@@ -43,6 +43,21 @@ Every new commit must retain the configured GPG signature. Verify it with
 If the key is locked or the passphrase prompt is unavailable, preserve the staged
 batch and wait for the owner to unlock the key locally.
 
+## Releasing a branch held by another worktree
+
+If checkout reports that a branch is already used by another worktree, inspect
+`git worktree list` and that worktree's status first. When it contains pending
+work, switch it to a new preservation branch with
+`git -C <holding-worktree> switch -c <preservation-branch>`. The new branch starts
+at the same commit and retains staged and unstaged changes in that worktree.
+The original branch is then available for checkout in the shared workspace.
+
+Verify that the pending diff, stash entries and unrelated files are unchanged.
+Uncommitted changes remain in the holding worktree; the preservation branch alone
+does not store them. Keep that worktree until the work is saved. Do not force-remove
+it or apply or drop stashes to resolve this checkout error. Releasing a branch
+does not reconcile divergence with its remote; that is a separate operation.
+
 ## Label taxonomy
 
 Every issue should have at least one truthful work-type label. Use `enhancement` for both features and enhancements so the repository does not maintain duplicate concepts.
