@@ -48,6 +48,8 @@ The subsequent [quantized BitNet CPU benchmark](../../docs/validation/vibevoice-
 
 ### Reproduce the frontend screen
 
+The completed [19 September denoising follow-up](../../docs/validation/denoising-followup-2026-09-19.md) records 2,153 attempts using fixed original/enhanced mixtures, known-gain diagnostics and bounded-observer streaming. Mixing helps several speech cases but introduces noise regressions; input level is a substantial contributor to quiet-speech errors. Native contracts and corpus reproduction pass, while contention prevents an isolated latency claim. Run instructions and evidence limits are in the report; detailed JSON stays in the ignored result cache and application defaults remain unchanged.
+
 Prepare the public FLEURS corpora using the instructions below. The frontend asset helper copies matching files from those directories, verifies every audio hash, and can generate the fixed non-speech and macOS Samantha controls. Synthesized audio depends on the voice/OS build: a mismatched hash is a new corpus, not permission to silently replace the pinned reference. Models stay in the ignored benchmark cache; these are development dependencies only.
 
 ```sh
