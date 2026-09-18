@@ -1,0 +1,108 @@
+# Rust and frontend build artifacts
+/target/
+node_modules/
+build/
+dist/
+.vite/
+*.tsbuildinfo
+/apps/desktop/src-tauri/gen/
+coverage/
+*.lcov
+/playwright-report/
+/test-results/
+/release/
+
+# Local tools and caches (Python is used only by optional development tooling)
+.tooling/
+.cache/
+__pycache__/
+*.py[oc]
+.venv
+.mypy_cache/
+.pytest_cache/
+.ruff_cache/
+wheels/
+*.egg-info/
+
+# Local environment, operating-system metadata and editor scratch files
+.env
+.env.*
+!.env.example
+!.env.*.example
+.DS_Store
+._*
+Thumbs.db
+Desktop.ini
+*.log
+*.tmp
+*.bak
+*.swp
+*.swo
+*~
+
+# Local visual QA and exploratory studies are not public source assets.
+# Preserve app icons/fonts and canonical docs/validation JSON/Markdown evidence.
+/screenshots/
+/docs/screenshots/
+/docs/design/
+/docs/validation/*.png
+/docs/validation/*.jpg
+/docs/validation/*.jpeg
+/docs/validation/*.webp
+/docs/validation/*.gif
+/artifacts/
+
+# Temporary design explorations belong outside the maintained application
+/design-previews/
+/scratch/
+/tmp/
+
+# Local embedded-store scratch file
+/:memory:.ses
+
+# Local application data and exports
+/data/
+/dataset/
+/datasets/
+/recordings/
+/exports/
+/settings.json
+transcribe-export-*/
+.transcribe-export-*/
+*.sqlite
+*.sqlite3
+*.db
+*.sqlite-journal
+*.sqlite3-journal
+*.db-journal
+*.sqlite-wal
+*.sqlite3-wal
+*.db-wal
+*.sqlite-shm
+*.sqlite3-shm
+*.db-shm
+
+# User audio/video; keep only the explicit synthetic decoder fixtures
+*.wav
+*.flac
+*.mp3
+*.m4a
+*.aac
+*.aif
+*.aiff
+*.ogg
+*.opus
+*.webm
+*.mp4
+!/crates/transcribe-audio/tests/fixtures/tone.flac
+!/crates/transcribe-audio/tests/fixtures/tone.mp3
+!/crates/transcribe-audio/tests/fixtures/tone.m4a
+!/crates/transcribe-audio/tests/fixtures/tone.ogg
+
+# Downloaded model weights belong outside source control
+*.gguf
+*.onnx
+*.onnx.data
+*.safetensors
+*.nemo
+/models/downloads/
