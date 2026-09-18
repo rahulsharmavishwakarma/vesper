@@ -347,15 +347,15 @@
   }
   async function copyResult() {
     if (!result || copying) return;
-    if (!(await commitDraft())) return;
-    if (!result) return;
     const source = result.resultId;
-    const text = draft;
-    if (!text.trim()) return;
-    copied = false;
-    copyMessage = null;
+    // Own the whole save-and-copy operation, including an in-flight blur save.
     copying = true;
     try {
+      if (!(await commitDraft()) || disposed || result?.resultId !== source) return;
+      const text = draft;
+      if (!text.trim()) return;
+      copied = false;
+      copyMessage = null;
       if (!navigator.clipboard?.writeText) throw new Error('Clipboard unavailable');
       await navigator.clipboard.writeText(text);
       if (disposed || result?.resultId !== source) return;
