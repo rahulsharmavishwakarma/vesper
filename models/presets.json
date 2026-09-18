@@ -1,0 +1,244 @@
+[
+  {
+    "description": "English · 0.6B · INT8 · CPU",
+    "precision": "INT8",
+    "sourceUrl": "https://huggingface.co/nvidia/parakeet-tdt-0.6b-v2",
+    "profile": {
+      "id": "parakeet-tdt-0.6b-v2-int8",
+      "name": "NVIDIA Parakeet TDT 0.6B v2",
+      "repository": "csukuangfj/sherpa-onnx-nemo-parakeet-tdt-0.6b-v2-int8",
+      "revision": "1ab9323565ddb038682214b292f588070a538ce2",
+      "runtime": "sherpa_onnx_transducer",
+      "files": [
+        {
+          "role": "encoder",
+          "path": "encoder.int8.onnx",
+          "sha256": "a32b12d17bbbc309d0686fbbcc2987b5e9b8333a7da83fa6b089f0a2acd651ab",
+          "sizeBytes": 652184296
+        },
+        {
+          "role": "decoder",
+          "path": "decoder.int8.onnx",
+          "sha256": "b6bb64963457237b900e496ee9994b59294526439fbcc1fecf705b31a15c6b4e",
+          "sizeBytes": 7257753
+        },
+        {
+          "role": "joiner",
+          "path": "joiner.int8.onnx",
+          "sha256": "7946164367946e7f9f29a122407c3252b680dbae9a51343eb2488d057c3c43d2",
+          "sizeBytes": 1739080
+        },
+        {
+          "role": "tokens",
+          "path": "tokens.txt",
+          "sha256": "ec182b70dd42113aff6c5372c75cac58c952443eb22322f57bbd7f53977d497d",
+          "sizeBytes": 9384
+        }
+      ],
+      "license": "CC-BY-4.0",
+      "modelType": "nemo_transducer",
+      "languages": [
+        "en"
+      ]
+    }
+  },
+  {
+    "description": "English · 0.6B · INT8 · CPU",
+    "precision": "INT8",
+    "sourceUrl": "https://huggingface.co/nvidia/parakeet-unified-en-0.6b",
+    "profile": {
+      "id": "parakeet-unified-en-0.6b-int8",
+      "name": "NVIDIA Parakeet Unified English 0.6B (offline)",
+      "repository": "csukuangfj2/sherpa-onnx-nemo-parakeet-unified-en-0.6b-int8-non-streaming",
+      "revision": "8c3a10fb13408c7a7054f6898958bf1c64a8d6c7",
+      "runtime": "sherpa_onnx_transducer",
+      "files": [
+        {
+          "role": "encoder",
+          "path": "encoder.int8.onnx",
+          "sha256": "6716910b7a0833997fec7a410494c995d70124001a0e9b66d6370d6aced577e0",
+          "sizeBytes": 654040552
+        },
+        {
+          "role": "decoder",
+          "path": "decoder.int8.onnx",
+          "sha256": "a5e223392c90e75f8144cdb5eb95af7625db389e39edef2bd1a9c872b3298fe6",
+          "sizeBytes": 7257753
+        },
+        {
+          "role": "joiner",
+          "path": "joiner.int8.onnx",
+          "sha256": "869f43f7d24595c55581ad3bf249a935fb8a71389fbdaa7504b9f46f93140f8a",
+          "sizeBytes": 1735860
+        },
+        {
+          "role": "tokens",
+          "path": "tokens.txt",
+          "sha256": "dc0b4584ab2e4ddbf888425c076c61b736e7356a015250db7d307e6f1a8188ff",
+          "sizeBytes": 8952
+        }
+      ],
+      "license": "NVIDIA Open Model License",
+      "modelType": "nemo_transducer",
+      "languages": [
+        "en"
+      ]
+    }
+  },
+  {
+    "description": "English, French, German, Spanish · 114M · CPU",
+    "precision": "FP32",
+    "sourceUrl": "https://catalog.ngc.nvidia.com/orgs/nvidia/teams/nemo/models/stt_multilingual_fastconformer_hybrid_large_pc_blend_eu",
+    "profile": {
+      "id": "fastconformer-en-de-es-fr",
+      "name": "NVIDIA FastConformer European 114M",
+      "repository": "csukuangfj/sherpa-onnx-nemo-fast-conformer-transducer-en-de-es-fr-14288",
+      "revision": "a68ecf678bbc9369516ca257a8418c8f085771eb",
+      "runtime": "sherpa_onnx_transducer",
+      "files": [
+        {
+          "role": "encoder",
+          "path": "encoder.onnx",
+          "sha256": "88484225db686f4666ca5e91a2352c038b3e04ed18595422e5facf5a3056c2f4",
+          "sizeBytes": 456051182
+        },
+        {
+          "role": "decoder",
+          "path": "decoder.onnx",
+          "sha256": "0bc2d9601d5210e8353552ed2915c43407944f7389ff233889c05e5dd4973df2",
+          "sizeBytes": 19685246
+        },
+        {
+          "role": "joiner",
+          "path": "joiner.onnx",
+          "sha256": "a8d11ed8042ef23965a1c77036611d77a2d1ca7ae4656e6e271e7655d7a76b51",
+          "sizeBytes": 9522338
+        },
+        {
+          "role": "tokens",
+          "path": "tokens.txt",
+          "sha256": "29effa220ddd8fcae96d2d6c78c2e24de4cd9dfaa4ceb86d54dc3d22259c1f93",
+          "sizeBytes": 24057
+        }
+      ],
+      "license": "NVIDIA NGC Terms of Use",
+      "modelType": "nemo_transducer",
+      "languages": [
+        "en",
+        "de",
+        "es",
+        "fr"
+      ]
+    }
+  },
+  {
+    "description": "Multilingual · 0.5B · Q4_K_M",
+    "precision": "Q4_K_M",
+    "sourceUrl": "https://huggingface.co/Qwen/Qwen2.5-0.5B-Instruct",
+    "profile": {
+      "id": "hf-82e478ca6fdb1e11",
+      "name": "Qwen2.5 0.5B Instruct · Q4_K_M",
+      "repository": "Qwen/Qwen2.5-0.5B-Instruct-GGUF",
+      "revision": "9217f5db79a29953eb74d5343926648285ec7e67",
+      "runtime": "llama_cpp",
+      "license": "apache-2.0",
+      "languages": [],
+      "files": [
+        {
+          "role": "weights",
+          "path": "qwen2.5-0.5b-instruct-q4_k_m.gguf",
+          "sha256": "74a4da8c9fdbcd15bd1f6d01d621410d31c6fc00986f5eb687824e7b93d7a9db",
+          "sizeBytes": 491400032
+        }
+      ]
+    }
+  },
+  {
+    "description": "Multilingual · 1.5B · Q4_K_M",
+    "precision": "Q4_K_M",
+    "sourceUrl": "https://huggingface.co/Qwen/Qwen2.5-1.5B-Instruct",
+    "profile": {
+      "id": "hf-e42e73104709477e",
+      "name": "Qwen2.5 1.5B Instruct · Q4_K_M",
+      "repository": "Qwen/Qwen2.5-1.5B-Instruct-GGUF",
+      "revision": "91cad51170dc346986eccefdc2dd33a9da36ead9",
+      "runtime": "llama_cpp",
+      "license": "apache-2.0",
+      "languages": [],
+      "files": [
+        {
+          "role": "weights",
+          "path": "qwen2.5-1.5b-instruct-q4_k_m.gguf",
+          "sha256": "6a1a2eb6d15622bf3c96857206351ba97e1af16c30d7a74ee38970e434e9407e",
+          "sizeBytes": 1117320736
+        }
+      ]
+    }
+  },
+  {
+    "description": "English · 360M · Q8_0",
+    "precision": "Q8_0",
+    "sourceUrl": "https://huggingface.co/HuggingFaceTB/SmolLM2-360M-Instruct",
+    "profile": {
+      "id": "hf-e8b39a8752a85d55",
+      "name": "SmolLM2 360M Instruct · Q8_0",
+      "repository": "HuggingFaceTB/SmolLM2-360M-Instruct-GGUF",
+      "revision": "593b5a2e04c8f3e4ee880263f93e0bd2901ad47f",
+      "runtime": "llama_cpp",
+      "license": "apache-2.0",
+      "languages": [],
+      "files": [
+        {
+          "role": "weights",
+          "path": "smollm2-360m-instruct-q8_0.gguf",
+          "sha256": "48ab3034d0dd401fbc721eb1df3217902fee7dab9078992d66431f09b7750201",
+          "sizeBytes": 386404992
+        }
+      ]
+    }
+  },
+  {
+    "description": "English · 1.7B · Q4_K_M",
+    "precision": "Q4_K_M",
+    "sourceUrl": "https://huggingface.co/HuggingFaceTB/SmolLM2-1.7B-Instruct",
+    "profile": {
+      "id": "hf-d152d789235fe4ec",
+      "name": "SmolLM2 1.7B Instruct · Q4_K_M",
+      "repository": "HuggingFaceTB/SmolLM2-1.7B-Instruct-GGUF",
+      "revision": "2d4a76a30b4af41ecd395c35725ac11688d4cfe4",
+      "runtime": "llama_cpp",
+      "license": "apache-2.0",
+      "languages": [],
+      "files": [
+        {
+          "role": "weights",
+          "path": "smollm2-1.7b-instruct-q4_k_m.gguf",
+          "sha256": "decd2598bc2c8ed08c19adc3c8fdd461ee19ed5708679d1c54ef54a5a30d4f33",
+          "sizeBytes": 1055609536
+        }
+      ]
+    }
+  },
+  {
+    "description": "Multilingual · 1B · Q4_K_M",
+    "precision": "Q4_K_M",
+    "sourceUrl": "https://huggingface.co/google/gemma-3-1b-it",
+    "profile": {
+      "id": "hf-68aaf8e5b14b7284",
+      "name": "Gemma 3 1B IT · Q4_K_M",
+      "repository": "ggml-org/gemma-3-1b-it-GGUF",
+      "revision": "f9c28bcd85737ffc5aef028638d3341d49869c27",
+      "runtime": "llama_cpp",
+      "license": "gemma",
+      "languages": [],
+      "files": [
+        {
+          "role": "weights",
+          "path": "gemma-3-1b-it-Q4_K_M.gguf",
+          "sha256": "8ccc5cd1f1b3602548715ae25a66ed73fd5dc68a210412eea643eb20eb75a135",
+          "sizeBytes": 806058240
+        }
+      ]
+    }
+  }
+]

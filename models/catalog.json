@@ -1,0 +1,246 @@
+{
+  "schema_version": 1,
+  "status": "reference_only",
+  "description": "Informational model catalog. Executable installation and runtime selection are implemented in transcribe-models and transcribe-inference.",
+  "defaults": {
+    "asr": "CohereLabs/cohere-transcribe-03-2026",
+    "rewriter": "Qwen/Qwen3.5-0.8B"
+  },
+  "models": [
+    {
+      "id": "nvidia/parakeet-tdt-0.6b-v3",
+      "name": "NVIDIA Parakeet TDT 0.6B v3",
+      "role": "speech_recognition",
+      "status": "optional_fallback",
+      "description": "Offline compatibility model for 25 European languages; Hindi is not supported.",
+      "source_url": "https://huggingface.co/nvidia/parakeet-tdt-0.6b-v3",
+      "license": "CC-BY-4.0",
+      "proposed_runtime": "sherpa-onnx official Rust API with a compatible ONNX export",
+      "runtime_integrated": true,
+      "artifact_revision": "2bda32ec70b097a55adaa07d9a7173915b43cc78",
+      "artifacts": [
+        {
+          "filename": "decoder.int8.onnx",
+          "size_bytes": 11845275,
+          "sha256": "179e50c43d1a9de79c8a24149a2f9bac6eb5981823f2a2ed88d655b24248db4e",
+          "url": "https://huggingface.co/csukuangfj/sherpa-onnx-nemo-parakeet-tdt-0.6b-v3-int8/resolve/2bda32ec70b097a55adaa07d9a7173915b43cc78/decoder.int8.onnx",
+          "quantization": null
+        },
+        {
+          "filename": "encoder.int8.onnx",
+          "size_bytes": 652184281,
+          "sha256": "acfc2b4456377e15d04f0243af540b7fe7c992f8d898d751cf134c3a55fd2247",
+          "url": "https://huggingface.co/csukuangfj/sherpa-onnx-nemo-parakeet-tdt-0.6b-v3-int8/resolve/2bda32ec70b097a55adaa07d9a7173915b43cc78/encoder.int8.onnx",
+          "quantization": null
+        },
+        {
+          "filename": "joiner.int8.onnx",
+          "size_bytes": 6355277,
+          "sha256": "3164c13fc2821009440d20fcb5fdc78bff28b4db2f8d0f0b329101719c0948b3",
+          "url": "https://huggingface.co/csukuangfj/sherpa-onnx-nemo-parakeet-tdt-0.6b-v3-int8/resolve/2bda32ec70b097a55adaa07d9a7173915b43cc78/joiner.int8.onnx",
+          "quantization": null
+        },
+        {
+          "filename": "tokens.txt",
+          "size_bytes": 93939,
+          "sha256": "d58544679ea4bc6ac563d1f545eb7d474bd6cfa467f0a6e2c1dc1c7d37e3c35d",
+          "url": "https://huggingface.co/csukuangfj/sherpa-onnx-nemo-parakeet-tdt-0.6b-v3-int8/resolve/2bda32ec70b097a55adaa07d9a7173915b43cc78/tokens.txt",
+          "quantization": null
+        }
+      ],
+      "artifact_notes": "Exact executable installation metadata is maintained in artifacts.json. Download size is not application RAM."
+    },
+    {
+      "id": "nvidia/nemotron-3.5-asr-streaming-0.6b",
+      "name": "NVIDIA Nemotron 3.5 ASR Streaming 0.6B",
+      "role": "speech_recognition",
+      "status": "optional",
+      "description": "Selectable multilingual cache-aware streaming ASR, including Hindi. Evaluate Hindi/English code-switching separately.",
+      "source_url": "https://huggingface.co/nvidia/nemotron-3.5-asr-streaming-0.6b",
+      "license": "OpenMDW-1.1",
+      "proposed_runtime": "NeMo-Speech.cpp 0.1.0 versioned C ABI; resident recognizer with fresh per-recording streams",
+      "runtime_integrated": true,
+      "artifact_revision": "ea30d66debe3740a08b573244286791d423d6b3e",
+      "artifacts": [
+        {
+          "filename": "nemotron-3.5-asr-streaming-0.6b.q8_0.gguf",
+          "quantization": "Q8_0",
+          "purpose": "default",
+          "approximate_download_mb": 742,
+          "url": "https://huggingface.co/nvidia/nemotron-3.5-asr-streaming-0.6b/blob/ea30d66debe3740a08b573244286791d423d6b3e/nemotron-3.5-asr-streaming-0.6b.q8_0.gguf",
+          "sha256": "3fc991d3badad7277c11030a7519832cddaf2057aafed6d4b25147e953a070b1"
+        }
+      ],
+      "artifact_notes": "The installer also pins the platform-specific NeMo-Speech.cpp 0.1.0 runtime archive and preserves its license notices."
+    },
+    {
+      "id": "Qwen/Qwen3.5-0.8B",
+      "name": "Qwen3.5 0.8B",
+      "role": "text_reconstruction",
+      "status": "default",
+      "description": "Faithful text cleanup after speech recognition. Preserve meaning and language; do not infer missing facts or answer dictated questions.",
+      "source_url": "https://huggingface.co/Qwen/Qwen3.5-0.8B",
+      "license": "Apache-2.0",
+      "proposed_runtime": "llama.cpp through llama-cpp-2",
+      "runtime_integrated": true,
+      "thinking_enabled": false,
+      "artifact_repository": "ggml-org/Qwen3.5-0.8B-GGUF",
+      "artifact_revision": "8fea620810c4afa23dd6443f999a48574c1611a3",
+      "artifacts": [
+        {
+          "filename": "Qwen3.5-0.8B-Q4_0.gguf",
+          "size_bytes": 563036064,
+          "sha256": "57d1997790d1744fba5b40a7317df71ea5e2acee28c47e78f0cce39c0703f8cf",
+          "url": "https://huggingface.co/ggml-org/Qwen3.5-0.8B-GGUF/resolve/8fea620810c4afa23dd6443f999a48574c1611a3/Qwen3.5-0.8B-Q4_0.gguf",
+          "quantization": "q4_0"
+        },
+        {
+          "filename": "Qwen3.5-0.8B-Q8_0.gguf",
+          "size_bytes": 833592096,
+          "sha256": "37ae482d336108d23516fa35e8e0c4126688d81018b87178a18d752a1357814f",
+          "url": "https://huggingface.co/ggml-org/Qwen3.5-0.8B-GGUF/resolve/8fea620810c4afa23dd6443f999a48574c1611a3/Qwen3.5-0.8B-Q8_0.gguf",
+          "quantization": "q8_0"
+        }
+      ],
+      "artifact_notes": "Exact executable installation metadata is maintained in artifacts.json. Download size is not application RAM."
+    },
+    {
+      "id": "Qwen/Qwen3-ASR-0.6B",
+      "name": "Qwen3-ASR 0.6B",
+      "role": "speech_recognition",
+      "status": "optional",
+      "description": "Automatic, English, French and Hindi. Completed recordings on CPU with internal bounded segments for longer audio.",
+      "source_url": "https://huggingface.co/Qwen/Qwen3-ASR-0.6B",
+      "license": "Apache-2.0 (original model; export card has no separate license declaration)",
+      "proposed_runtime": "sherpa-onnx 1.13.8 with application completion-reporting patch",
+      "runtime_integrated": true,
+      "artifact_revision": "68818b2313fe77bd06f6a7c5068ff3ef59d02b8a",
+      "artifacts": [
+        {
+          "filename": "conv_frontend.onnx",
+          "size_bytes": 44148281,
+          "sha256": "d22dc4423e0940e49884e903d2ea2f7e5567c14fc1aed97e4e26d6b8f208ef9e"
+        },
+        {
+          "filename": "encoder.int8.onnx",
+          "size_bytes": 182491662,
+          "sha256": "60748d3e6744a57c9c91e1b17424a6c2990567e8adceb0783940c03ed98fa9d9"
+        },
+        {
+          "filename": "decoder.int8.onnx",
+          "size_bytes": 755914231,
+          "sha256": "4f6885be5959ae26af3089d38ee7972c5fafbeeb1cf8d5e76eab6d8b61ca5771"
+        },
+        {
+          "filename": "tokenizer/vocab.json",
+          "size_bytes": 2776833,
+          "sha256": "ca10d7e9fb3ed18575dd1e277a2579c16d108e32f27439684afa0e10b1440910"
+        },
+        {
+          "filename": "tokenizer/merges.txt",
+          "size_bytes": 1671853,
+          "sha256": "8831e4f1a044471340f7c0a83d7bd71306a5b867e95fd870f74d0c5308a904d5"
+        },
+        {
+          "filename": "tokenizer/tokenizer_config.json",
+          "size_bytes": 12487,
+          "sha256": "4942d005604266809309cabc9f4e9cb89ce855d59b14681fdc0e1cc62ea26c4c"
+        }
+      ],
+      "artifact_notes": "Exact executable metadata is in artifacts.json; see docs/offline-asr.md."
+    },
+    {
+      "id": "CohereLabs/cohere-transcribe-03-2026",
+      "name": "Cohere Transcribe",
+      "role": "speech_recognition",
+      "status": "default",
+      "description": "Default completed-recording CPU ASR, with internal bounded segments for longer audio. Requires explicit English/French in this application; no Auto/Hindi or live partials.",
+      "source_url": "https://huggingface.co/CohereLabs/cohere-transcribe-03-2026",
+      "license": "Apache-2.0 (original model; export card has no separate license declaration)",
+      "proposed_runtime": "sherpa-onnx 1.13.8 with application completion-reporting patch",
+      "runtime_integrated": true,
+      "artifact_revision": "156a470cf08eefe706a0004f3c52d9ee567ca7a0",
+      "artifacts": [
+        {
+          "filename": "encoder.int8.onnx",
+          "size_bytes": 3090822,
+          "sha256": "cf704f8cfa90e3f0a76f9ffc05998bdf00ba9ae983192c14a85a3a5eb008b367"
+        },
+        {
+          "filename": "encoder.int8.onnx.data",
+          "size_bytes": 2731503072,
+          "sha256": "bcf1b7148c8518ae52df1ad2d2fc2b4e89261ea23e6c874eef1d9f55bcbaa4a3"
+        },
+        {
+          "filename": "decoder.int8.onnx",
+          "size_bytes": 153250705,
+          "sha256": "8372ca6c8ff4db8b916ca3592f5c757a715e691b9edec751ba19b29fc854baf9"
+        },
+        {
+          "filename": "tokens.txt",
+          "size_bytes": 207437,
+          "sha256": "013ede043ae2480e3a9205cc34550d9686100cc682bacc90f702facdfbb93035"
+        }
+      ],
+      "artifact_notes": "Exact executable metadata is in artifacts.json; see docs/offline-asr.md."
+    },
+    {
+      "id": "LiquidAI/LFM2.5-Audio-1.5B",
+      "name": "Liquid LFM2.5 Audio 1.5B",
+      "role": "speech_recognition",
+      "status": "optional",
+      "description": "English-only completed-recording CPU ASR with resident Q4 weights and bounded long-audio segments.",
+      "source_url": "https://huggingface.co/LiquidAI/LFM2.5-Audio-1.5B",
+      "license": "LFM Open License 1.0; third-party audio notices apply",
+      "proposed_runtime": "llama.cpp mtmd through llama-cpp-2 0.1.156",
+      "runtime_integrated": true,
+      "artifact_repository": "LiquidAI/LFM2.5-Audio-1.5B-GGUF",
+      "artifact_revision": "7d525f883a077e20afb782f2ff618edcae0e39e4",
+      "artifacts": [
+        {
+          "filename": "LFM2.5-Audio-1.5B-Q4_0.gguf",
+          "size_bytes": 695750880,
+          "sha256": "3583bee853be20331ca342b0593fefd8acc43fb61a41ec6f1a1dc7465823e0d8",
+          "quantization": "q4_0"
+        },
+        {
+          "filename": "mmproj-LFM2.5-Audio-1.5B-Q4_0.gguf",
+          "size_bytes": 219511136,
+          "sha256": "6b483682c263b100f8cc8022d61507e446b1d320b9febc328e7960f72d03f7ea",
+          "quantization": "q4_0"
+        }
+      ],
+      "artifact_notes": "Exact executable metadata is in artifacts.json; see docs/lfm-audio.md."
+    },
+    {
+      "id": "openai/whisper-small",
+      "name": "OpenAI Whisper Small INT8",
+      "role": "speech_recognition",
+      "status": "qualification_pending",
+      "description": "Shared Whisper CPU adapter and verified installer implemented; product selection withheld after noise and repetition quality failures. English/French evaluation only; no native streaming.",
+      "source_url": "https://huggingface.co/openai/whisper-small",
+      "license": "MIT",
+      "proposed_runtime": "Pinned sherpa-onnx 1.13.8 with native completion/confidence patch",
+      "runtime_integrated": true,
+      "artifact_revision": "8f3c18b358db4d1f2fc1eae49d75cd20989e4309",
+      "artifact_manifest": "models/artifacts.json",
+      "artifact_size_bytes": 375485327,
+      "validation": "docs/validation/whisper-adapter-2026-09-18.md"
+    },
+    {
+      "id": "openai/whisper-large-v3-turbo",
+      "name": "OpenAI Whisper Turbo INT8",
+      "role": "speech_recognition",
+      "status": "qualification_pending",
+      "description": "Shared Whisper CPU adapter and verified installer implemented; product selection withheld after noise and repetition quality failures. English/French evaluation only; no native streaming.",
+      "source_url": "https://huggingface.co/openai/whisper-large-v3-turbo",
+      "license": "MIT",
+      "proposed_runtime": "Pinned sherpa-onnx 1.13.8 with native completion/confidence patch",
+      "runtime_integrated": true,
+      "artifact_revision": "2ca6ff69fc878651b770880507669577ac41c2ff",
+      "artifact_manifest": "models/artifacts.json",
+      "artifact_size_bytes": 1036613791,
+      "validation": "docs/validation/whisper-adapter-2026-09-18.md"
+    }
+  ]
+}
