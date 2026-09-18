@@ -1,0 +1,92 @@
+[
+  {
+    "sample": {
+      "cpuPercent": null,
+      "logicalCpus": 18,
+      "memoryBytes": 12959744,
+      "sampledAtMs": 1789417721545,
+      "status": "warming"
+    },
+    "samplingMicros": 148,
+    "os": {
+      "rssKiB": 13152,
+      "cpuDecayingPercent": 0.0,
+      "cumulativeCpuTime": "0:00.01"
+    }
+  },
+  {
+    "sample": {
+      "cpuPercent": 0.0,
+      "logicalCpus": 18,
+      "memoryBytes": 13516800,
+      "sampledAtMs": 1789417722548,
+      "status": "ready"
+    },
+    "samplingMicros": 388,
+    "os": {
+      "rssKiB": 13232,
+      "cpuDecayingPercent": 0.0,
+      "cumulativeCpuTime": "0:00.01"
+    }
+  },
+  {
+    "sample": {
+      "cpuPercent": 0.005527242944477835,
+      "logicalCpus": 18,
+      "memoryBytes": 13549568,
+      "sampledAtMs": 1789417723553,
+      "status": "ready"
+    },
+    "samplingMicros": 641,
+    "os": {
+      "rssKiB": 13248,
+      "cpuDecayingPercent": 0.0,
+      "cumulativeCpuTime": "0:00.01"
+    }
+  },
+  {
+    "sample": {
+      "cpuPercent": 0.0,
+      "logicalCpus": 18,
+      "memoryBytes": 13565952,
+      "sampledAtMs": 1789417724559,
+      "status": "ready"
+    },
+    "samplingMicros": 727,
+    "os": {
+      "rssKiB": 13248,
+      "cpuDecayingPercent": 0.0,
+      "cumulativeCpuTime": "0:00.01"
+    }
+  },
+  {
+    "sample": {
+      "cpuPercent": 0.005523964922664977,
+      "logicalCpus": 18,
+      "memoryBytes": 13565952,
+      "sampledAtMs": 1789417725564,
+      "status": "ready"
+    },
+    "samplingMicros": 636,
+    "os": {
+      "rssKiB": 13248,
+      "cpuDecayingPercent": 0.0,
+      "cumulativeCpuTime": "0:00.01"
+    }
+  },
+  {
+    "sample": {
+      "cpuPercent": 0.0055482750646295475,
+      "logicalCpus": 18,
+      "memoryBytes": 13565952,
+      "sampledAtMs": 1789417726566,
+      "status": "ready"
+    },
+    "samplingMicros": 352,
+    "os": {
+      "rssKiB": 13264,
+      "cpuDecayingPercent": 0.0,
+      "cumulativeCpuTime": "0:00.01"
+    }
+  }
+]
