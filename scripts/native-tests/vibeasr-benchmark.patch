@@ -1,0 +1,99 @@
+--- a/demo/asr_infer.cpp
++++ b/demo/asr_infer.cpp
+@@ -16,6 +16,7 @@
+ #include "../utils/prompt_builder.h"
+ 
+ #include "time_compat.h"
++#include "../3rdparty/llama.cpp/common/json.hpp"
+ 
+ #include <algorithm>
+ #include <cmath>
+@@ -423,6 +424,7 @@
+ 
+         // EOG token IDs (canonical from Python tokenizer)
+         // The GGUF metadata may have incorrect EOS ID due to vocab mapping issues
++        const double benchmark_first_token_ms = get_time_ms() - total_start - vae_load_time - lm_load_time - warmup_time;
+         const llama_token EOG_IM_END = 151645;       // <|im_end|>
+         const llama_token EOG_ENDOFTEXT = 151643;    // <|endoftext|>
+ 
+@@ -512,6 +514,22 @@
+         double load_time    = vae_load_time + lm_load_time;
+         double request_time = total_time - load_time - warmup_time;
+         double rtf = (request_time / 1000.0) / audio.duration_sec;
++        nlohmann::json benchmark = {
++            {"rawText", output_text}, {"generatedTokens", n_decoded},
++            {"lastToken", new_token}, {"promptTokens", n_prompt_tokens},
++            {"acousticFrames", acoustic_frames}, {"semanticFrames", semantic_frames},
++            {"audioSamples", n_samples}, {"audioSeconds", audio.duration_sec},
++            {"acousticMs", acoustic_time_ms}, {"semanticMs", semantic_time_ms},
++            {"prefillMs", prefill_time}, {"decodeMs", decode_time},
++            {"audioLoadMs", audio_load_time}, {"promptBuildMs", prompt_build_time},
++            {"modelLoadMs", load_time}, {"warmupMs", warmup_time},
++            {"requestMs", request_time}, {"firstGeneratedTokenMs", benchmark_first_token_ms},
++            {"stopReason", (new_token == EOG_IM_END || new_token == EOG_ENDOFTEXT) ? "eos" :
++                (n_decoded >= params.max_tokens ? "token-limit" : "decoder-error")}
++        };
++        fprintf(stderr, "VIBEASR_BENCH %s\n", benchmark.dump().c_str());
++        fflush(stderr);
++
+ 
+         // Print timing summary
+         fprintf(stderr, "\n========================================\n");
+--- a/src/asr_server.cpp
++++ b/src/asr_server.cpp
+@@ -18,6 +18,7 @@
+ #include "../utils/prompt_builder.h"
+ 
+ #include "time_compat.h"
++#include "../3rdparty/llama.cpp/common/json.hpp"
+ 
+ #include <algorithm>
+ #include <cmath>
+@@ -200,6 +201,7 @@
+     // Clear KV cache
+     llama_kv_cache_clear(lm_ctx);
+ 
++    const double benchmark_prefill_start = get_time_ms();
+     // Segmented prefill
+     int pos = prompt_builder::prefill_segmented(
+         lm_model, lm_ctx, prompt,
+@@ -213,6 +215,8 @@
+         return -1;
+     }
+ 
++    const double benchmark_prefill_ms = get_time_ms() - benchmark_prefill_start;
++    const double benchmark_decode_start = get_time_ms();
+     // Set up sampler
+     llama_sampler * smpl = llama_sampler_chain_init(llama_sampler_chain_default_params());
+     if (params.greedy) {
+@@ -239,6 +243,7 @@
+     generated_tokens.push_back(new_token);
+     n_decoded++;
+ 
++    const double benchmark_first_token_ms = get_time_ms() - chunk_start;
+     // Skip assistant header: <|im_start|> assistant \n (3 tokens)
+     int header_skip_remaining = (new_token == im_start_id) ? 2 : 0;
+ 
+@@ -302,6 +307,22 @@
+             generated_tokens.begin() + content_end);
+         std::string output_text = prompt_builder::detokenize(lm_model, content_tokens, false);
+         fprintf(stdout, "%s", output_text.c_str());
++        nlohmann::json benchmark = {
++            {"rawText", output_text}, {"generatedTokens", n_decoded},
++            {"lastToken", new_token}, {"promptTokens", n_prompt_tokens},
++            {"acousticFrames", acoustic_frames}, {"semanticFrames", semantic_frames},
++            {"audioSamples", n_samples}, {"audioSeconds", audio.duration_sec},
++            {"acousticMs", acoustic_time_ms}, {"semanticMs", semantic_time_ms},
++            {"prefillMs", benchmark_prefill_ms},
++            {"decodeMs", get_time_ms() - benchmark_decode_start},
++            {"requestMs", get_time_ms() - chunk_start},
++            {"firstGeneratedTokenMs", benchmark_first_token_ms},
++            {"stopReason", (new_token == EOG_IM_END || new_token == EOG_ENDOFTEXT) ? "eos" :
++                (n_decoded >= params.max_tokens ? "token-limit" : "decoder-error")}
++        };
++        fprintf(stderr, "VIBEASR_BENCH %s\n", benchmark.dump().c_str());
++        fflush(stderr);
++
+     }
+ 
+     fprintf(stdout, "\n---END---\n");

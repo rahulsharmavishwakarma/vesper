@@ -1,0 +1,56 @@
+--- a/demo/asr_infer.cpp
++++ b/demo/asr_infer.cpp
+@@ -354,6 +354,7 @@
+         fprintf(stderr, "\n[Step 7] LM prefill (segmented)...\n");
+ 
+         int n_prompt_tokens = (int)prompt.tokens.size();
++        int actual_prefill_tokens = 0;
+ 
+         // Warm-up prefill: same graph shape as the timed one, so the timed prefill
+         // does not pay for first-touch faults on the compute buffer / KV cache.
+@@ -386,6 +387,7 @@
+                 fprintf(stderr, "Error: Segmented prefill failed\n");
+                 goto cleanup;
+             }
++            actual_prefill_tokens = pos;
+         }
+ 
+         double prefill_time = get_time_ms() - t0;
+@@ -412,7 +414,7 @@
+         }
+ 
+         std::vector<llama_token> generated_tokens;
+-        int cur_pos = n_prompt_tokens;
++        int cur_pos = actual_prefill_tokens;
+         int n_decoded = 0;
+ 
+         // Sample first token from prefill logits
+@@ -516,7 +518,7 @@
+         double rtf = (request_time / 1000.0) / audio.duration_sec;
+         nlohmann::json benchmark = {
+             {"rawText", output_text}, {"generatedTokens", n_decoded},
+-            {"lastToken", new_token}, {"promptTokens", n_prompt_tokens},
++            {"lastToken", new_token}, {"promptTokens", n_prompt_tokens}, {"actualPrefillTokens", actual_prefill_tokens},
+             {"acousticFrames", acoustic_frames}, {"semanticFrames", semantic_frames},
+             {"audioSamples", n_samples}, {"audioSeconds", audio.duration_sec},
+             {"acousticMs", acoustic_time_ms}, {"semanticMs", semantic_time_ms},
+--- a/src/asr_server.cpp
++++ b/src/asr_server.cpp
+@@ -234,7 +234,7 @@
+ 
+     // Autoregressive decode
+     std::vector<llama_token> generated_tokens;
+-    int cur_pos = n_prompt_tokens;
++    int cur_pos = pos;
+     int n_decoded = 0;
+ 
+     // Sample first token from prefill logits
+@@ -309,7 +309,7 @@
+         fprintf(stdout, "%s", output_text.c_str());
+         nlohmann::json benchmark = {
+             {"rawText", output_text}, {"generatedTokens", n_decoded},
+-            {"lastToken", new_token}, {"promptTokens", n_prompt_tokens},
++            {"lastToken", new_token}, {"promptTokens", n_prompt_tokens}, {"actualPrefillTokens", pos},
+             {"acousticFrames", acoustic_frames}, {"semanticFrames", semantic_frames},
+             {"audioSamples", n_samples}, {"audioSeconds", audio.duration_sec},
+             {"acousticMs", acoustic_time_ms}, {"semanticMs", semantic_time_ms},
