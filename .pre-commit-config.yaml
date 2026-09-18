@@ -51,7 +51,7 @@ repos:
   - repo: local
     hooks:
       - id: transcribe-fast-check
-        name: transcribe format, language lint, types and Node tests
+        name: transcribe Python locks, format, language lint, types and Node tests
         entry: make check-fast
         language: system
         pass_filenames: false

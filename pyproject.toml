@@ -1,0 +1,34 @@
+[project]
+name = "transcribe-tooling"
+version = "0.0.0"
+description = "Contributor and benchmark tooling for the native transcribe app"
+requires-python = ">=3.12"
+dependencies = []
+
+[dependency-groups]
+dev = [
+    "pre-commit==4.6.1",
+    "pip-audit==2.10.1",
+    "numpy==2.5.3",
+    "soundfile==0.14.0",
+    "ruff==0.16.8",
+    "shellcheck-py==0.11.0.1",
+    "shfmt-py==4.2.0",
+]
+benchmark = ["pyarrow==25.0.1"]
+
+[tool.uv]
+package = false
+required-version = ">=0.12.15,<0.13"
+
+[tool.ruff]
+required-version = "==0.16.8"
+target-version = "py312"
+line-length = 100
+force-exclude = true
+
+[tool.ruff.lint]
+select = ["E4", "E7", "E9", "F", "I"]
+
+[tool.ruff.format]
+line-ending = "lf"

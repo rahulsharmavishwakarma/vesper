@@ -37,6 +37,12 @@ Before declaring a job complete:
 
 The contributor-facing version of this workflow is documented in [docs/project-workflow.md](docs/project-workflow.md).
 
+## Python tooling
+
+Use **uv and `pyproject.toml` for all Python work**, including contributor tools, scripts, tests, benchmarks and research environments. Keep dependencies, supported Python versions and compatible tool configuration in the owning `pyproject.toml`; use dependency groups for development/test tooling. Manage dependencies with `uv add` / `uv remove`, keep the generated `uv.lock` versioned alongside the manifest, and run project commands through `uv run`. Use `uv sync --locked` and `uv run --locked` for reproducible CI checks.
+
+Do not introduce pip/pipx, manually managed virtualenvs, Poetry/Pipenv, or hand-maintained requirements files as parallel project workflows. Requirements files needed by an external consumer must be generated with `uv export` from the canonical project metadata and lockfile. Use `uv tool` for independently installed Python CLI tools. Keep environments and caches ignored. Update manifests, lockfiles, compatibility exports and their callers together, preserving tests, hooks and security checks; verify them with `make python-lock-check`. See [Python tooling policy](docs/development.md#python-tooling-policy) for the contributor and isolated benchmark environments.
+
 ## UI interaction design
 
 Prefer familiar, direct interactions with the fewest necessary steps. Before introducing a new interaction or redesigning an unfamiliar control, check relevant platform guidance and one or two established applications; record the useful pattern and sources in the issue. Adapt behavior to this project's existing design system instead of copying another product's appearance or inventing a more complicated workflow.
