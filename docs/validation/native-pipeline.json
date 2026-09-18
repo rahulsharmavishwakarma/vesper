@@ -1,0 +1,34 @@
+{
+  "raw": "Ask not what your country can do for you, ask what you can do for your country.",
+  "cleaned": "Ask not what your country can do for you, ask what you can do for your country.",
+  "cleanupError": null,
+  "modelVersions": {
+    "asr": {
+      "artifactFiles": [
+        "encoder.int8.onnx",
+        "decoder.int8.onnx",
+        "joiner.int8.onnx",
+        "tokens.txt"
+      ],
+      "languageMode": "automatic",
+      "modelId": "nvidia/parakeet-tdt-0.6b-v3",
+      "provider": "cpu",
+      "runtime": "sherpa-onnx",
+      "runtimeVersion": "1.13.8"
+    },
+    "rewriter": {
+      "artifactFile": "Qwen3.5-0.8B-Q4_0.gguf",
+      "contextTokens": 4096,
+      "fidelityGuard": "lexical-v1",
+      "maxOutputTokens": 2048,
+      "modelId": "Qwen/Qwen3.5-0.8B",
+      "provider": "cpu",
+      "runtime": "llama-cpp-2",
+      "runtimeVersion": "0.1.156",
+      "sampling": {
+        "strategy": "greedy"
+      },
+      "thinkingEnabled": false
+    }
+  }
+}
