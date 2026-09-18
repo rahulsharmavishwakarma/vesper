@@ -1,0 +1,29 @@
+name: Maintenance, tests, or documentation
+description: Track repository work that is not a bug report or feature request
+title: "[Task]: "
+labels: [task]
+body:
+  - type: markdown
+    attributes:
+      value: Search existing issues first. Keep private audio, transcripts, credentials, and machine-specific paths out of this report.
+  - type: textarea
+    id: scope
+    attributes:
+      label: Problem and proposed scope
+      description: Describe the work and affected components. Identify any architectural proposal that needs approval.
+    validations:
+      required: true
+  - type: textarea
+    id: completion
+    attributes:
+      label: Completion criteria and documentation
+      description: State the expected result and the canonical docs page that will describe it.
+    validations:
+      required: true
+  - type: textarea
+    id: validation
+    attributes:
+      label: Validation plan
+      description: List appropriate automated or manual checks and any known limitations.
+    validations:
+      required: true
