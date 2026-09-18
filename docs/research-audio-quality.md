@@ -12,6 +12,12 @@ The [Whisper adapter regression](validation/whisper-adapter-2026-09-18.md) did n
 
 The harder frontend benchmark did not qualify automatic filtering: denoisers did not consistently improve word accuracy, Silero missed some extremely attenuated speech, and Ear/Uhm retained routing or false-positive failures. The user subsequently approved opt-in integration under issue #42; this does not promote automatic filtering. Selected Cohere/Whisper resident ownership remains shared under ADR-0017/0018.
 
+### Why required denoising still needs ASR qualification
+
+Denoising remains a required product capability. The experimental default describes the current qualification of these artifacts/settings, not cancellation of that requirement. A single-microphone enhancer estimates speech from a mixture and can suppress target speech or introduce artifacts while reducing noise. [Ochiai et al.](https://arxiv.org/abs/2404.14860v1) isolate the detrimental effect of enhancement artifacts on ASR in their experiments; the [DPDFNet paper](https://arxiv.org/html/2512.16420v1) explicitly addresses over-attenuation with a training loss. That loss is a checkpoint-training technique, not a switch for the downloaded weights.
+
+Locally, DPDF8 improves noisy Whisper Small WER from 17.42% to 13.35%, while DPDF4 worsens attenuated Whisper Turbo from 6.53% to 53.27% (24 paired clips in each comparison). These are different ASR/condition/denoiser combinations, not a head-to-head denoiser ranking. The latter inputs were multiplied by 0.03; they are not natural whispers. Exact length/reset tests do not establish waveform fidelity. Follow-up diagnostics establish substantial signal-level sensitivity, while residual attenuation, waveform distortion and export/runtime contributions remain incompletely separated. Existing original-audio fallback handles processing failures; it does not detect acoustically plausible but incorrect words.
+
 ## First production integration contract — 18 September 2026
 
 The user approved this concrete first-stage design. [ADR-0019](adrs/0019-shared-audio-frontend.md) describes the implementation, including the native endpoint range fix discovered during integration. [Issue #42](https://github.com/rahulsharmavishwakarma/transcribe/issues/42) owns approval and qualification status. The following records the scope and predeclared test gates; targets are not benchmark results.
