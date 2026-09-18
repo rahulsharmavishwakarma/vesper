@@ -1,0 +1,975 @@
+{
+  "schemaVersion": 1,
+  "source": {
+    "kind": "authored synthetic feedback with externally supplied desired-text labels",
+    "limitation": "Includes explicit outcome labels on unchanged outputs; not passive user behavior or a real-user study.",
+    "protocol": "policy family 3x2; one-coordinate proposals; >=4 independent feedback cases, >=2 improved, zero regressed; fresh validation and held-out audit",
+    "expectedDecisionSequence": [
+      "promoted",
+      "promoted",
+      "rolled_back"
+    ],
+    "note": "Expected decisions are report metadata, never passed to the controller. Adverse final cases retained."
+  },
+  "rounds": [
+    {
+      "id": "context",
+      "learn": [
+        {
+          "input": {
+            "id": "constructed-0001",
+            "sourceKey": "constructed-0001",
+            "episodeId": "constructed-0001",
+            "atMs": 180000,
+            "project": "workspace",
+            "language": "en",
+            "modelId": "fixture-model-a",
+            "text": "Open readme sdk for onboarding"
+          },
+          "edit": "Open ReadmeSDK for onboarding",
+          "reference": "Open ReadmeSDK for onboarding"
+        },
+        {
+          "input": {
+            "id": "constructed-0002",
+            "sourceKey": "constructed-0002",
+            "episodeId": "constructed-0002",
+            "atMs": 360000,
+            "project": "workspace",
+            "language": "en",
+            "modelId": "fixture-model-a",
+            "text": "Open atlas api for onboarding"
+          },
+          "edit": "Open AtlasAPI for onboarding",
+          "reference": "Open AtlasAPI for onboarding"
+        },
+        {
+          "input": {
+            "id": "constructed-0003",
+            "sourceKey": "constructed-0003",
+            "episodeId": "constructed-0003",
+            "atMs": 540000,
+            "project": "workspace",
+            "language": "en",
+            "modelId": "fixture-model-a",
+            "text": "Open photon sdk for onboarding"
+          },
+          "edit": "Open PhotonSDK for onboarding",
+          "reference": "Open PhotonSDK for onboarding"
+        },
+        {
+          "input": {
+            "id": "constructed-0004",
+            "sourceKey": "constructed-0004",
+            "episodeId": "constructed-0004",
+            "atMs": 720000,
+            "project": "workspace",
+            "language": "en",
+            "modelId": "fixture-model-a",
+            "text": "Open vector api for onboarding"
+          },
+          "edit": "Open VectorAPI for onboarding",
+          "reference": "Open VectorAPI for onboarding"
+        },
+        {
+          "input": {
+            "id": "constructed-0005",
+            "sourceKey": "constructed-0005",
+            "episodeId": "constructed-0005",
+            "atMs": 900000,
+            "project": "workspace",
+            "language": "en",
+            "modelId": "fixture-model-a",
+            "text": "Open nimbus sdk for onboarding"
+          },
+          "edit": "Open NimbusSDK for onboarding",
+          "reference": "Open NimbusSDK for onboarding"
+        },
+        {
+          "input": {
+            "id": "constructed-0006",
+            "sourceKey": "constructed-0006",
+            "episodeId": "constructed-0006",
+            "atMs": 1080000,
+            "project": "workspace",
+            "language": "en",
+            "modelId": "fixture-model-a",
+            "text": "Open orion api for onboarding"
+          },
+          "edit": "Open OrionAPI for onboarding",
+          "reference": "Open OrionAPI for onboarding"
+        },
+        {
+          "input": {
+            "id": "constructed-0007",
+            "sourceKey": "constructed-0007",
+            "episodeId": "constructed-0007",
+            "atMs": 1260000,
+            "project": "workspace",
+            "language": "en",
+            "modelId": "fixture-model-a",
+            "text": "Meet Martellis during onboarding"
+          },
+          "edit": "Meet Martellys during onboarding",
+          "reference": "Meet Martellys during onboarding"
+        },
+        {
+          "input": {
+            "id": "constructed-0008",
+            "sourceKey": "constructed-0008",
+            "episodeId": "constructed-0008",
+            "atMs": 1440000,
+            "project": "workspace",
+            "language": "en",
+            "modelId": "fixture-model-a",
+            "text": "Meet Martellis during onboarding"
+          },
+          "edit": "Meet Martellys during onboarding",
+          "reference": "Meet Martellys during onboarding"
+        },
+        {
+          "input": {
+            "id": "constructed-0009",
+            "sourceKey": "constructed-0009",
+            "episodeId": "constructed-0009",
+            "atMs": 1620000,
+            "project": "workspace",
+            "language": "en",
+            "modelId": "fixture-model-a",
+            "text": "Meet Alberto during onboarding"
+          },
+          "edit": "Meet Albertoo during onboarding",
+          "reference": "Meet Albertoo during onboarding"
+        },
+        {
+          "input": {
+            "id": "constructed-0010",
+            "sourceKey": "constructed-0010",
+            "episodeId": "constructed-0010",
+            "atMs": 1800000,
+            "project": "workspace",
+            "language": "en",
+            "modelId": "fixture-model-a",
+            "text": "Meet Alberto during onboarding"
+          },
+          "edit": "Meet Albertoo during onboarding",
+          "reference": "Meet Albertoo during onboarding"
+        }
+      ],
+      "develop": [
+        {
+          "input": {
+            "id": "constructed-0011",
+            "sourceKey": "constructed-0011",
+            "episodeId": "constructed-0011",
+            "atMs": 1980000,
+            "project": "workspace",
+            "language": "en",
+            "modelId": "fixture-model-a",
+            "text": "Discuss readme sdk in linguistics exercises"
+          },
+          "edit": "Discuss readme sdk in linguistics exercises",
+          "reference": "Discuss readme sdk in linguistics exercises"
+        },
+        {
+          "input": {
+            "id": "constructed-0012",
+            "sourceKey": "constructed-0012",
+            "episodeId": "constructed-0012",
+            "atMs": 2160000,
+            "project": "workspace",
+            "language": "en",
+            "modelId": "fixture-model-a",
+            "text": "Discuss atlas api in linguistics exercises"
+          },
+          "edit": "Discuss atlas api in linguistics exercises",
+          "reference": "Discuss atlas api in linguistics exercises"
+        },
+        {
+          "input": {
+            "id": "constructed-0013",
+            "sourceKey": "constructed-0013",
+            "episodeId": "constructed-0013",
+            "atMs": 2340000,
+            "project": "workspace",
+            "language": "en",
+            "modelId": "fixture-model-a",
+            "text": "Review Martellis onboarding handbook"
+          },
+          "edit": "Review Martellys onboarding handbook",
+          "reference": "Review Martellys onboarding handbook"
+        },
+        {
+          "input": {
+            "id": "constructed-0014",
+            "sourceKey": "constructed-0014",
+            "episodeId": "constructed-0014",
+            "atMs": 2520000,
+            "project": "workspace",
+            "language": "en",
+            "modelId": "fixture-model-a",
+            "text": "Review Alberto onboarding handbook"
+          },
+          "edit": "Review Albertoo onboarding handbook",
+          "reference": "Review Albertoo onboarding handbook"
+        }
+      ],
+      "validate": [
+        {
+          "input": {
+            "id": "constructed-0015",
+            "sourceKey": "constructed-0015",
+            "episodeId": "constructed-0015",
+            "atMs": 2700000,
+            "project": "workspace",
+            "language": "en",
+            "modelId": "fixture-model-a",
+            "text": "Discuss photon sdk in linguistics exercises"
+          },
+          "edit": "Discuss photon sdk in linguistics exercises",
+          "reference": "Discuss photon sdk in linguistics exercises"
+        },
+        {
+          "input": {
+            "id": "constructed-0016",
+            "sourceKey": "constructed-0016",
+            "episodeId": "constructed-0016",
+            "atMs": 2880000,
+            "project": "workspace",
+            "language": "en",
+            "modelId": "fixture-model-a",
+            "text": "Discuss vector api in linguistics exercises"
+          },
+          "edit": "Discuss vector api in linguistics exercises",
+          "reference": "Discuss vector api in linguistics exercises"
+        },
+        {
+          "input": {
+            "id": "constructed-0017",
+            "sourceKey": "constructed-0017",
+            "episodeId": "constructed-0017",
+            "atMs": 3060000,
+            "project": "workspace",
+            "language": "en",
+            "modelId": "fixture-model-a",
+            "text": "Review Martellis onboarding handbook"
+          },
+          "edit": "Review Martellys onboarding handbook",
+          "reference": "Review Martellys onboarding handbook"
+        },
+        {
+          "input": {
+            "id": "constructed-0018",
+            "sourceKey": "constructed-0018",
+            "episodeId": "constructed-0018",
+            "atMs": 3240000,
+            "project": "workspace",
+            "language": "en",
+            "modelId": "fixture-model-a",
+            "text": "Review Alberto onboarding handbook"
+          },
+          "edit": "Review Albertoo onboarding handbook",
+          "reference": "Review Albertoo onboarding handbook"
+        }
+      ],
+      "audit": [
+        {
+          "input": {
+            "id": "constructed-0019",
+            "sourceKey": "constructed-0019",
+            "episodeId": "constructed-0019",
+            "atMs": 3420000,
+            "project": "workspace",
+            "language": "en",
+            "modelId": "fixture-model-a",
+            "text": "Discuss nimbus sdk in linguistics exercises"
+          },
+          "edit": null,
+          "reference": "Discuss nimbus sdk in linguistics exercises"
+        },
+        {
+          "input": {
+            "id": "constructed-0020",
+            "sourceKey": "constructed-0020",
+            "episodeId": "constructed-0020",
+            "atMs": 3600000,
+            "project": "workspace",
+            "language": "en",
+            "modelId": "fixture-model-a",
+            "text": "Discuss orion api in linguistics exercises"
+          },
+          "edit": null,
+          "reference": "Discuss orion api in linguistics exercises"
+        },
+        {
+          "input": {
+            "id": "constructed-0021",
+            "sourceKey": "constructed-0021",
+            "episodeId": "constructed-0021",
+            "atMs": 3780000,
+            "project": "workspace",
+            "language": "en",
+            "modelId": "fixture-model-a",
+            "text": "Review Martellis onboarding handbook"
+          },
+          "edit": null,
+          "reference": "Review Martellys onboarding handbook"
+        },
+        {
+          "input": {
+            "id": "constructed-0022",
+            "sourceKey": "constructed-0022",
+            "episodeId": "constructed-0022",
+            "atMs": 3960000,
+            "project": "workspace",
+            "language": "en",
+            "modelId": "fixture-model-a",
+            "text": "Review Alberto onboarding handbook"
+          },
+          "edit": null,
+          "reference": "Review Albertoo onboarding handbook"
+        }
+      ]
+    },
+    {
+      "id": "independent-support",
+      "learn": [
+        {
+          "input": {
+            "id": "constructed-0023",
+            "sourceKey": "constructed-0023",
+            "episodeId": "constructed-0023",
+            "atMs": 4140000,
+            "project": "workspace",
+            "language": "en",
+            "modelId": "fixture-model-a",
+            "text": "Open aster tool for onboarding"
+          },
+          "edit": "Open AsterTool for onboarding",
+          "reference": "Open AsterTool for onboarding"
+        },
+        {
+          "input": {
+            "id": "constructed-0024",
+            "sourceKey": "constructed-0024",
+            "episodeId": "constructed-0024",
+            "atMs": 4320000,
+            "project": "workspace",
+            "language": "en",
+            "modelId": "fixture-model-a",
+            "text": "Open comet tool for onboarding"
+          },
+          "edit": "Open CometTool for onboarding",
+          "reference": "Open CometTool for onboarding"
+        },
+        {
+          "input": {
+            "id": "constructed-0025",
+            "sourceKey": "constructed-0025",
+            "episodeId": "constructed-0025",
+            "atMs": 4500000,
+            "project": "workspace",
+            "language": "en",
+            "modelId": "fixture-model-a",
+            "text": "Open solar tool for onboarding"
+          },
+          "edit": "Open SolarTool for onboarding",
+          "reference": "Open SolarTool for onboarding"
+        },
+        {
+          "input": {
+            "id": "constructed-0026",
+            "sourceKey": "constructed-0026",
+            "episodeId": "constructed-0026",
+            "atMs": 4680000,
+            "project": "workspace",
+            "language": "en",
+            "modelId": "fixture-model-a",
+            "text": "Open lunar tool for onboarding"
+          },
+          "edit": "Open LunarTool for onboarding",
+          "reference": "Open LunarTool for onboarding"
+        },
+        {
+          "input": {
+            "id": "constructed-0027",
+            "sourceKey": "constructed-0027",
+            "episodeId": "constructed-0027",
+            "atMs": 4860000,
+            "project": "workspace",
+            "language": "en",
+            "modelId": "fixture-model-a",
+            "text": "Open quartz tool for onboarding"
+          },
+          "edit": "Open QuartzTool for onboarding",
+          "reference": "Open QuartzTool for onboarding"
+        },
+        {
+          "input": {
+            "id": "constructed-0028",
+            "sourceKey": "constructed-0028",
+            "episodeId": "constructed-0028",
+            "atMs": 5040000,
+            "project": "workspace",
+            "language": "en",
+            "modelId": "fixture-model-a",
+            "text": "Open cobalt tool for onboarding"
+          },
+          "edit": "Open CobaltTool for onboarding",
+          "reference": "Open CobaltTool for onboarding"
+        }
+      ],
+      "develop": [
+        {
+          "input": {
+            "id": "constructed-0029",
+            "sourceKey": "constructed-0029",
+            "episodeId": "constructed-0029",
+            "atMs": 5220000,
+            "project": "workspace",
+            "language": "en",
+            "modelId": "fixture-model-a",
+            "text": "Discuss aster tool in onboarding exercises"
+          },
+          "edit": "Discuss aster tool in onboarding exercises",
+          "reference": "Discuss aster tool in onboarding exercises"
+        },
+        {
+          "input": {
+            "id": "constructed-0030",
+            "sourceKey": "constructed-0030",
+            "episodeId": "constructed-0030",
+            "atMs": 5400000,
+            "project": "workspace",
+            "language": "en",
+            "modelId": "fixture-model-a",
+            "text": "Discuss comet tool in onboarding exercises"
+          },
+          "edit": "Discuss comet tool in onboarding exercises",
+          "reference": "Discuss comet tool in onboarding exercises"
+        },
+        {
+          "input": {
+            "id": "constructed-0031",
+            "sourceKey": "constructed-0031",
+            "episodeId": "constructed-0031",
+            "atMs": 5580000,
+            "project": "workspace",
+            "language": "en",
+            "modelId": "fixture-model-a",
+            "text": "Review Martellis onboarding handbook"
+          },
+          "edit": "Review Martellys onboarding handbook",
+          "reference": "Review Martellys onboarding handbook"
+        },
+        {
+          "input": {
+            "id": "constructed-0032",
+            "sourceKey": "constructed-0032",
+            "episodeId": "constructed-0032",
+            "atMs": 5760000,
+            "project": "workspace",
+            "language": "en",
+            "modelId": "fixture-model-a",
+            "text": "Review Alberto onboarding handbook"
+          },
+          "edit": "Review Albertoo onboarding handbook",
+          "reference": "Review Albertoo onboarding handbook"
+        }
+      ],
+      "validate": [
+        {
+          "input": {
+            "id": "constructed-0033",
+            "sourceKey": "constructed-0033",
+            "episodeId": "constructed-0033",
+            "atMs": 5940000,
+            "project": "workspace",
+            "language": "en",
+            "modelId": "fixture-model-a",
+            "text": "Discuss solar tool in onboarding exercises"
+          },
+          "edit": "Discuss solar tool in onboarding exercises",
+          "reference": "Discuss solar tool in onboarding exercises"
+        },
+        {
+          "input": {
+            "id": "constructed-0034",
+            "sourceKey": "constructed-0034",
+            "episodeId": "constructed-0034",
+            "atMs": 6120000,
+            "project": "workspace",
+            "language": "en",
+            "modelId": "fixture-model-a",
+            "text": "Discuss lunar tool in onboarding exercises"
+          },
+          "edit": "Discuss lunar tool in onboarding exercises",
+          "reference": "Discuss lunar tool in onboarding exercises"
+        },
+        {
+          "input": {
+            "id": "constructed-0035",
+            "sourceKey": "constructed-0035",
+            "episodeId": "constructed-0035",
+            "atMs": 6300000,
+            "project": "workspace",
+            "language": "en",
+            "modelId": "fixture-model-a",
+            "text": "Review Martellis onboarding handbook"
+          },
+          "edit": "Review Martellys onboarding handbook",
+          "reference": "Review Martellys onboarding handbook"
+        },
+        {
+          "input": {
+            "id": "constructed-0036",
+            "sourceKey": "constructed-0036",
+            "episodeId": "constructed-0036",
+            "atMs": 6480000,
+            "project": "workspace",
+            "language": "en",
+            "modelId": "fixture-model-a",
+            "text": "Review Alberto onboarding handbook"
+          },
+          "edit": "Review Albertoo onboarding handbook",
+          "reference": "Review Albertoo onboarding handbook"
+        }
+      ],
+      "audit": [
+        {
+          "input": {
+            "id": "constructed-0037",
+            "sourceKey": "constructed-0037",
+            "episodeId": "constructed-0037",
+            "atMs": 6660000,
+            "project": "workspace",
+            "language": "en",
+            "modelId": "fixture-model-a",
+            "text": "Discuss quartz tool in onboarding exercises"
+          },
+          "edit": null,
+          "reference": "Discuss quartz tool in onboarding exercises"
+        },
+        {
+          "input": {
+            "id": "constructed-0038",
+            "sourceKey": "constructed-0038",
+            "episodeId": "constructed-0038",
+            "atMs": 6840000,
+            "project": "workspace",
+            "language": "en",
+            "modelId": "fixture-model-a",
+            "text": "Discuss cobalt tool in onboarding exercises"
+          },
+          "edit": null,
+          "reference": "Discuss cobalt tool in onboarding exercises"
+        },
+        {
+          "input": {
+            "id": "constructed-0039",
+            "sourceKey": "constructed-0039",
+            "episodeId": "constructed-0039",
+            "atMs": 7020000,
+            "project": "workspace",
+            "language": "en",
+            "modelId": "fixture-model-a",
+            "text": "Review Martellis onboarding handbook"
+          },
+          "edit": null,
+          "reference": "Review Martellys onboarding handbook"
+        },
+        {
+          "input": {
+            "id": "constructed-0040",
+            "sourceKey": "constructed-0040",
+            "episodeId": "constructed-0040",
+            "atMs": 7200000,
+            "project": "workspace",
+            "language": "en",
+            "modelId": "fixture-model-a",
+            "text": "Review Alberto onboarding handbook"
+          },
+          "edit": null,
+          "reference": "Review Albertoo onboarding handbook"
+        }
+      ]
+    },
+    {
+      "id": "distribution-change",
+      "learn": [
+        {
+          "input": {
+            "id": "constructed-0041",
+            "sourceKey": "constructed-0041",
+            "episodeId": "constructed-0041",
+            "atMs": 7380000,
+            "project": "workspace",
+            "language": "en",
+            "modelId": "fixture-model-a",
+            "text": "Open helix sdk for onboarding"
+          },
+          "edit": "Open HelixSDK for onboarding",
+          "reference": "Open HelixSDK for onboarding"
+        },
+        {
+          "input": {
+            "id": "constructed-0042",
+            "sourceKey": "constructed-0042",
+            "episodeId": "constructed-0042",
+            "atMs": 7560000,
+            "project": "workspace",
+            "language": "en",
+            "modelId": "fixture-model-a",
+            "text": "Open lyra api for onboarding"
+          },
+          "edit": "Open LyraAPI for onboarding",
+          "reference": "Open LyraAPI for onboarding"
+        },
+        {
+          "input": {
+            "id": "constructed-0043",
+            "sourceKey": "constructed-0043",
+            "episodeId": "constructed-0043",
+            "atMs": 7740000,
+            "project": "workspace",
+            "language": "en",
+            "modelId": "fixture-model-a",
+            "text": "Open delta sdk for onboarding"
+          },
+          "edit": "Open DeltaSDK for onboarding",
+          "reference": "Open DeltaSDK for onboarding"
+        },
+        {
+          "input": {
+            "id": "constructed-0044",
+            "sourceKey": "constructed-0044",
+            "episodeId": "constructed-0044",
+            "atMs": 7920000,
+            "project": "workspace",
+            "language": "en",
+            "modelId": "fixture-model-a",
+            "text": "Open omega api for onboarding"
+          },
+          "edit": "Open OmegaAPI for onboarding",
+          "reference": "Open OmegaAPI for onboarding"
+        },
+        {
+          "input": {
+            "id": "constructed-0045",
+            "sourceKey": "constructed-0045",
+            "episodeId": "constructed-0045",
+            "atMs": 8100000,
+            "project": "workspace",
+            "language": "en",
+            "modelId": "fixture-model-a",
+            "text": "Open stellar sdk for onboarding"
+          },
+          "edit": "Open StellarSDK for onboarding",
+          "reference": "Open StellarSDK for onboarding"
+        },
+        {
+          "input": {
+            "id": "constructed-0046",
+            "sourceKey": "constructed-0046",
+            "episodeId": "constructed-0046",
+            "atMs": 8280000,
+            "project": "workspace",
+            "language": "en",
+            "modelId": "fixture-model-a",
+            "text": "Open spectrum api for onboarding"
+          },
+          "edit": "Open SpectrumAPI for onboarding",
+          "reference": "Open SpectrumAPI for onboarding"
+        }
+      ],
+      "develop": [
+        {
+          "input": {
+            "id": "constructed-0047",
+            "sourceKey": "constructed-0047",
+            "episodeId": "constructed-0047",
+            "atMs": 8460000,
+            "project": "workspace",
+            "language": "en",
+            "modelId": "fixture-model-a",
+            "text": "Review helix sdk onboarding handbook"
+          },
+          "edit": "Review HelixSDK onboarding handbook",
+          "reference": "Review HelixSDK onboarding handbook"
+        },
+        {
+          "input": {
+            "id": "constructed-0048",
+            "sourceKey": "constructed-0048",
+            "episodeId": "constructed-0048",
+            "atMs": 8640000,
+            "project": "workspace",
+            "language": "en",
+            "modelId": "fixture-model-a",
+            "text": "Review lyra api onboarding handbook"
+          },
+          "edit": "Review LyraAPI onboarding handbook",
+          "reference": "Review LyraAPI onboarding handbook"
+        },
+        {
+          "input": {
+            "id": "constructed-0049",
+            "sourceKey": "constructed-0049",
+            "episodeId": "constructed-0049",
+            "atMs": 8820000,
+            "project": "workspace",
+            "language": "en",
+            "modelId": "fixture-model-a",
+            "text": "Review Martellis onboarding handbook"
+          },
+          "edit": "Review Martellys onboarding handbook",
+          "reference": "Review Martellys onboarding handbook"
+        },
+        {
+          "input": {
+            "id": "constructed-0050",
+            "sourceKey": "constructed-0050",
+            "episodeId": "constructed-0050",
+            "atMs": 9000000,
+            "project": "workspace",
+            "language": "en",
+            "modelId": "fixture-model-a",
+            "text": "Review Alberto onboarding handbook"
+          },
+          "edit": "Review Albertoo onboarding handbook",
+          "reference": "Review Albertoo onboarding handbook"
+        }
+      ],
+      "validate": [
+        {
+          "input": {
+            "id": "constructed-0051",
+            "sourceKey": "constructed-0051",
+            "episodeId": "constructed-0051",
+            "atMs": 9180000,
+            "project": "workspace",
+            "language": "en",
+            "modelId": "fixture-model-a",
+            "text": "Review delta sdk onboarding handbook"
+          },
+          "edit": "Review DeltaSDK onboarding handbook",
+          "reference": "Review DeltaSDK onboarding handbook"
+        },
+        {
+          "input": {
+            "id": "constructed-0052",
+            "sourceKey": "constructed-0052",
+            "episodeId": "constructed-0052",
+            "atMs": 9360000,
+            "project": "workspace",
+            "language": "en",
+            "modelId": "fixture-model-a",
+            "text": "Review omega api onboarding handbook"
+          },
+          "edit": "Review OmegaAPI onboarding handbook",
+          "reference": "Review OmegaAPI onboarding handbook"
+        },
+        {
+          "input": {
+            "id": "constructed-0053",
+            "sourceKey": "constructed-0053",
+            "episodeId": "constructed-0053",
+            "atMs": 9540000,
+            "project": "workspace",
+            "language": "en",
+            "modelId": "fixture-model-a",
+            "text": "Review Martellis onboarding handbook"
+          },
+          "edit": "Review Martellys onboarding handbook",
+          "reference": "Review Martellys onboarding handbook"
+        },
+        {
+          "input": {
+            "id": "constructed-0054",
+            "sourceKey": "constructed-0054",
+            "episodeId": "constructed-0054",
+            "atMs": 9720000,
+            "project": "workspace",
+            "language": "en",
+            "modelId": "fixture-model-a",
+            "text": "Review Alberto onboarding handbook"
+          },
+          "edit": "Review Albertoo onboarding handbook",
+          "reference": "Review Albertoo onboarding handbook"
+        }
+      ],
+      "audit": [
+        {
+          "input": {
+            "id": "constructed-0055",
+            "sourceKey": "constructed-0055",
+            "episodeId": "constructed-0055",
+            "atMs": 9900000,
+            "project": "workspace",
+            "language": "en",
+            "modelId": "fixture-model-a",
+            "text": "Review stellar sdk onboarding handbook"
+          },
+          "edit": null,
+          "reference": "Review StellarSDK onboarding handbook"
+        },
+        {
+          "input": {
+            "id": "constructed-0056",
+            "sourceKey": "constructed-0056",
+            "episodeId": "constructed-0056",
+            "atMs": 10080000,
+            "project": "workspace",
+            "language": "en",
+            "modelId": "fixture-model-a",
+            "text": "Review spectrum api onboarding handbook"
+          },
+          "edit": null,
+          "reference": "Review SpectrumAPI onboarding handbook"
+        },
+        {
+          "input": {
+            "id": "constructed-0057",
+            "sourceKey": "constructed-0057",
+            "episodeId": "constructed-0057",
+            "atMs": 10260000,
+            "project": "workspace",
+            "language": "en",
+            "modelId": "fixture-model-a",
+            "text": "Review Martellis onboarding handbook"
+          },
+          "edit": null,
+          "reference": "Review Martellys onboarding handbook"
+        },
+        {
+          "input": {
+            "id": "constructed-0058",
+            "sourceKey": "constructed-0058",
+            "episodeId": "constructed-0058",
+            "atMs": 10440000,
+            "project": "workspace",
+            "language": "en",
+            "modelId": "fixture-model-a",
+            "text": "Review Alberto onboarding handbook"
+          },
+          "edit": null,
+          "reference": "Review Albertoo onboarding handbook"
+        }
+      ]
+    }
+  ],
+  "finalTest": [
+    {
+      "input": {
+        "id": "constructed-0059",
+        "sourceKey": "constructed-0059",
+        "episodeId": "constructed-0059",
+        "atMs": 10620000,
+        "project": "workspace",
+        "language": "en",
+        "modelId": "fixture-model-a",
+        "text": "Review Martellis onboarding handbook"
+      },
+      "edit": null,
+      "reference": "Review Martellys onboarding handbook"
+    },
+    {
+      "input": {
+        "id": "constructed-0060",
+        "sourceKey": "constructed-0060",
+        "episodeId": "constructed-0060",
+        "atMs": 10800000,
+        "project": "workspace",
+        "language": "en",
+        "modelId": "fixture-model-a",
+        "text": "Review Alberto onboarding handbook"
+      },
+      "edit": null,
+      "reference": "Review Albertoo onboarding handbook"
+    },
+    {
+      "input": {
+        "id": "constructed-0061",
+        "sourceKey": "constructed-0061",
+        "episodeId": "constructed-0061",
+        "atMs": 10980000,
+        "project": "workspace",
+        "language": "en",
+        "modelId": "fixture-model-b",
+        "text": "Do not send 15 files on Friday"
+      },
+      "edit": null,
+      "reference": "Do not send 15 files on Friday"
+    },
+    {
+      "input": {
+        "id": "constructed-0062",
+        "sourceKey": "constructed-0062",
+        "episodeId": "constructed-0062",
+        "atMs": 11160000,
+        "project": "workspace",
+        "language": "en",
+        "modelId": "fixture-model-b",
+        "text": "Quote 'readme sdk' during onboarding"
+      },
+      "edit": null,
+      "reference": "Quote 'readme sdk' during onboarding"
+    },
+    {
+      "input": {
+        "id": "constructed-0063",
+        "sourceKey": "constructed-0063",
+        "episodeId": "constructed-0063",
+        "atMs": 11340000,
+        "project": "workspace",
+        "language": "en",
+        "modelId": "fixture-model-b",
+        "text": "Keep \"atlas api\" exactly as dictated"
+      },
+      "edit": null,
+      "reference": "Keep \"atlas api\" exactly as dictated"
+    },
+    {
+      "input": {
+        "id": "constructed-0064",
+        "sourceKey": "constructed-0064",
+        "episodeId": "constructed-0064",
+        "atMs": 11520000,
+        "project": "workspace",
+        "language": "en",
+        "modelId": "fixture-model-b",
+        "text": "Actually make it Monday instead"
+      },
+      "edit": null,
+      "reference": "Actually make it Monday instead"
+    },
+    {
+      "input": {
+        "id": "constructed-0065",
+        "sourceKey": "constructed-0065",
+        "episodeId": "constructed-0065",
+        "atMs": 11700000,
+        "project": "workspace",
+        "language": "en",
+        "modelId": "fixture-model-a",
+        "text": "Discuss quartz tool in onboarding exercises"
+      },
+      "edit": null,
+      "reference": "Discuss quartz tool in onboarding exercises"
+    },
+    {
+      "input": {
+        "id": "constructed-0066",
+        "sourceKey": "constructed-0066",
+        "episodeId": "constructed-0066",
+        "atMs": 11880000,
+        "project": "workspace",
+        "language": "en",
+        "modelId": "fixture-model-a",
+        "text": "Discuss cobalt tool in onboarding exercises"
+      },
+      "edit": null,
+      "reference": "Discuss cobalt tool in onboarding exercises"
+    }
+  ]
+}

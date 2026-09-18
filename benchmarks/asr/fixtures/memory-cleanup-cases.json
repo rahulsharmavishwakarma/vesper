@@ -1,0 +1,427 @@
+{
+  "source": {
+    "kind": "controlled-public-calibration-replay",
+    "note": "Vocabulary/oracle reference from calibration; repeated examples and technical intent labels are simulated. This is not held-out intent or ASR accuracy.",
+    "attribution": "Google FLEURS / FLoRes sentences, CC-BY-4.0, https://huggingface.co/datasets/google/fleurs"
+  },
+  "cases": [
+    {
+      "id": "0-off",
+      "sourceSampleId": "en_us-dev-14187645011903893773",
+      "raw": "Pspokesman Gordon John Row called North Korea's Pledge a major step towards the goal of achieving the verifiable denuclearization of the Korean Peninsula.",
+      "reference": "bush spokesman gordon johndroe called north korea s pledge a major step towards the goal of achieving the verifiable denuclearization of the korean peninsula",
+      "profile": {
+        "schemaVersion": 2,
+        "revision": 1,
+        "speechBiasEnabled": false,
+        "outputIntent": "verbatim",
+        "preserveFillers": false,
+        "applyCorrections": true,
+        "useRememberedIntent": true,
+        "activeProject": "qa-project",
+        "vocabulary": [],
+        "examples": []
+      },
+      "expectedVocabularyIds": [],
+      "expectedExampleIds": [],
+      "expectedOutputIntent": "verbatim"
+    },
+    {
+      "id": "0-on",
+      "sourceSampleId": "en_us-dev-14187645011903893773",
+      "raw": "Pspokesman Gordon John Row called North Korea's Pledge a major step towards the goal of achieving the verifiable denuclearization of the Korean Peninsula.",
+      "reference": "bush spokesman gordon johndroe called north korea s pledge a major step towards the goal of achieving the verifiable denuclearization of the korean peninsula",
+      "profile": {
+        "schemaVersion": 2,
+        "revision": 1,
+        "speechBiasEnabled": false,
+        "outputIntent": "verbatim",
+        "preserveFillers": false,
+        "applyCorrections": true,
+        "useRememberedIntent": true,
+        "activeProject": "qa-project",
+        "vocabulary": [
+          {
+            "id": "corpus-1",
+            "phrase": "Bush spokesman Gordon Johndroe",
+            "language": "en",
+            "context": "",
+            "enabled": true,
+            "aliases": [
+              "Pspokesman Gordon John Row"
+            ],
+            "project": "qa-project",
+            "pronunciation": false,
+            "sources": [],
+            "learnedAt": "2026-09-15T20:04:27.646312+00:00"
+          }
+        ],
+        "examples": [
+          {
+            "id": "example-0",
+            "sessionId": "synthetic-session-0",
+            "reviewRevisionId": "synthetic-review-0",
+            "input": "Pspokesman Gordon John Row called North Korea's Pledge a major step towards the goal of achieving the verifiable denuclearization of the Korean Peninsula.",
+            "output": "bush spokesman gordon johndroe called north korea s pledge a major step towards the goal of achieving the verifiable denuclearization of the korean peninsula",
+            "language": "en",
+            "preset": "minimal",
+            "intent": "technical",
+            "enabled": true,
+            "project": "qa-project"
+          },
+          {
+            "id": "example-1",
+            "sessionId": "synthetic-session-1",
+            "reviewRevisionId": "synthetic-review-1",
+            "input": "Pspokesman Gordon John Row called North Korea's Pledge a major step towards the goal of achieving the verifiable denuclearization of the Korean Peninsula.",
+            "output": "bush spokesman gordon johndroe called north korea s pledge a major step towards the goal of achieving the verifiable denuclearization of the korean peninsula",
+            "language": "en",
+            "preset": "minimal",
+            "intent": "technical",
+            "enabled": true,
+            "project": "qa-project"
+          }
+        ]
+      },
+      "expectedVocabularyIds": [
+        "corpus-1"
+      ],
+      "expectedExampleIds": [
+        "example-0",
+        "example-1"
+      ],
+      "expectedOutputIntent": "technical"
+    },
+    {
+      "id": "0-wrong-project",
+      "sourceSampleId": "en_us-dev-14187645011903893773",
+      "raw": "Pspokesman Gordon John Row called North Korea's Pledge a major step towards the goal of achieving the verifiable denuclearization of the Korean Peninsula.",
+      "reference": "bush spokesman gordon johndroe called north korea s pledge a major step towards the goal of achieving the verifiable denuclearization of the korean peninsula",
+      "profile": {
+        "schemaVersion": 2,
+        "revision": 1,
+        "speechBiasEnabled": false,
+        "outputIntent": "verbatim",
+        "preserveFillers": false,
+        "applyCorrections": true,
+        "useRememberedIntent": true,
+        "activeProject": "another-project",
+        "vocabulary": [
+          {
+            "id": "corpus-1",
+            "phrase": "Bush spokesman Gordon Johndroe",
+            "language": "en",
+            "context": "",
+            "enabled": true,
+            "aliases": [
+              "Pspokesman Gordon John Row"
+            ],
+            "project": "qa-project",
+            "pronunciation": false,
+            "sources": [],
+            "learnedAt": "2026-09-15T20:04:27.646312+00:00"
+          }
+        ],
+        "examples": [
+          {
+            "id": "example-0",
+            "sessionId": "synthetic-session-0",
+            "reviewRevisionId": "synthetic-review-0",
+            "input": "Pspokesman Gordon John Row called North Korea's Pledge a major step towards the goal of achieving the verifiable denuclearization of the Korean Peninsula.",
+            "output": "bush spokesman gordon johndroe called north korea s pledge a major step towards the goal of achieving the verifiable denuclearization of the korean peninsula",
+            "language": "en",
+            "preset": "minimal",
+            "intent": "technical",
+            "enabled": true,
+            "project": "qa-project"
+          },
+          {
+            "id": "example-1",
+            "sessionId": "synthetic-session-1",
+            "reviewRevisionId": "synthetic-review-1",
+            "input": "Pspokesman Gordon John Row called North Korea's Pledge a major step towards the goal of achieving the verifiable denuclearization of the Korean Peninsula.",
+            "output": "bush spokesman gordon johndroe called north korea s pledge a major step towards the goal of achieving the verifiable denuclearization of the korean peninsula",
+            "language": "en",
+            "preset": "minimal",
+            "intent": "technical",
+            "enabled": true,
+            "project": "qa-project"
+          }
+        ]
+      },
+      "expectedVocabularyIds": [],
+      "expectedExampleIds": [],
+      "expectedOutputIntent": "verbatim"
+    },
+    {
+      "id": "0-paused",
+      "sourceSampleId": "en_us-dev-14187645011903893773",
+      "raw": "Pspokesman Gordon John Row called North Korea's Pledge a major step towards the goal of achieving the verifiable denuclearization of the Korean Peninsula.",
+      "reference": "bush spokesman gordon johndroe called north korea s pledge a major step towards the goal of achieving the verifiable denuclearization of the korean peninsula",
+      "profile": {
+        "schemaVersion": 2,
+        "revision": 1,
+        "speechBiasEnabled": false,
+        "outputIntent": "verbatim",
+        "preserveFillers": false,
+        "applyCorrections": true,
+        "useRememberedIntent": true,
+        "activeProject": "qa-project",
+        "vocabulary": [
+          {
+            "id": "corpus-1",
+            "phrase": "Bush spokesman Gordon Johndroe",
+            "language": "en",
+            "context": "",
+            "enabled": false,
+            "aliases": [
+              "Pspokesman Gordon John Row"
+            ],
+            "project": "qa-project",
+            "pronunciation": false,
+            "sources": [],
+            "learnedAt": "2026-09-15T20:04:27.646312+00:00"
+          }
+        ],
+        "examples": [
+          {
+            "id": "example-0",
+            "sessionId": "synthetic-session-0",
+            "reviewRevisionId": "synthetic-review-0",
+            "input": "Pspokesman Gordon John Row called North Korea's Pledge a major step towards the goal of achieving the verifiable denuclearization of the Korean Peninsula.",
+            "output": "bush spokesman gordon johndroe called north korea s pledge a major step towards the goal of achieving the verifiable denuclearization of the korean peninsula",
+            "language": "en",
+            "preset": "minimal",
+            "intent": "technical",
+            "enabled": false,
+            "project": "qa-project"
+          },
+          {
+            "id": "example-1",
+            "sessionId": "synthetic-session-1",
+            "reviewRevisionId": "synthetic-review-1",
+            "input": "Pspokesman Gordon John Row called North Korea's Pledge a major step towards the goal of achieving the verifiable denuclearization of the Korean Peninsula.",
+            "output": "bush spokesman gordon johndroe called north korea s pledge a major step towards the goal of achieving the verifiable denuclearization of the korean peninsula",
+            "language": "en",
+            "preset": "minimal",
+            "intent": "technical",
+            "enabled": false,
+            "project": "qa-project"
+          }
+        ]
+      },
+      "expectedVocabularyIds": [],
+      "expectedExampleIds": [],
+      "expectedOutputIntent": "verbatim"
+    },
+    {
+      "id": "1-off",
+      "sourceSampleId": "en_us-dev-17953956109255745056",
+      "raw": "Saltwater crocodiles do not actively live in the ocean. Their primary habitat is in River Estuary north from Rockhampton.",
+      "reference": "saltwater crocodiles do not actively live in the ocean their primary habitat is in river estuaries north from rockhampton",
+      "profile": {
+        "schemaVersion": 2,
+        "revision": 1,
+        "speechBiasEnabled": false,
+        "outputIntent": "verbatim",
+        "preserveFillers": false,
+        "applyCorrections": true,
+        "useRememberedIntent": true,
+        "activeProject": "qa-project",
+        "vocabulary": [],
+        "examples": []
+      },
+      "expectedVocabularyIds": [],
+      "expectedExampleIds": [],
+      "expectedOutputIntent": "verbatim"
+    },
+    {
+      "id": "1-on",
+      "sourceSampleId": "en_us-dev-17953956109255745056",
+      "raw": "Saltwater crocodiles do not actively live in the ocean. Their primary habitat is in River Estuary north from Rockhampton.",
+      "reference": "saltwater crocodiles do not actively live in the ocean their primary habitat is in river estuaries north from rockhampton",
+      "profile": {
+        "schemaVersion": 2,
+        "revision": 1,
+        "speechBiasEnabled": false,
+        "outputIntent": "verbatim",
+        "preserveFillers": false,
+        "applyCorrections": true,
+        "useRememberedIntent": true,
+        "activeProject": "qa-project",
+        "vocabulary": [
+          {
+            "id": "corpus-2",
+            "phrase": "estuaries",
+            "language": "en",
+            "context": "",
+            "enabled": true,
+            "aliases": [
+              "Estuary"
+            ],
+            "project": "qa-project",
+            "pronunciation": false,
+            "sources": [],
+            "learnedAt": "2026-09-15T20:04:27.646358+00:00"
+          }
+        ],
+        "examples": [
+          {
+            "id": "example-0",
+            "sessionId": "synthetic-session-0",
+            "reviewRevisionId": "synthetic-review-0",
+            "input": "Saltwater crocodiles do not actively live in the ocean. Their primary habitat is in River Estuary north from Rockhampton.",
+            "output": "saltwater crocodiles do not actively live in the ocean their primary habitat is in river estuaries north from rockhampton",
+            "language": "en",
+            "preset": "minimal",
+            "intent": "technical",
+            "enabled": true,
+            "project": "qa-project"
+          },
+          {
+            "id": "example-1",
+            "sessionId": "synthetic-session-1",
+            "reviewRevisionId": "synthetic-review-1",
+            "input": "Saltwater crocodiles do not actively live in the ocean. Their primary habitat is in River Estuary north from Rockhampton.",
+            "output": "saltwater crocodiles do not actively live in the ocean their primary habitat is in river estuaries north from rockhampton",
+            "language": "en",
+            "preset": "minimal",
+            "intent": "technical",
+            "enabled": true,
+            "project": "qa-project"
+          }
+        ]
+      },
+      "expectedVocabularyIds": [
+        "corpus-2"
+      ],
+      "expectedExampleIds": [
+        "example-0",
+        "example-1"
+      ],
+      "expectedOutputIntent": "technical"
+    },
+    {
+      "id": "1-wrong-project",
+      "sourceSampleId": "en_us-dev-17953956109255745056",
+      "raw": "Saltwater crocodiles do not actively live in the ocean. Their primary habitat is in River Estuary north from Rockhampton.",
+      "reference": "saltwater crocodiles do not actively live in the ocean their primary habitat is in river estuaries north from rockhampton",
+      "profile": {
+        "schemaVersion": 2,
+        "revision": 1,
+        "speechBiasEnabled": false,
+        "outputIntent": "verbatim",
+        "preserveFillers": false,
+        "applyCorrections": true,
+        "useRememberedIntent": true,
+        "activeProject": "another-project",
+        "vocabulary": [
+          {
+            "id": "corpus-2",
+            "phrase": "estuaries",
+            "language": "en",
+            "context": "",
+            "enabled": true,
+            "aliases": [
+              "Estuary"
+            ],
+            "project": "qa-project",
+            "pronunciation": false,
+            "sources": [],
+            "learnedAt": "2026-09-15T20:04:27.646358+00:00"
+          }
+        ],
+        "examples": [
+          {
+            "id": "example-0",
+            "sessionId": "synthetic-session-0",
+            "reviewRevisionId": "synthetic-review-0",
+            "input": "Saltwater crocodiles do not actively live in the ocean. Their primary habitat is in River Estuary north from Rockhampton.",
+            "output": "saltwater crocodiles do not actively live in the ocean their primary habitat is in river estuaries north from rockhampton",
+            "language": "en",
+            "preset": "minimal",
+            "intent": "technical",
+            "enabled": true,
+            "project": "qa-project"
+          },
+          {
+            "id": "example-1",
+            "sessionId": "synthetic-session-1",
+            "reviewRevisionId": "synthetic-review-1",
+            "input": "Saltwater crocodiles do not actively live in the ocean. Their primary habitat is in River Estuary north from Rockhampton.",
+            "output": "saltwater crocodiles do not actively live in the ocean their primary habitat is in river estuaries north from rockhampton",
+            "language": "en",
+            "preset": "minimal",
+            "intent": "technical",
+            "enabled": true,
+            "project": "qa-project"
+          }
+        ]
+      },
+      "expectedVocabularyIds": [],
+      "expectedExampleIds": [],
+      "expectedOutputIntent": "verbatim"
+    },
+    {
+      "id": "1-paused",
+      "sourceSampleId": "en_us-dev-17953956109255745056",
+      "raw": "Saltwater crocodiles do not actively live in the ocean. Their primary habitat is in River Estuary north from Rockhampton.",
+      "reference": "saltwater crocodiles do not actively live in the ocean their primary habitat is in river estuaries north from rockhampton",
+      "profile": {
+        "schemaVersion": 2,
+        "revision": 1,
+        "speechBiasEnabled": false,
+        "outputIntent": "verbatim",
+        "preserveFillers": false,
+        "applyCorrections": true,
+        "useRememberedIntent": true,
+        "activeProject": "qa-project",
+        "vocabulary": [
+          {
+            "id": "corpus-2",
+            "phrase": "estuaries",
+            "language": "en",
+            "context": "",
+            "enabled": false,
+            "aliases": [
+              "Estuary"
+            ],
+            "project": "qa-project",
+            "pronunciation": false,
+            "sources": [],
+            "learnedAt": "2026-09-15T20:04:27.646358+00:00"
+          }
+        ],
+        "examples": [
+          {
+            "id": "example-0",
+            "sessionId": "synthetic-session-0",
+            "reviewRevisionId": "synthetic-review-0",
+            "input": "Saltwater crocodiles do not actively live in the ocean. Their primary habitat is in River Estuary north from Rockhampton.",
+            "output": "saltwater crocodiles do not actively live in the ocean their primary habitat is in river estuaries north from rockhampton",
+            "language": "en",
+            "preset": "minimal",
+            "intent": "technical",
+            "enabled": false,
+            "project": "qa-project"
+          },
+          {
+            "id": "example-1",
+            "sessionId": "synthetic-session-1",
+            "reviewRevisionId": "synthetic-review-1",
+            "input": "Saltwater crocodiles do not actively live in the ocean. Their primary habitat is in River Estuary north from Rockhampton.",
+            "output": "saltwater crocodiles do not actively live in the ocean their primary habitat is in river estuaries north from rockhampton",
+            "language": "en",
+            "preset": "minimal",
+            "intent": "technical",
+            "enabled": false,
+            "project": "qa-project"
+          }
+        ]
+      },
+      "expectedVocabularyIds": [],
+      "expectedExampleIds": [],
+      "expectedOutputIntent": "verbatim"
+    }
+  ]
+}

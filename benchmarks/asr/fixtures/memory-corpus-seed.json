@@ -1,0 +1,741 @@
+{
+  "schemaVersion": 1,
+  "source": {
+    "kind": "public-corpus-calibration-derived test fixture",
+    "originalEvaluationMemorySha256": "c77345ed6acea87bfa92e6e797068fcb124937ad0629be0c0cf117b8e13f124a",
+    "calibrationManifestSha256": "4e6d210ef53202e049161b552f0b4e2ce8a27a406e5166f2df05c79dea90e95c",
+    "calibrationReportSha256": "fa6f5fe684b1e01aff480126673b903a482c3d00fa52858a67d4df3db9857ce5",
+    "attribution": [
+      "Google FLEURS / FLoRes sentences, CC-BY-4.0, https://huggingface.co/datasets/google/fleurs",
+      "AI4Bharat Svarah, CC-BY-4.0, https://huggingface.co/datasets/ai4bharat/Svarah"
+    ],
+    "note": "Includes historical unsafe or unusable suggestions to exercise rejection. Corpus references simulate review; never import this as a user profile."
+  },
+  "profile": {
+    "schemaVersion": 2,
+    "revision": 1,
+    "speechBiasEnabled": false,
+    "outputIntent": "verbatim",
+    "preserveFillers": false,
+    "applyCorrections": true,
+    "useRememberedIntent": false,
+    "activeProject": "",
+    "vocabulary": [
+      {
+        "id": "corpus-0",
+        "phrase": "U.N",
+        "language": "en",
+        "context": "",
+        "enabled": true,
+        "aliases": [
+          "UN"
+        ],
+        "project": "",
+        "pronunciation": false,
+        "sources": [],
+        "learnedAt": "2026-09-15T20:04:27.646242+00:00"
+      },
+      {
+        "id": "corpus-1",
+        "phrase": "Bush spokesman Gordon Johndroe",
+        "language": "en",
+        "context": "",
+        "enabled": true,
+        "aliases": [
+          "Pspokesman Gordon John Row"
+        ],
+        "project": "",
+        "pronunciation": false,
+        "sources": [],
+        "learnedAt": "2026-09-15T20:04:27.646312+00:00"
+      },
+      {
+        "id": "corpus-2",
+        "phrase": "estuaries",
+        "language": "en",
+        "context": "",
+        "enabled": true,
+        "aliases": [
+          "Estuary"
+        ],
+        "project": "",
+        "pronunciation": false,
+        "sources": [],
+        "learnedAt": "2026-09-15T20:04:27.646358+00:00"
+      },
+      {
+        "id": "corpus-3",
+        "phrase": "islands",
+        "language": "en",
+        "context": "",
+        "enabled": true,
+        "aliases": [
+          "island"
+        ],
+        "project": "",
+        "pronunciation": false,
+        "sources": [],
+        "learnedAt": "2026-09-15T20:04:27.646409+00:00"
+      },
+      {
+        "id": "corpus-4",
+        "phrase": "plotting",
+        "language": "en",
+        "context": "",
+        "enabled": true,
+        "aliases": [
+          "planning"
+        ],
+        "project": "",
+        "pronunciation": false,
+        "sources": [],
+        "learnedAt": "2026-09-15T20:04:27.646437+00:00"
+      },
+      {
+        "id": "corpus-5",
+        "phrase": "mannerisms",
+        "language": "en",
+        "context": "",
+        "enabled": true,
+        "aliases": [
+          "mannerism"
+        ],
+        "project": "",
+        "pronunciation": false,
+        "sources": [],
+        "learnedAt": "2026-09-15T20:04:27.646510+00:00"
+      },
+      {
+        "id": "corpus-6",
+        "phrase": "Auckland's",
+        "language": "en",
+        "context": "",
+        "enabled": true,
+        "aliases": [
+          "Auckland"
+        ],
+        "project": "",
+        "pronunciation": false,
+        "sources": [],
+        "learnedAt": "2026-09-15T20:04:27.646673+00:00"
+      },
+      {
+        "id": "corpus-7",
+        "phrase": "Martelly's",
+        "language": "en",
+        "context": "",
+        "enabled": true,
+        "aliases": [
+          "Martelli's"
+        ],
+        "project": "",
+        "pronunciation": false,
+        "sources": [],
+        "learnedAt": "2026-09-15T20:04:27.646693+00:00"
+      },
+      {
+        "id": "corpus-8",
+        "phrase": "meals",
+        "language": "en",
+        "context": "",
+        "enabled": true,
+        "aliases": [
+          "mills"
+        ],
+        "project": "",
+        "pronunciation": false,
+        "sources": [],
+        "learnedAt": "2026-09-15T20:04:27.646711+00:00"
+      },
+      {
+        "id": "corpus-9",
+        "phrase": "birthday",
+        "language": "en",
+        "context": "",
+        "enabled": true,
+        "aliases": [
+          "birth"
+        ],
+        "project": "",
+        "pronunciation": false,
+        "sources": [],
+        "learnedAt": "2026-09-15T20:04:27.646722+00:00"
+      },
+      {
+        "id": "corpus-10",
+        "phrase": "गाँव",
+        "language": "hi",
+        "context": "",
+        "enabled": true,
+        "aliases": [
+          "गांव"
+        ],
+        "project": "",
+        "pronunciation": false,
+        "sources": [],
+        "learnedAt": "2026-09-15T20:04:27.646937+00:00"
+      },
+      {
+        "id": "corpus-11",
+        "phrase": "नवोन्मेषी हो सके, लीडरशिप को नवोन्मेष",
+        "language": "hi",
+        "context": "",
+        "enabled": true,
+        "aliases": [
+          "नेवोन में सी हो सके, लीडरशिप को नेबुनमेश"
+        ],
+        "project": "",
+        "pronunciation": false,
+        "sources": [],
+        "learnedAt": "2026-09-15T20:04:27.646996+00:00"
+      },
+      {
+        "id": "corpus-12",
+        "phrase": "जैसे-जैसे नई आबादी नए माहौल में ढलती",
+        "language": "hi",
+        "context": "",
+        "enabled": true,
+        "aliases": [
+          "जैसे जैसे नई आबादी नए माहौल में डलती"
+        ],
+        "project": "",
+        "pronunciation": false,
+        "sources": [],
+        "learnedAt": "2026-09-15T20:04:27.647062+00:00"
+      },
+      {
+        "id": "corpus-13",
+        "phrase": "सांप्रदायिक",
+        "language": "hi",
+        "context": "",
+        "enabled": true,
+        "aliases": [
+          "संप्रदायिक"
+        ],
+        "project": "",
+        "pronunciation": false,
+        "sources": [],
+        "learnedAt": "2026-09-15T20:04:27.647213+00:00"
+      },
+      {
+        "id": "corpus-14",
+        "phrase": "घोषणा",
+        "language": "hi",
+        "context": "",
+        "enabled": true,
+        "aliases": [
+          "कोसना"
+        ],
+        "project": "",
+        "pronunciation": false,
+        "sources": [],
+        "learnedAt": "2026-09-15T20:04:27.647229+00:00"
+      },
+      {
+        "id": "corpus-15",
+        "phrase": "उप-संस्कृति",
+        "language": "hi",
+        "context": "",
+        "enabled": true,
+        "aliases": [
+          "उपसंस्कृति"
+        ],
+        "project": "",
+        "pronunciation": false,
+        "sources": [],
+        "learnedAt": "2026-09-15T20:04:27.647258+00:00"
+      },
+      {
+        "id": "corpus-16",
+        "phrase": "फिर, लक्खा",
+        "language": "hi",
+        "context": "",
+        "enabled": true,
+        "aliases": [
+          "तुरखा"
+        ],
+        "project": "",
+        "pronunciation": false,
+        "sources": [],
+        "learnedAt": "2026-09-15T20:04:27.647272+00:00"
+      },
+      {
+        "id": "corpus-17",
+        "phrase": "वार्मिंग",
+        "language": "hi",
+        "context": "",
+        "enabled": true,
+        "aliases": [
+          "वर्मिंग"
+        ],
+        "project": "",
+        "pronunciation": false,
+        "sources": [],
+        "learnedAt": "2026-09-15T20:04:27.647318+00:00"
+      },
+      {
+        "id": "corpus-18",
+        "phrase": "वैज्ञानिकों",
+        "language": "hi",
+        "context": "",
+        "enabled": true,
+        "aliases": [
+          "भिग्निकों"
+        ],
+        "project": "",
+        "pronunciation": false,
+        "sources": [],
+        "learnedAt": "2026-09-15T20:04:27.647338+00:00"
+      },
+      {
+        "id": "corpus-19",
+        "phrase": "हज़ारों",
+        "language": "hi",
+        "context": "",
+        "enabled": true,
+        "aliases": [
+          "हजारों"
+        ],
+        "project": "",
+        "pronunciation": false,
+        "sources": [],
+        "learnedAt": "2026-09-15T20:04:27.647417+00:00"
+      },
+      {
+        "id": "corpus-20",
+        "phrase": "क्रैश",
+        "language": "hi",
+        "context": "",
+        "enabled": true,
+        "aliases": [
+          "कैश"
+        ],
+        "project": "",
+        "pronunciation": false,
+        "sources": [],
+        "learnedAt": "2026-09-15T20:04:27.647438+00:00"
+      },
+      {
+        "id": "corpus-21",
+        "phrase": "ज़्यादा",
+        "language": "hi",
+        "context": "",
+        "enabled": true,
+        "aliases": [
+          "ज्यादा"
+        ],
+        "project": "",
+        "pronunciation": false,
+        "sources": [],
+        "learnedAt": "2026-09-15T20:04:27.647722+00:00"
+      },
+      {
+        "id": "corpus-22",
+        "phrase": "अनुसंधान",
+        "language": "hi",
+        "context": "",
+        "enabled": true,
+        "aliases": [
+          "अनुसाधन"
+        ],
+        "project": "",
+        "pronunciation": false,
+        "sources": [],
+        "learnedAt": "2026-09-15T20:04:27.647748+00:00"
+      },
+      {
+        "id": "corpus-23",
+        "phrase": "बाइबिल",
+        "language": "hi",
+        "context": "",
+        "enabled": true,
+        "aliases": [
+          "बाइबल"
+        ],
+        "project": "",
+        "pronunciation": false,
+        "sources": [],
+        "learnedAt": "2026-09-15T20:04:27.647801+00:00"
+      },
+      {
+        "id": "corpus-24",
+        "phrase": "तिब्बती बौद्ध",
+        "language": "hi",
+        "context": "",
+        "enabled": true,
+        "aliases": [
+          "टिब्टी बोध"
+        ],
+        "project": "",
+        "pronunciation": false,
+        "sources": [],
+        "learnedAt": "2026-09-15T20:04:27.647833+00:00"
+      },
+      {
+        "id": "corpus-25",
+        "phrase": "परिवहन",
+        "language": "hi",
+        "context": "",
+        "enabled": true,
+        "aliases": [
+          "परिवहक"
+        ],
+        "project": "",
+        "pronunciation": false,
+        "sources": [],
+        "learnedAt": "2026-09-15T20:04:27.647899+00:00"
+      },
+      {
+        "id": "corpus-26",
+        "phrase": "चरने वाला",
+        "language": "hi",
+        "context": "",
+        "enabled": true,
+        "aliases": [
+          "चढ़ने का"
+        ],
+        "project": "",
+        "pronunciation": false,
+        "sources": [],
+        "learnedAt": "2026-09-15T20:04:27.647949+00:00"
+      },
+      {
+        "id": "corpus-27",
+        "phrase": "सभी को",
+        "language": "hi",
+        "context": "",
+        "enabled": true,
+        "aliases": [
+          "सबको"
+        ],
+        "project": "",
+        "pronunciation": false,
+        "sources": [],
+        "learnedAt": "2026-09-15T20:04:27.647966+00:00"
+      },
+      {
+        "id": "corpus-28",
+        "phrase": "फ़ैसले",
+        "language": "hi",
+        "context": "",
+        "enabled": true,
+        "aliases": [
+          "फैसले"
+        ],
+        "project": "",
+        "pronunciation": false,
+        "sources": [],
+        "learnedAt": "2026-09-15T20:04:27.647988+00:00"
+      },
+      {
+        "id": "corpus-29",
+        "phrase": "तैरने",
+        "language": "hi",
+        "context": "",
+        "enabled": true,
+        "aliases": [
+          "तैरनी"
+        ],
+        "project": "",
+        "pronunciation": false,
+        "sources": [],
+        "learnedAt": "2026-09-15T20:04:27.648007+00:00"
+      },
+      {
+        "id": "corpus-30",
+        "phrase": "अमेरिका",
+        "language": "hi",
+        "context": "",
+        "enabled": true,
+        "aliases": [
+          "अमरीका"
+        ],
+        "project": "",
+        "pronunciation": false,
+        "sources": [],
+        "learnedAt": "2026-09-15T20:04:27.648100+00:00"
+      },
+      {
+        "id": "corpus-31",
+        "phrase": "श्री श्याम के चरणों में भजन या भक्तिगीत",
+        "language": "hi",
+        "context": "",
+        "enabled": true,
+        "aliases": [
+          "श्रीशाम के चरणों में भजन या भक्ति गीत"
+        ],
+        "project": "",
+        "pronunciation": false,
+        "sources": [],
+        "learnedAt": "2026-09-15T20:04:27.648130+00:00"
+      },
+      {
+        "id": "corpus-32",
+        "phrase": "अंतर्देशीय जलमार्ग आनेवाली",
+        "language": "hi",
+        "context": "",
+        "enabled": true,
+        "aliases": [
+          "अंतरदेशी जलमार्ग आने वाली"
+        ],
+        "project": "",
+        "pronunciation": false,
+        "sources": [],
+        "learnedAt": "2026-09-15T20:04:27.648155+00:00"
+      },
+      {
+        "id": "corpus-33",
+        "phrase": "हिममय सड़कों",
+        "language": "hi",
+        "context": "",
+        "enabled": true,
+        "aliases": [
+          "हिम में सड़कों"
+        ],
+        "project": "",
+        "pronunciation": false,
+        "sources": [],
+        "learnedAt": "2026-09-15T20:04:27.648213+00:00"
+      },
+      {
+        "id": "corpus-34",
+        "phrase": "काशीवाज़की करिवा परमाणु",
+        "language": "hi",
+        "context": "",
+        "enabled": true,
+        "aliases": [
+          "काशीवाज की करीवा प्रमाणु"
+        ],
+        "project": "",
+        "pronunciation": false,
+        "sources": [],
+        "learnedAt": "2026-09-15T20:04:27.648244+00:00"
+      },
+      {
+        "id": "corpus-35",
+        "phrase": "पोशाक, पूर्व में बीजान्टिन",
+        "language": "hi",
+        "context": "",
+        "enabled": true,
+        "aliases": [
+          "पोषा पूर्व में बीजांटिन"
+        ],
+        "project": "",
+        "pronunciation": false,
+        "sources": [],
+        "learnedAt": "2026-09-15T20:04:27.648268+00:00"
+      },
+      {
+        "id": "corpus-36",
+        "phrase": "सीज़न",
+        "language": "hi",
+        "context": "",
+        "enabled": true,
+        "aliases": [
+          "सीजन"
+        ],
+        "project": "",
+        "pronunciation": false,
+        "sources": [],
+        "learnedAt": "2026-09-15T20:04:27.648285+00:00"
+      },
+      {
+        "id": "corpus-37",
+        "phrase": "इज़राइल, वर्तमान सैन्य स्थिति को अगले दस सालों",
+        "language": "hi",
+        "context": "",
+        "enabled": true,
+        "aliases": [
+          "इजराइल वर्तमान सैन्य स्थिति को अगले दस वर्षों"
+        ],
+        "project": "",
+        "pronunciation": false,
+        "sources": [],
+        "learnedAt": "2026-09-15T20:04:27.648396+00:00"
+      },
+      {
+        "id": "corpus-38",
+        "phrase": "section",
+        "language": "en",
+        "context": "",
+        "enabled": true,
+        "aliases": [
+          "sections"
+        ],
+        "project": "",
+        "pronunciation": false,
+        "sources": [],
+        "learnedAt": "2026-09-15T20:04:27.648516+00:00"
+      },
+      {
+        "id": "corpus-39",
+        "phrase": "Anveshan Dry Fruit Paak",
+        "language": "en",
+        "context": "",
+        "enabled": true,
+        "aliases": [
+          "anvation dry fruit park"
+        ],
+        "project": "",
+        "pronunciation": false,
+        "sources": [],
+        "learnedAt": "2026-09-15T20:04:27.648530+00:00"
+      },
+      {
+        "id": "corpus-40",
+        "phrase": "Tai Chi",
+        "language": "en",
+        "context": "",
+        "enabled": true,
+        "aliases": [
+          "Taichi"
+        ],
+        "project": "",
+        "pronunciation": false,
+        "sources": [],
+        "learnedAt": "2026-09-15T20:04:27.648544+00:00"
+      },
+      {
+        "id": "corpus-41",
+        "phrase": "centres for Sputnik vaccine in district Changlang",
+        "language": "en",
+        "context": "",
+        "enabled": true,
+        "aliases": [
+          "centers for sputnik vaccine in district chunk"
+        ],
+        "project": "",
+        "pronunciation": false,
+        "sources": [],
+        "learnedAt": "2026-09-15T20:04:27.648688+00:00"
+      },
+      {
+        "id": "corpus-42",
+        "phrase": "costs",
+        "language": "en",
+        "context": "",
+        "enabled": true,
+        "aliases": [
+          "cost"
+        ],
+        "project": "",
+        "pronunciation": false,
+        "sources": [],
+        "learnedAt": "2026-09-15T20:04:27.648759+00:00"
+      },
+      {
+        "id": "corpus-43",
+        "phrase": "Uzbeks",
+        "language": "en",
+        "context": "",
+        "enabled": true,
+        "aliases": [
+          "USBs"
+        ],
+        "project": "",
+        "pronunciation": false,
+        "sources": [],
+        "learnedAt": "2026-09-15T20:04:27.648855+00:00"
+      },
+      {
+        "id": "corpus-44",
+        "phrase": "state",
+        "language": "en",
+        "context": "",
+        "enabled": true,
+        "aliases": [
+          "stayed"
+        ],
+        "project": "",
+        "pronunciation": false,
+        "sources": [],
+        "learnedAt": "2026-09-15T20:04:27.648876+00:00"
+      },
+      {
+        "id": "corpus-45",
+        "phrase": "Ranjith's Rock & Roll",
+        "language": "en",
+        "context": "",
+        "enabled": true,
+        "aliases": [
+          "Ranjit's Rock and Ro"
+        ],
+        "project": "",
+        "pronunciation": false,
+        "sources": [],
+        "learnedAt": "2026-09-15T20:04:27.648909+00:00"
+      },
+      {
+        "id": "corpus-46",
+        "phrase": "Deodrants",
+        "language": "en",
+        "context": "",
+        "enabled": true,
+        "aliases": [
+          "Diodrence"
+        ],
+        "project": "",
+        "pronunciation": false,
+        "sources": [],
+        "learnedAt": "2026-09-15T20:04:27.648925+00:00"
+      },
+      {
+        "id": "corpus-47",
+        "phrase": "practiced in our state encourage dialogue, encourage",
+        "language": "en",
+        "context": "",
+        "enabled": true,
+        "aliases": [
+          "practised in our state encourage dialogue, encouraged"
+        ],
+        "project": "",
+        "pronunciation": false,
+        "sources": [],
+        "learnedAt": "2026-09-15T20:04:27.648966+00:00"
+      },
+      {
+        "id": "corpus-48",
+        "phrase": "Bedi began his career in Indian theatre",
+        "language": "en",
+        "context": "",
+        "enabled": true,
+        "aliases": [
+          "begin his career in Indian theater"
+        ],
+        "project": "",
+        "pronunciation": false,
+        "sources": [],
+        "learnedAt": "2026-09-15T20:04:27.648983+00:00"
+      },
+      {
+        "id": "corpus-49",
+        "phrase": "Jammu",
+        "language": "en",
+        "context": "",
+        "enabled": true,
+        "aliases": [
+          "gem"
+        ],
+        "project": "",
+        "pronunciation": false,
+        "sources": [],
+        "learnedAt": "2026-09-15T20:04:27.649067+00:00"
+      },
+      {
+        "id": "corpus-50",
+        "phrase": "farmer",
+        "language": "en",
+        "context": "",
+        "enabled": true,
+        "aliases": [
+          "farmers"
+        ],
+        "project": "",
+        "pronunciation": false,
+        "sources": [],
+        "learnedAt": "2026-09-15T20:04:27.649083+00:00"
+      }
+    ],
+    "examples": []
+  }
+}
