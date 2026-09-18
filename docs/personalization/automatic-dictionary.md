@@ -1,6 +1,6 @@
 # Automatic dictionary admission
 
-Implementation: [core learning policy](../../crates/transcribe-core/src/learning.rs), [existing memory guards](../../crates/transcribe-core/src/memory.rs), and [evidence/admission transactions](../../crates/transcribe-data/src/learning.rs). Policy version: **1**. These deterministic rules are not calibrated probabilities or acoustic confidence.
+Implementation: [core learning policy](../../crates/transcribe-core/src/learning.rs), [existing memory guards](../../crates/transcribe-core/src/memory.rs), and [evidence/admission transactions](../../crates/transcribe-data/src/learning.rs). Policy version: **2**. These deterministic rules are not calibrated probabilities or acoustic confidence.
 
 Learning is automatic desktop behavior: no enable switch or separate Remember action is needed. Completed edits and result observations use the existing background workers. This changes when the existing policy is available, not its admission thresholds or evidence requirements.
 
@@ -21,6 +21,16 @@ A term must look like an identifier or a related spelling. Identifier evidence r
 - Conflicting existing aliases suspend the candidate. The store does not overwrite or re-enable an equivalent manually managed entry. Full vocabulary capacity leaves the candidate unactivated.
 
 The application stores the canonical term and a single observed alias, candidate provenance, language/context and a store-authored activation time. These entries have no forged human-review source. An explicit later reviewed confirmation may take ownership of the same alias through the manual path.
+
+## Context required for post-recognition use
+
+Admission and use are separate. An active automatic word must also match an unquoted alias or canonical spelling in the raw transcript and at least one retained teaching cue. This fixed guard filters the automatic vocabulary supplied to cleanup and the final deterministic correction stage. Both stages reuse selection from the raw hypothesis, so cleanup cannot create context that authorizes its own later correction. Requested language and project must match; automatic language mode, missing candidate provenance, disabled/suspended entries, absent cues and oversized raw input fail closed for automatic words. Manual entries retain their existing rules. Optional pre-recognition hints remain separately controlled and unchanged.
+
+Each independent supporting edit retains at most **16 deduplicated lexical terms, 64 UTF-8 bytes each**, from the displayed before-text. Extraction excludes the heard/intended terms, project words, a fixed English function-word list, purely numeric and quoted terms. It uses a bounded lexical match, not semantic intent or accent detection. Words beyond the 8,192-byte input budget have no automatic context eligibility. An eligible edit still does not label the surrounding transcript as verified speech.
+
+Legacy support with no teaching cues stays stored but cannot satisfy this added guard. A fresh independent edit can supply cues. At the 16-support cap, a fresh cue-bearing record can replace one cue-less legacy record without increasing the support count; repeated audio/episode support cannot add cues this way. Once all records carry cues, new context is not appended beyond that bound. Adding cues to an active entry advances the profile revision in the same transaction. Undo/suspension clears cues; Forget and entry removal delete their owning evidence. New context applies to later operation snapshots.
+
+This integrates the stronger fixed-context idea from the benchmarks. It does **not** enable the experimental adaptive controller or transfer its reported gains to real use. It can prevent unrelated replacements and can also miss useful paraphrases; [evaluation](evaluation.md) records both.
 
 ## Independence and self-reinforcement
 

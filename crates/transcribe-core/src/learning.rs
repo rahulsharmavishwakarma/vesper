@@ -6,8 +6,55 @@ use crate::{
 };
 use serde::{Deserialize, Serialize};
 
-pub const LEARNING_POLICY_VERSION: u32 = 1;
+pub const LEARNING_POLICY_VERSION: u32 = 2;
 pub const MAX_LEARNING_TEXT_BYTES: usize = 8192;
+pub const MAX_TEACHING_TERMS: usize = 16;
+pub const MAX_TEACHING_TERM_BYTES: usize = 64;
+
+/// Compact observable cues, not a transcript, embedding or semantic intent label.
+/// Alias, preferred spelling and project words cannot prove their own context.
+pub fn teaching_context_terms(before: &str, pair: &CorrectionPair, project: &str) -> Vec<String> {
+    if before.len() > MAX_LEARNING_TEXT_BYTES {
+        return vec![];
+    }
+    let excluded = memory_words(&format!("{} {} {project}", pair.heard, pair.intended));
+    memory_words(before)
+        .into_iter()
+        .filter(|term| {
+            term.len() <= MAX_TEACHING_TERM_BYTES
+                && term.chars().any(char::is_alphabetic)
+                && !excluded.contains(term)
+                && !matches!(
+                    term.as_str(),
+                    "open"
+                        | "run"
+                        | "show"
+                        | "use"
+                        | "in"
+                        | "for"
+                        | "on"
+                        | "of"
+                        | "with"
+                        | "this"
+                        | "that"
+                        | "it"
+                )
+                && crate::memory_phrase_occurs(before, term)
+        })
+        .take(MAX_TEACHING_TERMS)
+        .collect()
+}
+
+/// Matching also uses pre-cleanup text, never model-generated context or feedback targets.
+pub fn teaching_context_matches<'a>(
+    teaching: impl IntoIterator<Item = &'a String>,
+    raw: &str,
+    pair: &CorrectionPair,
+    project: &str,
+) -> bool {
+    let current = teaching_context_terms(raw, pair, project);
+    teaching.into_iter().any(|term| current.contains(term))
+}
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
 #[serde(rename_all = "snake_case")]
@@ -200,6 +247,55 @@ pub fn correlated_attempts(
 #[cfg(test)]
 mod tests {
     use super::*;
+    #[test]
+    fn teaching_cues_exclude_self_evidence_quotes_and_uninformative_words() {
+        let pair = CorrectionPair {
+            heard: "read me".into(),
+            intended: "README.md".into(),
+        };
+        let cues = teaching_context_terms(
+            "Open read me in repo for deployment 'secret' 2026",
+            &pair,
+            "repo",
+        );
+        assert_eq!(cues, ["deployment"]);
+        assert!(teaching_context_matches(
+            &cues,
+            "Review read me deployment",
+            &pair,
+            "repo"
+        ));
+        for text in [
+            "Open read me in repo",
+            "Open read me for shopping",
+            "Open read me 'deployment'",
+        ] {
+            assert!(!teaching_context_matches(&cues, text, &pair, "repo"));
+        }
+    }
+
+    #[test]
+    fn teaching_cues_are_unicode_safe_deduplicated_and_bounded() {
+        let pair = CorrectionPair {
+            heard: "कुबेरनेटस".into(),
+            intended: "कुबेरनेट्स".into(),
+        };
+        let cues = teaching_context_terms("कुबेरनेटस परिनियोजन परिनियोजन", &pair, "");
+        assert_eq!(cues, ["परिनियोजन"]);
+        let many = (0..100)
+            .map(|i| format!("topic{i}"))
+            .collect::<Vec<_>>()
+            .join(" ");
+        assert_eq!(
+            teaching_context_terms(&many, &pair, "").len(),
+            MAX_TEACHING_TERMS
+        );
+        let oversized_term = "अ".repeat(22);
+        assert!(teaching_context_terms(&oversized_term, &pair, "").is_empty());
+        assert!(
+            teaching_context_terms(&"a".repeat(MAX_LEARNING_TEXT_BYTES + 1), &pair, "").is_empty()
+        );
+    }
     #[test]
     fn spelling_edits_are_narrow_and_do_not_convert_intent_or_quotes() {
         assert!(automatic_spelling_pair("यह ज्यादा उपयोगी है", "यह ज़्यादा उपयोगी है").is_some());
