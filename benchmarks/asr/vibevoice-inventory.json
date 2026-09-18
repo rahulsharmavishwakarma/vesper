@@ -1,0 +1,378 @@
+{
+  "schemaVersion": 1,
+  "asOf": "2026-09-18",
+  "scope": "Official Microsoft VibeVoice model repositories; stored tensors are distinct from backbone names and quantized file sizes",
+  "models": [
+    {
+      "modelId": "microsoft/VibeVoice-ASR-Streaming-7B",
+      "revision": "60d858b518b4e19d404af3737f848fc185b30177",
+      "pipelineTag": "automatic-speech-recognition",
+      "safetensorsMetadata": {
+        "parameters": {
+          "BF16": 8674021857
+        },
+        "total": 8674021857
+      },
+      "artifacts": [
+        {
+          "file": "model-00001-of-00008.safetensors",
+          "bytes": 2488346304,
+          "sha256": "3685d210ad49c49521e71a0cc5418ea94b20761c801dc8fc95938c4ec1ab27b3"
+        },
+        {
+          "file": "model-00002-of-00008.safetensors",
+          "bytes": 2389316008,
+          "sha256": "d0252f5e9bdf7e65bb0ae051c49148fd5d77e531057556eb955fc6dc72f4f0bc"
+        },
+        {
+          "file": "model-00003-of-00008.safetensors",
+          "bytes": 2466376400,
+          "sha256": "eeeb0c24e4a3746f16512c0d4aef84732bf8bb4dc5452782e4db356eb5fc7ce7"
+        },
+        {
+          "file": "model-00004-of-00008.safetensors",
+          "bytes": 2466376432,
+          "sha256": "02fec24aaf3e59cbc653b55d94665d6393543f2550364c2c8bc9e75e2a2ca3c0"
+        },
+        {
+          "file": "model-00005-of-00008.safetensors",
+          "bytes": 2499431160,
+          "sha256": "a78637bdc2b44f28601f7ee12503e28f5e9faedde35ff5bcdc2e7356c9a6458e"
+        },
+        {
+          "file": "model-00006-of-00008.safetensors",
+          "bytes": 2483469960,
+          "sha256": "5bc9dfef14c62989192ab39356da45a9ccc9f0ef82f7f7127e48c17b5bd5a2f8"
+        },
+        {
+          "file": "model-00007-of-00008.safetensors",
+          "bytes": 1464887514,
+          "sha256": "bb6da42b3547124eb67645fc6fb92523e93310a107872643f7df6dd75f85b4d7"
+        },
+        {
+          "file": "model-00008-of-00008.safetensors",
+          "bytes": 1089994880,
+          "sha256": "b1499fbe8bc0454eeafc1177db144679940f2456eae188299214c629d4d618b4"
+        }
+      ],
+      "createdAt": "2026-09-02T15:46:22.000Z",
+      "lastModified": "2026-09-03T05:35:33.000Z"
+    },
+    {
+      "modelId": "microsoft/VibeVoice-Realtime-0.5B",
+      "revision": "6bce5f06044837fe6d2c5d7a71a84f0416bd57e4",
+      "pipelineTag": "text-to-speech",
+      "safetensorsMetadata": {
+        "parameters": {
+          "BF16": 1017626722
+        },
+        "total": 1017626722
+      },
+      "artifacts": [
+        {
+          "file": "model.safetensors",
+          "bytes": 2035332888,
+          "sha256": "7758b150b8139deb48ac1ff6f181f745c8fedd5511232fd974b3eb217d83b514"
+        }
+      ],
+      "createdAt": "2025-12-04T05:32:08.000Z",
+      "lastModified": "2025-12-12T15:35:46.000Z"
+    },
+    {
+      "modelId": "microsoft/VibeVoice-ASR-Streaming-1.5B",
+      "revision": "4262d23d8a539a6530cf64fbd0b1751ef9a30853",
+      "pipelineTag": "automatic-speech-recognition",
+      "safetensorsMetadata": {
+        "parameters": {
+          "BF16": 2814116321
+        },
+        "total": 2814116321
+      },
+      "artifacts": [
+        {
+          "file": "model-00001-of-00003.safetensors",
+          "bytes": 2498354152,
+          "sha256": "788e6206a158c614e1e6777ab843baf64ca8a3f555e3cb72c26d5d79b925d4b9"
+        },
+        {
+          "file": "model-00002-of-00003.safetensors",
+          "bytes": 2486576066,
+          "sha256": "4d58b3ce47ac6b0ac5d3b142d54e56f10e02a928cf016b493e9e6a3f91beb75d"
+        },
+        {
+          "file": "model-00003-of-00003.safetensors",
+          "bytes": 643458072,
+          "sha256": "884b560dcd3024436d8827d32c7e211c545751c099df4ee75101c1ee2196f427"
+        }
+      ],
+      "verifiedHeaderTensorCount": 2814116321,
+      "headerGroups": {
+        "model.language_model.embed_tokens": 233373696,
+        "model.language_model.layers": 1310339072,
+        "model.acoustic_connector.fc1": 99840,
+        "model.acoustic_connector.fc2": 2360832,
+        "model.acoustic_connector.norm": 1536,
+        "model.acoustic_tokenizer.decoder": 343695969,
+        "model.acoustic_tokenizer.encoder": 343696032,
+        "model.language_model.norm": 1536,
+        "model.semantic_tokenizer.encoder": 344613600,
+        "lm_head.weight": 233373696,
+        "model.semantic_connector.fc1": 198144,
+        "model.semantic_connector.fc2": 2360832,
+        "model.semantic_connector.norm": 1536
+      },
+      "headers": [
+        {
+          "file": "model-00001-of-00003.safetensors",
+          "headerBytes": 33760,
+          "headerSha256": "f58c5d2334becc14c1af57e372e705c5ac493cd07d630c5cfbd7a371e1623828"
+        },
+        {
+          "file": "model-00002-of-00003.safetensors",
+          "headerBytes": 118008,
+          "headerSha256": "1c19d24291bb9e23fd31868bfcf1375601dd952a40b8a19395b2100ef736f818"
+        },
+        {
+          "file": "model-00003-of-00003.safetensors",
+          "headerBytes": 3856,
+          "headerSha256": "9d3f729310cd816d681367dcf1b1bdcd349cc15424f44c814a961a29ca2e6df5"
+        }
+      ],
+      "createdAt": "2026-09-02T15:51:38.000Z",
+      "lastModified": "2026-09-03T05:35:41.000Z"
+    },
+    {
+      "modelId": "microsoft/VibeVoice-1.5B",
+      "revision": "c00898d257e6b46004e3e2866a47534085fb685a",
+      "pipelineTag": "text-to-speech",
+      "safetensorsMetadata": {
+        "parameters": {
+          "BF16": 2704021985
+        },
+        "total": 2704021985
+      },
+      "artifacts": [
+        {
+          "file": "model-00001-of-00003.safetensors",
+          "bytes": 1975317828,
+          "sha256": "c5f0a61ddeaeb028e3af540ba4dee7933ad30f9f30b6e1320dd9c875a2daa033"
+        },
+        {
+          "file": "model-00002-of-00003.safetensors",
+          "bytes": 1983051688,
+          "sha256": "81c3891f7b2493eb48a9eb6f5be0df48d4f1a4bfd952d84e21683ca6d0bf7969"
+        },
+        {
+          "file": "model-00003-of-00003.safetensors",
+          "bytes": 1449832938,
+          "sha256": "cb6e7e5e86b4a41fffbe1f3aaf445d0d50b5e21ed47574101b777f77d75fa196"
+        }
+      ],
+      "createdAt": "2025-08-25T13:46:48.000Z",
+      "lastModified": "2026-01-22T07:22:28.000Z"
+    },
+    {
+      "modelId": "microsoft/VibeVoice-ASR",
+      "revision": "d0c9efdb8d614685062c04425d91e01b6f37d944",
+      "pipelineTag": "automatic-speech-recognition",
+      "safetensorsMetadata": {
+        "parameters": {
+          "BF16": 8674021857
+        },
+        "total": 8674021857
+      },
+      "artifacts": [
+        {
+          "file": "model-00001-of-00008.safetensors",
+          "bytes": 2488346272,
+          "sha256": "5548c67885d423ba184bc8c33f2e9f81b582a6d119cef79907e19a274b916637"
+        },
+        {
+          "file": "model-00002-of-00008.safetensors",
+          "bytes": 2389315976,
+          "sha256": "163023c61a3fb047745cbaf53ed41c1e27e515e9786a376e122bfac2ea6e687e"
+        },
+        {
+          "file": "model-00003-of-00008.safetensors",
+          "bytes": 2466376368,
+          "sha256": "4e021702dfac2c52e8fdd6688de82c118be7bb7ad9b5c7988725ec63c44a64fb"
+        },
+        {
+          "file": "model-00004-of-00008.safetensors",
+          "bytes": 2466376400,
+          "sha256": "b17657bb151daa117a5a4671374ac1b248acb696691a2a67ac227a1115925e30"
+        },
+        {
+          "file": "model-00005-of-00008.safetensors",
+          "bytes": 2499431136,
+          "sha256": "0ed4e457268f7b02dda5cffe16b3a32614ccc2ccfe5de2db39bdd79700836406"
+        },
+        {
+          "file": "model-00006-of-00008.safetensors",
+          "bytes": 2483469928,
+          "sha256": "6de8246bb042fd853b57d40995efd289ea44e4d1b611cec2e122570b8d2122bd"
+        },
+        {
+          "file": "model-00007-of-00008.safetensors",
+          "bytes": 1464887482,
+          "sha256": "a2ba6960d994dc7598efc6796f85ab097da7708f4dd56095f7fccf4df8dc00e5"
+        },
+        {
+          "file": "model-00008-of-00008.safetensors",
+          "bytes": 1089994848,
+          "sha256": "1b9d9b328f85a25b4efca712d31513c6eed9e178152cc8cf4a6f0c2cd2bb623f"
+        }
+      ],
+      "createdAt": "2026-01-21T15:04:18.000Z",
+      "lastModified": "2026-01-27T13:12:22.000Z"
+    },
+    {
+      "modelId": "microsoft/VibeVoice-ASR-BitNet",
+      "revision": "66e78021ab8f5f06133d1ab421ba4d348bda97c9",
+      "pipelineTag": "automatic-speech-recognition",
+      "safetensorsMetadata": {
+        "parameters": {
+          "F32": 2814116321
+        },
+        "total": 322592829
+      },
+      "artifacts": [
+        {
+          "file": "model-00001-of-00003.safetensors",
+          "bytes": 4996674400,
+          "sha256": "58cb328634bb4b7e5afcc4f14c43261a0c636c9031b0b085bd3ef53c131aaf19"
+        },
+        {
+          "file": "model-00002-of-00003.safetensors",
+          "bytes": 4963184724,
+          "sha256": "410349401256a9a995424408f8f77a21cad5e53183e07207820d7b25e84682df"
+        },
+        {
+          "file": "model-00003-of-00003.safetensors",
+          "bytes": 1296761656,
+          "sha256": "49c2d7591f9dcbbd6fb37baa58379211f21df30dbd3c6ff39cb8c81473660cdb"
+        },
+        {
+          "file": "vibeasr-lm-i2_s-embed-q6_k.gguf",
+          "bytes": 992877600,
+          "sha256": "fbe273d8dc2f2433bb25f849e19d77ea65aaa2188d12c20cee987ab6f321e002"
+        },
+        {
+          "file": "vibeasr-vae-encoder-i8_s.gguf",
+          "bytes": 703080064,
+          "sha256": "4941c82608c253ec066b5cc74d3dd11a5c8fef96cccbc5b87359ef0fe4338df6"
+        }
+      ],
+      "verifiedHeaderTensorCount": 2814116321,
+      "headerGroups": {
+        "model.language_model.embed_tokens": 233373696,
+        "model.language_model.layers": 1310339072,
+        "model.acoustic_tokenizer.decoder": 343695969,
+        "model.acoustic_tokenizer.encoder": 343696032,
+        "model.language_model.norm": 1536,
+        "model.semantic_tokenizer.encoder": 344613600,
+        "lm_head.weight": 233373696,
+        "model.acoustic_connector.fc1": 99840,
+        "model.acoustic_connector.fc2": 2360832,
+        "model.acoustic_connector.norm": 1536,
+        "model.semantic_connector.fc1": 198144,
+        "model.semantic_connector.fc2": 2360832,
+        "model.semantic_connector.norm": 1536
+      },
+      "headers": [
+        {
+          "file": "model-00001-of-00003.safetensors",
+          "headerBytes": 33624,
+          "headerSha256": "298d79514ea75c8aca4f5c4d514cc777617fa934b2175d26fde764b38b8c3054"
+        },
+        {
+          "file": "model-00002-of-00003.safetensors",
+          "headerBytes": 117448,
+          "headerSha256": "c4d55e75dc133e641e34238bdbe3b230bbbd286d56134bcaae7dd5a8da25a536"
+        },
+        {
+          "file": "model-00003-of-00003.safetensors",
+          "headerBytes": 4400,
+          "headerSha256": "4e70389568d894e2769eed5109c26f34814ac913581953e284aa75ce376873f3"
+        }
+      ],
+      "createdAt": "2026-07-24T06:03:05.000Z",
+      "lastModified": "2026-07-24T06:03:32.000Z"
+    },
+    {
+      "modelId": "microsoft/VibeVoice-AcousticTokenizer",
+      "revision": "f0643be7cab5b9c91c6f0038e3b8dde13e3e107e",
+      "pipelineTag": "feature-extraction",
+      "safetensorsMetadata": {
+        "parameters": {
+          "BF16": 687392001
+        },
+        "total": 687392001
+      },
+      "artifacts": [
+        {
+          "file": "model.safetensors",
+          "bytes": 1374847314,
+          "sha256": "3acc2dcc75c6b18dffdc74e9ec7a79ea3849ccf69323499fd9bf54209e531a6a"
+        }
+      ],
+      "createdAt": "2026-02-06T03:33:31.000Z",
+      "lastModified": "2026-02-06T03:33:47.000Z"
+    },
+    {
+      "modelId": "microsoft/VibeVoice-ASR-HF",
+      "revision": "f22241c2062b3b25272bf117397e03d73381037a",
+      "pipelineTag": "audio-text-to-text",
+      "safetensorsMetadata": {
+        "parameters": {
+          "BF16": 8330325888
+        },
+        "total": 8330325888
+      },
+      "artifacts": [
+        {
+          "file": "model-00001-of-00008.safetensors",
+          "bytes": 2488346304,
+          "sha256": "580189757a1c737ecc6fad16e633b922bc73220268356e31362c24365f081095"
+        },
+        {
+          "file": "model-00002-of-00008.safetensors",
+          "bytes": 2389316008,
+          "sha256": "65e419d28fc8c87d6938ec611c7b425b38e391c80a2df59c2b4935f6fd65c7c2"
+        },
+        {
+          "file": "model-00003-of-00008.safetensors",
+          "bytes": 2466376400,
+          "sha256": "30f574c764550d26c654cc3f5dd000b90b0c3305db955267c577001c1013fdf7"
+        },
+        {
+          "file": "model-00004-of-00008.safetensors",
+          "bytes": 2466376432,
+          "sha256": "8fa3d9350f0a8cc97524617ff582e451159bfdba2ef0b2e372a627518ef681b1"
+        },
+        {
+          "file": "model-00005-of-00008.safetensors",
+          "bytes": 2499431160,
+          "sha256": "5015ecacc86d897d20d5e42ba52ef83355d42f587d3b158ff897ec94847bd083"
+        },
+        {
+          "file": "model-00006-of-00008.safetensors",
+          "bytes": 1831435704,
+          "sha256": "7463d75607185c118925cea6a60a5698aaa6f428e626bcee774572bdc28ef55d"
+        },
+        {
+          "file": "model-00007-of-00008.safetensors",
+          "bytes": 2482226384,
+          "sha256": "b52aa2fab9640bcac5201a278f540b018c439ed4e99516d9ff30ea1ae399525e"
+        },
+        {
+          "file": "model-00008-of-00008.safetensors",
+          "bytes": 37262376,
+          "sha256": "a66ced85b619507e1970dc51be45786ff55803ccc63658765e412ea23d9a8ace"
+        }
+      ],
+      "createdAt": "2026-03-02T02:48:09.000Z",
+      "lastModified": "2026-03-09T03:11:35.000Z"
+    }
+  ]
+}

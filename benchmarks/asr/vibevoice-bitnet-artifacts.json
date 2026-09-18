@@ -1,0 +1,18 @@
+{
+  "model": "microsoft/VibeVoice-ASR-BitNet",
+  "modelRevision": "66e78021ab8f5f06133d1ab421ba4d348bda97c9",
+  "sourceRevision": "94cddff7216df8069cbf1b9095714b8327ffeedc",
+  "llamaRevision": "a2fdadc20285df2dce90402fca9264a93a8eb32f",
+  "artifacts": [
+    {
+      "file": "vibeasr-lm-i2_s-embed-q6_k.gguf",
+      "bytes": 992877600,
+      "sha256": "fbe273d8dc2f2433bb25f849e19d77ea65aaa2188d12c20cee987ab6f321e002"
+    },
+    {
+      "file": "vibeasr-vae-encoder-i8_s.gguf",
+      "bytes": 703080064,
+      "sha256": "4941c82608c253ec066b5cc74d3dd11a5c8fef96cccbc5b87359ef0fe4338df6"
+    }
+  ]
+}
