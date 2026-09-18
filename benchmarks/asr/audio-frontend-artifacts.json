@@ -1,0 +1,130 @@
+[
+  {
+    "id": "silero-fp32",
+    "path": "silero_vad.onnx",
+    "size": 643854,
+    "sha256": "9e2449e1087496d8d4caba907f23e0bd3f78d91fa552479bb9c23ac09cbb1fd6",
+    "url": "https://github.com/k2-fsa/sherpa-onnx/releases/download/asr-models/silero_vad.onnx",
+    "revision": "asset-271935959",
+    "role": "vad"
+  },
+  {
+    "id": "silero-int8",
+    "path": "silero_vad.int8.onnx",
+    "size": 212860,
+    "sha256": "c36d490aff5ab924ca6c7aeec4d8f6bd3d22db6fa17611b9c5b17eae58ac3a20",
+    "url": "https://github.com/k2-fsa/sherpa-onnx/releases/download/asr-models/silero_vad.int8.onnx",
+    "revision": "asset-271935990",
+    "role": "vad"
+  },
+  {
+    "id": "gtcrn",
+    "path": "gtcrn_simple.onnx",
+    "size": 535638,
+    "sha256": "e77603ac0c23dac3227dd2d7135b3a585cbee2679048aecfa886657d3ae1b534",
+    "url": "https://github.com/k2-fsa/sherpa-onnx/releases/download/speech-enhancement-models/gtcrn_simple.onnx",
+    "revision": "asset-236067657",
+    "role": "denoise"
+  },
+  {
+    "id": "dpdfnet4",
+    "path": "dpdfnet4.onnx",
+    "size": 11707436,
+    "sha256": "71b588bc26163941aa82a592cce924b08c1fbdc0879fe44f5a2d4eac44bd8420",
+    "url": "https://github.com/k2-fsa/sherpa-onnx/releases/download/speech-enhancement-models/dpdfnet4.onnx",
+    "revision": "sherpa-speech-enhancement-models; content-addressed",
+    "role": "denoise"
+  },
+  {
+    "id": "dpdfnet8",
+    "path": "dpdfnet8.onnx",
+    "size": 14623619,
+    "sha256": "2751c1f5a4e849d23a07c675b4c838158b249b42152f10cc318522dd339134f0",
+    "url": "https://github.com/k2-fsa/sherpa-onnx/releases/download/speech-enhancement-models/dpdfnet8.onnx",
+    "revision": "sherpa-speech-enhancement-models; content-addressed",
+    "role": "denoise"
+  },
+  {
+    "id": "ced-mini",
+    "path": "ced-mini.int8.onnx",
+    "size": 10451715,
+    "sha256": "ff29f39f9fbe637f72535160e9d006d61d872fdab0fce838672265b9b38cf946",
+    "url": "https://huggingface.co/k2-fsa/sherpa-onnx-ced-mini-audio-tagging-2024-04-19/resolve/4da6df50dc47b25f91074b5ef7df4c1cc0dd7d4d/model.int8.onnx",
+    "revision": "4da6df50dc47b25f91074b5ef7df4c1cc0dd7d4d",
+    "role": "classification"
+  },
+  {
+    "id": "labels",
+    "path": "class_labels_indices.csv",
+    "size": 14675,
+    "sha256": "cdd1049833c4b86127c2773ac0d14a2754b6a6d0d1798002ed5c66e699708429",
+    "url": "https://huggingface.co/k2-fsa/sherpa-onnx-ced-mini-audio-tagging-2024-04-19/resolve/4da6df50dc47b25f91074b5ef7df4c1cc0dd7d4d/class_labels_indices.csv",
+    "revision": "4da6df50dc47b25f91074b5ef7df4c1cc0dd7d4d",
+    "role": "labels"
+  },
+  {
+    "id": "ced-base",
+    "path": "ced-base.int8.onnx",
+    "size": 87464243,
+    "sha256": "05c59be9615f6e24a34534ab8d7be782c912ac241d5ed73989b75177becdd312",
+    "url": "https://huggingface.co/k2-fsa/sherpa-onnx-ced-base-audio-tagging-2024-04-19/resolve/6c64f5ae637788ad51e138fdaaa4a49686b4eb91/model.int8.onnx",
+    "revision": "6c64f5ae637788ad51e138fdaaa4a49686b4eb91",
+    "role": "classification"
+  },
+  {
+    "id": "uhm-fp16",
+    "path": "uhm-web-fp16.onnx",
+    "size": 47047128,
+    "sha256": "c266faf7db4cdced6f18aa9119ff2800a20707d7159be645d487ec191a9d79ff",
+    "url": "https://huggingface.co/desert-ant-labs/uhm/resolve/9b172658b2a20a21ad8ea44092f4d4b3ff2c69a4/uhm-web-fp16.onnx",
+    "revision": "9b172658b2a20a21ad8ea44092f4d4b3ff2c69a4",
+    "role": "filler-detection"
+  },
+  {
+    "id": "ear-ear.tflite",
+    "path": "ear/ear.tflite",
+    "size": 23062016,
+    "sha256": "71cc15c3f24abbea2dcdf2892370d85806891ad7822cd3107abc0629f10bc955",
+    "revision": "557fcde24e585cdaba69c6bcc24a6ad23f9064cd",
+    "role": "language-identification",
+    "url": "https://huggingface.co/desert-ant-labs/ear/resolve/557fcde24e585cdaba69c6bcc24a6ad23f9064cd/ear.tflite"
+  },
+  {
+    "id": "ear-ear_meta.json",
+    "path": "ear/ear_meta.json",
+    "size": 3894,
+    "sha256": "e4dadabed1a376b8da0d06bbb0ce642976c245fb4cd13e871cc94daf15171735",
+    "revision": "557fcde24e585cdaba69c6bcc24a6ad23f9064cd",
+    "role": "language-identification",
+    "url": "https://huggingface.co/desert-ant-labs/ear/resolve/557fcde24e585cdaba69c6bcc24a6ad23f9064cd/ear_meta.json"
+  },
+  {
+    "id": "ear-languages.json",
+    "path": "ear/languages.json",
+    "size": 595,
+    "sha256": "23acb08df40a4ed87a9415f1cacd261cb4f67240579490605eb2ea8e44d6d2a4",
+    "revision": "557fcde24e585cdaba69c6bcc24a6ad23f9064cd",
+    "role": "language-identification",
+    "url": "https://huggingface.co/desert-ant-labs/ear/resolve/557fcde24e585cdaba69c6bcc24a6ad23f9064cd/languages.json"
+  },
+  {
+    "id": "ear-mel_filters.f32",
+    "path": "ear/mel_filters.f32",
+    "size": 64328,
+    "sha256": "8bf0fc4ec3d379aa107e68ac87c9d3bacb3396efec4cd6711e4d45eb908b6a58",
+    "revision": "557fcde24e585cdaba69c6bcc24a6ad23f9064cd",
+    "role": "language-identification",
+    "url": "https://huggingface.co/desert-ant-labs/ear/resolve/557fcde24e585cdaba69c6bcc24a6ad23f9064cd/mel_filters.f32"
+  },
+  {
+    "id": "silero-v6.2",
+    "path": "silero_v6.2_16k_op15.onnx",
+    "size": 1289603,
+    "sha256": "7ed98ddbad84ccac4cd0aeb3099049280713df825c610a8ed34543318f1b2c49",
+    "revision": "7e30209a3e901f9842f81b225f3e93d8199902b1",
+    "weightRevision": "bfdc0193023f121ea5b3cc7b176dbed570a68a59",
+    "weightReleaseDate": "2025-11-06",
+    "role": "vad",
+    "url": "https://raw.githubusercontent.com/snakers4/silero-vad/7e30209a3e901f9842f81b225f3e93d8199902b1/src/silero_vad/data/silero_vad_16k_op15.onnx"
+  }
+]
