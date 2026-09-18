@@ -1,0 +1,1954 @@
+{
+  "schemaVersion": 1,
+  "dateLocal": "2026-09-16",
+  "evidenceClass": "local_measurement",
+  "scope": "Application-memory regression tests, controlled native cleanup, fresh vocabulary-enriched FLEURS screen; not personal longitudinal qualification.",
+  "goldenReplay": {
+    "cases": 778,
+    "failuresBefore": 155,
+    "failuresAfter": 0,
+    "categories": [
+      {
+        "category": "boundary-abstention",
+        "cases": 4,
+        "failuresBefore": 0,
+        "failuresAfter": 0,
+        "exampleBefore": null
+      },
+      {
+        "category": "boundary-suggestion",
+        "cases": 2,
+        "failuresBefore": 2,
+        "failuresAfter": 0,
+        "exampleBefore": {
+          "actual": "नेवोन में सी हो सके, लीडरशिप को नेबुनमेश",
+          "category": "boundary-suggestion",
+          "evidence": {
+            "ambiguousMatches": 0,
+            "applied": [],
+            "budgetExceeded": false,
+            "correctionsEnabled": true,
+            "profileRevision": 1,
+            "suggestedIntent": null
+          },
+          "expected": "नेवोन में सी हो सके, लीडरशिप को नेबुनमेश",
+          "id": "boundary-suggestion-166",
+          "intent": "verbatim",
+          "passed": false,
+          "suggestions": [
+            {
+              "heard": "नेवोन में सी हो सके, लीडरशिप को नेबुनमेश",
+              "intended": "नवोन्मेषी हो सके, लीडरशिप को नवोन्मेष"
+            }
+          ]
+        }
+      },
+      {
+        "category": "conflicting-memory",
+        "cases": 51,
+        "failuresBefore": 0,
+        "failuresAfter": 0,
+        "exampleBefore": null
+      },
+      {
+        "category": "contraction-in-quote",
+        "cases": 51,
+        "failuresBefore": 49,
+        "failuresAfter": 0,
+        "exampleBefore": {
+          "actual": "'don't change U.N'",
+          "category": "contraction-in-quote",
+          "evidence": {
+            "ambiguousMatches": 0,
+            "applied": [
+              {
+                "entryId": "corpus-0",
+                "occurrences": 1
+              }
+            ],
+            "budgetExceeded": false,
+            "correctionsEnabled": true,
+            "profileRevision": 1,
+            "suggestedIntent": null
+          },
+          "expected": "'don't change UN'",
+          "id": "contraction-in-quote-3",
+          "intent": "verbatim",
+          "passed": false,
+          "suggestions": null
+        }
+      },
+      {
+        "category": "curly-contraction-in-quote",
+        "cases": 51,
+        "failuresBefore": 49,
+        "failuresAfter": 0,
+        "exampleBefore": {
+          "actual": "‘don’t change U.N’",
+          "category": "curly-contraction-in-quote",
+          "evidence": {
+            "ambiguousMatches": 0,
+            "applied": [
+              {
+                "entryId": "corpus-0",
+                "occurrences": 1
+              }
+            ],
+            "budgetExceeded": false,
+            "correctionsEnabled": true,
+            "profileRevision": 1,
+            "suggestedIntent": null
+          },
+          "expected": "‘don’t change UN’",
+          "id": "curly-contraction-in-quote-4",
+          "intent": "verbatim",
+          "passed": false,
+          "suggestions": null
+        }
+      },
+      {
+        "category": "disabled",
+        "cases": 51,
+        "failuresBefore": 0,
+        "failuresAfter": 0,
+        "exampleBefore": null
+      },
+      {
+        "category": "double-quoted",
+        "cases": 51,
+        "failuresBefore": 0,
+        "failuresAfter": 0,
+        "exampleBefore": null
+      },
+      {
+        "category": "escaped-quote",
+        "cases": 51,
+        "failuresBefore": 0,
+        "failuresAfter": 0,
+        "exampleBefore": null
+      },
+      {
+        "category": "intent-agreement",
+        "cases": 1,
+        "failuresBefore": 0,
+        "failuresAfter": 0,
+        "exampleBefore": null
+      },
+      {
+        "category": "intent-conflict",
+        "cases": 1,
+        "failuresBefore": 0,
+        "failuresAfter": 0,
+        "exampleBefore": null
+      },
+      {
+        "category": "intent-duplicate-session",
+        "cases": 1,
+        "failuresBefore": 0,
+        "failuresAfter": 0,
+        "exampleBefore": null
+      },
+      {
+        "category": "intent-opt-in-off",
+        "cases": 1,
+        "failuresBefore": 0,
+        "failuresAfter": 0,
+        "exampleBefore": null
+      },
+      {
+        "category": "intent-unrelated",
+        "cases": 1,
+        "failuresBefore": 0,
+        "failuresAfter": 0,
+        "exampleBefore": null
+      },
+      {
+        "category": "language-mismatch",
+        "cases": 51,
+        "failuresBefore": 0,
+        "failuresAfter": 0,
+        "exampleBefore": null
+      },
+      {
+        "category": "paused",
+        "cases": 51,
+        "failuresBefore": 0,
+        "failuresAfter": 0,
+        "exampleBefore": null
+      },
+      {
+        "category": "positive",
+        "cases": 49,
+        "failuresBefore": 0,
+        "failuresAfter": 0,
+        "exampleBefore": null
+      },
+      {
+        "category": "right-project",
+        "cases": 49,
+        "failuresBefore": 0,
+        "failuresAfter": 0,
+        "exampleBefore": null
+      },
+      {
+        "category": "single-escaped-quote",
+        "cases": 51,
+        "failuresBefore": 49,
+        "failuresAfter": 0,
+        "exampleBefore": {
+          "actual": "\"say \\\" U.N\"",
+          "category": "single-escaped-quote",
+          "evidence": {
+            "ambiguousMatches": 0,
+            "applied": [
+              {
+                "entryId": "corpus-0",
+                "occurrences": 1
+              }
+            ],
+            "budgetExceeded": false,
+            "correctionsEnabled": true,
+            "profileRevision": 1,
+            "suggestedIntent": null
+          },
+          "expected": "\"say \\\" UN\"",
+          "id": "single-escaped-quote-6",
+          "intent": "verbatim",
+          "passed": false,
+          "suggestions": null
+        }
+      },
+      {
+        "category": "single-quoted",
+        "cases": 51,
+        "failuresBefore": 0,
+        "failuresAfter": 0,
+        "exampleBefore": null
+      },
+      {
+        "category": "unrelated",
+        "cases": 51,
+        "failuresBefore": 0,
+        "failuresAfter": 0,
+        "exampleBefore": null
+      },
+      {
+        "category": "unsafe-suggestion",
+        "cases": 6,
+        "failuresBefore": 6,
+        "failuresAfter": 0,
+        "exampleBefore": {
+          "actual": "don’t",
+          "category": "unsafe-suggestion",
+          "evidence": {
+            "ambiguousMatches": 0,
+            "applied": [],
+            "budgetExceeded": false,
+            "correctionsEnabled": true,
+            "profileRevision": 1,
+            "suggestedIntent": null
+          },
+          "expected": "don’t",
+          "id": "unsafe-suggestion-767",
+          "intent": "verbatim",
+          "passed": false,
+          "suggestions": [
+            {
+              "heard": "don’t",
+              "intended": "do"
+            }
+          ]
+        }
+      },
+      {
+        "category": "wrong-context",
+        "cases": 51,
+        "failuresBefore": 0,
+        "failuresAfter": 0,
+        "exampleBefore": null
+      },
+      {
+        "category": "wrong-project",
+        "cases": 51,
+        "failuresBefore": 0,
+        "failuresAfter": 0,
+        "exampleBefore": null
+      }
+    ],
+    "oracleCorrection": "Four draft expectations incorrectly demanded cross-punctuation substitutions. They were corrected to intended abstention before the final 778-case before/after replay; the draft is preserved locally."
+  },
+  "sources": [
+    {
+      "id": "fleurs-en_us-test",
+      "name": "FLEURS en_us test",
+      "url": "https://huggingface.co/datasets/google/fleurs/tree/70bb2e84b976b7e960aa89f1c648e09c59f894dd/data/en_us",
+      "revision": "70bb2e84b976b7e960aa89f1c648e09c59f894dd; audio-sha256:d9c2e37b41aacd41bc283554a0a82b5476b36887049774ecb2819dcaaa55a356; metadata-sha256:74c046239374deeb60fa63f258f907388093a32bcaa3140965f70ef05c79f7ca",
+      "license": "CC-BY-4.0",
+      "attribution": "Google FLEURS; FLoRes sentences",
+      "redistribution": "Retain CC-BY-4.0 attribution."
+    },
+    {
+      "id": "fleurs-hi_in-test",
+      "name": "FLEURS hi_in test",
+      "url": "https://huggingface.co/datasets/google/fleurs/tree/70bb2e84b976b7e960aa89f1c648e09c59f894dd/data/hi_in",
+      "revision": "70bb2e84b976b7e960aa89f1c648e09c59f894dd; audio-sha256:47c238b9cf7016ba596639bb3038b0c89dc6e85759f16d09c4f58c6dfa25c65f; metadata-sha256:889e82e2875490f9533ff59ab67326fcfa01cf828fc4412758aaaa1f442a729f",
+      "license": "CC-BY-4.0",
+      "attribution": "Google FLEURS; FLoRes sentences",
+      "redistribution": "Retain CC-BY-4.0 attribution."
+    }
+  ],
+  "selection": {
+    "rule": "Up to 12 calibration-canonical-term-containing prompts per language, then fixed hash order; selected before new inference. Prior selected normalized prompts excluded.",
+    "samples": [
+      {
+        "id": "en_us-test-15510957858467012907",
+        "selection": "calibration-term-present"
+      },
+      {
+        "id": "en_us-test-776561182148076732",
+        "selection": "calibration-term-present"
+      },
+      {
+        "id": "en_us-test-10383288285905292158",
+        "selection": "calibration-term-present"
+      },
+      {
+        "id": "en_us-test-3793212987221322581",
+        "selection": "calibration-term-present"
+      },
+      {
+        "id": "en_us-test-2362130555763646360",
+        "selection": "calibration-term-present"
+      },
+      {
+        "id": "en_us-test-12921155570472263117",
+        "selection": "calibration-term-present"
+      },
+      {
+        "id": "en_us-test-4940213511640275250",
+        "selection": "calibration-term-present"
+      },
+      {
+        "id": "en_us-test-8398257681626621326",
+        "selection": "calibration-term-present"
+      },
+      {
+        "id": "en_us-test-4446007980468141561",
+        "selection": "hash-order"
+      },
+      {
+        "id": "en_us-test-9833173223298420094",
+        "selection": "hash-order"
+      },
+      {
+        "id": "en_us-test-13345242347208844836",
+        "selection": "hash-order"
+      },
+      {
+        "id": "en_us-test-2642023010607031328",
+        "selection": "hash-order"
+      },
+      {
+        "id": "en_us-test-12239464249642485259",
+        "selection": "hash-order"
+      },
+      {
+        "id": "en_us-test-14472713183013529731",
+        "selection": "hash-order"
+      },
+      {
+        "id": "en_us-test-5922110980503615373",
+        "selection": "hash-order"
+      },
+      {
+        "id": "en_us-test-3664511950771966320",
+        "selection": "hash-order"
+      },
+      {
+        "id": "en_us-test-4130846879604713113",
+        "selection": "hash-order"
+      },
+      {
+        "id": "en_us-test-2013850546771709559",
+        "selection": "hash-order"
+      },
+      {
+        "id": "en_us-test-15966297335082605286",
+        "selection": "hash-order"
+      },
+      {
+        "id": "en_us-test-2074231104398719826",
+        "selection": "hash-order"
+      },
+      {
+        "id": "en_us-test-4498797456222901763",
+        "selection": "hash-order"
+      },
+      {
+        "id": "en_us-test-1800879378797955911",
+        "selection": "hash-order"
+      },
+      {
+        "id": "en_us-test-5531306493601107261",
+        "selection": "hash-order"
+      },
+      {
+        "id": "en_us-test-12700569942235742079",
+        "selection": "hash-order"
+      },
+      {
+        "id": "hi_in-test-3550122948577909974",
+        "selection": "calibration-term-present"
+      },
+      {
+        "id": "hi_in-test-2011804587702312354",
+        "selection": "calibration-term-present"
+      },
+      {
+        "id": "hi_in-test-9619650182223479168",
+        "selection": "calibration-term-present"
+      },
+      {
+        "id": "hi_in-test-5393581790967994378",
+        "selection": "calibration-term-present"
+      },
+      {
+        "id": "hi_in-test-11420171604929754563",
+        "selection": "calibration-term-present"
+      },
+      {
+        "id": "hi_in-test-16573110632965818241",
+        "selection": "calibration-term-present"
+      },
+      {
+        "id": "hi_in-test-17863237178605538274",
+        "selection": "calibration-term-present"
+      },
+      {
+        "id": "hi_in-test-8886702602797259620",
+        "selection": "calibration-term-present"
+      },
+      {
+        "id": "hi_in-test-11014623647783711221",
+        "selection": "hash-order"
+      },
+      {
+        "id": "hi_in-test-1908329718103862127",
+        "selection": "hash-order"
+      },
+      {
+        "id": "hi_in-test-17086010151221726696",
+        "selection": "hash-order"
+      },
+      {
+        "id": "hi_in-test-1307993758979104205",
+        "selection": "hash-order"
+      },
+      {
+        "id": "hi_in-test-14689665761817080227",
+        "selection": "hash-order"
+      },
+      {
+        "id": "hi_in-test-8407865170997565043",
+        "selection": "hash-order"
+      },
+      {
+        "id": "hi_in-test-17538987337957377962",
+        "selection": "hash-order"
+      },
+      {
+        "id": "hi_in-test-2640562846735193135",
+        "selection": "hash-order"
+      },
+      {
+        "id": "hi_in-test-7810041577325288574",
+        "selection": "hash-order"
+      },
+      {
+        "id": "hi_in-test-7794801306276043902",
+        "selection": "hash-order"
+      },
+      {
+        "id": "hi_in-test-11044357197343438539",
+        "selection": "hash-order"
+      },
+      {
+        "id": "hi_in-test-8830093559754179628",
+        "selection": "hash-order"
+      },
+      {
+        "id": "hi_in-test-9848223928915558733",
+        "selection": "hash-order"
+      },
+      {
+        "id": "hi_in-test-17757682103941428900",
+        "selection": "hash-order"
+      },
+      {
+        "id": "hi_in-test-3972087215456952159",
+        "selection": "hash-order"
+      },
+      {
+        "id": "hi_in-test-15275809492376300280",
+        "selection": "hash-order"
+      }
+    ]
+  },
+  "freshRecordings": 48,
+  "freshAudioSeconds": 496.4799999999999,
+  "nativeAsrExecutions": 72,
+  "sampleHashes": [
+    {
+      "id": "en_us-test-15510957858467012907",
+      "sourceId": "fleurs-en_us-test",
+      "sha256": "3adf709912ee86af585328a98f9ea8dedb43a3c695097b698f095fbc9b902022",
+      "language": "en-US",
+      "durationSeconds": 10.52
+    },
+    {
+      "id": "en_us-test-776561182148076732",
+      "sourceId": "fleurs-en_us-test",
+      "sha256": "78476bf1e2405ce9f1cfee6baaed6b37dc5706891e7362b25363455defc8f2ab",
+      "language": "en-US",
+      "durationSeconds": 8.52
+    },
+    {
+      "id": "en_us-test-10383288285905292158",
+      "sourceId": "fleurs-en_us-test",
+      "sha256": "76e349546fc73bf40326c0ac33d62b87ffe7b5455afd825f431494e2f7690a8c",
+      "language": "en-US",
+      "durationSeconds": 11.28
+    },
+    {
+      "id": "en_us-test-3793212987221322581",
+      "sourceId": "fleurs-en_us-test",
+      "sha256": "5d35b82817a2946f31f3abf13d0c159ed941b23d74accb07fb0d28a8b356a9d3",
+      "language": "en-US",
+      "durationSeconds": 13.92
+    },
+    {
+      "id": "en_us-test-2362130555763646360",
+      "sourceId": "fleurs-en_us-test",
+      "sha256": "4eca84c93586250088842345a2a8ab16ff7f3b0ddc7ed00e37f823d3f4232702",
+      "language": "en-US",
+      "durationSeconds": 9.36
+    },
+    {
+      "id": "en_us-test-12921155570472263117",
+      "sourceId": "fleurs-en_us-test",
+      "sha256": "f436e0198db170c54c2aa0156f54bfad9057877079a98aa3b712c38d1a871f38",
+      "language": "en-US",
+      "durationSeconds": 9.84
+    },
+    {
+      "id": "en_us-test-4940213511640275250",
+      "sourceId": "fleurs-en_us-test",
+      "sha256": "a3566a6ef1b11d1548b47d4129f80c60ca7fc3b67f16436547e4ef2fc5a35c47",
+      "language": "en-US",
+      "durationSeconds": 7.44
+    },
+    {
+      "id": "en_us-test-8398257681626621326",
+      "sourceId": "fleurs-en_us-test",
+      "sha256": "1f828b9547345aa08c6e41cb84acffb5bf1b1d75ac9de20bed3f36ed2572a18b",
+      "language": "en-US",
+      "durationSeconds": 14.28
+    },
+    {
+      "id": "en_us-test-4446007980468141561",
+      "sourceId": "fleurs-en_us-test",
+      "sha256": "fe039b48c9e15c38af0dc9ba20aa912f8d92a3e92f7cc6874310c56548a874fd",
+      "language": "en-US",
+      "durationSeconds": 16.5
+    },
+    {
+      "id": "en_us-test-9833173223298420094",
+      "sourceId": "fleurs-en_us-test",
+      "sha256": "71ca172220ac41658ab4da1082c29fe392a156076b1a92489fb5b6104a78a76b",
+      "language": "en-US",
+      "durationSeconds": 15.3
+    },
+    {
+      "id": "en_us-test-13345242347208844836",
+      "sourceId": "fleurs-en_us-test",
+      "sha256": "85411e3125cb37800a7c49d32b16c4bc907ed11a6a2171321091e19b8552e4f8",
+      "language": "en-US",
+      "durationSeconds": 6.64
+    },
+    {
+      "id": "en_us-test-2642023010607031328",
+      "sourceId": "fleurs-en_us-test",
+      "sha256": "5d7767bd32bacc74991995de2a0ad8b79274747b5c1b834e654cb366a489dcf9",
+      "language": "en-US",
+      "durationSeconds": 12.12
+    },
+    {
+      "id": "en_us-test-12239464249642485259",
+      "sourceId": "fleurs-en_us-test",
+      "sha256": "a63e19301dab38eed28455ff19676878b5de1c1b0f8d1a7e55c00a16f24845c7",
+      "language": "en-US",
+      "durationSeconds": 7.2
+    },
+    {
+      "id": "en_us-test-14472713183013529731",
+      "sourceId": "fleurs-en_us-test",
+      "sha256": "b0954a1c00c7eb9e4c8c72beb43fdf64cc4604243b5968026ed27a062d0345a2",
+      "language": "en-US",
+      "durationSeconds": 7.2
+    },
+    {
+      "id": "en_us-test-5922110980503615373",
+      "sourceId": "fleurs-en_us-test",
+      "sha256": "a1f332ee924839ac811246eb535207b0d5c77601854b4827422c7501f97dbc1b",
+      "language": "en-US",
+      "durationSeconds": 6.72
+    },
+    {
+      "id": "en_us-test-3664511950771966320",
+      "sourceId": "fleurs-en_us-test",
+      "sha256": "c543678e731e817dbe5ab6b040971b99c227299410b1f30950c0cd1bcddd1fd1",
+      "language": "en-US",
+      "durationSeconds": 8.64
+    },
+    {
+      "id": "en_us-test-4130846879604713113",
+      "sourceId": "fleurs-en_us-test",
+      "sha256": "c5f16f272d44fd764e2a168e6b8e62f0bd657f9d3da3b9647b067fcdcf443cec",
+      "language": "en-US",
+      "durationSeconds": 8.96
+    },
+    {
+      "id": "en_us-test-2013850546771709559",
+      "sourceId": "fleurs-en_us-test",
+      "sha256": "ca2974ef8698d1aeb132782a02aaf50a18707489d1cb132af7a83efbc72bc236",
+      "language": "en-US",
+      "durationSeconds": 6.72
+    },
+    {
+      "id": "en_us-test-15966297335082605286",
+      "sourceId": "fleurs-en_us-test",
+      "sha256": "50b365611f5fd435bbfe941dfaff0e290ef3bc802afa522c0d5d0561846b82b1",
+      "language": "en-US",
+      "durationSeconds": 12.96
+    },
+    {
+      "id": "en_us-test-2074231104398719826",
+      "sourceId": "fleurs-en_us-test",
+      "sha256": "2f216a67a8cbc73fbde8c28c385008ede9126e154943bde046bc76097c211df9",
+      "language": "en-US",
+      "durationSeconds": 9.72
+    },
+    {
+      "id": "en_us-test-4498797456222901763",
+      "sourceId": "fleurs-en_us-test",
+      "sha256": "4a62db45bcb1bae0f37dcf4e94b65f1d3439b50d2e25be3d6b22e3c491d3da90",
+      "language": "en-US",
+      "durationSeconds": 12.96
+    },
+    {
+      "id": "en_us-test-1800879378797955911",
+      "sourceId": "fleurs-en_us-test",
+      "sha256": "fac684f113ac7c37ea97a6823229c728c704aa25da989e06a7b3066cc1974f8e",
+      "language": "en-US",
+      "durationSeconds": 6.98
+    },
+    {
+      "id": "en_us-test-5531306493601107261",
+      "sourceId": "fleurs-en_us-test",
+      "sha256": "a8d54f843649cf4e28b9bceef39184f44246b5226b34169e907a290b0a58dccf",
+      "language": "en-US",
+      "durationSeconds": 10.26
+    },
+    {
+      "id": "en_us-test-12700569942235742079",
+      "sourceId": "fleurs-en_us-test",
+      "sha256": "ee402f535822930cff006abd68057ec5b5c50175cd6e73f5c139ed489d773aff",
+      "language": "en-US",
+      "durationSeconds": 9.66
+    },
+    {
+      "id": "hi_in-test-3550122948577909974",
+      "sourceId": "fleurs-hi_in-test",
+      "sha256": "993d65fe61ea8ef8a4a4bf11c52b2c9c83170537a696be9d9c128deebbb285cf",
+      "language": "hi-IN",
+      "durationSeconds": 6.6
+    },
+    {
+      "id": "hi_in-test-2011804587702312354",
+      "sourceId": "fleurs-hi_in-test",
+      "sha256": "b89778a686e285a7e810cdece1f6f34d5739db1a3a7ebfd4c29131d5a81fad8e",
+      "language": "hi-IN",
+      "durationSeconds": 13.74
+    },
+    {
+      "id": "hi_in-test-9619650182223479168",
+      "sourceId": "fleurs-hi_in-test",
+      "sha256": "d10008ccbf44e2f5f7e863af66984e6d5ada9689377d3d118c768691a0391a4c",
+      "language": "hi-IN",
+      "durationSeconds": 7.2
+    },
+    {
+      "id": "hi_in-test-5393581790967994378",
+      "sourceId": "fleurs-hi_in-test",
+      "sha256": "a4302bfb35168c09bbb483e2b8f9301931c479811c7a04cc81f56728c3d75771",
+      "language": "hi-IN",
+      "durationSeconds": 17.46
+    },
+    {
+      "id": "hi_in-test-11420171604929754563",
+      "sourceId": "fleurs-hi_in-test",
+      "sha256": "305a040a750e4628bad077b6f573acbed0152449abce621bd0516c8bdebcda6c",
+      "language": "hi-IN",
+      "durationSeconds": 14.64
+    },
+    {
+      "id": "hi_in-test-16573110632965818241",
+      "sourceId": "fleurs-hi_in-test",
+      "sha256": "3e6d415fe9c7ee5ebd908c8abe31ef3ce32a9d16e1579fb70b4368ddc4d51af0",
+      "language": "hi-IN",
+      "durationSeconds": 11.58
+    },
+    {
+      "id": "hi_in-test-17863237178605538274",
+      "sourceId": "fleurs-hi_in-test",
+      "sha256": "db41a72172183a75ce6c8e52ac4c36edd980f80b0d0e4afd5deb0b25e2f08660",
+      "language": "hi-IN",
+      "durationSeconds": 9.12
+    },
+    {
+      "id": "hi_in-test-8886702602797259620",
+      "sourceId": "fleurs-hi_in-test",
+      "sha256": "36b03eefa9458baab8ecda9f72fc4e0c3672c06b96fab8ab5ec9238907e2337a",
+      "language": "hi-IN",
+      "durationSeconds": 9.06
+    },
+    {
+      "id": "hi_in-test-11014623647783711221",
+      "sourceId": "fleurs-hi_in-test",
+      "sha256": "d4d3d218c2aaf2c493adf90cb1302afc05f2ce3482f548af1ce99e6d0ccd5a1c",
+      "language": "hi-IN",
+      "durationSeconds": 5.46
+    },
+    {
+      "id": "hi_in-test-1908329718103862127",
+      "sourceId": "fleurs-hi_in-test",
+      "sha256": "afd23964feda0f5e6f0491ad4fcd18eeb72c044e66a9449aa5c4a5f6c9b313cd",
+      "language": "hi-IN",
+      "durationSeconds": 13.56
+    },
+    {
+      "id": "hi_in-test-17086010151221726696",
+      "sourceId": "fleurs-hi_in-test",
+      "sha256": "826d79452a6b50cf75ddf4392fa8c228642c19b067cdcc6fbef0513d1b05e979",
+      "language": "hi-IN",
+      "durationSeconds": 9.54
+    },
+    {
+      "id": "hi_in-test-1307993758979104205",
+      "sourceId": "fleurs-hi_in-test",
+      "sha256": "03d18d6f470b7adaf44845e0a2e5f39719642713cb675728da2ad317a39b0db8",
+      "language": "hi-IN",
+      "durationSeconds": 9.96
+    },
+    {
+      "id": "hi_in-test-14689665761817080227",
+      "sourceId": "fleurs-hi_in-test",
+      "sha256": "3d7af9589ac5d0d36b968cc7ed84748c5f05014631fe461754cae5c265bc811a",
+      "language": "hi-IN",
+      "durationSeconds": 13.08
+    },
+    {
+      "id": "hi_in-test-8407865170997565043",
+      "sourceId": "fleurs-hi_in-test",
+      "sha256": "88d0488d45b8fe4de028f2049cdf3dbbf1f2d7635fdb96d09afefd67e4d301d2",
+      "language": "hi-IN",
+      "durationSeconds": 7.38
+    },
+    {
+      "id": "hi_in-test-17538987337957377962",
+      "sourceId": "fleurs-hi_in-test",
+      "sha256": "c05d8a7f26410cd99d17ad3972b27ba43dff4f29a4789f850dd4fed78154f97f",
+      "language": "hi-IN",
+      "durationSeconds": 19.8
+    },
+    {
+      "id": "hi_in-test-2640562846735193135",
+      "sourceId": "fleurs-hi_in-test",
+      "sha256": "4b655b6ba3afee8f10142f028e6ab595c20e28f21bd3c0f4aaf3e33f141994ec",
+      "language": "hi-IN",
+      "durationSeconds": 9.0
+    },
+    {
+      "id": "hi_in-test-7810041577325288574",
+      "sourceId": "fleurs-hi_in-test",
+      "sha256": "89bdd644c3be5aaf47dd991980cf4ad7fa10967b0cc041ec11fe3e139e5f4895",
+      "language": "hi-IN",
+      "durationSeconds": 5.94
+    },
+    {
+      "id": "hi_in-test-7794801306276043902",
+      "sourceId": "fleurs-hi_in-test",
+      "sha256": "ea046295b634a631c5b8b5c38edc9e073b6639d26c854431b284b591dae297b0",
+      "language": "hi-IN",
+      "durationSeconds": 8.64
+    },
+    {
+      "id": "hi_in-test-11044357197343438539",
+      "sourceId": "fleurs-hi_in-test",
+      "sha256": "5259c5eabc33cc429154714b4298432873d11537f1ddc9ceed0d77003a4e8369",
+      "language": "hi-IN",
+      "durationSeconds": 18.6
+    },
+    {
+      "id": "hi_in-test-8830093559754179628",
+      "sourceId": "fleurs-hi_in-test",
+      "sha256": "020bc5862f6f9d3af590b18ba355382dd5849d553826c778d38de0e3bcc5f56c",
+      "language": "hi-IN",
+      "durationSeconds": 8.46
+    },
+    {
+      "id": "hi_in-test-9848223928915558733",
+      "sourceId": "fleurs-hi_in-test",
+      "sha256": "aa82294a517bc0597575229107a60536c10cf0c3dffe0fbb471161a2d56c461f",
+      "language": "hi-IN",
+      "durationSeconds": 15.3
+    },
+    {
+      "id": "hi_in-test-17757682103941428900",
+      "sourceId": "fleurs-hi_in-test",
+      "sha256": "5fc1d6b6310edcd2fdfda8a0d45de1489a80dea7c0eb365f61ccd3ff7295a297",
+      "language": "hi-IN",
+      "durationSeconds": 6.6
+    },
+    {
+      "id": "hi_in-test-3972087215456952159",
+      "sourceId": "fleurs-hi_in-test",
+      "sha256": "968815e628da75aae4307a14f4c1a0aea3e937282d7364d812952062b5c568c6",
+      "language": "hi-IN",
+      "durationSeconds": 6.6
+    },
+    {
+      "id": "hi_in-test-15275809492376300280",
+      "sourceId": "fleurs-hi_in-test",
+      "sha256": "713292945c68a7fec54e7120b49fedaeeada4501cae03cdf0d72213c0548c282",
+      "language": "hi-IN",
+      "durationSeconds": 5.46
+    }
+  ],
+  "memory": {
+    "entries": 45,
+    "sha256": "99d32f82f121cd52f7816009aec1ebb60501e8a7c0f4567f9c9ed69ac65f4ea1",
+    "calibrationManifestSha256": "4e6d210ef53202e049161b552f0b4e2ce8a27a406e5166f2df05c79dea90e95c",
+    "calibrationReportSha256": "fa6f5fe684b1e01aff480126673b903a482c3d00fa52858a67d4df3db9857ce5"
+  },
+  "artifactProvenance": {
+    "cohere-fresh.json": {
+      "applicationVersion": "0.1.0",
+      "artifacts": [
+        {
+          "archive": null,
+          "backend": null,
+          "license": "Apache-2.0 (original model; export card has no separate license declaration)",
+          "modelId": "CohereLabs/cohere-transcribe-03-2026",
+          "name": "encoder.int8.onnx",
+          "platform": null,
+          "quantization": null,
+          "relativePath": "cohere-transcribe/encoder.int8.onnx",
+          "revision": "156a470cf08eefe706a0004f3c52d9ee567ca7a0",
+          "role": "asr",
+          "sha256": "cf704f8cfa90e3f0a76f9ffc05998bdf00ba9ae983192c14a85a3a5eb008b367",
+          "sizeBytes": 3090822,
+          "url": "https://huggingface.co/csukuangfj2/sherpa-onnx-cohere-transcribe-14-lang-int8-2026-04-01/resolve/156a470cf08eefe706a0004f3c52d9ee567ca7a0/encoder.int8.onnx"
+        },
+        {
+          "archive": null,
+          "backend": null,
+          "license": "Apache-2.0 (original model; export card has no separate license declaration)",
+          "modelId": "CohereLabs/cohere-transcribe-03-2026",
+          "name": "encoder.int8.onnx.data",
+          "platform": null,
+          "quantization": null,
+          "relativePath": "cohere-transcribe/encoder.int8.onnx.data",
+          "revision": "156a470cf08eefe706a0004f3c52d9ee567ca7a0",
+          "role": "asr",
+          "sha256": "bcf1b7148c8518ae52df1ad2d2fc2b4e89261ea23e6c874eef1d9f55bcbaa4a3",
+          "sizeBytes": 2731503072,
+          "url": "https://huggingface.co/csukuangfj2/sherpa-onnx-cohere-transcribe-14-lang-int8-2026-04-01/resolve/156a470cf08eefe706a0004f3c52d9ee567ca7a0/encoder.int8.onnx.data"
+        },
+        {
+          "archive": null,
+          "backend": null,
+          "license": "Apache-2.0 (original model; export card has no separate license declaration)",
+          "modelId": "CohereLabs/cohere-transcribe-03-2026",
+          "name": "decoder.int8.onnx",
+          "platform": null,
+          "quantization": null,
+          "relativePath": "cohere-transcribe/decoder.int8.onnx",
+          "revision": "156a470cf08eefe706a0004f3c52d9ee567ca7a0",
+          "role": "asr",
+          "sha256": "8372ca6c8ff4db8b916ca3592f5c757a715e691b9edec751ba19b29fc854baf9",
+          "sizeBytes": 153250705,
+          "url": "https://huggingface.co/csukuangfj2/sherpa-onnx-cohere-transcribe-14-lang-int8-2026-04-01/resolve/156a470cf08eefe706a0004f3c52d9ee567ca7a0/decoder.int8.onnx"
+        },
+        {
+          "archive": null,
+          "backend": null,
+          "license": "Apache-2.0 (original model; export card has no separate license declaration)",
+          "modelId": "CohereLabs/cohere-transcribe-03-2026",
+          "name": "tokens.txt",
+          "platform": null,
+          "quantization": null,
+          "relativePath": "cohere-transcribe/tokens.txt",
+          "revision": "156a470cf08eefe706a0004f3c52d9ee567ca7a0",
+          "role": "asr",
+          "sha256": "013ede043ae2480e3a9205cc34550d9686100cc682bacc90f702facdfbb93035",
+          "sizeBytes": 207437,
+          "url": "https://huggingface.co/csukuangfj2/sherpa-onnx-cohere-transcribe-14-lang-int8-2026-04-01/resolve/156a470cf08eefe706a0004f3c52d9ee567ca7a0/tokens.txt"
+        }
+      ],
+      "asrRuntime": "sherpa-onnx 1.13.8",
+      "customAsr": null,
+      "customRewriter": null,
+      "rewriterRuntime": null
+    },
+    "nemotron-fresh.json": {
+      "applicationVersion": "0.1.0",
+      "artifacts": [
+        {
+          "archive": null,
+          "backend": null,
+          "license": "OpenMDW-1.1",
+          "modelId": "nvidia/nemotron-3.5-asr-streaming-0.6b",
+          "name": "nemotron-3.5-asr-streaming-0.6b.q8_0.gguf",
+          "platform": null,
+          "quantization": "q8_0",
+          "relativePath": "nemotron-3.5-asr-streaming-0.6b/nemotron-3.5-asr-streaming-0.6b.q8_0.gguf",
+          "revision": "ea30d66debe3740a08b573244286791d423d6b3e",
+          "role": "asr",
+          "sha256": "3fc991d3badad7277c11030a7519832cddaf2057aafed6d4b25147e953a070b1",
+          "sizeBytes": 742090464,
+          "url": "https://huggingface.co/nvidia/nemotron-3.5-asr-streaming-0.6b/resolve/ea30d66debe3740a08b573244286791d423d6b3e/nemotron-3.5-asr-streaming-0.6b.q8_0.gguf"
+        },
+        {
+          "archive": "tar_gz",
+          "backend": "cpu",
+          "license": "Apache-2.0 runtime; bundled third-party notices apply",
+          "modelId": "nvidia/nemotron-3.5-asr-streaming-0.6b",
+          "name": "nemo-speech-0.1.0-macos-aarch64-cpu.tar.gz",
+          "platform": "macos-aarch64",
+          "quantization": null,
+          "relativePath": "nemo-speech-runtime/archives/nemo-speech-0.1.0-macos-aarch64-cpu.tar.gz",
+          "revision": "4f9676226f667d14608487df744f375db87127f8",
+          "role": "asr_runtime",
+          "sha256": "971661d38d4bf97a63c528d13041a964316d25068d8df045e5b4839848092f25",
+          "sizeBytes": 3299661,
+          "url": "https://github.com/NVIDIA/NeMo-Speech.cpp/releases/download/v0.1.0/nemo-speech-0.1.0-macos-aarch64-cpu.tar.gz"
+        }
+      ],
+      "asrRuntime": "NeMo-Speech.cpp 0.1.0",
+      "customAsr": null,
+      "customRewriter": null,
+      "rewriterRuntime": null
+    }
+  },
+  "measuredSourceHashes": {
+    "Cargo.lock": "fc56034af5c639f334a3af028888c5d22d3666c8b699d18801d044c613155102",
+    "apps/desktop/src-tauri/src/commands.rs": "a21033206f9648f6f7617dd549a29a892ae71b511e7f543be96e69a267d811c0",
+    "apps/desktop/src-tauri/src/diagnostics.rs": "f04e68ce96cd22750b326adb2d9c763b736709b570ef617b6b42dfc66bd64ea6",
+    "apps/desktop/src-tauri/src/dictation.rs": "2458a3df63025ef3eed413720c87a09861713ff75b835188c48cbbfa1ad15f15",
+    "apps/desktop/src-tauri/src/lib.rs": "80218c46717d804e579a9112eaf1ae33b1fa7c6f3a96e67f54a920849c70267d",
+    "apps/desktop/src-tauri/src/main.rs": "68ab6e33527e5c95cb61c766cb1094c6a588b29971e43d622a7203536077dded",
+    "apps/desktop/src-tauri/src/menu_bar.rs": "a17f263d0822408687518e41904a5ac78dc4ddbbcfdbc742d83eb0f388a8071e",
+    "apps/desktop/src-tauri/src/resources.rs": "831a3db63dbd055852080573b1bc02abaeb36f92cdaecb1343abed16e2c2bd0e",
+    "apps/desktop/src-tauri/src/runtime.rs": "31db982b6408eaa43b12fad06e914a289d79bc6ce0615a8c2a26a6bd21140ab9",
+    "apps/desktop/src-tauri/src/settings.rs": "e31617723227a133869338bff1ee636fac6ec2f7dc3307d17c3a134cf26c655f",
+    "apps/desktop/src-tauri/src/shortcuts.rs": "d894d662953e9b684ad1b9fda771c0a54a68257109237acf4857b8d7496046ff",
+    "apps/desktop/src-tauri/src/storage.rs": "c49adc3a8aa24b6600d7b821cfff3a5f21c3b860f436cd56ec0f378dc688cc16",
+    "crates/transcribe-audio/src/capture.rs": "328bd1f0f008f5eccb1ae3a4b5fd6a6709666e1ae38ba42b505ee2432ed3a05a",
+    "crates/transcribe-audio/src/decode.rs": "1b9f3296b87273622d1e8fb74b05293bdf4ff45f081df1b7363857611631e146",
+    "crates/transcribe-audio/src/lib.rs": "c03f974d0698b72b964e5279b4063768cd3cf6e3228c38e159357ccc5e78af80",
+    "crates/transcribe-audio/src/pcm.rs": "9103a21b6d24ea60781f11e41fa31a42c9757396fe5e79edbd7962f7caea19cd",
+    "crates/transcribe-audio/src/pitch.rs": "96ca27789403ab5ff58cde551446e391c140663421ad42547cafad3787856ad7",
+    "crates/transcribe-core/examples/memory_replay.rs": "9012a544e103e27c4e5aaff9c325bb65e1d20efeec4fc750053718a35fb3eb28",
+    "crates/transcribe-core/src/adapters.rs": "cd7fb37cb99a3a1dec02c2f5a30b645776df1b82ebed7f77bf11f4434d3bfaa8",
+    "crates/transcribe-core/src/config.rs": "efeb9565bf27333718c7eeb77d99c1de74e25862d5ea89c3530ffcbafefdbb98",
+    "crates/transcribe-core/src/error.rs": "ad50c47d9e62a252aea8d7b73649d783ecc1a972a41b868bf14b9f32a147147a",
+    "crates/transcribe-core/src/huggingface.rs": "ed8837f1c76cf8bf6cb80bbbddcdee535b7838d451dc6cbe1fc11b81ac777f1a",
+    "crates/transcribe-core/src/lib.rs": "14dcf7c76ccc1b4f1a6a7ba4fb3d35871594d0a1d129d76f3ef22f03407c98ad",
+    "crates/transcribe-core/src/memory.rs": "0f4daa4302f5d1b45e4976a41e3b6a6cf196858b71a81c536938aae7743b4c1f",
+    "crates/transcribe-core/src/model.rs": "1a12738a6927777b570f9224c07955a874d0bf584942e29e48597e81f8ef29ee",
+    "crates/transcribe-core/src/personalization.rs": "289904a2354abe4417d074909b9ea6ddabcf0c88ec9809dc66353b5447470802",
+    "crates/transcribe-core/src/transcript.rs": "9a3dfba16fe6686ad116969ca8e7d9311bebbff68559a22e0b2b02c228185c02",
+    "crates/transcribe-data/src/lib.rs": "2ab9d7263a038dbce670cba2d448f9dc2169c5019b9d878bda1adb791e04ae52",
+    "crates/transcribe-data/src/personalization.rs": "648128561b5454c12649518cea2db1da7878e6b0eb479abbdbcd2e1c78d2ec63",
+    "crates/transcribe-desktop-platform/build.rs": "8b1474350a20b1b9d03abee6ed90b1ef30c269827b80e88097a694602551dde0",
+    "crates/transcribe-desktop-platform/src/lib.rs": "968770db4695518a738eab8e9afeb19819eacd199510b0e561f006dca280d19a",
+    "crates/transcribe-eval/examples/audio_frontend.rs": "6d73dbf913f56471652e6592040917b5c0038ae1a39fc19f3d60bc7fe9f429fe",
+    "crates/transcribe-eval/examples/multimodal.rs": "f17388fce1891ae968e7815b62e5ac2dd72b2a146545d01b424a86ec751b349a",
+    "crates/transcribe-eval/src/lib.rs": "e750c86da84222c1cc7636832a7b716c6ef0672d0fb209ee069f1e9fe53c83f8",
+    "crates/transcribe-eval/src/main.rs": "381ac3ed6abf5a6002d28268fadb1b8c2f3734dcd6310fb8769b1d76cf4d6fc4",
+    "crates/transcribe-eval/src/manifest.rs": "e488f693e44d1270aec90930bba4b377ae72cc2e49b681eb6299174ce5a7bbc8",
+    "crates/transcribe-eval/src/memory.rs": "5bf3fba09161e6990e9154bc4d58f1bc9bc14854561d5ba74399e2ae8971ed3c",
+    "crates/transcribe-eval/src/metrics.rs": "c452f29d9a3593933864ce2d37a52dc5671f541ddfe7cd9e59ac6ee012a13a3e",
+    "crates/transcribe-eval/src/recommendation.rs": "02e5c2ef75526d37a43daa69ca8b875a93d3665e51b1ce3b37af58abf5199afe",
+    "crates/transcribe-inference/build.rs": "ee73c2f29dec2359cbf8300b5ea7db23c46e3eee1d61b0137c2472d4404476ac",
+    "crates/transcribe-inference/examples/cleanup.rs": "10daac2e715a1c67e0c482e76fffae1192a6219d805bdcce629cd1c0deb81bd1",
+    "crates/transcribe-inference/examples/memory_cleanup.rs": "dbc21a56e60809145bd7302e2852cd923163bdeb1838dddea42d83893bbdef27",
+    "crates/transcribe-inference/examples/pipeline.rs": "a2045e21c5d278cfb3eaa195349b196cafa464a90b7b67454acef1866bd240c4",
+    "crates/transcribe-inference/src/adapters.rs": "a9c69115261d24a6255987ee28a967d2079208d24ff21a97b234df12700b2fb0",
+    "crates/transcribe-inference/src/capabilities.rs": "e337e773530a040c31884014558ac8677cc298e22b01ba885fa11930c8c11c2b",
+    "crates/transcribe-inference/src/fidelity.rs": "ddff769304ba125abade25b6fd087f88df310fff2daf9d3140f249b11148f2be",
+    "crates/transcribe-inference/src/kyutai.rs": "e0daa871ee76d6fdffa42a3f9e052eaeb4ca7e45bcb17347528cdf7e55853767",
+    "crates/transcribe-inference/src/lfm.rs": "c5660bb81302546dd7d8b31efd03fb5898f3e621706e007282a5476f417c27f5",
+    "crates/transcribe-inference/src/lib.rs": "5a9b25337196bc45fbf41f91de6e01bf20eaaa02edc414e0fc602dcbd058c702",
+    "crates/transcribe-inference/src/llama_runtime.rs": "b194b2caa5918b9544bc50f2d7a6238fb5477e6de46a10ec202dbc6b1beac6e3",
+    "crates/transcribe-inference/src/manager.rs": "91a667359ea8027f59c5de9ab51798cd67507b2522f2f41baf9b3a0b83e95d76",
+    "crates/transcribe-inference/src/nemotron.rs": "ce17f5121179214d0abcafa9be8d388239e22a11210bbf8c5cfe83ceb84f7ed7",
+    "crates/transcribe-inference/src/offline_asr.rs": "1a5779bd0456c8f8fd6cd18b616597cf10528fa6fc87482914c5663db27abe38",
+    "crates/transcribe-inference/src/parakeet.rs": "51c22aa339d2285ff1895b76327ea8d4777f1349611a5e77fe7223ea2feed1c9",
+    "crates/transcribe-inference/src/personalization.rs": "544aee475ee781ede49e05c8662aed9bbab19a55c2ac0aacedc2af5df682a5ac",
+    "crates/transcribe-inference/src/qwen.rs": "0176f0ca76720fd2788eae796e8c03a045dfbeac952662cd5573beb8ca60f287",
+    "crates/transcribe-inference/src/segmented_audio.rs": "d148f4747bc10719ba2ce1a3837c451d17c412e42beb5e327bfeed9872f1006d",
+    "crates/transcribe-models/examples/install.rs": "ad6f51dc7cb3a6a543a47398cfcb30bf07bfcd079c3a1a761cac492b8d96c50b",
+    "crates/transcribe-models/src/lib.rs": "8e3db37622d0ef7f88b44c71ccdd2536099b0dbcea54222cc781beb1277c46cf",
+    "crates/transcribe-models/src/storage.rs": "92e14c811a610224197c635e2f2d18f13dce4323859e2e5ac03781aa25a17be8",
+    "crates/transcribe-nemo/src/lib.rs": "6907f8b5d4a68e9f5af60c9ac038151ae26a22fb9a0408636277675d56542255"
+  },
+  "measuredBinaryHashes": {
+    "target/release/transcribe-eval": "06b7efde4d1b3fb3ee9f93fc1234e16c34fed98d79d868c35445665695e1d273",
+    "target/release/examples/memory_cleanup": "43ba6576ad5aed58e5e05cc2a9f287a1012049c14fc876fc975c55c0a88b4c4d"
+  },
+  "inputAndResultHashes": {
+    "cases.json": "738146644ca6aa9ac86ac72b5c154d65461e361bd93abfa61238612bbbdd2486",
+    "before-corrected.json": "65df701218889a4ddb161e3e76c1557599aabb824e18f0fb63c043ecbe806452",
+    "after.json": "148615b12c28de1edb9876a21d24c3cface6d4237f5691c2f9766d0cb90a35eb",
+    "cleanup-cases.json": "efd70cc40e9a05edab64eb1dd741d0eedb40f8922dc539e95a48b4580600e437",
+    "cleanup-results.json": "9085fdb943410024bd57058d856350f2a5754606d2e195181cef51542f65e5f8",
+    "fresh/holdout.json": "af514af77bfdbc5f0d1eba603be5a231337e7f48271a5dd410aef73f7aee72a0",
+    "results/cohere-fresh.json": "1642338de330edeba56d6bbb185d4fc472dfdc73fddc71e5a45849dacb300f41",
+    "results/nemotron-fresh.json": "a03bd55735d7df3afe14934d0bf0753b93277440e1068ba96525220f79096aed"
+  },
+  "summaries": [
+    {
+      "report": "cohere-fresh.json",
+      "language": "en-US",
+      "manifestSha256": "8af08f0da2024845499fff97ef2cb8d7b19ac31f8237ab3166099077a4ff4665",
+      "profileSha256": "99d32f82f121cd52f7816009aec1ebb60501e8a7c0f4567f9c9ed69ac65f4ea1",
+      "environment": {
+        "label": "m5-pro-memory-followup-cpu",
+        "hardware": "Apple M5 Pro; 18 logical CPUs; 64 GiB RAM",
+        "operatingSystem": "macOS 26.6.2 (25G83)",
+        "powerMode": "AC power; power mode 0; no thermal/performance warning recorded at start",
+        "backend": "cpu",
+        "precision": "Cohere INT8; Qwen Q4_0 when enabled",
+        "threads": 8,
+        "applicationRevision": "592e0084fe5cf486b4d56c575423e9a4f219bfb8+unstaged-sha256:0b93e43264bb85963118424fd0e525a1c5ac3047973e9d71fa4fef8eb1e8eb83",
+        "runtimeRevision": "NeMo-Speech.cpp 4f9676226f667d14608487df744f375db87127f8; llama.cpp e79e4bf660e19f2ad851e06c6913f7a8c5852621; sherpa-onnx 11afbd009a7f8c08f4bcf2fc1b265d0df4670fbf",
+        "driver": "CPU; no accelerator driver",
+        "notes": "Release build. Explicit CPU runtime artifact, no Auto fallback. Corpus replay excludes microphone/UI. Cohere loads per recording; Qwen remains resident after first use when cleanup enabled. Calibrated memory derived only from separate corpus references, not user history. Worker threads clamp to 8; source/manifest/profile hashes accompany report. No competing benchmark during runs. Peak RSS captured separately by /usr/bin/time -l; no continuous power/thermal trace. Follow-up after quote/negation/suggestion guards; 24 new FLEURS clips per language. App worker cap 8; actual NeMo graph threads unknown."
+      },
+      "samples": 24,
+      "failures": 0,
+      "scoredSamples": 24,
+      "audioSeconds": 243.69999999999996,
+      "rawWer": {
+        "edits": 69,
+        "referenceUnits": 597,
+        "percent": 11.557788944723619
+      },
+      "cleanedWer": {
+        "edits": 0,
+        "referenceUnits": 0,
+        "percent": null
+      },
+      "finalWer": {
+        "edits": 68,
+        "referenceUnits": 597,
+        "percent": 11.390284757118929
+      },
+      "rawCer": {
+        "edits": 203,
+        "referenceUnits": 2862,
+        "percent": 7.092941998602376
+      },
+      "finalCer": {
+        "edits": 202,
+        "referenceUnits": 2862,
+        "percent": 7.058001397624039
+      },
+      "changed": 1,
+      "improved": 1,
+      "worsened": 0,
+      "appliedOccurrences": 1,
+      "asrMsP50": 7465.277333999999,
+      "asrMsP95": 7845.55625,
+      "firstPartialMsP50": null,
+      "stopToFinalMsP50": null,
+      "stopToFinalMsP95": null,
+      "memoryMsP95": 0.060708000000000005,
+      "partialUpdates": 0,
+      "partialEditDistance": 0,
+      "examples": [
+        {
+          "id": "en_us-test-776561182148076732",
+          "reference": "the commission was martelly s response to widespread anti regime protests that started in october",
+          "raw": "The commission was Martelli's response to widespread anti-regime protests that started in October.",
+          "cleaned": null,
+          "personalized": "The commission was Martelly's response to widespread anti-regime protests that started in October.",
+          "beforeEdits": 1,
+          "afterEdits": 0,
+          "memory": {
+            "profileRevision": 1,
+            "applied": [
+              {
+                "entryId": "corpus-6",
+                "occurrences": 1
+              }
+            ],
+            "ambiguousMatches": 0,
+            "suggestedIntent": null,
+            "correctionsEnabled": true,
+            "budgetExceeded": false
+          }
+        }
+      ],
+      "asrMsMean": 7542.1003664166665,
+      "memoryMsMean": 0.05419979166666667
+    },
+    {
+      "report": "nemotron-fresh.json",
+      "language": "en-US",
+      "manifestSha256": "af514af77bfdbc5f0d1eba603be5a231337e7f48271a5dd410aef73f7aee72a0",
+      "profileSha256": "99d32f82f121cd52f7816009aec1ebb60501e8a7c0f4567f9c9ed69ac65f4ea1",
+      "environment": {
+        "label": "m5-pro-memory-followup-cpu",
+        "hardware": "Apple M5 Pro; 18 logical CPUs; 64 GiB RAM",
+        "operatingSystem": "macOS 26.6.2 (25G83)",
+        "powerMode": "AC power; power mode 0; no thermal/performance warning recorded at start",
+        "backend": "cpu",
+        "precision": "Nemotron Q8_0; Qwen Q4_0 when enabled",
+        "threads": 8,
+        "applicationRevision": "592e0084fe5cf486b4d56c575423e9a4f219bfb8+unstaged-sha256:0b93e43264bb85963118424fd0e525a1c5ac3047973e9d71fa4fef8eb1e8eb83",
+        "runtimeRevision": "NeMo-Speech.cpp 4f9676226f667d14608487df744f375db87127f8; llama.cpp e79e4bf660e19f2ad851e06c6913f7a8c5852621; sherpa-onnx 11afbd009a7f8c08f4bcf2fc1b265d0df4670fbf",
+        "driver": "CPU; no accelerator driver",
+        "notes": "Release build. Explicit CPU runtime artifact, no Auto fallback. Corpus replay excludes microphone/UI. First sample includes model load; later Nemotron samples use resident weights. Calibrated memory derived only from separate corpus references, not user history. Worker threads clamp to 8; source/manifest/profile hashes accompany report. No competing benchmark during runs. Peak RSS captured separately by /usr/bin/time -l; no continuous power/thermal trace. Follow-up after quote/negation/suggestion guards; 24 new FLEURS clips per language. App worker cap 8; actual NeMo graph threads unknown."
+      },
+      "samples": 24,
+      "failures": 0,
+      "scoredSamples": 24,
+      "audioSeconds": 243.69999999999996,
+      "rawWer": {
+        "edits": 85,
+        "referenceUnits": 597,
+        "percent": 14.23785594639866
+      },
+      "cleanedWer": {
+        "edits": 0,
+        "referenceUnits": 0,
+        "percent": null
+      },
+      "finalWer": {
+        "edits": 84,
+        "referenceUnits": 597,
+        "percent": 14.07035175879397
+      },
+      "rawCer": {
+        "edits": 224,
+        "referenceUnits": 2862,
+        "percent": 7.82669461914745
+      },
+      "finalCer": {
+        "edits": 223,
+        "referenceUnits": 2862,
+        "percent": 7.7917540181691125
+      },
+      "changed": 1,
+      "improved": 1,
+      "worsened": 0,
+      "appliedOccurrences": 1,
+      "asrMsP50": 395.743917,
+      "asrMsP95": 1172.073417,
+      "firstPartialMsP50": null,
+      "stopToFinalMsP50": null,
+      "stopToFinalMsP95": null,
+      "memoryMsP95": 0.051,
+      "partialUpdates": 0,
+      "partialEditDistance": 0,
+      "examples": [
+        {
+          "id": "en_us-test-776561182148076732",
+          "reference": "the commission was martelly s response to widespread anti regime protests that started in october",
+          "raw": "The Commission was Martelli's response to widespread anti regime protests that started in October.",
+          "cleaned": null,
+          "personalized": "The Commission was Martelly's response to widespread anti regime protests that started in October.",
+          "beforeEdits": 1,
+          "afterEdits": 0,
+          "memory": {
+            "profileRevision": 1,
+            "applied": [
+              {
+                "entryId": "corpus-6",
+                "occurrences": 1
+              }
+            ],
+            "ambiguousMatches": 0,
+            "suggestedIntent": null,
+            "correctionsEnabled": true,
+            "budgetExceeded": false
+          }
+        }
+      ],
+      "asrMsMean": 538.00161625,
+      "memoryMsMean": 0.04456941666666667
+    },
+    {
+      "report": "nemotron-fresh.json",
+      "language": "hi-IN",
+      "manifestSha256": "af514af77bfdbc5f0d1eba603be5a231337e7f48271a5dd410aef73f7aee72a0",
+      "profileSha256": "99d32f82f121cd52f7816009aec1ebb60501e8a7c0f4567f9c9ed69ac65f4ea1",
+      "environment": {
+        "label": "m5-pro-memory-followup-cpu",
+        "hardware": "Apple M5 Pro; 18 logical CPUs; 64 GiB RAM",
+        "operatingSystem": "macOS 26.6.2 (25G83)",
+        "powerMode": "AC power; power mode 0; no thermal/performance warning recorded at start",
+        "backend": "cpu",
+        "precision": "Nemotron Q8_0; Qwen Q4_0 when enabled",
+        "threads": 8,
+        "applicationRevision": "592e0084fe5cf486b4d56c575423e9a4f219bfb8+unstaged-sha256:0b93e43264bb85963118424fd0e525a1c5ac3047973e9d71fa4fef8eb1e8eb83",
+        "runtimeRevision": "NeMo-Speech.cpp 4f9676226f667d14608487df744f375db87127f8; llama.cpp e79e4bf660e19f2ad851e06c6913f7a8c5852621; sherpa-onnx 11afbd009a7f8c08f4bcf2fc1b265d0df4670fbf",
+        "driver": "CPU; no accelerator driver",
+        "notes": "Release build. Explicit CPU runtime artifact, no Auto fallback. Corpus replay excludes microphone/UI. First sample includes model load; later Nemotron samples use resident weights. Calibrated memory derived only from separate corpus references, not user history. Worker threads clamp to 8; source/manifest/profile hashes accompany report. No competing benchmark during runs. Peak RSS captured separately by /usr/bin/time -l; no continuous power/thermal trace. Follow-up after quote/negation/suggestion guards; 24 new FLEURS clips per language. App worker cap 8; actual NeMo graph threads unknown."
+      },
+      "samples": 24,
+      "failures": 0,
+      "scoredSamples": 24,
+      "audioSeconds": 252.78000000000006,
+      "rawWer": {
+        "edits": 81,
+        "referenceUnits": 554,
+        "percent": 14.620938628158845
+      },
+      "cleanedWer": {
+        "edits": 0,
+        "referenceUnits": 0,
+        "percent": null
+      },
+      "finalWer": {
+        "edits": 76,
+        "referenceUnits": 554,
+        "percent": 13.71841155234657
+      },
+      "rawCer": {
+        "edits": 127,
+        "referenceUnits": 1281,
+        "percent": 9.914129586260733
+      },
+      "finalCer": {
+        "edits": 122,
+        "referenceUnits": 1281,
+        "percent": 9.523809523809524
+      },
+      "changed": 5,
+      "improved": 5,
+      "worsened": 0,
+      "appliedOccurrences": 5,
+      "asrMsP50": 379.013417,
+      "asrMsP95": 954.0023749999999,
+      "firstPartialMsP50": null,
+      "stopToFinalMsP50": null,
+      "stopToFinalMsP95": null,
+      "memoryMsP95": 0.088709,
+      "partialUpdates": 0,
+      "partialEditDistance": 0,
+      "examples": [
+        {
+          "id": "hi_in-test-2011804587702312354",
+          "reference": "सामान के ट्रांसपोर्ट के लिए जहाज़ों का इस्तेमाल करना समुद्रों के एक सिरे से दूसरे सिरे तक बड़ी मात्रा में लोगों और सामान को लाने और ले जाने का बहुत ज़्यादा प्रभावी तरीका है",
+          "raw": "सामान के ट्रांसपोर्ट के लिए जहाजों का इस्तेमाल करना समुद्रों के लिए एक सिरे से दूसरे सिरे तक बड़ी मात्रा में लोगों और सामान को लाने और ले जाने का बहुत ज्यादा प्रभावी तरीका है।",
+          "cleaned": null,
+          "personalized": "सामान के ट्रांसपोर्ट के लिए जहाजों का इस्तेमाल करना समुद्रों के लिए एक सिरे से दूसरे सिरे तक बड़ी मात्रा में लोगों और सामान को लाने और ले जाने का बहुत ज़्यादा प्रभावी तरीका है।",
+          "beforeEdits": 3,
+          "afterEdits": 2,
+          "memory": {
+            "profileRevision": 1,
+            "applied": [
+              {
+                "entryId": "corpus-18",
+                "occurrences": 1
+              }
+            ],
+            "ambiguousMatches": 0,
+            "suggestedIntent": null,
+            "correctionsEnabled": true,
+            "budgetExceeded": false
+          }
+        },
+        {
+          "id": "hi_in-test-9619650182223479168",
+          "reference": "पहाड़ी इलाकों में ज़्यादा दुर्घटना हुई इसकी वजह आपसी दुश्मनी को माना जाता है",
+          "raw": "पहाड़ी इलाकों में ज्यादा दुर्घटना हुई। इसकी वजह से आपसी दुश्मनी को माना जाता है।",
+          "cleaned": null,
+          "personalized": "पहाड़ी इलाकों में ज़्यादा दुर्घटना हुई। इसकी वजह से आपसी दुश्मनी को माना जाता है।",
+          "beforeEdits": 2,
+          "afterEdits": 1,
+          "memory": {
+            "profileRevision": 1,
+            "applied": [
+              {
+                "entryId": "corpus-18",
+                "occurrences": 1
+              }
+            ],
+            "ambiguousMatches": 0,
+            "suggestedIntent": null,
+            "correctionsEnabled": true,
+            "budgetExceeded": false
+          }
+        },
+        {
+          "id": "hi_in-test-5393581790967994378",
+          "reference": "इसके मुंह के तालु में एक अतिरिक्त सेट के साथ ही 70 से ज़्यादा रेजर की तरह नुकीले दाँतों से भरे इसके लंबे जबड़े थे जिसका अर्थ है कि उसके रास्ते से गुज़रने वाली किसी भी चीज़ के लिए कोई बचाव नहीं था",
+          "raw": "इसके मुंह के तालू में एक अतिरिक्त सेट के साथ ही सत्तर से ज्यादा रेजर की तरह नुकीले दांतों से भरे इसके लंबे जबड़े थे जिसका अर्थ है कि उसके रास्ते से गुजरने वाली किसी भी चीज के लिए कोई बचाव नहीं था।",
+          "cleaned": null,
+          "personalized": "इसके मुंह के तालू में एक अतिरिक्त सेट के साथ ही सत्तर से ज़्यादा रेजर की तरह नुकीले दांतों से भरे इसके लंबे जबड़े थे जिसका अर्थ है कि उसके रास्ते से गुजरने वाली किसी भी चीज के लिए कोई बचाव नहीं था।",
+          "beforeEdits": 6,
+          "afterEdits": 5,
+          "memory": {
+            "profileRevision": 1,
+            "applied": [
+              {
+                "entryId": "corpus-18",
+                "occurrences": 1
+              }
+            ],
+            "ambiguousMatches": 0,
+            "suggestedIntent": null,
+            "correctionsEnabled": true,
+            "budgetExceeded": false
+          }
+        },
+        {
+          "id": "hi_in-test-11420171604929754563",
+          "reference": "ज़्यादा परंपरागत चर्चों में ईस्टर सप्ताहांत में शनिवार रात को ईस्टर विजिल का आयोजन किया जाता है जिसमें लोग क्रिस के पुनर्जन्म का उत्सव मनाने के लिए आधी रात के समय उत्सव मनाना शुरू करते हैं",
+          "raw": "ज्यादा परंपरागत चर्चों में इंस्टर सप्ताह मिश्रनिवार रात को इंस्टर विजिल का आयोजन किया जाता है, जिसमें लोग क्रिस के पुण्य जर्नन का उत्सव मनाने के लिए आधी रात के समय उत्सव मनाना शुरू करते हैं",
+          "cleaned": null,
+          "personalized": "ज़्यादा परंपरागत चर्चों में इंस्टर सप्ताह मिश्रनिवार रात को इंस्टर विजिल का आयोजन किया जाता है, जिसमें लोग क्रिस के पुण्य जर्नन का उत्सव मनाने के लिए आधी रात के समय उत्सव मनाना शुरू करते हैं",
+          "beforeEdits": 8,
+          "afterEdits": 7,
+          "memory": {
+            "profileRevision": 1,
+            "applied": [
+              {
+                "entryId": "corpus-18",
+                "occurrences": 1
+              }
+            ],
+            "ambiguousMatches": 0,
+            "suggestedIntent": null,
+            "correctionsEnabled": true,
+            "budgetExceeded": false
+          }
+        },
+        {
+          "id": "hi_in-test-8886702602797259620",
+          "reference": "शेरों का समूह वयस्क नर के साथ साथ तीस से ज़्यादा मादा और शावकों के साथ एक से तीन तक का बना होता है",
+          "raw": "शेरों का समूह वयस्क नर के साथ साथ तीस से ज्यादा मादा और शावकों के साथ एक से तीन तक का बना होता है।",
+          "cleaned": null,
+          "personalized": "शेरों का समूह वयस्क नर के साथ साथ तीस से ज़्यादा मादा और शावकों के साथ एक से तीन तक का बना होता है।",
+          "beforeEdits": 1,
+          "afterEdits": 0,
+          "memory": {
+            "profileRevision": 1,
+            "applied": [
+              {
+                "entryId": "corpus-18",
+                "occurrences": 1
+              }
+            ],
+            "ambiguousMatches": 0,
+            "suggestedIntent": null,
+            "correctionsEnabled": true,
+            "budgetExceeded": false
+          }
+        }
+      ],
+      "asrMsMean": 495.75953820833337,
+      "memoryMsMean": 0.07542875
+    }
+  ],
+  "controlledCleanup": {
+    "failures": 0,
+    "results": [
+      {
+        "cleaned": "Pspokesman Gordon John Row called North Korea's Pledge a major step towards the goal of achieving the verifiable denuclearization of the Korean Peninsula.",
+        "elapsedMs": 8602.603208,
+        "error": null,
+        "execution": {
+          "operationId": "memory-cleanup-0",
+          "rewriter": {
+            "initializedProvider": "cpu",
+            "metrics": {
+              "outcome": "accepted",
+              "passes": [
+                {
+                  "contextUs": 5513,
+                  "firstTokenUs": 246108,
+                  "generatedTokens": 33,
+                  "generationUs": 166135,
+                  "outcome": "completed",
+                  "pass": "full-cleanup",
+                  "prefillUs": 239683,
+                  "prefilledTokens": 262,
+                  "prefixHit": false,
+                  "promptTokens": 262,
+                  "restoreUs": 0,
+                  "retainedCacheBytes": 0,
+                  "snapshotUs": 0,
+                  "tokenizationUs": 591,
+                  "totalUs": 412980
+                }
+              ],
+              "personalization": {
+                "exampleIds": [],
+                "outputIntent": "verbatim",
+                "profileRevision": 1,
+                "vocabularyIds": []
+              },
+              "personalizationDroppedForBudget": false,
+              "tailDecision": "skipped",
+              "tailPersonalization": null
+            },
+            "operatorPlacement": "unknown"
+          }
+        },
+        "expectedVocabularyIds": [],
+        "id": "0-off",
+        "personalized": {
+          "evidence": {
+            "ambiguousMatches": 0,
+            "applied": [],
+            "budgetExceeded": false,
+            "correctionsEnabled": true,
+            "profileRevision": 1,
+            "suggestedIntent": null
+          },
+          "text": "Pspokesman Gordon John Row called North Korea's Pledge a major step towards the goal of achieving the verifiable denuclearization of the Korean Peninsula."
+        },
+        "raw": "Pspokesman Gordon John Row called North Korea's Pledge a major step towards the goal of achieving the verifiable denuclearization of the Korean Peninsula.",
+        "reference": "bush spokesman gordon johndroe called north korea s pledge a major step towards the goal of achieving the verifiable denuclearization of the korean peninsula",
+        "retrievalPassed": true
+      },
+      {
+        "cleaned": "Pspokesman Gordon John Row called North Korea's Pledge a major step towards the goal of achieving the verifiable denuclearization of the Korean Peninsula.",
+        "elapsedMs": 644.510084,
+        "error": null,
+        "execution": {
+          "operationId": "memory-cleanup-1",
+          "rewriter": {
+            "initializedProvider": "cpu",
+            "metrics": {
+              "outcome": "accepted",
+              "passes": [
+                {
+                  "contextUs": 5551,
+                  "firstTokenUs": 480654,
+                  "generatedTokens": 33,
+                  "generationUs": 162361,
+                  "outcome": "completed",
+                  "pass": "full-cleanup",
+                  "prefillUs": 474469,
+                  "prefilledTokens": 521,
+                  "prefixHit": false,
+                  "promptTokens": 521,
+                  "restoreUs": 0,
+                  "retainedCacheBytes": 0,
+                  "snapshotUs": 0,
+                  "tokenizationUs": 509,
+                  "totalUs": 643964
+                }
+              ],
+              "personalization": {
+                "exampleIds": [
+                  "example-0",
+                  "example-1"
+                ],
+                "outputIntent": "technical",
+                "profileRevision": 1,
+                "vocabularyIds": [
+                  "corpus-1"
+                ]
+              },
+              "personalizationDroppedForBudget": false,
+              "tailDecision": "skipped",
+              "tailPersonalization": null
+            },
+            "operatorPlacement": "unknown"
+          }
+        },
+        "expectedVocabularyIds": [
+          "corpus-1"
+        ],
+        "id": "0-on",
+        "personalized": {
+          "evidence": {
+            "ambiguousMatches": 0,
+            "applied": [
+              {
+                "entryId": "corpus-1",
+                "occurrences": 1
+              }
+            ],
+            "budgetExceeded": false,
+            "correctionsEnabled": true,
+            "profileRevision": 1,
+            "suggestedIntent": {
+              "intent": "technical",
+              "supportingExamples": 2
+            }
+          },
+          "text": "Bush spokesman Gordon Johndroe called North Korea's Pledge a major step towards the goal of achieving the verifiable denuclearization of the Korean Peninsula."
+        },
+        "raw": "Pspokesman Gordon John Row called North Korea's Pledge a major step towards the goal of achieving the verifiable denuclearization of the Korean Peninsula.",
+        "reference": "bush spokesman gordon johndroe called north korea s pledge a major step towards the goal of achieving the verifiable denuclearization of the korean peninsula",
+        "retrievalPassed": true
+      },
+      {
+        "cleaned": "Pspokesman Gordon John Row called North Korea's Pledge a major step towards the goal of achieving the verifiable denuclearization of the Korean Peninsula.",
+        "elapsedMs": 405.586709,
+        "error": null,
+        "execution": {
+          "operationId": "memory-cleanup-2",
+          "rewriter": {
+            "initializedProvider": "cpu",
+            "metrics": {
+              "outcome": "accepted",
+              "passes": [
+                {
+                  "contextUs": 5500,
+                  "firstTokenUs": 241839,
+                  "generatedTokens": 33,
+                  "generationUs": 162738,
+                  "outcome": "completed",
+                  "pass": "full-cleanup",
+                  "prefillUs": 235728,
+                  "prefilledTokens": 262,
+                  "prefixHit": false,
+                  "promptTokens": 262,
+                  "restoreUs": 0,
+                  "retainedCacheBytes": 0,
+                  "snapshotUs": 0,
+                  "tokenizationUs": 489,
+                  "totalUs": 405547
+                }
+              ],
+              "personalization": {
+                "exampleIds": [],
+                "outputIntent": "verbatim",
+                "profileRevision": 1,
+                "vocabularyIds": []
+              },
+              "personalizationDroppedForBudget": false,
+              "tailDecision": "skipped",
+              "tailPersonalization": null
+            },
+            "operatorPlacement": "unknown"
+          }
+        },
+        "expectedVocabularyIds": [],
+        "id": "0-wrong-project",
+        "personalized": {
+          "evidence": {
+            "ambiguousMatches": 0,
+            "applied": [],
+            "budgetExceeded": false,
+            "correctionsEnabled": true,
+            "profileRevision": 1,
+            "suggestedIntent": null
+          },
+          "text": "Pspokesman Gordon John Row called North Korea's Pledge a major step towards the goal of achieving the verifiable denuclearization of the Korean Peninsula."
+        },
+        "raw": "Pspokesman Gordon John Row called North Korea's Pledge a major step towards the goal of achieving the verifiable denuclearization of the Korean Peninsula.",
+        "reference": "bush spokesman gordon johndroe called north korea s pledge a major step towards the goal of achieving the verifiable denuclearization of the korean peninsula",
+        "retrievalPassed": true
+      },
+      {
+        "cleaned": "Pspokesman Gordon John Row called North Korea's Pledge a major step towards the goal of achieving the verifiable denuclearization of the Korean Peninsula.",
+        "elapsedMs": 409.350792,
+        "error": null,
+        "execution": {
+          "operationId": "memory-cleanup-3",
+          "rewriter": {
+            "initializedProvider": "cpu",
+            "metrics": {
+              "outcome": "accepted",
+              "passes": [
+                {
+                  "contextUs": 5358,
+                  "firstTokenUs": 246223,
+                  "generatedTokens": 33,
+                  "generationUs": 162154,
+                  "outcome": "completed",
+                  "pass": "full-cleanup",
+                  "prefillUs": 240262,
+                  "prefilledTokens": 262,
+                  "prefixHit": false,
+                  "promptTokens": 262,
+                  "restoreUs": 0,
+                  "retainedCacheBytes": 0,
+                  "snapshotUs": 0,
+                  "tokenizationUs": 475,
+                  "totalUs": 409305
+                }
+              ],
+              "personalization": {
+                "exampleIds": [],
+                "outputIntent": "verbatim",
+                "profileRevision": 1,
+                "vocabularyIds": []
+              },
+              "personalizationDroppedForBudget": false,
+              "tailDecision": "skipped",
+              "tailPersonalization": null
+            },
+            "operatorPlacement": "unknown"
+          }
+        },
+        "expectedVocabularyIds": [],
+        "id": "0-paused",
+        "personalized": {
+          "evidence": {
+            "ambiguousMatches": 0,
+            "applied": [],
+            "budgetExceeded": false,
+            "correctionsEnabled": true,
+            "profileRevision": 1,
+            "suggestedIntent": null
+          },
+          "text": "Pspokesman Gordon John Row called North Korea's Pledge a major step towards the goal of achieving the verifiable denuclearization of the Korean Peninsula."
+        },
+        "raw": "Pspokesman Gordon John Row called North Korea's Pledge a major step towards the goal of achieving the verifiable denuclearization of the Korean Peninsula.",
+        "reference": "bush spokesman gordon johndroe called north korea s pledge a major step towards the goal of achieving the verifiable denuclearization of the korean peninsula",
+        "retrievalPassed": true
+      },
+      {
+        "cleaned": "Saltwater crocodiles do not actively live in the ocean. Their primary habitat is in River Estuary north from Rockhampton.",
+        "elapsedMs": 377.743791,
+        "error": null,
+        "execution": {
+          "operationId": "memory-cleanup-4",
+          "rewriter": {
+            "initializedProvider": "cpu",
+            "metrics": {
+              "outcome": "accepted",
+              "passes": [
+                {
+                  "contextUs": 5424,
+                  "firstTokenUs": 241625,
+                  "generatedTokens": 27,
+                  "generationUs": 135085,
+                  "outcome": "completed",
+                  "pass": "full-cleanup",
+                  "prefillUs": 235586,
+                  "prefilledTokens": 256,
+                  "prefixHit": false,
+                  "promptTokens": 256,
+                  "restoreUs": 0,
+                  "retainedCacheBytes": 0,
+                  "snapshotUs": 0,
+                  "tokenizationUs": 484,
+                  "totalUs": 377706
+                }
+              ],
+              "personalization": {
+                "exampleIds": [],
+                "outputIntent": "verbatim",
+                "profileRevision": 1,
+                "vocabularyIds": []
+              },
+              "personalizationDroppedForBudget": false,
+              "tailDecision": "skipped",
+              "tailPersonalization": null
+            },
+            "operatorPlacement": "unknown"
+          }
+        },
+        "expectedVocabularyIds": [],
+        "id": "1-off",
+        "personalized": {
+          "evidence": {
+            "ambiguousMatches": 0,
+            "applied": [],
+            "budgetExceeded": false,
+            "correctionsEnabled": true,
+            "profileRevision": 1,
+            "suggestedIntent": null
+          },
+          "text": "Saltwater crocodiles do not actively live in the ocean. Their primary habitat is in River Estuary north from Rockhampton."
+        },
+        "raw": "Saltwater crocodiles do not actively live in the ocean. Their primary habitat is in River Estuary north from Rockhampton.",
+        "reference": "saltwater crocodiles do not actively live in the ocean their primary habitat is in river estuaries north from rockhampton",
+        "retrievalPassed": true
+      },
+      {
+        "cleaned": "Saltwater crocodiles do not actively live in the ocean. Their primary habitat is in River Estuary north from Rockhampton.",
+        "elapsedMs": 582.244875,
+        "error": null,
+        "execution": {
+          "operationId": "memory-cleanup-5",
+          "rewriter": {
+            "initializedProvider": "cpu",
+            "metrics": {
+              "outcome": "accepted",
+              "passes": [
+                {
+                  "contextUs": 5542,
+                  "firstTokenUs": 447904,
+                  "generatedTokens": 27,
+                  "generationUs": 132868,
+                  "outcome": "completed",
+                  "pass": "full-cleanup",
+                  "prefillUs": 441735,
+                  "prefilledTokens": 483,
+                  "prefixHit": false,
+                  "promptTokens": 483,
+                  "restoreUs": 0,
+                  "retainedCacheBytes": 0,
+                  "snapshotUs": 0,
+                  "tokenizationUs": 502,
+                  "totalUs": 581761
+                }
+              ],
+              "personalization": {
+                "exampleIds": [
+                  "example-0",
+                  "example-1"
+                ],
+                "outputIntent": "technical",
+                "profileRevision": 1,
+                "vocabularyIds": [
+                  "corpus-2"
+                ]
+              },
+              "personalizationDroppedForBudget": false,
+              "tailDecision": "skipped",
+              "tailPersonalization": null
+            },
+            "operatorPlacement": "unknown"
+          }
+        },
+        "expectedVocabularyIds": [
+          "corpus-2"
+        ],
+        "id": "1-on",
+        "personalized": {
+          "evidence": {
+            "ambiguousMatches": 0,
+            "applied": [
+              {
+                "entryId": "corpus-2",
+                "occurrences": 1
+              }
+            ],
+            "budgetExceeded": false,
+            "correctionsEnabled": true,
+            "profileRevision": 1,
+            "suggestedIntent": {
+              "intent": "technical",
+              "supportingExamples": 2
+            }
+          },
+          "text": "Saltwater crocodiles do not actively live in the ocean. Their primary habitat is in River estuaries north from Rockhampton."
+        },
+        "raw": "Saltwater crocodiles do not actively live in the ocean. Their primary habitat is in River Estuary north from Rockhampton.",
+        "reference": "saltwater crocodiles do not actively live in the ocean their primary habitat is in river estuaries north from rockhampton",
+        "retrievalPassed": true
+      },
+      {
+        "cleaned": "Saltwater crocodiles do not actively live in the ocean. Their primary habitat is in River Estuary north from Rockhampton.",
+        "elapsedMs": 375.26166700000005,
+        "error": null,
+        "execution": {
+          "operationId": "memory-cleanup-6",
+          "rewriter": {
+            "initializedProvider": "cpu",
+            "metrics": {
+              "outcome": "accepted",
+              "passes": [
+                {
+                  "contextUs": 5653,
+                  "firstTokenUs": 234450,
+                  "generatedTokens": 27,
+                  "generationUs": 139344,
+                  "outcome": "completed",
+                  "pass": "full-cleanup",
+                  "prefillUs": 228179,
+                  "prefilledTokens": 256,
+                  "prefixHit": false,
+                  "promptTokens": 256,
+                  "restoreUs": 0,
+                  "retainedCacheBytes": 0,
+                  "snapshotUs": 0,
+                  "tokenizationUs": 491,
+                  "totalUs": 375218
+                }
+              ],
+              "personalization": {
+                "exampleIds": [],
+                "outputIntent": "verbatim",
+                "profileRevision": 1,
+                "vocabularyIds": []
+              },
+              "personalizationDroppedForBudget": false,
+              "tailDecision": "skipped",
+              "tailPersonalization": null
+            },
+            "operatorPlacement": "unknown"
+          }
+        },
+        "expectedVocabularyIds": [],
+        "id": "1-wrong-project",
+        "personalized": {
+          "evidence": {
+            "ambiguousMatches": 0,
+            "applied": [],
+            "budgetExceeded": false,
+            "correctionsEnabled": true,
+            "profileRevision": 1,
+            "suggestedIntent": null
+          },
+          "text": "Saltwater crocodiles do not actively live in the ocean. Their primary habitat is in River Estuary north from Rockhampton."
+        },
+        "raw": "Saltwater crocodiles do not actively live in the ocean. Their primary habitat is in River Estuary north from Rockhampton.",
+        "reference": "saltwater crocodiles do not actively live in the ocean their primary habitat is in river estuaries north from rockhampton",
+        "retrievalPassed": true
+      },
+      {
+        "cleaned": "Saltwater crocodiles do not actively live in the ocean. Their primary habitat is in River Estuary north from Rockhampton.",
+        "elapsedMs": 389.715583,
+        "error": null,
+        "execution": {
+          "operationId": "memory-cleanup-7",
+          "rewriter": {
+            "initializedProvider": "cpu",
+            "metrics": {
+              "outcome": "accepted",
+              "passes": [
+                {
+                  "contextUs": 6782,
+                  "firstTokenUs": 242090,
+                  "generatedTokens": 27,
+                  "generationUs": 145602,
+                  "outcome": "completed",
+                  "pass": "full-cleanup",
+                  "prefillUs": 234574,
+                  "prefilledTokens": 256,
+                  "prefixHit": false,
+                  "promptTokens": 256,
+                  "restoreUs": 0,
+                  "retainedCacheBytes": 0,
+                  "snapshotUs": 0,
+                  "tokenizationUs": 580,
+                  "totalUs": 389656
+                }
+              ],
+              "personalization": {
+                "exampleIds": [],
+                "outputIntent": "verbatim",
+                "profileRevision": 1,
+                "vocabularyIds": []
+              },
+              "personalizationDroppedForBudget": false,
+              "tailDecision": "skipped",
+              "tailPersonalization": null
+            },
+            "operatorPlacement": "unknown"
+          }
+        },
+        "expectedVocabularyIds": [],
+        "id": "1-paused",
+        "personalized": {
+          "evidence": {
+            "ambiguousMatches": 0,
+            "applied": [],
+            "budgetExceeded": false,
+            "correctionsEnabled": true,
+            "profileRevision": 1,
+            "suggestedIntent": null
+          },
+          "text": "Saltwater crocodiles do not actively live in the ocean. Their primary habitat is in River Estuary north from Rockhampton."
+        },
+        "raw": "Saltwater crocodiles do not actively live in the ocean. Their primary habitat is in River Estuary north from Rockhampton.",
+        "reference": "saltwater crocodiles do not actively live in the ocean their primary habitat is in river estuaries north from rockhampton",
+        "retrievalPassed": true
+      }
+    ],
+    "schemaVersion": 1,
+    "source": {
+      "kind": "controlled-public-calibration-replay",
+      "note": "Vocabulary/oracle reference from calibration; repeated examples and technical intent labels are simulated. This is not held-out intent or ASR accuracy."
+    }
+  },
+  "cleanupArtifact": {
+    "archive": null,
+    "backend": null,
+    "license": "Apache-2.0",
+    "modelId": "Qwen/Qwen3.5-0.8B",
+    "name": "Qwen3.5-0.8B-Q4_0.gguf",
+    "platform": null,
+    "quantization": "q4_0",
+    "relativePath": "qwen3.5-0.8b/Qwen3.5-0.8B-Q4_0.gguf",
+    "revision": "8fea620810c4afa23dd6443f999a48574c1611a3",
+    "role": "rewriter",
+    "sha256": "57d1997790d1744fba5b40a7317df71ea5e2acee28c47e78f0cce39c0703f8cf",
+    "sizeBytes": 563036064,
+    "url": "https://huggingface.co/ggml-org/Qwen3.5-0.8B-GGUF/resolve/8fea620810c4afa23dd6443f999a48574c1611a3/Qwen3.5-0.8B-Q4_0.gguf"
+  },
+  "cleanupRuntime": "llama-cpp-2 0.1.156",
+  "processResources": [
+    {
+      "log": "nemotron-fresh.log",
+      "peakRssBytes": 1155022848,
+      "processElapsedSeconds": 25.08
+    },
+    {
+      "log": "cleanup.log",
+      "peakRssBytes": 1345536000,
+      "processElapsedSeconds": 12.52
+    },
+    {
+      "log": "cohere-fresh.log",
+      "peakRssBytes": 4630331392,
+      "processElapsedSeconds": 181.12
+    }
+  ],
+  "verification": {
+    "rustTestsPassed": 178,
+    "nodeTestsPassed": 68,
+    "optionalRustTestsIgnoredByDefault": 15,
+    "explicitTests": {
+      "publicDataStore": {
+        "passed": true,
+        "logSha256": "5b3d9dec62cac491220bab516f4596ab2217918c73e2d9c5c570d1ce3c474ee2"
+      },
+      "nemotronCancelReset": {
+        "passed": true,
+        "logSha256": "b7509860aab503c81d630932d9b1beac7a42713cfa1d15fd7867c92a3ff71a3e"
+      },
+      "qwenPrefixAndProfileReset": {
+        "passed": true,
+        "logSha256": "563b3a5a0833187f9c2f896360e88dbd10a8eb20fd6d42310bd74069202511d4"
+      }
+    },
+    "requiredChecksPassed": true,
+    "browser": "Synthetic command fixture: confirm pronunciation, undo, pause/save, queue navigation, save-error recovery/discard; no observed browser errors after fixture mount.",
+    "browserScreenshot": "Local temporary artifact transcribe-memory-ui-save-recovery.png; visually inspected."
+  },
+  "limitations": [
+    "No microphone/room/noise/UI-to-native timing qualification.",
+    "No acoustic accent adaptation or model training.",
+    "Intent labels and repeated cleanup examples are authored simulations; unchanged cleanup wording does not prove style benefit.",
+    "The prior Cohere duration_token_limit failure is not claimed fixed by application-memory changes.",
+    "Eight-worker app cap is not a verified NeMo internal thread setting; no continuous thermal trace.",
+    "The CPU selection in an optional test and additional cleanup assertion checks were added after the measured release binaries were built; inference behavior was unchanged."
+  ]
+}

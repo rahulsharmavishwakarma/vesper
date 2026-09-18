@@ -1,0 +1,815 @@
+{
+  "schemaVersion": 1,
+  "date": "2026-09-17",
+  "evidenceClass": "bounded policy-search prototype; constructed interactions and cached public-hypothesis replay, no new ASR run",
+  "applicationRevision": "592e0084fe5cf486b4d56c575423e9a4f219bfb8 plus unstaged files identified below",
+  "sourceSha256": {
+    "Cargo.lock": "ca1b2c81c095c83f9ce4780a9be5e759657573dc5a15649ebee7e93c4f8e48b0",
+    "crates/transcribe-core/src/learning.rs": "6408cd177ad99931581fcea505f3e8f6ef0d70ff932cc276ce4642e98f062842",
+    "crates/transcribe-core/src/memory.rs": "ad2caa5759f01ce86960ad436deae9d949de3f4a0693fc36c7f1ebeae76da24d",
+    "crates/transcribe-core/src/personalization.rs": "c8f0b8efaa0b7c6f2d6effaca3a5b86bef37c68fcd5d2fe3b54b15acde073949",
+    "crates/transcribe-data/src/learning.rs": "6aac462ad980b9741267c5575454c10b0933f5598c71d934d8a014cee30bdee8",
+    "crates/transcribe-data/src/personalization.rs": "5cde71b07145a276ac22c3c9f252fac13af668c3d6b017c8b50f069f212ae225",
+    "crates/transcribe-data/src/lib.rs": "76d636af0542e4157f1c68396d49abab1258df3854089b54c51e27ac3c0b31ac",
+    "crates/transcribe-data/examples/policy_learning_replay.rs": "5e1b73706b3ef4dd4acff80a02e90a56f0f397e6c8df7a237f5c632cf66becb8",
+    "scripts/prepare-policy-learning-replay.py": "b69fddfbee2822be20b37295048c6f5d24f7c5a193ca8518e3c4ac920bb07f13",
+    "benchmarks/asr/fixtures/policy-learning-episodes.json": "b1f513b8c4934469057614acce936751ee1903abfca55bb01ed0ac548ea70818"
+  },
+  "binarySha256": "e1fa2ef0dfcf9f1b34457f9360bfb3138dccee16c7034eac32d269fb6429c598",
+  "environment": {
+    "hardware": "Apple M5 Pro (Mac17,8), 64 GiB RAM",
+    "os": "macOS 27.0 (26A428)",
+    "rust": "rustc 1.98.1 (48a229cea 2026-09-01)",
+    "cargo": "cargo 1.98.1 (797e8a9bc 2026-08-05)",
+    "build": "release; locked dependencies",
+    "backend": "CPU; sequential policy replay; no models loaded",
+    "inferenceThreads": "not applicable",
+    "powerThermalsPeakMemory": "not measured; not end-to-end resource qualification",
+    "cacheState": "warm open SQLite connection per learner; chronological growth; disk cache not cleared"
+  },
+  "scoreDefinition": "core word_edits (lowercase whitespace tokens with edge punctuation trimmed), not transcribe-eval normalized WER; harmful means more word edits than raw input, not an independent human semantic rating",
+  "cachedAsrProvenance": {
+    "modelVersions": {
+      "asr": {
+        "adapter": {
+          "architecture": "nemo_cache_aware_fastconformer_rnnt",
+          "capabilities": {
+            "backends": [
+              "auto",
+              "cpu",
+              "metal",
+              "cuda",
+              "vulkan",
+              "rocm"
+            ],
+            "cacheState": "rnnt",
+            "completePrefixState": false,
+            "completionReport": false,
+            "contextualPhrases": true,
+            "languages": [
+              "auto",
+              "en",
+              "hi",
+              "fr"
+            ],
+            "nativeStreaming": true,
+            "offline": true,
+            "residentWeights": true
+          },
+          "kind": "nemo_rnnt",
+          "runtime": "NeMo-Speech.cpp",
+          "runtimeRevision": "4f9676226f667d14608487df744f375db87127f8",
+          "task": "speech_recognition"
+        },
+        "artifactFiles": [
+          "nemotron-3.5-asr-streaming-0.6b.q8_0.gguf"
+        ],
+        "executionEvidence": "not-observed",
+        "interface": "versioned-c-abi",
+        "languageMode": "prompted-or-automatic",
+        "modelId": "nvidia/nemotron-3.5-asr-streaming-0.6b",
+        "modelLifetime": "resident-until-selection-change-or-exit",
+        "provider": null,
+        "requestedBackend": "cpu",
+        "runtime": "NeMo-Speech.cpp",
+        "runtimeRevision": "4f9676226f667d14608487df744f375db87127f8",
+        "runtimeVersion": "0.1.0",
+        "selectedProvider": "cpu",
+        "streamingMode": "native-live-microphone-and-offline-file"
+      },
+      "rewriter": null
+    },
+    "artifactProvenance": {
+      "applicationVersion": "0.1.0",
+      "artifacts": [
+        {
+          "archive": null,
+          "backend": null,
+          "license": "OpenMDW-1.1",
+          "modelId": "nvidia/nemotron-3.5-asr-streaming-0.6b",
+          "name": "nemotron-3.5-asr-streaming-0.6b.q8_0.gguf",
+          "platform": null,
+          "quantization": "q8_0",
+          "relativePath": "nemotron-3.5-asr-streaming-0.6b/nemotron-3.5-asr-streaming-0.6b.q8_0.gguf",
+          "revision": "ea30d66debe3740a08b573244286791d423d6b3e",
+          "role": "asr",
+          "sha256": "3fc991d3badad7277c11030a7519832cddaf2057aafed6d4b25147e953a070b1",
+          "sizeBytes": 742090464,
+          "url": "https://huggingface.co/nvidia/nemotron-3.5-asr-streaming-0.6b/resolve/ea30d66debe3740a08b573244286791d423d6b3e/nemotron-3.5-asr-streaming-0.6b.q8_0.gguf"
+        },
+        {
+          "archive": "tar_gz",
+          "backend": "cpu",
+          "license": "Apache-2.0 runtime; bundled third-party notices apply",
+          "modelId": "nvidia/nemotron-3.5-asr-streaming-0.6b",
+          "name": "nemo-speech-0.1.0-macos-aarch64-cpu.tar.gz",
+          "platform": "macos-aarch64",
+          "quantization": null,
+          "relativePath": "nemo-speech-runtime/archives/nemo-speech-0.1.0-macos-aarch64-cpu.tar.gz",
+          "revision": "4f9676226f667d14608487df744f375db87127f8",
+          "role": "asr_runtime",
+          "sha256": "971661d38d4bf97a63c528d13041a964316d25068d8df045e5b4839848092f25",
+          "sizeBytes": 3299661,
+          "url": "https://github.com/NVIDIA/NeMo-Speech.cpp/releases/download/v0.1.0/nemo-speech-0.1.0-macos-aarch64-cpu.tar.gz"
+        }
+      ],
+      "asrRuntime": "NeMo-Speech.cpp 0.1.0",
+      "customAsr": null,
+      "customRewriter": null,
+      "rewriterRuntime": null
+    },
+    "environment": {
+      "label": "m5-pro-local-memory-cpu",
+      "hardware": "Apple M5 Pro; 18 logical CPUs; 64 GiB RAM",
+      "operatingSystem": "macOS 26.6.2 (25G83)",
+      "powerMode": "AC power; power mode 0; no thermal/performance warning recorded at start",
+      "backend": "cpu",
+      "precision": "Nemotron Q8_0; Qwen Q4_0 when enabled",
+      "threads": 8,
+      "applicationRevision": "592e0084fe5cf486b4d56c575423e9a4f219bfb8+unstaged-sha256:b309d037b1c4e444ed764efc1dd78e4cec64317be5cd0aa0e0ddce2789d44089",
+      "runtimeRevision": "NeMo-Speech.cpp 4f9676226f667d14608487df744f375db87127f8; llama.cpp e79e4bf660e19f2ad851e06c6913f7a8c5852621; sherpa-onnx 11afbd009a7f8c08f4bcf2fc1b265d0df4670fbf",
+      "driver": "CPU; no accelerator driver",
+      "notes": "Release build. Explicit CPU runtime artifact, no Auto fallback. Corpus replay excludes microphone/UI. First sample includes model load; later Nemotron samples use resident weights. Calibrated memory derived only from separate corpus references, not user history. Worker threads clamp to 8; source/manifest/profile hashes accompany report. No competing benchmark during runs. Peak RSS captured separately by /usr/bin/time -l; no continuous power/thermal trace."
+    }
+  },
+  "results": {
+    "constructed": {
+      "adaptiveMemoryCount": 20,
+      "allEpisodes": {
+        "adaptiveHarmfulComparedWithRaw": 10,
+        "adaptiveWordEdits": 68,
+        "attempted": 66,
+        "baselineHarmfulComparedWithRaw": 14,
+        "baselineWordEdits": 68,
+        "failureRows": 0,
+        "improved": 4,
+        "rawWordEdits": 72,
+        "regressed": 4,
+        "scored": 66
+      },
+      "baselineMemoryCount": 20,
+      "decisions": [
+        {
+          "action": "promoted",
+          "active": {
+            "contextOverlap": 1,
+            "supportFloor": 1
+          },
+          "development": {
+            "candidateErrors": 0,
+            "candidateHarmful": 0,
+            "cases": 4,
+            "failures": [],
+            "improved": 2,
+            "incumbentErrors": 4,
+            "incumbentHarmful": 2,
+            "independentCases": 4,
+            "regressed": 0
+          },
+          "previous": {
+            "contextOverlap": 0,
+            "supportFloor": 1
+          },
+          "proposed": {
+            "contextOverlap": 1,
+            "supportFloor": 1
+          },
+          "reason": "Proposal improved development and fresh validation with no per-case regressions.",
+          "rollback": null,
+          "round": "context",
+          "validation": {
+            "candidateErrors": 0,
+            "candidateHarmful": 0,
+            "cases": 4,
+            "failures": [],
+            "improved": 2,
+            "incumbentErrors": 4,
+            "incumbentHarmful": 2,
+            "independentCases": 4,
+            "regressed": 0
+          }
+        },
+        {
+          "action": "promoted",
+          "active": {
+            "contextOverlap": 1,
+            "supportFloor": 2
+          },
+          "development": {
+            "candidateErrors": 0,
+            "candidateHarmful": 0,
+            "cases": 4,
+            "failures": [],
+            "improved": 2,
+            "incumbentErrors": 4,
+            "incumbentHarmful": 2,
+            "independentCases": 4,
+            "regressed": 0
+          },
+          "previous": {
+            "contextOverlap": 1,
+            "supportFloor": 1
+          },
+          "proposed": {
+            "contextOverlap": 1,
+            "supportFloor": 2
+          },
+          "reason": "Proposal improved development and fresh validation with no per-case regressions.",
+          "rollback": {
+            "candidateErrors": 4,
+            "candidateHarmful": 2,
+            "cases": 4,
+            "failures": [],
+            "improved": 0,
+            "incumbentErrors": 4,
+            "incumbentHarmful": 2,
+            "independentCases": 4,
+            "regressed": 0
+          },
+          "round": "independent-support",
+          "validation": {
+            "candidateErrors": 0,
+            "candidateHarmful": 0,
+            "cases": 4,
+            "failures": [],
+            "improved": 2,
+            "incumbentErrors": 4,
+            "incumbentHarmful": 2,
+            "independentCases": 4,
+            "regressed": 0
+          }
+        },
+        {
+          "action": "rolled_back",
+          "active": {
+            "contextOverlap": 1,
+            "supportFloor": 1
+          },
+          "development": null,
+          "previous": {
+            "contextOverlap": 1,
+            "supportFloor": 2
+          },
+          "proposed": {
+            "contextOverlap": 1,
+            "supportFloor": 1
+          },
+          "reason": "Fresh independent feedback favors the saved previous policy without per-case regression.",
+          "rollback": {
+            "candidateErrors": 0,
+            "candidateHarmful": 0,
+            "cases": 4,
+            "failures": [],
+            "improved": 2,
+            "incumbentErrors": 4,
+            "incumbentHarmful": 0,
+            "independentCases": 4,
+            "regressed": 0
+          },
+          "round": "distribution-change",
+          "validation": null
+        }
+      ],
+      "experimentVersion": 1,
+      "finalPolicy": {
+        "contextOverlap": 1,
+        "supportFloor": 1
+      },
+      "finalTest": {
+        "adaptiveHarmfulComparedWithRaw": 2,
+        "adaptiveWordEdits": 4,
+        "attempted": 8,
+        "baselineHarmfulComparedWithRaw": 2,
+        "baselineWordEdits": 4,
+        "failureRows": 0,
+        "improved": 0,
+        "rawWordEdits": 2,
+        "regressed": 0,
+        "scored": 8
+      },
+      "fixedComparatorLimit": "Post-hoc six-policy comparison; the best fixed policy is not controller input.",
+      "fixedPolicyComparators": [
+        {
+          "heldout": {
+            "attempted": 20,
+            "failureRows": 0,
+            "harmfulComparedWithRaw": 6,
+            "scored": 20,
+            "wordEdits": 12
+          },
+          "policy": {
+            "contextOverlap": 0,
+            "supportFloor": 1
+          }
+        },
+        {
+          "heldout": {
+            "attempted": 20,
+            "failureRows": 0,
+            "harmfulComparedWithRaw": 4,
+            "scored": 20,
+            "wordEdits": 8
+          },
+          "policy": {
+            "contextOverlap": 1,
+            "supportFloor": 1
+          }
+        },
+        {
+          "heldout": {
+            "attempted": 20,
+            "failureRows": 0,
+            "harmfulComparedWithRaw": 0,
+            "scored": 20,
+            "wordEdits": 4
+          },
+          "policy": {
+            "contextOverlap": 0,
+            "supportFloor": 2
+          }
+        },
+        {
+          "heldout": {
+            "attempted": 20,
+            "failureRows": 0,
+            "harmfulComparedWithRaw": 0,
+            "scored": 20,
+            "wordEdits": 4
+          },
+          "policy": {
+            "contextOverlap": 1,
+            "supportFloor": 2
+          }
+        },
+        {
+          "heldout": {
+            "attempted": 20,
+            "failureRows": 0,
+            "harmfulComparedWithRaw": 0,
+            "scored": 20,
+            "wordEdits": 4
+          },
+          "policy": {
+            "contextOverlap": 0,
+            "supportFloor": 3
+          }
+        },
+        {
+          "heldout": {
+            "attempted": 20,
+            "failureRows": 0,
+            "harmfulComparedWithRaw": 0,
+            "scored": 20,
+            "wordEdits": 4
+          },
+          "policy": {
+            "contextOverlap": 1,
+            "supportFloor": 3
+          }
+        }
+      ],
+      "gates": {
+        "maximumRegressed": 0,
+        "minimumImproved": 2,
+        "minimumIndependentFeedback": 4,
+        "strictWordEditReduction": true
+      },
+      "heldout": {
+        "adaptiveHarmfulComparedWithRaw": 2,
+        "adaptiveWordEdits": 4,
+        "attempted": 20,
+        "baselineHarmfulComparedWithRaw": 6,
+        "baselineWordEdits": 12,
+        "failureRows": 0,
+        "improved": 4,
+        "rawWordEdits": 12,
+        "regressed": 0,
+        "scored": 20
+      },
+      "initialPolicy": {
+        "contextOverlap": 0,
+        "supportFloor": 1
+      },
+      "kind": "offline bounded eligibility-policy search; no live integration or open-ended algorithm discovery",
+      "manifestSha256": "b1f513b8c4934469057614acce936751ee1903abfca55bb01ed0ac548ea70818",
+      "policyFamily": {
+        "contextOverlap": [
+          0,
+          1
+        ],
+        "proposal": "one-coordinate neighbors only",
+        "supportFloor": [
+          1,
+          2,
+          3
+        ]
+      },
+      "schemaVersion": 1,
+      "source": {
+        "expectedDecisionSequence": [
+          "promoted",
+          "promoted",
+          "rolled_back"
+        ],
+        "kind": "authored synthetic feedback with externally supplied desired-text labels",
+        "limitation": "Includes explicit outcome labels on unchanged outputs; not passive user behavior or a real-user study.",
+        "note": "Expected decisions are report metadata, never passed to the controller. Adverse final cases retained.",
+        "protocol": "policy family 3x2; one-coordinate proposals; >=4 independent feedback cases, >=2 improved, zero regressed; fresh validation and held-out audit"
+      },
+      "timing": {
+        "application": {
+          "count": 66,
+          "meanMs": 0.019641484848484846,
+          "p50Ms": 0.019292,
+          "p95Ms": 0.027041000000000003,
+          "p99Ms": 0.044833000000000005
+        },
+        "feedback": {
+          "count": 46,
+          "meanMs": 0.2461259130434782,
+          "p50Ms": 0.23775000000000002,
+          "p95Ms": 0.312709,
+          "p99Ms": 0.354
+        },
+        "proposal": {
+          "count": 3,
+          "meanMs": 0.36544466666666664,
+          "p50Ms": 0.315334,
+          "p95Ms": 0.481083,
+          "p99Ms": 0.481083
+        },
+        "validationAndRollback": {
+          "count": 3,
+          "meanMs": 0.29506933333333335,
+          "p50Ms": 0.241125,
+          "p95Ms": 0.450083,
+          "p99Ms": 0.450083
+        }
+      },
+      "timingDefinitions": {
+        "application": "clone/filter existing profile and guarded application; excludes SQLite snapshot read",
+        "feedback": "existing open SQLite learner transaction plus metadata update; excludes connection setup",
+        "proposal": "bounded neighbor comparison on pre-event snapshots",
+        "validationAndRollback": "fresh feedback comparison, rollback and policy decision; in-memory"
+      },
+      "fullResultsSha256": "16227c8c72e1c54e2b534cf5e29f0a146655188757e98c043c2b3af0489dc310",
+      "languageHeldout": {
+        "en": {
+          "attempted": 20,
+          "baselineWordEdits": 12,
+          "adaptiveWordEdits": 4,
+          "failureRows": 0
+        }
+      }
+    },
+    "public": {
+      "adaptiveMemoryCount": 0,
+      "allEpisodes": {
+        "adaptiveHarmfulComparedWithRaw": 0,
+        "adaptiveWordEdits": 737,
+        "attempted": 240,
+        "baselineHarmfulComparedWithRaw": 0,
+        "baselineWordEdits": 737,
+        "failureRows": 0,
+        "improved": 0,
+        "rawWordEdits": 737,
+        "regressed": 0,
+        "scored": 240
+      },
+      "baselineMemoryCount": 0,
+      "decisions": [
+        {
+          "action": "unchanged",
+          "active": {
+            "contextOverlap": 0,
+            "supportFloor": 1
+          },
+          "development": null,
+          "previous": {
+            "contextOverlap": 0,
+            "supportFloor": 1
+          },
+          "proposed": null,
+          "reason": "Insufficient independent evidence, no strict gain, or a regression/failure; retain incumbent.",
+          "rollback": null,
+          "round": "public-1",
+          "validation": null
+        },
+        {
+          "action": "unchanged",
+          "active": {
+            "contextOverlap": 0,
+            "supportFloor": 1
+          },
+          "development": null,
+          "previous": {
+            "contextOverlap": 0,
+            "supportFloor": 1
+          },
+          "proposed": null,
+          "reason": "Insufficient independent evidence, no strict gain, or a regression/failure; retain incumbent.",
+          "rollback": null,
+          "round": "public-2",
+          "validation": null
+        },
+        {
+          "action": "unchanged",
+          "active": {
+            "contextOverlap": 0,
+            "supportFloor": 1
+          },
+          "development": null,
+          "previous": {
+            "contextOverlap": 0,
+            "supportFloor": 1
+          },
+          "proposed": null,
+          "reason": "Insufficient independent evidence, no strict gain, or a regression/failure; retain incumbent.",
+          "rollback": null,
+          "round": "public-3",
+          "validation": null
+        }
+      ],
+      "experimentVersion": 1,
+      "finalPolicy": {
+        "contextOverlap": 0,
+        "supportFloor": 1
+      },
+      "finalTest": {
+        "adaptiveHarmfulComparedWithRaw": 0,
+        "adaptiveWordEdits": 181,
+        "attempted": 48,
+        "baselineHarmfulComparedWithRaw": 0,
+        "baselineWordEdits": 181,
+        "failureRows": 0,
+        "improved": 0,
+        "rawWordEdits": 181,
+        "regressed": 0,
+        "scored": 48
+      },
+      "fixedComparatorLimit": "Post-hoc six-policy comparison; the best fixed policy is not controller input.",
+      "fixedPolicyComparators": [
+        {
+          "heldout": {
+            "attempted": 48,
+            "failureRows": 0,
+            "harmfulComparedWithRaw": 0,
+            "scored": 48,
+            "wordEdits": 181
+          },
+          "policy": {
+            "contextOverlap": 0,
+            "supportFloor": 1
+          }
+        },
+        {
+          "heldout": {
+            "attempted": 48,
+            "failureRows": 0,
+            "harmfulComparedWithRaw": 0,
+            "scored": 48,
+            "wordEdits": 181
+          },
+          "policy": {
+            "contextOverlap": 1,
+            "supportFloor": 1
+          }
+        },
+        {
+          "heldout": {
+            "attempted": 48,
+            "failureRows": 0,
+            "harmfulComparedWithRaw": 0,
+            "scored": 48,
+            "wordEdits": 181
+          },
+          "policy": {
+            "contextOverlap": 0,
+            "supportFloor": 2
+          }
+        },
+        {
+          "heldout": {
+            "attempted": 48,
+            "failureRows": 0,
+            "harmfulComparedWithRaw": 0,
+            "scored": 48,
+            "wordEdits": 181
+          },
+          "policy": {
+            "contextOverlap": 1,
+            "supportFloor": 2
+          }
+        },
+        {
+          "heldout": {
+            "attempted": 48,
+            "failureRows": 0,
+            "harmfulComparedWithRaw": 0,
+            "scored": 48,
+            "wordEdits": 181
+          },
+          "policy": {
+            "contextOverlap": 0,
+            "supportFloor": 3
+          }
+        },
+        {
+          "heldout": {
+            "attempted": 48,
+            "failureRows": 0,
+            "harmfulComparedWithRaw": 0,
+            "scored": 48,
+            "wordEdits": 181
+          },
+          "policy": {
+            "contextOverlap": 1,
+            "supportFloor": 3
+          }
+        }
+      ],
+      "gates": {
+        "maximumRegressed": 0,
+        "minimumImproved": 2,
+        "minimumIndependentFeedback": 4,
+        "strictWordEditReduction": true
+      },
+      "heldout": {
+        "adaptiveHarmfulComparedWithRaw": 0,
+        "adaptiveWordEdits": 181,
+        "attempted": 48,
+        "baselineHarmfulComparedWithRaw": 0,
+        "baselineWordEdits": 181,
+        "failureRows": 0,
+        "improved": 0,
+        "rawWordEdits": 181,
+        "regressed": 0,
+        "scored": 48
+      },
+      "initialPolicy": {
+        "contextOverlap": 0,
+        "supportFloor": 1
+      },
+      "kind": "offline bounded eligibility-policy search; no live integration or open-ended algorithm discovery",
+      "manifestSha256": "ff2fa5d0defc5c0da12a18034a8405d52a78f95d947fef9eb8ed9ab72b017f87",
+      "policyFamily": {
+        "contextOverlap": [
+          0,
+          1
+        ],
+        "proposal": "one-coordinate neighbors only",
+        "supportFloor": [
+          1,
+          2,
+          3
+        ]
+      },
+      "schemaVersion": 1,
+      "source": {
+        "inputSha256": "1fe3ba1144d80b0c52bc4edd0d605f0155fbc8349f2da28490f8ea9d3df3acc0",
+        "kind": "cached public ASR; simulated independently supplied correction/review feedback",
+        "limitation": "Chronological ordering is constructed; corpus recordings are not actual longitudinal dictation history.",
+        "upstream": {
+          "attribution": [
+            {
+              "attribution": "Google FLEURS; FLoRes sentences",
+              "id": "fleurs-en_us-dev",
+              "license": "CC-BY-4.0",
+              "name": "FLEURS en_us dev",
+              "redistribution": "Retain CC-BY-4.0 attribution.",
+              "revision": "70bb2e84b976b7e960aa89f1c648e09c59f894dd; audio-sha256:2658fda72f199e12676ecac9415094667a4e14e149b146e568ea00b2a2f0954c; metadata-sha256:9d57ee7e91e9d4c92edb39f6bbea668ef8dc2a3ff96eb510d5580b2ad05d17ec",
+              "url": "https://huggingface.co/datasets/google/fleurs/tree/70bb2e84b976b7e960aa89f1c648e09c59f894dd/data/en_us"
+            },
+            {
+              "attribution": "Google FLEURS; FLoRes sentences",
+              "id": "fleurs-hi_in-dev",
+              "license": "CC-BY-4.0",
+              "name": "FLEURS hi_in dev",
+              "redistribution": "Retain CC-BY-4.0 attribution.",
+              "revision": "70bb2e84b976b7e960aa89f1c648e09c59f894dd; audio-sha256:9adbca6d6fc70e40c121910941bcd7c8906eee60b402b6d21b4bd160e20030c7; metadata-sha256:cea87c57a37a0d38ed0afce30e68a35ad7b3945414648430fee09a54ca7b72ba",
+              "url": "https://huggingface.co/datasets/google/fleurs/tree/70bb2e84b976b7e960aa89f1c648e09c59f894dd/data/hi_in"
+            },
+            {
+              "attribution": "AI4Bharat Svarah",
+              "id": "svarah",
+              "license": "CC-BY-4.0",
+              "name": "Svarah Indian English mixed read/spontaneous corpus",
+              "redistribution": "Retain CC-BY-4.0 attribution; local source accessed under dataset terms.",
+              "revision": "ebbf7777fe771490696a3f7b007097606fa8c924",
+              "url": "https://huggingface.co/datasets/ai4bharat/Svarah"
+            },
+            {
+              "attribution": "Google FLEURS; FLoRes sentences",
+              "id": "fleurs-en_us-test",
+              "license": "CC-BY-4.0",
+              "name": "FLEURS en_us test",
+              "redistribution": "Retain CC-BY-4.0 attribution.",
+              "revision": "70bb2e84b976b7e960aa89f1c648e09c59f894dd; audio-sha256:d9c2e37b41aacd41bc283554a0a82b5476b36887049774ecb2819dcaaa55a356; metadata-sha256:74c046239374deeb60fa63f258f907388093a32bcaa3140965f70ef05c79f7ca",
+              "url": "https://huggingface.co/datasets/google/fleurs/tree/70bb2e84b976b7e960aa89f1c648e09c59f894dd/data/en_us"
+            },
+            {
+              "attribution": "Google FLEURS; FLoRes sentences",
+              "id": "fleurs-hi_in-test",
+              "license": "CC-BY-4.0",
+              "name": "FLEURS hi_in test",
+              "redistribution": "Retain CC-BY-4.0 attribution.",
+              "revision": "70bb2e84b976b7e960aa89f1c648e09c59f894dd; audio-sha256:47c238b9cf7016ba596639bb3038b0c89dc6e85759f16d09c4f58c6dfa25c65f; metadata-sha256:889e82e2875490f9533ff59ab67326fcfa01cf828fc4412758aaaa1f442a729f",
+              "url": "https://huggingface.co/datasets/google/fleurs/tree/70bb2e84b976b7e960aa89f1c648e09c59f894dd/data/hi_in"
+            }
+          ],
+          "heldoutEpisodes": 48,
+          "inputs": [
+            {
+              "file": ".cache/benchmarks/personalization-2026-09-16/calibration.json",
+              "sha256": "4e6d210ef53202e049161b552f0b4e2ce8a27a406e5166f2df05c79dea90e95c"
+            },
+            {
+              "file": ".cache/benchmarks/personalization-2026-09-16/results/calibration-nemotron.json",
+              "sha256": "fa6f5fe684b1e01aff480126673b903a482c3d00fa52858a67d4df3db9857ce5"
+            },
+            {
+              "file": ".cache/benchmarks/personalization-regressions-2026-09-16/fresh/holdout.json",
+              "sha256": "af514af77bfdbc5f0d1eba603be5a231337e7f48271a5dd410aef73f7aee72a0"
+            },
+            {
+              "file": ".cache/benchmarks/personalization-regressions-2026-09-16/results/nemotron-fresh.json",
+              "sha256": "a03bd55735d7df3afe14934d0bf0753b93277440e1068ba96525220f79096aed"
+            }
+          ],
+          "kind": "cached public ASR outputs with simulated correction feedback; no new recognition",
+          "learningEpisodes": 192,
+          "limitation": "One reference edit per calibration recording, not actual personal feedback. No duplicated teaching episodes to force promotion. Manual comparator blindly remembers generated review suggestions and is not a realistic user study."
+        }
+      },
+      "timing": {
+        "application": {
+          "count": 240,
+          "meanMs": 0.013045158333333333,
+          "p50Ms": 0.010709,
+          "p95Ms": 0.029124999999999998,
+          "p99Ms": 0.034749999999999996
+        },
+        "feedback": {
+          "count": 192,
+          "meanMs": 0.21005205729166665,
+          "p50Ms": 0.22233299999999998,
+          "p95Ms": 0.307666,
+          "p99Ms": 0.45875
+        },
+        "proposal": {
+          "count": 3,
+          "meanMs": 0.48256933333333335,
+          "p50Ms": 0.38825,
+          "p95Ms": 0.83075,
+          "p99Ms": 0.83075
+        },
+        "validationAndRollback": {
+          "count": 3,
+          "meanMs": 0.000333,
+          "p50Ms": 0.00029099999999999997,
+          "p95Ms": 0.000458,
+          "p99Ms": 0.000458
+        }
+      },
+      "timingDefinitions": {
+        "application": "clone/filter existing profile and guarded application; excludes SQLite snapshot read",
+        "feedback": "existing open SQLite learner transaction plus metadata update; excludes connection setup",
+        "proposal": "bounded neighbor comparison on pre-event snapshots",
+        "validationAndRollback": "fresh feedback comparison, rollback and policy decision; in-memory"
+      },
+      "fullResultsSha256": "a498084333365db56f1302499024b5ad0cf20413916838c2fdfeaa039a5cc178",
+      "languageHeldout": {
+        "en": {
+          "attempted": 24,
+          "baselineWordEdits": 95,
+          "adaptiveWordEdits": 95,
+          "failureRows": 0
+        },
+        "hi": {
+          "attempted": 24,
+          "baselineWordEdits": 86,
+          "adaptiveWordEdits": 86,
+          "failureRows": 0
+        }
+      }
+    }
+  },
+  "validation": {
+    "coreTestsPassed": 29,
+    "dataTestsPassed": 27,
+    "experimentTestsPassed": 11,
+    "ignoredOptionalDataTests": 1,
+    "clippy": "strict all targets of transcribe-data",
+    "fixturePreparation": "both locked manifests reproduced; invalid public calibration count rejected",
+    "regressionFoundAndFixed": "transitive audio/episode links were initially counted as two independent cases; a failing test reproduced it, connected-component grouping now counts one; eligibility floor also accounts for retained duplicate bridge events",
+    "limits": [
+      "No live policy integration, user study, new microphone/native ASR execution, training or open-ended algorithm improvement.",
+      "Constructed feedback includes explicit externally supplied labels on unchanged outputs.",
+      "Counterfactual policy selection scores pre-event incumbent snapshots; deployed feedback distribution can differ.",
+      "Adaptive ties best fixed policy word-edit total but has two harmful outputs versus zero for those alternatives.",
+      "All 66 constructed episode totals tie (68 errors each); final eight test episodes tie (4 each). Intermediate audits supply the paired held-out improvement.",
+      "Public replay has no automatic memories, policy changes or quality gain.",
+      "Two harmful final cases after rollback are retained; no tuning against hidden labels was performed."
+    ]
+  }
+}
