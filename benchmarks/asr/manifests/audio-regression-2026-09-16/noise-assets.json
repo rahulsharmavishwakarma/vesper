@@ -1,0 +1,26 @@
+[
+  {
+    "path": "AirConditioner_1.wav",
+    "url": "https://raw.githubusercontent.com/microsoft/MS-SNSD/fe61c4ba0d9ac8dd7e23d719cc79f8947e1dc742/noise_test/AirConditioner_1.wav",
+    "sha256": "3fe55d7035d7ef2599841738f818dc4463f5ef983eb4b5fefeee153d8caa2110",
+    "size": 750400
+  },
+  {
+    "path": "ShuttingDoor_1.wav",
+    "url": "https://raw.githubusercontent.com/microsoft/MS-SNSD/fe61c4ba0d9ac8dd7e23d719cc79f8947e1dc742/noise_test/ShuttingDoor_1.wav",
+    "sha256": "302b35fb3bea6a4b97bbbfb21a56e9b87a04922c8dbfd41fb9bf4d7be1dcf455",
+    "size": 741836
+  },
+  {
+    "path": "VacuumCleaner_1.wav",
+    "url": "https://raw.githubusercontent.com/microsoft/MS-SNSD/fe61c4ba0d9ac8dd7e23d719cc79f8947e1dc742/noise_test/VacuumCleaner_1.wav",
+    "sha256": "594c10d5db0f809b695f90199443b81b799fa1b06c09efcac02c1ebff62fda80",
+    "size": 1109382
+  },
+  {
+    "path": "Typing_1.wav",
+    "url": "https://raw.githubusercontent.com/microsoft/MS-SNSD/fe61c4ba0d9ac8dd7e23d719cc79f8947e1dc742/noise_test/Typing_1.wav",
+    "sha256": "47980660888977fb45e5cdfd4a14d6585139e90267c0e61a01eeadb4a5891222",
+    "size": 6792768
+  }
+]
