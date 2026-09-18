@@ -1,0 +1,123 @@
+{
+  "method": "FFT cross-correlation over +/-1024samples; compare same speech clip cut near voiced tail, with no injected final silence. Signal parity, not natural speech quality.",
+  "checks": [
+    {
+      "model": "gtcrn",
+      "inputSamples": 200313,
+      "inputSha256": "3c4b7abed79e723d8ad65c66c747051a89f24f5e3c42bf47aa077d513e7802d9",
+      "offlineOutputSha256": "0a8673a14ffff94a64af0f45442f829f5b7174c2008e3dd69ee4dbe3109fc445",
+      "chunkedOutputSha256": "5981288679fa6ceff3ae0ebb6ffc1f6c98d67fe420a11e5a3221cbbaaa1c97a4",
+      "bestLagSamples": 0,
+      "cosineSimilarity": 0.9999999999799121,
+      "offlineLast100msRms": 0.000168159918018829,
+      "chunkedLast100msRms": 0.0001690653035998585,
+      "tailGainDifferenceDb": 0.04664003537070353,
+      "relativeRmse": 6.338691080389609e-06
+    },
+    {
+      "model": "dpdfnet4",
+      "inputSamples": 200313,
+      "inputSha256": "3c4b7abed79e723d8ad65c66c747051a89f24f5e3c42bf47aa077d513e7802d9",
+      "offlineOutputSha256": "c9b3d4e0be2662f18a593a3aafa2da595969397c43e04bd36c58180338c36e9e",
+      "chunkedOutputSha256": "567ee7cf4718c5ce81866e477515561a867c95886d5516361ef6b803355cbd28",
+      "bestLagSamples": 0,
+      "cosineSimilarity": 0.9999999999999832,
+      "offlineLast100msRms": 1.6259717127287993e-06,
+      "chunkedLast100msRms": 1.625972151556239e-06,
+      "tailGainDifferenceDb": 2.34420203392059e-06,
+      "relativeRmse": 1.9831481525309207e-07
+    },
+    {
+      "model": "dpdfnet8",
+      "inputSamples": 200313,
+      "inputSha256": "3c4b7abed79e723d8ad65c66c747051a89f24f5e3c42bf47aa077d513e7802d9",
+      "offlineOutputSha256": "295df96a5ac1b7db6ace12b636142e6dd1bf48a4b331295f0e5d530a28013c41",
+      "chunkedOutputSha256": "47429734c54935327198454f226e8f3cec48c22de4897f849863337045f764bd",
+      "bestLagSamples": 0,
+      "cosineSimilarity": 0.9999999999999817,
+      "offlineLast100msRms": 2.3898203326523577e-06,
+      "chunkedLast100msRms": 2.3898196707344965e-06,
+      "tailGainDifferenceDb": -2.4057650730887374e-06,
+      "relativeRmse": 2.0230740207135563e-07
+    }
+  ],
+  "highEnergyHardCut": [
+    {
+      "model": "gtcrn",
+      "diagnostic": "Hard cut three samples before end of highest-RMS100ms window in second half of first English clip; not annotated last-word accuracy.",
+      "samples": 128317,
+      "inputSha256": "b24e1d9d9a6b32a108871c965237922f1b920d8871aa9003cd2a3ff01fa23c91",
+      "offlineOutputSha256": "f6bc4adc10e09e3d597a1dc58a4ef3ce6d9b085d04773686b118859f972a593e",
+      "chunkedOutputSha256": "3e5df31ac4d76a46421cd8a505bedb24486888c01e50b792c2dc3f94e164746c",
+      "bestLagSamples": 0,
+      "cosineSimilarity": 0.9999999933337551,
+      "offlineLast100msRms": 0.13961095179948682,
+      "chunkedLast100msRms": 0.1396199878313223,
+      "relativeRmse": 0.00011550123814778208
+    },
+    {
+      "model": "dpdfnet4",
+      "diagnostic": "Hard cut three samples before end of highest-RMS100ms window in second half of first English clip; not annotated last-word accuracy.",
+      "samples": 128317,
+      "inputSha256": "b24e1d9d9a6b32a108871c965237922f1b920d8871aa9003cd2a3ff01fa23c91",
+      "offlineOutputSha256": "1fe2b2f2b3efae5f57f9ca34faedd599c9c2f31524bc43ff8b019b23537baf6b",
+      "chunkedOutputSha256": "639f6d40637d1f1a5d13f74cf4082cbcc43a94ae057b15ec1e74fd7e5095a705",
+      "bestLagSamples": 0,
+      "cosineSimilarity": 0.9999999999999828,
+      "offlineLast100msRms": 0.13887958317485383,
+      "chunkedLast100msRms": 0.138879575886686,
+      "relativeRmse": 2.0111047223776283e-07
+    },
+    {
+      "model": "dpdfnet8",
+      "diagnostic": "Hard cut three samples before end of highest-RMS100ms window in second half of first English clip; not annotated last-word accuracy.",
+      "samples": 128317,
+      "inputSha256": "b24e1d9d9a6b32a108871c965237922f1b920d8871aa9003cd2a3ff01fa23c91",
+      "offlineOutputSha256": "c1248865b0a13ee98d01cee9cbbb7e1c913affee09989a70a2ea76b662e6018d",
+      "chunkedOutputSha256": "11a221d1c0763c6ffc47768930384e8367c8d16e8c7c359d32e8953a6c931fb4",
+      "bestLagSamples": 0,
+      "cosineSimilarity": 0.9999999999999817,
+      "offlineLast100msRms": 0.13731187336500508,
+      "chunkedLast100msRms": 0.13731186533787879,
+      "relativeRmse": 2.0245033023320214e-07
+    }
+  ],
+  "postContinuousReset": [
+    {
+      "model": "silero-fp32",
+      "delivery": "offline",
+      "comparisonApi": "offline",
+      "identicalOutput": true
+    },
+    {
+      "model": "silero-fp32",
+      "delivery": "realtime",
+      "comparisonApi": "offline",
+      "identicalOutput": true
+    },
+    {
+      "model": "silero-v6.2",
+      "delivery": "offline",
+      "comparisonApi": "offline",
+      "identicalOutput": true
+    },
+    {
+      "model": "silero-v6.2",
+      "delivery": "realtime",
+      "comparisonApi": "offline",
+      "identicalOutput": true
+    },
+    {
+      "model": "dpdfnet8",
+      "delivery": "offline",
+      "comparisonApi": "offline",
+      "identicalOutput": true
+    },
+    {
+      "model": "dpdfnet8",
+      "delivery": "realtime",
+      "comparisonApi": "chunks",
+      "identicalOutput": true
+    }
+  ]
+}

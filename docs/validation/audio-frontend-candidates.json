@@ -1,0 +1,1798 @@
+{
+  "date": "2026-09-16",
+  "scope": "Non-exhaustive HF/official implementation research, up to 200 decimal MB per selected model. Metadata hashes are not local download verification. Execution results are separate.",
+  "enhancement": {
+    "checkedDate": "2026-09-16",
+    "sizeConvention": "decimal MB; count deployment selection, not whole multi-format repository",
+    "models": [
+      {
+        "id": "Ceva-IP/DPDFNet",
+        "revision": "dd6818d00f50c836fed43a6243ebe49116de5964",
+        "task": "speech enhancement",
+        "artifacts": [
+          {
+            "path": "onnx/dpdfnet4.onnx",
+            "bytes": 11633337,
+            "sha256": "42a386d3601922f474c4309927e1f471cce422e9bd8e3fd3967bb943bac36c01",
+            "gitBlobId": "583b1db9a567d2c5ec74cb4f6b740bae1e35f06c"
+          }
+        ],
+        "totalBytes": 11633337,
+        "authority": "model author",
+        "license": "Apache-2.0",
+        "streaming": "Stateful recurrent ONNX. Official StreamEnhancer preserves state, reset and flush. Do not equate first returned window ~20 ms with content alignment; paper and export retain df_lookahead=2 and conv_lookahead=2. Exact signal delay needs impulse test.",
+        "runtime": "Official CPU ONNX and TFLite; parent verifying existing sherpa compatibility.",
+        "notes": "16 kHz dpdfnet2/4/8 are alternatives, not cumulative components. Their ONNX weights are 10178747 / 11633337 / 14542517 bytes. 48 kHz variants are 10493337 / 14857107 bytes. Paper multilingual 324 clips/~13.5 h did not measure this ASR stack. Package streaming and offline centered STFT differ; external sample-rate path resamples each incoming block and flush calls process with model sample rate (potential non-native reset-rate error): use native-rate benchmark first.",
+        "evidenceUrls": [
+          "https://huggingface.co/Ceva-IP/DPDFNet/tree/dd6818d00f50c836fed43a6243ebe49116de5964",
+          "https://arxiv.org/html/2512.16420v1",
+          "https://github.com/ceva-ip/DPDFNet/blob/9bd9844a227bb6aa57e55588d8d0e961fcff1c46/package/src/dpdfnet/stream.py",
+          "https://github.com/ceva-ip/DPDFNet/blob/9bd9844a227bb6aa57e55588d8d0e961fcff1c46/onnx_model/dpdfnet.py"
+        ],
+        "localInferenceTested": false,
+        "hashEvidence": "HF API declared SHA-256 for LFS artifacts, not locally downloaded or hashed"
+      },
+      {
+        "id": "fal/DeepFilterNet3",
+        "revision": "efd275812b477d9e3cbf7e830d7d5123576918b9",
+        "task": "speech enhancement",
+        "artifacts": [
+          {
+            "path": "model.safetensors",
+            "bytes": 8684112,
+            "sha256": "08edae645691c1af0e2401341444d26089c49f16cbdf8bbcfc511f8a2494cbe4",
+            "gitBlobId": "15ed3aa15378af3a70c3647ee05be4a0ef94b869"
+          }
+        ],
+        "totalBytes": 8684112,
+        "authority": "community mirror; authoritative upstream Rikorose/DeepFilterNet",
+        "license": "Mirror Apache-2.0; upstream MIT OR Apache-2.0",
+        "streaming": "48 kHz, 10 ms hop, conv and DF lookahead 2 frames. True total frontend delay includes STFT, cannot call lookahead end-to-end latency.",
+        "runtime": "Upstream Rust libDF/tract and C ABI; HF mirror is PyTorch/safetensors, not same executable format.",
+        "notes": "Mature efficient fullband benchmark candidate; compare official release artifact rather than automatically trusting mirror weights.",
+        "evidenceUrls": [
+          "https://huggingface.co/fal/DeepFilterNet3/tree/efd275812b477d9e3cbf7e830d7d5123576918b9",
+          "https://github.com/Rikorose/DeepFilterNet",
+          "https://arxiv.org/html/2305.08227v1"
+        ],
+        "localInferenceTested": false,
+        "hashEvidence": "HF API declared SHA-256 for LFS artifacts, not locally downloaded or hashed"
+      },
+      {
+        "id": "tonythethompson/DeepFilterNet3-ONNX",
+        "revision": "191b102108bf10180909258809dcb3d2a0e59b46",
+        "task": "speech enhancement",
+        "artifacts": [
+          {
+            "path": "enc.onnx",
+            "bytes": 1954042,
+            "sha256": "7c5399d3da8a50ebef1c1a0ae421b33376aa5e45d0e92df16da7e83c9c131916",
+            "gitBlobId": "c515cf75f1424bd5dc9b2098acb2e4b2e04a6b1b"
+          },
+          {
+            "path": "erb_dec.onnx",
+            "bytes": 3292397,
+            "sha256": "ab669a1d10afe20911728b33053a452071042317a90581092b325da7b2f9d895",
+            "gitBlobId": "0dbcf710e3888edef9c897a571a1f073d4676741"
+          },
+          {
+            "path": "df_dec.onnx",
+            "bytes": 3340803,
+            "sha256": "23114ce3b0f6464b763ee62f7bb8aab6b2a129a21eabd5bcfe59413db05f278a",
+            "gitBlobId": "149e105469ca32da7d4a68521aa25fddb3e9c4b7"
+          }
+        ],
+        "totalBytes": 8587242,
+        "authority": "community conversion of upstream DeepFilterNet3",
+        "license": "Apache-2.0",
+        "streaming": "Export metadata needs state-I/O and full DSP validation before live use.",
+        "runtime": "3 ONNX components total8587242 bytes; CPUONNX requires STFT/ERB/deep-filter DSP.",
+        "notes": "Card identifies upstream/packaging revision dcbbe520263d1061693c4c4a56a6d6a917f30b25. Do not claim this mirror is official author weights.",
+        "evidenceUrls": [
+          "https://huggingface.co/tonythethompson/DeepFilterNet3-ONNX/tree/191b102108bf10180909258809dcb3d2a0e59b46",
+          "https://github.com/Rikorose/DeepFilterNet",
+          "https://arxiv.org/html/2305.08227v1"
+        ],
+        "localInferenceTested": false,
+        "hashEvidence": "HF API declared SHA-256 for LFS artifacts, not locally downloaded or hashed"
+      },
+      {
+        "id": "alibabasglab/FRCRN_SE_16K",
+        "revision": "3766e6a64b0d8cb58f08d913d617bf129f11ed53",
+        "task": "speech enhancement",
+        "artifacts": [
+          {
+            "path": "last_best_checkpoint.pt",
+            "bytes": 161053751,
+            "sha256": "b22256adbb91b68cf5a3db8f6657a4fb17066eecd5f069803e59c186c1cf3ebb",
+            "gitBlobId": "07dcdc2d96ba7bc5006ec4d2a8d9933b0aee8a26"
+          }
+        ],
+        "totalBytes": 161053751,
+        "authority": "model author",
+        "license": "Apache-2.0",
+        "streaming": "Released ClearVoice path processes completed files with up-to30-second windows. Paper real-time track result is not evidence of released stateful CPU streaming adapter.",
+        "runtime": "PyTorch CPU supported by official toolkit; no pinned official ONNX/Rust release in inspected repo.",
+        "notes": "161.05 MB fits 200 MB. Useful larger completed-file comparator. Source contains FSMN within FRCRN; distinct from FSMN VAD.",
+        "evidenceUrls": [
+          "https://huggingface.co/alibabasglab/FRCRN_SE_16K/tree/3766e6a64b0d8cb58f08d913d617bf129f11ed53",
+          "https://arxiv.org/abs/2206.07293",
+          "https://arxiv.org/abs/2506.19398",
+          "https://github.com/modelscope/ClearerVoice-Studio/tree/6b3774dc79c46ae8bed2a4fa5f706f0ac8c75c61"
+        ],
+        "localInferenceTested": false,
+        "hashEvidence": "HF API declared SHA-256 for LFS artifacts, not locally downloaded or hashed"
+      },
+      {
+        "id": "alibabasglab/MossFormerGAN_SE_16K",
+        "revision": "dcb1b20e1e44d435090072ab9b223c792ea1f624",
+        "task": "speech enhancement",
+        "artifacts": [
+          {
+            "path": "last_best_checkpoint.pt",
+            "bytes": 38845593,
+            "sha256": "04bf00db575389e1ea8b1fcca48d9efcf073e50ad170e6dd5230df3bac98be27",
+            "gitBlobId": "6786645d1eeeb773221b8d9997e84782c3d424f6"
+          }
+        ],
+        "totalBytes": 38845593,
+        "authority": "model author",
+        "license": "Apache-2.0",
+        "streaming": "Released default processes completed audio in10-second windows; no verified stateful causal microphone implementation.",
+        "runtime": "PyTorch CPU possible; no official pinned ONNX/Rust export found.",
+        "notes": "Only38.85MBgenerator is loaded for enhancement.97.59MBdiscriminator is training-only, verified generic inference loader and model creation. Paper DNS2020 synthetic300clip PESQ3.57/STOI98.05 are not ASR quality or this machine performance.",
+        "evidenceUrls": [
+          "https://huggingface.co/alibabasglab/MossFormerGAN_SE_16K/tree/dcb1b20e1e44d435090072ab9b223c792ea1f624",
+          "https://arxiv.org/abs/2506.19398",
+          "https://github.com/modelscope/ClearerVoice-Studio/blob/6b3774dc79c46ae8bed2a4fa5f706f0ac8c75c61/clearvoice/clearvoice/networks.py",
+          "https://github.com/modelscope/ClearerVoice-Studio/blob/6b3774dc79c46ae8bed2a4fa5f706f0ac8c75c61/clearvoice/clearvoice/config/inference/MossFormerGAN_SE_16K.yaml"
+        ],
+        "localInferenceTested": false,
+        "hashEvidence": "HF API declared SHA-256 for LFS artifacts, not locally downloaded or hashed"
+      },
+      {
+        "id": "speechbrain/mtl-mimic-voicebank",
+        "revision": "5142933779578738d62d0d1f79290e824c8cd2fb",
+        "task": "speech enhancement",
+        "artifacts": [
+          {
+            "path": "enhance_model.ckpt",
+            "bytes": 89236029,
+            "sha256": "f9569c7127fec9c3400d356cdea37f2089d86211a186d5fe6f2c17de07380e32",
+            "gitBlobId": "eb3415a0165835ea8834638d1347c4e9d5b710d0"
+          }
+        ],
+        "totalBytes": 89236029,
+        "authority": "official SpeechBrain recipe/checkpoint",
+        "license": "Apache-2.0",
+        "streaming": "16 kHz mono completed-file enhancement; stateful streaming not documented.",
+        "runtime": "SpeechBrain/PyTorch CPU. Inference YAML loadables only enhance_model.",
+        "notes": "89.24MBdeployable enhancer;211.09MBperceptual.ckpt is training model and not loaded by enhancement YAML. ASR-aware mimic-loss objective is especially relevant, but published2.80%WER uses fine-tuned ASR and cannot transfer to frozen Cohere/LFM/Gemma.",
+        "evidenceUrls": [
+          "https://huggingface.co/speechbrain/mtl-mimic-voicebank/tree/5142933779578738d62d0d1f79290e824c8cd2fb",
+          "https://huggingface.co/speechbrain/mtl-mimic-voicebank/blob/5142933779578738d62d0d1f79290e824c8cd2fb/hyperparams.yaml",
+          "https://arxiv.org/abs/1803.09816"
+        ],
+        "localInferenceTested": false,
+        "hashEvidence": "HF API declared SHA-256 for LFS artifacts, not locally downloaded or hashed"
+      },
+      {
+        "id": "speechbrain/metricgan-plus-voicebank",
+        "revision": "a196ce26b3bdace6fa1d819017584bdbcce462a8",
+        "task": "speech enhancement",
+        "artifacts": [
+          {
+            "path": "enhance_model.ckpt",
+            "bytes": 7586021,
+            "sha256": null,
+            "gitBlobId": "1c7c412f3adf0fdb54eaa4297cece5dc708dd00e"
+          }
+        ],
+        "totalBytes": 7586021,
+        "authority": "official SpeechBrain recipe/checkpoint",
+        "license": "Apache-2.0",
+        "streaming": "16kHz completed-file spectral enhancement, BLSTM noncausal.",
+        "runtime": "SpeechBrain/PyTorch CPU.",
+        "notes": "7.59MBbaseline. Stored in plain Git, so HF metadata gives Git blob SHA1 not SHA256; local content hash intentionally not verified.",
+        "evidenceUrls": [
+          "https://huggingface.co/speechbrain/metricgan-plus-voicebank/tree/a196ce26b3bdace6fa1d819017584bdbcce462a8",
+          "https://arxiv.org/abs/2104.03538"
+        ],
+        "localInferenceTested": false,
+        "hashEvidence": "HF API declared SHA-256 for LFS artifacts, not locally downloaded or hashed"
+      },
+      {
+        "id": "nvidia/Real-time_RE-USE",
+        "revision": "de401c582803bfbf67f75f1c30f3fd26fecdbc70",
+        "task": "speech enhancement",
+        "artifacts": [
+          {
+            "path": "model.safetensors",
+            "bytes": 54055764,
+            "sha256": "6eac4e8cc721f99a22cde7eac3c9f8e2826ced5dc8a4234fd1977de1ec0d3ade",
+            "gitBlobId": "dcb4f196e629beb73f534dc4acdf304ff8f83d70"
+          }
+        ],
+        "totalBytes": 54055764,
+        "authority": "model author",
+        "license": "NVIDIA One-Way Noncommercial NSCLv1; research/development",
+        "streaming": "Model supports exit_layers3..12 and look_ahead_frames0..2. Supplied online example still computes full-file centered STFT; online STFT/BWE explicitly future work.",
+        "runtime": "PyTorch/Mamba custom CUDA-oriented; unconditional torch.cuda.synchronize in frame loop. No verified CPU ONNX/Rust artifact.",
+        "notes": "54.06MBfits cap but licensing/runtime block product selection. Card says3.7Mparams while artifact summary says13.5M, so prefer actualbytes. Releasedcheckpoint explicitly differs from paper.",
+        "evidenceUrls": [
+          "https://huggingface.co/nvidia/Real-time_RE-USE/tree/de401c582803bfbf67f75f1c30f3fd26fecdbc70",
+          "https://huggingface.co/nvidia/Real-time_RE-USE/blob/de401c582803bfbf67f75f1c30f3fd26fecdbc70/online_inference.py",
+          "https://arxiv.org/abs/2606.25621",
+          "https://arxiv.org/abs/2603.02641"
+        ],
+        "localInferenceTested": false,
+        "hashEvidence": "HF API declared SHA-256 for LFS artifacts, not locally downloaded or hashed"
+      },
+      {
+        "id": "nvidia/RE-USE",
+        "revision": "022e920d727347a64d6c21fbf0628f2a5f37ad78",
+        "task": "speech enhancement",
+        "artifacts": [
+          {
+            "path": "model.safetensors",
+            "bytes": 38592940,
+            "sha256": "87a4a970ce9aa79d5d92e71899ab034defcf13d93e5e4393ec0dc7db6d4ec048",
+            "gitBlobId": "374a37a883a05c99181b4199f3570add3a8c9dab"
+          }
+        ],
+        "totalBytes": 38592940,
+        "authority": "model author",
+        "license": "NVIDIA One-Way Noncommercial NSCLv1; research/development",
+        "streaming": "Noncausal bidirectional Mamba30layers, completed-file path. Chunking files is not live causal streaming.",
+        "runtime": "PyTorch/Mamba GPU-oriented, no verified nativeCPUexport.",
+        "notes": "38.59MBfits; research-only comparator, different checkpoint than paper.",
+        "evidenceUrls": [
+          "https://huggingface.co/nvidia/RE-USE/tree/022e920d727347a64d6c21fbf0628f2a5f37ad78",
+          "https://arxiv.org/abs/2603.02641"
+        ],
+        "localInferenceTested": false,
+        "hashEvidence": "HF API declared SHA-256 for LFS artifacts, not locally downloaded or hashed"
+      },
+      {
+        "id": "weya-ai/hush",
+        "revision": "a55d932cbf6344d284ac985f21e7f6e5bc4d38a5",
+        "task": "speech enhancement",
+        "artifacts": [
+          {
+            "path": "onnx/advanced_dfnet16k_model_best_onnx.tar.gz",
+            "bytes": 8558968,
+            "sha256": "45632ccaa82b71bb743d6caa7c78e983fe2f2790a3af7f6ec48e6ed7ba085df6",
+            "gitBlobId": "6e19cf032e89929fa3028c36506e2b904a895aea"
+          }
+        ],
+        "totalBytes": 8558968,
+        "authority": "checkpoint author, DeepFilterNet-derived",
+        "license": "Apache-2.0 card",
+        "streaming": "16kHz, advertised zero neural lookahead/~20ms frontend; explicit session frame API and CPU binaries.",
+        "runtime": "ONNX bundle compressed size8.56MB; uncompressed graph total not verified; PyTorch checkpoint9.23MB.",
+        "notes": "Background-speaker suppression trained at12\u201324dBSIR. Does not identify/enroll intendeduser; can suppress quiet target user. No distinct peer-reviewedcheckpointpaper found, derivedDFNresearch only. Publisher CPUclaim lacks sufficient hardware envelope; not local result.",
+        "evidenceUrls": [
+          "https://huggingface.co/weya-ai/hush/tree/a55d932cbf6344d284ac985f21e7f6e5bc4d38a5",
+          "https://github.com/Rikorose/DeepFilterNet",
+          "https://arxiv.org/html/2305.08227v1"
+        ],
+        "localInferenceTested": false,
+        "hashEvidence": "HF API declared SHA-256 for LFS artifacts, not locally downloaded or hashed"
+      },
+      {
+        "id": "desert-ant-labs/clear",
+        "revision": "16be4d516113853a2100fbb295c32186b2a05606",
+        "task": "speech enhancement",
+        "artifacts": [
+          {
+            "path": "clear-natural.onnx",
+            "bytes": 24801006,
+            "sha256": "672b49c3f601043b21d13a9c44f5da6b81187a753a4ec787a843a7b31f02e016",
+            "gitBlobId": "bce738623d4e281a89b50dd9b4d180b4ee60152d"
+          }
+        ],
+        "totalBytes": 24801006,
+        "authority": "model publisher",
+        "license": "Desert Ant Labs Source-Available1.0; restrictions/scale licensing",
+        "streaming": "48kHzmono/stereo cleanup; full SDK advertised, no independent live delay qualification.",
+        "runtime": "Official ONNX24.80MB per variant, TFLite49.29MB, compiledCoreMLzip9.03MB; alternative formats not cumulative.",
+        "notes": "Naturalvariant preserves more room/breath texture than studio. No checkpoint-specificprimarypaper found. Does not separateoverlapping speakers. Source-available not unrestrictedopensource, commercialterms need check before product.",
+        "evidenceUrls": [
+          "https://huggingface.co/desert-ant-labs/clear/tree/16be4d516113853a2100fbb295c32186b2a05606",
+          "https://github.com/Desert-Ant-Labs/desert-ant-core/blob/main/docs/models/clear.md",
+          "https://license.desertant.com/1.0"
+        ],
+        "localInferenceTested": false,
+        "hashEvidence": "HF API declared SHA-256 for LFS artifacts, not locally downloaded or hashed"
+      },
+      {
+        "id": "JacobLinCool/MP-SENet-DNS",
+        "revision": "8b78493f536df1aa53bd3bcbb2f620f705e8589c",
+        "task": "speech enhancement",
+        "artifacts": [
+          {
+            "path": "model.safetensors",
+            "bytes": 9081872,
+            "sha256": "74912046c8b352d78ca4056c9624d7256ac4d7eac45ce015822a7f2282749cdc",
+            "gitBlobId": "7c6623e07b72e542bec33aaf3634d811eb9c3138"
+          }
+        ],
+        "totalBytes": 9081872,
+        "authority": "community repackaging; original paperauthorcode yxlu-0102/MP-SENet",
+        "license": "MIT card; verify upstreamartifactlineage",
+        "streaming": "16kHz magnitude/phase enhancement; no verifiedcausalstatefulstreaming.",
+        "runtime": "PyTorch; no official pinned nativeCPUadapter verified.",
+        "notes": "9.08MBcompleted-file comparator. Lowerprovenance priority thanmodelauthorrelease.",
+        "evidenceUrls": [
+          "https://huggingface.co/JacobLinCool/MP-SENet-DNS/tree/8b78493f536df1aa53bd3bcbb2f620f705e8589c",
+          "https://github.com/yxlu-0102/MP-SENet",
+          "https://arxiv.org/abs/2308.08926"
+        ],
+        "localInferenceTested": false,
+        "hashEvidence": "HF API declared SHA-256 for LFS artifacts, not locally downloaded or hashed"
+      },
+      {
+        "id": "alekya/DTLN",
+        "revision": "73cdda76f3d90da997dced319f9000617463ec30",
+        "task": "speech enhancement",
+        "artifacts": [
+          {
+            "path": "model.h5",
+            "bytes": 3989312,
+            "sha256": "b6e9ecb8140f51e8ffb373884b62e186dc166e97995fa7eea3fffcc6ef30d55d",
+            "gitBlobId": "041cc5a144db2946ecfc5eff60f70f8f7631ea32"
+          }
+        ],
+        "totalBytes": 3989312,
+        "authority": "communitymirror, upstreamauthor Nils L. Westhausen",
+        "license": "HFcard no declaredlicense; upstreamMIT requiresprovenanceverification",
+        "streaming": "Upstreamstateful16kHz512sample32msblock,128sample8mshop.",
+        "runtime": "MirroronlyH5; officialupstreamONNX/TFLite splitmodels and realtimeexample available.",
+        "notes": "3.99MBH5doesnotestablishwhichofficialONNXartifactsdeploy; preferofficialGitHubrelease forbaseline.",
+        "evidenceUrls": [
+          "https://huggingface.co/alekya/DTLN/tree/73cdda76f3d90da997dced319f9000617463ec30",
+          "https://github.com/breizhn/DTLN",
+          "https://arxiv.org/abs/2005.07551"
+        ],
+        "localInferenceTested": false,
+        "hashEvidence": "HF API declared SHA-256 for LFS artifacts, not locally downloaded or hashed"
+      },
+      {
+        "id": "alibabasglab/MossFormer2_SE_48K",
+        "revision": "eff8c97925c8bec812af707814b3e5d777fd4503",
+        "task": "speech enhancement",
+        "artifacts": [
+          {
+            "path": "last_best_checkpoint.pt",
+            "bytes": 221552019,
+            "sha256": "03692b9f773bbd6bb43b9c5a41f96b1e28affd66e13796b7bec66ad3d8b227c6",
+            "gitBlobId": "8fd037f31a765a5ec8a1c71c54ebb460d1712fb5"
+          }
+        ],
+        "totalBytes": 221552019,
+        "authority": "modelauthor",
+        "license": "Apache-2.0",
+        "streaming": "Completedfile",
+        "runtime": "PyTorch",
+        "notes": "EXCLUDEsuppliedcheckpoint221.55MBabove200decimalMB; do notrounddownorassumehypotheticalquantization.",
+        "evidenceUrls": [
+          "https://huggingface.co/alibabasglab/MossFormer2_SE_48K/tree/eff8c97925c8bec812af707814b3e5d777fd4503",
+          "https://arxiv.org/abs/2506.19398"
+        ],
+        "localInferenceTested": false,
+        "hashEvidence": "HF API declared SHA-256 for LFS artifacts, not locally downloaded or hashed"
+      },
+      {
+        "id": "starkdmi/MossFormer2-SE-4bit",
+        "revision": "634f852dbbaeeb4d784dd276127c6827d924ffc9",
+        "task": "speech enhancement",
+        "artifacts": [
+          {
+            "path": "model.safetensors",
+            "bytes": 67282702,
+            "sha256": "dfe3a01376e6a3985bf9638f07b78cf30f06159534a48e485d51e15ecc81d358",
+            "gitBlobId": "d77117fde90fb5de6cdea53bb27900e979dc4324"
+          }
+        ],
+        "totalBytes": 67282702,
+        "authority": "community MLXquantization",
+        "license": "Apache-2.0card",
+        "streaming": "Completedfile; streamingnotqualified.",
+        "runtime": "MLX67.28MB; AppleGPU path is not CPUqualification.",
+        "notes": "Fittingquantizedalternative to221MBofficialcheckpoint; requiresconversionprovenanceandqualityparitybeforecandidate executable.",
+        "evidenceUrls": [
+          "https://huggingface.co/starkdmi/MossFormer2-SE-4bit/tree/634f852dbbaeeb4d784dd276127c6827d924ffc9",
+          "https://arxiv.org/abs/2506.19398"
+        ],
+        "localInferenceTested": false,
+        "hashEvidence": "HF API declared SHA-256 for LFS artifacts, not locally downloaded or hashed"
+      },
+      {
+        "id": "mispeech/dasheng-denoiser",
+        "revision": "ec2e819926330080b009d4659ecb67158dda65d3",
+        "task": "speech enhancement",
+        "artifacts": [
+          {
+            "path": "model.safetensors",
+            "bytes": 476053712,
+            "sha256": "a876840a630a71238a13a7be026211dd0b5c4b4e697bfa78f840cb1d2f0ae5de",
+            "gitBlobId": "9fb2cc7d9f36740786b9c82207d9e3bc59c03a82"
+          }
+        ],
+        "totalBytes": 476053712,
+        "authority": "modelauthor",
+        "license": "Apache-2.0",
+        "streaming": "Completedfile",
+        "runtime": "Transformers/PyTorchcustomcode",
+        "notes": "EXCLUDE476.05MBsuppliedweightsabovebudget; do not infer hypotheticalhalfprecision orquantizedsupport.",
+        "evidenceUrls": [
+          "https://huggingface.co/mispeech/dasheng-denoiser/tree/ec2e819926330080b009d4659ecb67158dda65d3",
+          "https://arxiv.org/abs/2506.11514"
+        ],
+        "localInferenceTested": false,
+        "hashEvidence": "HF API declared SHA-256 for LFS artifacts, not locally downloaded or hashed"
+      }
+    ]
+  },
+  "speakerAndVad": {
+    "date": "2026-09-16",
+    "scope": "Read-only official model-author HF metadata and primary sources; no weights downloaded, no inference, no local latency/RAM/quality claims. SHA256 values are HF LFS metadata, not locally verified bytes. Sizes decimal bytes and only selected model payloads, exclude runtime/RAM.",
+    "models": [
+      {
+        "repo": "Wespeaker/wespeaker-voxceleb-resnet34-LM",
+        "sha": "f0c48c298fd835726c27956a5d617bad7115627e",
+        "gated": false,
+        "cardData": {
+          "license": "cc-by-4.0",
+          "language": [
+            "en"
+          ],
+          "pipeline_tag": "summarization",
+          "tags": [
+            "speaker embedding",
+            "wespeaker",
+            "speaker modelling"
+          ]
+        },
+        "tier": "A: owner enrollment/verification benchmark",
+        "files": [
+          "voxceleb_resnet34_LM.onnx"
+        ],
+        "job": "utterance/window speaker embedding; compare enrolled owner using calibrated similarity",
+        "contract": "16kHz; 80-bin features and temporal statistics pooling; no causal per-frame speaker decision or waveform separation",
+        "native": "Existing sherpa1.13.8 WeSpeaker family; metadata framework/sample_rate/output_dim/normalize_samples required. Official HF ONNX must be inspected and metadata exported/pinned, not assumed plug-and-play. Runtime release LM export26,530,550B exists, digest absent; not downloaded.",
+        "selectedArtifacts": [
+          {
+            "rfilename": "voxceleb_resnet34_LM.onnx",
+            "blobId": "81d3cfc3bfc4c32e4f2c3586a2042b010da3d415",
+            "size": 26530309,
+            "lfs": {
+              "sha256": "7bb2f06e9df17cdf1ef14ee8a15ab08ed28e8d0ef5054ee135741560df2ec068",
+              "size": 26530309,
+              "pointerSize": 133
+            }
+          }
+        ],
+        "selectedBytes": 26530309,
+        "url": "https://huggingface.co/Wespeaker/wespeaker-voxceleb-resnet34-LM/tree/f0c48c298fd835726c27956a5d617bad7115627e",
+        "localExecution": false
+      },
+      {
+        "repo": "pyannote/segmentation-3.0",
+        "sha": "e66f3d3b9eb0873085418a7b813d3b369bf160bb",
+        "gated": "auto",
+        "cardData": {
+          "tags": [
+            "pyannote",
+            "pyannote-audio",
+            "pyannote-audio-model",
+            "audio",
+            "voice",
+            "speech",
+            "speaker",
+            "speaker-diarization",
+            "speaker-change-detection",
+            "speaker-segmentation",
+            "voice-activity-detection",
+            "overlapped-speech-detection",
+            "resegmentation"
+          ],
+          "license": "mit",
+          "inference": false,
+          "extra_gated_prompt": "The collected information will help acquire a better knowledge of pyannote.audio userbase and help its maintainers improve it further. Though this model uses MIT license and will always remain open-source, we will occasionnally email you about premium models and paid services around pyannote.",
+          "extra_gated_fields": {
+            "Company/university": "text",
+            "Website": "text"
+          }
+        },
+        "tier": "A: completed-mode overlap/VAD comparator",
+        "files": [
+          "pytorch_model.bin"
+        ],
+        "job": "10s local speech and speaker activity including pairwise overlap",
+        "contract": "16kHz mono;10s chunks;7 powerset classes,3 local speakers/max2 simultaneous; not complete recording diarization. Bidirectional PyanNet family; output resolution is not causal latency.",
+        "native": "Existing sherpa1.13.8 offline pyannote export+embedding+fast clustering path; exact ONNX conversion and parity required; standalone raw Pytorch cannot be loaded by native Rust wrapper.",
+        "selectedArtifacts": [
+          {
+            "rfilename": "pytorch_model.bin",
+            "blobId": "3f22f0609ca7b73df999c6b9dd2db8c159103d39",
+            "size": 5905440,
+            "lfs": {
+              "sha256": "da85c29829d4002daedd676e012936488234d9255e65e86dfab9bec6b1729298",
+              "size": 5905440,
+              "pointerSize": 132
+            }
+          }
+        ],
+        "selectedBytes": 5905440,
+        "url": "https://huggingface.co/pyannote/segmentation-3.0/tree/e66f3d3b9eb0873085418a7b813d3b369bf160bb",
+        "localExecution": false
+      },
+      {
+        "repo": "pyannote/speaker-diarization-community-1",
+        "sha": "3533c8cf8e369892e6b79ff1bf80f7b0286a54ee",
+        "gated": "auto",
+        "cardData": {
+          "tags": [
+            "pyannote",
+            "pyannote-audio",
+            "pyannote-audio-pipeline",
+            "audio",
+            "voice",
+            "speech",
+            "speaker",
+            "speaker-diarization",
+            "speaker-change-detection",
+            "voice-activity-detection",
+            "overlapped-speech-detection",
+            "automatic-speech-recognition"
+          ],
+          "license": "cc-by-4.0",
+          "extra_gated_prompt": "Your input helps us strengthen the pyannote community and improve our open-source offerings. This pipeline is released under the CC-BY-4.0 license and will always remain freely accessible. By providing your details, you agree that we may email you occasionally with important news about pyannote models, invitations to try premium pipelines, and information about specific services designed for researchers and professionals like you.",
+          "extra_gated_fields": {
+            "Company/university": "text",
+            "Use case": {
+              "type": "select",
+              "options": [
+                {
+                  "label": "Meeting note taker (automated meeting transcription, action item extraction, and speaker identification in recordings)",
+                  "value": "meeting"
+                },
+                {
+                  "label": "Conversation AI (chatbots, voice assistants, multi-turn dialogue systems with speaker awareness)",
+                  "value": "conversation"
+                },
+                {
+                  "label": "CCaaS and customer experience (call center analytics, customer service optimization, and interaction quality monitoring)",
+                  "value": "ccaas"
+                },
+                {
+                  "label": "Voice agents (AI-powered phone systems, automated customer service, voice-based interactions)",
+                  "value": "agent"
+                },
+                {
+                  "label": "Media and automated dubbing (content creation, podcast processing, video production, and multilingual media)",
+                  "value": "dubbing"
+                },
+                {
+                  "label": "Training and development (educational content analysis, corporate training evaluation, and learning assessment tools)",
+                  "value": "training"
+                },
+                {
+                  "label": "Other",
+                  "value": "other"
+                }
+              ]
+            }
+          }
+        },
+        "tier": "A: completed-mode full-diarization reference",
+        "files": [
+          "segmentation/pytorch_model.bin",
+          "embedding/pytorch_model.bin",
+          "plda/plda.npz",
+          "plda/xvec_transform.npz"
+        ],
+        "job": "full speaker diarization with exclusive timestamp mapping",
+        "contract": "16kHz mono; official Python full-file CPU/offline API; exact gated configuration not read. Do not transplant segmentation3.0 window or latency contract into this newer checkpoint.",
+        "native": "Not equivalent to existing sherpa fast-clustering pipeline: official Community1 includes VBx/PLDA. Native adaptation needs separately validated implementation; gated access remains user step.",
+        "selectedArtifacts": [
+          {
+            "rfilename": "embedding/pytorch_model.bin",
+            "blobId": "6347697826a1958253dd195fa296d8d97b8f6280",
+            "size": 26646242,
+            "lfs": {
+              "sha256": "6f10ff60898a1d185fa22e1d11e0bfa8a92efec811f11bca48cb8cafebefd929",
+              "size": 26646242,
+              "pointerSize": 133
+            }
+          },
+          {
+            "rfilename": "plda/plda.npz",
+            "blobId": "e61936ef2108eccdff801c440d5e3f6c6995aba4",
+            "size": 133852,
+            "lfs": {
+              "sha256": "9b77bcd840692710dd3496f62ecfeed8d8e5f002fd991b785079b244eab7d255",
+              "size": 133852,
+              "pointerSize": 131
+            }
+          },
+          {
+            "rfilename": "plda/xvec_transform.npz",
+            "blobId": "b8079f30a35a68fe7d996bd7abc2170338ba6767",
+            "size": 134376,
+            "lfs": {
+              "sha256": "325f1ce8e48f7e55e9c8aa47e05d2766b7c48c4b25b8de8dd751e7a4cc5fbe8f",
+              "size": 134376,
+              "pointerSize": 131
+            }
+          },
+          {
+            "rfilename": "segmentation/pytorch_model.bin",
+            "blobId": "e3b91de5a5374fc40b556f9cc51317d280b4ea79",
+            "size": 5906507,
+            "lfs": {
+              "sha256": "7ad24338d844fb95985486eb1a464e32d229f6d7a03c9abe60f978bacf3f816e",
+              "size": 5906507,
+              "pointerSize": 132
+            }
+          }
+        ],
+        "selectedBytes": 32820977,
+        "url": "https://huggingface.co/pyannote/speaker-diarization-community-1/tree/3533c8cf8e369892e6b79ff1bf80f7b0286a54ee",
+        "localExecution": false
+      },
+      {
+        "repo": "pyannote/brouhaha",
+        "sha": "c93c9b537732dd50c28c0366c73f560c3a7aeb02",
+        "gated": "auto",
+        "cardData": {
+          "tags": [
+            "pyannote",
+            "pyannote-audio",
+            "pyannote-audio-model",
+            "audio",
+            "voice",
+            "speech",
+            "voice-activity-detection",
+            "speech-to-noise ratio",
+            "snr",
+            "room acoustics",
+            "c50"
+          ],
+          "datasets": [
+            "LibriSpeech",
+            "AudioSet",
+            "EchoThief",
+            "MIT-Acoustical-Reverberation-Scene"
+          ],
+          "license": "openrail",
+          "extra_gated_prompt": "The collected information will help acquire a better knowledge of this model userbase and help its maintainers apply for grants to improve it further. ",
+          "extra_gated_fields": {
+            "Company/university": "text",
+            "Website": "text",
+            "I plan to use this model for (task, type of audio data, etc)": "text"
+          }
+        },
+        "tier": "B: diagnostic routing hypothesis",
+        "files": [
+          "pytorch_model.bin"
+        ],
+        "job": "joint VAD,SNR and C50 acoustic quality estimation; no denoised waveform",
+        "contract": "Official companion best config uses6s,3 bidirectional LSTM256 layers. HF gated config unavailable; exact HF checkpoint correspondence to companion best config not proven.",
+        "native": "Official pyannote+brouhaha Python; no current sherpa family. Additional ONNX export/runtime contract and parity needed; upstream GitHub MIT code does not override HF weights OpenRAIL license.",
+        "selectedArtifacts": [
+          {
+            "rfilename": "pytorch_model.bin",
+            "blobId": "30beac4dbca7a4497677f7f9bf194dfdc6f5577a",
+            "size": 47224097,
+            "lfs": {
+              "sha256": "9c237e4a7b1de8b456dbee25db853342bf374b19d8732b72b61356519e390ae1",
+              "size": 47224097,
+              "pointerSize": 133
+            }
+          }
+        ],
+        "selectedBytes": 47224097,
+        "url": "https://huggingface.co/pyannote/brouhaha/tree/c93c9b537732dd50c28c0366c73f560c3a7aeb02",
+        "localExecution": false
+      },
+      {
+        "repo": "nvidia/Frame_VAD_Multilingual_MarbleNet_v2.0",
+        "sha": "9d25eb877d9edab5101ccc843edd04787a6c72c4",
+        "gated": false,
+        "cardData": {
+          "license": "other",
+          "language": [
+            "en",
+            "es",
+            "fr",
+            "de",
+            "ru",
+            "zh"
+          ],
+          "metrics": [
+            "roc_auc"
+          ],
+          "pipeline_tag": "voice-activity-detection",
+          "library_name": "nemo",
+          "tags": [
+            "Multilingual",
+            "MarbleNet",
+            "pytorch",
+            "speech",
+            "audio",
+            "VAD",
+            "onnx",
+            "onnxruntime"
+          ]
+        },
+        "tier": "A: second VAD comparator",
+        "files": [
+          "frame_vad_multilingual_marblenet_v2.0.nemo"
+        ],
+        "job": "speech probabilities and false-positive reduction",
+        "contract": "16kHz mono;20ms output frames,91.5K params. Six listed languages en/es/fr/de/ru/zh; Hindi unqualified. Card demonstrates whole-wave inference;20ms output resolution does not establish20ms lookahead or live latency.",
+        "native": "Official NeMo2.3.0 export recipe produces feature-input ONNX and demonstrates CPUExecutionProvider. Mel/preprocessing outside exported graph; existing sherpa VAD wrapper not generic MarbleNet. Additional adapter required.",
+        "selectedArtifacts": [
+          {
+            "rfilename": "frame_vad_multilingual_marblenet_v2.0.nemo",
+            "blobId": "17dbe5bf1a53d4046328fc105ca02dfc2b198bae",
+            "size": 501760,
+            "lfs": {
+              "sha256": "84bda37e925ac6fd740c2ced55642cb79f94f81348e1fa0db992ca50d4b09706",
+              "size": 501760,
+              "pointerSize": 131
+            }
+          }
+        ],
+        "selectedBytes": 501760,
+        "url": "https://huggingface.co/nvidia/Frame_VAD_Multilingual_MarbleNet_v2.0/tree/9d25eb877d9edab5101ccc843edd04787a6c72c4",
+        "localExecution": false
+      },
+      {
+        "repo": "speechbrain/spkrec-ecapa-voxceleb",
+        "sha": "0f99f2d0ebe89ac095bcc5903c4dd8f72b367286",
+        "gated": false,
+        "cardData": {
+          "language": "en",
+          "thumbnail": null,
+          "tags": [
+            "speechbrain",
+            "embeddings",
+            "Speaker",
+            "Verification",
+            "Identification",
+            "pytorch",
+            "ECAPA",
+            "TDNN"
+          ],
+          "license": "apache-2.0",
+          "datasets": [
+            "voxceleb"
+          ],
+          "metrics": [
+            "EER"
+          ],
+          "widget": [
+            {
+              "example_title": "VoxCeleb Speaker id10003",
+              "src": "https://cdn-media.huggingface.co/speech_samples/VoxCeleb1_00003.wav"
+            },
+            {
+              "example_title": "VoxCeleb Speaker id10004",
+              "src": "https://cdn-media.huggingface.co/speech_samples/VoxCeleb_00004.wav"
+            }
+          ]
+        },
+        "tier": "B: larger owner-verification comparator",
+        "files": [
+          "embedding_model.ckpt",
+          "mean_var_norm_emb.ckpt",
+          "classifier.ckpt",
+          "label_encoder.txt"
+        ],
+        "job": "192d speaker embedding and cosine verification",
+        "contract": "16kHz mono; attentive global statistics pooling,window/utterance inference. Default loader includes training-speaker classifier and labels; owner verification does not use those class IDs.",
+        "native": "Official SpeechBrain CPU API, no native SpeechBrain branch in sherpa1.13.8 extractor. Export/front-end/state adaptation required; architecture similarity is insufficient.",
+        "selectedArtifacts": [
+          {
+            "rfilename": "classifier.ckpt",
+            "blobId": "d6f70f222826ea5490bfad657373af3d6d2a08ba",
+            "size": 5534328,
+            "lfs": {
+              "sha256": "fd9e3634fe68bd0a427c95e354c0c677374f62b3f434e45b78599950d860d535",
+              "size": 5534328,
+              "pointerSize": 132
+            }
+          },
+          {
+            "rfilename": "embedding_model.ckpt",
+            "blobId": "8ba959669e5570dbbf8076bc6b8a79555a81d5c4",
+            "size": 83316686,
+            "lfs": {
+              "sha256": "0575cb64845e6b9a10db9bcb74d5ac32b326b8dc90352671d345e2ee3d0126a2",
+              "size": 83316686,
+              "pointerSize": 133
+            }
+          },
+          {
+            "rfilename": "label_encoder.txt",
+            "blobId": "72c6fa7b170cbfd169df5e09326cd97febdf086a",
+            "size": 128619
+          },
+          {
+            "rfilename": "mean_var_norm_emb.ckpt",
+            "blobId": "1978c5e7f20d5ffd14c8a932a7e85a09816f3da9",
+            "size": 1921
+          }
+        ],
+        "selectedBytes": 88981554,
+        "url": "https://huggingface.co/speechbrain/spkrec-ecapa-voxceleb/tree/0f99f2d0ebe89ac095bcc5903c4dd8f72b367286",
+        "localExecution": false
+      },
+      {
+        "repo": "nvidia/speakerverification_en_titanet_large",
+        "sha": "0dc382f40121a5fbd34db10a2bb04d826c2be6a8",
+        "gated": false,
+        "cardData": {
+          "language": [
+            "en"
+          ],
+          "library_name": "nemo",
+          "datasets": [
+            "VOXCELEB-1",
+            "VOXCELEB-2",
+            "FISHER",
+            "switchboard",
+            "librispeech_asr",
+            "SRE"
+          ],
+          "thumbnail": null,
+          "tags": [
+            "speaker",
+            "speech",
+            "audio",
+            "speaker-verification",
+            "speaker-recognition",
+            "speaker-diarization",
+            "titanet",
+            "NeMo",
+            "pytorch"
+          ],
+          "license": "cc-by-4.0",
+          "widget": [
+            {
+              "src": "https://huggingface.co/nvidia/speakerverification_en_titanet_large/resolve/main/an255-fash-b.wav",
+              "example_title": "Speech sample 1"
+            },
+            {
+              "src": "https://huggingface.co/nvidia/speakerverification_en_titanet_large/resolve/main/cen7-fash-b.wav",
+              "example_title": "Speech sample 2"
+            }
+          ],
+          "model-index": [
+            {
+              "name": "speakerverification_en_titanet_large",
+              "results": [
+                {
+                  "task": {
+                    "name": "Speaker Verification",
+                    "type": "speaker-verification"
+                  },
+                  "dataset": {
+                    "name": "voxceleb1",
+                    "type": "voxceleb1-O",
+                    "config": "clean",
+                    "split": "test",
+                    "args": {
+                      "language": "en"
+                    }
+                  },
+                  "metrics": [
+                    {
+                      "name": "Test EER",
+                      "type": "eer",
+                      "value": 0.66,
+                      "verified": false
+                    }
+                  ]
+                },
+                {
+                  "task": {
+                    "type": "Speaker Diarization",
+                    "name": "speaker-diarization"
+                  },
+                  "dataset": {
+                    "name": "ami-mixheadset",
+                    "type": "ami_diarization",
+                    "config": "oracle-vad-known-number-of-speakers",
+                    "split": "test",
+                    "args": {
+                      "language": "en"
+                    }
+                  },
+                  "metrics": [
+                    {
+                      "name": "Test DER",
+                      "type": "der",
+                      "value": 1.73,
+                      "verified": false
+                    }
+                  ]
+                },
+                {
+                  "task": {
+                    "type": "Speaker Diarization",
+                    "name": "speaker-diarization"
+                  },
+                  "dataset": {
+                    "name": "ami-lapel",
+                    "type": "ami_diarization",
+                    "config": "oracle-vad-known-number-of-speakers",
+                    "split": "test",
+                    "args": {
+                      "language": "en"
+                    }
+                  },
+                  "metrics": [
+                    {
+                      "name": "Test DER",
+                      "type": "der",
+                      "value": 2.03,
+                      "verified": false
+                    }
+                  ]
+                },
+                {
+                  "task": {
+                    "type": "Speaker Diarization",
+                    "name": "speaker-diarization"
+                  },
+                  "dataset": {
+                    "name": "ch109",
+                    "type": "callhome_diarization",
+                    "config": "oracle-vad-known-number-of-speakers",
+                    "split": "test",
+                    "args": {
+                      "language": "en"
+                    }
+                  },
+                  "metrics": [
+                    {
+                      "name": "Test DER",
+                      "type": "der",
+                      "value": 1.19,
+                      "verified": false
+                    }
+                  ]
+                },
+                {
+                  "task": {
+                    "type": "Speaker Diarization",
+                    "name": "speaker-diarization"
+                  },
+                  "dataset": {
+                    "name": "nist-sre-2000",
+                    "type": "nist-sre_diarization",
+                    "config": "oracle-vad-known-number-of-speakers",
+                    "split": "test",
+                    "args": {
+                      "language": "en"
+                    }
+                  },
+                  "metrics": [
+                    {
+                      "name": "Test DER",
+                      "type": "der",
+                      "value": 6.73,
+                      "verified": false
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        },
+        "tier": "B: larger native-compatible owner comparator",
+        "files": [
+          "speakerverification_en_titanet_large.nemo"
+        ],
+        "job": "speaker embedding and verification",
+        "contract": "16kHz mono;global context/attentive pooling; English-trained; utterance embeddings not noise suppression. Published DER uses oracleVAD and cannot rank against a full pipeline.",
+        "native": "Existing sherpa1.13.8 NeMo branch; runtime release ONNX101,405,493B exists, no listed digest. Artifact parity/provenance and native run required; official HF .nemo is101,621,760B archive.",
+        "selectedArtifacts": [
+          {
+            "rfilename": "speakerverification_en_titanet_large.nemo",
+            "blobId": "1c9686181bb1265a9103ac7b51e2a52236c57c65",
+            "size": 101621760,
+            "lfs": {
+              "sha256": "e838520693f269e7984f55bc8eb3c2d60ccf246bf4b896d4be9bcabe3e4b0fe3",
+              "size": 101621760,
+              "pointerSize": 134
+            }
+          }
+        ],
+        "selectedBytes": 101621760,
+        "url": "https://huggingface.co/nvidia/speakerverification_en_titanet_large/tree/0dc382f40121a5fbd34db10a2bb04d826c2be6a8",
+        "localExecution": false
+      },
+      {
+        "repo": "speechbrain/vad-crdnn-libriparty",
+        "sha": "c5d5ae4fce161d94c3ab0286e32fb4a041a21a04",
+        "gated": false,
+        "cardData": {
+          "language": "en",
+          "thumbnail": null,
+          "tags": [
+            "speechbrain",
+            "VAD",
+            "SAD",
+            "Voice Activity Detection",
+            "Speech Activity Detection",
+            "Speaker Diarization",
+            "pytorch",
+            "CRDNN",
+            "LibriSpeech",
+            "LibryParty"
+          ],
+          "datasets": [
+            "Urbansound8k"
+          ],
+          "metrics": [
+            "Accuracy"
+          ]
+        },
+        "tier": "C: tiny historical comparator",
+        "files": [
+          "model.ckpt",
+          "mean_var_norm.ckpt"
+        ],
+        "job": "speech activity",
+        "contract": "16kHz mono,10ms feature hop,2-layer bidirectional GRU32 and sentence normalization; not causal10ms VAD.",
+        "native": "Official SpeechBrain CPU; no sherpa family. Repo has no model license metadata/file, do not inherit frameworkApache automatically.",
+        "selectedArtifacts": [
+          {
+            "rfilename": "mean_var_norm.ckpt",
+            "blobId": "02440345e121a9bb398511be55774d0ed1d004ae",
+            "size": 1063
+          },
+          {
+            "rfilename": "model.ckpt",
+            "blobId": "ed5e10d285f444bc88dc562de5ee5adbd1e99419",
+            "size": 452671
+          }
+        ],
+        "selectedBytes": 453734,
+        "url": "https://huggingface.co/speechbrain/vad-crdnn-libriparty/tree/c5d5ae4fce161d94c3ab0286e32fb4a041a21a04",
+        "localExecution": false
+      },
+      {
+        "repo": "Wespeaker/wespeaker-voxceleb-redimnet2-B6-LM",
+        "sha": "e34354de2429a45894905bd58c24c22250485b9a",
+        "gated": false,
+        "cardData": {
+          "license": "apache-2.0"
+        },
+        "tier": "C: recent candidate inventory only",
+        "files": [
+          "avg_model.pt"
+        ],
+        "job": "speaker embedding",
+        "contract": "Official HF card contains license only; insufficient documented task/runtime qualification despite55.5MBweights.",
+        "native": "No runtime compatibility claim; inspect exact config and architecture-specific export before nomination.",
+        "selectedArtifacts": [
+          {
+            "rfilename": "avg_model.pt",
+            "blobId": "591e989f57c7da642690ce550caa7a4220d64119",
+            "size": 55525357,
+            "lfs": {
+              "sha256": "b9314cd0184d3823c70a2518d354397bf049832f90fb1d7584ff6c0b0d8b152a",
+              "size": 55525357,
+              "pointerSize": 133
+            }
+          }
+        ],
+        "selectedBytes": 55525357,
+        "url": "https://huggingface.co/Wespeaker/wespeaker-voxceleb-redimnet2-B6-LM/tree/e34354de2429a45894905bd58c24c22250485b9a",
+        "localExecution": false
+      }
+    ],
+    "papers": {
+      "powerset": "https://arxiv.org/abs/2310.13025",
+      "wespeaker": "https://arxiv.org/abs/2210.17016",
+      "ecapa": "https://arxiv.org/abs/2005.07143",
+      "titanet": "https://arxiv.org/abs/2110.04410",
+      "marblenet": "https://arxiv.org/abs/2010.13886",
+      "brouhaha": "https://arxiv.org/abs/2210.13248",
+      "vbx": "https://arxiv.org/abs/2012.14952"
+    },
+    "runtimeRevision": "k2-fsa/sherpa-onnx@11afbd009a7f8c08f4bcf2fc1b265d0df4670fbf = crate1.13.8",
+    "sourceEvidence": [
+      {
+        "file": "hf-brouhaha-best-config.txt",
+        "sha256": "747411b29d6e5fbe62fdc3c85a64814c29af10ad656701f53fc0281a684494c0",
+        "text": "task:\n  duration: 6\n  batch_size: 64\narchitecture:\n  sincnet:\n    stride: 10\n    sample_rate: 16000\n  lstm:\n    hidden_size: 256\n    num_layers: 3\n    bidirectional: true\n    monolithic: true\n    dropout: 0.5\n    batch_first: true\n  linear:\n    hidden_size: 128\n    num_layers: 2\n"
+      },
+      {
+        "file": "hf-brouhaha-models.txt",
+        "sha256": "6e4b718a04ed3bb2c916dfb3c4416ff8503509fc641e3072c8a07b9a6e7e408a",
+        "text": "import torch\nimport torch.nn as nn\nimport torch.nn.functional as F\nfrom einops import rearrange\nfrom pyannote.audio import Model\nfrom pyannote.audio.models.segmentation import PyanNet\nfrom pyannote.audio.models.segmentation.debug import SimpleSegmentationModel\n\nSNR_MIN = -15\nSNR_MAX = 80\nC50_MIN = -10\nC50_MAX = 60\n\n\nclass ParametricSigmoid(nn.Module):\n    def __init__(self, alpha: float, beta: float) -> None:\n        super().__init__()\n        self.alpha = alpha\n        self.beta = beta\n\n    def forward(self, x: torch.Tensor):\n        return (self.beta - self.alpha) * F.sigmoid(x) + self.alpha\n\n\nclass CustomClassifier(nn.Module):\n    def __init__(self, in_features, out_features: int) -> None:\n        super().__init__()\n        self.linears = nn.ModuleDict({\n            'vad': nn.Linear(in_features, out_features),\n            'snr': nn.Linear(in_features, 1),\n            'c50': nn.Linear(in_features, 1),\n        })\n\n    def forward(self, x: torch.Tensor):\n        out = dict()\n        for mode, linear in self.linears.items():\n            _output = linear(x)\n            out[mode] = _output\n\n        return out\n\n\nclass CustomActivation(nn.Module):\n    # Try something else for snr and c50\n    # TODO : print and save alpha and beta values of ParametricSigmoid\n    def __init__(self) -> None:\n        super().__init__()\n        self.activations = nn.ModuleDict({\n            'vad': nn.Sigmoid(),\n            'snr': ParametricSigmoid(SNR_MAX, SNR_MIN),\n            'c50': ParametricSigmoid(C50_MAX, C50_MIN),\n        })\n\n    def forward(self, x: torch.Tensor):\n        out = list()\n        for mode, activation in self.activations.items():\n            _output = activation(x[mode])\n            out.append(_output)\n\n        out = torch.stack(out)\n        out = rearrange(out, \"n b t o -> b t (n o)\")\n        return out\n\n\nclass RegressiveSegmentationModelMixin(Model):\n    def build(self):\n        \"\"\"\n        Debug architecture\n        \"\"\"\n        nb_classif = len(set(self.specifications.classes) - set(['snr', 'c50']))\n        self.classifier = CustomClassifier(32 * 2, nb_classif)\n        self.activation = CustomActivation()\n\n\nclass CustomSimpleSegmentationModel(RegressiveSegmentationModelMixin, SimpleSegmentationModel):\n    pass\n\n\nclass CustomPyanNetModel(RegressiveSegmentationModelMixin, PyanNet):\n    def build(self):\n        if self.hparams.linear[\"num_layers\"] > 0:\n            in_features = self.hparams.linear[\"hidden_size\"]\n        else:\n            in_features = self.hparams.lstm[\"hidden_size\"] * (\n                2 if self.hparams.lstm[\"bidirectional\"] else 1\n            )\n        nb_classif = len(set(self.specifications.classes) - set(['snr', 'c50']))\n        self.classifier = CustomClassifier(in_features, nb_classif)\n        self.activation = CustomActivation()\n"
+      },
+      {
+        "file": "hf-ecapa-params.txt",
+        "sha256": "6f78854fa04ba59e761437b76a2575d3aba5e5016de3e9b69f0c9a5077fb1a41",
+        "text": "# ############################################################################\n# Model: ECAPA big for Speaker verification\n# ############################################################################\n\n# Feature parameters\nn_mels: 80\n\n# Pretrain folder (HuggingFace)\npretrained_path: speechbrain/spkrec-ecapa-voxceleb\n\n# Output parameters\nout_n_neurons: 7205\n\n# Model params\ncompute_features: !new:speechbrain.lobes.features.Fbank\n    n_mels: !ref <n_mels>\n\nmean_var_norm: !new:speechbrain.processing.features.InputNormalization\n    norm_type: sentence\n    std_norm: False\n\nembedding_model: !new:speechbrain.lobes.models.ECAPA_TDNN.ECAPA_TDNN\n    input_size: !ref <n_mels>\n    channels: [1024, 1024, 1024, 1024, 3072]\n    kernel_sizes: [5, 3, 3, 3, 1]\n    dilations: [1, 2, 3, 4, 1]\n    attention_channels: 128\n    lin_neurons: 192\n\nclassifier: !new:speechbrain.lobes.models.ECAPA_TDNN.Classifier\n    input_size: 192\n    out_neurons: !ref <out_n_neurons>\n\nmean_var_norm_emb: !new:speechbrain.processing.features.InputNormalization\n    norm_type: global\n    std_norm: False\n\nmodules:\n    compute_features: !ref <compute_features>\n    mean_var_norm: !ref <mean_var_norm>\n    embedding_model: !ref <embedding_model>\n    mean_var_norm_emb: !ref <mean_var_norm_emb>\n    classifier: !ref <classifier>\n        \nlabel_encoder: !new:speechbrain.dataio.encoder.CategoricalEncoder\n\n        \npretrainer: !new:speechbrain.utils.parameter_transfer.Pretrainer\n    loadables:\n        embedding_model: !ref <embedding_model>\n        mean_var_norm_emb: !ref <mean_var_norm_emb>\n        classifier: !ref <classifier>\n        label_encoder: !ref <label_encoder>\n    paths:\n        embedding_model: !ref <pretrained_path>/embedding_model.ckpt\n        mean_var_norm_emb: !ref <pretrained_path>/mean_var_norm_emb.ckpt\n        classifier: !ref <pretrained_path>/classifier.ckpt\n        label_encoder: !ref <pretrained_path>/label_encoder.txt\n"
+      },
+      {
+        "file": "hf-pyannote-segmentation-source.txt",
+        "sha256": "8d576a0992d56f23f1c065e1ee211747649e3fd1494eee50e994aec7856f09ff",
+        "text": "# MIT License\n#\n# Copyright (c) 2020 CNRS\n#\n# Permission is hereby granted, free of charge, to any person obtaining a copy\n# of this software and associated documentation files (the \"Software\"), to deal\n# in the Software without restriction, including without limitation the rights\n# to use, copy, modify, merge, publish, distribute, sublicense, and/or sell\n# copies of the Software, and to permit persons to whom the Software is\n# furnished to do so, subject to the following conditions:\n#\n# The above copyright notice and this permission notice shall be included in all\n# copies or substantial portions of the Software.\n#\n# THE SOFTWARE IS PROVIDED \"AS IS\", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR\n# IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,\n# FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE\n# AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER\n# LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,\n# OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE\n# SOFTWARE.\n\n\nfrom typing import Optional\n\nimport torch\nimport torch.nn as nn\nimport torch.nn.functional as F\nfrom einops import rearrange\nfrom pyannote.core.utils.generators import pairwise\n\nfrom pyannote.audio.core.model import Model\nfrom pyannote.audio.core.task import Task\nfrom pyannote.audio.models.blocks.sincnet import SincNet\nfrom pyannote.audio.utils.params import merge_dict\n\n\nclass PyanNet(Model):\n    \"\"\"PyanNet segmentation model\n\n    SincNet > LSTM > Feed forward > Classifier\n\n    Parameters\n    ----------\n    sample_rate : int, optional\n        Audio sample rate. Defaults to 16kHz (16000).\n    num_channels : int, optional\n        Number of channels. Defaults to mono (1).\n    sincnet : dict, optional\n        Keyword arugments passed to the SincNet block.\n        Defaults to {\"stride\": 1}.\n    lstm : dict, optional\n        Keyword arguments passed to the LSTM layer.\n        Defaults to {\"hidden_size\": 128, \"num_layers\": 2, \"bidirectional\": True},\n        i.e. two bidirectional layers with 128 units each.\n        Set \"monolithic\" to False to split monolithic multi-layer LSTM into multiple mono-layer LSTMs.\n        This may proove useful for probing LSTM internals.\n    linear : dict, optional\n        Keyword arugments used to initialize linear layers\n        Defaults to {\"hidden_size\": 128, \"num_layers\": 2},\n        i.e. two linear layers with 128 units each.\n    \"\"\"\n\n    SINCNET_DEFAULTS = {\"stride\": 10}\n    LSTM_DEFAULTS = {\n        \"hidden_size\": 128,\n        \"num_layers\": 2,\n        \"bidirectional\": True,\n        \"monolithic\": True,\n        \"dropout\": 0.0,\n    }\n    LINEAR_DEFAULTS = {\"hidden_size\": 128, \"num_layers\": 2}\n\n    def __init__(\n        self,\n        sincnet: dict = None,\n        lstm: dict = None,\n        linear: dict = None,\n        sample_rate: int = 16000,\n        num_channels: int = 1,\n        task: Optional[Task] = None,\n    ):\n        super().__init__(sample_rate=sample_rate, num_channels=num_channels, task=task)\n\n        sincnet = merge_dict(self.SINCNET_DEFAULTS, sincnet)\n        sincnet[\"sample_rate\"] = sample_rate\n        lstm = merge_dict(self.LSTM_DEFAULTS, lstm)\n        lstm[\"batch_first\"] = True\n        linear = merge_dict(self.LINEAR_DEFAULTS, linear)\n        self.save_hyperparameters(\"sincnet\", \"lstm\", \"linear\")\n\n        self.sincnet = SincNet(**self.hparams.sincnet)\n\n        monolithic = lstm[\"monolithic\"]\n        if monolithic:\n            multi_layer_lstm = dict(lstm)\n            del multi_layer_lstm[\"monolithic\"]\n            self.lstm = nn.LSTM(60, **multi_layer_lstm)\n\n        else:\n            num_layers = lstm[\"num_layers\"]\n            if num_layers > 1:\n                self.dropout = nn.Dropout(p=lstm[\"dropout\"])\n\n            one_layer_lstm = dict(lstm)\n            one_layer_lstm[\"num_layers\"] = 1\n            one_layer_lstm[\"dropout\"] = 0.0\n            del one_layer_lstm[\"monolithic\"]\n\n            self.lstm = nn.ModuleList(\n                [\n                    nn.LSTM(\n                        60\n                        if i == 0\n                        else lstm[\"hidden_size\"] * (2 if lstm[\"bidirectional\"] else 1),\n                        **one_layer_lstm\n                    )\n                    for i in range(num_layers)\n                ]\n            )\n\n        if linear[\"num_layers\"] < 1:\n            return\n\n        lstm_out_features: int = self.hparams.lstm[\"hidden_size\"] * (\n            2 if self.hparams.lstm[\"bidirectional\"] else 1\n        )\n        self.linear = nn.ModuleList(\n            [\n                nn.Linear(in_features, out_features)\n                for in_features, out_features in pairwise(\n                    [\n                        lstm_out_features,\n                    ]\n                    + [self.hparams.linear[\"hidden_size\"]]\n                    * self.hparams.linear[\"num_layers\"]\n                )\n            ]\n        )\n\n    def build(self):\n        if self.hparams.linear[\"num_layers\"] > 0:\n            in_features = self.hparams.linear[\"hidden_size\"]\n        else:\n            in_features = self.hparams.lstm[\"hidden_size\"] * (\n                2 if self.hparams.lstm[\"bidirectional\"] else 1\n            )\n\n        if isinstance(self.specifications, tuple):\n            raise ValueError(\"PyanNet does not support multi-tasking.\")\n\n        if self.specifications.powerset:\n            out_features = self.specifications.num_powerset_classes\n        else:\n            out_features = len(self.specifications.classes)\n\n        self.classifier = nn.Linear(in_features, out_features)\n        self.activation = self.default_activation()\n\n    def forward(self, waveforms: torch.Tensor) -> torch.Tensor:\n        \"\"\"Pass forward\n\n        Parameters\n        ----------\n        waveforms : (batch, channel, sample)\n\n        Returns\n        -------\n        scores : (batch, frame, classes)\n        \"\"\"\n\n        outputs = self.sincnet(waveforms)\n\n        if self.hparams.lstm[\"monolithic\"]:\n            outputs, _ = self.lstm(\n                rearrange(outputs, \"batch feature frame -> batch frame feature\")\n            )\n        else:\n            outputs = rearrange(outputs, \"batch feature frame -> batch frame feature\")\n            for i, lstm in enumerate(self.lstm):\n                outputs, _ = lstm(outputs)\n                if i + 1 < self.hparams.lstm[\"num_layers\"]:\n                    outputs = self.dropout(outputs)\n\n        if self.hparams.linear[\"num_layers\"] > 0:\n            for linear in self.linear:\n                outputs = F.leaky_relu(linear(outputs))\n\n        return self.activation(self.classifier(outputs))\n"
+      },
+      {
+        "file": "hf-sherpa-embedding-impl.txt",
+        "sha256": "0a98272899c8310743dea4281e1011a0dcf360d26aebe43dd146f4c594cb27bc",
+        "text": "// sherpa-onnx/csrc/speaker-embedding-extractor-impl.cc\n//\n// Copyright (c)  2024  Xiaomi Corporation\n#include \"sherpa-onnx/csrc/speaker-embedding-extractor-impl.h\"\n\n#include <memory>\n\n#if __ANDROID_API__ >= 9\n#include \"android/asset_manager.h\"\n#include \"android/asset_manager_jni.h\"\n#endif\n\n#if __OHOS__\n#include \"rawfile/raw_file_manager.h\"\n#endif\n\n#include \"sherpa-onnx/csrc/file-utils.h\"\n#include \"sherpa-onnx/csrc/macros.h\"\n#include \"sherpa-onnx/csrc/onnx-utils.h\"\n#include \"sherpa-onnx/csrc/session.h\"\n#include \"sherpa-onnx/csrc/speaker-embedding-extractor-general-impl.h\"\n#include \"sherpa-onnx/csrc/speaker-embedding-extractor-nemo-impl.h\"\n#include \"sherpa-onnx/csrc/text-utils.h\"\n\nnamespace sherpa_onnx {\n\nnamespace {\n\nenum class ModelType : std::uint8_t {\n  kWeSpeaker,\n  k3dSpeaker,\n  kNeMo,\n  kUnknown,\n};\n\n}  // namespace\n\nstatic ModelType GetModelType(const std::string &model_path, bool debug) {\n  Ort::Env env = ORT_LOGGING_LEVEL_ERROR;\n  Ort::SessionOptions sess_opts;\n  sess_opts.SetIntraOpNumThreads(1);\n  sess_opts.SetInterOpNumThreads(1);\n\n  auto sess = std::make_unique<Ort::Session>(\n      env, SHERPA_ONNX_TO_ORT_PATH(model_path), sess_opts);\n\n\n  Ort::ModelMetadata meta_data = sess->GetModelMetadata();\n  if (debug) {\n    std::ostringstream os;\n    PrintModelMetadata(os, meta_data);\n#if __OHOS__\n    SHERPA_ONNX_LOGE(\"%{public}s\", os.str().c_str());\n#else\n    SHERPA_ONNX_LOGE(\"%s\", os.str().c_str());\n#endif\n  }\n\n  Ort::AllocatorWithDefaultOptions allocator;\n  auto model_type =\n      LookupCustomModelMetaData(meta_data, \"framework\", allocator);\n  if (model_type.empty()) {\n    SHERPA_ONNX_LOGE(\n        \"No model_type in the metadata!\\n\"\n        \"Please make sure you have added metadata to the model.\\n\\n\"\n        \"For instance, you can use\\n\"\n        \"https://github.com/k2-fsa/sherpa-onnx/blob/master/scripts/wespeaker/\"\n        \"add_meta_data.py\"\n        \"to add metadata to models from WeSpeaker\\n\");\n    return ModelType::kUnknown;\n  }\n\n  if (model_type == \"wespeaker\") {\n    return ModelType::kWeSpeaker;\n  } else if (model_type == \"3d-speaker\") {\n    return ModelType::k3dSpeaker;\n  } else if (model_type == \"nemo\") {\n    return ModelType::kNeMo;\n  } else {\n#if __OHOS__\n    SHERPA_ONNX_LOGE(\"Unsupported model_type: %{public}s\", model_type.c_str());\n#else\n    SHERPA_ONNX_LOGE(\"Unsupported model_type: %s\", model_type.c_str());\n#endif\n    return ModelType::kUnknown;\n  }\n}\n\nstatic ModelType GetModelType(char *model_data, size_t model_data_length,\n                              bool debug) {\n  Ort::Env env = ORT_LOGGING_LEVEL_ERROR;\n  Ort::SessionOptions sess_opts;\n  sess_opts.SetIntraOpNumThreads(1);\n  sess_opts.SetInterOpNumThreads(1);\n\n  auto sess = std::make_unique<Ort::Session>(env, model_data, model_data_length,\n                                             sess_opts);\n\n  Ort::ModelMetadata meta_data = sess->GetModelMetadata();\n  if (debug) {\n    std::ostringstream os;\n    PrintModelMetadata(os, meta_data);\n#if __OHOS__\n    SHERPA_ONNX_LOGE(\"%{public}s\", os.str().c_str());\n#else\n    SHERPA_ONNX_LOGE(\"%s\", os.str().c_str());\n#endif\n  }\n\n  Ort::AllocatorWithDefaultOptions allocator;\n  auto model_type =\n      LookupCustomModelMetaData(meta_data, \"framework\", allocator);\n  if (model_type.empty()) {\n    SHERPA_ONNX_LOGE(\n        \"No model_type in the metadata!\\n\"\n        \"Please make sure you have added metadata to the model.\\n\\n\"\n        \"For instance, you can use\\n\"\n        \"https://github.com/k2-fsa/sherpa-onnx/blob/master/scripts/wespeaker/\"\n        \"add_meta_data.py\"\n        \"to add metadata to models from WeSpeaker\\n\");\n    return ModelType::kUnknown;\n  }\n\n  if (model_type == \"wespeaker\") {\n    return ModelType::kWeSpeaker;\n  } else if (model_type == \"3d-speaker\") {\n    return ModelType::k3dSpeaker;\n  } else if (model_type == \"nemo\") {\n    return ModelType::kNeMo;\n  } else {\n#if __OHOS__\n    SHERPA_ONNX_LOGE(\"Unsupported model_type: %{public}s\", model_type.c_str());\n#else\n    SHERPA_ONNX_LOGE(\"Unsupported model_type: %s\", model_type.c_str());\n#endif\n    return ModelType::kUnknown;\n  }\n}\n\nstd::unique_ptr<SpeakerEmbeddingExtractorImpl>\nSpeakerEmbeddingExtractorImpl::Create(\n    const SpeakerEmbeddingExtractorConfig &config) {\n  ModelType model_type = ModelType::kUnknown;\n\n  {\n    model_type = GetModelType(config.model, config.debug);\n  }\n\n  switch (model_type) {\n    case ModelType::kWeSpeaker:\n      // fall through\n    case ModelType::k3dSpeaker:\n      return std::make_unique<SpeakerEmbeddingExtractorGeneralImpl>(config);\n    case ModelType::kNeMo:\n      return std::make_unique<SpeakerEmbeddingExtractorNeMoImpl>(config);\n    case ModelType::kUnknown:\n      SHERPA_ONNX_LOGE(\"Unknown model type for speaker embedding extractor!\");\n      return nullptr;\n  }\n\n  // unreachable code\n  return nullptr;\n}\n\ntemplate <typename Manager>\nstd::unique_ptr<SpeakerEmbeddingExtractorImpl>\nSpeakerEmbeddingExtractorImpl::Create(\n    Manager *mgr, const SpeakerEmbeddingExtractorConfig &config) {\n  ModelType model_type = ModelType::kUnknown;\n\n  {\n    auto buffer = ReadFile(mgr, config.model);\n\n    model_type = GetModelType(buffer.data(), buffer.size(), config.debug);\n  }\n\n  switch (model_type) {\n    case ModelType::kWeSpeaker:\n      // fall through\n    case ModelType::k3dSpeaker:\n      return std::make_unique<SpeakerEmbeddingExtractorGeneralImpl>(mgr,\n                                                                    config);\n    case ModelType::kNeMo:\n      return std::make_unique<SpeakerEmbeddingExtractorNeMoImpl>(mgr, config);\n    case ModelType::kUnknown:\n      SHERPA_ONNX_LOGE(\n          \"Unknown model type in for speaker embedding extractor!\");\n      return nullptr;\n  }\n\n  // unreachable code\n  return nullptr;\n}\n\n#if __ANDROID_API__ >= 9\ntemplate std::unique_ptr<SpeakerEmbeddingExtractorImpl>\nSpeakerEmbeddingExtractorImpl::Create(\n    AAssetManager *mgr, const SpeakerEmbeddingExtractorConfig &config);\n#endif\n\n#if __OHOS__\ntemplate std::unique_ptr<SpeakerEmbeddingExtractorImpl>\nSpeakerEmbeddingExtractorImpl::Create(\n    NativeResourceManager *mgr, const SpeakerEmbeddingExtractorConfig &config);\n#endif\n\n}  // namespace sherpa_onnx\n"
+      },
+      {
+        "file": "hf-sherpa-wespeaker-metadata.txt",
+        "sha256": "7bc272689cd74d70d563c83b040bfd03b9c5f25663434e1b297841561187a769",
+        "text": "#!/usr/bin/env python3\n# Copyright      2023  Xiaomi Corp.        (authors: Fangjun Kuang)\n\n\"\"\"\nThis script adds meta data to a model so that it can be used in sherpa-onnx.\n\nUsage:\n./add_meta_data.py --model ./voxceleb_resnet34.onnx  --language English\n\"\"\"\n\nimport argparse\nfrom pathlib import Path\nfrom typing import Dict\n\nimport onnx\nimport onnxruntime\n\n\ndef get_args():\n    parser = argparse.ArgumentParser()\n    parser.add_argument(\n        \"--model\",\n        type=str,\n        required=True,\n        help=\"Path to the input onnx model. Example value: model.onnx\",\n    )\n\n    parser.add_argument(\n        \"--language\",\n        type=str,\n        required=True,\n        help=\"\"\"Supported language of the input model.\n        Example value: Chinese, English.\n        \"\"\",\n    )\n\n    parser.add_argument(\n        \"--url\",\n        type=str,\n        default=\"https://github.com/wenet-e2e/wespeaker/blob/master/docs/pretrained.md\",\n        help=\"Where the model is downloaded\",\n    )\n\n    parser.add_argument(\n        \"--comment\",\n        type=str,\n        default=\"no comment\",\n        help=\"Comment about the model\",\n    )\n\n    parser.add_argument(\n        \"--sample-rate\",\n        type=int,\n        default=16000,\n        help=\"Sample rate expected by the model\",\n    )\n\n    return parser.parse_args()\n\n\ndef add_meta_data(filename: str, meta_data: Dict[str, str]):\n    \"\"\"Add meta data to an ONNX model. It is changed in-place.\n\n    Args:\n      filename:\n        Filename of the ONNX model to be changed.\n      meta_data:\n        Key-value pairs.\n    \"\"\"\n    model = onnx.load(filename)\n    for key, value in meta_data.items():\n        meta = model.metadata_props.add()\n        meta.key = key\n        meta.value = str(value)\n\n    onnx.save(model, filename)\n\n\ndef get_output_dim(filename) -> int:\n    filename = str(filename)\n    session_opts = onnxruntime.SessionOptions()\n    session_opts.log_severity_level = 3  # error level\n    sess = onnxruntime.InferenceSession(filename, session_opts)\n\n    for i in sess.get_inputs():\n        print(i)\n\n    print(\"----------\")\n\n    for o in sess.get_outputs():\n        print(o)\n\n    print(\"----------\")\n\n    assert len(sess.get_inputs()) == 1\n    assert len(sess.get_outputs()) == 1\n\n    i = sess.get_inputs()[0]\n    o = sess.get_outputs()[0]\n\n    assert i.shape[:2] == [\"B\", \"T\"], i.shape\n    assert o.shape[0] == \"B\"\n\n    assert i.shape[2] == 80, i.shape\n\n    return o.shape[1]\n\n\ndef main():\n    args = get_args()\n    model = Path(args.model)\n    language = args.language\n    url = args.url\n    comment = args.comment\n    sample_rate = args.sample_rate\n\n    if not model.is_file():\n        raise ValueError(f\"{model} does not exist\")\n\n    assert len(language) > 0, len(language)\n    assert len(url) > 0, len(url)\n\n    output_dim = get_output_dim(model)\n\n    # all models from wespeaker expect input samples in the range\n    # [-32768, 32767]\n    normalize_samples = 0\n\n    meta_data = {\n        \"framework\": \"wespeaker\",\n        \"language\": language,\n        \"url\": url,\n        \"comment\": comment,\n        \"sample_rate\": sample_rate,\n        \"output_dim\": output_dim,\n        \"normalize_samples\": normalize_samples,\n    }\n    print(meta_data)\n    add_meta_data(filename=str(model), meta_data=meta_data)\n\n\nif __name__ == \"__main__\":\n    main()\n"
+      },
+      {
+        "file": "hf-vad-params.txt",
+        "sha256": "6e50ba520586acce9d9d89e79ff88e3f85fcef543ef22b61939b85540fb93351",
+        "text": "# ############################################################################\n# Model: Small CRDNN model for Voice Activity Detection\n# Author:  Mirco Ravanelli, 2021\n# ############################################################################\n\n# Feature parameters\nsample_rate: 16000\ntime_resolution: 0.01 # in seconds (e.g,, 0.01 = 10 ms)\nn_fft: 400\nn_mels: 40\n\n# Model parameters\nactivation: !name:torch.nn.LeakyReLU\ndropout: 0.15\ncnn_blocks: 2\ncnn_channels: (16, 32)\ncnn_kernelsize: (3, 3)\nrnn_layers: 2\nrnn_neurons: 32\nrnn_bidirectional: True\ndnn_blocks: 1\ndnn_neurons: 16\noutput_neurons: 1\ndevice: 'cpu' # or 'cuda'\n\n# Feature/Model objects\ncompute_features: !new:speechbrain.lobes.features.Fbank\n    sample_rate: !ref <sample_rate>\n    n_fft: !ref <n_fft>\n    n_mels: !ref <n_mels>\n    hop_length: !ref <time_resolution> * 1000 # in ms\n\nmean_var_norm: !new:speechbrain.processing.features.InputNormalization\n    norm_type: sentence\n\ncnn: !new:speechbrain.nnet.containers.Sequential\n    input_shape: [null, null, !ref <n_mels>]\n    norm1: !name:speechbrain.nnet.normalization.LayerNorm\n    cnn1: !name:speechbrain.lobes.models.CRDNN.CNN_Block\n        channels: 16\n        kernel_size: (3, 3) \n    cnn2: !name:speechbrain.lobes.models.CRDNN.CNN_Block\n        channels: 32\n        kernel_size: (3, 3)\n\nrnn: !new:speechbrain.nnet.RNN.GRU\n    input_shape: [null, null, 320]\n    hidden_size: !ref <rnn_neurons>\n    num_layers: !ref <rnn_layers>\n    bidirectional: True\n\ndnn: !new:speechbrain.nnet.containers.Sequential\n    input_shape: [null, null, !ref <rnn_neurons> * 2]\n    dnn1: !name:speechbrain.lobes.models.CRDNN.DNN_Block\n        neurons: !ref <dnn_neurons>\n    dnn2: !name:speechbrain.lobes.models.CRDNN.DNN_Block\n        neurons: !ref <dnn_neurons>\n    lin: !name:speechbrain.nnet.linear.Linear\n        n_neurons: !ref <output_neurons>\n        bias: False\n\n\nmodel: !new:torch.nn.ModuleList\n    - [!ref <cnn>, !ref <rnn>, !ref <dnn>]\n      \nmodules:\n    compute_features: !ref <compute_features>\n    model: !ref <model>\n    cnn: !ref <cnn>\n    rnn: !ref <rnn>\n    dnn: !ref <dnn>\n    mean_var_norm: !ref <mean_var_norm>\n\npretrainer: !new:speechbrain.utils.parameter_transfer.Pretrainer\n    loadables:\n        model: !ref <model>\n        mean_var_norm: !ref <mean_var_norm>\n"
+      }
+    ]
+  },
+  "audioEvents": {
+    "metadata_checked": "2026-09-16",
+    "units": "decimalMB=1000000bytes; excludesruntimebinaries/RAM/activationstate",
+    "entries": [
+      {
+        "family": "CED-tiny",
+        "repo": "k2-fsa/sherpa-onnx-ced-tiny-audio-tagging-2024-04-19",
+        "revision": "efe3a5cfad74e56598d855d055006903adc00e38",
+        "files": [
+          {
+            "name": "class_labels_indices.csv",
+            "size": 14675,
+            "lfs": null
+          },
+          {
+            "name": "model.int8.onnx",
+            "size": 6133417,
+            "lfs": {
+              "sha256": "73aa22e783115f6a4ae169b36089907e07d0fd44795595eddea9c1bfc74cc945",
+              "size": 6133417,
+              "pointerSize": 132
+            }
+          }
+        ],
+        "artifact_bytes": 6148092,
+        "origin": "Runtime-maintainer conversion from author CED",
+        "runtime": "Existing sherpa-onnx1.13.8 Rust AudioTagging CPU API",
+        "window_contract": "Variable length 16kHz; offline clip probabilities527classes, not frameVAD. 2/5/10second trailing-window calibration needed. Freshclip stream percompute; AcceptWaveform calls InputFinished.",
+        "use": "Strong first native benchmark ladder; speech/music/noise co-occurrence labels",
+        "license": "Author Apache2.0; HFconversioncard license omitted; labels attributionverify",
+        "paper": "https://arxiv.org/abs/2308.11957v2",
+        "local_measurement": "Not run by research agent; metadata only."
+      },
+      {
+        "family": "CED-mini",
+        "repo": "k2-fsa/sherpa-onnx-ced-mini-audio-tagging-2024-04-19",
+        "revision": "4da6df50dc47b25f91074b5ef7df4c1cc0dd7d4d",
+        "files": [
+          {
+            "name": "class_labels_indices.csv",
+            "size": 14675,
+            "lfs": null
+          },
+          {
+            "name": "model.int8.onnx",
+            "size": 10451715,
+            "lfs": {
+              "sha256": "ff29f39f9fbe637f72535160e9d006d61d872fdab0fce838672265b9b38cf946",
+              "size": 10451715,
+              "pointerSize": 133
+            }
+          }
+        ],
+        "artifact_bytes": 10466390,
+        "origin": "Runtime-maintainer conversion from author CED",
+        "runtime": "Existing sherpa-onnx1.13.8 Rust AudioTagging CPU API",
+        "window_contract": "Variable length 16kHz; offline clip probabilities527classes, not frameVAD. 2/5/10second trailing-window calibration needed. Freshclip stream percompute; AcceptWaveform calls InputFinished.",
+        "use": "Strong first native benchmark ladder; speech/music/noise co-occurrence labels",
+        "license": "Author Apache2.0; HFconversioncard license omitted; labels attributionverify",
+        "paper": "https://arxiv.org/abs/2308.11957v2",
+        "local_measurement": "Not run by research agent; metadata only."
+      },
+      {
+        "family": "CED-small",
+        "repo": "k2-fsa/sherpa-onnx-ced-small-audio-tagging-2024-04-19",
+        "revision": "afbf166bdf847d68f2adfe0c358be20d704c2289",
+        "files": [
+          {
+            "name": "class_labels_indices.csv",
+            "size": 14675,
+            "lfs": null
+          },
+          {
+            "name": "model.int8.onnx",
+            "size": 22626947,
+            "lfs": {
+              "sha256": "ccb9f661014c047e5878a140eda1d816b5579a9ac32a196f062240872e32f489",
+              "size": 22626947,
+              "pointerSize": 133
+            }
+          }
+        ],
+        "artifact_bytes": 22641622,
+        "origin": "Runtime-maintainer conversion from author CED",
+        "runtime": "Existing sherpa-onnx1.13.8 Rust AudioTagging CPU API",
+        "window_contract": "Variable length 16kHz; offline clip probabilities527classes, not frameVAD. 2/5/10second trailing-window calibration needed. Freshclip stream percompute; AcceptWaveform calls InputFinished.",
+        "use": "Strong first native benchmark ladder; speech/music/noise co-occurrence labels",
+        "license": "Author Apache2.0; HFconversioncard license omitted; labels attributionverify",
+        "paper": "https://arxiv.org/abs/2308.11957v2",
+        "local_measurement": "Not run by research agent; metadata only."
+      },
+      {
+        "family": "CED-base",
+        "repo": "k2-fsa/sherpa-onnx-ced-base-audio-tagging-2024-04-19",
+        "revision": "6c64f5ae637788ad51e138fdaaa4a49686b4eb91",
+        "files": [
+          {
+            "name": "class_labels_indices.csv",
+            "size": 14675,
+            "lfs": null
+          },
+          {
+            "name": "model.int8.onnx",
+            "size": 87464243,
+            "lfs": {
+              "sha256": "05c59be9615f6e24a34534ab8d7be782c912ac241d5ed73989b75177becdd312",
+              "size": 87464243,
+              "pointerSize": 133
+            }
+          }
+        ],
+        "artifact_bytes": 87478918,
+        "origin": "Runtime-maintainer conversion from author CED",
+        "runtime": "Existing sherpa-onnx1.13.8 Rust AudioTagging CPU API",
+        "window_contract": "Variable length 16kHz; offline clip probabilities527classes, not frameVAD. 2/5/10second trailing-window calibration needed. Freshclip stream percompute; AcceptWaveform calls InputFinished.",
+        "use": "Strong first native benchmark ladder; speech/music/noise co-occurrence labels",
+        "license": "Author Apache2.0; HFconversioncard license omitted; labels attributionverify",
+        "paper": "https://arxiv.org/abs/2308.11957v2",
+        "local_measurement": "Not run by research agent; metadata only."
+      },
+      {
+        "family": "CED-small-F32",
+        "repo": "k2-fsa/sherpa-onnx-ced-small-audio-tagging-2024-04-19",
+        "revision": "afbf166bdf847d68f2adfe0c358be20d704c2289",
+        "files": [
+          {
+            "name": "class_labels_indices.csv",
+            "size": 14675,
+            "lfs": null
+          },
+          {
+            "name": "model.onnx",
+            "size": 86829382,
+            "lfs": {
+              "sha256": "75f880efd4a3d3c4ca4011a83d7d35b00397597286f1217f0458342febafa392",
+              "size": 86829382,
+              "pointerSize": 133
+            }
+          }
+        ],
+        "artifact_bytes": 86844057,
+        "origin": "Runtime-maintainer conversion",
+        "runtime": "Existing sherpa-onnx1.13.8",
+        "window_contract": "As CED above",
+        "use": "Precisionreference under100MB",
+        "license": "Source Apache2.0; conversioncard lacksmetadata",
+        "paper": "https://arxiv.org/abs/2308.11957v2",
+        "local_measurement": "Not run by research agent; metadata only."
+      },
+      {
+        "family": "Zipformer",
+        "repo": "k2-fsa/sherpa-onnx-zipformer-audio-tagging-2024-04-09",
+        "revision": "733383fa2bca3d2a4c8f909cedb7df9be42ce5cf",
+        "files": [
+          {
+            "name": "class_labels_indices.csv",
+            "size": 14675,
+            "lfs": null
+          },
+          {
+            "name": "model.int8.onnx",
+            "size": 68387871,
+            "lfs": {
+              "sha256": "a6254a4c8a76deecb5ff22a1ad85eda8085a23bb56f6c672db5cc7da1bdfa257",
+              "size": 68387871,
+              "pointerSize": 133
+            }
+          }
+        ],
+        "artifact_bytes": 68402546,
+        "origin": "Runtime-maintainer conversion from icefall recipe",
+        "runtime": "Existing sherpa-onnx1.13.8 RustAudioTagging zipformer",
+        "window_contract": "Offline clip labels527,variablelength;80mel. No claimof streamingASR semanticsfromarchitecture.",
+        "use": "Alternative existingruntime classifier",
+        "license": "Apache2.0",
+        "paper": "https://arxiv.org/abs/2310.11230",
+        "local_measurement": "Not run by research agent; metadata only."
+      },
+      {
+        "family": "Zipformer-small",
+        "repo": "k2-fsa/sherpa-onnx-zipformer-small-audio-tagging-2024-04-15",
+        "revision": "c24f9d0fdf7d0b8c0c4f9733aa0cac51fda10c95",
+        "files": [
+          {
+            "name": "class_labels_indices.csv",
+            "size": 14675,
+            "lfs": null
+          },
+          {
+            "name": "model.int8.onnx",
+            "size": 27038066,
+            "lfs": {
+              "sha256": "69304b8a1b96bbe6b7d16c24079f0732c65faf3568a14cb82a8238c709afe76c",
+              "size": 27038066,
+              "pointerSize": 133
+            }
+          }
+        ],
+        "artifact_bytes": 27052741,
+        "origin": "Runtime-maintainer conversion from icefall recipe",
+        "runtime": "Existing sherpa-onnx1.13.8 RustAudioTagging zipformer",
+        "window_contract": "Offline clip labels527,variablelength;80mel. No claimof streamingASR semanticsfromarchitecture.",
+        "use": "Alternative existingruntime classifier",
+        "license": "Apache2.0",
+        "paper": "https://arxiv.org/abs/2310.11230",
+        "local_measurement": "Not run by research agent; metadata only."
+      },
+      {
+        "family": "AST-INT8",
+        "repo": "onnx-community/ast-finetuned-audioset-10-10-0.4593-ONNX",
+        "revision": "2fe67046c486b8b8bc90a7b469239b2dec822f72",
+        "files": [
+          {
+            "name": "config.json",
+            "size": 26860,
+            "lfs": null
+          },
+          {
+            "name": "onnx/model_int8.onnx",
+            "size": 90592065,
+            "lfs": {
+              "sha256": "6739e480a4faf4651f60d2238b0eb8cd58bead2a07ae1da5e2fbc72e3f7c98a6",
+              "size": 90592065,
+              "pointerSize": 133
+            }
+          },
+          {
+            "name": "preprocessor_config.json",
+            "size": 297,
+            "lfs": null
+          }
+        ],
+        "artifact_bytes": 90619222,
+        "origin": "Community ONNX conversion, MIT author sourcef826b80d28226b62986cc218e5cec390b1096902",
+        "runtime": "ONNXRuntime/Transformers.js; noexistingASTnative adapter",
+        "window_contract": "16kHz1024x128features; approx10.24s padded/truncated framewindow. Clip527multilabel sigmoid.",
+        "use": "Large transformer comparator fitsdownloadcap; morelatency/contextthanVAD",
+        "license": "OriginalBSD3Clause; conversioncard omitslicense",
+        "paper": "https://arxiv.org/abs/2104.01778v3",
+        "local_measurement": "Not run by research agent; metadata only."
+      },
+      {
+        "family": "YAMNet-CoreML",
+        "repo": "Yehor/YAMNet-CoreML",
+        "revision": "9681162a6618cceb548ee2a94e83bcfb3a141066",
+        "files": [
+          {
+            "name": "YAMNet.mlpackage/Data/com.apple.CoreML/model.mlmodel",
+            "size": 70188,
+            "lfs": {
+              "sha256": "2f555c993e6632c3a1be43f87fa9ec44520c7697ebf3c27c5b17532f1f9c3a7d",
+              "size": 70188,
+              "pointerSize": 130
+            }
+          },
+          {
+            "name": "YAMNet.mlpackage/Data/com.apple.CoreML/weights/weight.bin",
+            "size": 7462610,
+            "lfs": {
+              "sha256": "39aee5b5261a4d27cab29a0cd0d272a8d949d456e551bb68c14182cafb78a8ea",
+              "size": 7462610,
+              "pointerSize": 132
+            }
+          },
+          {
+            "name": "YAMNet.mlpackage/Manifest.json",
+            "size": 617,
+            "lfs": null
+          },
+          {
+            "name": "yamnet_model/assets/yamnet_class_map.csv",
+            "size": 14096,
+            "lfs": null
+          }
+        ],
+        "artifact_bytes": 7547511,
+        "origin": "Communityconversion ofGoogleYAMNet",
+        "runtime": "CoreML; separateadapterrequired",
+        "window_contract": "Original:16kHz0.96sfeaturepatch,0.48shop,975mswaveformfirstoutput,521classes. Conversionfrontend parityunverified.",
+        "use": "Small backgroundcontextbaseline,notframeVAD",
+        "license": "Apache2.0",
+        "paper": "https://arxiv.org/abs/1704.04861",
+        "local_measurement": "Not run by research agent; metadata only."
+      },
+      {
+        "family": "PANN-Cnn6",
+        "repo": "nicofarr/panns_Cnn6",
+        "revision": "3ce28ef0b057c37d42945c5c0e6bc776c40a15a8",
+        "files": [
+          {
+            "name": "config.json",
+            "size": 26,
+            "lfs": null
+          },
+          {
+            "name": "model.safetensors",
+            "size": 23695340,
+            "lfs": {
+              "sha256": "c55ec40fe251b32981b148429d50ea9e3837936aecee9294515b9da6665ba446",
+              "size": 23695340,
+              "pointerSize": 133
+            }
+          }
+        ],
+        "artifact_bytes": 23695366,
+        "origin": "CommunityHFpackaging,authorPANNsourceqiuqiangkong",
+        "runtime": "PyTorch; noONNXartifactincheckedrepo",
+        "window_contract": "StandardPANN32kHz/64mel; clip527classes,authorSEDdemo2sconsecutivewindows,notintrinsicstreaming",
+        "use": "Secondarybaseline; CEDnativepathmorematureinthisrepo",
+        "license": "HFcardApache2.0; provenanceparityunchecked",
+        "paper": "https://arxiv.org/abs/1912.10211v5",
+        "local_measurement": "Not run by research agent; metadata only."
+      },
+      {
+        "family": "PANN-Cnn10",
+        "repo": "nicofarr/panns_Cnn10",
+        "revision": "bf3a3d704e95f01f6aab50ef222a8b1d1e299140",
+        "files": [
+          {
+            "name": "config.json",
+            "size": 27,
+            "lfs": null
+          },
+          {
+            "name": "model.safetensors",
+            "size": 25232732,
+            "lfs": {
+              "sha256": "0f1ccbde4f8c3cdf29d2fa4006cd3bcd5583c9afe4ebeb76eea334e75f0a08e3",
+              "size": 25232732,
+              "pointerSize": 133
+            }
+          }
+        ],
+        "artifact_bytes": 25232759,
+        "origin": "CommunityHFpackaging,authorPANNsourceqiuqiangkong",
+        "runtime": "PyTorch; noONNXartifactincheckedrepo",
+        "window_contract": "StandardPANN32kHz/64mel; clip527classes,authorSEDdemo2sconsecutivewindows,notintrinsicstreaming",
+        "use": "Secondarybaseline; CEDnativepathmorematureinthisrepo",
+        "license": "HFcardApache2.0; provenanceparityunchecked",
+        "paper": "https://arxiv.org/abs/1912.10211v5",
+        "local_measurement": "Not run by research agent; metadata only."
+      },
+      {
+        "family": "PANN-MobileNetV2",
+        "repo": "nicofarr/panns_MobileNetV2",
+        "revision": "6299ee25610cfdd5eb32e4e034bb3bf017484e5b",
+        "files": [
+          {
+            "name": "config.json",
+            "size": 83,
+            "lfs": null
+          },
+          {
+            "name": "model.safetensors",
+            "size": 20805852,
+            "lfs": {
+              "sha256": "c7fe891ac6764571d217e8fab82b713ee39f3749463d51846175901683e084b4",
+              "size": 20805852,
+              "pointerSize": 133
+            }
+          }
+        ],
+        "artifact_bytes": 20805935,
+        "origin": "CommunityHFpackaging,authorPANNsourceqiuqiangkong",
+        "runtime": "PyTorch; noONNXartifactincheckedrepo",
+        "window_contract": "StandardPANN32kHz/64mel; clip527classes,authorSEDdemo2sconsecutivewindows,notintrinsicstreaming",
+        "use": "Secondarybaseline; CEDnativepathmorematureinthisrepo",
+        "license": "HFcardApache2.0; provenanceparityunchecked",
+        "paper": "https://arxiv.org/abs/1912.10211v5",
+        "local_measurement": "Not run by research agent; metadata only."
+      },
+      {
+        "family": "tinyCLAP-fixed-label-audio",
+        "repo": "ClementDuhamel/tinyclap-coreml",
+        "revision": "ea65e74696eae797ee4ee50dc7ef91b584d2a96f",
+        "files": [
+          {
+            "name": "TinyCLAP_AudioEncoder.mlpackage/Data/com.apple.CoreML/model.mlmodel",
+            "size": 42250,
+            "lfs": {
+              "sha256": "2c80b39d704249c8b94c86df8a677e61389222870ec88d459549e251e8d16902",
+              "size": 42250,
+              "pointerSize": 130
+            }
+          },
+          {
+            "name": "TinyCLAP_AudioEncoder.mlpackage/Data/com.apple.CoreML/weights/weight.bin",
+            "size": 17722496,
+            "lfs": {
+              "sha256": "05959dd7bf38660ad3a6d134fe856acee3ea763d5b97bb9def55933e4dd7ed99",
+              "size": 17722496,
+              "pointerSize": 133
+            }
+          },
+          {
+            "name": "TinyCLAP_AudioEncoder.mlpackage/Manifest.json",
+            "size": 617,
+            "lfs": null
+          },
+          {
+            "name": "mel_filter_bank.json",
+            "size": 173850,
+            "lfs": null
+          },
+          {
+            "name": "text_embeddings.json",
+            "size": 227013,
+            "lfs": null
+          }
+        ],
+        "artifact_bytes": 18166226,
+        "origin": "CommunityCoreML conversion",
+        "runtime": "CoreMLmacOS14/iOS17; newadapter",
+        "window_contract": "44.1kHz64mel,nominal640frames~4.64s; flexibletimeclaimunverified",
+        "use": "Onlyfixedprecomputedtextlabelsfit; fulltextencoder441.97MBexceedslimit. SimilarityscoresnotcalibratedVAD.",
+        "license": "Apache2.0",
+        "paper": "https://arxiv.org/abs/2311.14517v3",
+        "local_measurement": "Not run by research agent; metadata only."
+      }
+    ],
+    "labels_verified": {
+      "path": "class_labels_indices.csv",
+      "size": 14675,
+      "sha256": "cdd1049833c4b86127c2773ac0d14a2754b6a6d0d1798002ed5c66e699708429",
+      "repositories": "CEDmini,base,small actualsmalltextdownloadsverified"
+    },
+    "EfficientAT": {
+      "author_revision": "a425fdce92572e602a1d5634799bd9f1f2efa806",
+      "release": "v0.0.1",
+      "artifacts": [
+        {
+          "filename": "dymn10_as.pt",
+          "size": 42498109,
+          "url": "https://github.com/fschmid56/EfficientAT/releases/download/v0.0.1/dymn10_as.pt",
+          "digest": null
+        },
+        {
+          "filename": "dymn20_as.pt",
+          "size": 160278269,
+          "url": "https://github.com/fschmid56/EfficientAT/releases/download/v0.0.1/dymn20_as.pt",
+          "digest": null
+        },
+        {
+          "filename": "mn10_as_mAP_471.pt",
+          "size": 19708753,
+          "url": "https://github.com/fschmid56/EfficientAT/releases/download/v0.0.1/mn10_as_mAP_471.pt",
+          "digest": null
+        },
+        {
+          "filename": "mn20_as_mAP_478.pt",
+          "size": 71938961,
+          "url": "https://github.com/fschmid56/EfficientAT/releases/download/v0.0.1/mn20_as_mAP_478.pt",
+          "digest": null
+        }
+      ],
+      "papers": [
+        "https://arxiv.org/abs/2211.04772",
+        "https://arxiv.org/abs/2310.15648"
+      ],
+      "license": "MIT",
+      "window": "32kHz128mel default; officialwindowedscript10swindow/2.5shop, configurable. NoVADtimingguarantee.",
+      "runtime": "AuthorPyTorch; HFduongvebundle4.15GBnotselected; independentexport/parityworkneeded"
+    },
+    "sources": [
+      "https://github.com/k2-fsa/sherpa-onnx/blob/v1.13.8/sherpa-onnx/csrc/audio-tagging-ced-impl.h",
+      "https://github.com/k2-fsa/sherpa-onnx/blob/v1.13.8/sherpa-onnx/csrc/offline-stream.cc",
+      "https://github.com/k2-fsa/sherpa-onnx/blob/v1.13.8/sherpa-onnx/csrc/offline-ced-model.cc",
+      "https://github.com/RicherMans/CED/tree/4b2149dc9ba1ed25c6348083f82dba03f00a5022",
+      "https://github.com/tensorflow/models/tree/master/research/audioset/yamnet"
+    ],
+    "recommendation": "BenchmarknativeCEDminiINT8 versusbaseINT8 first; classifyoriginalaudio asynchronouslyascontext,neverdropoverlappedspeechduetomusiclabel. Do nottreattagsasdenoisedwaveformorintentrecognition."
+  },
+  "ear": {
+    "checked": "2026-09-16",
+    "model": "desert-ant-labs/ear",
+    "hf_revision": "557fcde24e585cdaba69c6bcc24a6ad23f9064cd",
+    "files": [
+      {
+        "path": "ear.tflite",
+        "bytes": 23062016,
+        "sha256": "71cc15c3f24abbea2dcdf2892370d85806891ad7822cd3107abc0629f10bc955"
+      },
+      {
+        "path": "ear_meta.json",
+        "bytes": 3894,
+        "sha256": "e4dadabed1a376b8da0d06bbb0ce642976c245fb4cd13e871cc94daf15171735"
+      },
+      {
+        "path": "languages.json",
+        "bytes": 595,
+        "sha256": "23acb08df40a4ed87a9415f1cacd261cb4f67240579490605eb2ea8e44d6d2a4"
+      },
+      {
+        "path": "mel_filters.f32",
+        "bytes": 64328,
+        "sha256": "8bf0fc4ec3d379aa107e68ac87c9d3bacb3396efec4cd6711e4d45eb908b6a58"
+      }
+    ],
+    "total_litert_artifact_bytes": 23130833,
+    "no_ONNX_artifact": true,
+    "architecture": "Whisper-tiny language-detection subgraph; publisher17.9M params after removing unused decoder/vocabulary parameters; 99 languages; no transcription/VAD/denoising output",
+    "research": {
+      "primary_backbone_paper": "https://arxiv.org/abs/2212.04356",
+      "ear_specific_paper": "None identified; artifact/SDK engineering and publisher measurements only",
+      "compression": "LiteRT metadata dynamic_wi8c_hr_afp32, Hadamard-rotated int8weights, fp32activations; no local kernel execution verification"
+    },
+    "license": "Desert Ant Labs Source-Available1.0 derivative; upstreamWhisperMIT preserved in THIRD_PARTY_NOTICES; not permissive open-source equivalent",
+    "python_cpu_option": {
+      "package": "ai-edge-litert==2.2.0",
+      "module": "from ai_edge_litert.interpreter import Interpreter",
+      "macos_arm64_wheel": "Available for CPython3.10 through3.14, about10.83MB each, PyPI metadata verified",
+      "IO": "Inspect model input/output details; metadata mel/output_0, historicSDKtest notes rawtensor serving_default_args_0. Use tensor indices or signature names fromactualartifact.",
+      "provider": "Interpreter default CPU/XNNPACK; do not addGPUdelegate. Record delegated ops/threads."
+    },
+    "frontend": {
+      "input_samples": "16kHz mono, pad/trim480000; no mean/std/gain normalization",
+      "periodic_Hann": 400,
+      "center_padding": "reflect200samples; no repeatededges",
+      "hop": 160,
+      "rFFT_bins": 201,
+      "frames": 3000,
+      "tail": "centeredSTFTproduces3001frames, usefirst3000",
+      "mel_filters": "Shipped64,328bytefile: twoLEuint32 header80,201 then80x201LEf32; do not regenerate",
+      "power": "real^2+imag^2",
+      "log": "log10(max(melenergy,1e-10))",
+      "floor": "max_log-8 DECADES, despite metadata key floor_below_peak_db",
+      "affine": "(max(log,floor)+4)/4",
+      "shape": [
+        1,
+        80,
+        3000
+      ],
+      "dtype": "float32 for LiteRT; CoreML graph fp16 input"
+    },
+    "postprocess": {
+      "logits": 99,
+      "softmax": "Stable separately perwindow; average probabilities acrosswindows",
+      "default_windows": 3,
+      "short_recording": "one zero-padded30secondmodelinput",
+      "long_window_selection": "30secondcandidates at10secondstride; syllabic modulation score from 8Hz minus2Hz one-pole envelopefilters; exclude windows below2percent of peakcandidateenergy; choosehighest3 then sort chronological",
+      "reliability": "hostSDK top1prob-top2prob>=0.25 and top1language notin no,sv,da; not a modeloutput",
+      "report": "Artifact99 logits; SDKreturns top5 candidates despite cardsayingalllanguages",
+      "limitations": "No code-switch segmentation; no unknownlanguage class; noise may yield confidentlanguage; shortaudio not locallyqualified"
+    },
+    "comparison": {
+      "CED": "527 broad sound-event labels, not language identification; can detect simultaneousmusic/speech",
+      "Uhm": "Actual local ONNX inspection: six classes, despite five-label sidecar. Filler detection, not language identification.",
+      "Ear": "Could route tolanguage-capable ASRadapter, only usefulifroutingbenefitexceedsLIDlatencyandmisroutecost; no claimofASRqualityimprovement"
+    },
+    "sources": [
+      "https://huggingface.co/desert-ant-labs/ear/tree/557fcde24e585cdaba69c6bcc24a6ad23f9064cd",
+      "https://github.com/Desert-Ant-Labs/desert-ant-core/blob/2aed9c6d6459fc1843ab59553965035954e40199/Sources/Ear/Frontend.swift",
+      "https://github.com/Desert-Ant-Labs/desert-ant-core/blob/2aed9c6d6459fc1843ab59553965035954e40199/Sources/Ear/Model.swift",
+      "https://github.com/Desert-Ant-Labs/desert-ant-core/blob/2aed9c6d6459fc1843ab59553965035954e40199/Sources/Ear/Ear.swift",
+      "https://developers.google.com/edge/litert/migration"
+    ],
+    "local_measurement": "Research agent downloaded only metadata, small frontend filters and SDKsource. No modelweights or inference."
+  },
+  "uhm": {
+    "checked": "2026-09-16",
+    "hf_revision": "9b172658b2a20a21ad8ea44092f4d4b3ff2c69a4",
+    "sdk_revision": "2aed9c6d6459fc1843ab59553965035954e40199",
+    "sdk_model_revision": "612592c10ad7b2a51f3237725448a1aad212480b",
+    "demo_revision": "b40c9458a6ce9c79abe64d14cff949a6bed2811f",
+    "artifacts": [
+      {
+        "file": "uhm-web-fp16.onnx",
+        "bytes": 47047128,
+        "sha256": "c266faf7db4cdced6f18aa9119ff2800a20707d7159be645d487ec191a9d79ff"
+      },
+      {
+        "file": "uhm.onnx",
+        "bytes": 94042570,
+        "sha256": "fbd19765def76893841e0c70e498bf632d6c68175ceae5a2da8fe3bf7d9d0314"
+      }
+    ],
+    "contract_conflict": {
+      "HF_card": "6 classes",
+      "HF_labels_json": [
+        "not_filler",
+        "uh",
+        "um",
+        "hmm",
+        "other"
+      ],
+      "CoreML_text_graph": "6 output classes; explicit temperature1.9; starts with waveform cast then conv, no input waveform mean/std normalization",
+      "official_demo": "5 classes; raw PCM padded input; argmax+maxsoftmax threshold; no mean/std normalization",
+      "SDK": "6-class CoreML; external real-window mean/std normalization; 1-p0 threshold; overlap averaging",
+      "resolution": "Actual ONNX graph/session inspection required; do not assume model card and SDK match ONNX exports."
+    },
+    "SDK_preprocess": {
+      "sample_rate": 16000,
+      "input_name": "audio",
+      "dtype": "float32",
+      "shape": [
+        1,
+        480000
+      ],
+      "mean": "over real samples only",
+      "std": "sqrt(sum((x-mean)^2)/max(1,N-1))+1e-7",
+      "padding": "normalize first, then zero-pad",
+      "clipping": "none in Detector.swift",
+      "peak_rescaling": "none"
+    },
+    "SDK_postprocess": {
+      "output_name": "probs",
+      "frame_hop_samples": 320,
+      "window_seconds": 30,
+      "hop_seconds": 25,
+      "overlap": "average scalar 1-probability(class0)",
+      "frame_threshold": 0.5,
+      "merge_gap_seconds": 0.1,
+      "initial_min_run_seconds": 0.1,
+      "public_min_duration_seconds": 0.12,
+      "public_bias_min_confidence": {
+        "balanced": 0.65,
+        "precision": 0.75,
+        "recall": 0.5
+      },
+      "types": "Apple SoundAnalysis auxiliary labeler, not simply detector argmax"
+    },
+    "demo_postprocess": {
+      "classes": 5,
+      "threshold": 0.5,
+      "min_frames": 6,
+      "min_confidence": 0.65,
+      "per_frame": "argmax class, maximum softmax probability",
+      "merge_gaps": "none",
+      "overlap": "drops trailing frames on nonfinal window, no probability averaging",
+      "known_harness_corrections": "Crop padded frames/spans to actual audio duration, do not reproduce concatenation/tail overcounting in a benchmark."
+    },
+    "fixtures": {
+      "author_audio": "No annotated audio files present in checked HF repo/demo/SDK",
+      "AMI": "CC BY4.0, but disclosed training/evaluation overlap; no held-out guarantee",
+      "PodcastFillers": "Official metadata and annotation-derived clips restricted to noncommercial research; do not treat HF mirror as permissive",
+      "synthetic": "macOS speech-generated filler controls test execution, not natural filler accuracy"
+    },
+    "cpu": "Use CPUExecutionProvider explicitly; inspect providers, graph input/output names/types/shapes and finite row-normalized probabilities. Preserve FP16 load/run failures; run published FP32 as separate94MB candidate if unsupported. Do not silently use CoreML/GPU or claim FP16 native compute from file size.",
+    "sources": [
+      "https://huggingface.co/desert-ant-labs/uhm/tree/9b172658b2a20a21ad8ea44092f4d4b3ff2c69a4",
+      "https://github.com/Desert-Ant-Labs/desert-ant-core/blob/2aed9c6d6459fc1843ab59553965035954e40199/Sources/Uhm/Detector.swift",
+      "https://huggingface.co/spaces/desert-ant-labs/uhm-demo/blob/b40c9458a6ce9c79abe64d14cff949a6bed2811f/lib/uhm.js",
+      "https://huggingface.co/spaces/desert-ant-labs/uhm-demo/blob/b40c9458a6ce9c79abe64d14cff949a6bed2811f/lib/detection.js",
+      "https://zenodo.org/records/7121457",
+      "https://arxiv.org/abs/2110.01900v4",
+      "https://onnxruntime.ai/docs/performance/model-optimizations/float16.html"
+    ],
+    "local_measurement": "No weights downloaded or inference run by research agent."
+  }
+}
