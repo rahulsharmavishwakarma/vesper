@@ -1,0 +1,119 @@
+name: Check
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  merge_group:
+  workflow_dispatch:
+  workflow_call:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: check-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  frontend:
+    name: Frontend and repository hygiene
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97 # v7.0.0
+        with:
+          python-version: '3.12'
+      - run: python -m pip install -r requirements-dev.txt
+      - name: Check repository hygiene
+        env:
+          SKIP: transcribe-fast-check
+        run: |
+          pre-commit run --all-files --show-diff-on-failure
+      - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
+        with:
+          node-version-file: .nvmrc
+          cache: npm
+      - run: npm ci
+      - name: Format, lint, type-check, test and build portable source
+        run: make check-portable
+
+  browser:
+    name: Browser regressions
+    env:
+      PLAYWRIGHT_BROWSERS_PATH: ${{ github.workspace }}/.cache/playwright
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
+        with:
+          node-version-file: .nvmrc
+          cache: npm
+      - run: npm ci
+      - run: npm exec playwright install --with-deps chromium
+      - run: make test-browser
+      - name: Upload synthetic browser failure evidence
+        if: failure()
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: browser-failure-${{ github.run_id }}-${{ github.run_attempt }}
+          path: |
+            playwright-report/
+            test-results/
+          retention-days: 7
+          if-no-files-found: ignore
+          include-hidden-files: false
+
+  rust:
+    name: Rust (macOS)
+    runs-on: macos-15
+    timeout-minutes: 60
+    env:
+      CMAKE_BUILD_PARALLEL_LEVEL: '2'
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
+        with:
+          node-version-file: .nvmrc
+          cache: npm
+      - name: Install Rust
+        run: rustup show active-toolchain
+      - name: Check macOS native prerequisites
+        run: |
+          if ! command -v cmake >/dev/null; then brew install cmake; fi
+          cmake --version
+          xcrun --find clang
+          xcrun --find clang++
+      - name: Cache pinned patched sherpa-onnx build
+        uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
+        with:
+          path: .tooling/sherpa-runtime
+          key: sherpa-patched-${{ runner.os }}-${{ runner.arch }}-${{ hashFiles('patches/sherpa-onnx/**', 'scripts/sherpa-runtime.mjs') }}
+      - name: Build and verify native completion reporting
+        run: |
+          node scripts/sherpa-runtime.mjs
+          printf 'SHERPA_ONNX_LIB_DIR=%s\n' "$(node scripts/sherpa-runtime.mjs --lib-dir)" >> "$GITHUB_ENV"
+          make test-native-report
+      - run: npm ci
+      - name: Rust formatting
+        run: make fmt-rust-check
+      - name: Compile all Rust targets
+        run: make check-rust
+      - name: Rust target tests and doctests
+        run: make test-rust
+      - name: Strict Clippy and rustdoc
+        run: make lint-rust doc-rust
+      - name: Build the macOS application bundle without loading models
+        run: |
+          make build-debug
+          app=target/debug/bundle/macos/transcribe.app
+          executable=$(/usr/libexec/PlistBuddy -c 'Print :CFBundleExecutable' "$app/Contents/Info.plist")
+          test -x "$app/Contents/MacOS/$executable"

@@ -1,0 +1,58 @@
+version: 2
+updates:
+  - package-ecosystem: npm
+    directory: /
+    labels: [dependencies]
+    open-pull-requests-limit: 5
+    cooldown:
+      default-days: 7
+    schedule:
+      interval: weekly
+    groups:
+      npm-development:
+        dependency-type: development
+
+  - package-ecosystem: cargo
+    directory: /
+    labels: [dependencies]
+    open-pull-requests-limit: 5
+    cooldown:
+      default-days: 7
+    schedule:
+      interval: weekly
+    groups:
+      rust-dependencies:
+        patterns: ["*"]
+
+  - package-ecosystem: github-actions
+    directory: /
+    labels: [dependencies, ci]
+    open-pull-requests-limit: 5
+    cooldown:
+      default-days: 7
+    schedule:
+      interval: weekly
+    groups:
+      github-actions:
+        patterns: ["*"]
+
+  - package-ecosystem: docker
+    directory: /
+    labels: [dependencies, ci]
+    open-pull-requests-limit: 5
+    cooldown:
+      default-days: 7
+    schedule:
+      interval: weekly
+
+  - package-ecosystem: pip
+    directory: /
+    labels: [dependencies, testing]
+    open-pull-requests-limit: 5
+    cooldown:
+      default-days: 7
+    schedule:
+      interval: weekly
+    groups:
+      test-tooling:
+        patterns: ["*"]
