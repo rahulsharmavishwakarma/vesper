@@ -1,0 +1,23 @@
+# Native device validation
+
+Status: Pending manual execution
+
+This checklist completes the device-dependent parts of [GitHub issue #7](https://github.com/rahulsharmavishwakarma/transcribe/issues/7) and the real conflict check in [GitHub issue #1](https://github.com/rahulsharmavishwakarma/transcribe/issues/1). Automated tests and browser mocks do not count as evidence for these rows.
+
+Build with `make build-debug`, then open `target/debug/bundle/macos/transcribe.app`. Use a short test phrase such as “Please do not send fifteen rupees tomorrow.” Record the macOS version, selected microphone, model/backend selections, and pass/fail observations. Enable collection only for the rows that test archival behavior.
+
+| Check | Steps | Expected result | Result |
+| --- | --- | --- | --- |
+| Permission denied | Attempt recording with microphone permission denied. | An actionable error; no stuck recording or processing state. | Pending |
+| Permission granted | Grant permission, relaunch if required, select the microphone, and record the test phrase. | The input meter reacts; Stop returns a raw transcript and cleanup or an explicit raw fallback. | Pending |
+| Quiet input and silence | Record silence, then speak softly. | Quiet-input guidance appears where appropriate; silence does not become fabricated speech. | Pending |
+| Recording limit | Set the maximum length to five seconds, save, and record beyond the limit. | Capture stops at the limit and processing finishes without needing a second click. | Pending |
+| Disconnection | Record with an external microphone and disconnect it. Reconnect and rescan. | Capture stops or reports the device error; usable captured audio is handled explicitly, and a new recording can start after recovery. | Pending |
+| Cancel and collection off | Disable collection, save, start/cancel a recording, then complete another. | Cancellation leaves the app usable; the completed result is available without a new history archive. | Pending |
+| Collection and close | Enable collection for test speech, record, and close the main window during recording. Reopen the app. | Captured audio is preserved, or a visible recovery error identifies retained audio; it is not silently reported as archived after a storage failure. | Pending |
+| Quick capture | Use the configured shortcut to start and stop. Repeat with the floating strip disabled. | One recording per toggle cycle; hidden-strip mode still works. | Pending |
+| Shortcut conflict and recovery | Reserve the configured combination in another application, then start transcribe. Choose a free combination in Settings, or release the conflict and retry the saved shortcut. | A visible startup warning; manual Record remains available; successful registration clears the warning. Failed replacement preserves any working binding. | Pending |
+| Notifications | Enable notifications, grant/deny the system permission, and complete a test transcription. | Notification preferences are respected; denied permission does not fail transcription, and bodies contain no transcript text. | Pending |
+| Human review/export | With collection enabled, transcribe the test phrase, review a verbatim label, then export reviewed examples. | Original audio and the approved label appear in the export; unreviewed predictions are not promoted to labels. | Pending |
+
+Record outcomes in [the validation document](../validation.md), including the application revision and reproduction steps for failures. Preserve a distinction between checks that passed, failed, and were not run.
