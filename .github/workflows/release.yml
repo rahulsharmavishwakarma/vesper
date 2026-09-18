@@ -1,0 +1,103 @@
+name: Release
+
+on:
+  push:
+    tags: ['v*']
+  release:
+    types: [published]
+
+permissions:
+  contents: read
+
+concurrency:
+  group: release-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  checks:
+    name: Required checks
+    # actionlint 1.7.12 does not yet parse the new $/ syntax.
+    uses: ./.github/workflows/check.yml # zizmor: ignore[self-repository]
+
+  security:
+    name: Required security
+    # actionlint 1.7.12 does not yet parse the new $/ syntax.
+    uses: ./.github/workflows/security.yml # zizmor: ignore[self-repository]
+
+  desktop:
+    name: Desktop package (macOS)
+    needs: [checks, security]
+    runs-on: macos-15
+    timeout-minutes: 90
+    permissions:
+      contents: read
+    env:
+      CMAKE_BUILD_PARALLEL_LEVEL: '2'
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
+        with:
+          node-version-file: .nvmrc
+          package-manager-cache: false
+      - name: Install Rust
+        run: rustup show active-toolchain
+      - name: Check macOS native prerequisites
+        run: |
+          if ! command -v cmake >/dev/null; then brew install cmake; fi
+          cmake --version
+          xcrun --find clang
+          xcrun --find clang++
+      - name: Build pinned native ASR runtime
+        run: |
+          node scripts/sherpa-runtime.mjs
+          printf 'SHERPA_ONNX_LIB_DIR=%s\n' "$(node scripts/sherpa-runtime.mjs --lib-dir)" >> "$GITHUB_ENV"
+      - run: npm ci
+      - name: Verify tag and application versions
+        run: node scripts/version.mjs check --tag="$GITHUB_REF_NAME"
+      - name: Build desktop bundles
+        run: npm run desktop:build
+      - name: Collect release artifact
+        run: sh scripts/package-release.sh "${GITHUB_REF_NAME#v}"
+      - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: release-${{ runner.os }}-${{ runner.arch }}
+          path: release/*
+          if-no-files-found: error
+          retention-days: 14
+          include-hidden-files: false
+
+  publish:
+    name: Publish desktop download
+    needs: desktop
+    timeout-minutes: 10
+    runs-on: ubuntu-24.04
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
+        with:
+          node-version-file: .nvmrc
+          package-manager-cache: false
+      - uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8.0.1
+        with:
+          pattern: release-*
+          path: release
+          merge-multiple: true
+      - name: Create checksums
+        working-directory: release
+        run: sha256sum -- * > SHA256SUMS
+      - name: Publish the DMG and checksums as permanent release assets
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: node scripts/publish-release.mjs
+      - name: Record download links
+        run: |
+          {
+            echo "Version download: https://github.com/$GITHUB_REPOSITORY/releases/download/$GITHUB_REF_NAME/transcribe-macos-arm64.dmg"
+            echo "Latest stable: https://github.com/$GITHUB_REPOSITORY/releases/latest/download/transcribe-macos-arm64.dmg"
+          } >> "$GITHUB_STEP_SUMMARY"
