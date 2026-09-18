@@ -1,0 +1,91 @@
+{
+  "schemaVersion": 1,
+  "sources": [
+    {
+      "id": "fleurs-en_us-test",
+      "name": "FLEURS English (United States) test set",
+      "url": "https://huggingface.co/datasets/google/fleurs/tree/70bb2e84b976b7e960aa89f1c648e09c59f894dd/data/en_us",
+      "revision": "70bb2e84b976b7e960aa89f1c648e09c59f894dd; audio-sha256:d9c2e37b41aacd41bc283554a0a82b5476b36887049774ecb2819dcaaa55a356; metadata-sha256:74c046239374deeb60fa63f258f907388093a32bcaa3140965f70ef05c79f7ca",
+      "license": "CC-BY-4.0",
+      "attribution": "Google FLEURS; derived from the FLoRes evaluation sentences",
+      "redistribution": "Redistributions must retain attribution under CC-BY-4.0."
+    },
+    {
+      "id": "fleurs-hi_in-test",
+      "name": "FLEURS Hindi (India) test set",
+      "url": "https://huggingface.co/datasets/google/fleurs/tree/70bb2e84b976b7e960aa89f1c648e09c59f894dd/data/hi_in",
+      "revision": "70bb2e84b976b7e960aa89f1c648e09c59f894dd; audio-sha256:47c238b9cf7016ba596639bb3038b0c89dc6e85759f16d09c4f58c6dfa25c65f; metadata-sha256:889e82e2875490f9533ff59ab67326fcfa01cf828fc4412758aaaa1f442a729f",
+      "license": "CC-BY-4.0",
+      "attribution": "Google FLEURS; derived from the FLoRes evaluation sentences",
+      "redistribution": "Redistributions must retain attribution under CC-BY-4.0."
+    },
+    {
+      "id": "synthetic-dictation-controls",
+      "name": "Task-authored synthetic English dictation controls",
+      "url": "https://github.com/rahulsharmavishwakarma/transcribe/issues/41",
+      "revision": "controls-v1; macOS26.6.2; say Samantha; rate175; PCM16 mono16kHz",
+      "license": "Task-authored text; generated audio retained locally only",
+      "attribution": "Original synthetic control sentences generated for this benchmark, spoken by macOS Samantha",
+      "redistribution": "No synthesized audio is redistributed; text, parameters and hashes only."
+    },
+    {
+      "id": "audio-frontend-synthetic-noise",
+      "name": "Deterministic non-speech diagnostics",
+      "url": "https://github.com/rahulsharmavishwakarma/transcribe/issues/42",
+      "revision": "noise-v1; 16000Hz PCM16; LCG1664525+1013904223 seed17",
+      "license": "Task-authored mathematical signals",
+      "attribution": "Generated non-speech controls; not recorded natural environments",
+      "redistribution": "May redistribute mathematical recipes and generated signals"
+    }
+  ],
+  "samples": [
+    {
+      "id": "en_us-12741024238657315067",
+      "sourceId": "fleurs-en_us-test",
+      "split": "test",
+      "language": "en-US",
+      "audioPath": "en_us-12741024238657315067.wav",
+      "sha256": "3e76cc5728bfd7c24f1039b5c9a47e8d79c7f225605862e977833a4f79249bff",
+      "reference": "Unfortunately, studying traffic flow is difficult because driver behavior cannot be predicted with one-hundred percent certainty.",
+      "durationSeconds": 12.64,
+      "scenario": "read",
+      "replayKind": "natural"
+    },
+    {
+      "id": "noise-silence",
+      "sourceId": "audio-frontend-synthetic-noise",
+      "split": "test",
+      "language": "en-US",
+      "audioPath": "noise-silence.wav",
+      "sha256": "262d1f34f300560a4c82ba8127ddea9e1d72946f187fdbd3e8f70ee096077aec",
+      "reference": "",
+      "durationSeconds": 5.0,
+      "scenario": "noise",
+      "replayKind": "synthetic_soak"
+    },
+    {
+      "id": "speech-tail-crop",
+      "sourceId": "fleurs-en_us-test",
+      "split": "test",
+      "language": "en-US",
+      "audioPath": "tail-crop.wav",
+      "sha256": "69a668833a2444f0e47ab95ced5ac23f76dffe5209300f6d3823404d4527a66e",
+      "reference": "Alignment diagnostic only; intentionally truncated speech; do not score WER.",
+      "durationSeconds": 12.5195625,
+      "scenario": "read",
+      "replayKind": "natural"
+    },
+    {
+      "id": "en_us-12741024238657315067-reset-repeat",
+      "sourceId": "fleurs-en_us-test",
+      "split": "test",
+      "language": "en-US",
+      "audioPath": "en_us-12741024238657315067.wav",
+      "sha256": "3e76cc5728bfd7c24f1039b5c9a47e8d79c7f225605862e977833a4f79249bff",
+      "reference": "Unfortunately, studying traffic flow is difficult because driver behavior cannot be predicted with one-hundred percent certainty.",
+      "durationSeconds": 12.64,
+      "scenario": "read",
+      "replayKind": "natural"
+    }
+  ]
+}
