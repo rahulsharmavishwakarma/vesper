@@ -2,7 +2,7 @@
 
 **Both local recognizers ran all 304 selected Svarah recordings without execution failure.** On identical audio, Cohere INT8 scored 9.54% normalized WER and Nemotron Q8 scored 20.78%. The frozen corpus-reference dictionary slightly worsened both results by applying one incorrect pluralization. These are fresh native audio measurements, separate from the [text/feedback stress simulation](2026-09-18-policy-learning-stress.md).
 
-The [portable results](results/2026-09-18-accent-personalization.json) retain each cohort, score denominators, failures, sample/audio hashes, model/runtime artifacts, actual execution settings and timing distributions without exporting transcript rows. [Issue #34](https://github.com/rahulsharmavishwakarma/transcribe/issues/34#issuecomment-5719577820) records the authorized testing scope. No model/default, runtime ownership, live user profile or training behavior changed.
+The local debug report at `.cache/benchmarks/results/2026-09-18-accent-personalization/debug-summary.json` retains each cohort, score denominators, failures, sample/audio hashes, model/runtime artifacts, actual execution settings and timing distributions without exporting transcript rows. [Issue #34](https://github.com/rahulsharmavishwakarma/transcribe/issues/34#issuecomment-5719577820) records the authorized testing scope. No model/default, runtime ownership, live user profile or training behavior changed.
 
 ## Corpus and grouping
 

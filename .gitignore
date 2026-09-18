@@ -15,6 +15,8 @@ coverage/
 # Local tools and caches (Python is used only by optional development tooling)
 .tooling/
 .cache/
+/benchmarks/asr/results/
+/benchmarks/cleanup/results/
 __pycache__/
 *.py[oc]
 .venv

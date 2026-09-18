@@ -8,7 +8,7 @@ from pathlib import Path
 import numpy as np
 
 ROOT = Path(".cache/benchmarks/results/frontend-integration-2026-09-18")
-OUTPUT = Path("docs/validation/audio-frontend-integration-2026-09-18.json")
+OUTPUT = Path(".cache/benchmarks/results/audio-frontend-integration-2026-09-18/debug-summary.json")
 
 
 def read(path):

@@ -35,7 +35,7 @@ The native adapter and pinned installer are available to evaluation. Product sel
 
 **Local measurement:** the [adapter regression](../validation/whisper-adapter-2026-09-18.md) records the executed application path, failures and qualification limits. The earlier development probe is separate evidence. **Hypothesis:** session reuse can reduce repeated setup and a larger token allowance may recover truncated output; neither establishes SOTA latency, Hindi qualification or noise robustness.
 
-Pins: Sherpa 1.13.8 revision `11afbd009a7f8c08f4bcf2fc1b265d0df4670fbf`, local build `247e90de15e1772d0122836444a0fc6b1f92f85b32555f1eb3cabaa1c4cbbf69`, patch SHA-256 `b6bfad9330296d2c56309e3dd10d2848820d89cd18e376f90686da2b6595237a`. Small export revision `8f3c18b358db4d1f2fc1eae49d75cd20989e4309`; Turbo `2ca6ff69fc878651b770880507669577ac41c2ff`. Exact artifact hashes are in `models/artifacts.json` and the dated result JSON.
+Pins: Sherpa 1.13.8 revision `11afbd009a7f8c08f4bcf2fc1b265d0df4670fbf`, local build `247e90de15e1772d0122836444a0fc6b1f92f85b32555f1eb3cabaa1c4cbbf69`, patch SHA-256 `b6bfad9330296d2c56309e3dd10d2848820d89cd18e376f90686da2b6595237a`. Small export revision `8f3c18b358db4d1f2fc1eae49d75cd20989e4309`; Turbo `2ca6ff69fc878651b770880507669577ac41c2ff`. Exact artifact hashes are in `models/artifacts.json` and the dated local debug report.
 
 ## Consequences
 

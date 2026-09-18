@@ -60,7 +60,7 @@ uncommitted.
 
 ## Qwen3-ASR and Cohere integration
 
-The approved [issue #14](https://github.com/rahulsharmavishwakarma/transcribe/issues/14) integration was qualified on Apple M5 Pro, 64 GiB RAM, macOS 26.6.2 (25G83), CPU with eight native threads. The source-pinned Sherpa 1.13.8 patch/build, artifact hashes, outputs and individual timings are in [qwen-cohere-native.json](validation/qwen-cohere-native.json); fixture attribution and reproduction commands are in [offline ASR](offline-asr.md).
+The approved [issue #14](https://github.com/rahulsharmavishwakarma/transcribe/issues/14) integration was qualified on Apple M5 Pro, 64 GiB RAM, macOS 26.6.2 (25G83), CPU with eight native threads. The source-pinned Sherpa 1.13.8 patch/build, artifact hashes, outputs and individual timings remain in `.cache/benchmarks/results/qwen-cohere-native/debug-summary.json`; fixture attribution and reproduction commands are in [offline ASR](offline-asr.md).
 
 | Adapter | Native load | Native decode | Peak process RSS | Post-stop backend pipeline |
 | --- | ---: | ---: | ---: | ---: |
@@ -117,7 +117,7 @@ Both ASR and final minimal cleanup returned:
 
 > Ask not what your country can do for you, ask what you can do for your country.
 
-The raw and cleaned result plus inference settings are recorded in [native-pipeline.json](validation/native-pipeline.json). The desktop test also checks original audio byte equality, pinned artifact provenance, and absence of machine-created ASR/cleanup training labels in its export.
+The raw and cleaned result plus inference settings remain in `.cache/benchmarks/results/native-pipeline/debug-summary.json`. The desktop test also checks original audio byte equality, pinned artifact provenance, and absence of machine-created ASR/cleanup training labels in its export.
 
 Unoptimized Rust checksum code initially made the same integration test take 38.59 seconds. Development optimization for `sha2` and `transcribe-models` reduced that to 3.63 seconds while retaining full hash verification. Release builds already use optimization.
 
@@ -279,7 +279,7 @@ The screenshot uses labelled synthetic data.
 Six native sampler observations were compared with macOS `ps`: 148–727 µs per
 reading (512 µs median), with subsequent RSS readings within 32 KiB of `ps`.
 These measurements exclude IPC/rendering and are an idle-process observation,
-not an inference benchmark. See [measurement data](validation/application-status-resources.json)
+not an inference benchmark. See the local measurement data at `.cache/benchmarks/results/application-status-resources/debug-summary.json`
 and [scope, sources, and platform limits](application-status.md).
 
 ## Model download progress — 15 September 2026
@@ -516,7 +516,7 @@ overlapped, discarded, or inferred from transcript alignment. Every part must
 pass the existing native completion check before the complete raw result can be
 published. Sample coverage is reported as processing progress.
 
-The [machine-readable record](validation/long-asr.json) includes model/runtime
+The local debug record at `.cache/benchmarks/results/long-asr/debug-summary.json` includes model/runtime
 revisions and hashes, the evaluated executable fingerprint, fixture references
 and hashes, all scores and hypotheses, process RSS, native isolation results,
 and the initial failed long recording. All audio is public: Google FLEURS test

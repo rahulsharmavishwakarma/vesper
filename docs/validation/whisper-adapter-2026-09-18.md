@@ -2,7 +2,7 @@
 
 The Small/Turbo architecture adapter, verified INT8 installation and shared selected-resident Sherpa ownership are implemented under [ADR-0018](../adrs/0018-shared-whisper-adapter.md), with specific user approval recorded in [issue #45](https://github.com/rahulsharmavishwakarma/transcribe/issues/45). Product presets remain unavailable: noise and repeated-speech quality gates fail. Cohere plus Qwen remains the default; Kyutai remains removed.
 
-This is the application `InferenceManager` path, separate from the earlier [development probe](whisper-2026-09-18.md). The [machine-readable publication](whisper-adapter-2026-09-18.json) retains source/binary/artifact hashes, process failures, missing cases, stage errors, confidence/completion records and transcript hashes without publishing transcripts or audio. Published model/paper results are described separately in [the research review](../research-whisper.md).
+This is the application `InferenceManager` path, separate from the earlier [development probe](whisper-2026-09-18.md). The local debug report at `.cache/benchmarks/results/whisper-adapter-2026-09-18/debug-summary.json` retains source/binary/artifact hashes, process failures, missing cases, stage errors, confidence/completion records and transcript hashes without publishing transcripts or audio. Published model/paper results are described separately in [the research review](../research-whisper.md).
 
 ## Executed contract
 

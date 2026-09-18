@@ -4,7 +4,7 @@ The frozen application memory ran across two installed recognizers on public spe
 
 The user authorized collecting public datasets and running native/real-time tests. This is development evaluation under [#34](https://github.com/rahulsharmavishwakarma/transcribe/issues/34) and [#33](https://github.com/rahulsharmavishwakarma/transcribe/issues/33). No cloud inference, user recording, model training, default change, decoder modification or inference-lifetime change was involved.
 
-The [protocol](personalization.md) documents preparation and replay. The [machine-readable result](results/2026-09-16-personalization.json) preserves scores, denominators, failures, all changed examples, sample identities/audio hashes, source licenses, artifact hashes, environment, paired cleanup outcomes and per-recording streaming measurements. Full native reports and logs remain in the ignored `.cache/benchmarks/personalization-2026-09-16/` directory.
+The [protocol](personalization.md) documents preparation and replay. The local debug report at `.cache/benchmarks/results/2026-09-16-personalization/debug-summary.json` preserves scores, denominators, failures, all changed examples, sample identities/audio hashes, source licenses, artifact hashes, environment, paired cleanup outcomes and per-recording streaming measurements. Full native reports and logs remain in the ignored `.cache/benchmarks/personalization-2026-09-16/` directory.
 
 ## Data and calibration
 

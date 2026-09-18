@@ -2,7 +2,7 @@
 
 All nine ASR choices that were selectable in the Models menu at the time of this run used the same fixed 16-recording FLEURS US-English pack through the application's real inference adapters. The pack contains 150.56 seconds, 324 normalized reference words, and 1,619 reference graphemes. All **144/144 model executions completed**; no model failure was removed from the aggregate. Kyutai was later removed from application support in [GitHub issue #48](https://github.com/rahulsharmavishwakarma/transcribe/issues/48); its row remains here as historical evidence.
 
-This is local measurement on an Apple M5 Pro CPU with explicit English and completed-audio delivery. Models ran sequentially after downloads and compilation finished. The [sanitized aggregate](results/2026-09-18-app-catalog-en-us.json) pins the runner, corpus, raw-report hashes, artifacts, runtimes, metric definitions, environment and limitations. Audio, hypotheses and ordinary raw reports remain in the ignored benchmark cache.
+This is local measurement on an Apple M5 Pro CPU with explicit English and completed-audio delivery. Models ran sequentially after downloads and compilation finished. The local debug aggregate at `.cache/benchmarks/results/2026-09-18-app-catalog-en-us/debug-summary.json` pins the runner, corpus, raw-report hashes, artifacts, runtimes, metric definitions, environment and limitations. Audio, hypotheses and ordinary raw reports remain in the ignored benchmark cache.
 
 | ASR choice | Success | Micro WER | Micro CER | Median RTF | p95 RTF | Median ASR |
 | --- | ---: | ---: | ---: | ---: | ---: | ---: |

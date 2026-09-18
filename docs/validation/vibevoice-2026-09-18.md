@@ -12,7 +12,7 @@ results, process failures or token-cap failures. Quality and latency qualificati
 still fail; successful execution is not a model recommendation. Cases include
 repeats and controls, not 49 independent natural recordings.
 
-See the [machine-readable evidence](vibevoice-2026-09-18.json),
+See the local debug evidence at `.cache/benchmarks/results/vibevoice-2026-09-18/debug-summary.json`,
 [primary-source research and full family inventory](../research-vibevoice.md)
 and [issue #15](https://github.com/rahulsharmavishwakarma/transcribe/issues/15).
 This is an isolated Microsoft Python-runtime experiment, not the application's

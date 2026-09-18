@@ -8,7 +8,7 @@ The user’s final requirements are **model releases within the preceding year**
 
 ## Evidence and envelope
 
-The [machine-readable results](audio-frontends-2026-09-16.json) contain 43 completed experiment reports, eight preserved first-pass failure reports, artifact/source/executable hashes, per-case outcomes, separate accuracy lanes and memory measurements. [Waveform alignment evidence](audio-frontend-alignment.json) records additional paired signal checks. Full raw reports and PCM remain in `.cache/benchmarks/results/audio-frontends-2026-09-16/`; no personal audio was used.
+The local debug report at `.cache/benchmarks/results/audio-frontends-2026-09-16/debug-summary.json` contains 43 completed experiment reports, eight preserved first-pass failure reports, artifact/source/executable hashes, per-case outcomes, separate accuracy lanes and memory measurements. Additional paired signal checks are archived at `.cache/benchmarks/results/audio-frontend-alignment/debug-summary.json`. Full raw reports and PCM remain in the ignored benchmark cache; no personal audio was used.
 
 - Apple M5 Pro, 18 logical CPUs, 64 GiB RAM; macOS 26.6.2 (25G83), AC power, low-power mode off. Our inference jobs ran sequentially. Other system load and CPU frequency were not controlled; no sustained thermal or power measurement.
 - Native CPU: sherpa-onnx **1.13.8**, upstream `11afbd009a7f8c08f4bcf2fc1b265d0df4670fbf`, existing application runtime build/patch identities retained in results. Frontends request one thread; existing ASR/writer helpers request up to eight. This is not a CPU instruction/operator-placement profile.

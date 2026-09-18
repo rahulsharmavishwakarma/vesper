@@ -44,7 +44,7 @@ Original [Qwen](https://huggingface.co/Qwen/Qwen3-ASR-0.6B) and [Cohere](https:/
 
 ## Qualification
 
-Current long-audio results, performance definitions and accuracy limitations are in [validation](validation.md#long-qwen3-asr-and-cohere-audio), with [machine-readable evidence](validation/long-asr.json). The earlier [short-clip integration qualification](validation.md#qwen3-asr-and-cohere-integration) is retained as historical evidence.
+Current long-audio results, performance definitions and accuracy limitations are in [validation](validation.md#long-qwen3-asr-and-cohere-audio). Detailed evidence remains locally at `.cache/benchmarks/results/long-asr/debug-summary.json`. The earlier [short-clip integration qualification](validation.md#qwen3-asr-and-cohere-integration) is retained as historical evidence.
 
 `make check` includes ordinary Rust/JS checks and `make test-native-report`. The report tests cover reset/isolation, retained context-loss flags, EOS at an output boundary, and invalid/masked numerical rows. Rust tests cover rejected stop reasons, language mapping, sample coverage and tiny-tail avoidance, failure/cancellation between segments, cancellation, settings round trips, file layout and exact download selection. Browser tests exercise save-before-download, Cohere's language error, Qwen Hindi, the absence of duration restrictions, and processing progress.
 
@@ -81,7 +81,7 @@ TRANSCRIBE_ASR_FIXTURES=/path/to/verified-fixtures cargo test --locked \
   -- --ignored --nocapture
 ```
 
-The long qualifiers repeat each original fixture three times, then repeat with two seconds of leading digital silence to shift boundaries. They use the production adapter, check cancellation after the first part, and compare fresh A/B/A streams and failure recovery on the same recognizer. The desktop test imports and processes a 26.28-second three-copy English WAV through both file and post-stop paths, asserting original-byte/PCM identity and provenance. The [long-audio evidence](validation/long-asr.json) additionally records natural FLEURS members, full references, fixture hashes, and MUCS attribution for the benchmark manifests.
+The long qualifiers repeat each original fixture three times, then repeat with two seconds of leading digital silence to shift boundaries. They use the production adapter, check cancellation after the first part, and compare fresh A/B/A streams and failure recovery on the same recognizer. The desktop test imports and processes a 26.28-second three-copy English WAV through both file and post-stop paths, asserting original-byte/PCM identity and provenance. The local long-audio debug report additionally records natural FLEURS members, full references, fixture hashes, and MUCS attribution for the benchmark manifests.
 
 The standalone [native probe](../scripts/native-tests/asr-probe.cpp) is retained for historical short-clip patch-parity checks; use the Rust qualifiers above for the current segmented application path. It can link against either the original upstream libraries or the patched libraries. On macOS, after sourcing the development environment:
 

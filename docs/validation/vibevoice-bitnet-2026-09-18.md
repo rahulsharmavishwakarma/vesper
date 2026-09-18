@@ -8,7 +8,7 @@ the family inventory; its parameter count still exceeds two billion.
 
 See [primary-source family research](../research-vibevoice.md),
 [issue #15](https://github.com/rahulsharmavishwakarma/transcribe/issues/15), and the
-[machine-readable evidence](vibevoice-bitnet-2026-09-18.json).
+the local debug evidence at `.cache/benchmarks/results/vibevoice-bitnet-2026-09-18/debug-summary.json`.
 
 The final evidence contains **172 planned instrumented case records: 169 native
 executions and three explicit memory-budget blocks**, across 11 configurations.

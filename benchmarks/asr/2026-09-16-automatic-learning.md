@@ -2,7 +2,7 @@
 
 Phase A learns eligible scoped spellings from ordinary edits without a per-word Remember action. **All 54 automatic expected-output checks passed in 27 constructed episodes. The public replay activated no automatic memories and produced no held-out accuracy gain.** Automatic learning therefore remains an explicit setting, off by default. These results qualify implementation behavior, not long-term personal benefit.
 
-The [implementation guide](../../docs/personalization/README.md) documents each component. [ADR-0016](../../docs/adrs/0016-automatic-local-spelling-learning.md) records approval and architecture. The [machine-readable summary](results/2026-09-16-automatic-learning.json) preserves source/binary/fixture hashes, timing distributions, failures, public attribution and the cached recognizer's exact artifacts. Work remains tracked in [#34](https://github.com/rahulsharmavishwakarma/transcribe/issues/34).
+The [implementation guide](../../docs/personalization/README.md) documents each component. [ADR-0016](../../docs/adrs/0016-automatic-local-spelling-learning.md) records approval and architecture. The local debug report at `.cache/benchmarks/results/2026-09-16-automatic-learning/debug-summary.json` preserves source/binary/fixture hashes, timing distributions, failures, public attribution and the cached recognizer's exact artifacts. Work remains tracked in [#34](https://github.com/rahulsharmavishwakarma/transcribe/issues/34).
 
 ## Method and results
 
@@ -72,6 +72,6 @@ target/release/examples/automatic_learning_replay \
   /tmp/automatic-public-episodes.json /tmp/automatic-public-results.json
 ```
 
-The preparer validates manifest hashes, model identity, complete successful upstream outputs and duplicate recording exclusion. It stops on upstream failures instead of dropping them. It reproduced the measured public fixture exactly as JSON; serialization can differ in its final newline. [FLEURS](https://huggingface.co/datasets/google/fleurs) / FLoRes and [Svarah](https://huggingface.co/datasets/ai4bharat/Svarah) attribution and pinned revisions are retained in the result JSON. Full replay and verification logs remain under `.cache/automatic-learning-replay/`.
+The preparer validates manifest hashes, model identity, complete successful upstream outputs and duplicate recording exclusion. It stops on upstream failures instead of dropping them. It reproduced the measured public fixture exactly as JSON; serialization can differ in its final newline. [FLEURS](https://huggingface.co/datasets/google/fleurs) / FLoRes and [Svarah](https://huggingface.co/datasets/ai4bharat/Svarah) attribution and pinned revisions are retained in the local debug report. Full replay and verification logs remain under `.cache/automatic-learning-replay/`.
 
 These are local measurements and labelled simulations. Paper findings and official runtime capabilities remain in the [research synthesis](../../docs/research-automatic-personalization.md). Automatic semantic style learning, accent-model adaptation, external-document observation, training and general real-user improvement are not established or implemented by this phase.
