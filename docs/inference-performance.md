@@ -112,7 +112,7 @@ The recorded development-machine smoke used an **Apple M5 Pro with 64 GiB RAM**,
 | Both native stages | 1.46 s |
 | Desktop integration test, including hashes, archive, SQLite and export assertions | 3.63 s |
 
-These are single observations with potentially warm filesystem caches, not p50/p95 values, cold-start measurements, or release-build comparisons. Peak memory and GPU execution were not measured. The derived ASR real-time factor for this one load-inclusive sample is approximately `0.76 / 3.845 = 0.20`; it says nothing about sustained performance on other devices. The integration test includes export work that ordinary dictation need not perform. [Recorded validation and reproduction commands](validation.md), [native result](validation/native-pipeline.json).
+These are single observations with potentially warm filesystem caches, not p50/p95 values, cold-start measurements, or release-build comparisons. Peak memory and GPU execution were not measured. The derived ASR real-time factor for this one load-inclusive sample is approximately `0.76 / 3.845 = 0.20`; it says nothing about sustained performance on other devices. The integration test includes export work that ordinary dictation need not perform. See the [recorded validation and reproduction commands](validation.md); the native debug result remains in `.cache/benchmarks/results/native-pipeline/debug-summary.json`.
 
 The six synthetic cleanup cases also exposed repetition and meaning changes. An optimization cannot be accepted solely because it produces text sooner. Preserve the existing raw-output fallback and review behavior during performance work. [Cleanup observations](validation.md#cleanup-quality-findings).
 

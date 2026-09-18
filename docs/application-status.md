@@ -78,7 +78,7 @@ RSS differed from the immediately subsequent `ps` reading by at most 32 KiB.
 The first CPU result was null; subsequent idle readings were 0–0.0056% of 18 logical
 CPUs. `ps` showed an idle decaying CPU average. Its `%cpu` has a different time
 window, so this is an idle consistency check, not interval equivalence under load.
-See [raw observations](validation/application-status-resources.json).
+Raw observations remain in `.cache/benchmarks/results/application-status-resources/debug-summary.json`.
 
 To reproduce the explicit sampler observation, run:
 

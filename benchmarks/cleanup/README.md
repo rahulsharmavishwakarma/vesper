@@ -4,7 +4,7 @@ This development experiment preserves the sequential technical-tail and full-cle
 
 ## Recorded CPU result
 
-[Full report, 60 samples and source digests](results/2026-09-15-m5-pro-prefix-screen.json): Apple M5 Pro, 18 logical CPUs, 64 GiB RAM, explicit CPU, 8 inference threads, macOS 26.6.2, AC power with low power mode off. Qwen3.5-0.8B Q4_0, llama-cpp-2 0.1.156 / llama.cpp `e79e4bf660e19f2ad851e06c6913f7a8c5852621`, 4096-token fresh contexts, batch 512, microbatch 128, greedy decoding. Rust test/dev profile with bundled native runtime.
+The full local debug report with 60 samples and source digests remains at `.cache/benchmarks/results/2026-09-15-m5-pro-prefix-screen/debug-summary.json`: Apple M5 Pro, 18 logical CPUs, 64 GiB RAM, explicit CPU, 8 inference threads, macOS 26.6.2, AC power with low power mode off. Qwen3.5-0.8B Q4_0, llama-cpp-2 0.1.156 / llama.cpp `e79e4bf660e19f2ad851e06c6913f7a8c5852621`, 4096-token fresh contexts, batch 512, microbatch 128, greedy decoding. Rust test/dev profile with bundled native runtime.
 
 | Warm resident configuration | Runs | Median complete rewrite | Observed P90 |
 | --- | ---: | ---: | ---: |

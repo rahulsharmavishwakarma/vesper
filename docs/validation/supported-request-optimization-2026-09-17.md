@@ -8,7 +8,7 @@ does **not** establish a material end-to-end speedup. The principal improvements
 are avoiding redundant copies/calls and stopping cancelled work sooner at
 application boundaries.
 
-[Transcript-free evidence](supported-request-optimization-2026-09-17.json)
+The transcript-free local debug report at `.cache/benchmarks/results/supported-request-optimization-2026-09-17/debug-summary.json`
 contains per-case timings, score counts, output hashes, exact artifact/runtime
 provenance, source inventories, process RSS and failures. The earlier
 [hardware SHA result](application-sha-2026-09-17.md) is a separate change; its

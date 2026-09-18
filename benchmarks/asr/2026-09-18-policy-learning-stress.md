@@ -2,7 +2,7 @@
 
 **The expanded simulation found two evaluator defects, now fixed, and confirms that adaptive policy selection is not ready for live use.** All 97 frozen histories completed: 23,809 episodes, including 7,300 held-out audit/final episodes. Adaptation reduced held-out word edits by 18.7% versus the starting policy, but a single fixed context policy performed substantially better. No production policy, model weights, model lifetime or storage schema changed.
 
-The [canonical experiment contract](../../docs/personalization/policy-experiment.md) describes the implementation. [Issue #34](https://github.com/rahulsharmavishwakarma/transcribe/issues/34#issuecomment-5719345518) records the expanded testing scope. The [portable JSON](results/2026-09-18-policy-learning-stress.json) contains per-history counts, all manifest hashes, source/binary hashes, environment, timings, controls and validation results without transcript rows. The [initial 66-episode trial](2026-09-17-policy-learning.md) is preserved as historical evidence.
+The [canonical experiment contract](../../docs/personalization/policy-experiment.md) describes the implementation. [Issue #34](https://github.com/rahulsharmavishwakarma/transcribe/issues/34#issuecomment-5719345518) records the expanded testing scope. The local debug report at `.cache/benchmarks/results/2026-09-18-policy-learning-stress/debug-summary.json` contains per-history counts, all manifest hashes, source/binary hashes, environment, timings, controls and validation results without transcript rows. The [initial 66-episode trial](2026-09-17-policy-learning.md) is preserved as historical evidence.
 
 ## What was simulated
 
@@ -107,6 +107,6 @@ python3 scripts/stress-policy-learning.py verify-isolation /tmp/policy-stress-ma
   --output /tmp/policy-stress-results
 ```
 
-Use new manifest/results directories. The preparation step creates a lock before scoring, and the runner refuses changed inputs. Failed processes, timeouts and missing reports remain in the attempted-history aggregate. Full local outputs and pre-fix failure logs are retained in `.cache/policy-learning-stress/`; the portable JSON records their relevant hashes and aggregate evidence.
+Use new manifest/results directories. The preparation step creates a lock before scoring, and the runner refuses changed inputs. Failed processes, timeouts and missing reports remain in the attempted-history aggregate. Full local outputs and pre-fix failure logs are retained in `.cache/policy-learning-stress/`; the local debug report records their relevant hashes and aggregate evidence.
 
 The next qualification step needs representative independently labelled feedback, coverage of earlier adverse cases, and a fresh locked comparison against strong fixed policies. This simulation does not establish unrestricted recursive improvement or justify enabling the offline controller in live dictation.

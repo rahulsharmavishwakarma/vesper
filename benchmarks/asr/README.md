@@ -4,7 +4,9 @@ The user-facing language/model matrix and the distinction between compatibility 
 
 The runner accepts either a built-in `--model MODEL_ID` or one validated custom speech declaration through `--asr-profile PROFILE_JSON`. These options are mutually exclusive. The profile path uses the same pinned `HuggingFaceProfile` schema, validation, artifact layout, and sherpa-onnx adapter as the application; it is not a second inference implementation. The model installer example accepts the same `--asr-profile` option so benchmark setup exercises the production download and hash-verification contract.
 
-This benchmark runs the application's real Rust/native inference path. It is not a Python proxy and it does not treat a publisher score as a local result. Raw reports and corpora live below `.cache/benchmarks/` and are intentionally gitignored; checked-in code contains only preparation, scoring, capability metadata, and examples.
+This benchmark runs the application's real Rust/native inference path. It is not a Python proxy and it does not treat a publisher score as a local result. Corpora, raw reports, detailed generated JSON, machine environments, and process/source inventories live below `.cache/benchmarks/` and are intentionally gitignored. Source control keeps preparation and scoring code, input manifests, capability metadata, fixtures, tests, and human-reviewed Markdown conclusions. A result is not made more trustworthy by committing a large debug snapshot.
+
+Detailed local summaries use `.cache/benchmarks/results/<run-id>/debug-summary.json`. Before removing a legacy tracked report, preserve and hash it with `python3 scripts/archive-debug-reports.py PATH...`; `python3 scripts/archive-debug-reports.py --verify` checks the ignored local index. A publishable machine-readable result is exceptional: it must be compact, sanitized, path-independent, required by a documented consumer, and generated separately from the debug report.
 
 [15 September 2026 continuous-speech and completed-audio screen](2026-09-15-screen.md) records local results, the supported-context quality regression, default Cohere→Qwen checks, and the limits of these measurements.
 

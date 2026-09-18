@@ -8,7 +8,7 @@ application lifecycle improvement, not a new decoder/kernel or a SOTA claim.
 
 [ADR-0017](../adrs/0017-resident-cohere-recognizer.md) records the specific approval,
 implementation, primary research and exact native reset contract.
-[Transcript-free JSON evidence](cohere-residency-2026-09-17.json) contains every
+The transcript-free local debug report at `.cache/benchmarks/results/cohere-residency-2026-09-17/debug-summary.json` contains every
 case, output hashes, source/model/runtime identities, process RSS, failures and
 lifecycle observations. The [prior copy/sampler fixes](supported-request-optimization-2026-09-17.md)
 and [hardware SHA change](application-sha-2026-09-17.md) are already present in

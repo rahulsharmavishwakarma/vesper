@@ -70,7 +70,7 @@ source scripts/dev-env.sh
 cargo test --locked -p transcribe-inference capabilities::tests::observe_native_accelerators -- --ignored --exact --nocapture
 ```
 
-The [observation](validation/accelerator-capabilities.json) is local hardware
+The observation archived at `.cache/benchmarks/results/accelerator-capabilities/debug-summary.json` is local hardware
 evidence. Windows/Linux/NVIDIA/AMD cases are synthetic rule tests, not native
 cross-platform qualification. Tests also cover CPU-only builds, empty devices,
 unsupported architectures, model restrictions, saved-choice preservation and

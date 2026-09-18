@@ -4,7 +4,7 @@
 
 This evaluates our application of the feedback idea discussed in the [Z.ai research assessment](../../docs/research-rsi-2026-09.md#zai-inspiration-diagnose-replay-and-verify). It is not a reproduction of Z.ai's GLM agent, infrastructure or throughput claims. All computation uses the local Rust learner and temporary SQLite stores; no model call, training or production profile change occurs. The [canonical experiment contract](../../docs/personalization/policy-experiment.md#observed-failure-replay-variant) defines the mechanism. [Issue #34](https://github.com/rahulsharmavishwakarma/transcribe/issues/34#issuecomment-5733700652) records the requested scope.
 
-The [portable results](results/2026-09-18-failure-bank-comparison.json) retain every manifest hash, source/binary hashes, environment, per-history comparisons, fixed controls, public-corpus checks, isolation tests and all paired timing measurements. Full episode outputs remain in the ignored local benchmark directory.
+The local debug report at `.cache/benchmarks/results/2026-09-18-failure-bank-comparison/debug-summary.json` retains every manifest hash, source/binary hashes, environment, per-history comparisons, fixed controls, public-corpus checks, isolation tests and all paired timing measurements. Full episode outputs remain in the ignored local benchmark directory.
 
 ## Design and controls
 
@@ -84,7 +84,7 @@ To reduce fixed run-order effects, one history from each of the eight families w
 
 The paired adaptive-plus-baseline duration increases by a mean **5.04 ms per complete history** (median 3.45 ms; range 0.03–34.17 ms), about 4.5% of the current mean. This includes setup, SQLite snapshots, both trajectories and reporting rows, and is not a per-dictation delay. Individual application timings exclude SQLite snapshot reads; feedback timing excludes connection setup. The extra history-update mean is per experimental round, not per word or utterance. These are descriptive shared-host timings, without a statistical latency guarantee.
 
-The portable artifact also records the main 97-history timing aggregates and the largest per-history p99 values. Those tails are not pooled p99 estimates. No microphone, ASR, cleanup, UI, insertion, battery, peak-RAM or sustained thermal measurement was performed in this comparison. Background production latency is not established by this replay.
+The local debug report also records the main 97-history timing aggregates and the largest per-history p99 values. Those tails are not pooled p99 estimates. No microphone, ASR, cleanup, UI, insertion, battery, peak-RAM or sustained thermal measurement was performed in this comparison. Background production latency is not established by this replay.
 
 Validation completed:
 
@@ -96,7 +96,7 @@ Validation completed:
 
 ## Reproduce
 
-Preserve a copy of the existing version-2 executable before rebuilding version 3 if checking original-binary equivalence. The recorded original hash is in the portable artifact; do not substitute an unrelated binary. Use new directories for each stress run. Record hardware/OS/compiler metadata in `environment.json` under the benchmark directory; missing hardware is reported as unknown rather than guessed.
+Preserve a copy of the existing version-2 executable before rebuilding version 3 if checking original-binary equivalence. The recorded original hash is in the local debug report; do not substitute an unrelated binary. Use new directories for each stress run. Record hardware/OS/compiler metadata in `environment.json` under the benchmark directory; missing hardware is reported as unknown rather than guessed.
 
 ```sh
 . ./scripts/dev-env.sh

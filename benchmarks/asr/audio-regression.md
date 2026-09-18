@@ -65,7 +65,7 @@ Place the official pinned Ear frontend golden JSON at `<result-root>/ear-golden.
 ```sh
 .cache/audio-eval-venv/bin/python scripts/summarize-audio-regression.py \
   .cache/benchmarks/results/audio-regression-2026-09-16 \
-  docs/validation/audio-regression-2026-09-16.json
+  .cache/benchmarks/results/audio-regression-2026-09-16/debug-summary.json
 ```
 
 No threshold or model is tuned after viewing this validation set. Always-on promotion requires demonstrated paired benefit without clean/meaning regressions, valid runtime contracts and a suitable local latency/RAM envelope; otherwise preserve original audio and state the narrower conclusion.
