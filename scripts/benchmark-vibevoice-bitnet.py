@@ -9,6 +9,7 @@ import queue
 import re
 import signal
 import subprocess
+import sys
 import threading
 import time
 from pathlib import Path
@@ -53,6 +54,26 @@ def host_sample(excluded, child_group=None):
     return busy, rss
 
 
+def time_command(command, platform):
+    if platform == "darwin":
+        return ["/usr/bin/time", "-l", *command]
+    if platform == "linux":
+        # GNU time's %M is KiB; use a stable, locale-independent record.
+        return ["/usr/bin/time", "-f", "TRANSCRIBE_PEAK_RSS_KIB %M", *command]
+    raise RuntimeError(f"native resource measurement is unsupported on {platform}")
+
+
+def peak_rss_bytes(stderr, platform):
+    if platform == "darwin":
+        pattern, scale = r"^\s*(\d+)\s+maximum resident set size\s*$", 1
+    elif platform == "linux":
+        pattern, scale = r"^TRANSCRIBE_PEAK_RSS_KIB (\d+)\s*$", 1024
+    else:
+        return None
+    matches = re.findall(pattern, stderr, flags=re.MULTILINE)
+    return int(matches[-1]) * scale if matches else None
+
+
 class Native:
     def __init__(self, command, log_prefix, rss_limit):
         self.lines = queue.Queue()
@@ -65,6 +86,7 @@ class Native:
         self.last_sample = 0.0
         self.end_received = None
         self.command = command
+        self.platform = sys.platform
         env = dict(
             os.environ,
             OMP_NUM_THREADS="1",
@@ -73,7 +95,7 @@ class Native:
             MKL_NUM_THREADS="1",
         )
         self.process = subprocess.Popen(
-            ["/usr/bin/time", "-l", *command],
+            time_command(command, self.platform),
             stdin=subprocess.PIPE,
             stdout=subprocess.PIPE,
             stderr=subprocess.PIPE,
@@ -170,12 +192,11 @@ class Native:
 
     def evidence(self):
         text = "".join(self.stderr)
-        matches = re.findall(r"(\d+)\s+maximum resident set size", text)
         return {
             "command": self.command,
             "exitCode": self.process.poll(),
             "wallMs": (time.perf_counter() - self.started) * 1000,
-            "peakRssBytes": int(matches[-1]) if matches else None,
+            "peakRssBytes": peak_rss_bytes(text, self.platform),
             "sampledPeakRssBytes": self.observed_rss,
             "contention": self.contention,
         }

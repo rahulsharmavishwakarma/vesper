@@ -27,6 +27,26 @@ in an isolated interpreter, and any failure fails the job. These tests use
 synthetic data and require only the development dependencies in
 `requirements-dev.txt`, not optional model/inference Python environments.
 
+Native-protocol tests in `scripts/test-vibevoice-bitnet.py` launch synthetic
+children through the real resource wrapper. It uses BSD `/usr/bin/time -l` on
+macOS and GNU `/usr/bin/time -f` on the Ubuntu portable runner. GNU peak RSS is
+reported in KiB and converted to bytes; macOS already reports bytes. The GNU
+format is an explicit marker, so parsing does not depend on localized labels or
+the caller's `TIME` environment variable. Missing memory evidence stays absent.
+See GNU time's [format options](https://www.gnu.org/software/time/manual/html_node/Setting-Format.html)
+and [memory fields](https://www.gnu.org/software/time/manual/html_node/Memory-Resources.html).
+Using `-l` on Ubuntu exits before the child emits its protocol record and causes
+misleading missing-measurement failures. Do not skip those assertions or move the
+portable suite to macOS to conceal the failure. The full benchmark's macOS power
+sampling remains platform-specific; this wrapper portability does not qualify
+Linux inference or change the supported desktop platform.
+
+The portability correction was validated locally on macOS with the complete
+`make check-portable` gate, including nine passing protocol/resource tests and
+all nine Python suites. Platform-selection and byte-conversion fixtures cover
+both BSD and GNU output; the real subprocess test checks memory evidence on the
+current host. This is local evidence, not a successful Ubuntu Actions rerun.
+
 The browser job runs the existing `tests/recovery.html` scenarios in Chromium
 with mocked Tauri commands through Playwright. It fails on scenario failures,
 uncaught browser errors, or missing completion; it does not retry away failures.
