@@ -1,0 +1,53 @@
+# transcribe Rust workspace; member paths are relative to this manifest.
+[workspace]
+members = [
+    "apps/desktop/src-tauri",
+    "crates/transcribe-core",
+    "crates/transcribe-audio",
+    "crates/transcribe-inference",
+    "crates/transcribe-data",
+    "crates/transcribe-models",
+    "crates/transcribe-nemo",
+    "crates/transcribe-eval",
+    "crates/transcribe-desktop-platform",
+]
+default-members = ["crates/transcribe-core", "crates/transcribe-audio", "crates/transcribe-inference", "crates/transcribe-data", "crates/transcribe-models"]
+resolver = "2"
+
+[workspace.package]
+version = "0.1.0"
+edition = "2021"
+rust-version = "1.85"
+publish = false
+
+[workspace.dependencies]
+serde = { version = "1", features = ["derive"] }
+serde_json = "1"
+thiserror = "2"
+tempfile = "3"
+uuid = { version = "1", features = ["v4", "serde"] }
+chrono = { version = "0.4", features = ["serde"] }
+sha2 = "0.10"
+rusqlite = { version = "0.37", features = ["bundled"] }
+transcribe-core = { path = "crates/transcribe-core" }
+transcribe-audio = { path = "crates/transcribe-audio" }
+transcribe-inference = { path = "crates/transcribe-inference" }
+transcribe-data = { path = "crates/transcribe-data" }
+transcribe-models = { path = "crates/transcribe-models" }
+transcribe-nemo = { path = "crates/transcribe-nemo" }
+transcribe-eval = { path = "crates/transcribe-eval" }
+
+[workspace.lints.rust]
+unsafe_code = "forbid"
+
+[profile.release]
+codegen-units = 1
+lto = "thin"
+strip = true
+
+# Keep integrity checks responsive in development when hashing >1 GB of weights.
+[profile.dev.package.sha2]
+opt-level = 3
+
+[profile.dev.package.transcribe-models]
+opt-level = 2
