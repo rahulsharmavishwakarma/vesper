@@ -49,6 +49,8 @@ Reuse shared controls, spacing, typography, wording, and motion across screens. 
 
 Create and check out a new task-specific feature branch **before making the first repository edit**, including documentation and rule changes. Never implement, stage, or commit directly on `main` or another default branch. Creating a feature branch only when preparing the PR is too late.
 
+Name branches `<type>/<short-kebab-description>`. Use `feature/`, `fix/`, `chore/`, `docs/`, `test/`, `refactor/`, `perf/`, `ci/`, or `release/` according to the work. Do not prefix a branch with an agent name, tool name, contributor name, or generic ownership marker such as `codex/`.
+
 Start the feature branch from the freshly fetched `origin/main` (or the repository's actual default branch). Inspect the current branch, working tree, local-only commits and existing worktrees first. If existing work makes that unsafe, preserve it on a dedicated branch and in a recoverable snapshot, then use a fresh feature branch or isolated worktree. Preserve tracked, untracked and ignored files; ordinary `git stash` does not include untracked files. Do not carry unrelated commits into the new PR or leave duplicate implementation changes behind on `main`.
 
 Make the task's edits, scoped signed commits and validation in that feature branch. Before raising a PR, verify the head branch is the intended feature branch, the base is `main`, and both the commit list and complete diff against the base contain only the requested scope. Follow the [PR template](.github/PULL_REQUEST_TEMPLATE.md) and record the branch and PR in the tracking issue. Existing authorization requirements for pushing and publishing still apply.

@@ -7,14 +7,67 @@ GitHub Issues is the only task tracker. Project documentation records current be
 ## Required lifecycle
 
 1. Inspect the configured Git remote and search open and closed issues with explicit `--repo` arguments when repository identity could be ambiguous.
-2. Read the matching issue and reuse it. If none exists, create one containing the problem, proposed scope, completion criteria, and validation plan.
+2. Read the matching issue and reuse it. If none exists, create one containing the problem, proposed scope, completion criteria, validation plan, and the documentation affected by the work.
 3. Apply the relevant work-type label and any useful existing routing labels. Keep them accurate when scope changes.
 4. Record any architectural proposal and its approval status. Creating an issue does not itself authorize a major architectural change.
 5. Update the issue when scope, decisions, progress, blockers, or completion criteria change.
-6. Implement or investigate, then prepare small local commits under the owner's standing authorization and the rules below.
-7. Update the canonical documentation under `docs/`. Prefer an existing owner page; otherwise add a focused page and link it from the nearest index or README.
+6. Before the first repository edit, create and check out a new feature branch from the freshly fetched default branch. Preserve existing local work separately when needed. Implement or investigate there, then prepare small local commits under the owner's standing authorization and the rules below.
+7. Update canonical documentation alongside the implementation, in the same change. Prefer an existing owner page; otherwise add a focused page and link it from the nearest index or README. Include related docs in the implementation commit when practical.
 8. Run proportionate validation and publish the result, documentation location, limitations, and deferred work to the issue.
 9. Confirm labels still represent the completed scope, then close only when every completion criterion—including documentation—is complete. Leave incomplete work open with an explicit status.
+
+## Feature branches and pull requests
+
+Use a new task-specific feature branch before editing code, documentation or
+repository rules. Do not develop or commit on `main`, and do not wait until PR
+creation to move the work to a branch. Inspect the current branch, working tree,
+local-only commits and worktrees before choosing the base.
+
+For a clean checkout with no local-only work, the normal start is:
+
+```sh
+git fetch origin main
+git switch main
+git merge --ff-only origin/main
+git switch -c feature/short-task-name
+```
+
+Branch names use `<type>/<short-kebab-description>`. Use `feature/` for user-facing
+capabilities, `fix/` for defects, `chore/` for maintenance, `docs/` for
+documentation-only work, `test/` for test or benchmark infrastructure,
+`refactor/` for behavior-preserving restructuring, `perf/` for performance work,
+`ci/` for automation, and `release/` for release preparation. Do not prefix
+branches with an agent or contributor name.
+
+Use the actual default branch if it is not `main`. When the checkout contains
+other work, preserve it on a dedicated branch and in a recoverable snapshot, then
+start a fresh feature branch or isolated worktree from the fetched base. Ordinary
+`git stash` saves tracked changes only; untracked files require explicit
+preservation, and ignored local state must also remain intact. Never delete a
+file merely because it blocks checkout or rebase.
+
+Before opening the PR, inspect the entire commit list and diff against its base,
+including earlier commits inherited by the branch. Publish only the requested
+scope, keep signed commits and hooks enabled, and use the
+[PR checklist](../.github/PULL_REQUEST_TEMPLATE.md). The PR head must be the task's
+feature branch and its base the default branch. Record both in the tracking
+issue. Branch creation does not grant publication or architectural approval.
+
+After merging, fetch and verify the actual merged content. Rebase and squash
+merges can change commit IDs, so ancestry alone may not prove whether the work
+landed. Fast-forward a clean local `main` when possible. A divergent `main` needs
+its local-only commits preserved and reconciled first; changing `pull.ff` does
+not resolve that divergence. An applied stash also remains in the stash list.
+Do not blindly reapply already-merged changes or force away remaining work.
+Retain recovery references until restoration is verified, and continue unfinished
+work on its own feature branch.
+
+The shared-checkout handoff state is `main`, provided switching preserves all
+existing work. Each incoming agent checks the state and creates/checks out its
+own feature branch before editing. Do not discard or silently stash another
+agent's changes to obtain a clean handoff. Use isolated worktrees for concurrent
+tasks when a shared branch switch would disrupt active work, and report a blocked
+handoff rather than forcing it.
 
 ## Local commit convention
 
@@ -100,7 +153,7 @@ Documentation should explain what future users and maintainers need to know afte
 
 | Change area | Typical canonical documentation |
 | --- | --- |
-| User-visible behavior | Feature guide, root README link, and limitations |
+| User-visible behavior | `docs/user-guide.md`, owning feature guide, relevant README overview/setup changes, and limitations |
 | Architecture or data flow | `docs/architecture.md`, `docs/internals.md`, and an ADR when required |
 | Model/runtime behavior | Model guide, inference-performance evidence, benchmark contract, and provenance |
 | Bug fix | Owning behavior page plus regression/validation evidence |
@@ -110,6 +163,21 @@ Documentation should explain what future users and maintainers need to know afte
 | Documentation-only work | The corrected canonical page and any necessary index links |
 
 Do not create a per-issue Markdown file or chronological local work log solely to satisfy documentation completion. The GitHub issue owns task state; `docs/` owns durable project truth.
+
+Documentation is part of each feature, bug fix, task, test, refactor and
+maintenance change, not a separate cleanup promised for later. Correct behavior
+descriptions and troubleshooting when fixing bugs; update examples/defaults when
+changing configuration or commands; record operational and validation changes
+even when the user interface stays the same. Preserve historical measurements
+as dated evidence rather than rewriting them to describe a newer implementation.
+
+The root README is the product entry point. Keep purpose, capabilities, actual
+download availability, first-run steps, privacy and user/contributor links there.
+Keep runtime details and benchmark/research notes in their owning guides. Check
+current UI wording, commands, links, platform support and release status before
+claiming completion. Unpublished installers and pending licenses must stay
+clearly identified. The issue's completion comment names the updated pages and
+their validation; an issue comment alone does not replace the documentation.
 
 ## UI changes
 

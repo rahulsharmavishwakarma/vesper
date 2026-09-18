@@ -22,6 +22,9 @@ Canonical documentation updated: `docs/...`
 
 ## Checklist
 
+- [ ] I created and checked out a new feature branch before the first edit; the PR targets the default branch, and its commit list and diff contain only this task's scope.
+- [ ] The branch uses the documented `<type>/<short-kebab-description>` convention and is not named after an agent or contributor.
+- [ ] I preserved existing local work separately and did not leave duplicate implementation changes on `main`.
 - [ ] This change is focused and does not include unrelated generated files.
 - [ ] The tracking issue has accurate labels, scope, validation, and any required architectural approval.
 - [ ] I did not commit model weights, recordings, credentials, or private data.
