@@ -1,0 +1,8 @@
+# CI and contributor tooling only; the native app has no Python dependency.
+pre-commit==4.6.1
+pip-audit==2.10.1
+numpy==2.5.3
+soundfile==0.14.0
+ruff==0.16.8
+shellcheck-py==0.11.0.1
+shfmt-py==4.2.0
