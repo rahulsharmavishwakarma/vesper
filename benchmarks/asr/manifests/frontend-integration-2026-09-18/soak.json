@@ -1,0 +1,109 @@
+{
+  "schemaVersion": 1,
+  "sources": [
+    {
+      "id": "fleurs-en_us-test",
+      "name": "FLEURS English (United States) test set",
+      "url": "https://huggingface.co/datasets/google/fleurs/tree/70bb2e84b976b7e960aa89f1c648e09c59f894dd/data/en_us",
+      "revision": "70bb2e84b976b7e960aa89f1c648e09c59f894dd; audio-sha256:d9c2e37b41aacd41bc283554a0a82b5476b36887049774ecb2819dcaaa55a356; metadata-sha256:74c046239374deeb60fa63f258f907388093a32bcaa3140965f70ef05c79f7ca",
+      "license": "CC-BY-4.0",
+      "attribution": "Google FLEURS; derived from the FLoRes evaluation sentences",
+      "redistribution": "Redistributions must retain attribution under CC-BY-4.0."
+    },
+    {
+      "id": "fleurs-hi_in-test",
+      "name": "FLEURS Hindi (India) test set",
+      "url": "https://huggingface.co/datasets/google/fleurs/tree/70bb2e84b976b7e960aa89f1c648e09c59f894dd/data/hi_in",
+      "revision": "70bb2e84b976b7e960aa89f1c648e09c59f894dd; audio-sha256:47c238b9cf7016ba596639bb3038b0c89dc6e85759f16d09c4f58c6dfa25c65f; metadata-sha256:889e82e2875490f9533ff59ab67326fcfa01cf828fc4412758aaaa1f442a729f",
+      "license": "CC-BY-4.0",
+      "attribution": "Google FLEURS; derived from the FLoRes evaluation sentences",
+      "redistribution": "Redistributions must retain attribution under CC-BY-4.0."
+    },
+    {
+      "id": "synthetic-dictation-controls",
+      "name": "Task-authored synthetic English dictation controls",
+      "url": "https://github.com/rahulsharmavishwakarma/transcribe/issues/41",
+      "revision": "controls-v1; macOS26.6.2; say Samantha; rate175; PCM16 mono16kHz",
+      "license": "Task-authored text; generated audio retained locally only",
+      "attribution": "Original synthetic control sentences generated for this benchmark, spoken by macOS Samantha",
+      "redistribution": "No synthesized audio is redistributed; text, parameters and hashes only."
+    },
+    {
+      "id": "audio-frontend-synthetic-noise",
+      "name": "Deterministic non-speech diagnostics",
+      "url": "https://github.com/rahulsharmavishwakarma/transcribe/issues/42",
+      "revision": "noise-v1; 16000Hz PCM16; LCG1664525+1013904223 seed17",
+      "license": "Task-authored mathematical signals",
+      "attribution": "Generated non-speech controls; not recorded natural environments",
+      "redistribution": "May redistribute mathematical recipes and generated signals"
+    },
+    {
+      "id": "ms-snsd-noise-test",
+      "name": "MS-SNSD environmental test noise",
+      "url": "https://github.com/microsoft/MS-SNSD/tree/fe61c4ba0d9ac8dd7e23d719cc79f8947e1dc742/noise_test",
+      "revision": "fe61c4ba0d9ac8dd7e23d719cc79f8947e1dc742; individual hashes in assets manifest",
+      "license": "Collection: Freesound CC0 and DEMAND CC-BY-SA3 per official README; code MIT",
+      "attribution": "Microsoft MS-SNSD; Reddy et al., Interspeech2019; original sound contributors",
+      "redistribution": "Audio retained locally; no assumption of MIT audio licensing"
+    },
+    {
+      "id": "ami-es2004a",
+      "name": "AMI ES2004a mixed-headset conversation",
+      "url": "https://groups.inf.ed.ac.uk/ami/download/",
+      "revision": "722d8891643e1e4dc62cfd0d198fa05a1646c3cc",
+      "license": "CC-BY-4.0",
+      "attribution": "AMI Consortium / University of Edinburgh; Jean Carletta et al., The AMI Meeting Corpus: A Pre-announcement, MLMI2005. Audio adapted by deterministic window extraction.",
+      "redistribution": "CC-BY4; source and modifications attributed, audio retained locally"
+    }
+  ],
+  "samples": [
+    {
+      "id": "soak-warmup",
+      "sourceId": "fleurs-en_us-test",
+      "split": "test",
+      "language": "en-US",
+      "audioPath": "en_us-16355757648693617724--integration-clean.wav",
+      "sha256": "d346e6a7863d0b509d51daeafa12df565fc4df112d3f1369bb7dd333f18b2eca",
+      "reference": "Bishkek was described as sinking into a state of \"anarchy\" by one observer, as gangs of people roamed the streets and plundered stores of consumer goods.",
+      "durationSeconds": 7.92,
+      "scenario": "read",
+      "replayKind": "natural",
+      "condition": "clean",
+      "baseId": "16355757648693617724",
+      "evaluationRole": "holdout",
+      "sex": "FEMALE"
+    },
+    {
+      "id": "frontend-soak-30min",
+      "sourceId": "fleurs-en_us-test",
+      "split": "test",
+      "language": "en-US",
+      "audioPath": "soak-30min.wav",
+      "sha256": "1f333daf4fc57940581ce0d1ea6c465ffc0beb7f8440ecb7ac651ff11785d2b0",
+      "reference": "Bishkek was described as sinking into a state of \"anarchy\" by one observer, as gangs of people roamed the streets and plundered stores of consumer goods.",
+      "durationSeconds": 1800.0,
+      "scenario": "read",
+      "replayKind": "synthetic_soak",
+      "condition": "clean",
+      "baseId": "16355757648693617724",
+      "evaluationRole": "state-only-no-accuracy",
+      "sex": "FEMALE"
+    },
+    {
+      "id": "soak-reset",
+      "sourceId": "fleurs-en_us-test",
+      "split": "test",
+      "language": "en-US",
+      "audioPath": "en_us-16355757648693617724--integration-clean.wav",
+      "sha256": "d346e6a7863d0b509d51daeafa12df565fc4df112d3f1369bb7dd333f18b2eca",
+      "reference": "Bishkek was described as sinking into a state of \"anarchy\" by one observer, as gangs of people roamed the streets and plundered stores of consumer goods.",
+      "durationSeconds": 7.92,
+      "scenario": "read",
+      "replayKind": "natural",
+      "condition": "clean",
+      "baseId": "16355757648693617724",
+      "evaluationRole": "holdout",
+      "sex": "FEMALE"
+    }
+  ]
+}
