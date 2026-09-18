@@ -1,0 +1,203 @@
+//! Task interfaces at request boundaries. No dynamic lookup inside native loops.
+use crate::{
+    lfm, native, nemotron, qwen, resident_sherpa, InferenceError, Result, TranscriptionProgressSink,
+};
+use std::{
+    path::{Path, PathBuf},
+    sync::atomic::AtomicBool,
+};
+use transcribe_audio::MonoPcm;
+use transcribe_core::{AdapterKind, AppConfig, PersonalizationProfile};
+
+#[derive(PartialEq, Eq)]
+pub(crate) enum SpeechKey {
+    Nemo(nemotron::RecognizerKey),
+    Lfm(lfm::RecognizerKey),
+    Sherpa(resident_sherpa::RecognizerKey),
+    PerJob(AdapterKind, PathBuf, Box<AppConfig>),
+}
+
+pub(crate) fn speech_key(config: &AppConfig, root: &Path) -> Result<SpeechKey> {
+    config.validate()?;
+    Ok(match config.speech_adapter().kind {
+        AdapterKind::NemoRnnt => SpeechKey::Nemo(nemotron::key(config, root)?),
+        AdapterKind::LfmAudio => SpeechKey::Lfm(lfm::key(config, root)?),
+        AdapterKind::CohereAsr | AdapterKind::Whisper => {
+            SpeechKey::Sherpa(resident_sherpa::key(config, root)?)
+        }
+        kind => SpeechKey::PerJob(kind, root.to_owned(), Box::new(config.clone())),
+    })
+}
+
+/// Native resources are constructed, used and dropped on their owning worker.
+/// Per-job adapters keep their established lifetimes; registration never claims
+/// residency or native streaming merely because a checkpoint supports it.
+pub(crate) enum SpeechModel {
+    Nemo(nemotron::Recognizer),
+    Lfm(lfm::Recognizer),
+    Sherpa(resident_sherpa::Recognizer),
+    PerJob(AdapterKind),
+}
+
+impl SpeechModel {
+    pub(crate) fn load(config: &AppConfig, root: &Path, cancelled: &AtomicBool) -> Result<Self> {
+        match config.speech_adapter().kind {
+            AdapterKind::CohereAsr | AdapterKind::Whisper => Ok(Self::Sherpa(
+                resident_sherpa::Recognizer::load(config, root, cancelled)?,
+            )),
+            AdapterKind::NemoRnnt => {
+                transcribe_models::verify_asr(config, root, cancelled)
+                    .map_err(|e| native("speech model verification", e))?;
+                Ok(Self::Nemo(nemotron::Recognizer::load(
+                    config, root, cancelled,
+                )?))
+            }
+            AdapterKind::LfmAudio => {
+                transcribe_models::verify_asr(config, root, cancelled)
+                    .map_err(|e| native("speech model verification", e))?;
+                Ok(Self::Lfm(lfm::Recognizer::load(config, root, cancelled)?))
+            }
+            kind => Ok(Self::PerJob(kind)),
+        }
+    }
+
+    #[allow(clippy::too_many_arguments)]
+    pub(crate) fn transcribe(
+        &self,
+        audio: &MonoPcm,
+        config: &AppConfig,
+        root: &Path,
+        id: &str,
+        cancelled: &AtomicBool,
+        progress: &TranscriptionProgressSink,
+        profile: &PersonalizationProfile,
+    ) -> Result<String> {
+        match self {
+            Self::Nemo(model) => model.transcribe_with_phrases(
+                audio,
+                config,
+                Some(id),
+                cancelled,
+                &profile.speech_phrases(config.language),
+            ),
+            Self::Lfm(model) => model.transcribe(audio, cancelled, &**progress),
+            Self::Sherpa(model) => model.transcribe(audio, config, root, cancelled, &**progress),
+            Self::PerJob(kind) => {
+                transcribe_models::verify_asr(config, root, cancelled)
+                    .map_err(|e| native("speech model verification", e))?;
+                transcribe_once(*kind, audio, config, root, cancelled, progress)
+            }
+        }
+    }
+
+    pub(crate) fn stream<'a>(
+        &'a self,
+        config: &AppConfig,
+        id: &str,
+        cancelled: &AtomicBool,
+        profile: &PersonalizationProfile,
+    ) -> Result<transcribe_nemo::Stream<'a>> {
+        match self {
+            Self::Nemo(model) => model.stream_with_phrases(
+                config,
+                id,
+                cancelled,
+                &profile.speech_phrases(config.language),
+            ),
+            Self::Lfm(_) | Self::Sherpa(_) | Self::PerJob(_) => {
+                Err(InferenceError::UnsupportedAsr(config.models.asr.id()))
+            }
+        }
+    }
+
+    pub(crate) fn evidence(
+        &self,
+        config: &AppConfig,
+        profile: &PersonalizationProfile,
+    ) -> serde_json::Value {
+        if let Self::Sherpa(model) = self {
+            return serde_json::json!({"requestedBackend":config.compute_backend,
+                "initializedProvider":"cpu", "operatorPlacement":"unknown",
+                "nativeGraphThreads":crate::worker_threads(), "residentWeights":true,
+                "residentLoadOrdinal":model.load_ordinal, "verificationUs":model.verification_us,
+                "modelLoadUs":model.load_us, "metrics":*model.metrics.borrow(),
+                "contextualPhrasesSupported":false, "contextualPhraseCount":0,
+                "evidence":"verified-resident-sherpa-fresh-segment-streams"});
+        }
+        if let Self::Lfm(model) = self {
+            return serde_json::json!({"requestedBackend":config.compute_backend, "initializedProvider":"cpu", "projectorProvider":"cpu", "operatorPlacement":"explicit-cpu-only", "nativeGraphThreads":crate::worker_threads(), "modelLoadUs":model.load_us, "metrics":*model.metrics.borrow(), "contextualPhrasesSupported":false, "contextualPhraseCount":0, "evidence":"explicit-empty-lm-devices-and-cpu-projector"});
+        }
+        let initialized = match self {
+            Self::Nemo(m) => Some(m.initialized_provider),
+            Self::PerJob(
+                AdapterKind::SherpaTransducer | AdapterKind::QwenAsr | AdapterKind::CohereAsr,
+            ) => Some("cpu"),
+            Self::Lfm(_) | Self::Sherpa(_) | Self::PerJob(_) => None,
+        };
+        serde_json::json!({"requestedBackend":config.compute_backend, "initializedProvider":initialized, "nativeGraphThreads":if matches!(self, Self::Nemo(_)) { Some(4) } else { None }, "streamingPolicy":if matches!(self, Self::Nemo(_)) { serde_json::json!({"rightContextPolicy":"artifact-default", "artifactRightContextFrames":3, "artifactLeftContextFrames":56, "nominalEncoderAdvanceMs":320, "evidence":"pinned-model-and-runtime-source"}) } else { serde_json::Value::Null }, "operatorPlacement":"unknown", "profileRevision":profile.revision, "contextualPhrasesSupported":config.speech_adapter().capabilities.contextual_phrases, "contextualPhraseCount":if config.speech_adapter().capabilities.contextual_phrases { profile.speech_phrases(config.language).len() } else { 0 }, "phraseBoost":2.0, "evidence":"adapter-initialization-or-explicit-cpu-contract"})
+    }
+}
+
+pub(crate) fn transcribe_once(
+    kind: AdapterKind,
+    audio: &MonoPcm,
+    config: &AppConfig,
+    root: &Path,
+    cancelled: &AtomicBool,
+    progress: &TranscriptionProgressSink,
+) -> Result<String> {
+    match kind {
+        AdapterKind::NemoRnnt => nemotron::transcribe(audio, config, root, cancelled),
+        AdapterKind::LfmAudio => {
+            transcribe_models::verify_asr(config, root, cancelled)
+                .map_err(|e| native("speech model verification", e))?;
+            lfm::Recognizer::load(config, root, cancelled)?.transcribe(
+                audio,
+                cancelled,
+                &**progress,
+            )
+        }
+        AdapterKind::SherpaTransducer => {
+            crate::parakeet::transcribe(audio, config, root, cancelled)
+        }
+        AdapterKind::QwenAsr | AdapterKind::CohereAsr | AdapterKind::Whisper => {
+            crate::offline_asr::transcribe_with_progress(
+                audio,
+                config,
+                root,
+                cancelled,
+                &**progress,
+            )
+        }
+        _ => Err(InferenceError::UnsupportedAsr(config.models.asr.id())),
+    }
+}
+
+pub(crate) enum TextModel {
+    Llama(qwen::Rewriter),
+}
+impl TextModel {
+    pub(crate) fn load(config: &AppConfig, root: &Path, cancelled: &AtomicBool) -> Result<Self> {
+        transcribe_models::verify_rewriter(config, root, cancelled)
+            .map_err(|e| native("writing model verification", e))?;
+        Ok(Self::Llama(qwen::Rewriter::load(config, root, cancelled)?))
+    }
+    pub(crate) fn rewrite(
+        &self,
+        raw: &str,
+        config: &AppConfig,
+        cancelled: &AtomicBool,
+        profile: &PersonalizationProfile,
+    ) -> Result<String> {
+        match self {
+            Self::Llama(model) => model.rewrite_personalized(raw, config, cancelled, profile),
+        }
+    }
+    pub(crate) fn evidence(&self) -> serde_json::Value {
+        match self {
+            Self::Llama(model) => {
+                serde_json::json!({"initializedProvider":model.initialized_provider, "operatorPlacement":"unknown", "metrics":*model.metrics.borrow()})
+            }
+        }
+    }
+}
