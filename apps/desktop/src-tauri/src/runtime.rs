@@ -12,6 +12,10 @@ use transcribe_audio::MonoPcm;
 use transcribe_core::{AppConfig, Language};
 use transcribe_data::{DatasetStore, SessionRecord};
 
+#[cfg(test)]
+#[path = "runtime_learning_tests.rs"]
+mod learning_tests;
+
 #[derive(Clone, Debug, Serialize)]
 #[serde(rename_all = "camelCase")]
 pub struct PipelineResult {
@@ -1352,7 +1356,7 @@ pub struct WorkContext {
     pub inference: Arc<transcribe_inference::InferenceManager>,
     pub(crate) streaming_result: Arc<Mutex<Option<StreamingResultReceiver>>>,
     pub(crate) personalization:
-        Arc<std::sync::OnceLock<Result<transcribe_core::PersonalizationProfile, String>>>,
+        Arc<std::sync::OnceLock<Result<transcribe_data::DictationPersonalizationSnapshot, String>>>,
 }
 
 type StreamingResultReceiver = mpsc::Receiver<Result<String, String>>;
@@ -1361,10 +1365,17 @@ impl WorkContext {
     pub(crate) fn personalization(
         &self,
     ) -> Result<&transcribe_core::PersonalizationProfile, String> {
+        self.personalization_snapshot()
+            .map(|snapshot| &snapshot.profile)
+    }
+
+    fn personalization_snapshot(
+        &self,
+    ) -> Result<&transcribe_data::DictationPersonalizationSnapshot, String> {
         self.personalization
             .get_or_init(|| {
                 DatasetStore::open(self.dataset_root.clone())
-                    .and_then(|store| store.dictation_personalization())
+                    .and_then(|store| store.dictation_personalization_snapshot())
                     .map_err(|e| e.to_string())
             })
             .as_ref()
@@ -1656,6 +1667,10 @@ impl WorkContext {
         result.session = session.clone();
         // Publish the durable raw result before a potentially slow or failed cleanup.
         self.runtime.publish(result.clone());
+        // Freeze eligibility from the raw hypothesis. Cleanup cannot generate its own cues.
+        let post_asr_profile = self
+            .personalization_snapshot()?
+            .post_asr_profile(&raw, self.config.language);
         if self.config.cleanup_enabled && !raw.trim().is_empty() {
             self.runtime.progress(
                 "rewriting",
@@ -1674,7 +1689,7 @@ impl WorkContext {
                 &self.model_root,
                 &self.operation_id,
                 Arc::clone(&self.runtime.cancelled),
-                self.personalization()?,
+                &post_asr_profile,
             );
             drop(timer);
             match cleaned {
@@ -1723,7 +1738,7 @@ impl WorkContext {
             learning_enabled: profile.automatic_learning,
         };
         let baseline = result.cleaned_transcript.as_deref().unwrap_or(&raw);
-        let personalized = profile.personalize(baseline, self.config.language);
+        let personalized = post_asr_profile.personalize(baseline, self.config.language);
         if personalized.text != baseline {
             result.personalized_transcript = Some(personalized.text.clone());
         }

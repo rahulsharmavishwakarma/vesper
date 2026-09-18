@@ -4,6 +4,8 @@ This is an **offline prototype of the second learning loop**, authorized by the 
 
 The prototype can change which learned memories are eligible for use, test a proposed change on subsequent feedback and return to the preceding policy. Its candidate family, scoring rules and controller are human-written and fixed. This is **bounded policy selection**, not open-ended discovery of better learning algorithms or a demonstration of unrestricted recursive self-improvement.
 
+On 19 September the user approved integrating the **fixed teaching-context guard** into the desktop separately from this controller. Its persistent metadata and raw-hypothesis selection rules are specified in [dictionary learning](automatic-dictionary.md#context-required-for-post-recognition-use). The app additionally requires an unquoted alias/canonical occurrence and bounded cues; it is not a verbatim deployment of the replay policy. The earlier experimental scores remain historical offline evidence. Live scoped promotion/rollback is still unimplemented and requires representative feedback qualification.
+
 ## What changes and what stays fixed
 
 The real `DatasetStore` still extracts guarded spellings, stores ordinary-edit provenance and performs its existing admission/suspension checks. The experiment applies an additional eligibility filter to a copied profile before calling the real deterministic matcher. It does not relax number/date/negation/quote guards, change acoustic decoding, rewrite code, or train weights.

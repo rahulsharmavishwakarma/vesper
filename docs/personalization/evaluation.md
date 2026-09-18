@@ -35,6 +35,51 @@ Desktop-policy regressions cover first use without a settings visit, legacy sche
 
 The browser fixture mounts production components with mocked native commands. It exercises single-click Copy after editing, feedback display, undo, save failure/retry and learning controls. This is frontend evidence, distinct from the real Rust store tests and installed-model tests. Transient browser fixtures stay outside shipped code. The automatic desktop-policy verification passes 114 Rust tests (32 core, 30 data, 52 desktop; four existing opt-in tests ignored), strict targeted Clippy, frontend type/build checks and modified-file formatting. Browser checks use mocked native commands: the removed opt-in, one draft commit on Copy, pending-state disabling, undo, forget, keyboard navigation, profile save failure/retry and a 390-pixel layout. These do not replace the real SQLite tests or previous native accent measurements.
 
+## Application lifecycle checks, 19 September 2026
+
+The [desktop lifecycle suite](../../apps/desktop/src-tauri/src/runtime_learning_tests.rs) runs the real `WorkContext` completion path, runtime draft editing and SQLite learner with constructed ASR text and distinct synthetic audio fingerprints. It verifies learning across a new runtime and different model identity, language exclusion, no audio/session archival with collection disabled, no automatic admission from unedited usage, duplicate-audio support deduplication, undo suspension, Forget epoch isolation with fresh relearning, and storage-failure retry without duplicate feedback. It does not execute acoustic inference or establish real-user learning benefit. Old-epoch edits remain usable drafts but supply no learning evidence; rejection of stale evidence does not mean rejecting the user's text.
+
+Actual-component browser checks reproduce and fix a Copy race: repeated clicks while a draft save was pending could queue multiple clipboard writes. The pending guard now covers save and Copy together. Tests also verify save failure/retry, no extra label from unchanged Copy, undo preserving authored text, and Forget pending/error/retry behavior with manual-entry preservation and unsaved-preference protection. Browser IPC is mocked; Rust lifecycle tests independently exercise real persistence. The deterministic core/data/desktop run passes **119 tests**, with four existing opt-in tests omitted from that run; targeted desktop Clippy passes.
+
+All **45 browser scenarios** pass, including the three permanent learning scenarios. The Copy failure/retry case was strengthened and rechecked after the full run. Svelte/TypeScript, targeted ESLint/formatting, the frontend production build and the macOS debug application bundle also pass. The [portable validation artifact](../validation/2026-09-19-application-learning.json) retains outcomes, the reproduced UI failure, current source/bundle hashes, native artifact/runtime provenance, hardware and exact timings. This is working-tree validation rather than a frozen-source benchmark. The bundle is built, but native WebView interaction and live microphone-to-text behavior were not automated.
+
+The installed-model desktop file pipeline separately passes on the pinned 3.845-second public English fixture, using Cohere Transcribe and Qwen3.5 0.8B with temporary storage. One observed run records **3,204.30 ms transcription**, **2,285.77 ms cleanup** and **19.40 ms save-stage time**. These are one run's backend stage measurements, including model work, not average latency or microphone-stop-to-visible-text timing; they do not measure the new scoped controller. Fixture/model/runtime provenance and native assertions remain in the existing [native smoke procedure](../validation.md#reproduce).
+
+The initial combined smoke command passed that pipeline and then failed because its model root did not contain the requested Nemotron CPU runtime. Re-running the unchanged stream reuse/reset/cancellation test against the existing `.cache/benchmarks/model-roots/nemotron-cpu` cache passes; the Qwen embedded-template test also passes separately. No model was downloaded or user profile modified. This prerequisite failure is retained in the validation record rather than reported as a fully passing first run.
+
+At this pre-integration checkpoint, the scoped controller and stronger context selector were still offline candidates. The [integration proposal in issue #34](https://github.com/rahulsharmavishwakarma/transcribe/issues/34#issuecomment-5735762281) distinguishes the first fixed-context integration from later live policy promotion. These initial application checks validate automatic learning and its UI fix. The subsequent approved fixed-context integration is qualified below; the adaptive controller remains offline.
+
+## Integrated teaching-context guard, 19 September 2026
+
+The user approved the fixed-context integration in [issue #34](https://github.com/rahulsharmavishwakarma/transcribe/issues/34#issuecomment-5735896074). The desktop now snapshots profile and learning evidence together, selects automatic vocabulary from raw text before cleanup, and reuses that selected profile for final replacement. [Dictionary learning](automatic-dictionary.md#context-required-for-post-recognition-use) and [storage](storage-and-privacy.md) specify eligibility, schema-1 compatibility, schema-2 metadata and bounds. There is no new model, remote service or adaptive-policy promotion.
+
+Frozen-source verification passes **127 core/data/desktop tests** (35/35/57), **28 offline-controller tests**, strict Clippy, frontend checks/build and **45 actual-component browser scenarios**. Four existing opt-in tests are excluded from the deterministic library total. New checks cover schema migration without invented context, unknown/oversized evidence, duplicate source/episode handling, bounded legacy-context backfill, transactional rollback, cue deletion on undo/forget, raw-only selection, snapshot isolation and later context learning after an ordinary correction. The desktop test verifies the latter across a model switch. Browser IPC remains mocked; real SQLite and native inference are separate checks.
+
+The new [application context replay](../../crates/transcribe-data/examples/application_context_replay.rs) calls the production selector and real SQLite snapshot API on **64 authored text controls across eight topics**. The comparator uses the same learned profile with the new filter bypassed. Total word edits are **48 without the added filter and 16 with it**: **24 improved, eight regressed, 32 tied**. All eight regressions are deliberately retained unseen-paraphrase cases where lexical context does not match. These are mechanism controls with authored desired outputs, not an independent real-user accuracy benchmark or a rerun of the earlier 7,300-episode adaptive study. No thresholds were tuned to remove these failures.
+
+The release replay repeats each output comparison five times and requires exact agreement. Mean component measurements with one to eight active entries are:
+
+| Component | Observations | Mean |
+| --- | ---: | ---: |
+| SQLite/profile/evidence snapshot | 320 | 0.0220 ms |
+| Raw-text eligibility selection | 320 | 0.0044 ms |
+| Final deterministic application | 320 | 0.0034 ms |
+| Learning edit transaction, including commit | 8 | 0.1905 ms |
+
+The SQLite connection is already open in these measurements. They exclude connection opening, ASR, cleanup, frontend IPC/rendering and insertion. They do not qualify the theoretical maximum metadata size or native resource interference.
+
+The frozen native desktop public-file pipeline passes in three fresh test processes on the same pinned 3.845-second English recording, with Cohere initialized on CPU (eight native graph threads) and Qwen initialized on Metal. Mean transcription is **3,393.24 ms**, cleanup **2,552.39 ms**, and save-stage time **19.05 ms**; the mean sum of these stages is **5,964.67 ms**. These are first requests with fresh model managers and potentially warm filesystem caches, not resident steady-state or microphone-stop-to-visible latency. The small sample on a shared host cannot establish a speedup or regression versus the earlier single run. Native Nemotron stream/reset/cancellation and Qwen template checks also pass using installed/cached artifacts. No microphone or private recording is used.
+
+The [portable report](../validation/2026-09-19-context-guard.json) retains every authored row, timing sample summaries, browser outcomes, frozen input hashes, native artifact/runtime/execution provenance and limitations. Frozen sources and executable are retained in `.cache/context-guard-2026-09-19/`; no benchmark query can open a live user store. Reproduce the text controls with:
+
+```sh
+. ./scripts/dev-env.sh
+cargo run --release --locked -p transcribe-data --example application_context_replay -- \
+  /tmp/application-context-replay.json
+```
+
+The output path must be new. Keep semantic/longitudinal benefit, true acoustic accent adaptation and scoped policy promotion as separate qualification work. The fixed guard is implemented and tested; these checks do not establish recursive discovery of better learning algorithms.
+
 ## Chronological replay
 
 The [replay executable](../../crates/transcribe-data/examples/automatic_learning_replay.rs) consumes an ordered manifest of interactions. At each step it snapshots current memory, generates the output, scores against withheld references, and only then exposes the ordinary edit to memory. Source fingerprints and inferred correlated episodes prevent artificial independent support. No actual time sleeps or ASR inference occur.

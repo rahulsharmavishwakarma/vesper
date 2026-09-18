@@ -20,6 +20,8 @@ The exact component contracts and resource/admission limits are in the [implemen
 
 ## Evidence and inference boundary
 
+Amended 2026-09-19 after the user's explicit [approval](https://github.com/rahulsharmavishwakarma/transcribe/issues/34#issuecomment-5735896074) of the [stage-1 proposal](https://github.com/rahulsharmavishwakarma/transcribe/issues/34#issuecomment-5735762281): add bounded per-support teaching cues in automatic-state schema 2 and a shared fixed post-ASR eligibility selector. A single operation reads profile/evidence transactionally and selects from raw text before cleanup, reusing that selection for final correction. Legacy cue-less entries abstain until fresh independent evidence; undo/suspension clears cues and existing forget/epoch/transaction boundaries remain. Pre-ASR hints, manual memory, inference ownership and models are unchanged. This approves the fixed guard, not persistent adaptive policy promotion. The canonical dictionary/context/privacy pages define exact limits and migration behavior.
+
 The [research synthesis](../research-automatic-personalization.md) distinguishes paper results, official capability, local measurement and unverified hypotheses. PROSE, GEC-RAG, contextual vocabulary retrieval, ReSpect and dialogue-repair analysis inform the design; the implementation is not a reproduction of their methods or published metrics. Its lexical retry rules do not implement a trained feedback decoder.
 
 Category 1: new application records and UI use existing frozen-weight text/hint interfaces. There are no category-2 runtime-internal decoder/kernel changes or category-3 training/checkpoint changes. Phase B structured semantic analysis needs a separate approved application API/scheduling proposal.

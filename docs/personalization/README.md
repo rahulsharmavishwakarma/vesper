@@ -8,6 +8,8 @@ For what comes next, see [Personalization phases and remaining work](roadmap.md)
 
 The [bounded policy-improvement experiment](policy-experiment.md) now exercises an offline second loop: propose an eligibility-policy change, validate it on fresh feedback and optionally roll back. It is not connected to live dictation; its measured limits do not justify deployment.
 
+The separately approved fixed [teaching-context guard](automatic-dictionary.md#context-required-for-post-recognition-use) is integrated into the desktop post-ASR path. Automatic words now need matching context from an independent edit before cleanup vocabulary selection and final correction. Legacy entries without cues need fresh evidence; manual vocabulary and optional pre-ASR hints keep their existing behavior. The adaptive policy controller remains offline.
+
 The [September 2026 RSI research review](../research-rsi-2026-09.md) compares Dream-RSI, related recent papers and lab posts with this implementation. It prioritizes retaining past failure cases and evaluating memory-specific outcomes before integrating a live policy optimizer.
 
 | Component | Detailed contract |
@@ -26,4 +28,4 @@ Background execution is event-driven: transcription workers record bounded usage
 
 The first implementation observes edits made in **Your text**, and bounded usage/retry evidence from the app's results. It cannot observe corrections made after pasting into another application. History review remains a separate, explicit target-labeling workflow. A routine edit never labels an entire recording as verified speech.
 
-Current boundaries include one small replacement per completed edit, explicit language for automatic activation, conservative script-independent spelling similarity, English-only retry cues, and limited context from the selected project. Rich style extraction, semantic intent/repair classification, automatic external-document context and acoustic accent adaptation are not implemented by phase A.
+Current boundaries include one small replacement per completed edit, explicit language for automatic activation, conservative script-independent spelling similarity, English-only retry cues, and bounded lexical teaching context alongside the selected project. Rich style extraction, semantic intent/repair classification, automatic external-document context and acoustic accent adaptation are not implemented by phase A.

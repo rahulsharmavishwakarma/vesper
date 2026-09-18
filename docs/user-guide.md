@@ -24,6 +24,12 @@ writing**. **Undo learning** pauses an inferred spelling while keeping your
 edited text. **Forget automatic learning** removes automatic memory while
 preserving manual vocabulary; new recordings can teach again.
 
+Automatically learned words are used after recognition only when the transcript
+also matches context from a supporting edit. Older learned words may need a fresh
+correction before they apply again. This helps avoid unrelated replacements, but
+can miss a valid correction when you phrase the context differently. Manually
+saved vocabulary and optional recognition hints keep their existing controls.
+
 Corrections made after pasting into another application are not observed.
 History review remains a separate workflow for explicitly reviewed targets.
 Read the [personalization guide](personalization/README.md) and
