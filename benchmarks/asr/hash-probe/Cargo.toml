@@ -1,0 +1,19 @@
+[package]
+name = "audio-integrity-probe"
+version = "0.0.0"
+edition = "2021"
+publish = false
+
+# Deliberately isolated: enabling a probe feature must not change app builds.
+[workspace]
+
+[features]
+hardware = ["sha2/asm"]
+
+[dependencies]
+sha2 = "=0.10.9"
+
+[profile.release]
+codegen-units = 1
+lto = "thin"
+strip = true
