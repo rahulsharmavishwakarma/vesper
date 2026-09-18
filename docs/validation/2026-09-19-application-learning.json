@@ -1,0 +1,628 @@
+{
+  "date": "2026-09-19",
+  "scope": "Current automatic-learning application lifecycle and Copy/save fix; scoped-policy integration is not measured.",
+  "sourceRevisionAtReport": "8239328a48505d75b04b26b8e44b19a671c7483b",
+  "sourceHashesAtReport": {
+    "apps/desktop/src-tauri/src/runtime.rs": "795797b2f810fb37f144746ce988a849639c6704f89dd51b973873cf3a9e1d20",
+    "apps/desktop/src-tauri/src/runtime_learning_tests.rs": "698d4cfd082ced45c180583b6673b9e7e6d58f4f90d71fa19a71cbb31fcd40be",
+    "apps/desktop/src/lib/components/TranscriptionPanel.svelte": "64a42a6a440603df88db4e4fe84fafaed4c0814f755d2307dd5692d2c2dde81f",
+    "apps/desktop/tests/recovery.mjs": "da8633d2bbb70aeefef72698fab84c525acb085b8f1c9a1f10583812eb8a09a2",
+    "Cargo.lock": "ca1b2c81c095c83f9ce4780a9be5e759657573dc5a15649ebee7e93c4f8e48b0",
+    "package-lock.json": "48d2f07c2b611266156131d04b377fc2fe269ad6cc6f8a77b5d00764c4315677"
+  },
+  "sourceQualification": "Working-tree validation, not an immutable build snapshot. Native production logic unchanged; new desktop tests and frontend Copy guard are included in the final bundle.",
+  "hardware": [
+    "Mac17,8",
+    "68719476736",
+    "Apple M5 Pro"
+  ],
+  "os": [
+    "ProductName:\t\tmacOS",
+    "ProductVersion:\t\t27.0",
+    "BuildVersion:\t\t26A428"
+  ],
+  "rust": {
+    "desktop": [
+      {
+        "passed": 56,
+        "failed": 0,
+        "ignored": 3
+      }
+    ],
+    "coreAndData": [
+      {
+        "passed": 33,
+        "failed": 0,
+        "ignored": 0
+      },
+      {
+        "passed": 30,
+        "failed": 0,
+        "ignored": 1
+      }
+    ]
+  },
+  "browser": {
+    "commandsMocked": true,
+    "allScenarios": [
+      {
+        "name": "Native shortcut state drives the overlay without WebView capture commands",
+        "passed": true
+      },
+      {
+        "name": "Repeated button clicks cannot overlap a pending native request",
+        "passed": true
+      },
+      {
+        "name": "Native request error releases the button for retry",
+        "passed": true
+      },
+      {
+        "name": "Preview start and stop complete without native commands",
+        "passed": true
+      },
+      {
+        "name": "Quick-capture completion copies the final operation without starting another recording",
+        "passed": true
+      },
+      {
+        "name": "Cancel requests native cancellation and fallback results remain visible",
+        "passed": true
+      },
+      {
+        "name": "Shortcut and output preferences save together and permission reads do not prompt",
+        "passed": true
+      },
+      {
+        "name": "Shortcut recorder captures keys, rejects duplicates, cancels, and recovers from save conflicts",
+        "passed": true
+      },
+      {
+        "name": "Shortcut recorder abandons delayed setup and handles native registered combinations",
+        "passed": true
+      },
+      {
+        "name": "Personal preference drafts survive navigation and save independently with failure and discard recovery",
+        "passed": true
+      },
+      {
+        "name": "Learning draft Copy saves once, blocks repeat clicks, and preserves the draft when learning is undone",
+        "passed": true
+      },
+      {
+        "name": "Learning draft save failure retains text and retry does not treat unchanged Copy as feedback",
+        "passed": true
+      },
+      {
+        "name": "Learning forget preserves manual words, rejects dirty preferences, and retries failures",
+        "passed": true
+      },
+      {
+        "name": "Vocabulary and example dropdowns preserve edits through shared keyboard selection",
+        "passed": true
+      },
+      {
+        "name": "Stale same-operation snapshots cannot replace a newer completed result",
+        "passed": true
+      },
+      {
+        "name": "Release shows finalization immediately while the runtime recording snapshot is stale",
+        "passed": true
+      },
+      {
+        "name": "View transcript navigates from Settings and refreshes the latest result",
+        "passed": true
+      },
+      {
+        "name": "Corrupt settings show recovery controls and reset restores manual capture",
+        "passed": true
+      },
+      {
+        "name": "Model presets save before explicit download and survive reopening",
+        "passed": true
+      },
+      {
+        "name": "Qwen and Cohere retain language choices without a recording duration cutoff",
+        "passed": true
+      },
+      {
+        "name": "Long-audio progress appears in Dictate and Quick Capture without a partial completed result",
+        "passed": true
+      },
+      {
+        "name": "Local engine reports measured values and pauses on navigation, visibility and disposal",
+        "passed": true
+      },
+      {
+        "name": "Imported model and pipeline downloads show byte progress, verification, cancellation and retry",
+        "passed": true
+      },
+      {
+        "name": "Device-aware menu preserves an unavailable saved backend and supports detection retry",
+        "passed": true
+      },
+      {
+        "name": "All screens share saved model names, writing state and model-management navigation",
+        "passed": true
+      },
+      {
+        "name": "Capture keeps one control and Reed follows acknowledged recording and real silence",
+        "passed": true
+      },
+      {
+        "name": "Microphone synchronization: Dictate follows pitch and volume without autonomous motion",
+        "passed": true
+      },
+      {
+        "name": "Microphone synchronization: floating capture follows pitch and volume without autonomous motion",
+        "passed": true
+      },
+      {
+        "name": "History feedback persists, rolls back failed saves, clears and undoes independently of reviews",
+        "passed": true
+      },
+      {
+        "name": "Shared selection keeps its backing during rapid changes and dropdown keyboard navigation",
+        "passed": true
+      },
+      {
+        "name": "split: dense Reed, live updates, native bounds, final copy and cancel",
+        "passed": true
+      },
+      {
+        "name": "ribbon: dense Reed, live updates, native bounds, final copy and cancel",
+        "passed": true
+      },
+      {
+        "name": "underline: dense Reed, live updates, native bounds, final copy and cancel",
+        "passed": true
+      },
+      {
+        "name": "studio: dense Reed, live updates, native bounds, final copy and cancel",
+        "passed": true
+      },
+      {
+        "name": "margin: dense Reed, live updates, native bounds, final copy and cancel",
+        "passed": true
+      },
+      {
+        "name": "counter: dense Reed, live updates, native bounds, final copy and cancel",
+        "passed": true
+      },
+      {
+        "name": "Capture drag excludes controls, guards repeats and preserves runtime actions",
+        "passed": true
+      },
+      {
+        "name": "Split keeps errors and progress inside its signal pod",
+        "passed": true
+      },
+      {
+        "name": "Capture settings preview all six designs, save explicitly and restore Split",
+        "passed": true
+      },
+      {
+        "name": "Capture preview animates locally, pauses when hidden, and finishes with replay",
+        "passed": true
+      },
+      {
+        "name": "Navigation changes icon state while keeping its target stationary",
+        "passed": true
+      },
+      {
+        "name": "Quiet model choices retain creator identity through selection and keyboard focus",
+        "passed": true
+      },
+      {
+        "name": "Model status icons distinguish downloaded files from selection and missing or unknown files",
+        "passed": true
+      },
+      {
+        "name": "Checkbox labels preserve native toggling and focus with visible field boundaries",
+        "passed": true
+      },
+      {
+        "name": "Shared disclosure arrows track native open state and retain keyboard focus",
+        "passed": true
+      }
+    ],
+    "finalCopyRetryChecks": [
+      {
+        "name": "Learning draft Copy saves once, blocks repeat clicks, and preserves the draft when learning is undone",
+        "passed": true
+      },
+      {
+        "name": "Learning draft save failure retains text and retry does not treat unchanged Copy as feedback",
+        "passed": true
+      }
+    ],
+    "reproducedFailure": [
+      {
+        "error": "Error: Copy remained enabled while waiting for draft save",
+        "name": "Learning draft Copy saves once, blocks repeat clicks, and preserves the draft when learning is undone",
+        "passed": false
+      },
+      {
+        "name": "Learning draft save failure retains text and retry does not treat unchanged Copy as feedback",
+        "passed": true
+      }
+    ]
+  },
+  "nativeFilePipeline": {
+    "test": "runtime::tests::real_file_pipeline_preserves_audio_predictions_and_export_provenance",
+    "passed": true,
+    "fixtureSha256": "148b936b43ce7c546a866e64da059f0458aee2d65e617f16e9d94f06e8d99ed6",
+    "durationSeconds": 3.8450625,
+    "warnings": [],
+    "rawEqualsCleanup": true,
+    "stageTimings": {
+      "operationId": "test",
+      "asrModel": "Cohere Transcribe",
+      "cleanupModel": "Qwen3.5 0.8B",
+      "speechMode": "offline",
+      "outcome": "completed",
+      "activeStage": null,
+      "transcribeMs": 3204.296417,
+      "cleanupMs": 2285.770625,
+      "saveMs": 19.404624
+    },
+    "modelVersions": {
+      "applicationVersion": "0.1.0",
+      "artifacts": [
+        {
+          "archive": null,
+          "backend": null,
+          "license": "Apache-2.0",
+          "modelId": "Qwen/Qwen3.5-0.8B",
+          "name": "Qwen3.5-0.8B-Q4_0.gguf",
+          "platform": null,
+          "quantization": "q4_0",
+          "relativePath": "qwen3.5-0.8b/Qwen3.5-0.8B-Q4_0.gguf",
+          "revision": "8fea620810c4afa23dd6443f999a48574c1611a3",
+          "role": "rewriter",
+          "sha256": "57d1997790d1744fba5b40a7317df71ea5e2acee28c47e78f0cce39c0703f8cf",
+          "sizeBytes": 563036064,
+          "url": "https://huggingface.co/ggml-org/Qwen3.5-0.8B-GGUF/resolve/8fea620810c4afa23dd6443f999a48574c1611a3/Qwen3.5-0.8B-Q4_0.gguf"
+        },
+        {
+          "archive": null,
+          "backend": null,
+          "license": "Apache-2.0 (original model; export card has no separate license declaration)",
+          "modelId": "CohereLabs/cohere-transcribe-03-2026",
+          "name": "encoder.int8.onnx",
+          "platform": null,
+          "quantization": null,
+          "relativePath": "cohere-transcribe/encoder.int8.onnx",
+          "revision": "156a470cf08eefe706a0004f3c52d9ee567ca7a0",
+          "role": "asr",
+          "sha256": "cf704f8cfa90e3f0a76f9ffc05998bdf00ba9ae983192c14a85a3a5eb008b367",
+          "sizeBytes": 3090822,
+          "url": "https://huggingface.co/csukuangfj2/sherpa-onnx-cohere-transcribe-14-lang-int8-2026-04-01/resolve/156a470cf08eefe706a0004f3c52d9ee567ca7a0/encoder.int8.onnx"
+        },
+        {
+          "archive": null,
+          "backend": null,
+          "license": "Apache-2.0 (original model; export card has no separate license declaration)",
+          "modelId": "CohereLabs/cohere-transcribe-03-2026",
+          "name": "encoder.int8.onnx.data",
+          "platform": null,
+          "quantization": null,
+          "relativePath": "cohere-transcribe/encoder.int8.onnx.data",
+          "revision": "156a470cf08eefe706a0004f3c52d9ee567ca7a0",
+          "role": "asr",
+          "sha256": "bcf1b7148c8518ae52df1ad2d2fc2b4e89261ea23e6c874eef1d9f55bcbaa4a3",
+          "sizeBytes": 2731503072,
+          "url": "https://huggingface.co/csukuangfj2/sherpa-onnx-cohere-transcribe-14-lang-int8-2026-04-01/resolve/156a470cf08eefe706a0004f3c52d9ee567ca7a0/encoder.int8.onnx.data"
+        },
+        {
+          "archive": null,
+          "backend": null,
+          "license": "Apache-2.0 (original model; export card has no separate license declaration)",
+          "modelId": "CohereLabs/cohere-transcribe-03-2026",
+          "name": "decoder.int8.onnx",
+          "platform": null,
+          "quantization": null,
+          "relativePath": "cohere-transcribe/decoder.int8.onnx",
+          "revision": "156a470cf08eefe706a0004f3c52d9ee567ca7a0",
+          "role": "asr",
+          "sha256": "8372ca6c8ff4db8b916ca3592f5c757a715e691b9edec751ba19b29fc854baf9",
+          "sizeBytes": 153250705,
+          "url": "https://huggingface.co/csukuangfj2/sherpa-onnx-cohere-transcribe-14-lang-int8-2026-04-01/resolve/156a470cf08eefe706a0004f3c52d9ee567ca7a0/decoder.int8.onnx"
+        },
+        {
+          "archive": null,
+          "backend": null,
+          "license": "Apache-2.0 (original model; export card has no separate license declaration)",
+          "modelId": "CohereLabs/cohere-transcribe-03-2026",
+          "name": "tokens.txt",
+          "platform": null,
+          "quantization": null,
+          "relativePath": "cohere-transcribe/tokens.txt",
+          "revision": "156a470cf08eefe706a0004f3c52d9ee567ca7a0",
+          "role": "asr",
+          "sha256": "013ede043ae2480e3a9205cc34550d9686100cc682bacc90f702facdfbb93035",
+          "sizeBytes": 207437,
+          "url": "https://huggingface.co/csukuangfj2/sherpa-onnx-cohere-transcribe-14-lang-int8-2026-04-01/resolve/156a470cf08eefe706a0004f3c52d9ee567ca7a0/tokens.txt"
+        }
+      ],
+      "asrRuntime": "sherpa-onnx 1.13.8",
+      "customAsr": null,
+      "customRewriter": null,
+      "execution": {
+        "asr": {
+          "contextualPhraseCount": 0,
+          "contextualPhrasesSupported": false,
+          "evidence": "verified-resident-sherpa-fresh-segment-streams",
+          "initializedProvider": "cpu",
+          "metrics": {
+            "requestOrdinal": 1,
+            "segments": [
+              {
+                "acceptUs": 1777,
+                "completion": {
+                  "inputContextTruncated": false,
+                  "schemaVersion": 1,
+                  "stopReason": "eos"
+                },
+                "decodeUs": 312576,
+                "samples": 61521,
+                "whisperScores": null
+              }
+            ],
+            "totalUs": 314427
+          },
+          "modelLoadUs": 1866169,
+          "nativeGraphThreads": 8,
+          "operatorPlacement": "unknown",
+          "requestedBackend": "auto",
+          "residentLoadOrdinal": 1,
+          "residentWeights": true,
+          "verificationUs": 1021229
+        },
+        "audioFrontend": {
+          "enabled": false,
+          "originalAudioFallback": false,
+          "warning": null
+        },
+        "operationId": "test",
+        "rewriter": {
+          "initializedProvider": "metal",
+          "metrics": {
+            "outcome": "accepted",
+            "passes": [
+              {
+                "contextUs": 11804,
+                "firstTokenUs": 62198,
+                "generatedTokens": 19,
+                "generationUs": 80085,
+                "outcome": "completed",
+                "pass": "full-cleanup",
+                "prefillUs": 48952,
+                "prefilledTokens": 248,
+                "prefixHit": false,
+                "promptTokens": 248,
+                "restoreUs": 0,
+                "retainedCacheBytes": 0,
+                "snapshotUs": 0,
+                "tokenizationUs": 819,
+                "totalUs": 142183
+              }
+            ],
+            "personalization": {
+              "exampleIds": [],
+              "outputIntent": "verbatim",
+              "profileRevision": 1,
+              "vocabularyIds": []
+            },
+            "personalizationDroppedForBudget": false,
+            "tailDecision": "skipped",
+            "tailPersonalization": null
+          },
+          "operatorPlacement": "unknown"
+        }
+      },
+      "inference": {
+        "asr": {
+          "adapter": {
+            "architecture": "cohere_asr",
+            "capabilities": {
+              "backends": [
+                "auto",
+                "cpu"
+              ],
+              "cacheState": "encoder_decoder",
+              "completePrefixState": false,
+              "completionReport": true,
+              "contextualPhrases": false,
+              "languages": [
+                "en",
+                "fr"
+              ],
+              "nativeStreaming": false,
+              "offline": true,
+              "residentWeights": true
+            },
+            "kind": "cohere_asr",
+            "runtime": "sherpa-onnx",
+            "runtimeRevision": "11afbd009a7f8c08f4bcf2fc1b265d0df4670fbf",
+            "task": "speech_recognition"
+          },
+          "artifacts": [
+            {
+              "archive": null,
+              "backend": null,
+              "license": "Apache-2.0 (original model; export card has no separate license declaration)",
+              "modelId": "CohereLabs/cohere-transcribe-03-2026",
+              "name": "encoder.int8.onnx",
+              "platform": null,
+              "quantization": null,
+              "relativePath": "cohere-transcribe/encoder.int8.onnx",
+              "revision": "156a470cf08eefe706a0004f3c52d9ee567ca7a0",
+              "role": "asr",
+              "sha256": "cf704f8cfa90e3f0a76f9ffc05998bdf00ba9ae983192c14a85a3a5eb008b367",
+              "sizeBytes": 3090822,
+              "url": "https://huggingface.co/csukuangfj2/sherpa-onnx-cohere-transcribe-14-lang-int8-2026-04-01/resolve/156a470cf08eefe706a0004f3c52d9ee567ca7a0/encoder.int8.onnx"
+            },
+            {
+              "archive": null,
+              "backend": null,
+              "license": "Apache-2.0 (original model; export card has no separate license declaration)",
+              "modelId": "CohereLabs/cohere-transcribe-03-2026",
+              "name": "encoder.int8.onnx.data",
+              "platform": null,
+              "quantization": null,
+              "relativePath": "cohere-transcribe/encoder.int8.onnx.data",
+              "revision": "156a470cf08eefe706a0004f3c52d9ee567ca7a0",
+              "role": "asr",
+              "sha256": "bcf1b7148c8518ae52df1ad2d2fc2b4e89261ea23e6c874eef1d9f55bcbaa4a3",
+              "sizeBytes": 2731503072,
+              "url": "https://huggingface.co/csukuangfj2/sherpa-onnx-cohere-transcribe-14-lang-int8-2026-04-01/resolve/156a470cf08eefe706a0004f3c52d9ee567ca7a0/encoder.int8.onnx.data"
+            },
+            {
+              "archive": null,
+              "backend": null,
+              "license": "Apache-2.0 (original model; export card has no separate license declaration)",
+              "modelId": "CohereLabs/cohere-transcribe-03-2026",
+              "name": "decoder.int8.onnx",
+              "platform": null,
+              "quantization": null,
+              "relativePath": "cohere-transcribe/decoder.int8.onnx",
+              "revision": "156a470cf08eefe706a0004f3c52d9ee567ca7a0",
+              "role": "asr",
+              "sha256": "8372ca6c8ff4db8b916ca3592f5c757a715e691b9edec751ba19b29fc854baf9",
+              "sizeBytes": 153250705,
+              "url": "https://huggingface.co/csukuangfj2/sherpa-onnx-cohere-transcribe-14-lang-int8-2026-04-01/resolve/156a470cf08eefe706a0004f3c52d9ee567ca7a0/decoder.int8.onnx"
+            },
+            {
+              "archive": null,
+              "backend": null,
+              "license": "Apache-2.0 (original model; export card has no separate license declaration)",
+              "modelId": "CohereLabs/cohere-transcribe-03-2026",
+              "name": "tokens.txt",
+              "platform": null,
+              "quantization": null,
+              "relativePath": "cohere-transcribe/tokens.txt",
+              "revision": "156a470cf08eefe706a0004f3c52d9ee567ca7a0",
+              "role": "asr",
+              "sha256": "013ede043ae2480e3a9205cc34550d9686100cc682bacc90f702facdfbb93035",
+              "sizeBytes": 207437,
+              "url": "https://huggingface.co/csukuangfj2/sherpa-onnx-cohere-transcribe-14-lang-int8-2026-04-01/resolve/156a470cf08eefe706a0004f3c52d9ee567ca7a0/tokens.txt"
+            }
+          ],
+          "completionReportVersion": 1,
+          "decoderBudget": null,
+          "executionEvidence": "not-observed",
+          "language": "en",
+          "maxRecordingSeconds": 0,
+          "modelId": "CohereLabs/cohere-transcribe-03-2026",
+          "modelLifetime": "resident-in-manager-fresh-stream-per-segment",
+          "provider": null,
+          "requestedBackend": "auto",
+          "revision": "156a470cf08eefe706a0004f3c52d9ee567ca7a0",
+          "runtime": "sherpa-onnx",
+          "runtimeBuildId": "67ce39e3334e098b428e0e94284c3b6a0846e014a5c08000c02ae28f393ebc7b",
+          "runtimePatchSha256": "22d05a9249ede683930e3f47c9c69ebeed66d85aaa8925914dca4b310984bae3",
+          "runtimeRevision": "11afbd009a7f8c08f4bcf2fc1b265d0df4670fbf",
+          "runtimeVersion": "1.13.8",
+          "segmentation": {
+            "boundaryLookbackMs": 1000,
+            "boundaryStepMs": 10,
+            "energyWindowMs": 100,
+            "maxSegmentSeconds": 10,
+            "overlapSamples": 0,
+            "policy": "balanced-low-energy-v1",
+            "streamLifetime": "per-segment"
+          },
+          "selectedProvider": "cpu"
+        },
+        "audioFrontend": {
+          "artifacts": [],
+          "denoiserApi": "online-in-both-modes",
+          "nativeGraphThreads": 1,
+          "provider": "cpu",
+          "runtimeBuildId": "67ce39e3334e098b428e0e94284c3b6a0846e014a5c08000c02ae28f393ebc7b",
+          "runtimePatchSha256": "22d05a9249ede683930e3f47c9c69ebeed66d85aaa8925914dca4b310984bae3",
+          "sampleRate": 16000,
+          "settings": {
+            "noiseReduction": "off",
+            "vadEnabled": false
+          },
+          "vadPolicy": "advisory-original-pcm"
+        },
+        "rewriter": {
+          "adapter": {
+            "architecture": "qwen35_hybrid_causal_lm",
+            "capabilities": {
+              "backends": [
+                "auto",
+                "cpu",
+                "metal",
+                "cuda",
+                "vulkan",
+                "rocm"
+              ],
+              "cacheState": "hybrid_recurrent_kv",
+              "completePrefixState": true,
+              "completionReport": false,
+              "contextualPhrases": false,
+              "languages": [
+                "auto",
+                "en",
+                "hi",
+                "fr"
+              ],
+              "nativeStreaming": false,
+              "offline": true,
+              "residentWeights": true
+            },
+            "kind": "qwen_hybrid",
+            "runtime": "llama-cpp-2",
+            "runtimeRevision": "e79e4bf660e19f2ad851e06c6913f7a8c5852621",
+            "task": "text_reconstruction"
+          },
+          "artifactFile": "Qwen3.5-0.8B-Q4_0.gguf",
+          "contextTokens": 4096,
+          "executionEvidence": "not-observed",
+          "fidelityGuard": "lexical-v1",
+          "maxOutputTokens": 2048,
+          "modelId": "Qwen/Qwen3.5-0.8B",
+          "modelLifetime": "resident-weights-fresh-context-per-request",
+          "provider": null,
+          "requestedBackend": "auto",
+          "runtime": "llama-cpp-2",
+          "runtimeRevision": "e79e4bf660e19f2ad851e06c6913f7a8c5852621",
+          "runtimeVersion": "0.1.156",
+          "sampling": {
+            "strategy": "greedy"
+          },
+          "selectedProvider": "metal",
+          "thinkingEnabled": false
+        }
+      },
+      "rewriterRuntime": "llama-cpp-2 0.1.156"
+    }
+  },
+  "nativePrerequisiteFailure": {
+    "test": "manager::tests::real_nemotron_stream_reuses_weights_and_resets_utterance_state",
+    "initialPassed": false,
+    "reason": "Default model root contained Metal runtime; selected CPU runtime was absent from that root.",
+    "rerunPassed": true,
+    "rerunModelRoot": ".cache/benchmarks/model-roots/nemotron-cpu"
+  },
+  "nativeTemplate": {
+    "test": "qwen::tests::existing_gguf_embedded_template_formats_messages_and_rejects_role_tokens",
+    "passed": true
+  },
+  "bundle": {
+    "path": "target/debug/bundle/macos/transcribe.app",
+    "binarySha256": "67c3b6843189158141c085c5558e3dbb895874382e5f10f8c52408360b857738"
+  },
+  "limitations": [
+    "Browser runs mock Tauri IPC; no native WebView end-to-end automation.",
+    "Desktop learning tests inject constructed ASR text; actual acoustic inference is qualified by a separate public-file test.",
+    "One cold pipeline observation, not mean latency or microphone stop-to-visible timing.",
+    "No real-user longitudinal improvement measurement, adaptive policy activation, microphone recording or model download.",
+    "Power mode, peak RAM and thermal behavior unmeasured on a shared host."
+  ],
+  "nativeTestBaseRevision": "370db7ae0c9915952f0a3c7321a2995f43fc4451"
+}

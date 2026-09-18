@@ -96,7 +96,7 @@ export interface AutomaticLearningState {
     project: string;
     context: string;
     state: 'observed' | 'provisional' | 'active' | 'suspended';
-    support: { sourceKey: string; episodeId: string; eventId: string }[];
+    support: { sourceKey: string; episodeId: string; eventId: string; teachingTerms: string[] }[];
     observedCount: number;
     lastSeenMs: number;
     reason: string;
