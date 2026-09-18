@@ -754,6 +754,273 @@ await test('Personal preference drafts survive navigation and save independently
   );
 });
 
+await test('Learning draft Copy saves once, blocks repeat clicks, and preserves the draft when learning is undone', async () => {
+  let result = {
+    resultId: 'learning-copy',
+    rawTranscript: 'Open read me in the repo',
+    cleanedTranscript: null,
+    personalizedTranscript: null,
+    draftTranscript: null,
+    draftRevision: 0,
+    session: null,
+    warnings: [],
+    durationSeconds: 1,
+  };
+  const saved = deferred();
+  const copied = [];
+  const clipboard = Object.getOwnPropertyDescriptor(navigator, 'clipboard');
+  Object.defineProperty(navigator, 'clipboard', {
+    configurable: true,
+    value: { writeText: async (text) => copied.push(text) },
+  });
+  try {
+    const state = await setup({
+      main: true,
+      intercept: (command, _state, args) => {
+        if (command === 'get_latest_result') return structuredClone(result);
+        if (command === 'edit_latest_draft')
+          return (async () => {
+            assert(args.resultId === result.resultId && args.revision === 0, 'Wrong edit identity');
+            await saved.promise;
+            result = {
+              ...result,
+              draftRevision: 1,
+              draftTranscript: args.text,
+              learningOutcome: {
+                activated: ['README.md'],
+                status: 'Spelling remembered.',
+                suspended: 0,
+                provisional: 0,
+              },
+            };
+            return structuredClone(result);
+          })();
+        if (command === 'undo_latest_learning') {
+          assert(args.resultId === result.resultId, 'Undo targeted a different result');
+          result = {
+            ...result,
+            learningOutcome: {
+              activated: [],
+              status: 'Learning undone.',
+              suspended: 1,
+              provisional: 0,
+            },
+          };
+          return structuredClone(result);
+        }
+      },
+    });
+    await until(() => target.querySelector('#final-draft'), 'Draft did not load');
+    const field = target.querySelector('#final-draft');
+    field.value = 'Open README.md in the repo';
+    field.dispatchEvent(new Event('input', { bubbles: true }));
+    await tick();
+    field.dispatchEvent(new FocusEvent('blur'));
+    const copy = [...target.querySelectorAll('button')].find((b) =>
+      b.textContent.includes('Copy text'),
+    );
+    copy.click();
+    await tick();
+    const blockedDuringSave = copy.disabled;
+    copy.click();
+    assert(field.disabled, 'Draft remained editable during save');
+    assert(
+      state.counts.edit_latest_draft === 1 && copied.length === 0,
+      'Copy bypassed the pending save',
+    );
+    saved.resolve();
+    await until(() => copied.length > 0 && !field.disabled, 'Save/Copy did not finish');
+    assert(blockedDuringSave, 'Copy remained enabled while waiting for draft save');
+    assert(
+      copied.length === 1 && copied[0] === field.value,
+      'Repeated Copy duplicated or copied stale text',
+    );
+    const undo = [...target.querySelectorAll('button')].find(
+      (b) => b.textContent === 'Undo learning',
+    );
+    assert(undo, 'Learning undo is absent');
+    undo.click();
+    await until(() => target.textContent.includes('Learning undone.'), 'Undo did not finish');
+    assert(field.value === 'Open README.md in the repo', 'Undo deleted the user draft');
+    assert(
+      state.counts.edit_latest_draft === 1 && state.counts.undo_latest_learning === 1,
+      'Undo relearned the draft',
+    );
+  } finally {
+    saved.resolve();
+    if (clipboard) Object.defineProperty(navigator, 'clipboard', clipboard);
+    else delete navigator.clipboard;
+  }
+});
+
+await test('Learning draft save failure retains text and retry does not treat unchanged Copy as feedback', async () => {
+  let result = {
+    resultId: 'learning-retry',
+    rawTranscript: 'Deploy kubernets to the cluster',
+    cleanedTranscript: null,
+    personalizedTranscript: null,
+    draftTranscript: null,
+    draftRevision: 0,
+    session: null,
+    warnings: [],
+    durationSeconds: 1,
+  };
+  let fail = true;
+  const state = await setup({
+    main: true,
+    intercept: (command, _state, args) => {
+      if (command === 'get_latest_result') return structuredClone(result);
+      if (command === 'edit_latest_draft') {
+        assert(args.revision === 0, 'Failed edit advanced the revision');
+        if (fail) return Promise.reject(new Error('Synthetic learning transaction failure'));
+        result = {
+          ...result,
+          draftTranscript: args.text,
+          draftRevision: 1,
+          learningOutcome: {
+            activated: [],
+            status: 'Waiting for independent support.',
+            suspended: 0,
+            provisional: 1,
+          },
+        };
+        return structuredClone(result);
+      }
+    },
+  });
+  await until(() => target.querySelector('#final-draft'), 'Draft did not load');
+  const field = target.querySelector('#final-draft');
+  field.value = 'Deploy kubernetes to the cluster';
+  field.dispatchEvent(new Event('input', { bubbles: true }));
+  await tick();
+  const copy = [...target.querySelectorAll('button')].find((b) =>
+    b.textContent.includes('Copy text'),
+  );
+  copy.click();
+  await until(
+    () => target.textContent.includes('Synthetic learning transaction failure'),
+    'Failure was hidden',
+  );
+  assert(field.value === 'Deploy kubernetes to the cluster', 'Failure lost the user edit');
+  assert(!copy.disabled, 'Failed save left Copy locked');
+  fail = false;
+  [...target.querySelectorAll('button')].find((b) => b.textContent === 'Retry saving edit').click();
+  await until(
+    () => target.textContent.includes('Waiting for independent support.'),
+    'Retry did not finish',
+  );
+  [...target.querySelectorAll('button')].find((b) => b.textContent.includes('Copy text')).click();
+  await until(
+    () =>
+      target.textContent.includes('copied.') ||
+      target.textContent.includes('Automatic copy is unavailable'),
+    'Copy did not settle',
+  );
+  assert(state.counts.edit_latest_draft === 2, 'Unchanged Copy supplied an extra learning label');
+  assert(
+    !state.counts.review_transcription && !state.counts.remember_cleanup,
+    'Ordinary edit became a reviewed label',
+  );
+});
+
+await test('Learning forget preserves manual words, rejects dirty preferences, and retries failures', async () => {
+  const word = (id, phrase, automaticSource) => ({
+    id,
+    phrase,
+    automaticSource,
+    aliases: [],
+    language: 'en',
+    project: '',
+    context: '',
+    enabled: true,
+    pronunciation: false,
+    learnedAt: '',
+    sources: [],
+    usageCount: 0,
+  });
+  let profile = {
+    schemaVersion: 3,
+    revision: 4,
+    learningEpoch: 2,
+    automaticLearning: true,
+    speechBiasEnabled: false,
+    outputIntent: 'verbatim',
+    preserveFillers: false,
+    applyCorrections: true,
+    useRememberedIntent: false,
+    activeProject: '',
+    examples: [],
+    vocabulary: [word('manual', 'ManualTerm', null), word('automatic', 'LearnedTerm', 'candidate')],
+  };
+  let fail = true;
+  let pending;
+  const state = await setup({
+    main: true,
+    intercept: (command, _state, args) => {
+      if (command === 'get_personalization') return structuredClone(profile);
+      if (command === 'forget_automatic_learning')
+        return (async () => {
+          assert(args.revision === profile.revision, 'Forget used a stale profile revision');
+          await pending?.promise;
+          if (fail) throw new Error('Synthetic forget failure');
+          profile = {
+            ...profile,
+            revision: 5,
+            learningEpoch: 3,
+            vocabulary: profile.vocabulary.filter((entry) => !entry.automaticSource),
+          };
+          return structuredClone(profile);
+        })();
+    },
+  });
+  [...target.querySelectorAll('nav button')]
+    .find((b) => b.textContent.trim() === 'Settings')
+    .click();
+  await until(() => target.querySelector('#personal-project'), 'Personal preferences did not load');
+  const panel = () => target.querySelector('.personalization');
+  const forget = () =>
+    [...panel().querySelectorAll('button')].find(
+      (b) => b.textContent === 'Forget automatic learning',
+    );
+  assert(!panel().textContent.includes('Learn as I dictate'), 'Retired learning opt-in reappeared');
+  const project = target.querySelector('#personal-project');
+  project.value = 'Unsaved project';
+  project.dispatchEvent(new Event('input', { bubbles: true }));
+  await tick();
+  assert(forget().disabled, 'Forget discarded unsaved profile edits');
+  [...panel().querySelectorAll('button')].find((b) => b.textContent === 'Discard changes').click();
+  await tick();
+  forget().click();
+  await until(
+    () => panel().textContent.includes('Synthetic forget failure'),
+    'Forget failure was hidden',
+  );
+  assert(
+    profile.vocabulary.length === 2 && !forget().disabled,
+    'Failure deleted words or blocked retry',
+  );
+  pending = deferred();
+  fail = false;
+  forget().click();
+  await tick();
+  const locked = forget().disabled && project.matches(':disabled');
+  pending.resolve();
+  await until(
+    () => panel().textContent.includes('Automatic learning forgotten.'),
+    'Forget retry failed',
+  );
+  assert(locked, 'Controls were editable during Forget');
+  assert(
+    profile.vocabulary.length === 1 && profile.vocabulary[0].id === 'manual',
+    'Forget removed a manual word',
+  );
+  assert(
+    profile.automaticLearning && !state.counts.save_personalization,
+    'Forget disabled automatic learning or resaved stale preferences',
+  );
+  assert(state.counts.forget_automatic_learning === 2, 'Forget submitted duplicate requests');
+});
+
 await test('Vocabulary and example dropdowns preserve edits through shared keyboard selection', async () => {
   const saved = {
     schemaVersion: 1,
