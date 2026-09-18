@@ -1,0 +1,33 @@
+# Learning storage, lifecycle and privacy
+
+Implementation: [data-store schema](../../crates/transcribe-data/src/lib.rs), [automatic store](../../crates/transcribe-data/src/learning.rs), [profile validation](../../crates/transcribe-data/src/personalization.rs), and [core profile](../../crates/transcribe-core/src/personalization.rs).
+
+## Schemas and provenance
+
+Profile schema **3** adds `automaticLearning`, a store-controlled `learningEpoch`, and vocabulary `automaticSource`/`usageCount`. The desktop reads profiles through `dictation_personalization()`: new profiles and schema 1/2/3 profiles carrying the retired off switch are saved with learning enabled. This advances the existing profile revision and learning epoch once, preserving manual words, disabled entries, application/hint choices and reviews. Repeated reads do not write or advance revisions. Desktop saves also enforce learning enabled, including requests from an older client. The generic `personalization()`/`save_personalization()` APIs retain explicit off/frozen controls for offline experiments and legacy-context regression tests; they are not the desktop learning preference. Unknown future schemas are rejected. Existing optimistic profile revisions remain mandatory.
+
+A single-row `automatic_learning` SQLite table holds schema-1 JSON with a policy version, bounded candidate records and bounded recent events. It uses the same database, WAL and synchronous settings as the existing profile/session store. This is an application-memory extension, not a new service or a training database.
+
+Events distinguish ordinary user edits from raw observations. They retain result/source/episode identity, language/project, model provenance, timestamp and optional compact changed pair or retry label. Model identity is evidence metadata, not the owner or key of a vocabulary item. Full raw/edited transcripts are not copied into the feedback table. `automaticSource` references a candidate; human-review source fields remain reserved for actual reviews.
+
+## Bounds and expiry
+
+The store retains at most **128 active vocabulary entries**, **64 reviewed examples**, **256 non-active candidates**, and **1,024 recent events**. Each serialized event is limited to **4,096 bytes**. A candidate has at most **16 compact independent support records**. Unsupported observed/provisional candidates and recent events expire after 30 days when the next learning/profile mutation prunes the store. There is no timer-based retention scheduler. Learning runs on existing transcription workers and `spawn_blocking` draft commands when an event arrives; it does not require an idle polling service, extra model calls or a new model owner. A draft command awaits its transaction before confirming save, and result observation is awaited on the transcription worker. Background thread execution does not imply zero completion latency.
+
+Active support remains compact after event expiry. Suspended entries keep their negative decision until explicitly changed, removed or displaced by the bounded candidate quota; their disabled vocabulary entries still prevent automatic re-enabling. Expiry and quota eviction are not evidence that a spelling is wrong. The inspector displays up to 32 recent candidates; the underlying store remains separately bounded.
+
+## Undo, conflicts and deletion
+
+Undoing an applied inferred memory disables its vocabulary entry and suspends the candidate transactionally. An ordinary edit reverting the canonical spelling to the known alias is also negative evidence. Neither action learns an automatic reverse rule. Undo learning preserves the user's authored draft.
+
+Clients cannot forge candidate provenance, usage counts or learning epochs. Changing an automatic entry's spelling/language/project/context in the inspector converts it to manually managed text and clears its automatic attribution. Explicitly re-enabling a suspended entry is likewise a manual decision. Existing reviewed sources keep their stricter review validation.
+
+Removing an automatic entry deletes its candidate and matching compact correction evidence. Forget automatic learning removes all automatic vocabulary, candidate/event evidence and usage ranks while preserving manual words and reviewed sessions. It increments the learning epoch, so a late callback from a pre-forget result cannot recreate the deleted evidence. New recordings automatically provide fresh evidence; forgetting does not turn learning off. This is logical deletion from application records; it does not claim forensic erasure of SQLite pages or backups.
+
+The migration from the retired opt-in gate also advances the epoch. An operation must have learning enabled in its frozen context and match the current enabled profile/epoch before it can add evidence. Legacy disabled contexts remain ineligible. Users can disable individual spellings or final correction application without stopping evidence collection; automatic admissions never re-enable a disabled manually managed spelling.
+
+## Collection and exports
+
+Audio retention follows `collectTrainingData`. Automatic local learning does not enable audio collection. With collection off, minimal feedback records still persist and the current draft remains ephemeral. The desktop creates its local SQLite store when preparing its first personalization snapshot even if audio retention is off; no source audio or full draft is archived by that step. A single bounded recent microphone transcript may remain in runtime memory for retry comparison, as described in [retry evidence](retry-evidence.md).
+
+The future training `improvementMode` setting is unchanged. An ordinary draft or inferred candidate does not become a supervised export target. Export eligibility still uses separately reviewed verbatim/cleanup targets. The feedback store is not included as a training-label source. Everything runs locally using installed components; no clipboard polling, external-editor observation or cloud inference is added.
