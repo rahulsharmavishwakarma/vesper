@@ -16,6 +16,9 @@ pub struct EditSupport {
     pub source_key: String,
     pub episode_id: String,
     pub event_id: String,
+    /// Local lexical cues from this independent edit. Missing in schema-1 support.
+    #[serde(default)]
+    pub teaching_terms: Vec<String>,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -65,12 +68,55 @@ pub struct AutomaticLearningState {
 impl Default for AutomaticLearningState {
     fn default() -> Self {
         Self {
-            schema_version: 1,
+            schema_version: 2,
             policy_version: LEARNING_POLICY_VERSION,
             candidates: vec![],
             events: vec![],
             expired_candidates: 0,
         }
+    }
+}
+
+/// Profile and learning evidence read in one SQLite snapshot for one operation.
+/// Pre-ASR hints use `profile`; both post-ASR stages use `post_asr_profile`.
+#[derive(Debug, Clone)]
+pub struct DictationPersonalizationSnapshot {
+    pub profile: PersonalizationProfile,
+    pub learning: AutomaticLearningState,
+}
+
+impl DictationPersonalizationSnapshot {
+    pub fn post_asr_profile(&self, raw: &str, language: Language) -> PersonalizationProfile {
+        let mut selected = self.profile.clone();
+        for entry in &mut selected.vocabulary {
+            let Some(source) = &entry.automatic_source else {
+                continue;
+            };
+            let eligible = self.learning.candidates.iter().any(|candidate| {
+                candidate.id == *source
+                    && candidate.state == CandidateState::Active
+                    && candidate.phrase == entry.phrase
+                    && entry.aliases.contains(&candidate.alias)
+                    && candidate.language == entry.language
+                    && candidate.project == entry.project
+                    && language != Language::Auto
+                    && transcribe_core::language_matches(entry.language, language)
+                    && transcribe_core::project_matches(&entry.project, &selected.active_project)
+                    && (memory_phrase_occurs(raw, &candidate.alias)
+                        || memory_phrase_occurs(raw, &candidate.phrase))
+                    && transcribe_core::teaching_context_matches(
+                        candidate.support.iter().flat_map(|s| &s.teaching_terms),
+                        raw,
+                        &CorrectionPair {
+                            heard: candidate.alias.clone(),
+                            intended: candidate.phrase.clone(),
+                        },
+                        &selected.active_project,
+                    )
+            });
+            entry.enabled &= eligible;
+        }
+        selected
     }
 }
 
@@ -89,6 +135,18 @@ pub fn learning_audio_key(samples: &[f32]) -> String {
 }
 
 impl DatasetStore {
+    pub fn dictation_personalization_snapshot(&self) -> Result<DictationPersonalizationSnapshot> {
+        // Persist the existing desktop enable migration before the read transaction.
+        self.dictation_personalization()?;
+        let tx = self.connection.unchecked_transaction()?;
+        let snapshot = DictationPersonalizationSnapshot {
+            profile: self.personalization()?,
+            learning: self.automatic_learning_state()?,
+        };
+        tx.commit()?;
+        Ok(snapshot)
+    }
+
     pub fn automatic_learning_state(&self) -> Result<AutomaticLearningState> {
         let state: Option<String> = self
             .connection
@@ -98,18 +156,38 @@ impl DatasetStore {
                 |r| r.get(0),
             )
             .optional()?;
-        let state: AutomaticLearningState = state
+        let mut state: AutomaticLearningState = state
             .map(|s| serde_json::from_str(&s))
             .transpose()?
             .unwrap_or_default();
-        if state.schema_version != 1
+        if !(1..=2).contains(&state.schema_version)
+            || !(1..=LEARNING_POLICY_VERSION).contains(&state.policy_version)
             || state.candidates.len() > MAX_CANDIDATES + 128
             || state.events.len() > MAX_EVENTS
+            || state.candidates.iter().any(|c| {
+                c.support.len() > 16
+                    || c.support.iter().any(|s| {
+                        s.teaching_terms.len() > transcribe_core::MAX_TEACHING_TERMS
+                            || s.teaching_terms.iter().any(|t| {
+                                t.is_empty()
+                                    || t.len() > transcribe_core::MAX_TEACHING_TERM_BYTES
+                                    || t.chars().any(char::is_control)
+                            })
+                            || s.teaching_terms
+                                .iter()
+                                .collect::<std::collections::BTreeSet<_>>()
+                                .len()
+                                != s.teaching_terms.len()
+                    })
+            })
         {
             return Err(DatasetError::InvalidConfig(
                 "Unsupported or oversized automatic-learning store.".into(),
             ));
         }
+        // Read compatibility is non-writing; the next mutation persists schema 2.
+        state.schema_version = 2;
+        state.policy_version = LEARNING_POLICY_VERSION;
         Ok(state)
     }
 
@@ -149,6 +227,7 @@ impl DatasetStore {
         }
         let mut state = self.automatic_learning_state()?;
         prune(&mut state, stamp());
+        let mut teaching_changed = false;
         let event_id = format!("{}:{revision}", context.result_id);
         if state.events.iter().any(|e| e.id == event_id) {
             outcome.status = "This edit was already processed.".into();
@@ -208,13 +287,32 @@ impl DatasetStore {
             if candidate.state != CandidateState::Suspended {
                 if !candidate.support.iter().any(|s| {
                     s.source_key == context.source_key || s.episode_id == context.episode_id
-                }) && candidate.support.len() < 16
-                {
-                    candidate.support.push(EditSupport {
+                }) {
+                    let support = EditSupport {
                         source_key: context.source_key.clone(),
                         episode_id: context.episode_id.clone(),
                         event_id: event_id.clone(),
-                    });
+                        teaching_terms: transcribe_core::teaching_context_terms(
+                            before,
+                            pair,
+                            &context.project,
+                        ),
+                    };
+                    if candidate.support.len() < 16 {
+                        teaching_changed |= candidate.state == CandidateState::Active
+                            && !support.teaching_terms.is_empty();
+                        candidate.support.push(support);
+                    } else if !support.teaching_terms.is_empty() {
+                        // Full legacy candidates can acquire context without increasing support.
+                        if let Some(old) = candidate
+                            .support
+                            .iter_mut()
+                            .find(|s| s.teaching_terms.is_empty())
+                        {
+                            teaching_changed |= candidate.state == CandidateState::Active;
+                            *old = support;
+                        }
+                    }
                 }
                 let required = if !context.project.is_empty()
                     && transcribe_core::technical_spelling(&pair.intended)
@@ -275,7 +373,8 @@ impl DatasetStore {
                 }
             }
         }
-        // Store changed spans only. A rewrite without a spelling pair keeps no text.
+        // Events keep changed spans; independent support keeps bounded teaching cues.
+        // A rewrite without a spelling pair keeps neither transcript nor new cues.
         state.events.push(LearningEvent {
             id: event_id,
             context: context.clone(),
@@ -286,7 +385,7 @@ impl DatasetStore {
         });
         prune(&mut state, stamp());
         put_state(tx, &state)?;
-        if !outcome.activated.is_empty() || outcome.suspended > 0 {
+        if !outcome.activated.is_empty() || outcome.suspended > 0 || teaching_changed {
             put_profile(tx, &mut profile)?;
         }
         outcome.profile_revision = profile.revision;
@@ -617,10 +716,20 @@ fn scope(language: Language, project: &str, context: &LearningContext) -> bool {
 fn suspend(state: &mut AutomaticLearningState, id: &str) {
     if let Some(candidate) = state.candidates.iter_mut().find(|c| c.id == id) {
         candidate.state = CandidateState::Suspended;
+        for support in &mut candidate.support {
+            support.teaching_terms.clear();
+        }
         candidate.reason = "Paused after a rejected or disabled application.".into();
     }
 }
 fn prune(state: &mut AutomaticLearningState, timestamp: i64) {
+    for candidate in &mut state.candidates {
+        if candidate.state == CandidateState::Suspended {
+            for support in &mut candidate.support {
+                support.teaching_terms.clear();
+            }
+        }
+    }
     let before = state.candidates.len();
     state.candidates.retain(|c| {
         matches!(c.state, CandidateState::Active | CandidateState::Suspended)
@@ -679,6 +788,251 @@ fn put_profile(tx: &Connection, profile: &mut PersonalizationProfile) -> Result<
 #[cfg(test)]
 mod tests {
     use super::*;
+    const CONTEXT_HEARD: &str = "Open read me for deployment";
+    const CONTEXT_EDITED: &str = "Open README.md for deployment";
+
+    #[test]
+    fn post_asr_context_guard_requires_observable_cues_and_preserves_manual_entries() {
+        let (_dir, store, p) = setup();
+        store
+            .learn_from_edit(&context(&p, "context"), 0, CONTEXT_HEARD, CONTEXT_EDITED)
+            .unwrap();
+        let mut snapshot = store.dictation_personalization_snapshot().unwrap();
+        assert_eq!(
+            snapshot.learning.candidates[0].support[0].teaching_terms,
+            ["deployment"]
+        );
+        let selected = snapshot.post_asr_profile(CONTEXT_HEARD, Language::English);
+        assert_eq!(
+            selected.personalize(CONTEXT_HEARD, Language::English).text,
+            CONTEXT_EDITED
+        );
+        for raw in [
+            "Open read me for shopping",
+            "Open read me in repo",
+            "Open 'read me' for deployment",
+            "Open read me for 'deployment'",
+            "Discuss deployment without a filename",
+        ] {
+            assert!(
+                !snapshot.post_asr_profile(raw, Language::English).vocabulary[0].enabled,
+                "{raw}"
+            );
+        }
+        assert!(
+            !snapshot
+                .post_asr_profile(CONTEXT_HEARD, Language::Hindi)
+                .vocabulary[0]
+                .enabled
+        );
+        assert!(
+            !snapshot
+                .post_asr_profile(CONTEXT_HEARD, Language::Auto)
+                .vocabulary[0]
+                .enabled
+        );
+        let mut manual = snapshot.profile.vocabulary[0].clone();
+        manual.id = "manual".into();
+        manual.automatic_source = None;
+        snapshot.profile.vocabulary.push(manual.clone());
+        snapshot.profile.active_project = "other".into();
+        let selected = snapshot.post_asr_profile(CONTEXT_HEARD, Language::English);
+        assert!(!selected.vocabulary[0].enabled);
+        assert_eq!(selected.vocabulary[1], manual);
+        // Selection is operation-local; it never disables the persisted entry.
+        assert!(store.personalization().unwrap().vocabulary[0].enabled);
+    }
+
+    #[test]
+    fn legacy_context_is_not_fabricated_and_new_independent_edits_upgrade_atomically() {
+        let (_dir, store, p) = setup();
+        store
+            .learn_from_edit(&context(&p, "legacy"), 0, CONTEXT_HEARD, CONTEXT_EDITED)
+            .unwrap();
+        let mut legacy = serde_json::to_value(store.automatic_learning_state().unwrap()).unwrap();
+        legacy["schemaVersion"] = json!(1);
+        legacy["policyVersion"] = json!(1);
+        legacy["candidates"][0]["support"][0]
+            .as_object_mut()
+            .unwrap()
+            .remove("teachingTerms");
+        let encoded = serde_json::to_string(&legacy).unwrap();
+        store
+            .connection
+            .execute("UPDATE automatic_learning SET state_json=?1", [&encoded])
+            .unwrap();
+        let old = store.dictation_personalization_snapshot().unwrap();
+        assert!(
+            !old.post_asr_profile(CONTEXT_HEARD, Language::English)
+                .vocabulary[0]
+                .enabled
+        );
+        let stored: String = store
+            .connection
+            .query_row("SELECT state_json FROM automatic_learning", [], |r| {
+                r.get(0)
+            })
+            .unwrap();
+        assert_eq!(stored, encoded, "read must not rewrite old evidence");
+        store
+            .learn_from_edit(&context(&p, "fresh"), 0, CONTEXT_HEARD, CONTEXT_EDITED)
+            .unwrap();
+        let fresh = store.dictation_personalization_snapshot().unwrap();
+        assert!(fresh.profile.revision > old.profile.revision);
+        assert!(
+            fresh
+                .post_asr_profile(CONTEXT_HEARD, Language::English)
+                .vocabulary[0]
+                .enabled
+        );
+        assert!(
+            !old.post_asr_profile(CONTEXT_HEARD, Language::English)
+                .vocabulary[0]
+                .enabled
+        );
+        let stored: String = store
+            .connection
+            .query_row("SELECT state_json FROM automatic_learning", [], |r| {
+                r.get(0)
+            })
+            .unwrap();
+        assert_eq!(
+            serde_json::from_str::<Value>(&stored).unwrap()["schemaVersion"],
+            2
+        );
+    }
+
+    #[test]
+    fn full_legacy_support_can_acquire_context_without_inflating_votes_or_duplicate_cues() {
+        let (_dir, store, p) = setup();
+        for i in 0..16 {
+            store
+                .learn_from_edit(
+                    &context(&p, &format!("old-{i}")),
+                    0,
+                    "Open read me",
+                    "Open README.md",
+                )
+                .unwrap();
+        }
+        let mut duplicate = context(&p, "duplicate");
+        duplicate.source_key = "audio-old-0".into();
+        store
+            .learn_from_edit(&duplicate, 0, CONTEXT_HEARD, CONTEXT_EDITED)
+            .unwrap();
+        assert!(
+            !store
+                .dictation_personalization_snapshot()
+                .unwrap()
+                .post_asr_profile(CONTEXT_HEARD, Language::English)
+                .vocabulary[0]
+                .enabled
+        );
+        store
+            .learn_from_edit(
+                &context(&p, "independent"),
+                0,
+                CONTEXT_HEARD,
+                CONTEXT_EDITED,
+            )
+            .unwrap();
+        let snapshot = store.dictation_personalization_snapshot().unwrap();
+        assert_eq!(snapshot.learning.candidates[0].support.len(), 16);
+        assert!(
+            snapshot
+                .post_asr_profile(CONTEXT_HEARD, Language::English)
+                .vocabulary[0]
+                .enabled
+        );
+    }
+
+    #[test]
+    fn context_support_is_rolled_back_cleared_by_undo_and_retained_only_with_active_memory() {
+        let (_dir, store, p) = setup();
+        store
+            .learn_from_edit(&context(&p, "old"), 0, "Open read me", "Open README.md")
+            .unwrap();
+        store.connection.execute_batch("CREATE TRIGGER fail_context BEFORE UPDATE ON personalization BEGIN SELECT RAISE(ABORT, 'injected context write failure'); END;").unwrap();
+        assert!(store
+            .learn_from_edit(&context(&p, "new"), 0, CONTEXT_HEARD, CONTEXT_EDITED)
+            .is_err());
+        assert_eq!(
+            store.automatic_learning_state().unwrap().candidates[0]
+                .support
+                .len(),
+            1
+        );
+        store
+            .connection
+            .execute_batch("DROP TRIGGER fail_context")
+            .unwrap();
+        store
+            .learn_from_edit(&context(&p, "new"), 0, CONTEXT_HEARD, CONTEXT_EDITED)
+            .unwrap();
+        let mut retained = store.automatic_learning_state().unwrap();
+        prune(&mut retained, stamp() + EXPIRY_MS + 1);
+        assert!(retained.events.is_empty());
+        assert!(retained.candidates[0]
+            .support
+            .iter()
+            .any(|s| !s.teaching_terms.is_empty()));
+        store.undo_learning_for_result("new").unwrap();
+        let suspended = store.dictation_personalization_snapshot().unwrap();
+        assert!(suspended.learning.candidates[0]
+            .support
+            .iter()
+            .all(|s| s.teaching_terms.is_empty()));
+        assert!(
+            !suspended
+                .post_asr_profile(CONTEXT_HEARD, Language::English)
+                .vocabulary[0]
+                .enabled
+        );
+        store
+            .forget_automatic_learning(suspended.profile.revision)
+            .unwrap();
+        assert!(store
+            .automatic_learning_state()
+            .unwrap()
+            .candidates
+            .is_empty());
+    }
+
+    #[test]
+    fn context_metadata_rejects_oversized_duplicate_and_future_evidence() {
+        let (_dir, store, p) = setup();
+        store
+            .learn_from_edit(&context(&p, "context"), 0, CONTEXT_HEARD, CONTEXT_EDITED)
+            .unwrap();
+        let original = serde_json::to_value(store.automatic_learning_state().unwrap()).unwrap();
+        for bad_terms in [
+            json!(["x".repeat(65)]),
+            json!(["duplicate", "duplicate"]),
+            json!((0..17).map(|n| format!("term{n}")).collect::<Vec<_>>()),
+            json!(["bad\nterm"]),
+        ] {
+            let mut invalid = original.clone();
+            invalid["candidates"][0]["support"][0]["teachingTerms"] = bad_terms;
+            store
+                .connection
+                .execute(
+                    "UPDATE automatic_learning SET state_json=?1",
+                    [invalid.to_string()],
+                )
+                .unwrap();
+            assert!(store.automatic_learning_state().is_err());
+        }
+        let mut future = original;
+        future["policyVersion"] = json!(999);
+        store
+            .connection
+            .execute(
+                "UPDATE automatic_learning SET state_json=?1",
+                [future.to_string()],
+            )
+            .unwrap();
+        assert!(store.automatic_learning_state().is_err());
+    }
     fn setup() -> (tempfile::TempDir, DatasetStore, PersonalizationProfile) {
         let dir = tempfile::tempdir().unwrap();
         let store = DatasetStore::open(dir.path().join("data")).unwrap();

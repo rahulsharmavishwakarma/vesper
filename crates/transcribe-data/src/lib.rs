@@ -3,8 +3,8 @@
 mod learning;
 mod personalization;
 pub use learning::{
-    learning_audio_key, AutomaticLearningState, EditSupport, LearningCandidate, LearningEvent,
-    LearningEventKind,
+    learning_audio_key, AutomaticLearningState, DictationPersonalizationSnapshot, EditSupport,
+    LearningCandidate, LearningEvent, LearningEventKind,
 };
 pub use personalization::{
     CorrectionSuggestion, LearningDashboard, RememberCorrection, ReplayGroup, ReviewCandidate,
