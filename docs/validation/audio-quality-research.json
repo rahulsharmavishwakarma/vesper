@@ -1,0 +1,282 @@
+{
+  "schemaVersion": 1,
+  "date": "2026-09-16",
+  "issue": "https://github.com/rahulsharmavishwakarma/transcribe/issues/42",
+  "scope": "Research and source/artifact audit only. No new model execution, integration, default or production behavior changes.",
+  "evidenceClasses": [
+    "paper result",
+    "official capability",
+    "local source/artifact observation",
+    "unverified hypothesis"
+  ],
+  "applicationRevision": "592e0084fe5cf486b4d56c575423e9a4f219bfb8",
+  "uncommittedSourceSha256": {
+    "crates/transcribe-audio/src/capture.rs": "328bd1f0f008f5eccb1ae3a4b5fd6a6709666e1ae38ba42b505ee2432ed3a05a",
+    "crates/transcribe-audio/src/pcm.rs": "9103a21b6d24ea60781f11e41fa31a42c9757396fe5e79edbd7962f7caea19cd",
+    "crates/transcribe-inference/src/segmented_audio.rs": "d148f4747bc10719ba2ce1a3837c451d17c412e42beb5e327bfeed9872f1006d",
+    "crates/transcribe-inference/src/offline_asr.rs": "1a5779bd0456c8f8fd6cd18b616597cf10528fa6fc87482914c5663db27abe38",
+    "crates/transcribe-inference/Cargo.toml": "3197ad69448dc229002f0bf0bca708a8cd22f75619e1a4b797ea587b507f3017",
+    "apps/desktop/src-tauri/src/runtime.rs": "31db982b6408eaa43b12fad06e914a289d79bc6ce0615a8c2a26a6bd21140ab9",
+    "crates/transcribe-eval/src/manifest.rs": "92eece38d15b9d347129d851472bd4f32f2ccb97c700ebc23d672cea844edb47",
+    "crates/transcribe-eval/src/metrics.rs": "15342285e24bc481dd92bc449f7dd2f9c27761a90e1d5742dbb6ac65ba34c6fd",
+    "Cargo.lock": "a92624d436e56d67c521a556cc70fcc3b3b0c6e71a818f95b3f0ca5c218341d1"
+  },
+  "runtime": {
+    "crate": "sherpa-onnx",
+    "version": "1.13.8",
+    "crateChecksum": "efaa98d5f08380f3d47026e00f60fed182f6edaf4c0af290d88ac0e08d6e3b90",
+    "sysCrateChecksum": "14bbeabb73f73f1c1f4a278af0ee9ae90a19f9727482027047fb9422fa14f8fe",
+    "upstreamRevision": "11afbd009a7f8c08f4bcf2fc1b265d0df4670fbf",
+    "publishedVcsMetadata": {
+      "git": {
+        "sha1": "11afbd009a7f8c08f4bcf2fc1b265d0df4670fbf",
+        "dirty": true
+      },
+      "path_in_vcs": "sherpa-onnx/rust/sherpa-onnx"
+    },
+    "wrapperSourceSha256": {
+      "vad.rs": "b7ba35b70f4e91cd64b1b8fd0bd869be894fa708cae9b9e0aa4fdc2b8c14b8f8",
+      "online_speech_denoiser.rs": "343a3043eec4850d07a792816c993473d620691269c9d6dc6935fed2337e8f96",
+      "offline_speech_denoiser.rs": "8e8831dcc909aaf5d94c0a4062bc6bafb41c1312125cb8696f7ce0002f40a03e"
+    },
+    "nativeExecutionTested": false
+  },
+  "artifacts": [
+    {
+      "name": "silero_vad.onnx",
+      "modelFamily": "silero-vad-v4",
+      "precision": "FP32",
+      "bytes": 643854,
+      "sha256": "9e2449e1087496d8d4caba907f23e0bd3f78d91fa552479bb9c23ac09cbb1fd6",
+      "githubAssetId": 271935959,
+      "url": "https://github.com/k2-fsa/sherpa-onnx/releases/download/asr-models/silero_vad.onnx",
+      "hashEvidence": "locally downloaded and SHA-256 verified; not executed",
+      "qualified": false
+    },
+    {
+      "name": "silero_vad.int8.onnx",
+      "modelFamily": "silero-vad-v4",
+      "precision": "INT8",
+      "bytes": 212860,
+      "sha256": "c36d490aff5ab924ca6c7aeec4d8f6bd3d22db6fa17611b9c5b17eae58ac3a20",
+      "githubAssetId": 271935990,
+      "url": "https://github.com/k2-fsa/sherpa-onnx/releases/download/asr-models/silero_vad.int8.onnx",
+      "hashEvidence": "locally downloaded and SHA-256 verified; not executed",
+      "qualified": false
+    },
+    {
+      "name": "gtcrn_simple.onnx",
+      "modelFamily": "gtcrn-streaming",
+      "precision": "FP32",
+      "bytes": 535638,
+      "sha256": "e77603ac0c23dac3227dd2d7135b3a585cbee2679048aecfa886657d3ae1b534",
+      "githubAssetId": 236067657,
+      "url": "https://github.com/k2-fsa/sherpa-onnx/releases/download/speech-enhancement-models/gtcrn_simple.onnx",
+      "hashEvidence": "locally downloaded and SHA-256 verified; not executed",
+      "qualified": false
+    }
+  ],
+  "upstreamSourceObservations": [
+    {
+      "url": "https://raw.githubusercontent.com/k2-fsa/sherpa-onnx/11afbd009a7f8c08f4bcf2fc1b265d0df4670fbf/sherpa-onnx/csrc/online-speech-denoiser-gtcrn-impl.h",
+      "sha256": "ebb0f49a3a3ab89f3fe74639c2509f84bd5dd650d2bf44f8cba250b631a57b05"
+    },
+    {
+      "url": "https://raw.githubusercontent.com/k2-fsa/sherpa-onnx/11afbd009a7f8c08f4bcf2fc1b265d0df4670fbf/sherpa-onnx/csrc/online-speech-denoiser-stft-impl.h",
+      "sha256": "5ec43424a1c5bf48c198dd7aaad3e19cc01d366e779fbc8196e8146f8514e124"
+    },
+    {
+      "url": "https://raw.githubusercontent.com/k2-fsa/sherpa-onnx/11afbd009a7f8c08f4bcf2fc1b265d0df4670fbf/sherpa-onnx/csrc/offline-speech-denoiser-gtcrn-model.cc",
+      "sha256": "e6d07c8eba1b399c13a12da6bf21939a501a557476bf284bffd9ce123fc98b52"
+    },
+    {
+      "url": "https://raw.githubusercontent.com/k2-fsa/sherpa-onnx/11afbd009a7f8c08f4bcf2fc1b265d0df4670fbf/sherpa-onnx/csrc/silero-vad-model.cc",
+      "sha256": "a78f9205159e264138647660353f7a7a2cd01204574fa33b1c31a2ab9d278af8"
+    },
+    {
+      "url": "https://raw.githubusercontent.com/k2-fsa/sherpa-onnx/11afbd009a7f8c08f4bcf2fc1b265d0df4670fbf/sherpa-onnx/csrc/voice-activity-detector.cc",
+      "sha256": "d8761999ff708637ea7ed1636484afa2d75854a7a7fb07e39ae4e68a2f6d0d15"
+    },
+    {
+      "url": "https://raw.githubusercontent.com/k2-fsa/sherpa-onnx/11afbd009a7f8c08f4bcf2fc1b265d0df4670fbf/scripts/silero_vad/v4/export-onnx.py",
+      "sha256": "fc7fce37513c932c025b2cf84e9b298c7c2dac679baa8165d35591f72d239496"
+    },
+    {
+      "url": "https://raw.githubusercontent.com/k2-fsa/sherpa-onnx/11afbd009a7f8c08f4bcf2fc1b265d0df4670fbf/scripts/gtcrn/add_meta_data.py",
+      "sha256": "e6d27b72dc2865c7b4d6555066f441dfb8d77739365fc5b85d3f73f99217611f"
+    }
+  ],
+  "sourceDerivedContracts": {
+    "silero": {
+      "family": "v4 k2-fsa 16 kHz export; not current upstream Silero",
+      "sampleRate": 16000,
+      "inputSamples": 512,
+      "stepMs": 32,
+      "state": [
+        "h [2,1,64]",
+        "c [2,1,64]"
+      ]
+    },
+    "gtcrn": {
+      "sampleRate": 16000,
+      "fftSamples": 512,
+      "windowSamples": 512,
+      "hopSamples": 256,
+      "hopMs": 16,
+      "window": "hann_sqrt",
+      "convCache": [
+        2,
+        1,
+        16,
+        16,
+        33
+      ],
+      "traCache": [
+        2,
+        3,
+        1,
+        1,
+        16
+      ],
+      "interCache": [
+        2,
+        1,
+        33,
+        16
+      ],
+      "nativeFourierTableBytes": 4210688,
+      "allocationEvidence": "calculated from upstream source; not measured RSS"
+    }
+  },
+  "suppliedExamples": {
+    "nemotron": {
+      "revision": "9c9cb0cc3bee7c7839bb6e1cf4938e63fee539bc",
+      "artifactBytes": 397199360,
+      "remoteArtifactSha256": "700c5ad09ee1fe53fbf832ab7714e2387f757c875025222e9a695ed0abd176e4",
+      "downloaded": false,
+      "executed": false,
+      "reasonExcluded": "Public preview terms: internal evaluation only, NVIDIA GPUs only, no production/redistribution; public gated metadata only."
+    },
+    "uhm": {
+      "revision": "9b172658b2a20a21ad8ea44092f4d4b3ff2c69a4",
+      "sdkRevision": "2aed9c6d6459fc1843ab59553965035954e40199",
+      "sdkWeightsRevision": "612592c10ad7b2a51f3237725448a1aad212480b",
+      "fp16OnnxBytes": 47047128,
+      "remoteFp16Sha256": "c266faf7db4cdced6f18aa9119ff2800a20707d7159be645d487ec191a9d79ff",
+      "weightsDownloaded": false,
+      "executed": false,
+      "labels": {
+        "id2label": {
+          "0": "not_filler",
+          "1": "uh",
+          "2": "um",
+          "3": "hmm",
+          "4": "other"
+        },
+        "label2id": {
+          "not_filler": 0,
+          "uh": 1,
+          "um": 2,
+          "hmm": 3,
+          "other": 4
+        }
+      },
+      "compiledMetadata": [
+        {
+          "metadataOutputVersion": "3.0",
+          "shortDescription": "Uhm filler detector (base tier) — distilhubert 6-class frame classifier at 50fps over 30s windows of 16kHz mono — temperature-calibrated (T=1.900)",
+          "outputSchema": [
+            {
+              "hasShapeFlexibility": "0",
+              "isOptional": "0",
+              "dataType": "Float16",
+              "formattedType": "MultiArray (Float16 1 × 1499 × 6)",
+              "shortDescription": "",
+              "shape": "[1, 1499, 6]",
+              "name": "probs",
+              "type": "MultiArray"
+            }
+          ],
+          "storagePrecision": "Float16",
+          "modelParameters": [],
+          "specificationVersion": 8,
+          "mlProgramOperationTypeHistogram": {
+            "Ios17.mul": 4,
+            "Ios17.sqrt": 1,
+            "Ios17.square": 1,
+            "Ios17.transpose": 11,
+            "Ios17.sub": 1,
+            "Ios17.linear": 14,
+            "Ios17.conv": 8,
+            "Ios17.matmul": 4,
+            "Ios17.add": 7,
+            "Ios17.realDiv": 1,
+            "Ios16.reduceMean": 2,
+            "Ios17.sliceByIndex": 1,
+            "Ios16.softmax": 3,
+            "Ios16.gelu": 10,
+            "Ios17.expandDims": 1,
+            "Ios17.reshape": 18,
+            "Ios17.cast": 1,
+            "Ios17.layerNorm": 6
+          },
+          "computePrecision": "Mixed (Float16, Int32)",
+          "isUpdatable": "0",
+          "stateSchema": [],
+          "availability": {
+            "macOS": "14.0",
+            "tvOS": "17.0",
+            "visionOS": "1.0",
+            "watchOS": "10.0",
+            "iOS": "17.0",
+            "macCatalyst": "17.0"
+          },
+          "modelType": {
+            "name": "MLModelType_mlProgram"
+          },
+          "inputSchema": [
+            {
+              "hasShapeFlexibility": "0",
+              "isOptional": "0",
+              "dataType": "Float32",
+              "formattedType": "MultiArray (Float32 1 × 480000)",
+              "shortDescription": "",
+              "shape": "[1, 480000]",
+              "name": "audio",
+              "type": "MultiArray"
+            }
+          ],
+          "userDefinedMetadata": {
+            "com.github.apple.coremltools.version": "8.2",
+            "base_model": "ntu-spml/distilhubert",
+            "labels": "[\"not_filler\", \"uh\", \"um\", \"hmm\", \"and\", \"other\"]",
+            "sample_rate": "16000",
+            "frame_hop": "320",
+            "model_family": "distilhubert",
+            "uhm_tier": "base",
+            "max_samples": "480000",
+            "calibration_temperature": "1.9000",
+            "com.github.apple.coremltools.source_dialect": "TorchScript",
+            "com.github.apple.coremltools.source": "torch==2.4.1",
+            "calibrated_against": "/Volumes/PV Media 2TB/swift-filler-train/runs/uhm-distil-2l-hint-v1/final-patched"
+          },
+          "generatedClassName": "uhm",
+          "method": "predict"
+        }
+      ],
+      "inspectedMetadataSha256": {
+        "labels.json": "249ac8e6fde738721904263672bd97ead47f3c537a5a698a6137a2afd20d78e7",
+        "metadata.json": "8ec4b86aa5dfcdcb11950ba43d3e057f85d460421bf2f078800ef5fbd42239cd"
+      },
+      "mismatch": "Sidecar has five classes; compiled graph has six with and=4 and other=5."
+    }
+  },
+  "limitations": [
+    "No local VAD/denoiser inference, WER, RAM, latency, power or thermal measurements.",
+    "Released ONNX files were only downloaded/hashed and metadata inspected; they were not loaded into an inference runtime or graph validator.",
+    "Native runtime source findings need confirmation against the actual built binary in qualification.",
+    "Public artifact release URLs may move; require the recorded SHA-256 before execution.",
+    "Noise-only benchmark manifests are currently blocked by nonempty-reference validation.",
+    "Full Uhm authoritative license was inaccessible; SDK license notice is not a replacement for complete terms."
+  ]
+}

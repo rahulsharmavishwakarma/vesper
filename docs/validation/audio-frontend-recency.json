@@ -1,0 +1,4343 @@
+{
+  "recent-vad-release-audit": {
+    "date": "2026-09-16",
+    "eligibleFrom": "2025-09-16",
+    "model": "Silero VAD v6.2 (not v6.0)",
+    "packageTag": "v6.2.1",
+    "pinnedRepositoryRevision": "7e30209a3e901f9842f81b225f3e93d8199902b1",
+    "weightsRevision": "bfdc0193023f121ea5b3cc7b176dbed570a68a59",
+    "weightsPublished": "2025-11-06T07:23:43Z",
+    "releasePublished": "2025-11-06T08:38:40Z",
+    "artifact": "src/silero_vad/data/silero_vad_16k_op15.onnx",
+    "url": "https://raw.githubusercontent.com/snakers4/silero-vad/7e30209a3e901f9842f81b225f3e93d8199902b1/src/silero_vad/data/silero_vad_16k_op15.onnx",
+    "artifactBytes": 1289603,
+    "artifactSha256": "7ed98ddbad84ccac4cd0aeb3099049280713df825c610a8ed34543318f1b2c49",
+    "evidence": "downloaded artifact hash and static ONNX protobuf inspection ONLY; NO model inference/build",
+    "license": "MIT",
+    "compatibility": "Source-compatible with sherpa1.13.8 v5-family branch, inputs input/state/sr outputs output/stateN. FP32state[2,batch,128],INT64sr scalar,opset15. 16kHz512new samples plus64context. Needs native execution/parity; do not call qualified.",
+    "sources": [
+      {
+        "file": "newvad-silero-v62release.txt",
+        "sha256": "f2ea0af2d786cf631954c2ed156654d5c3763026da315206104c9d221802c15d"
+      },
+      {
+        "file": "newvad-silero-model-commits.txt",
+        "sha256": "6a8daabe09aca6d77f07b78839f8ff05e493eec1dcfdc3275a7ba1e55f9174d3"
+      },
+      {
+        "file": "newvad-silero-16kop15-commits.txt",
+        "sha256": "08a984a1dcb4823e4f3803afc9a85927e4565a460ef598bde6766cb75c09eac1"
+      },
+      {
+        "file": "newvad-silero-utils.txt",
+        "sha256": "dbdcfc5cef2c14abf8cc29b44afb79038509a9bc34ae8ba2e7482b48813949ee"
+      },
+      {
+        "file": "newvad-sherpa-silero-source.txt",
+        "sha256": "a78f9205159e264138647660353f7a7a2cd01204574fa33b1c31a2ab9d278af8"
+      },
+      {
+        "file": "newvad-silero-graph.json",
+        "sha256": "c42ef29686268418a6b6ee3c630595577f374767c3441a2120b8251af3e1b36f"
+      },
+      {
+        "file": "newvad-TEN-releases.txt",
+        "sha256": "725cd149ef4ae4d3ed87ec652448a538171a49bbd641581e551d5c5a5d118a76"
+      },
+      {
+        "file": "newvad-MarbleNet-commits.txt",
+        "sha256": "9608e59fcf5ad31244adf2e221a27e32fc75acc4bf77b0c3d531b54547346983"
+      },
+      {
+        "file": "newvad-sherpa-vad-segments.txt",
+        "sha256": "d8761999ff708637ea7ed1636484afa2d75854a7a7fb07e39ae4e68a2f6d0d15"
+      },
+      {
+        "file": "newvad-MarbleNet-artifact-history.txt",
+        "sha256": "9608e59fcf5ad31244adf2e221a27e32fc75acc4bf77b0c3d531b54547346983"
+      }
+    ],
+    "nativeCaveats": [
+      "Native AcceptWaveform first waits for576 actual input samples; upstream Python prepends64zero context and first processes512actual input samples. This changes boundary alignment and startup context; do not claim output parity.",
+      "Native Flush emits already-processed buffer only and does not infer buffered last_ tail. Explicit tail feed/padding and timestamp clipping required in benchmark.",
+      "state[0]/state[1] represent recurrent h/c packed state, not evidence of two LSTM layers despite native source comment."
+    ]
+  },
+  "hf-audio-recent-audit": [
+    {
+      "id": "desert-ant-labs/ear",
+      "model": {
+        "_id": "6a8d86182d3451ffe8168631",
+        "id": "desert-ant-labs/ear",
+        "private": false,
+        "pipeline_tag": "audio-classification",
+        "library_name": "litert",
+        "tags": [
+          "litert",
+          "tflite",
+          "language-identification",
+          "language-detection",
+          "langid",
+          "spoken-language-identification",
+          "audio-classification",
+          "speech",
+          "on-device",
+          "edge-ai",
+          "mobile",
+          "offline",
+          "core-ml",
+          "apple-neural-engine",
+          "multilingual",
+          "af",
+          "am",
+          "ar",
+          "as",
+          "az",
+          "ba",
+          "be",
+          "bg",
+          "bn",
+          "bo",
+          "br",
+          "bs",
+          "ca",
+          "cs",
+          "cy",
+          "da",
+          "de",
+          "el",
+          "en",
+          "es",
+          "et",
+          "eu",
+          "fa",
+          "fi",
+          "fo",
+          "fr",
+          "gl",
+          "gu",
+          "ha",
+          "haw",
+          "he",
+          "hi",
+          "hr",
+          "ht",
+          "hu",
+          "hy",
+          "id",
+          "is",
+          "it",
+          "ja",
+          "jw",
+          "ka",
+          "kk",
+          "km",
+          "kn",
+          "ko",
+          "la",
+          "lb",
+          "ln",
+          "lo",
+          "lt",
+          "lv",
+          "mg",
+          "mi",
+          "mk",
+          "ml",
+          "mn",
+          "mr",
+          "ms",
+          "mt",
+          "my",
+          "ne",
+          "nl",
+          "nn",
+          "no",
+          "oc",
+          "pa",
+          "pl",
+          "ps",
+          "pt",
+          "ro",
+          "ru",
+          "sa",
+          "sd",
+          "si",
+          "sk",
+          "sl",
+          "sn",
+          "so",
+          "sq",
+          "sr",
+          "su",
+          "sv",
+          "sw",
+          "ta",
+          "te",
+          "tg",
+          "th",
+          "tk",
+          "tl",
+          "tr",
+          "tt",
+          "uk",
+          "ur",
+          "uz",
+          "vi",
+          "yi",
+          "yo",
+          "zh",
+          "license:other",
+          "region:us"
+        ],
+        "downloads": 355,
+        "likes": 6,
+        "modelId": "desert-ant-labs/ear",
+        "author": "desert-ant-labs",
+        "sha": "557fcde24e585cdaba69c6bcc24a6ad23f9064cd",
+        "lastModified": "2026-09-02T12:36:35.000Z",
+        "gated": false,
+        "disabled": false,
+        "model-index": null,
+        "config": {},
+        "cardData": {
+          "license": "other",
+          "license_name": "desert-ant-labs-source-available-1.0",
+          "license_link": "https://license.desertant.com/1.0",
+          "language": [
+            "af",
+            "am",
+            "ar",
+            "as",
+            "az",
+            "ba",
+            "be",
+            "bg",
+            "bn",
+            "bo",
+            "br",
+            "bs",
+            "ca",
+            "cs",
+            "cy",
+            "da",
+            "de",
+            "el",
+            "en",
+            "es",
+            "et",
+            "eu",
+            "fa",
+            "fi",
+            "fo",
+            "fr",
+            "gl",
+            "gu",
+            "ha",
+            "haw",
+            "he",
+            "hi",
+            "hr",
+            "ht",
+            "hu",
+            "hy",
+            "id",
+            "is",
+            "it",
+            "ja",
+            "jw",
+            "ka",
+            "kk",
+            "km",
+            "kn",
+            "ko",
+            "la",
+            "lb",
+            "ln",
+            "lo",
+            "lt",
+            "lv",
+            "mg",
+            "mi",
+            "mk",
+            "ml",
+            "mn",
+            "mr",
+            "ms",
+            "mt",
+            "my",
+            "ne",
+            "nl",
+            "nn",
+            "no",
+            "oc",
+            "pa",
+            "pl",
+            "ps",
+            "pt",
+            "ro",
+            "ru",
+            "sa",
+            "sd",
+            "si",
+            "sk",
+            "sl",
+            "sn",
+            "so",
+            "sq",
+            "sr",
+            "su",
+            "sv",
+            "sw",
+            "ta",
+            "te",
+            "tg",
+            "th",
+            "tk",
+            "tl",
+            "tr",
+            "tt",
+            "uk",
+            "ur",
+            "uz",
+            "vi",
+            "yi",
+            "yo",
+            "zh"
+          ],
+          "tags": [
+            "language-identification",
+            "language-detection",
+            "langid",
+            "spoken-language-identification",
+            "audio-classification",
+            "speech",
+            "on-device",
+            "edge-ai",
+            "mobile",
+            "offline",
+            "core-ml",
+            "apple-neural-engine",
+            "litert",
+            "multilingual"
+          ],
+          "pipeline_tag": "audio-classification"
+        },
+        "siblings": [
+          {
+            "rfilename": ".gitattributes",
+            "blobId": "a6344aac8c09253b3b630fb776ae94478aa0275b",
+            "size": 1519
+          },
+          {
+            "rfilename": "README.md",
+            "blobId": "b35808b69b5da9ccedfc90f07c98ba5fb1d759c9",
+            "size": 6842
+          },
+          {
+            "rfilename": "THIRD_PARTY_NOTICES.md",
+            "blobId": "f40fb04be71b1de4906471ef6f07a664b8b6f896",
+            "size": 1698
+          },
+          {
+            "rfilename": "ear.mlmodelc/analytics/coremldata.bin",
+            "blobId": "9b592fc6ace07fa550b3ee9e8b06a127fc25489a",
+            "size": 243,
+            "lfs": {
+              "sha256": "ed952e53694c407af19c56cc16e371ed3bc22af3260baec41cbe9cbdf7522ddd",
+              "size": 243,
+              "pointerSize": 128
+            }
+          },
+          {
+            "rfilename": "ear.mlmodelc/coremldata.bin",
+            "blobId": "76f8396d723fd33b2a5b9156da578bcac47a50a4",
+            "size": 369,
+            "lfs": {
+              "sha256": "bff545265c96ee0d12a127a6ed818422e6af9edd065ffbc9bd3294e1d1d0587c",
+              "size": 369,
+              "pointerSize": 128
+            }
+          },
+          {
+            "rfilename": "ear.mlmodelc/model.mil",
+            "blobId": "6d61a252a0be508a0db21a3deb206283111ffa5d",
+            "size": 128922
+          },
+          {
+            "rfilename": "ear.mlmodelc/weights/weight.bin",
+            "blobId": "e7a50d0d8b8855692d55ba82b805bc36e311076e",
+            "size": 13696070,
+            "lfs": {
+              "sha256": "ac2f45edb6654b49bfda1d2160276bebb73c325e5deb2f0deee03df0267956cf",
+              "size": 13696070,
+              "pointerSize": 133
+            }
+          },
+          {
+            "rfilename": "ear.tflite",
+            "blobId": "7e5eed6cf083971bd55dea3ce32923ab02eb466e",
+            "size": 23062016,
+            "lfs": {
+              "sha256": "71cc15c3f24abbea2dcdf2892370d85806891ad7822cd3107abc0629f10bc955",
+              "size": 23062016,
+              "pointerSize": 133
+            }
+          },
+          {
+            "rfilename": "ear_meta.json",
+            "blobId": "664b96b2727c4cbe2726e6eaed9fe9519c4950af",
+            "size": 3894
+          },
+          {
+            "rfilename": "languages.json",
+            "blobId": "996d10511d17a2cd6bb5c2519de61031a3963a0c",
+            "size": 595
+          },
+          {
+            "rfilename": "mel_filters.f32",
+            "blobId": "a83c7b139bfc5d7db8bb74763f4656cd82c3b334",
+            "size": 64328
+          }
+        ],
+        "spaces": [
+          "desert-ant-labs/ear-language-id-demo"
+        ],
+        "createdAt": "2026-08-25T12:10:00.000Z",
+        "usedStorage": 61543238
+      },
+      "commits": [
+        {
+          "id": "557fcde24e585cdaba69c6bcc24a6ad23f9064cd",
+          "title": "Sync card from manifest.json",
+          "message": "",
+          "authors": [
+            {
+              "user": "laurier-rochon",
+              "avatar": "https://cdn-avatars.huggingface.co/v1/production/uploads/6a32b95ac8296baba4b2f2c0/mF8Vp0D7XOpvXU4pRHnkI.png"
+            }
+          ],
+          "date": "2026-09-02T12:36:35.000Z"
+        },
+        {
+          "id": "6202d3a4c18fbad7567caa66518228babaefe6e5",
+          "title": "Write the card: files, inputs and outputs, what it hears, accuracy, limits, languages, built on",
+          "message": "",
+          "authors": [
+            {
+              "user": "pveugen",
+              "avatar": "https://cdn-avatars.huggingface.co/v1/production/uploads/1669967230536-noauth.jpeg"
+            }
+          ],
+          "date": "2026-08-28T20:29:57.000Z"
+        },
+        {
+          "id": "364f7a3c8fe3d99271d1807264f0242852f28a1b",
+          "title": "Sync card from manifest.json",
+          "message": "",
+          "authors": [
+            {
+              "user": "laurier-rochon",
+              "avatar": "https://cdn-avatars.huggingface.co/v1/production/uploads/6a32b95ac8296baba4b2f2c0/mF8Vp0D7XOpvXU4pRHnkI.png"
+            }
+          ],
+          "date": "2026-08-28T15:23:52.000Z"
+        },
+        {
+          "id": "adf5bd9f5628c07710d8fd583a6398c8ba804c74",
+          "title": "Say audio in the tagline; Tongue is the text one",
+          "message": "",
+          "authors": [
+            {
+              "user": "pveugen",
+              "avatar": "https://cdn-avatars.huggingface.co/v1/production/uploads/1669967230536-noauth.jpeg"
+            }
+          ],
+          "date": "2026-08-28T12:31:39.000Z"
+        },
+        {
+          "id": "014a22ba320ac92bd06505ed7e9824c9e9347286",
+          "title": "Restore the card after the sync flattened it again",
+          "message": "",
+          "authors": [
+            {
+              "user": "pveugen",
+              "avatar": "https://cdn-avatars.huggingface.co/v1/production/uploads/1669967230536-noauth.jpeg"
+            }
+          ],
+          "date": "2026-08-28T09:04:51.000Z"
+        },
+        {
+          "id": "54acf20180181c8082133beb6d6de252f3061ac2",
+          "title": "Sync card from manifest.json",
+          "message": "",
+          "authors": [
+            {
+              "user": "laurier-rochon",
+              "avatar": "https://cdn-avatars.huggingface.co/v1/production/uploads/6a32b95ac8296baba4b2f2c0/mF8Vp0D7XOpvXU4pRHnkI.png"
+            }
+          ],
+          "date": "2026-08-28T08:42:01.000Z"
+        },
+        {
+          "id": "e89d35f79cc5ab6bf0315830b19238353292743a",
+          "title": "Generate the citation block; every card now has one",
+          "message": "",
+          "authors": [
+            {
+              "user": "pveugen",
+              "avatar": "https://cdn-avatars.huggingface.co/v1/production/uploads/1669967230536-noauth.jpeg"
+            }
+          ],
+          "date": "2026-08-28T07:54:19.000Z"
+        },
+        {
+          "id": "67747e6c1bb36aba107fe15a12dad6c33b41652d",
+          "title": "Card pass: reader-first copy, generated install and license blocks",
+          "message": "",
+          "authors": [
+            {
+              "user": "pveugen",
+              "avatar": "https://cdn-avatars.huggingface.co/v1/production/uploads/1669967230536-noauth.jpeg"
+            }
+          ],
+          "date": "2026-08-28T07:48:40.000Z"
+        },
+        {
+          "id": "f648f0cefbc17e677286fa59f0132011d3c60ba8",
+          "title": "Restore the model card, and mark the generated header",
+          "message": "",
+          "authors": [
+            {
+              "user": "pveugen",
+              "avatar": "https://cdn-avatars.huggingface.co/v1/production/uploads/1669967230536-noauth.jpeg"
+            }
+          ],
+          "date": "2026-08-28T06:17:11.000Z"
+        },
+        {
+          "id": "60d9e797bd829907fbf6d81bcb592e4af59fa208",
+          "title": "Sync card from manifest.json",
+          "message": "",
+          "authors": [
+            {
+              "user": "laurier-rochon",
+              "avatar": "https://cdn-avatars.huggingface.co/v1/production/uploads/6a32b95ac8296baba4b2f2c0/mF8Vp0D7XOpvXU4pRHnkI.png"
+            }
+          ],
+          "date": "2026-08-26T11:59:38.000Z"
+        },
+        {
+          "id": "5ac5bec6ecc04fea06dd49f022ccbbcb43391eef",
+          "title": "Move the frontend into the SDK; one artifact per runtime",
+          "message": "\n\nThe log-mel frontend is now host code rather than part of the graph. It cannot run in float16 -- the power spectrum is squared magnitudes floored at 1e-10 and 80% of its bins fall below float16's smallest normal number -- so shipping it as a Core ML program meant either destroying the features (routing 97.5% to 84.2%) or a float32 program that cannot use the Neural Engine at all.\n\nBoth runtimes now take log-mel and return logits, so every platform feeds the same tensor to the same graph. mel_filters.f32 carries the filterbank so host code does not reimplement slaney-normalized librosa filters and drift from it silently.\n\near.mlmodelc: 256 ops, 100% Neural Engine, palette6-group32.\near.tflite: int8 with Hadamard rotation, signature input 'mel'.",
+          "authors": [
+            {
+              "user": "finnvoorhees",
+              "avatar": "https://cdn-avatars.huggingface.co/v1/production/uploads/63890c038a5dbe2f3dc96952/Xoruyt2XD59FIe6S1ZuQI.jpeg"
+            }
+          ],
+          "date": "2026-08-25T12:49:11.000Z"
+        },
+        {
+          "id": "47e2d59596feb749d933287a6e91dd9edf6effa2",
+          "title": "ear 0.1.0: spoken language identification, Core ML and LiteRT",
+          "message": "\n\nDerived from openai/whisper-tiny (MIT), stripped to the subgraph that predicts a language: 37.8M parameters to 17.9M, identical predictions.\n\nCore ML ships as two artifacts on purpose. The frontend runs in fp32 because its power spectrum is squared magnitudes clamped at 1e-10 and 80% of those bins fall below fp16's smallest normal number; fusing it into the fp16 detector scores 84.2% routing where the split scores 97.5%. LiteRT is one file because it runs the frontend in fp32 anyway.\n\nDetector is 256 ops, 100% Neural Engine, 15.8 ms per 30 s window.",
+          "authors": [
+            {
+              "user": "finnvoorhees",
+              "avatar": "https://cdn-avatars.huggingface.co/v1/production/uploads/63890c038a5dbe2f3dc96952/Xoruyt2XD59FIe6S1ZuQI.jpeg"
+            }
+          ],
+          "date": "2026-08-25T12:10:14.000Z"
+        },
+        {
+          "id": "d1827b8aa50664cbd99ad06c033dde9271b37045",
+          "title": "initial commit",
+          "message": "",
+          "authors": [
+            {
+              "user": "finnvoorhees",
+              "avatar": "https://cdn-avatars.huggingface.co/v1/production/uploads/63890c038a5dbe2f3dc96952/Xoruyt2XD59FIe6S1ZuQI.jpeg"
+            }
+          ],
+          "date": "2026-08-25T12:10:00.000Z"
+        }
+      ]
+    },
+    {
+      "id": "desert-ant-labs/uhm",
+      "model": {
+        "_id": "6a02e84e6a6f5f6f5532f1b3",
+        "id": "desert-ant-labs/uhm",
+        "private": false,
+        "pipeline_tag": "audio-classification",
+        "tags": [
+          "coreml",
+          "onnx",
+          "audio",
+          "speech",
+          "filler-detection",
+          "disfluency",
+          "on-device",
+          "core-ml",
+          "audio-classification",
+          "de",
+          "en",
+          "es",
+          "fr",
+          "nl",
+          "license:other",
+          "region:us"
+        ],
+        "downloads": 426,
+        "likes": 8,
+        "modelId": "desert-ant-labs/uhm",
+        "author": "desert-ant-labs",
+        "sha": "9b172658b2a20a21ad8ea44092f4d4b3ff2c69a4",
+        "lastModified": "2026-09-02T12:36:41.000Z",
+        "gated": false,
+        "disabled": false,
+        "model-index": null,
+        "config": {},
+        "cardData": {
+          "license": "other",
+          "license_name": "desert-ant-labs-source-available-1.0",
+          "license_link": "https://license.desertant.com/1.0",
+          "language": [
+            "de",
+            "en",
+            "es",
+            "fr",
+            "nl"
+          ],
+          "tags": [
+            "audio",
+            "speech",
+            "filler-detection",
+            "disfluency",
+            "on-device",
+            "core-ml",
+            "onnx"
+          ],
+          "pipeline_tag": "audio-classification"
+        },
+        "siblings": [
+          {
+            "rfilename": ".gitattributes",
+            "blobId": "a6344aac8c09253b3b630fb776ae94478aa0275b",
+            "size": 1519
+          },
+          {
+            "rfilename": "README.md",
+            "blobId": "4e5c4fcad55ac4402833972850be515f397b26e4",
+            "size": 4865
+          },
+          {
+            "rfilename": "THIRD_PARTY_NOTICES.md",
+            "blobId": "eeb98e03560e95e46ae4d8547ea629e67bc56c0f",
+            "size": 1545
+          },
+          {
+            "rfilename": "UhmLabel.mlmodel",
+            "blobId": "0327c8620ede676befb44432494a1f4d2a878805",
+            "size": 12950,
+            "lfs": {
+              "sha256": "234aada7598f99786efd3b05cdac783da408a3123fe12fb1dca5e52035d59c31",
+              "size": 12950,
+              "pointerSize": 130
+            }
+          },
+          {
+            "rfilename": "labels.json",
+            "blobId": "b056aa5e6dc59e51a92bda5eb4aee12c50fa58ee",
+            "size": 207
+          },
+          {
+            "rfilename": "uhm-web-fp16.onnx",
+            "blobId": "4459ab73f01b86b822bdacf559ed307cb0bcf6b1",
+            "size": 47047128,
+            "lfs": {
+              "sha256": "c266faf7db4cdced6f18aa9119ff2800a20707d7159be645d487ec191a9d79ff",
+              "size": 47047128,
+              "pointerSize": 133
+            }
+          },
+          {
+            "rfilename": "uhm.mlmodelc/analytics/coremldata.bin",
+            "blobId": "92d67dcb091f0dc100d01b9bc5b85946545f38c5",
+            "size": 243,
+            "lfs": {
+              "sha256": "76cee692167747f8fa53ecd985e1de8da2cea9ea34cd22a0edc3ab1a08bc08cf",
+              "size": 243,
+              "pointerSize": 128
+            }
+          },
+          {
+            "rfilename": "uhm.mlmodelc/coremldata.bin",
+            "blobId": "9e24f1640d2eba111cd4fb06f81383a160dc3199",
+            "size": 821,
+            "lfs": {
+              "sha256": "53134cc61bb30fbb98d9b0a1fa3c6a203e25747fd8ad59018373f2a267961042",
+              "size": 821,
+              "pointerSize": 128
+            }
+          },
+          {
+            "rfilename": "uhm.mlmodelc/metadata.json",
+            "blobId": "dd7d8f728ce8da428ef68375936128c959db9174",
+            "size": 2593
+          },
+          {
+            "rfilename": "uhm.mlmodelc/model.mil",
+            "blobId": "07fb630e887170ae3caefdb5d4a0e5b9cf9516aa",
+            "size": 53453
+          },
+          {
+            "rfilename": "uhm.mlmodelc/weights/weight.bin",
+            "blobId": "b492acbb768520f0115b7d08343a6b72bd111cc5",
+            "size": 46996672,
+            "lfs": {
+              "sha256": "557cab7359a1bfd925852ce3f71137a29f5cd17ccaf4bddfbfaab04c4e3e4d00",
+              "size": 46996672,
+              "pointerSize": 133
+            }
+          },
+          {
+            "rfilename": "uhm.onnx",
+            "blobId": "3e4945c770d5b3b6cf89527b5ab2080b33c3be2d",
+            "size": 94042570,
+            "lfs": {
+              "sha256": "fbd19765def76893841e0c70e498bf632d6c68175ceae5a2da8fe3bf7d9d0314",
+              "size": 94042570,
+              "pointerSize": 133
+            }
+          }
+        ],
+        "spaces": [
+          "desert-ant-labs/uhm-demo"
+        ],
+        "createdAt": "2026-05-12T08:43:58.000Z",
+        "usedStorage": 188100384
+      },
+      "commits": [
+        {
+          "id": "9b172658b2a20a21ad8ea44092f4d4b3ff2c69a4",
+          "title": "Sync card from manifest.json",
+          "message": "",
+          "authors": [
+            {
+              "user": "laurier-rochon",
+              "avatar": "https://cdn-avatars.huggingface.co/v1/production/uploads/6a32b95ac8296baba4b2f2c0/mF8Vp0D7XOpvXU4pRHnkI.png"
+            }
+          ],
+          "date": "2026-09-02T12:36:41.000Z"
+        },
+        {
+          "id": "36e86ebcf1fe9a25c2f2e8af01ec302395b8ce30",
+          "title": "Sync card from manifest.json",
+          "message": "",
+          "authors": [
+            {
+              "user": "laurier-rochon",
+              "avatar": "https://cdn-avatars.huggingface.co/v1/production/uploads/6a32b95ac8296baba4b2f2c0/mF8Vp0D7XOpvXU4pRHnkI.png"
+            }
+          ],
+          "date": "2026-09-02T11:39:12.000Z"
+        },
+        {
+          "id": "68e74dfc6e7566a1fcb3bfe0b92544ebcd91913b",
+          "title": "Sync card from manifest.json",
+          "message": "",
+          "authors": [
+            {
+              "user": "laurier-rochon",
+              "avatar": "https://cdn-avatars.huggingface.co/v1/production/uploads/6a32b95ac8296baba4b2f2c0/mF8Vp0D7XOpvXU4pRHnkI.png"
+            }
+          ],
+          "date": "2026-08-28T15:23:59.000Z"
+        },
+        {
+          "id": "654fa8025459fc9efd0a9eb326d356abf744d4aa",
+          "title": "Restore the card after the sync flattened it again",
+          "message": "",
+          "authors": [
+            {
+              "user": "pveugen",
+              "avatar": "https://cdn-avatars.huggingface.co/v1/production/uploads/1669967230536-noauth.jpeg"
+            }
+          ],
+          "date": "2026-08-28T09:05:00.000Z"
+        },
+        {
+          "id": "ec70e80c43fe4489c863e824313886ba759c0b9c",
+          "title": "Sync card from manifest.json",
+          "message": "",
+          "authors": [
+            {
+              "user": "laurier-rochon",
+              "avatar": "https://cdn-avatars.huggingface.co/v1/production/uploads/6a32b95ac8296baba4b2f2c0/mF8Vp0D7XOpvXU4pRHnkI.png"
+            }
+          ],
+          "date": "2026-08-28T08:42:06.000Z"
+        },
+        {
+          "id": "e149fb49434161cdc9d10082ddeb154f253cac63",
+          "title": "State the sizes flat: no tildes, no about",
+          "message": "",
+          "authors": [
+            {
+              "user": "pveugen",
+              "avatar": "https://cdn-avatars.huggingface.co/v1/production/uploads/1669967230536-noauth.jpeg"
+            }
+          ],
+          "date": "2026-08-28T08:24:07.000Z"
+        },
+        {
+          "id": "924a2b0683936c1326e7b8401170b0e6f790d4d3",
+          "title": "Generate the citation block; every card now has one",
+          "message": "",
+          "authors": [
+            {
+              "user": "pveugen",
+              "avatar": "https://cdn-avatars.huggingface.co/v1/production/uploads/1669967230536-noauth.jpeg"
+            }
+          ],
+          "date": "2026-08-28T07:54:29.000Z"
+        },
+        {
+          "id": "aa7880c868bfe3f75ad9af2d17216a16bf344bfc",
+          "title": "Drop the duplicated copyright line",
+          "message": "",
+          "authors": [
+            {
+              "user": "pveugen",
+              "avatar": "https://cdn-avatars.huggingface.co/v1/production/uploads/1669967230536-noauth.jpeg"
+            }
+          ],
+          "date": "2026-08-28T07:50:46.000Z"
+        },
+        {
+          "id": "38782897fd22bececdd1a7e820bc2d3284bf5117",
+          "title": "Card pass: reader-first copy, generated install and license blocks",
+          "message": "",
+          "authors": [
+            {
+              "user": "pveugen",
+              "avatar": "https://cdn-avatars.huggingface.co/v1/production/uploads/1669967230536-noauth.jpeg"
+            }
+          ],
+          "date": "2026-08-28T07:48:49.000Z"
+        },
+        {
+          "id": "0950e6cf80bcf74a29e117188e04a81a3cb20d4e",
+          "title": "Restore the model card, and mark the generated header",
+          "message": "",
+          "authors": [
+            {
+              "user": "pveugen",
+              "avatar": "https://cdn-avatars.huggingface.co/v1/production/uploads/1669967230536-noauth.jpeg"
+            }
+          ],
+          "date": "2026-08-28T06:17:20.000Z"
+        },
+        {
+          "id": "b9170366a19817dbd9384ac89c7bc3d705ae797a",
+          "title": "Sync card from manifest.json",
+          "message": "",
+          "authors": [
+            {
+              "user": "laurier-rochon",
+              "avatar": "https://cdn-avatars.huggingface.co/v1/production/uploads/6a32b95ac8296baba4b2f2c0/mF8Vp0D7XOpvXU4pRHnkI.png"
+            }
+          ],
+          "date": "2026-08-24T16:10:47.000Z"
+        },
+        {
+          "id": "886617b81dc892d1d0d074391b5b4e8ea70896cb",
+          "title": "Sync card from manifest.json",
+          "message": "",
+          "authors": [
+            {
+              "user": "laurier-rochon",
+              "avatar": "https://cdn-avatars.huggingface.co/v1/production/uploads/6a32b95ac8296baba4b2f2c0/mF8Vp0D7XOpvXU4pRHnkI.png"
+            }
+          ],
+          "date": "2026-08-21T17:30:50.000Z"
+        },
+        {
+          "id": "612592c10ad7b2a51f3237725448a1aad212480b",
+          "title": "Add UhmLabel.mlmodel type-labeler head (downloaded on-demand by the SDK)",
+          "message": "",
+          "authors": [
+            {
+              "user": "frederoni",
+              "avatar": "https://cdn-avatars.huggingface.co/v1/production/uploads/6389bd084b547a364ea0dac6/ybnwiPn_GeiRFV3nfSQ6M.jpeg"
+            }
+          ],
+          "date": "2026-08-17T08:50:16.000Z"
+        },
+        {
+          "id": "43f58101a3f8ef598510ecf4b7dbb99e6076bef7",
+          "title": "Domain: point desertant.ai links to .com",
+          "message": "",
+          "authors": [
+            {
+              "user": "pveugen",
+              "avatar": "https://cdn-avatars.huggingface.co/v1/production/uploads/1669967230536-noauth.jpeg"
+            }
+          ],
+          "date": "2026-07-24T08:24:47.000Z"
+        },
+        {
+          "id": "177427988e5ec2a18bdcbca09e8ef9d3a8201306",
+          "title": "License: point README to license.desertant.com",
+          "message": "",
+          "authors": [
+            {
+              "user": "pveugen",
+              "avatar": "https://cdn-avatars.huggingface.co/v1/production/uploads/1669967230536-noauth.jpeg"
+            }
+          ],
+          "date": "2026-07-24T08:03:52.000Z"
+        },
+        {
+          "id": "c52154fefc3656b2ddef774a2279236e3e825fb1",
+          "title": "License: point to license.desertant.com/1.0",
+          "message": "",
+          "authors": [
+            {
+              "user": "pveugen",
+              "avatar": "https://cdn-avatars.huggingface.co/v1/production/uploads/1669967230536-noauth.jpeg"
+            }
+          ],
+          "date": "2026-07-24T08:03:11.000Z"
+        },
+        {
+          "id": "721153f72084505317efccd3b57c62e7072f1c47",
+          "title": "License: point README to license.desertant.ai",
+          "message": "",
+          "authors": [
+            {
+              "user": "pveugen",
+              "avatar": "https://cdn-avatars.huggingface.co/v1/production/uploads/1669967230536-noauth.jpeg"
+            }
+          ],
+          "date": "2026-07-03T15:54:14.000Z"
+        },
+        {
+          "id": "ef1b77859785f91262434e897748e647b7757224",
+          "title": "License: managed centrally at license.desertant.ai",
+          "message": "",
+          "authors": [
+            {
+              "user": "pveugen",
+              "avatar": "https://cdn-avatars.huggingface.co/v1/production/uploads/1669967230536-noauth.jpeg"
+            }
+          ],
+          "date": "2026-07-03T15:10:41.000Z"
+        },
+        {
+          "id": "a0ab78540d724afa6d8caf09090936ffbfbbf3d1",
+          "title": "License: point to license.desertant.ai/1.0",
+          "message": "",
+          "authors": [
+            {
+              "user": "pveugen",
+              "avatar": "https://cdn-avatars.huggingface.co/v1/production/uploads/1669967230536-noauth.jpeg"
+            }
+          ],
+          "date": "2026-07-03T15:10:41.000Z"
+        },
+        {
+          "id": "b864ecf50e7ca27b813c2bdb67964a9ffe84c413",
+          "title": "Uhm: on-device filler-word detection model (DistilHuBERT, Core ML + ONNX)",
+          "message": "\n\n\nCo-authored-by: pveugen <pveugen@users.noreply.huggingface.co>\n",
+          "authors": [
+            {
+              "user": "finnvoorhees",
+              "avatar": "https://cdn-avatars.huggingface.co/v1/production/uploads/63890c038a5dbe2f3dc96952/Xoruyt2XD59FIe6S1ZuQI.jpeg"
+            },
+            {
+              "user": "pveugen",
+              "avatar": "https://cdn-avatars.huggingface.co/v1/production/uploads/1669967230536-noauth.jpeg"
+            }
+          ],
+          "date": "2026-07-01T10:33:44.000Z"
+        }
+      ]
+    },
+    {
+      "id": "desert-ant-labs/clear",
+      "model": {
+        "_id": "6a05607165cede0727500ad2",
+        "id": "desert-ant-labs/clear",
+        "private": false,
+        "pipeline_tag": "audio-to-audio",
+        "tags": [
+          "tflite",
+          "onnx",
+          "audio",
+          "speech",
+          "speech-enhancement",
+          "speech-denoising",
+          "noise-suppression",
+          "dereverberation",
+          "podcast",
+          "on-device",
+          "core-ml",
+          "core-ai",
+          "ios",
+          "android",
+          "audio-to-audio",
+          "license:other",
+          "region:us"
+        ],
+        "downloads": 862,
+        "likes": 23,
+        "modelId": "desert-ant-labs/clear",
+        "author": "desert-ant-labs",
+        "sha": "16be4d516113853a2100fbb295c32186b2a05606",
+        "lastModified": "2026-09-10T16:46:26.000Z",
+        "gated": false,
+        "disabled": false,
+        "model-index": null,
+        "config": {},
+        "cardData": {
+          "license": "other",
+          "license_name": "desert-ant-labs-source-available-1.0",
+          "license_link": "https://license.desertant.com/1.0",
+          "tags": [
+            "audio",
+            "speech",
+            "speech-enhancement",
+            "speech-denoising",
+            "noise-suppression",
+            "dereverberation",
+            "podcast",
+            "on-device",
+            "core-ml",
+            "core-ai",
+            "onnx",
+            "ios",
+            "android"
+          ],
+          "pipeline_tag": "audio-to-audio"
+        },
+        "siblings": [
+          {
+            "rfilename": ".gitattributes",
+            "blobId": "73b549964b5a1d3690e06d3699fe84e6e7079559",
+            "size": 1563
+          },
+          {
+            "rfilename": "README.md",
+            "blobId": "a1b15c649d3a97bf840ad12002a1948619a5c3cc",
+            "size": 7190
+          },
+          {
+            "rfilename": "THIRD_PARTY_NOTICES.md",
+            "blobId": "f03275d6623cab433b56866ab6798d63dcf46613",
+            "size": 1834
+          },
+          {
+            "rfilename": "clear-natural.aimodel.zip",
+            "blobId": "b0f5c962259efda4274569265f27b81646af57f3",
+            "size": 22075066,
+            "lfs": {
+              "sha256": "4455d3a5486ad08f9fddc43253af8285fb5a99db28ed0eb6fb0479ccea8ff16d",
+              "size": 22075066,
+              "pointerSize": 133
+            }
+          },
+          {
+            "rfilename": "clear-natural.aimodel/main.hash",
+            "blobId": "6c358efa50e8db14436b8a94955e983df6ee9c49",
+            "size": 32
+          },
+          {
+            "rfilename": "clear-natural.aimodel/main.mlirb",
+            "blobId": "c163ce09c038b4529a7790ee6a3bf596e1f964b2",
+            "size": 24173281,
+            "lfs": {
+              "sha256": "4fb2f2222a343cdfe0ee862ee2ca07fc2989c09b7c03b6ee7aa421ec6548b36d",
+              "size": 24173281,
+              "pointerSize": 133
+            }
+          },
+          {
+            "rfilename": "clear-natural.aimodel/metadata.json",
+            "blobId": "5f2c96215cdc70bb086d89be71a40c5830eda793",
+            "size": 105
+          },
+          {
+            "rfilename": "clear-natural.mlmodelc.zip",
+            "blobId": "15b1b2820ffb2542efaa54d424c7fae6c8f946de",
+            "size": 9029142,
+            "lfs": {
+              "sha256": "dbeaad00f97ede7b2399f80ef2152c32413965d611df96578001bb364a285a53",
+              "size": 9029142,
+              "pointerSize": 132
+            }
+          },
+          {
+            "rfilename": "clear-natural.mlmodelc/analytics/coremldata.bin",
+            "blobId": "739fb423b7926b24b0f3244239aaac2e9f314bc8",
+            "size": 243,
+            "lfs": {
+              "sha256": "8c7d7de9759fdaf52b4521a7e6b904f2536a2e1c7b4141c6c91957960fb11576",
+              "size": 243,
+              "pointerSize": 128
+            }
+          },
+          {
+            "rfilename": "clear-natural.mlmodelc/coremldata.bin",
+            "blobId": "50109187629c36bc7b08f5a6a338945cdee1b3f0",
+            "size": 437,
+            "lfs": {
+              "sha256": "1188433c9403fb34a95d6bf48f8887da23e5afa7ed48b243d2d35d3a2713668f",
+              "size": 437,
+              "pointerSize": 128
+            }
+          },
+          {
+            "rfilename": "clear-natural.mlmodelc/metadata.json",
+            "blobId": "a9aa6b69578f277c65b38c04720545b7038195a9",
+            "size": 2730
+          },
+          {
+            "rfilename": "clear-natural.mlmodelc/model.mil",
+            "blobId": "480fc2a3490c317f258dfbde2a0888d86b6d70ed",
+            "size": 273102
+          },
+          {
+            "rfilename": "clear-natural.mlmodelc/weights/weight.bin",
+            "blobId": "8c0a0501f92b22f8592ded6b2e135fefe981bc5c",
+            "size": 9114304,
+            "lfs": {
+              "sha256": "bd3b622719f84a4e66fb02cff9471e725fb42844a70801a7e6cefe8d41a57fc8",
+              "size": 9114304,
+              "pointerSize": 132
+            }
+          },
+          {
+            "rfilename": "clear-natural.onnx",
+            "blobId": "bce738623d4e281a89b50dd9b4d180b4ee60152d",
+            "size": 24801006,
+            "lfs": {
+              "sha256": "672b49c3f601043b21d13a9c44f5da6b81187a753a4ec787a843a7b31f02e016",
+              "size": 24801006,
+              "pointerSize": 133
+            }
+          },
+          {
+            "rfilename": "clear-natural.tflite",
+            "blobId": "f52baf5ec2037612ddb2d2dee1fc3263b3846dff",
+            "size": 49285108,
+            "lfs": {
+              "sha256": "98e84e7df54a3ff52520b0e1c04662cea1415e7625c164e824ae27d5b03951ae",
+              "size": 49285108,
+              "pointerSize": 133
+            }
+          },
+          {
+            "rfilename": "clear-studio.aimodel.zip",
+            "blobId": "b390cbb14e5cff3d3e682cfddcaf373a1e75bd4a",
+            "size": 22078334,
+            "lfs": {
+              "sha256": "72ee85e94ab0029d5e89a83aa19a27a3548ac6250002136ecba66b51603df7d3",
+              "size": 22078334,
+              "pointerSize": 133
+            }
+          },
+          {
+            "rfilename": "clear-studio.aimodel/main.hash",
+            "blobId": "102de8f8bc7d5867adaa4eccf0f0e16a82a61b1f",
+            "size": 32
+          },
+          {
+            "rfilename": "clear-studio.aimodel/main.mlirb",
+            "blobId": "4bf9464272ec6eeb0ec932bdb65c44c3121a5322",
+            "size": 24173283,
+            "lfs": {
+              "sha256": "a1a1863a0be1ea902176438611b3f2f6b0daa800245ddf639d05301809f7cb39",
+              "size": 24173283,
+              "pointerSize": 133
+            }
+          },
+          {
+            "rfilename": "clear-studio.aimodel/metadata.json",
+            "blobId": "f8cdcae589da1e8d7a25f08da41cd83f13582cf6",
+            "size": 105
+          },
+          {
+            "rfilename": "clear-studio.mlmodelc.zip",
+            "blobId": "fb3120a31a109a84fdec2dae91f6f1dd9de114d9",
+            "size": 9029934,
+            "lfs": {
+              "sha256": "72acd7e93bf20ddd263a869b5ba93aa41e6618c76719474ad73fdf8b8604fc30",
+              "size": 9029934,
+              "pointerSize": 132
+            }
+          },
+          {
+            "rfilename": "clear-studio.mlmodelc/analytics/coremldata.bin",
+            "blobId": "515018865421d445c9538552a9061900da42f8c0",
+            "size": 243,
+            "lfs": {
+              "sha256": "f45f37a3b3af8f80cbed2b4118574296a91b74f1993e6f2b4b7e48ef67d96473",
+              "size": 243,
+              "pointerSize": 128
+            }
+          },
+          {
+            "rfilename": "clear-studio.mlmodelc/coremldata.bin",
+            "blobId": "892e61a9be3ccb6672ab434579d071c08b0f765d",
+            "size": 437,
+            "lfs": {
+              "sha256": "b10c5b24ecfa2528646089ca4a64abc74244e51c05a198eb4896875640933772",
+              "size": 437,
+              "pointerSize": 128
+            }
+          },
+          {
+            "rfilename": "clear-studio.mlmodelc/metadata.json",
+            "blobId": "2d53629a2828d02010eaf08aeb8be7c2dae276ba",
+            "size": 2729
+          },
+          {
+            "rfilename": "clear-studio.mlmodelc/model.mil",
+            "blobId": "fcd5ba404ec63306a85fb76ebe8da416043ba335",
+            "size": 273102
+          },
+          {
+            "rfilename": "clear-studio.mlmodelc/weights/weight.bin",
+            "blobId": "5f7b2b6cb49a9e0bd19809d6e38b638c3b48126b",
+            "size": 9114304,
+            "lfs": {
+              "sha256": "ddf02ee04d432a323141aebcedca40c3b2f6f4950ee75ddf2997ef79a183764f",
+              "size": 9114304,
+              "pointerSize": 132
+            }
+          },
+          {
+            "rfilename": "clear-studio.onnx",
+            "blobId": "67eed0db58ab57046a4ae979e506648412679b29",
+            "size": 24801006,
+            "lfs": {
+              "sha256": "4176990296374e972f0c347ddcc7988d216829cafc58e4d54a98dccd715107d9",
+              "size": 24801006,
+              "pointerSize": 133
+            }
+          },
+          {
+            "rfilename": "clear-studio.tflite",
+            "blobId": "2c1cea9e1e089c462b9f5d53c81c3050724f388a",
+            "size": 49285108,
+            "lfs": {
+              "sha256": "fe2438e4e1137455298321ca952c5d3a4d7dde27eca6b8a495789723212fc79f",
+              "size": 49285108,
+              "pointerSize": 133
+            }
+          }
+        ],
+        "spaces": [
+          "desert-ant-labs/clear-demo"
+        ],
+        "createdAt": "2026-05-14T05:41:05.000Z",
+        "usedStorage": 326322066
+      },
+      "commits": [
+        {
+          "id": "16be4d516113853a2100fbb295c32186b2a05606",
+          "title": "Update repository",
+          "message": "\n\n\nCo-authored-by: laurier-rochon <laurier-rochon@users.noreply.huggingface.co>\nCo-authored-by: pveugen <pveugen@users.noreply.huggingface.co>\nCo-authored-by: finnvoorhees <finnvoorhees@users.noreply.huggingface.co>\n",
+          "authors": [
+            {
+              "user": "bkicanao",
+              "avatar": "/avatars/dbedad3044d95f81ad39ceb5cc75864b.svg"
+            },
+            {
+              "user": "laurier-rochon",
+              "avatar": "https://cdn-avatars.huggingface.co/v1/production/uploads/6a32b95ac8296baba4b2f2c0/mF8Vp0D7XOpvXU4pRHnkI.png"
+            },
+            {
+              "user": "pveugen",
+              "avatar": "https://cdn-avatars.huggingface.co/v1/production/uploads/1669967230536-noauth.jpeg"
+            },
+            {
+              "user": "finnvoorhees",
+              "avatar": "https://cdn-avatars.huggingface.co/v1/production/uploads/63890c038a5dbe2f3dc96952/Xoruyt2XD59FIe6S1ZuQI.jpeg"
+            }
+          ],
+          "date": "2026-09-10T16:46:26.000Z"
+        }
+      ]
+    },
+    {
+      "id": "Ceva-IP/DPDFNet",
+      "model": {
+        "_id": "69427b0aa5ddf435d90489d2",
+        "id": "Ceva-IP/DPDFNet",
+        "private": false,
+        "pipeline_tag": "audio-to-audio",
+        "tags": [
+          "tflite",
+          "onnx",
+          "speech_enhancement",
+          "noise_suppression",
+          "real_time",
+          "streaming",
+          "causal",
+          "fullband",
+          "audio-to-audio",
+          "arxiv:2512.16420",
+          "license:apache-2.0",
+          "region:us"
+        ],
+        "downloads": 517,
+        "likes": 16,
+        "modelId": "Ceva-IP/DPDFNet",
+        "author": "Ceva-IP",
+        "sha": "dd6818d00f50c836fed43a6243ebe49116de5964",
+        "lastModified": "2026-07-05T10:22:54.000Z",
+        "gated": false,
+        "disabled": false,
+        "model-index": null,
+        "config": {},
+        "cardData": {
+          "license": "apache-2.0",
+          "pipeline_tag": "audio-to-audio",
+          "tags": [
+            "speech_enhancement",
+            "noise_suppression",
+            "real_time",
+            "streaming",
+            "causal",
+            "onnx",
+            "tflite",
+            "fullband"
+          ]
+        },
+        "siblings": [
+          {
+            "rfilename": ".gitattributes",
+            "blobId": "a6344aac8c09253b3b630fb776ae94478aa0275b",
+            "size": 1519
+          },
+          {
+            "rfilename": "README.md",
+            "blobId": "95d93407955c5f64b3017d0ab10d1027f743849a",
+            "size": 4970
+          },
+          {
+            "rfilename": "baseline.tflite",
+            "blobId": "d36f094c1846e9f8ece798535d446d8f80bf1606",
+            "size": 8938252,
+            "lfs": {
+              "sha256": "cc92c5e51781e3916ca8666e4cbdf031bffea4c095e7a4a474bf27283125b53a",
+              "size": 8938252,
+              "pointerSize": 132
+            }
+          },
+          {
+            "rfilename": "checkpoints/baseline.pth",
+            "blobId": "41b443b67e1814f1f9c28971fbd4f4483485ba2a",
+            "size": 8801227,
+            "lfs": {
+              "sha256": "2946fb28c186b15c10fa0945edec83fdafaacac8503c3cf3ad2354a8c79a28e5",
+              "size": 8801227,
+              "pointerSize": 132
+            }
+          },
+          {
+            "rfilename": "checkpoints/dpdfnet2.pth",
+            "blobId": "21b70b66b389104601bf22b3c01cf0897ec241f1",
+            "size": 10224203,
+            "lfs": {
+              "sha256": "96dc1e4a1c7a2c792189ee3638613ac27d8254ea2934a8ea204fc970a8ea61a5",
+              "size": 10224203,
+              "pointerSize": 133
+            }
+          },
+          {
+            "rfilename": "checkpoints/dpdfnet2_48khz_hr.pth",
+            "blobId": "d81e7358f5e62beebc10a35dc85e6d949dbf3ac3",
+            "size": 10738298,
+            "lfs": {
+              "sha256": "f4eb984dc80d66d6e417a8d6ad8855b4fd0b559452db1e68950f028234109d5c",
+              "size": 10738298,
+              "pointerSize": 133
+            }
+          },
+          {
+            "rfilename": "checkpoints/dpdfnet2_8khz.pth",
+            "blobId": "72be5c97dee080731a8430bd1426035bb200b1cf",
+            "size": 10279146,
+            "lfs": {
+              "sha256": "30a881b16ec63403c9aa61687becafc33196739195195033fc2443a8df230cbf",
+              "size": 10279146,
+              "pointerSize": 133
+            }
+          },
+          {
+            "rfilename": "checkpoints/dpdfnet4.pth",
+            "blobId": "9383d7924458e61761832bc11d79c18c5895b72a",
+            "size": 11645355,
+            "lfs": {
+              "sha256": "782f617c5d7388a857a7e2614e8151f868bff3b87dd4a7e5c414beb88aa13853",
+              "size": 11645355,
+              "pointerSize": 133
+            }
+          },
+          {
+            "rfilename": "checkpoints/dpdfnet8.pth",
+            "blobId": "19087a12bc248e6ce12a4901d56fb48496596a17",
+            "size": 14487595,
+            "lfs": {
+              "sha256": "34b8c6b010f46e41286c382269f88fbc6715a393de0c76a3312972dbb948e125",
+              "size": 14487595,
+              "pointerSize": 133
+            }
+          },
+          {
+            "rfilename": "checkpoints/dpdfnet8_48khz_hr.pth",
+            "blobId": "c23f0701f01a2c921e91f0f8d3fc1bc3fbc3e0a3",
+            "size": 14999747,
+            "lfs": {
+              "sha256": "7ade8f393e6b845a7f7e8e42b6c7cf169f6821e8489faf8f7fe0792b30482abe",
+              "size": 14999747,
+              "pointerSize": 133
+            }
+          },
+          {
+            "rfilename": "checkpoints/dpdfnet8_8khz.pth",
+            "blobId": "d2c13d7e5394e8489bd84a3a9999691845a56085",
+            "size": 14541554,
+            "lfs": {
+              "sha256": "73344e00468223d656a0c419b7b39cedc5db6cfd1acfe0ece84dae04e2f1f1c9",
+              "size": 14541554,
+              "pointerSize": 133
+            }
+          },
+          {
+            "rfilename": "dpdfnet2.tflite",
+            "blobId": "eedf64f23b64990fedb1ada9fd7577711e3d0d87",
+            "size": 11234672,
+            "lfs": {
+              "sha256": "5dc04b92bb9e8d3365772d5fb221b0dba7a3f1f643171c7c09931a71bd0177de",
+              "size": 11234672,
+              "pointerSize": 133
+            }
+          },
+          {
+            "rfilename": "dpdfnet2_48khz_hr.tflite",
+            "blobId": "86c3140f30e27601c5320d213456bef27e796984",
+            "size": 11898148,
+            "lfs": {
+              "sha256": "515ee352986e74149819bc829dd82c507b926d6edcde08fe4ef27cfc60c8957a",
+              "size": 11898148,
+              "pointerSize": 133
+            }
+          },
+          {
+            "rfilename": "dpdfnet2_8khz.tflite",
+            "blobId": "fde445e82e41d9ede3fe7ffdb15c732e8463d62d",
+            "size": 11049440,
+            "lfs": {
+              "sha256": "4a9f9ec357420b0366263f1439e894c9328e50d352dd47a910723da4b0dbb1f5",
+              "size": 11049440,
+              "pointerSize": 133
+            }
+          },
+          {
+            "rfilename": "dpdfnet4.tflite",
+            "blobId": "97a4b81befb6bb384d073bc87a7ebbef81360c18",
+            "size": 13515600,
+            "lfs": {
+              "sha256": "d544a0f9e65180b0f67d1442cb9d33cec33347076dc427af97a461a75dd19c06",
+              "size": 13515600,
+              "pointerSize": 133
+            }
+          },
+          {
+            "rfilename": "dpdfnet8.tflite",
+            "blobId": "ae22c3d81f5748e4d08df579fadc165433cf9610",
+            "size": 18077552,
+            "lfs": {
+              "sha256": "c7e07d2aac73b451a0d6cda6daf2a6194a1ec0e9e597ee86e2ecfc1356b6d6e1",
+              "size": 18077552,
+              "pointerSize": 133
+            }
+          },
+          {
+            "rfilename": "dpdfnet8_48khz_hr.tflite",
+            "blobId": "5d26a2a097e2ad791afe55df902848c6cbcd84c0",
+            "size": 19639068,
+            "lfs": {
+              "sha256": "3a28291a00b359592eaf6e853f49344eb6aac23dc992739de28da0f9face44c3",
+              "size": 19639068,
+              "pointerSize": 133
+            }
+          },
+          {
+            "rfilename": "dpdfnet8_8khz.tflite",
+            "blobId": "9ac630b15ee577ac6e645509dfd773e3fa7b4024",
+            "size": 17333272,
+            "lfs": {
+              "sha256": "95ecd5e82872f1e81eb74a6328ffa548b3851d1b29c5157c9e4969d0a6cfbb2b",
+              "size": 17333272,
+              "pointerSize": 133
+            }
+          },
+          {
+            "rfilename": "onnx/baseline.onnx",
+            "blobId": "142e516e03fa92023285957900d5736a9aaec7b0",
+            "size": 8722707,
+            "lfs": {
+              "sha256": "371d26182aff0e1e0d31354e24c81f79cd57458f5a7dd003fc10a7ebf64255e0",
+              "size": 8722707,
+              "pointerSize": 132
+            }
+          },
+          {
+            "rfilename": "onnx/dpdfnet2.onnx",
+            "blobId": "15158071ffab287bb1514cc39fde3d6df4e5aa43",
+            "size": 10178747,
+            "lfs": {
+              "sha256": "4f0ee28935b4a32abecc717d745416976565834d839601acf43031094b4dc94c",
+              "size": 10178747,
+              "pointerSize": 133
+            }
+          },
+          {
+            "rfilename": "onnx/dpdfnet2_48khz_hr.onnx",
+            "blobId": "1b073941269cdc499116eb1ed42a5b501a6579c0",
+            "size": 10493337,
+            "lfs": {
+              "sha256": "7f0575a5cec0ba4ffd8f8bd657e06d007e4ccdd955d76faab922b9d3291dc14b",
+              "size": 10493337,
+              "pointerSize": 133
+            }
+          },
+          {
+            "rfilename": "onnx/dpdfnet2_8khz.onnx",
+            "blobId": "7c334c2318a1b0c71db400b0bbfc78c7a0f390de",
+            "size": 10188357,
+            "lfs": {
+              "sha256": "6218f1dbd6e4bac5768c63b7d899fe7b84b3788f2a35c4e246d4ab0946165c5d",
+              "size": 10188357,
+              "pointerSize": 133
+            }
+          },
+          {
+            "rfilename": "onnx/dpdfnet4.onnx",
+            "blobId": "583b1db9a567d2c5ec74cb4f6b740bae1e35f06c",
+            "size": 11633337,
+            "lfs": {
+              "sha256": "42a386d3601922f474c4309927e1f471cce422e9bd8e3fd3967bb943bac36c01",
+              "size": 11633337,
+              "pointerSize": 133
+            }
+          },
+          {
+            "rfilename": "onnx/dpdfnet8.onnx",
+            "blobId": "65cb321b095549f05c8c30a4c5e6d45c26f12715",
+            "size": 14542517,
+            "lfs": {
+              "sha256": "899d4f23f3ff86edbffa8c537e4bcbdc49da1b4e84e0ef390611e0604a3b26cb",
+              "size": 14542517,
+              "pointerSize": 133
+            }
+          },
+          {
+            "rfilename": "onnx/dpdfnet8_48khz_hr.onnx",
+            "blobId": "f8137390ba815fd741b0aed817820e8c4bd76b9b",
+            "size": 14857107,
+            "lfs": {
+              "sha256": "7b3afbb260a08fe9af3d16e3bda992971be1e7e951d1dee7c2d235f5c43f5631",
+              "size": 14857107,
+              "pointerSize": 133
+            }
+          },
+          {
+            "rfilename": "onnx/dpdfnet8_8khz.onnx",
+            "blobId": "3f90a436751aff30bb07269284c98c18e8d5fdd2",
+            "size": 14552127,
+            "lfs": {
+              "sha256": "c061bcc56b803fa2fa97d448a45db6d966f7d17aff1304e464455d748745ea62",
+              "size": 14552127,
+              "pointerSize": 133
+            }
+          }
+        ],
+        "spaces": [],
+        "createdAt": "2025-12-17T09:42:34.000Z",
+        "usedStorage": 504258942
+      },
+      "commits": [
+        {
+          "id": "dd6818d00f50c836fed43a6243ebe49116de5964",
+          "title": "Update README.md",
+          "message": "",
+          "authors": [
+            {
+              "user": "danielr-ceva",
+              "avatar": "/avatars/2b325b24068063d66e7744029b346514.svg"
+            }
+          ],
+          "date": "2026-07-05T10:22:54.000Z"
+        },
+        {
+          "id": "06ea50dd388da9624b49586a4679d3f23eb511cb",
+          "title": "Upload 2 files",
+          "message": "",
+          "authors": [
+            {
+              "user": "danielr-ceva",
+              "avatar": "/avatars/2b325b24068063d66e7744029b346514.svg"
+            }
+          ],
+          "date": "2026-07-05T09:48:44.000Z"
+        },
+        {
+          "id": "32474f2dc786f64d88f01523dd61df06b98fd349",
+          "title": "Upload 2 files",
+          "message": "",
+          "authors": [
+            {
+              "user": "danielr-ceva",
+              "avatar": "/avatars/2b325b24068063d66e7744029b346514.svg"
+            }
+          ],
+          "date": "2026-07-05T09:48:01.000Z"
+        },
+        {
+          "id": "78da9504bef12c028f8b3286386e43b3dea5c28d",
+          "title": "Upload 2 files",
+          "message": "",
+          "authors": [
+            {
+              "user": "danielr-ceva",
+              "avatar": "/avatars/2b325b24068063d66e7744029b346514.svg"
+            }
+          ],
+          "date": "2026-07-05T09:41:43.000Z"
+        },
+        {
+          "id": "e3efebcb54d75b76681ad74f8c65ff8ae175cbfb",
+          "title": "Upload dpdfnet2_48khz_hr.pth",
+          "message": "",
+          "authors": [
+            {
+              "user": "danielr-ceva",
+              "avatar": "/avatars/2b325b24068063d66e7744029b346514.svg"
+            }
+          ],
+          "date": "2026-05-27T10:19:24.000Z"
+        },
+        {
+          "id": "50ceb13c3b5953cf714e42c77a52d9afc779fec8",
+          "title": "Upload dpdfnet2_48khz_hr.tflite",
+          "message": "",
+          "authors": [
+            {
+              "user": "danielr-ceva",
+              "avatar": "/avatars/2b325b24068063d66e7744029b346514.svg"
+            }
+          ],
+          "date": "2026-05-27T10:16:22.000Z"
+        },
+        {
+          "id": "c7ac7b249ff5e17fa606794dc4f68ed9a544834f",
+          "title": "Upload dpdfnet2_48khz_hr.onnx",
+          "message": "",
+          "authors": [
+            {
+              "user": "danielr-ceva",
+              "avatar": "/avatars/2b325b24068063d66e7744029b346514.svg"
+            }
+          ],
+          "date": "2026-05-17T09:48:24.000Z"
+        },
+        {
+          "id": "a2d672f9993f8be18b6c2586700124674e16f3a5",
+          "title": "Update README.md",
+          "message": "",
+          "authors": [
+            {
+              "user": "danielr-ceva",
+              "avatar": "/avatars/2b325b24068063d66e7744029b346514.svg"
+            }
+          ],
+          "date": "2026-03-26T12:48:48.000Z"
+        },
+        {
+          "id": "a38c6025258437578c0c1ee325f98a80e4d22f3b",
+          "title": "Update README.md",
+          "message": "",
+          "authors": [
+            {
+              "user": "danielr-ceva",
+              "avatar": "/avatars/2b325b24068063d66e7744029b346514.svg"
+            }
+          ],
+          "date": "2026-03-26T12:47:22.000Z"
+        },
+        {
+          "id": "16aeec3d284b98405e059e2f9fcf45314a4310a8",
+          "title": "Update README.md",
+          "message": "",
+          "authors": [
+            {
+              "user": "danielr-ceva",
+              "avatar": "/avatars/2b325b24068063d66e7744029b346514.svg"
+            }
+          ],
+          "date": "2026-03-26T12:45:53.000Z"
+        },
+        {
+          "id": "1366be98b1b42adb249fc0ada1ea9abda8b0f77b",
+          "title": "Upload dpdfnet8_48khz_hr.onnx",
+          "message": "",
+          "authors": [
+            {
+              "user": "danielr-ceva",
+              "avatar": "/avatars/2b325b24068063d66e7744029b346514.svg"
+            }
+          ],
+          "date": "2026-03-26T12:21:23.000Z"
+        },
+        {
+          "id": "0d08c1f13af30ef28511872ce1aa344764253ff9",
+          "title": "Upload dpdfnet8_48khz_hr.tflite",
+          "message": "",
+          "authors": [
+            {
+              "user": "danielr-ceva",
+              "avatar": "/avatars/2b325b24068063d66e7744029b346514.svg"
+            }
+          ],
+          "date": "2026-03-26T12:20:48.000Z"
+        },
+        {
+          "id": "08687cdbba31933176acb24839639e8d018fede2",
+          "title": "Upload dpdfnet8_48khz_hr.pth",
+          "message": "",
+          "authors": [
+            {
+              "user": "danielr-ceva",
+              "avatar": "/avatars/2b325b24068063d66e7744029b346514.svg"
+            }
+          ],
+          "date": "2026-03-26T12:11:49.000Z"
+        },
+        {
+          "id": "9adcf02b3c4ae0924a6dbb4cc2f9b582574be947",
+          "title": "Upload 5 files",
+          "message": "",
+          "authors": [
+            {
+              "user": "danielr-ceva",
+              "avatar": "/avatars/2b325b24068063d66e7744029b346514.svg"
+            }
+          ],
+          "date": "2026-03-20T19:06:29.000Z"
+        },
+        {
+          "id": "f9dcda8e940b73f2c741d089d85db28b7bd49949",
+          "title": "Delete onnx",
+          "message": "",
+          "authors": [
+            {
+              "user": "danielr-ceva",
+              "avatar": "/avatars/2b325b24068063d66e7744029b346514.svg"
+            }
+          ],
+          "date": "2026-03-20T19:05:32.000Z"
+        },
+        {
+          "id": "3b0a4ee55df845f6afd6be7e3253cdf5dbcfe634",
+          "title": "Upload 10 files",
+          "message": "",
+          "authors": [
+            {
+              "user": "danielr-ceva",
+              "avatar": "/avatars/2b325b24068063d66e7744029b346514.svg"
+            }
+          ],
+          "date": "2026-03-10T15:02:20.000Z"
+        },
+        {
+          "id": "40c49e2106e4c51e0e141261818c397532a2d376",
+          "title": "Upload 10 files",
+          "message": "",
+          "authors": [
+            {
+              "user": "danielr-ceva",
+              "avatar": "/avatars/2b325b24068063d66e7744029b346514.svg"
+            }
+          ],
+          "date": "2026-03-08T20:07:41.000Z"
+        },
+        {
+          "id": "1a80d48e150711322f84cb9d4c91b3520045cf64",
+          "title": "Delete run_tflite.py",
+          "message": "",
+          "authors": [
+            {
+              "user": "danielr-ceva",
+              "avatar": "/avatars/2b325b24068063d66e7744029b346514.svg"
+            }
+          ],
+          "date": "2026-02-24T13:44:11.000Z"
+        },
+        {
+          "id": "3985ab85439095ec64477863df0b3df308bef90b",
+          "title": "Update README.md",
+          "message": "",
+          "authors": [
+            {
+              "user": "danielr-ceva",
+              "avatar": "/avatars/2b325b24068063d66e7744029b346514.svg"
+            }
+          ],
+          "date": "2026-02-24T13:43:04.000Z"
+        },
+        {
+          "id": "912784b42233fc5efb08d7e97de40e6c81ecf789",
+          "title": "Upload 5 files",
+          "message": "",
+          "authors": [
+            {
+              "user": "danielr-ceva",
+              "avatar": "/avatars/2b325b24068063d66e7744029b346514.svg"
+            }
+          ],
+          "date": "2026-02-22T13:25:48.000Z"
+        },
+        {
+          "id": "385c9e5780d5c6c69b3c0bc12d07c53b40c59be7",
+          "title": "ONNX files",
+          "message": "",
+          "authors": [
+            {
+              "user": "danielr-ceva",
+              "avatar": "/avatars/2b325b24068063d66e7744029b346514.svg"
+            }
+          ],
+          "date": "2026-02-10T07:28:17.000Z"
+        },
+        {
+          "id": "b2f9edcd12407d916d62f920b99129f3dcf6f749",
+          "title": "Upload dpdfnet2_48khz_hr.pth",
+          "message": "",
+          "authors": [
+            {
+              "user": "danielr-ceva",
+              "avatar": "/avatars/2b325b24068063d66e7744029b346514.svg"
+            }
+          ],
+          "date": "2026-02-01T10:42:12.000Z"
+        },
+        {
+          "id": "9154229b94b27a68c06784513786961343bcb0c0",
+          "title": "Upload dpdfnet2_48khz_hr.tflite",
+          "message": "",
+          "authors": [
+            {
+              "user": "danielr-ceva",
+              "avatar": "/avatars/2b325b24068063d66e7744029b346514.svg"
+            }
+          ],
+          "date": "2026-01-19T10:53:24.000Z"
+        },
+        {
+          "id": "14fb942f4447a7c8fb14b83c3ca2d05fd904d6b2",
+          "title": "Update run_tflite.py",
+          "message": "",
+          "authors": [
+            {
+              "user": "danielr-ceva",
+              "avatar": "/avatars/2b325b24068063d66e7744029b346514.svg"
+            }
+          ],
+          "date": "2026-01-19T10:39:28.000Z"
+        },
+        {
+          "id": "03cd46eec6cd08d21c7a12769a0c64968468e2cd",
+          "title": "Update run_tflite.py",
+          "message": "",
+          "authors": [
+            {
+              "user": "danielr-ceva",
+              "avatar": "/avatars/2b325b24068063d66e7744029b346514.svg"
+            }
+          ],
+          "date": "2026-01-19T10:19:30.000Z"
+        },
+        {
+          "id": "4af1e8ce53778ed09820b0aa2dd87bdd65ff73c7",
+          "title": "Update README.md",
+          "message": "",
+          "authors": [
+            {
+              "user": "danielr-ceva",
+              "avatar": "/avatars/2b325b24068063d66e7744029b346514.svg"
+            }
+          ],
+          "date": "2026-01-19T10:18:01.000Z"
+        },
+        {
+          "id": "49d9463ca1d44300a123f02decdec595ac7e54fe",
+          "title": "Upload PyTorch checkpoints",
+          "message": "",
+          "authors": [
+            {
+              "user": "danielr-ceva",
+              "avatar": "/avatars/2b325b24068063d66e7744029b346514.svg"
+            }
+          ],
+          "date": "2025-12-18T06:13:24.000Z"
+        },
+        {
+          "id": "0e03407d94b9fa050710e2ebda21fc6d636b00ba",
+          "title": "Upload run_tflite.py",
+          "message": "",
+          "authors": [
+            {
+              "user": "danielr-ceva",
+              "avatar": "/avatars/2b325b24068063d66e7744029b346514.svg"
+            }
+          ],
+          "date": "2025-12-17T13:30:30.000Z"
+        },
+        {
+          "id": "3ecf5cb3fb54b6d8f066e9bb5a85de485ebf4bf2",
+          "title": "Upload TFLite models",
+          "message": "",
+          "authors": [
+            {
+              "user": "danielr-ceva",
+              "avatar": "/avatars/2b325b24068063d66e7744029b346514.svg"
+            }
+          ],
+          "date": "2025-12-17T13:01:25.000Z"
+        },
+        {
+          "id": "1a260a948a5a11563739d67736676a3d68d173c1",
+          "title": "Update README.md",
+          "message": "",
+          "authors": [
+            {
+              "user": "danielr-ceva",
+              "avatar": "/avatars/2b325b24068063d66e7744029b346514.svg"
+            }
+          ],
+          "date": "2025-12-17T12:59:57.000Z"
+        },
+        {
+          "id": "27c8c7f334058e346b2f7dc62dbeba35993db3ec",
+          "title": "Update README.md",
+          "message": "",
+          "authors": [
+            {
+              "user": "danielr-ceva",
+              "avatar": "/avatars/2b325b24068063d66e7744029b346514.svg"
+            }
+          ],
+          "date": "2025-12-17T10:41:20.000Z"
+        },
+        {
+          "id": "c30c61883214b9cb7f20ef28e7d8137733c59d5c",
+          "title": "Update README.md",
+          "message": "",
+          "authors": [
+            {
+              "user": "danielr-ceva",
+              "avatar": "/avatars/2b325b24068063d66e7744029b346514.svg"
+            }
+          ],
+          "date": "2025-12-17T10:37:14.000Z"
+        },
+        {
+          "id": "ee27b85abf7a79170880ced75b9b13a9cdcccd47",
+          "title": "initial commit",
+          "message": "",
+          "authors": [
+            {
+              "user": "danielr-ceva",
+              "avatar": "/avatars/2b325b24068063d66e7744029b346514.svg"
+            }
+          ],
+          "date": "2025-12-17T09:42:34.000Z"
+        }
+      ]
+    },
+    {
+      "id": "nvidia/Real-time_RE-USE",
+      "model": {
+        "_id": "69dddb981c74b88eaef7c9ef",
+        "id": "nvidia/Real-time_RE-USE",
+        "private": false,
+        "pipeline_tag": "audio-to-audio",
+        "library_name": "mamba-ssm",
+        "tags": [
+          "mamba-ssm",
+          "safetensors",
+          "streaming speech-enhancement",
+          "speech-enhancement",
+          "universal speech enhancement",
+          "multiple input sampling rates",
+          "language-agnostic",
+          "audio-to-audio",
+          "arxiv:2603.02641",
+          "arxiv:2606.25621",
+          "license:other",
+          "region:us"
+        ],
+        "downloads": 819,
+        "likes": 35,
+        "modelId": "nvidia/Real-time_RE-USE",
+        "author": "nvidia",
+        "sha": "de401c582803bfbf67f75f1c30f3fd26fecdbc70",
+        "lastModified": "2026-06-30T09:47:21.000Z",
+        "gated": false,
+        "disabled": false,
+        "model-index": null,
+        "config": {},
+        "cardData": {
+          "license": "other",
+          "track_downloads": true,
+          "pipeline_tag": "audio-to-audio",
+          "library_name": "mamba-ssm",
+          "tags": [
+            "streaming speech-enhancement",
+            "speech-enhancement",
+            "universal speech enhancement",
+            "multiple input sampling rates",
+            "language-agnostic"
+          ]
+        },
+        "siblings": [
+          {
+            "rfilename": ".gitattributes",
+            "blobId": "cf9c9fce85edcae9232a0f13b6d6e1885ea7b222",
+            "size": 1914
+          },
+          {
+            "rfilename": "README.md",
+            "blobId": "1864f7cf6755f692b8d406451e645b5f0e95df1f",
+            "size": 9059
+          },
+          {
+            "rfilename": "config.json",
+            "blobId": "51af38e2e642f0f78a4906d63b0073d54010f59a",
+            "size": 856
+          },
+          {
+            "rfilename": "enhanced_audio/offline_enhanced_mic_test.flac",
+            "blobId": "56b2a49e760c2212f7cf78dd2ff8e5012778135f",
+            "size": 172529,
+            "lfs": {
+              "sha256": "d76e76de2dffcbb479646f594a6798bd9e84aa8a00196cbd7d1f3dccbbacfb3d",
+              "size": 172529,
+              "pointerSize": 131
+            }
+          },
+          {
+            "rfilename": "enhanced_audio/online_enhanced_mic_test.flac",
+            "blobId": "736c7d97128bfb74b645a509b8cd3ab8a009410a",
+            "size": 172674,
+            "lfs": {
+              "sha256": "fe038f9f531b60bf3e15f2660cf4bfc287a0d889e0e99f2ccca6a54203abb08f",
+              "size": 172674,
+              "pointerSize": 131
+            }
+          },
+          {
+            "rfilename": "img/fig1.png",
+            "blobId": "d0a9a8e09b3a86475d9d7fd2539e3c4d8be86dd7",
+            "size": 421837,
+            "lfs": {
+              "sha256": "bdd29c38ceebbb43c69cd85ae32d10fec0286533ce4face8d6ab1385461a3495",
+              "size": 421837,
+              "pointerSize": 131
+            }
+          },
+          {
+            "rfilename": "img/fig2.png",
+            "blobId": "3fdbf585abf1f5ce2404d0a723ebcdbb3275ddad",
+            "size": 246198,
+            "lfs": {
+              "sha256": "9781702c500c66975a81541bcd22b469e85728b1d6de118988f55877dde1c182",
+              "size": 246198,
+              "pointerSize": 131
+            }
+          },
+          {
+            "rfilename": "model.safetensors",
+            "blobId": "dcb4f196e629beb73f534dc4acdf304ff8f83d70",
+            "size": 54055764,
+            "lfs": {
+              "sha256": "6eac4e8cc721f99a22cde7eac3c9f8e2826ced5dc8a4234fd1977de1ec0d3ade",
+              "size": 54055764,
+              "pointerSize": 133
+            }
+          },
+          {
+            "rfilename": "models/stfts.py",
+            "blobId": "7a1acfdfc04fbf9b013ca527b2d1ec0a672db9d0",
+            "size": 3591
+          },
+          {
+            "rfilename": "models/streaming_codec_module_time_d1_input_ahead_sep_conv.py",
+            "blobId": "5f50f64138a58ca4885aba45b8609dee1969d570",
+            "size": 8059
+          },
+          {
+            "rfilename": "models/streaming_generator_SEMamba_time_d1_random_layer_ahead_sep_conv.py",
+            "blobId": "abe2cc3e7eea4c25429f193b22d375ef37c50bbb",
+            "size": 3962
+          },
+          {
+            "rfilename": "models/streaming_mamba_block2_SEMamba.py",
+            "blobId": "285457fed77d95744d3916d2d8a3265b7d34ac44",
+            "size": 3693
+          },
+          {
+            "rfilename": "noisy_audio/mic_test.wav",
+            "blobId": "fbfc42801dad5fe49e92a6782ff95b2cccda71fc",
+            "size": 571580,
+            "lfs": {
+              "sha256": "dd54fe1decefe2e5c11c489f3d3d5b0e567bdd840f71bf4007cbe6349194f794",
+              "size": 571580,
+              "pointerSize": 131
+            }
+          },
+          {
+            "rfilename": "offline_enhanced_audio/mic_test.flac",
+            "blobId": "56b2a49e760c2212f7cf78dd2ff8e5012778135f",
+            "size": 172529,
+            "lfs": {
+              "sha256": "d76e76de2dffcbb479646f594a6798bd9e84aa8a00196cbd7d1f3dccbbacfb3d",
+              "size": 172529,
+              "pointerSize": 131
+            }
+          },
+          {
+            "rfilename": "offline_inference.py",
+            "blobId": "9399e31048f9ea6cae115845cf608d4c3e5b3202",
+            "size": 5002
+          },
+          {
+            "rfilename": "offline_inference.sh",
+            "blobId": "53c94e2201a62a816923e16f8949d66b47586b6d",
+            "size": 423
+          },
+          {
+            "rfilename": "online_inference.py",
+            "blobId": "c1412c6fea606743885448cf78aa7fcdefba42fd",
+            "size": 16836
+          },
+          {
+            "rfilename": "online_inference.sh",
+            "blobId": "aed20d386641d3f12240d371533db7e41e72127f",
+            "size": 368
+          },
+          {
+            "rfilename": "recipes/USEMamba_12x1_lr_00002_norm_05_vq_067_nfft_320_hop_160_NRIR_012_pha_0005_com_04_early_005_release_random_layer_GAN_longer_1k.yaml",
+            "blobId": "326dbeaf77c55a2d53787be94c5b68bdfddfd355",
+            "size": 2408
+          },
+          {
+            "rfilename": "utils/util.py",
+            "blobId": "cef30cd269b192d7523c552f45b1538312131a4b",
+            "size": 1349
+          }
+        ],
+        "spaces": [
+          "nvidia/Real-time_RE-USE",
+          "tyty-cli-guy/real-time-reuse-demo"
+        ],
+        "createdAt": "2026-04-14T06:15:52.000Z",
+        "safetensors": {
+          "parameters": {
+            "F32": 13475815
+          },
+          "total": 13475815
+        },
+        "usedStorage": 55640582
+      },
+      "commits": [
+        {
+          "id": "de401c582803bfbf67f75f1c30f3fd26fecdbc70",
+          "title": "Update README.md",
+          "message": "",
+          "authors": [
+            {
+              "user": "szuweifu",
+              "avatar": "/avatars/6718ad6a1325b1881cb1aaff686803c5.svg"
+            }
+          ],
+          "date": "2026-06-30T09:47:21.000Z"
+        },
+        {
+          "id": "aefea26ff9d5800939503cd5bc09c38fcde18819",
+          "title": "Update README.md",
+          "message": "",
+          "authors": [
+            {
+              "user": "szuweifu",
+              "avatar": "/avatars/6718ad6a1325b1881cb1aaff686803c5.svg"
+            }
+          ],
+          "date": "2026-06-25T03:05:41.000Z"
+        },
+        {
+          "id": "637a8ae122f3b70a4a75ac0e014c28b5b279465d",
+          "title": "Update README.md",
+          "message": "",
+          "authors": [
+            {
+              "user": "szuweifu",
+              "avatar": "/avatars/6718ad6a1325b1881cb1aaff686803c5.svg"
+            }
+          ],
+          "date": "2026-04-15T13:27:10.000Z"
+        },
+        {
+          "id": "24c2e634718652859c301c550f13618f5eb810fa",
+          "title": "Update README.md",
+          "message": "",
+          "authors": [
+            {
+              "user": "szuweifu",
+              "avatar": "/avatars/6718ad6a1325b1881cb1aaff686803c5.svg"
+            }
+          ],
+          "date": "2026-04-15T13:25:44.000Z"
+        },
+        {
+          "id": "3243eee41ec828a4b631acb92048f22cef8fd46a",
+          "title": "Update README.md",
+          "message": "",
+          "authors": [
+            {
+              "user": "szuweifu",
+              "avatar": "/avatars/6718ad6a1325b1881cb1aaff686803c5.svg"
+            }
+          ],
+          "date": "2026-04-15T13:25:10.000Z"
+        },
+        {
+          "id": "3b5179a1481fc30e9c48699ab7e4a3ac7eefdc7e",
+          "title": "Update README.md",
+          "message": "",
+          "authors": [
+            {
+              "user": "szuweifu",
+              "avatar": "/avatars/6718ad6a1325b1881cb1aaff686803c5.svg"
+            }
+          ],
+          "date": "2026-04-15T07:41:19.000Z"
+        },
+        {
+          "id": "c022f0a8f933a79cd7ba9313be1ef65f4c491c8d",
+          "title": "Update README.md",
+          "message": "",
+          "authors": [
+            {
+              "user": "szuweifu",
+              "avatar": "/avatars/6718ad6a1325b1881cb1aaff686803c5.svg"
+            }
+          ],
+          "date": "2026-04-14T08:08:41.000Z"
+        },
+        {
+          "id": "a35de284e6ee6e8a50621656aebc81000e606cf8",
+          "title": "Upload 2 files",
+          "message": "",
+          "authors": [
+            {
+              "user": "szuweifu",
+              "avatar": "/avatars/6718ad6a1325b1881cb1aaff686803c5.svg"
+            }
+          ],
+          "date": "2026-04-14T08:07:45.000Z"
+        },
+        {
+          "id": "b37efd31bdeb7d49bb610049cf10ef89a525884a",
+          "title": "Update README.md",
+          "message": "",
+          "authors": [
+            {
+              "user": "szuweifu",
+              "avatar": "/avatars/6718ad6a1325b1881cb1aaff686803c5.svg"
+            }
+          ],
+          "date": "2026-04-14T08:06:46.000Z"
+        },
+        {
+          "id": "f895bbb264c3797b07def5c07e246b09125bfaca",
+          "title": "Update README.md",
+          "message": "",
+          "authors": [
+            {
+              "user": "szuweifu",
+              "avatar": "/avatars/6718ad6a1325b1881cb1aaff686803c5.svg"
+            }
+          ],
+          "date": "2026-04-14T08:01:58.000Z"
+        },
+        {
+          "id": "52569b740ce24b61d1ce2957d2b2198cc62cd1a0",
+          "title": "Update README.md",
+          "message": "",
+          "authors": [
+            {
+              "user": "szuweifu",
+              "avatar": "/avatars/6718ad6a1325b1881cb1aaff686803c5.svg"
+            }
+          ],
+          "date": "2026-04-14T07:54:07.000Z"
+        },
+        {
+          "id": "d08adcf58e1e31367067354ff27db74bc0950ff6",
+          "title": "Update README.md",
+          "message": "",
+          "authors": [
+            {
+              "user": "szuweifu",
+              "avatar": "/avatars/6718ad6a1325b1881cb1aaff686803c5.svg"
+            }
+          ],
+          "date": "2026-04-14T07:40:46.000Z"
+        },
+        {
+          "id": "7535a0045aae30fccfcfc49446fa55d14376d1f7",
+          "title": "Update README.md",
+          "message": "",
+          "authors": [
+            {
+              "user": "szuweifu",
+              "avatar": "/avatars/6718ad6a1325b1881cb1aaff686803c5.svg"
+            }
+          ],
+          "date": "2026-04-14T07:17:13.000Z"
+        },
+        {
+          "id": "13e50292f49ecb4bade4bfb06b4f34c449b79364",
+          "title": "Upload 14 files",
+          "message": "",
+          "authors": [
+            {
+              "user": "szuweifu",
+              "avatar": "/avatars/6718ad6a1325b1881cb1aaff686803c5.svg"
+            }
+          ],
+          "date": "2026-04-14T07:08:02.000Z"
+        },
+        {
+          "id": "70508371acf14154bba3a5950555f86964ab42a1",
+          "title": "Add model safetensors checkpoint and config",
+          "message": "",
+          "authors": [
+            {
+              "user": "szuweifu",
+              "avatar": "/avatars/6718ad6a1325b1881cb1aaff686803c5.svg"
+            }
+          ],
+          "date": "2026-04-14T06:55:59.000Z"
+        },
+        {
+          "id": "a0ec3318921b6a6c70652c999372d3629b199ff9",
+          "title": "Update README.md",
+          "message": "",
+          "authors": [
+            {
+              "user": "szuweifu",
+              "avatar": "/avatars/6718ad6a1325b1881cb1aaff686803c5.svg"
+            }
+          ],
+          "date": "2026-04-14T06:16:31.000Z"
+        },
+        {
+          "id": "4649ac168b79e1452228736c9e878ec46654cdaf",
+          "title": "initial commit",
+          "message": "",
+          "authors": [
+            {
+              "user": "szuweifu",
+              "avatar": "/avatars/6718ad6a1325b1881cb1aaff686803c5.svg"
+            }
+          ],
+          "date": "2026-04-14T06:15:52.000Z"
+        }
+      ]
+    },
+    {
+      "id": "weya-ai/hush",
+      "model": {
+        "_id": "69bbdea7329ba7d148bde86e",
+        "id": "weya-ai/hush",
+        "private": false,
+        "pipeline_tag": "audio-to-audio",
+        "library_name": "hush",
+        "tags": [
+          "hush",
+          "speech-enhancement",
+          "denoising",
+          "real-time",
+          "voice-ai",
+          "background-speaker-suppression",
+          "onnx",
+          "multilingual",
+          "audio",
+          "noise-cancellation",
+          "audio-to-audio",
+          "license:apache-2.0",
+          "region:us"
+        ],
+        "downloads": 161,
+        "likes": 52,
+        "modelId": "weya-ai/hush",
+        "author": "weya-ai",
+        "sha": "a55d932cbf6344d284ac985f21e7f6e5bc4d38a5",
+        "lastModified": "2026-03-31T19:38:56.000Z",
+        "gated": false,
+        "disabled": false,
+        "model-index": null,
+        "config": {
+          "model_type": "hush",
+          "architectures": [
+            "DfNetSE"
+          ]
+        },
+        "cardData": {
+          "license": "apache-2.0",
+          "language": "multilingual",
+          "tags": [
+            "speech-enhancement",
+            "denoising",
+            "real-time",
+            "voice-ai",
+            "hush",
+            "background-speaker-suppression",
+            "onnx",
+            "multilingual",
+            "audio",
+            "noise-cancellation"
+          ],
+          "library_name": "hush",
+          "pipeline_tag": "audio-to-audio"
+        },
+        "siblings": [
+          {
+            "rfilename": ".gitattributes",
+            "blobId": "db99debdf3086c06ef0cbc01d10c94ebab7cb981",
+            "size": 1664
+          },
+          {
+            "rfilename": "LICENSE",
+            "blobId": "1c714550021949d38379ad619f5034caeeb4d843",
+            "size": 8549
+          },
+          {
+            "rfilename": "README.md",
+            "blobId": "3ded7ffc757e955e55d56c9f2f21cf5f8a9b2dee",
+            "size": 10430
+          },
+          {
+            "rfilename": "assets/audio/sample_00006_denoised.wav",
+            "blobId": "a08010ac01444d8eea1d524d4dfe58bdf2446545",
+            "size": 160044,
+            "lfs": {
+              "sha256": "8946bbce91695aee41b4c4ea1df3e9e148c6de452f43e4f9bc37e100572d8d4f",
+              "size": 160044,
+              "pointerSize": 131
+            }
+          },
+          {
+            "rfilename": "assets/audio/sample_00006_raw.wav",
+            "blobId": "e0b00e05614c83de20f46082a71cfda9a51d7beb",
+            "size": 160044,
+            "lfs": {
+              "sha256": "0d5ad72703bbed8794c04e9e60b86eb66af7d6167931fc3bcf427fd1671e05df",
+              "size": 160044,
+              "pointerSize": 131
+            }
+          },
+          {
+            "rfilename": "config.json",
+            "blobId": "c2eeff144865179996e28e545260cd7c54de7357",
+            "size": 482
+          },
+          {
+            "rfilename": "model_best.ckpt",
+            "blobId": "98fb2510be29e2bcfbad0f1c75415ea8023dec5d",
+            "size": 9229701,
+            "lfs": {
+              "sha256": "a2221e335c7de2c3453b422bf7f3c609723e453f4ca29c86137fd707d62f841b",
+              "size": 9229701,
+              "pointerSize": 132
+            }
+          },
+          {
+            "rfilename": "onnx/advanced_dfnet16k_model_best_onnx.tar.gz",
+            "blobId": "6e19cf032e89929fa3028c36506e2b904a895aea",
+            "size": 8558968,
+            "lfs": {
+              "sha256": "45632ccaa82b71bb743d6caa7c78e983fe2f2790a3af7f6ec48e6ed7ba085df6",
+              "size": 8558968,
+              "pointerSize": 132
+            }
+          }
+        ],
+        "spaces": [],
+        "createdAt": "2026-03-19T11:31:51.000Z",
+        "usedStorage": 18108757
+      },
+      "commits": [
+        {
+          "id": "a55d932cbf6344d284ac985f21e7f6e5bc4d38a5",
+          "title": "Add PyTorch checkpoint (model_best.ckpt)",
+          "message": "",
+          "authors": [
+            {
+              "user": "atulyaatul",
+              "avatar": "/avatars/b4baa4d8385855ff468ae96bd72f2ca1.svg"
+            }
+          ],
+          "date": "2026-03-31T19:38:56.000Z"
+        },
+        {
+          "id": "e4ce7721d519438e8c2fa0b1f7cc27e1868fff99",
+          "title": "Fix PyTorch inference code: use libdf for correct feature extraction",
+          "message": "",
+          "authors": [
+            {
+              "user": "atulyaatul",
+              "avatar": "/avatars/b4baa4d8385855ff468ae96bd72f2ca1.svg"
+            }
+          ],
+          "date": "2026-03-31T19:37:14.000Z"
+        },
+        {
+          "id": "8504e20b44c6b5706687f74d670e2092ff30ba60",
+          "title": "Upload folder using huggingface_hub",
+          "message": "",
+          "authors": [
+            {
+              "user": "atulyaatul",
+              "avatar": "/avatars/b4baa4d8385855ff468ae96bd72f2ca1.svg"
+            }
+          ],
+          "date": "2026-03-20T03:22:37.000Z"
+        },
+        {
+          "id": "d43b466643234aa136c3cf06470aa8da34f3caca",
+          "title": "Update: remove English-only references, add multilingual note",
+          "message": "",
+          "authors": [
+            {
+              "user": "atulyaatul",
+              "avatar": "/avatars/b4baa4d8385855ff468ae96bd72f2ca1.svg"
+            }
+          ],
+          "date": "2026-03-19T11:37:56.000Z"
+        },
+        {
+          "id": "40812c28145510d8a4b14641bb58c879a7a7b4fe",
+          "title": "Add ONNX model bundle",
+          "message": "",
+          "authors": [
+            {
+              "user": "atulyaatul",
+              "avatar": "/avatars/b4baa4d8385855ff468ae96bd72f2ca1.svg"
+            }
+          ],
+          "date": "2026-03-19T11:31:58.000Z"
+        },
+        {
+          "id": "4806e5925a0c937c6294e71507bca9eb8714baee",
+          "title": "Add Apache 2.0 LICENSE",
+          "message": "",
+          "authors": [
+            {
+              "user": "atulyaatul",
+              "avatar": "/avatars/b4baa4d8385855ff468ae96bd72f2ca1.svg"
+            }
+          ],
+          "date": "2026-03-19T11:31:55.000Z"
+        },
+        {
+          "id": "1aee65c0b22e99bc9c8fea933dc25948168d2416",
+          "title": "Add model config",
+          "message": "",
+          "authors": [
+            {
+              "user": "atulyaatul",
+              "avatar": "/avatars/b4baa4d8385855ff468ae96bd72f2ca1.svg"
+            }
+          ],
+          "date": "2026-03-19T11:31:53.000Z"
+        },
+        {
+          "id": "6de8343ca37818d7628707ec860a8e6ddb775f3a",
+          "title": "Add Hush Model Card",
+          "message": "",
+          "authors": [
+            {
+              "user": "atulyaatul",
+              "avatar": "/avatars/b4baa4d8385855ff468ae96bd72f2ca1.svg"
+            }
+          ],
+          "date": "2026-03-19T11:31:53.000Z"
+        },
+        {
+          "id": "7cf281225ff72903588ebe4a3fcc61d4472ef277",
+          "title": "initial commit",
+          "message": "",
+          "authors": [
+            {
+              "user": "atulyaatul",
+              "avatar": "/avatars/b4baa4d8385855ff468ae96bd72f2ca1.svg"
+            }
+          ],
+          "date": "2026-03-19T11:31:51.000Z"
+        }
+      ]
+    }
+  ],
+  "hf-audio-recent-artifact-history": [
+    {
+      "id": "Ceva-IP/DPDFNet",
+      "revision": "49d9463ca1d44300a123f02decdec595ac7e54fe",
+      "files": [
+        {
+          "rfilename": "checkpoints/dpdfnet4.pth",
+          "blobId": "9383d7924458e61761832bc11d79c18c5895b72a",
+          "size": 11645355,
+          "lfs": {
+            "sha256": "782f617c5d7388a857a7e2614e8151f868bff3b87dd4a7e5c414beb88aa13853",
+            "size": 11645355,
+            "pointerSize": 133
+          }
+        },
+        {
+          "rfilename": "checkpoints/dpdfnet8.pth",
+          "blobId": "19087a12bc248e6ce12a4901d56fb48496596a17",
+          "size": 14487595,
+          "lfs": {
+            "sha256": "34b8c6b010f46e41286c382269f88fbc6715a393de0c76a3312972dbb948e125",
+            "size": 14487595,
+            "pointerSize": 133
+          }
+        },
+        {
+          "rfilename": "dpdfnet4.tflite",
+          "blobId": "97a4b81befb6bb384d073bc87a7ebbef81360c18",
+          "size": 13515600,
+          "lfs": {
+            "sha256": "d544a0f9e65180b0f67d1442cb9d33cec33347076dc427af97a461a75dd19c06",
+            "size": 13515600,
+            "pointerSize": 133
+          }
+        },
+        {
+          "rfilename": "dpdfnet8.tflite",
+          "blobId": "ae22c3d81f5748e4d08df579fadc165433cf9610",
+          "size": 18077552,
+          "lfs": {
+            "sha256": "c7e07d2aac73b451a0d6cda6daf2a6194a1ec0e9e597ee86e2ecfc1356b6d6e1",
+            "size": 18077552,
+            "pointerSize": 133
+          }
+        }
+      ]
+    },
+    {
+      "id": "Ceva-IP/DPDFNet",
+      "revision": "385c9e5780d5c6c69b3c0bc12d07c53b40c59be7",
+      "files": [
+        {
+          "rfilename": "checkpoints/dpdfnet4.pth",
+          "blobId": "9383d7924458e61761832bc11d79c18c5895b72a",
+          "size": 11645355,
+          "lfs": {
+            "sha256": "782f617c5d7388a857a7e2614e8151f868bff3b87dd4a7e5c414beb88aa13853",
+            "size": 11645355,
+            "pointerSize": 133
+          }
+        },
+        {
+          "rfilename": "checkpoints/dpdfnet8.pth",
+          "blobId": "19087a12bc248e6ce12a4901d56fb48496596a17",
+          "size": 14487595,
+          "lfs": {
+            "sha256": "34b8c6b010f46e41286c382269f88fbc6715a393de0c76a3312972dbb948e125",
+            "size": 14487595,
+            "pointerSize": 133
+          }
+        },
+        {
+          "rfilename": "dpdfnet4.tflite",
+          "blobId": "97a4b81befb6bb384d073bc87a7ebbef81360c18",
+          "size": 13515600,
+          "lfs": {
+            "sha256": "d544a0f9e65180b0f67d1442cb9d33cec33347076dc427af97a461a75dd19c06",
+            "size": 13515600,
+            "pointerSize": 133
+          }
+        },
+        {
+          "rfilename": "dpdfnet8.tflite",
+          "blobId": "ae22c3d81f5748e4d08df579fadc165433cf9610",
+          "size": 18077552,
+          "lfs": {
+            "sha256": "c7e07d2aac73b451a0d6cda6daf2a6194a1ec0e9e597ee86e2ecfc1356b6d6e1",
+            "size": 18077552,
+            "pointerSize": 133
+          }
+        },
+        {
+          "rfilename": "onnx/dpdfnet4.onnx",
+          "blobId": "5846dbec68487db4fe962f17d2794f56ad087f4b",
+          "size": 11829151,
+          "lfs": {
+            "sha256": "25fe013e57c7cab08a3dc34e1955356febcb0579501a9450324ab12b78415123",
+            "size": 11829151,
+            "pointerSize": 133
+          }
+        },
+        {
+          "rfilename": "onnx/dpdfnet8.onnx",
+          "blobId": "c7c54aee2cafe89a89b9cb799d673f0ad215b2bf",
+          "size": 14745335,
+          "lfs": {
+            "sha256": "b9c9dc234330fca99058bccb0346bae66f5679cfc372d37e08a192ea14bdb3ba",
+            "size": 14745335,
+            "pointerSize": 133
+          }
+        }
+      ]
+    },
+    {
+      "id": "Ceva-IP/DPDFNet",
+      "revision": "912784b42233fc5efb08d7e97de40e6c81ecf789",
+      "files": [
+        {
+          "rfilename": "checkpoints/dpdfnet4.pth",
+          "blobId": "9383d7924458e61761832bc11d79c18c5895b72a",
+          "size": 11645355,
+          "lfs": {
+            "sha256": "782f617c5d7388a857a7e2614e8151f868bff3b87dd4a7e5c414beb88aa13853",
+            "size": 11645355,
+            "pointerSize": 133
+          }
+        },
+        {
+          "rfilename": "checkpoints/dpdfnet8.pth",
+          "blobId": "19087a12bc248e6ce12a4901d56fb48496596a17",
+          "size": 14487595,
+          "lfs": {
+            "sha256": "34b8c6b010f46e41286c382269f88fbc6715a393de0c76a3312972dbb948e125",
+            "size": 14487595,
+            "pointerSize": 133
+          }
+        },
+        {
+          "rfilename": "dpdfnet4.tflite",
+          "blobId": "97a4b81befb6bb384d073bc87a7ebbef81360c18",
+          "size": 13515600,
+          "lfs": {
+            "sha256": "d544a0f9e65180b0f67d1442cb9d33cec33347076dc427af97a461a75dd19c06",
+            "size": 13515600,
+            "pointerSize": 133
+          }
+        },
+        {
+          "rfilename": "dpdfnet8.tflite",
+          "blobId": "ae22c3d81f5748e4d08df579fadc165433cf9610",
+          "size": 18077552,
+          "lfs": {
+            "sha256": "c7e07d2aac73b451a0d6cda6daf2a6194a1ec0e9e597ee86e2ecfc1356b6d6e1",
+            "size": 18077552,
+            "pointerSize": 133
+          }
+        },
+        {
+          "rfilename": "onnx/dpdfnet4.onnx",
+          "blobId": "5846dbec68487db4fe962f17d2794f56ad087f4b",
+          "size": 11829151,
+          "lfs": {
+            "sha256": "25fe013e57c7cab08a3dc34e1955356febcb0579501a9450324ab12b78415123",
+            "size": 11829151,
+            "pointerSize": 133
+          }
+        },
+        {
+          "rfilename": "onnx/dpdfnet8.onnx",
+          "blobId": "c7c54aee2cafe89a89b9cb799d673f0ad215b2bf",
+          "size": 14745335,
+          "lfs": {
+            "sha256": "b9c9dc234330fca99058bccb0346bae66f5679cfc372d37e08a192ea14bdb3ba",
+            "size": 14745335,
+            "pointerSize": 133
+          }
+        }
+      ]
+    },
+    {
+      "id": "Ceva-IP/DPDFNet",
+      "revision": "40c49e2106e4c51e0e141261818c397532a2d376",
+      "files": [
+        {
+          "rfilename": "checkpoints/dpdfnet4.pth",
+          "blobId": "9383d7924458e61761832bc11d79c18c5895b72a",
+          "size": 11645355,
+          "lfs": {
+            "sha256": "782f617c5d7388a857a7e2614e8151f868bff3b87dd4a7e5c414beb88aa13853",
+            "size": 11645355,
+            "pointerSize": 133
+          }
+        },
+        {
+          "rfilename": "checkpoints/dpdfnet8.pth",
+          "blobId": "19087a12bc248e6ce12a4901d56fb48496596a17",
+          "size": 14487595,
+          "lfs": {
+            "sha256": "34b8c6b010f46e41286c382269f88fbc6715a393de0c76a3312972dbb948e125",
+            "size": 14487595,
+            "pointerSize": 133
+          }
+        },
+        {
+          "rfilename": "dpdfnet4.tflite",
+          "blobId": "97a4b81befb6bb384d073bc87a7ebbef81360c18",
+          "size": 13515600,
+          "lfs": {
+            "sha256": "d544a0f9e65180b0f67d1442cb9d33cec33347076dc427af97a461a75dd19c06",
+            "size": 13515600,
+            "pointerSize": 133
+          }
+        },
+        {
+          "rfilename": "dpdfnet8.tflite",
+          "blobId": "ae22c3d81f5748e4d08df579fadc165433cf9610",
+          "size": 18077552,
+          "lfs": {
+            "sha256": "c7e07d2aac73b451a0d6cda6daf2a6194a1ec0e9e597ee86e2ecfc1356b6d6e1",
+            "size": 18077552,
+            "pointerSize": 133
+          }
+        },
+        {
+          "rfilename": "onnx/dpdfnet4.onnx",
+          "blobId": "0be794da1f9c88098cd1a8ffc0173e8f07eb4ad0",
+          "size": 11705258,
+          "lfs": {
+            "sha256": "067c6e6d30e91da893102fd57271af2ccf03cd73c6f319a8c56413ea619507fd",
+            "size": 11705258,
+            "pointerSize": 133
+          }
+        },
+        {
+          "rfilename": "onnx/dpdfnet8.onnx",
+          "blobId": "e306d410e3b8cddc9e2de972189acf47cf7bda54",
+          "size": 14621441,
+          "lfs": {
+            "sha256": "eecf817ab5e179b9306828d810a966480d3e6c2c1f6c75cd670b70029eef33c1",
+            "size": 14621441,
+            "pointerSize": 133
+          }
+        }
+      ]
+    },
+    {
+      "id": "Ceva-IP/DPDFNet",
+      "revision": "3b0a4ee55df845f6afd6be7e3253cdf5dbcfe634",
+      "files": [
+        {
+          "rfilename": "checkpoints/dpdfnet4.pth",
+          "blobId": "9383d7924458e61761832bc11d79c18c5895b72a",
+          "size": 11645355,
+          "lfs": {
+            "sha256": "782f617c5d7388a857a7e2614e8151f868bff3b87dd4a7e5c414beb88aa13853",
+            "size": 11645355,
+            "pointerSize": 133
+          }
+        },
+        {
+          "rfilename": "checkpoints/dpdfnet8.pth",
+          "blobId": "19087a12bc248e6ce12a4901d56fb48496596a17",
+          "size": 14487595,
+          "lfs": {
+            "sha256": "34b8c6b010f46e41286c382269f88fbc6715a393de0c76a3312972dbb948e125",
+            "size": 14487595,
+            "pointerSize": 133
+          }
+        },
+        {
+          "rfilename": "dpdfnet4.tflite",
+          "blobId": "97a4b81befb6bb384d073bc87a7ebbef81360c18",
+          "size": 13515600,
+          "lfs": {
+            "sha256": "d544a0f9e65180b0f67d1442cb9d33cec33347076dc427af97a461a75dd19c06",
+            "size": 13515600,
+            "pointerSize": 133
+          }
+        },
+        {
+          "rfilename": "dpdfnet8.tflite",
+          "blobId": "ae22c3d81f5748e4d08df579fadc165433cf9610",
+          "size": 18077552,
+          "lfs": {
+            "sha256": "c7e07d2aac73b451a0d6cda6daf2a6194a1ec0e9e597ee86e2ecfc1356b6d6e1",
+            "size": 18077552,
+            "pointerSize": 133
+          }
+        },
+        {
+          "rfilename": "onnx/dpdfnet4.onnx",
+          "blobId": "e035cb1ee3698860867c1e77f857c4f40930c206",
+          "size": 11707436,
+          "lfs": {
+            "sha256": "71b588bc26163941aa82a592cce924b08c1fbdc0879fe44f5a2d4eac44bd8420",
+            "size": 11707436,
+            "pointerSize": 133
+          }
+        },
+        {
+          "rfilename": "onnx/dpdfnet8.onnx",
+          "blobId": "30c0cb156e86e84c3c2e134fdef55f984ad029f3",
+          "size": 14623619,
+          "lfs": {
+            "sha256": "2751c1f5a4e849d23a07c675b4c838158b249b42152f10cc318522dd339134f0",
+            "size": 14623619,
+            "pointerSize": 133
+          }
+        }
+      ]
+    },
+    {
+      "id": "Ceva-IP/DPDFNet",
+      "revision": "9adcf02b3c4ae0924a6dbb4cc2f9b582574be947",
+      "files": [
+        {
+          "rfilename": "checkpoints/dpdfnet4.pth",
+          "blobId": "9383d7924458e61761832bc11d79c18c5895b72a",
+          "size": 11645355,
+          "lfs": {
+            "sha256": "782f617c5d7388a857a7e2614e8151f868bff3b87dd4a7e5c414beb88aa13853",
+            "size": 11645355,
+            "pointerSize": 133
+          }
+        },
+        {
+          "rfilename": "checkpoints/dpdfnet8.pth",
+          "blobId": "19087a12bc248e6ce12a4901d56fb48496596a17",
+          "size": 14487595,
+          "lfs": {
+            "sha256": "34b8c6b010f46e41286c382269f88fbc6715a393de0c76a3312972dbb948e125",
+            "size": 14487595,
+            "pointerSize": 133
+          }
+        },
+        {
+          "rfilename": "dpdfnet4.tflite",
+          "blobId": "97a4b81befb6bb384d073bc87a7ebbef81360c18",
+          "size": 13515600,
+          "lfs": {
+            "sha256": "d544a0f9e65180b0f67d1442cb9d33cec33347076dc427af97a461a75dd19c06",
+            "size": 13515600,
+            "pointerSize": 133
+          }
+        },
+        {
+          "rfilename": "dpdfnet8.tflite",
+          "blobId": "ae22c3d81f5748e4d08df579fadc165433cf9610",
+          "size": 18077552,
+          "lfs": {
+            "sha256": "c7e07d2aac73b451a0d6cda6daf2a6194a1ec0e9e597ee86e2ecfc1356b6d6e1",
+            "size": 18077552,
+            "pointerSize": 133
+          }
+        },
+        {
+          "rfilename": "onnx/dpdfnet4.onnx",
+          "blobId": "583b1db9a567d2c5ec74cb4f6b740bae1e35f06c",
+          "size": 11633337,
+          "lfs": {
+            "sha256": "42a386d3601922f474c4309927e1f471cce422e9bd8e3fd3967bb943bac36c01",
+            "size": 11633337,
+            "pointerSize": 133
+          }
+        },
+        {
+          "rfilename": "onnx/dpdfnet8.onnx",
+          "blobId": "65cb321b095549f05c8c30a4c5e6d45c26f12715",
+          "size": 14542517,
+          "lfs": {
+            "sha256": "899d4f23f3ff86edbffa8c537e4bcbdc49da1b4e84e0ef390611e0604a3b26cb",
+            "size": 14542517,
+            "pointerSize": 133
+          }
+        }
+      ]
+    },
+    {
+      "id": "desert-ant-labs/ear",
+      "revision": "47e2d59596feb749d933287a6e91dd9edf6effa2",
+      "files": [
+        {
+          "rfilename": "detector.mlmodelc/weights/weight.bin",
+          "blobId": "e7a50d0d8b8855692d55ba82b805bc36e311076e",
+          "size": 13696070,
+          "lfs": {
+            "sha256": "ac2f45edb6654b49bfda1d2160276bebb73c325e5deb2f0deee03df0267956cf",
+            "size": 13696070,
+            "pointerSize": 133
+          }
+        },
+        {
+          "rfilename": "ear.tflite",
+          "blobId": "6dadf4141ee195a53182c9853a9017239271aa91",
+          "size": 23947568,
+          "lfs": {
+            "sha256": "eafb390863c39b28b607094fbbb7ae9202ece7ce0d5f5a28839fdc69b5770853",
+            "size": 23947568,
+            "pointerSize": 133
+          }
+        }
+      ]
+    },
+    {
+      "id": "desert-ant-labs/ear",
+      "revision": "5ac5bec6ecc04fea06dd49f022ccbbcb43391eef",
+      "files": [
+        {
+          "rfilename": "ear.mlmodelc/weights/weight.bin",
+          "blobId": "e7a50d0d8b8855692d55ba82b805bc36e311076e",
+          "size": 13696070,
+          "lfs": {
+            "sha256": "ac2f45edb6654b49bfda1d2160276bebb73c325e5deb2f0deee03df0267956cf",
+            "size": 13696070,
+            "pointerSize": 133
+          }
+        },
+        {
+          "rfilename": "ear.tflite",
+          "blobId": "7e5eed6cf083971bd55dea3ce32923ab02eb466e",
+          "size": 23062016,
+          "lfs": {
+            "sha256": "71cc15c3f24abbea2dcdf2892370d85806891ad7822cd3107abc0629f10bc955",
+            "size": 23062016,
+            "pointerSize": 133
+          }
+        }
+      ]
+    },
+    {
+      "id": "desert-ant-labs/uhm",
+      "revision": "b864ecf50e7ca27b813c2bdb67964a9ffe84c413",
+      "files": [
+        {
+          "rfilename": "uhm-web-fp16.onnx",
+          "blobId": "4459ab73f01b86b822bdacf559ed307cb0bcf6b1",
+          "size": 47047128,
+          "lfs": {
+            "sha256": "c266faf7db4cdced6f18aa9119ff2800a20707d7159be645d487ec191a9d79ff",
+            "size": 47047128,
+            "pointerSize": 133
+          }
+        },
+        {
+          "rfilename": "uhm.mlmodelc/weights/weight.bin",
+          "blobId": "b492acbb768520f0115b7d08343a6b72bd111cc5",
+          "size": 46996672,
+          "lfs": {
+            "sha256": "557cab7359a1bfd925852ce3f71137a29f5cd17ccaf4bddfbfaab04c4e3e4d00",
+            "size": 46996672,
+            "pointerSize": 133
+          }
+        },
+        {
+          "rfilename": "uhm.onnx",
+          "blobId": "3e4945c770d5b3b6cf89527b5ab2080b33c3be2d",
+          "size": 94042570,
+          "lfs": {
+            "sha256": "fbd19765def76893841e0c70e498bf632d6c68175ceae5a2da8fe3bf7d9d0314",
+            "size": 94042570,
+            "pointerSize": 133
+          }
+        }
+      ]
+    },
+    {
+      "id": "desert-ant-labs/uhm",
+      "revision": "612592c10ad7b2a51f3237725448a1aad212480b",
+      "files": [
+        {
+          "rfilename": "uhm-web-fp16.onnx",
+          "blobId": "4459ab73f01b86b822bdacf559ed307cb0bcf6b1",
+          "size": 47047128,
+          "lfs": {
+            "sha256": "c266faf7db4cdced6f18aa9119ff2800a20707d7159be645d487ec191a9d79ff",
+            "size": 47047128,
+            "pointerSize": 133
+          }
+        },
+        {
+          "rfilename": "uhm.mlmodelc/weights/weight.bin",
+          "blobId": "b492acbb768520f0115b7d08343a6b72bd111cc5",
+          "size": 46996672,
+          "lfs": {
+            "sha256": "557cab7359a1bfd925852ce3f71137a29f5cd17ccaf4bddfbfaab04c4e3e4d00",
+            "size": 46996672,
+            "pointerSize": 133
+          }
+        },
+        {
+          "rfilename": "uhm.onnx",
+          "blobId": "3e4945c770d5b3b6cf89527b5ab2080b33c3be2d",
+          "size": 94042570,
+          "lfs": {
+            "sha256": "fbd19765def76893841e0c70e498bf632d6c68175ceae5a2da8fe3bf7d9d0314",
+            "size": 94042570,
+            "pointerSize": 133
+          }
+        }
+      ]
+    }
+  ],
+  "hf-audio-recent-clear-tags": [
+    {
+      "ref": "v0.1.0",
+      "sha": "485ba9dd14314ebeceda68825c06ee1516d953dc",
+      "lastModified": "2026-09-10T16:46:27.000Z",
+      "commits": [
+        {
+          "id": "485ba9dd14314ebeceda68825c06ee1516d953dc",
+          "title": "Update repository",
+          "message": "\n\n\nCo-authored-by: finnvoorhees <finnvoorhees@users.noreply.huggingface.co>\nCo-authored-by: pveugen <pveugen@users.noreply.huggingface.co>\n",
+          "authors": [
+            {
+              "user": "bkicanao",
+              "avatar": "/avatars/dbedad3044d95f81ad39ceb5cc75864b.svg"
+            },
+            {
+              "user": "finnvoorhees",
+              "avatar": "https://cdn-avatars.huggingface.co/v1/production/uploads/63890c038a5dbe2f3dc96952/Xoruyt2XD59FIe6S1ZuQI.jpeg"
+            },
+            {
+              "user": "pveugen",
+              "avatar": "https://cdn-avatars.huggingface.co/v1/production/uploads/1669967230536-noauth.jpeg"
+            }
+          ],
+          "date": "2026-09-10T16:46:27.000Z"
+        }
+      ],
+      "files": [
+        {
+          "rfilename": "clear-natural.mlmodelc/weights/weight.bin",
+          "blobId": "63494e63732776487280930c870ed89090f35165",
+          "size": 1704192,
+          "lfs": {
+            "sha256": "8239aaf22671c20fb997b94a03b1ffc96925db341fa9a481a492e2aac87e79e2",
+            "size": 1704192,
+            "pointerSize": 132
+          }
+        },
+        {
+          "rfilename": "clear-natural.onnx",
+          "blobId": "f73c1c8693bb0b22de34a2c29e8c93f2b0a6767d",
+          "size": 4493171,
+          "lfs": {
+            "sha256": "028870c3505230d73c233d3dac9851944d4a8f87797b9abd7bd2ecc679442b43",
+            "size": 4493171,
+            "pointerSize": 132
+          }
+        },
+        {
+          "rfilename": "clear-studio.mlmodelc/weights/weight.bin",
+          "blobId": "92d17c713922073193d31319a512226c93d2db67",
+          "size": 1704192,
+          "lfs": {
+            "sha256": "0c682b77cfdc647ed84b98179c6b13bd52b4a2ca8bc908b771ad3283866aff05",
+            "size": 1704192,
+            "pointerSize": 132
+          }
+        },
+        {
+          "rfilename": "clear-studio.onnx",
+          "blobId": "cf70d4124bfd3dcab4f9feb220bcb32d538281bf",
+          "size": 4493171,
+          "lfs": {
+            "sha256": "6be8484a62fe76b180e1fbcb929514675febeb95a2180c25fb061aa7b5f7d3ff",
+            "size": 4493171,
+            "pointerSize": 132
+          }
+        }
+      ]
+    },
+    {
+      "ref": "v0.2.0",
+      "sha": "f8df78bf8d5c8b32dddacb20f61113357ee5a952",
+      "lastModified": "2026-09-10T16:46:30.000Z",
+      "commits": [
+        {
+          "id": "f8df78bf8d5c8b32dddacb20f61113357ee5a952",
+          "title": "Update repository",
+          "message": "\n\n\nCo-authored-by: finnvoorhees <finnvoorhees@users.noreply.huggingface.co>\nCo-authored-by: pveugen <pveugen@users.noreply.huggingface.co>\n",
+          "authors": [
+            {
+              "user": "bkicanao",
+              "avatar": "/avatars/dbedad3044d95f81ad39ceb5cc75864b.svg"
+            },
+            {
+              "user": "finnvoorhees",
+              "avatar": "https://cdn-avatars.huggingface.co/v1/production/uploads/63890c038a5dbe2f3dc96952/Xoruyt2XD59FIe6S1ZuQI.jpeg"
+            },
+            {
+              "user": "pveugen",
+              "avatar": "https://cdn-avatars.huggingface.co/v1/production/uploads/1669967230536-noauth.jpeg"
+            }
+          ],
+          "date": "2026-09-10T16:46:30.000Z"
+        }
+      ],
+      "files": [
+        {
+          "rfilename": "clear-natural.mlmodelc/weights/weight.bin",
+          "blobId": "c4379667dcae38c242af039a8fc07eb420190008",
+          "size": 9290176,
+          "lfs": {
+            "sha256": "d43736ffb7eb50a0843fa0905aab832b2c485c25acb56fb7c5d6c727e5e0571b",
+            "size": 9290176,
+            "pointerSize": 132
+          }
+        },
+        {
+          "rfilename": "clear-natural.onnx",
+          "blobId": "bce738623d4e281a89b50dd9b4d180b4ee60152d",
+          "size": 24801006,
+          "lfs": {
+            "sha256": "672b49c3f601043b21d13a9c44f5da6b81187a753a4ec787a843a7b31f02e016",
+            "size": 24801006,
+            "pointerSize": 133
+          }
+        },
+        {
+          "rfilename": "clear-studio.mlmodelc/weights/weight.bin",
+          "blobId": "fe188aa7052afae33a2cd5829e74351003dcb78c",
+          "size": 9290176,
+          "lfs": {
+            "sha256": "5929f42180be0ec1be371482963d59c420374f5a61d6c166a6a6bf9219249943",
+            "size": 9290176,
+            "pointerSize": 132
+          }
+        },
+        {
+          "rfilename": "clear-studio.onnx",
+          "blobId": "67eed0db58ab57046a4ae979e506648412679b29",
+          "size": 24801006,
+          "lfs": {
+            "sha256": "4176990296374e972f0c347ddcc7988d216829cafc58e4d54a98dccd715107d9",
+            "size": 24801006,
+            "pointerSize": 133
+          }
+        }
+      ]
+    },
+    {
+      "ref": "v0.3.0",
+      "sha": "a1850043fc4ae6c7e644b572ab916f9a678b9d14",
+      "lastModified": "2026-09-10T16:46:32.000Z",
+      "commits": [
+        {
+          "id": "a1850043fc4ae6c7e644b572ab916f9a678b9d14",
+          "title": "Update repository",
+          "message": "\n\n\nCo-authored-by: finnvoorhees <finnvoorhees@users.noreply.huggingface.co>\nCo-authored-by: pveugen <pveugen@users.noreply.huggingface.co>\n",
+          "authors": [
+            {
+              "user": "bkicanao",
+              "avatar": "/avatars/dbedad3044d95f81ad39ceb5cc75864b.svg"
+            },
+            {
+              "user": "finnvoorhees",
+              "avatar": "https://cdn-avatars.huggingface.co/v1/production/uploads/63890c038a5dbe2f3dc96952/Xoruyt2XD59FIe6S1ZuQI.jpeg"
+            },
+            {
+              "user": "pveugen",
+              "avatar": "https://cdn-avatars.huggingface.co/v1/production/uploads/1669967230536-noauth.jpeg"
+            }
+          ],
+          "date": "2026-09-10T16:46:32.000Z"
+        }
+      ],
+      "files": [
+        {
+          "rfilename": "clear-natural.mlmodelc/weights/weight.bin",
+          "blobId": "8c0a0501f92b22f8592ded6b2e135fefe981bc5c",
+          "size": 9114304,
+          "lfs": {
+            "sha256": "bd3b622719f84a4e66fb02cff9471e725fb42844a70801a7e6cefe8d41a57fc8",
+            "size": 9114304,
+            "pointerSize": 132
+          }
+        },
+        {
+          "rfilename": "clear-natural.onnx",
+          "blobId": "bce738623d4e281a89b50dd9b4d180b4ee60152d",
+          "size": 24801006,
+          "lfs": {
+            "sha256": "672b49c3f601043b21d13a9c44f5da6b81187a753a4ec787a843a7b31f02e016",
+            "size": 24801006,
+            "pointerSize": 133
+          }
+        },
+        {
+          "rfilename": "clear-studio.mlmodelc/weights/weight.bin",
+          "blobId": "5f7b2b6cb49a9e0bd19809d6e38b638c3b48126b",
+          "size": 9114304,
+          "lfs": {
+            "sha256": "ddf02ee04d432a323141aebcedca40c3b2f6f4950ee75ddf2997ef79a183764f",
+            "size": 9114304,
+            "pointerSize": 132
+          }
+        },
+        {
+          "rfilename": "clear-studio.onnx",
+          "blobId": "67eed0db58ab57046a4ae979e506648412679b29",
+          "size": 24801006,
+          "lfs": {
+            "sha256": "4176990296374e972f0c347ddcc7988d216829cafc58e4d54a98dccd715107d9",
+            "size": 24801006,
+            "pointerSize": 133
+          }
+        }
+      ]
+    },
+    {
+      "ref": "v0.4.0",
+      "sha": "5360c0849a43b99815ee1f63419fbd8dfc2173bf",
+      "lastModified": "2026-09-10T16:46:35.000Z",
+      "commits": [
+        {
+          "id": "5360c0849a43b99815ee1f63419fbd8dfc2173bf",
+          "title": "Update repository",
+          "message": "\n\n\nCo-authored-by: pveugen <pveugen@users.noreply.huggingface.co>\nCo-authored-by: laurier-rochon <laurier-rochon@users.noreply.huggingface.co>\nCo-authored-by: finnvoorhees <finnvoorhees@users.noreply.huggingface.co>\n",
+          "authors": [
+            {
+              "user": "bkicanao",
+              "avatar": "/avatars/dbedad3044d95f81ad39ceb5cc75864b.svg"
+            },
+            {
+              "user": "pveugen",
+              "avatar": "https://cdn-avatars.huggingface.co/v1/production/uploads/1669967230536-noauth.jpeg"
+            },
+            {
+              "user": "laurier-rochon",
+              "avatar": "https://cdn-avatars.huggingface.co/v1/production/uploads/6a32b95ac8296baba4b2f2c0/mF8Vp0D7XOpvXU4pRHnkI.png"
+            },
+            {
+              "user": "finnvoorhees",
+              "avatar": "https://cdn-avatars.huggingface.co/v1/production/uploads/63890c038a5dbe2f3dc96952/Xoruyt2XD59FIe6S1ZuQI.jpeg"
+            }
+          ],
+          "date": "2026-09-10T16:46:35.000Z"
+        }
+      ],
+      "files": [
+        {
+          "rfilename": "clear-natural.mlmodelc/weights/weight.bin",
+          "blobId": "8c0a0501f92b22f8592ded6b2e135fefe981bc5c",
+          "size": 9114304,
+          "lfs": {
+            "sha256": "bd3b622719f84a4e66fb02cff9471e725fb42844a70801a7e6cefe8d41a57fc8",
+            "size": 9114304,
+            "pointerSize": 132
+          }
+        },
+        {
+          "rfilename": "clear-natural.onnx",
+          "blobId": "bce738623d4e281a89b50dd9b4d180b4ee60152d",
+          "size": 24801006,
+          "lfs": {
+            "sha256": "672b49c3f601043b21d13a9c44f5da6b81187a753a4ec787a843a7b31f02e016",
+            "size": 24801006,
+            "pointerSize": 133
+          }
+        },
+        {
+          "rfilename": "clear-studio.mlmodelc/weights/weight.bin",
+          "blobId": "5f7b2b6cb49a9e0bd19809d6e38b638c3b48126b",
+          "size": 9114304,
+          "lfs": {
+            "sha256": "ddf02ee04d432a323141aebcedca40c3b2f6f4950ee75ddf2997ef79a183764f",
+            "size": 9114304,
+            "pointerSize": 132
+          }
+        },
+        {
+          "rfilename": "clear-studio.onnx",
+          "blobId": "67eed0db58ab57046a4ae979e506648412679b29",
+          "size": 24801006,
+          "lfs": {
+            "sha256": "4176990296374e972f0c347ddcc7988d216829cafc58e4d54a98dccd715107d9",
+            "size": 24801006,
+            "pointerSize": 133
+          }
+        }
+      ]
+    }
+  ],
+  "hf-audio-recent-events": [
+    {
+      "id": "resoajoe/room-audio-event-nano",
+      "model": {
+        "_id": "6a9b53b5b3bc55c77ebecca4",
+        "id": "resoajoe/room-audio-event-nano",
+        "private": false,
+        "pipeline_tag": "audio-classification",
+        "tags": [
+          "onnx",
+          "audio-classification",
+          "sound-event-detection",
+          "tiny-model",
+          "edge",
+          "dataset:FSD50K",
+          "license:cc-by-4.0",
+          "region:us"
+        ],
+        "downloads": 0,
+        "likes": 0,
+        "modelId": "resoajoe/room-audio-event-nano",
+        "author": "resoajoe",
+        "sha": "0fd4aa322f67d43ce6e620695f22276eede956cf",
+        "lastModified": "2026-09-04T23:26:48.000Z",
+        "gated": false,
+        "disabled": false,
+        "model-index": null,
+        "config": {},
+        "cardData": {
+          "license": "cc-by-4.0",
+          "tags": [
+            "audio-classification",
+            "sound-event-detection",
+            "tiny-model",
+            "onnx",
+            "edge"
+          ],
+          "datasets": [
+            "FSD50K"
+          ]
+        },
+        "siblings": [
+          {
+            "rfilename": ".gitattributes",
+            "blobId": "a6344aac8c09253b3b630fb776ae94478aa0275b",
+            "size": 1519
+          },
+          {
+            "rfilename": "README.md",
+            "blobId": "379fb71ba3775e3cea8a3e696c4a1506452fe75b",
+            "size": 5156
+          },
+          {
+            "rfilename": "audio_frontend.py",
+            "blobId": "428c547c124be7e9b476c45a913790c005c27606",
+            "size": 6985
+          },
+          {
+            "rfilename": "model.onnx",
+            "blobId": "1c5c622f0dbf74559967aa2cfa4bfb36fe61cf18",
+            "size": 192921,
+            "lfs": {
+              "sha256": "9f9d2e02e9d3f939280f088364ae8c38eafd1a519b7986074f96cf3931824e5b",
+              "size": 192921,
+              "pointerSize": 131
+            }
+          },
+          {
+            "rfilename": "model.pt",
+            "blobId": "10ebff2d8831aac84a3438cd5f301b2e887edbd2",
+            "size": 197761,
+            "lfs": {
+              "sha256": "5612d4344031aec2760f98fbc57b3f540537ad93003c99828c359058c398f9de",
+              "size": 197761,
+              "pointerSize": 131
+            }
+          },
+          {
+            "rfilename": "preproc.json",
+            "blobId": "cb6c584d3a0c25fe5d84a58f0361ae430cdb71b8",
+            "size": 245
+          }
+        ],
+        "spaces": [
+          "resoajoe/room-audio-event-demo"
+        ],
+        "createdAt": "2026-09-04T23:26:45.000Z",
+        "usedStorage": 390682
+      },
+      "commits": [
+        {
+          "id": "0fd4aa322f67d43ce6e620695f22276eede956cf",
+          "title": "room-audio-event-nano v1: 47K-param 7-class sound events, FSD50K uploader-disjoint eval, source-diversity control documented",
+          "message": "",
+          "authors": [
+            {
+              "user": "resoajoe",
+              "avatar": "https://cdn-avatars.huggingface.co/v1/production/uploads/6a4a7caba736265d267e4ace/tG2knFr7vNXQt3m_06VF6.jpeg"
+            }
+          ],
+          "date": "2026-09-04T23:26:48.000Z"
+        },
+        {
+          "id": "a963e187840d752d52e85b4fb8dcfd4f40f98679",
+          "title": "initial commit",
+          "message": "",
+          "authors": [
+            {
+              "user": "resoajoe",
+              "avatar": "https://cdn-avatars.huggingface.co/v1/production/uploads/6a4a7caba736265d267e4ace/tG2knFr7vNXQt3m_06VF6.jpeg"
+            }
+          ],
+          "date": "2026-09-04T23:26:45.000Z"
+        }
+      ]
+    },
+    {
+      "id": "retrina0678/miimo-efficientat-target4",
+      "model": {
+        "_id": "6a7b263463fdc73087556171",
+        "id": "retrina0678/miimo-efficientat-target4",
+        "private": false,
+        "pipeline_tag": "audio-classification",
+        "library_name": "pytorch",
+        "tags": [
+          "pytorch",
+          "audio",
+          "audio-classification",
+          "sound-event-detection",
+          "efficientat",
+          "mobilenetv3",
+          "edge",
+          "ko",
+          "dataset:retrina0678/miimo-audio-dataset",
+          "license:other",
+          "model-index",
+          "region:us"
+        ],
+        "downloads": 8,
+        "likes": 0,
+        "modelId": "retrina0678/miimo-efficientat-target4",
+        "author": "retrina0678",
+        "sha": "3bfc71cc55f6fe64b78a28a814c33171605f1642",
+        "lastModified": "2026-08-11T13:40:51.000Z",
+        "gated": false,
+        "disabled": false,
+        "model-index": [
+          {
+            "name": "miimo-efficientat-target4",
+            "results": [
+              {
+                "task": {
+                  "type": "audio-classification",
+                  "name": "Sound Event Classification"
+                },
+                "dataset": {
+                  "name": "miimo-audio-dataset (4-class, held-out test)",
+                  "type": "retrina0678/miimo-audio-dataset"
+                },
+                "metrics": [
+                  {
+                    "type": "accuracy",
+                    "value": 0.9774,
+                    "name": "Accuracy (5-fold mean)",
+                    "verified": false
+                  },
+                  {
+                    "type": "recall",
+                    "value": 0.9763,
+                    "name": "Macro Recall (5-fold mean)",
+                    "verified": false
+                  },
+                  {
+                    "type": "f1",
+                    "value": 0.9756,
+                    "name": "Macro F1 (5-fold mean)",
+                    "verified": false
+                  }
+                ]
+              }
+            ]
+          }
+        ],
+        "config": {},
+        "cardData": {
+          "license": "other",
+          "license_name": "non-commercial-inherited",
+          "language": [
+            "ko"
+          ],
+          "library_name": "pytorch",
+          "pipeline_tag": "audio-classification",
+          "tags": [
+            "audio",
+            "audio-classification",
+            "sound-event-detection",
+            "efficientat",
+            "mobilenetv3",
+            "edge"
+          ],
+          "datasets": [
+            "retrina0678/miimo-audio-dataset"
+          ],
+          "metrics": [
+            "accuracy",
+            "f1",
+            "recall"
+          ],
+          "model-index": [
+            {
+              "name": "miimo-efficientat-target4",
+              "results": [
+                {
+                  "task": {
+                    "type": "audio-classification",
+                    "name": "Sound Event Classification"
+                  },
+                  "dataset": {
+                    "name": "miimo-audio-dataset (4-class, held-out test)",
+                    "type": "retrina0678/miimo-audio-dataset"
+                  },
+                  "metrics": [
+                    {
+                      "type": "accuracy",
+                      "value": 0.9774,
+                      "name": "Accuracy (5-fold mean)",
+                      "verified": false
+                    },
+                    {
+                      "type": "recall",
+                      "value": 0.9763,
+                      "name": "Macro Recall (5-fold mean)",
+                      "verified": false
+                    },
+                    {
+                      "type": "f1",
+                      "value": 0.9756,
+                      "name": "Macro F1 (5-fold mean)",
+                      "verified": false
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        },
+        "siblings": [
+          {
+            "rfilename": ".gitattributes",
+            "blobId": "a6344aac8c09253b3b630fb776ae94478aa0275b",
+            "size": 1519
+          },
+          {
+            "rfilename": "README.md",
+            "blobId": "56d4f55a3d38e6bfc7d22e2cdd09ec2b61de784c",
+            "size": 7035
+          },
+          {
+            "rfilename": "all_metrics.json",
+            "blobId": "d54030c2a91f5ad3037fb902d54ae0e916148636",
+            "size": 19886
+          },
+          {
+            "rfilename": "best_model.pt",
+            "blobId": "3efbee534f1ea959e18af0f7766e294a420b9f7c",
+            "size": 17019541,
+            "lfs": {
+              "sha256": "430d9e443422be963040257146da0afdab8a6d8470677233c7f13ddc66f87291",
+              "size": 17019541,
+              "pointerSize": 133
+            }
+          },
+          {
+            "rfilename": "config.json",
+            "blobId": "ade17c1b5001b19881c957fa43b8443a2db7ac70",
+            "size": 740
+          },
+          {
+            "rfilename": "fold_01/best.pt",
+            "blobId": "3efbee534f1ea959e18af0f7766e294a420b9f7c",
+            "size": 17019541,
+            "lfs": {
+              "sha256": "430d9e443422be963040257146da0afdab8a6d8470677233c7f13ddc66f87291",
+              "size": 17019541,
+              "pointerSize": 133
+            }
+          },
+          {
+            "rfilename": "fold_01/history.csv",
+            "blobId": "3af380bdb2988710e72450980f44d9e460795a1d",
+            "size": 5202
+          },
+          {
+            "rfilename": "fold_01/metrics.json",
+            "blobId": "8031a8d29838a5f7df2b792ca267cea055f0ba45",
+            "size": 3704
+          },
+          {
+            "rfilename": "fold_01/split.csv",
+            "blobId": "61e640045d55baf2a765cb7157be7286f0241cba",
+            "size": 556789
+          },
+          {
+            "rfilename": "fold_01/test_classification_report.json",
+            "blobId": "c261e2a63094346f5fba4d4af9f62473600b57f9",
+            "size": 907
+          },
+          {
+            "rfilename": "fold_01/test_confusion_matrix.csv",
+            "blobId": "12fec08ed5543aedf60d92a03cac146561764c6d",
+            "size": 115
+          },
+          {
+            "rfilename": "fold_01/test_predictions.csv",
+            "blobId": "099b768ef09c59ca6c5d0f874b311020691b5605",
+            "size": 115433
+          },
+          {
+            "rfilename": "fold_01/val_best_current_classification_report.json",
+            "blobId": "73f306de37c60dac224b96f43b368b094bf46eaa",
+            "size": 899
+          },
+          {
+            "rfilename": "fold_01/val_best_current_confusion_matrix.csv",
+            "blobId": "a5f4f91592209ed3d6e816b9e262361c2900a6ea",
+            "size": 112
+          },
+          {
+            "rfilename": "fold_01/val_best_current_predictions.csv",
+            "blobId": "a5768e0ffa44251ccdc289becf1b4836ec514d08",
+            "size": 92447
+          },
+          {
+            "rfilename": "fold_01/val_classification_report.json",
+            "blobId": "73f306de37c60dac224b96f43b368b094bf46eaa",
+            "size": 899
+          },
+          {
+            "rfilename": "fold_01/val_confusion_matrix.csv",
+            "blobId": "a5f4f91592209ed3d6e816b9e262361c2900a6ea",
+            "size": 112
+          },
+          {
+            "rfilename": "fold_01/val_predictions.csv",
+            "blobId": "a5768e0ffa44251ccdc289becf1b4836ec514d08",
+            "size": 92447
+          },
+          {
+            "rfilename": "fold_02/best.pt",
+            "blobId": "b1d9b2f137f2748a3142b7488d462039bc700a34",
+            "size": 17019541,
+            "lfs": {
+              "sha256": "9c0a70588374071ebd8e798ea9d62acab2316258a432ee031b5b33116cd1a2ae",
+              "size": 17019541,
+              "pointerSize": 133
+            }
+          },
+          {
+            "rfilename": "fold_02/history.csv",
+            "blobId": "c56c9a74502413f497f3dceb3f35fbae2721b6f7",
+            "size": 4711
+          },
+          {
+            "rfilename": "fold_02/metrics.json",
+            "blobId": "fda66671bfb34b7fcc2ad9c48a116425a475db7d",
+            "size": 3590
+          },
+          {
+            "rfilename": "fold_02/split.csv",
+            "blobId": "02ad0ad42c4b3828547fa2a2308204d17cf952a5",
+            "size": 556789
+          },
+          {
+            "rfilename": "fold_02/test_classification_report.json",
+            "blobId": "9cca0827872e1a45fa07ca8424120ac5abda2a66",
+            "size": 873
+          },
+          {
+            "rfilename": "fold_02/test_confusion_matrix.csv",
+            "blobId": "79a5756b51a65dcabf1667096be513d77b9ffee6",
+            "size": 114
+          },
+          {
+            "rfilename": "fold_02/test_predictions.csv",
+            "blobId": "414396d53a6e1248e29bcd01982dde487511f11b",
+            "size": 115470
+          },
+          {
+            "rfilename": "fold_02/val_best_current_classification_report.json",
+            "blobId": "9a44a0eb278bbb87d6d18f00d815d06aebef7139",
+            "size": 842
+          },
+          {
+            "rfilename": "fold_02/val_best_current_confusion_matrix.csv",
+            "blobId": "c0a491098048d27fda420f411ff2f2eb1211256b",
+            "size": 112
+          },
+          {
+            "rfilename": "fold_02/val_best_current_predictions.csv",
+            "blobId": "af2687961a363a9aff52a257a55e32b8985e4266",
+            "size": 92451
+          },
+          {
+            "rfilename": "fold_02/val_classification_report.json",
+            "blobId": "9a44a0eb278bbb87d6d18f00d815d06aebef7139",
+            "size": 842
+          },
+          {
+            "rfilename": "fold_02/val_confusion_matrix.csv",
+            "blobId": "c0a491098048d27fda420f411ff2f2eb1211256b",
+            "size": 112
+          },
+          {
+            "rfilename": "fold_02/val_predictions.csv",
+            "blobId": "af2687961a363a9aff52a257a55e32b8985e4266",
+            "size": 92451
+          },
+          {
+            "rfilename": "fold_03/best.pt",
+            "blobId": "8acc61150a28c1a41ff8ba780c0190c9fc7c17f9",
+            "size": 17019541,
+            "lfs": {
+              "sha256": "c266e27c4c276013a4f51008b28a721637acbd18384d97384691188b302648e5",
+              "size": 17019541,
+              "pointerSize": 133
+            }
+          },
+          {
+            "rfilename": "fold_03/history.csv",
+            "blobId": "f153e0cd3c8a5fbb4a523c3ad16118cd5701b963",
+            "size": 5241
+          },
+          {
+            "rfilename": "fold_03/metrics.json",
+            "blobId": "f1ed2b9919fd579f6e95c23baa02119489e14d63",
+            "size": 3671
+          },
+          {
+            "rfilename": "fold_03/split.csv",
+            "blobId": "0def9fde5f361e7938bb49252aaf0ffc20c95c95",
+            "size": 556791
+          },
+          {
+            "rfilename": "fold_03/test_classification_report.json",
+            "blobId": "2dddfc419555b91918bc918cfbc9b87d7e80db76",
+            "size": 873
+          },
+          {
+            "rfilename": "fold_03/test_confusion_matrix.csv",
+            "blobId": "822f4535654e6c2a02cccc4487e34ea6ba38101e",
+            "size": 114
+          },
+          {
+            "rfilename": "fold_03/test_predictions.csv",
+            "blobId": "e43f271d62a6cba8e8d92fdf636538b4cb6956af",
+            "size": 115509
+          },
+          {
+            "rfilename": "fold_03/val_best_current_classification_report.json",
+            "blobId": "2dede18c36648f62611566eb3aa0cd17190f66a9",
+            "size": 899
+          },
+          {
+            "rfilename": "fold_03/val_best_current_confusion_matrix.csv",
+            "blobId": "f2eaadc4394eacdedbaa63456ce0d988e9951a18",
+            "size": 112
+          },
+          {
+            "rfilename": "fold_03/val_best_current_predictions.csv",
+            "blobId": "c4fece4630efe9fd1d27a5d963b47fd5a58a6edd",
+            "size": 92010
+          },
+          {
+            "rfilename": "fold_03/val_classification_report.json",
+            "blobId": "2dede18c36648f62611566eb3aa0cd17190f66a9",
+            "size": 899
+          },
+          {
+            "rfilename": "fold_03/val_confusion_matrix.csv",
+            "blobId": "f2eaadc4394eacdedbaa63456ce0d988e9951a18",
+            "size": 112
+          },
+          {
+            "rfilename": "fold_03/val_predictions.csv",
+            "blobId": "c4fece4630efe9fd1d27a5d963b47fd5a58a6edd",
+            "size": 92010
+          },
+          {
+            "rfilename": "fold_04/best.pt",
+            "blobId": "179df70561a558359abc1627cdc07097542f3cf7",
+            "size": 17019541,
+            "lfs": {
+              "sha256": "5766151e8b27b3bd3b447bf288e5995ee903ea5c4f0600e8414c5fcde7f835a5",
+              "size": 17019541,
+              "pointerSize": 133
+            }
+          },
+          {
+            "rfilename": "fold_04/history.csv",
+            "blobId": "f0485703a4b9c008a605b6cfc84a9406ab76017d",
+            "size": 5001
+          },
+          {
+            "rfilename": "fold_04/metrics.json",
+            "blobId": "346de604033326715cee8ef66cff08f30710cb4b",
+            "size": 3625
+          },
+          {
+            "rfilename": "fold_04/split.csv",
+            "blobId": "670f44c258fe88ff1ee2dc2b03d7ec8e90c9d762",
+            "size": 556791
+          },
+          {
+            "rfilename": "fold_04/test_classification_report.json",
+            "blobId": "0af915068db87a05b883745b34751cc783edb117",
+            "size": 886
+          },
+          {
+            "rfilename": "fold_04/test_confusion_matrix.csv",
+            "blobId": "46e72f534c46cf3840d1d0762b7acb7e2f661c03",
+            "size": 114
+          },
+          {
+            "rfilename": "fold_04/test_predictions.csv",
+            "blobId": "12cd7544fd368f0ff369b147b6d5db0c7d0b1bf0",
+            "size": 115471
+          },
+          {
+            "rfilename": "fold_04/val_best_current_classification_report.json",
+            "blobId": "456c1899ae1e15ab978a0473eb42333aae584862",
+            "size": 839
+          },
+          {
+            "rfilename": "fold_04/val_best_current_confusion_matrix.csv",
+            "blobId": "fbe680feb62c53978fcc8b62b6b0bf391626cf51",
+            "size": 112
+          },
+          {
+            "rfilename": "fold_04/val_best_current_predictions.csv",
+            "blobId": "29858b4c2f4de724cd39b13b69516162c65a9563",
+            "size": 91894
+          },
+          {
+            "rfilename": "fold_04/val_classification_report.json",
+            "blobId": "456c1899ae1e15ab978a0473eb42333aae584862",
+            "size": 839
+          },
+          {
+            "rfilename": "fold_04/val_confusion_matrix.csv",
+            "blobId": "fbe680feb62c53978fcc8b62b6b0bf391626cf51",
+            "size": 112
+          },
+          {
+            "rfilename": "fold_04/val_predictions.csv",
+            "blobId": "29858b4c2f4de724cd39b13b69516162c65a9563",
+            "size": 91894
+          },
+          {
+            "rfilename": "fold_05/best.pt",
+            "blobId": "0205bebf760aab8feb7deeda8e63879fc6e410c3",
+            "size": 17019541,
+            "lfs": {
+              "sha256": "170089d3554f31039c87376a9099adeb97eb912c8d5cf12e011c26d75280e9c0",
+              "size": 17019541,
+              "pointerSize": 133
+            }
+          },
+          {
+            "rfilename": "fold_05/history.csv",
+            "blobId": "a4a12e5c87e946fd496c5aebeeee1dc26a0a0e49",
+            "size": 2702
+          },
+          {
+            "rfilename": "fold_05/metrics.json",
+            "blobId": "4bf665d69e4c0bc1ea3d987235edf457565e240b",
+            "size": 3674
+          },
+          {
+            "rfilename": "fold_05/split.csv",
+            "blobId": "87aab1c35e2e00e5fa4dd91152ea7d96b5ce9430",
+            "size": 556791
+          },
+          {
+            "rfilename": "fold_05/test_classification_report.json",
+            "blobId": "15e153342745d725e66a739b02451098a87a3259",
+            "size": 901
+          },
+          {
+            "rfilename": "fold_05/test_confusion_matrix.csv",
+            "blobId": "ba1c801bd146da98ae4a5a8838a557b452ce57c9",
+            "size": 115
+          },
+          {
+            "rfilename": "fold_05/test_predictions.csv",
+            "blobId": "c993d63999eaaecc80fb7a10b658270c4b537483",
+            "size": 113826
+          },
+          {
+            "rfilename": "fold_05/val_best_current_classification_report.json",
+            "blobId": "85dc15d7698c81af23bd478f653b1a143a85c3cb",
+            "size": 873
+          },
+          {
+            "rfilename": "fold_05/val_best_current_confusion_matrix.csv",
+            "blobId": "acf414ec42c99cf9b274f629b7b6bec5c9aa3e09",
+            "size": 112
+          },
+          {
+            "rfilename": "fold_05/val_best_current_predictions.csv",
+            "blobId": "0c0ff830e093a3d56946e800bdfa5311763ec7a4",
+            "size": 90859
+          },
+          {
+            "rfilename": "fold_05/val_classification_report.json",
+            "blobId": "85dc15d7698c81af23bd478f653b1a143a85c3cb",
+            "size": 873
+          },
+          {
+            "rfilename": "fold_05/val_confusion_matrix.csv",
+            "blobId": "acf414ec42c99cf9b274f629b7b6bec5c9aa3e09",
+            "size": 112
+          },
+          {
+            "rfilename": "fold_05/val_predictions.csv",
+            "blobId": "0c0ff830e093a3d56946e800bdfa5311763ec7a4",
+            "size": 90859
+          },
+          {
+            "rfilename": "kfold_summary.csv",
+            "blobId": "d4818554bd87f4913a462aa9d229bd0785870149",
+            "size": 1876
+          },
+          {
+            "rfilename": "labels.json",
+            "blobId": "acdd62bd6f0a97bf4851529e69a698629f3c68ba",
+            "size": 182
+          },
+          {
+            "rfilename": "recall_by_source.csv",
+            "blobId": "3a54b1ae81a224b7320b6c54ff6a4be9e60919cb",
+            "size": 280
+          },
+          {
+            "rfilename": "report.md",
+            "blobId": "9c10ca10637e54ea9fcb42e08074917ba7bb961c",
+            "size": 2364
+          },
+          {
+            "rfilename": "test.csv",
+            "blobId": "d4cff2ff239062f90c1a1191860895987f5cdbc0",
+            "size": 108539
+          },
+          {
+            "rfilename": "trainval.csv",
+            "blobId": "a8ffcd26c4b3113d801f47cb33728b30d33f0b78",
+            "size": 433250
+          }
+        ],
+        "spaces": [],
+        "createdAt": "2026-08-11T13:40:04.000Z",
+        "usedStorage": 85097705
+      },
+      "commits": [
+        {
+          "id": "3bfc71cc55f6fe64b78a28a814c33171605f1642",
+          "title": "Add model card / clean paths",
+          "message": "",
+          "authors": [
+            {
+              "user": "retrina0678",
+              "avatar": "/avatars/b7243cee3be91dd0c1ebf33f1e208ce1.svg"
+            }
+          ],
+          "date": "2026-08-11T13:40:51.000Z"
+        },
+        {
+          "id": "7ac90d3643db0f0436b9a43850d194bcdcc7f226",
+          "title": "Add model card / clean paths",
+          "message": "",
+          "authors": [
+            {
+              "user": "retrina0678",
+              "avatar": "/avatars/b7243cee3be91dd0c1ebf33f1e208ce1.svg"
+            }
+          ],
+          "date": "2026-08-11T13:40:49.000Z"
+        },
+        {
+          "id": "db48d32efdc5bb5b2dae59ee4646215b1ed12562",
+          "title": "Add model card / clean paths",
+          "message": "",
+          "authors": [
+            {
+              "user": "retrina0678",
+              "avatar": "/avatars/b7243cee3be91dd0c1ebf33f1e208ce1.svg"
+            }
+          ],
+          "date": "2026-08-11T13:40:47.000Z"
+        },
+        {
+          "id": "8ba3f952fda07ab4ff9e5a0ee61acc1a7bf0370d",
+          "title": "Add 4-class EfficientAT checkpoint (5-fold)",
+          "message": "",
+          "authors": [
+            {
+              "user": "retrina0678",
+              "avatar": "/avatars/b7243cee3be91dd0c1ebf33f1e208ce1.svg"
+            }
+          ],
+          "date": "2026-08-11T13:40:42.000Z"
+        },
+        {
+          "id": "334718ac3ee7ecfa16ee262c488440c572bb5e78",
+          "title": "initial commit",
+          "message": "",
+          "authors": [
+            {
+              "user": "retrina0678",
+              "avatar": "/avatars/b7243cee3be91dd0c1ebf33f1e208ce1.svg"
+            }
+          ],
+          "date": "2026-08-11T13:40:04.000Z"
+        }
+      ]
+    },
+    {
+      "id": "litert-community/PANNs-CNN14-AudioSet-LiteRT",
+      "model": {
+        "_id": "6a437a9f44de777d7bb487e4",
+        "id": "litert-community/PANNs-CNN14-AudioSet-LiteRT",
+        "private": false,
+        "pipeline_tag": "audio-classification",
+        "library_name": "LiteRT",
+        "tags": [
+          "LiteRT",
+          "tflite",
+          "litert",
+          "on-device",
+          "android",
+          "gpu",
+          "audio-tagging",
+          "audioset",
+          "sound-event-detection",
+          "panns",
+          "cnn14",
+          "fully-gpu",
+          "audio-classification",
+          "license:cc-by-4.0",
+          "region:us"
+        ],
+        "downloads": 100,
+        "likes": 0,
+        "modelId": "litert-community/PANNs-CNN14-AudioSet-LiteRT",
+        "author": "litert-community",
+        "sha": "d9bade70b0224209ab4ab7145e1923c21641c626",
+        "lastModified": "2026-09-08T08:53:25.000Z",
+        "gated": false,
+        "disabled": false,
+        "model-index": null,
+        "config": {},
+        "cardData": {
+          "license": "cc-by-4.0",
+          "library_name": "LiteRT",
+          "pipeline_tag": "audio-classification",
+          "tags": [
+            "litert",
+            "tflite",
+            "on-device",
+            "android",
+            "gpu",
+            "audio-tagging",
+            "audioset",
+            "sound-event-detection",
+            "panns",
+            "cnn14",
+            "fully-gpu"
+          ]
+        },
+        "siblings": [
+          {
+            "rfilename": ".gitattributes",
+            "blobId": "60c0813e033edffb4b5d1c4b9c48957b62fd379d",
+            "size": 1574
+          },
+          {
+            "rfilename": "README.md",
+            "blobId": "3b8368ea3a687d4cdb4a8e172f07b406d34b5590",
+            "size": 9466
+          },
+          {
+            "rfilename": "audioset_labels.txt",
+            "blobId": "6fccf56a769d23191f5482b2805127cb68c70888",
+            "size": 6337
+          },
+          {
+            "rfilename": "build_panns.py",
+            "blobId": "881b1ad73814da24e827bc9e9af89d2ba14eee26",
+            "size": 7012
+          },
+          {
+            "rfilename": "cnn14_audioset_fp16.tflite",
+            "blobId": "644f9b18bf02cf712d8fb1ce3be5a06111cc18fd",
+            "size": 161533712,
+            "lfs": {
+              "sha256": "26e52a285ff324778c7b90642e9733b47a46071622ecba93d42ca14ec19a467f",
+              "size": 161533712,
+              "pointerSize": 134
+            }
+          },
+          {
+            "rfilename": "mel_basis.bin",
+            "blobId": "9ab74b23cb06f04912e266af901a361d24b07350",
+            "size": 131328,
+            "lfs": {
+              "sha256": "50edbf75f0ffdb5bf295a54cb3b9c4ad27b841be1119255f0f785552b99f13bd",
+              "size": 131328,
+              "pointerSize": 131
+            }
+          },
+          {
+            "rfilename": "samples/sample.png",
+            "blobId": "52c44a1798c5877e25d4c9f468a88afe875e98f8",
+            "size": 247133,
+            "lfs": {
+              "sha256": "a55a079b0fd46c14702683acf02ec39c9cac515b18ddf2fcb2b5bf869e50a9fa",
+              "size": 247133,
+              "pointerSize": 131
+            }
+          }
+        ],
+        "spaces": [],
+        "createdAt": "2026-06-30T08:13:19.000Z",
+        "usedStorage": 161912173
+      },
+      "commits": [
+        {
+          "id": "d9bade70b0224209ab4ab7145e1923c21641c626",
+          "title": "Card: measured device / browser results (edge-compat, 2026-09)",
+          "message": "",
+          "authors": [
+            {
+              "user": "mlboydaisuke",
+              "avatar": "https://cdn-avatars.huggingface.co/v1/production/uploads/63f4abae121f98947076d4d4/eV0naQ-mKLB0OtO788yez.jpeg"
+            }
+          ],
+          "date": "2026-09-08T08:53:25.000Z"
+        },
+        {
+          "id": "a9f9f496ef7c6e2449bedbe872bc81d3dbb2d6fa",
+          "title": "Add measured Raspberry Pi 5 (CPU) section",
+          "message": "\n\nNumbers from the 2026-08-31 Raspberry Pi 5 sweep: LiteRT benchmark_model\n(litert-cli-nightly 0.2.0.dev20260805), CPU/XNNPACK, 4 threads, 10 warm-up +\n50 timed runs x 3 invocations per file, cooldown between invocations, thermal\nthrottle state verified 0x0 on every run. Median + spread, never single-shot.\nMeasurements are joined to this repo by exact .tflite file name.",
+          "authors": [
+            {
+              "user": "mlboydaisuke",
+              "avatar": "https://cdn-avatars.huggingface.co/v1/production/uploads/63f4abae121f98947076d4d4/eV0naQ-mKLB0OtO788yez.jpeg"
+            }
+          ],
+          "date": "2026-09-01T01:45:09.000Z"
+        },
+        {
+          "id": "ae53b517b8111354736a3c667e36dd8143abcb8b",
+          "title": "Add measured Galaxy S26 NPU/GPU section",
+          "message": "\n\nNumbers from the S26 classic sweep. Primary logs:\nlitertlm-convert/community_accel_work/s2_npu_sweep/results.jsonl (on-device\nJIT) and portal_work/bench_all.txt + bench_redo.txt (the 2026-08-23 AOT\nsweep); every row states which of the two produced it. Rows carry device,\nSoC, runtime, N and thermal state, and join to this repo by exact .tflite\nfile name. Rows taken outside the sweep's thermal window are not reported.",
+          "authors": [
+            {
+              "user": "mlboydaisuke",
+              "avatar": "https://cdn-avatars.huggingface.co/v1/production/uploads/63f4abae121f98947076d4d4/eV0naQ-mKLB0OtO788yez.jpeg"
+            }
+          ],
+          "date": "2026-08-27T12:34:43.000Z"
+        },
+        {
+          "id": "89786cf2aabe39bce521e68bd79f4b608d420c30",
+          "title": "Card: add a measured Performance table (Pixel 8a, benchmark_model GPU+CPU), naming the runtime for each row",
+          "message": "",
+          "authors": [
+            {
+              "user": "mlboydaisuke",
+              "avatar": "https://cdn-avatars.huggingface.co/v1/production/uploads/63f4abae121f98947076d4d4/eV0naQ-mKLB0OtO788yez.jpeg"
+            }
+          ],
+          "date": "2026-08-10T15:13:25.000Z"
+        },
+        {
+          "id": "7348b11e1afcca204b91774088ef7d745bf958fe",
+          "title": "Embed hero image",
+          "message": "",
+          "authors": [
+            {
+              "user": "mlboydaisuke",
+              "avatar": "https://cdn-avatars.huggingface.co/v1/production/uploads/63f4abae121f98947076d4d4/eV0naQ-mKLB0OtO788yez.jpeg"
+            }
+          ],
+          "date": "2026-07-02T11:25:39.000Z"
+        },
+        {
+          "id": "133375c30eb82d2f26e435aa543e798492e7d1e6",
+          "title": "Add hero image",
+          "message": "",
+          "authors": [
+            {
+              "user": "mlboydaisuke",
+              "avatar": "https://cdn-avatars.huggingface.co/v1/production/uploads/63f4abae121f98947076d4d4/eV0naQ-mKLB0OtO788yez.jpeg"
+            }
+          ],
+          "date": "2026-07-02T11:25:38.000Z"
+        },
+        {
+          "id": "61f8a2714e201163198e8a6dcecad5bb76b3575a",
+          "title": "Add minimal usage snippets (Kotlin + Python)",
+          "message": "",
+          "authors": [
+            {
+              "user": "mlboydaisuke",
+              "avatar": "https://cdn-avatars.huggingface.co/v1/production/uploads/63f4abae121f98947076d4d4/eV0naQ-mKLB0OtO788yez.jpeg"
+            }
+          ],
+          "date": "2026-07-02T10:14:07.000Z"
+        },
+        {
+          "id": "a224538aedc0d84ddb40bd5fe10a07935cbb0c18",
+          "title": "Add PANNs CNN14 AudioSet tagging (fp16 CNN body + host log-mel assets)",
+          "message": "",
+          "authors": [
+            {
+              "user": "mlboydaisuke",
+              "avatar": "https://cdn-avatars.huggingface.co/v1/production/uploads/63f4abae121f98947076d4d4/eV0naQ-mKLB0OtO788yez.jpeg"
+            }
+          ],
+          "date": "2026-06-30T08:14:05.000Z"
+        },
+        {
+          "id": "5ea4789aae64877e0793bd143b77c9e25658b39d",
+          "title": "initial commit",
+          "message": "",
+          "authors": [
+            {
+              "user": "mlboydaisuke",
+              "avatar": "https://cdn-avatars.huggingface.co/v1/production/uploads/63f4abae121f98947076d4d4/eV0naQ-mKLB0OtO788yez.jpeg"
+            }
+          ],
+          "date": "2026-06-30T08:13:19.000Z"
+        }
+      ]
+    }
+  ]
+}
