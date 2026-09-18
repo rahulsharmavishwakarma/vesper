@@ -1,0 +1,14 @@
+{
+  "language": "en-US",
+  "mode": "offline",
+  "backend": "cpu",
+  "durationSeconds": 12,
+  "requireAutoLanguage": false,
+  "requireCodeSwitching": false,
+  "requireSinging": false,
+  "preference": "balanced",
+  "maximumMedianWordErrorRate": 0.2,
+  "maximumMedianRealTimeFactor": 1.0,
+  "maximumP95StopToFinalMs": null,
+  "maximumFailureRate": 0.02
+}

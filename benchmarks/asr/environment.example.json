@@ -1,0 +1,13 @@
+{
+  "label": "apple-silicon-cpu-example",
+  "hardware": "Apple Silicon; replace with exact model and memory",
+  "operatingSystem": "macOS; replace with exact version",
+  "powerMode": "AC power; Low Power Mode off",
+  "backend": "cpu",
+  "precision": "record the model quantization or dtype",
+  "threads": 8,
+  "applicationRevision": "replace-with-git-revision-and-dirty-state",
+  "runtimeRevision": "replace-with-runtime-build-or-source-revision",
+  "driver": "not-applicable-for-cpu",
+  "notes": "State thermal state, competing load, and any runtime overrides."
+}
