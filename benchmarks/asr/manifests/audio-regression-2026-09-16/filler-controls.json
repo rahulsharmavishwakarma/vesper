@@ -1,0 +1,91 @@
+{
+  "schemaVersion": 1,
+  "sources": [
+    {
+      "id": "fleurs-en_us-test",
+      "name": "FLEURS English (United States) test set",
+      "url": "https://huggingface.co/datasets/google/fleurs/tree/70bb2e84b976b7e960aa89f1c648e09c59f894dd/data/en_us",
+      "revision": "70bb2e84b976b7e960aa89f1c648e09c59f894dd; audio-sha256:d9c2e37b41aacd41bc283554a0a82b5476b36887049774ecb2819dcaaa55a356; metadata-sha256:74c046239374deeb60fa63f258f907388093a32bcaa3140965f70ef05c79f7ca",
+      "license": "CC-BY-4.0",
+      "attribution": "Google FLEURS; derived from the FLoRes evaluation sentences",
+      "redistribution": "Redistributions must retain attribution under CC-BY-4.0."
+    },
+    {
+      "id": "fleurs-hi_in-test",
+      "name": "FLEURS Hindi (India) test set",
+      "url": "https://huggingface.co/datasets/google/fleurs/tree/70bb2e84b976b7e960aa89f1c648e09c59f894dd/data/hi_in",
+      "revision": "70bb2e84b976b7e960aa89f1c648e09c59f894dd; audio-sha256:47c238b9cf7016ba596639bb3038b0c89dc6e85759f16d09c4f58c6dfa25c65f; metadata-sha256:889e82e2875490f9533ff59ab67326fcfa01cf828fc4412758aaaa1f442a729f",
+      "license": "CC-BY-4.0",
+      "attribution": "Google FLEURS; derived from the FLoRes evaluation sentences",
+      "redistribution": "Redistributions must retain attribution under CC-BY-4.0."
+    },
+    {
+      "id": "synthetic-dictation-controls",
+      "name": "Task-authored synthetic English dictation controls",
+      "url": "https://github.com/rahulsharmavishwakarma/transcribe/issues/41",
+      "revision": "controls-v2; macOS26.6.2; Samantha; original175wpm/filler140wpm; PCM16mono16k",
+      "license": "Task-authored text; generated audio retained locally only",
+      "attribution": "Original synthetic control sentences generated for this benchmark, spoken by macOS Samantha",
+      "redistribution": "No synthesized audio is redistributed; text, parameters and hashes only."
+    },
+    {
+      "id": "audio-frontend-synthetic-noise",
+      "name": "Deterministic non-speech diagnostics",
+      "url": "https://github.com/rahulsharmavishwakarma/transcribe/issues/42",
+      "revision": "noise-v1; 16000Hz PCM16; LCG1664525+1013904223 seed17",
+      "license": "Task-authored mathematical signals",
+      "attribution": "Generated non-speech controls; not recorded natural environments",
+      "redistribution": "May redistribute mathematical recipes and generated signals"
+    }
+  ],
+  "samples": [
+    {
+      "id": "filler-um",
+      "sourceId": "synthetic-dictation-controls",
+      "split": "test",
+      "language": "en-US",
+      "audioPath": "filler-um-v2.wav",
+      "sha256": "d7b15f0c87220ef855cf7ea7a6a450b5e94e1575f853bcd35eb9decb916f67fc",
+      "reference": "Um, I want to book a meeting.",
+      "durationSeconds": 1.9456875,
+      "scenario": "conversational",
+      "replayKind": "synthetic_soak"
+    },
+    {
+      "id": "filler-uh",
+      "sourceId": "synthetic-dictation-controls",
+      "split": "test",
+      "language": "en-US",
+      "audioPath": "filler-uh-v2.wav",
+      "sha256": "26538f77a9673ef1926b1aa6a0effd25e81e9eb07fcd83ea5cc658ed86f43166",
+      "reference": "Uh, please send the report.",
+      "durationSeconds": 1.8836875,
+      "scenario": "conversational",
+      "replayKind": "synthetic_soak"
+    },
+    {
+      "id": "affirmation-hmm",
+      "sourceId": "synthetic-dictation-controls",
+      "split": "test",
+      "language": "en-US",
+      "audioPath": "affirmation-hmm-v2.wav",
+      "sha256": "c5b60dc3d5690df5c51a9e4c66bc7924c1d7c92279685122b0de4cf87ce3f795",
+      "reference": "Hmm, yes, that is correct.",
+      "durationSeconds": 2.1274375,
+      "scenario": "conversational",
+      "replayKind": "synthetic_soak"
+    },
+    {
+      "id": "meaningful-and",
+      "sourceId": "synthetic-dictation-controls",
+      "split": "test",
+      "language": "en-US",
+      "audioPath": "meaningful-and-v2.wav",
+      "sha256": "f3cf7e1de66914b4eb61b5227703b7ed0d36cad8a27481ea36c085d7fae97a97",
+      "reference": "Buy apples and oranges, and do not cancel the order.",
+      "durationSeconds": 3.449375,
+      "scenario": "conversational",
+      "replayKind": "synthetic_soak"
+    }
+  ]
+}
