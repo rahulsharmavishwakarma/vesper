@@ -1,0 +1,31 @@
+# Reference template only: the application does not import this TOML file.
+# Desktop settings are saved as settings.json in Tauri's app_config_dir.
+# Browser preview keeps separate settings in localStorage.
+# Field names and values match the core configuration's JSON schema.
+schemaVersion = 1
+cleanupEnabled = true
+language = "en" # Cohere requires en or fr. Auto/hi require another compatible ASR.
+computeBackend = "auto" # auto, cpu, metal, cuda, vulkan, or rocm
+
+# Omit modelDirectory to represent the default JSON null / Rust None value.
+# Optional override: nonblank path, at most 4096 characters; not scanned yet.
+# modelDirectory = "/absolute/path/to/models"
+
+cleanupPreset = "minimal" # minimal (formatting only) or balanced (context correction)
+# Nonblank custom text replaces the preset instruction; at most 4000 characters.
+customCleanupInstruction = ""
+rewriteQuantization = "q4_0" # q4_0 or q8_0
+maxRecordingSeconds = 0 # Legacy field, ignored. No general duration cutoff; adapter/resource limits still apply.
+globalShortcut = "CommandOrControl+Shift+Space"
+floatingBarEnabled = true
+captureDesign = "split"
+notificationsEnabled = false
+# Retain imported audio and review records locally.
+collectTrainingData = true
+# Future training policy only; no automatic training is currently implemented.
+improvementMode = "review_required" # review_required or automatic
+
+[models]
+# Completed-recording ASR plus the writing model. Nemotron remains selectable for live partials.
+asr = "CohereLabs/cohere-transcribe-03-2026"
+rewriter = "Qwen/Qwen3.5-0.8B"
