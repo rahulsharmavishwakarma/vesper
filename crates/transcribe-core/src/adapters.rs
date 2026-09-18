@@ -1,0 +1,326 @@
+//! Compiled architecture contracts. Model repositories supply data, never code.
+//! Resolve at request/load boundaries; native runtimes own all frame/token kernels.
+use crate::{AppConfig, AsrModel, ComputeBackend, Language, ModelRole};
+use serde::Serialize;
+
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize)]
+#[serde(rename_all = "snake_case")]
+pub enum AdapterKind {
+    NemoRnnt,
+    SherpaTransducer,
+    QwenAsr,
+    CohereAsr,
+    Whisper,
+    LfmAudio,
+    QwenHybrid,
+    LlamaGguf,
+}
+
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize)]
+#[serde(rename_all = "snake_case")]
+pub enum CacheState {
+    Rnnt,
+    EncoderDecoder,
+    HybridRecurrentKv,
+    ModelDefined,
+}
+
+#[derive(Debug, Clone, Copy, Serialize)]
+#[serde(rename_all = "camelCase")]
+pub struct AdapterCapabilities {
+    pub offline: bool,
+    pub native_streaming: bool,
+    pub contextual_phrases: bool,
+    pub completion_report: bool,
+    pub cache_state: CacheState,
+    /// Runtime capability; activation still requires local equivalence tests.
+    pub complete_prefix_state: bool,
+    pub languages: &'static [Language],
+    pub backends: &'static [ComputeBackend],
+    pub resident_weights: bool,
+}
+
+#[derive(Debug, Clone, Copy, Serialize)]
+#[serde(rename_all = "camelCase")]
+pub struct AdapterRegistration {
+    pub kind: AdapterKind,
+    pub task: ModelRole,
+    pub architecture: &'static str,
+    pub runtime: &'static str,
+    pub runtime_revision: &'static str,
+    pub capabilities: AdapterCapabilities,
+}
+
+const CPU: &[ComputeBackend] = &[ComputeBackend::Auto, ComputeBackend::Cpu];
+const ALL_BACKENDS: &[ComputeBackend] = &[
+    ComputeBackend::Auto,
+    ComputeBackend::Cpu,
+    ComputeBackend::Metal,
+    ComputeBackend::Cuda,
+    ComputeBackend::Vulkan,
+    ComputeBackend::Rocm,
+];
+const ALL_LANGUAGES: &[Language] = &[
+    Language::Auto,
+    Language::English,
+    Language::Hindi,
+    Language::French,
+];
+const EN_FR: &[Language] = &[Language::Auto, Language::English, Language::French];
+const EXPLICIT_EN_FR: &[Language] = &[Language::English, Language::French];
+const SHERPA: &str = "11afbd009a7f8c08f4bcf2fc1b265d0df4670fbf";
+const LLAMA: &str = "e79e4bf660e19f2ad851e06c6913f7a8c5852621";
+const SPEECH: ModelRole = ModelRole::SpeechRecognition;
+const TEXT: ModelRole = ModelRole::TextReconstruction;
+
+const fn caps(
+    state: CacheState,
+    languages: &'static [Language],
+    backends: &'static [ComputeBackend],
+) -> AdapterCapabilities {
+    AdapterCapabilities {
+        offline: true,
+        native_streaming: false,
+        contextual_phrases: false,
+        completion_report: false,
+        cache_state: state,
+        complete_prefix_state: false,
+        languages,
+        backends,
+        resident_weights: false,
+    }
+}
+
+pub const ADAPTERS: &[AdapterRegistration] = &[
+    AdapterRegistration {
+        kind: AdapterKind::NemoRnnt,
+        task: SPEECH,
+        architecture: "nemo_cache_aware_fastconformer_rnnt",
+        runtime: "NeMo-Speech.cpp",
+        runtime_revision: "4f9676226f667d14608487df744f375db87127f8",
+        capabilities: AdapterCapabilities {
+            native_streaming: true,
+            contextual_phrases: true,
+            resident_weights: true,
+            ..caps(CacheState::Rnnt, ALL_LANGUAGES, ALL_BACKENDS)
+        },
+    },
+    AdapterRegistration {
+        kind: AdapterKind::SherpaTransducer,
+        task: SPEECH,
+        architecture: "sherpa_nemo_transducer",
+        runtime: "sherpa-onnx",
+        runtime_revision: SHERPA,
+        capabilities: caps(CacheState::Rnnt, EN_FR, CPU),
+    },
+    AdapterRegistration {
+        kind: AdapterKind::QwenAsr,
+        task: SPEECH,
+        architecture: "qwen3_asr",
+        runtime: "sherpa-onnx",
+        runtime_revision: SHERPA,
+        capabilities: AdapterCapabilities {
+            completion_report: true,
+            ..caps(CacheState::EncoderDecoder, ALL_LANGUAGES, CPU)
+        },
+    },
+    AdapterRegistration {
+        kind: AdapterKind::CohereAsr,
+        task: SPEECH,
+        architecture: "cohere_asr",
+        runtime: "sherpa-onnx",
+        runtime_revision: SHERPA,
+        capabilities: AdapterCapabilities {
+            resident_weights: true,
+            completion_report: true,
+            ..caps(CacheState::EncoderDecoder, EXPLICIT_EN_FR, CPU)
+        },
+    },
+    AdapterRegistration {
+        kind: AdapterKind::Whisper,
+        task: SPEECH,
+        architecture: "whisper",
+        runtime: "sherpa-onnx",
+        runtime_revision: SHERPA,
+        capabilities: AdapterCapabilities {
+            resident_weights: true,
+            completion_report: true,
+            ..caps(CacheState::EncoderDecoder, EN_FR, CPU)
+        },
+    },
+    AdapterRegistration {
+        kind: AdapterKind::LfmAudio,
+        task: SPEECH,
+        architecture: "lfm2_audio",
+        runtime: "llama-cpp-2/mtmd",
+        runtime_revision: LLAMA,
+        capabilities: AdapterCapabilities {
+            resident_weights: true,
+            completion_report: true,
+            ..caps(CacheState::HybridRecurrentKv, &[Language::English], CPU)
+        },
+    },
+    AdapterRegistration {
+        kind: AdapterKind::QwenHybrid,
+        task: TEXT,
+        architecture: "qwen35_hybrid_causal_lm",
+        runtime: "llama-cpp-2",
+        runtime_revision: LLAMA,
+        capabilities: AdapterCapabilities {
+            resident_weights: true,
+            complete_prefix_state: true,
+            ..caps(CacheState::HybridRecurrentKv, ALL_LANGUAGES, ALL_BACKENDS)
+        },
+    },
+    // Architecture is discovered by pinned llama.cpp from GGUF. Do not assume KV-only state.
+    AdapterRegistration {
+        kind: AdapterKind::LlamaGguf,
+        task: TEXT,
+        architecture: "llama_supported_gguf",
+        runtime: "llama-cpp-2",
+        runtime_revision: LLAMA,
+        capabilities: AdapterCapabilities {
+            resident_weights: true,
+            ..caps(CacheState::ModelDefined, ALL_LANGUAGES, ALL_BACKENDS)
+        },
+    },
+];
+
+pub fn resolve_adapter(
+    task: ModelRole,
+    architecture: &str,
+    runtime: &str,
+) -> Option<&'static AdapterRegistration> {
+    ADAPTERS
+        .iter()
+        .find(|a| a.task == task && a.architecture == architecture && a.runtime == runtime)
+}
+
+pub fn adapter(kind: AdapterKind) -> &'static AdapterRegistration {
+    ADAPTERS
+        .iter()
+        .find(|a| a.kind == kind)
+        .expect("compiled adapter registration")
+}
+
+impl AsrModel {
+    pub const fn adapter_kind(self) -> AdapterKind {
+        match self {
+            Self::Nemotron35AsrStreaming06b => AdapterKind::NemoRnnt,
+            Self::ParakeetTdt06bV3 => AdapterKind::SherpaTransducer,
+            Self::Qwen3Asr06b => AdapterKind::QwenAsr,
+            Self::CohereTranscribe => AdapterKind::CohereAsr,
+            Self::WhisperSmall | Self::WhisperTurbo => AdapterKind::Whisper,
+            Self::Lfm25Audio15b => AdapterKind::LfmAudio,
+        }
+    }
+}
+
+impl AppConfig {
+    pub fn speech_adapter(&self) -> &'static AdapterRegistration {
+        adapter(if self.models.custom_asr.is_some() {
+            AdapterKind::SherpaTransducer
+        } else {
+            self.models.asr.adapter_kind()
+        })
+    }
+    pub fn text_adapter(&self) -> &'static AdapterRegistration {
+        adapter(if self.models.custom_rewriter.is_some() {
+            AdapterKind::LlamaGguf
+        } else {
+            AdapterKind::QwenHybrid
+        })
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    #[test]
+    fn whisper_variants_share_one_cpu_completed_audio_contract() {
+        for model in [AsrModel::WhisperSmall, AsrModel::WhisperTurbo] {
+            let mut config = AppConfig::default();
+            config.models.asr = model;
+            assert_eq!(config.speech_adapter().kind, AdapterKind::Whisper);
+            let capability = config.speech_adapter().capabilities;
+            assert!(
+                capability.offline && capability.resident_weights && capability.completion_report
+            );
+            assert!(!capability.native_streaming && !capability.contextual_phrases);
+            for language in ALL_LANGUAGES {
+                config.language = *language;
+                assert_eq!(config.validate().is_ok(), EN_FR.contains(language));
+            }
+            config.language = Language::English;
+            for backend in ALL_BACKENDS {
+                config.compute_backend = *backend;
+                assert_eq!(config.validate().is_ok(), CPU.contains(backend));
+            }
+        }
+        assert_eq!(AppConfig::default().models.asr, AsrModel::CohereTranscribe);
+    }
+    #[test]
+    fn lfm_is_resident_completed_audio_with_explicit_english_and_cpu_only() {
+        let mut config = AppConfig::default();
+        config.models.asr = AsrModel::Lfm25Audio15b;
+        let capability = config.speech_adapter().capabilities;
+        assert!(capability.offline && capability.resident_weights && capability.completion_report);
+        assert!(
+            !capability.native_streaming
+                && !capability.contextual_phrases
+                && !capability.complete_prefix_state
+        );
+        for language in ALL_LANGUAGES {
+            config.language = *language;
+            assert_eq!(config.validate().is_ok(), *language == Language::English);
+        }
+        config.language = Language::English;
+        for backend in ALL_BACKENDS {
+            config.compute_backend = *backend;
+            assert_eq!(config.validate().is_ok(), CPU.contains(backend));
+        }
+        config.compute_backend = ComputeBackend::Cpu;
+        let restored: AppConfig =
+            serde_json::from_str(&serde_json::to_string(&config).unwrap()).unwrap();
+        assert_eq!(restored, config);
+    }
+
+    #[test]
+    fn unique_keys_and_exact_task_resolution() {
+        for a in ADAPTERS {
+            assert_eq!(
+                ADAPTERS
+                    .iter()
+                    .filter(|b| b.task == a.task
+                        && b.architecture == a.architecture
+                        && b.runtime == a.runtime)
+                    .count(),
+                1
+            );
+            assert_eq!(
+                resolve_adapter(a.task, a.architecture, a.runtime)
+                    .unwrap()
+                    .kind,
+                a.kind
+            );
+            assert!(resolve_adapter(a.task, a.architecture, "unregistered-runtime").is_none());
+        }
+        assert!(
+            !adapter(AdapterKind::LlamaGguf)
+                .capabilities
+                .complete_prefix_state
+        );
+        assert!(
+            adapter(AdapterKind::NemoRnnt)
+                .capabilities
+                .contextual_phrases
+        );
+        let default = AppConfig::default();
+        default.validate().unwrap();
+        assert_eq!(default.speech_adapter().kind, AdapterKind::CohereAsr);
+        assert_eq!(default.text_adapter().kind, AdapterKind::QwenHybrid);
+        assert_eq!(default.language, Language::English);
+        assert!(default.cleanup_enabled);
+        assert!(!default.speech_adapter().capabilities.native_streaming);
+    }
+}
