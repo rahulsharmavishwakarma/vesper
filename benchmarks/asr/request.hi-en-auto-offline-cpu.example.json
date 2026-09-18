@@ -1,0 +1,14 @@
+{
+  "language": "hi+en",
+  "mode": "offline",
+  "backend": "cpu",
+  "durationSeconds": 12,
+  "requireAutoLanguage": true,
+  "requireCodeSwitching": true,
+  "requireSinging": false,
+  "preference": "balanced",
+  "maximumMedianWordErrorRate": 0.3,
+  "maximumMedianRealTimeFactor": 1.0,
+  "maximumP95StopToFinalMs": null,
+  "maximumFailureRate": 0.02
+}
