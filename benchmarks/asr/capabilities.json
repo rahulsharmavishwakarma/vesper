@@ -1,0 +1,188 @@
+[
+  {
+    "modelId": "nvidia/nemotron-3.5-asr-streaming-0.6b",
+    "displayName": "NVIDIA Nemotron 3.5 ASR Streaming 0.6B",
+    "languages": [
+      "en",
+      "fr",
+      "hi"
+    ],
+    "modes": [
+      "offline",
+      "streaming"
+    ],
+    "backends": [
+      "cpu",
+      "metal",
+      "cuda",
+      "vulkan"
+    ],
+    "supportsAutoLanguage": true,
+    "supportsCodeSwitching": false,
+    "supportsSinging": false,
+    "maximumSeconds": null,
+    "executable": true,
+    "evidenceUrl": "https://huggingface.co/nvidia/nemotron-3.5-asr-streaming-0.6b"
+  },
+  {
+    "modelId": "Qwen/Qwen3-ASR-0.6B",
+    "displayName": "Qwen3-ASR 0.6B",
+    "languages": [
+      "en",
+      "fr",
+      "hi"
+    ],
+    "modes": [
+      "offline"
+    ],
+    "backends": [
+      "cpu"
+    ],
+    "supportsAutoLanguage": true,
+    "supportsCodeSwitching": true,
+    "supportsSinging": true,
+    "maximumSeconds": null,
+    "executable": true,
+    "evidenceUrl": "https://huggingface.co/Qwen/Qwen3-ASR-0.6B"
+  },
+  {
+    "modelId": "CohereLabs/cohere-transcribe-03-2026",
+    "displayName": "Cohere Transcribe",
+    "languages": [
+      "en",
+      "fr"
+    ],
+    "modes": [
+      "offline"
+    ],
+    "backends": [
+      "cpu"
+    ],
+    "supportsAutoLanguage": false,
+    "supportsCodeSwitching": false,
+    "supportsSinging": false,
+    "maximumSeconds": null,
+    "executable": true,
+    "evidenceUrl": "https://huggingface.co/CohereLabs/cohere-transcribe-03-2026"
+  },
+  {
+    "modelId": "nvidia/parakeet-tdt-0.6b-v3",
+    "displayName": "NVIDIA Parakeet TDT 0.6B v3",
+    "languages": [
+      "en",
+      "fr"
+    ],
+    "modes": [
+      "offline"
+    ],
+    "backends": [
+      "cpu"
+    ],
+    "supportsAutoLanguage": true,
+    "supportsCodeSwitching": false,
+    "supportsSinging": false,
+    "maximumSeconds": null,
+    "executable": true,
+    "evidenceUrl": "https://huggingface.co/nvidia/parakeet-tdt-0.6b-v3"
+  },
+  {
+    "modelId": "mistralai/Voxtral-Mini-4B-Realtime-2602",
+    "displayName": "Voxtral Mini 4B Realtime",
+    "languages": [
+      "en",
+      "fr",
+      "hi"
+    ],
+    "modes": [
+      "streaming"
+    ],
+    "backends": [
+      "cuda"
+    ],
+    "supportsAutoLanguage": true,
+    "supportsCodeSwitching": false,
+    "supportsSinging": false,
+    "maximumSeconds": null,
+    "executable": false,
+    "evidenceUrl": "https://huggingface.co/mistralai/Voxtral-Mini-4B-Realtime-2602"
+  },
+  {
+    "modelId": "microsoft/VibeVoice-ASR-BitNet",
+    "displayName": "Microsoft VibeVoice ASR BitNet",
+    "languages": [
+      "en",
+      "fr"
+    ],
+    "modes": [
+      "offline"
+    ],
+    "backends": [
+      "cpu"
+    ],
+    "supportsAutoLanguage": true,
+    "supportsCodeSwitching": false,
+    "supportsSinging": false,
+    "maximumSeconds": null,
+    "executable": false,
+    "evidenceUrl": "https://huggingface.co/microsoft/VibeVoice-ASR-BitNet"
+  },
+  {
+    "modelId": "LiquidAI/LFM2.5-Audio-1.5B",
+    "displayName": "Liquid LFM2.5 Audio 1.5B",
+    "languages": [
+      "en"
+    ],
+    "modes": [
+      "offline"
+    ],
+    "backends": [
+      "cpu"
+    ],
+    "supportsAutoLanguage": false,
+    "supportsCodeSwitching": false,
+    "supportsSinging": false,
+    "maximumSeconds": null,
+    "executable": true,
+    "evidenceUrl": "https://github.com/rahulsharmavishwakarma/transcribe/issues/40"
+  },
+  {
+    "modelId": "openai/whisper-small",
+    "displayName": "OpenAI Whisper Small INT8 (qualification pending)",
+    "languages": [
+      "en",
+      "fr"
+    ],
+    "modes": [
+      "offline"
+    ],
+    "backends": [
+      "cpu"
+    ],
+    "supportsAutoLanguage": true,
+    "supportsCodeSwitching": false,
+    "supportsSinging": false,
+    "maximumSeconds": null,
+    "executable": false,
+    "evidenceUrl": "https://github.com/rahulsharmavishwakarma/transcribe/issues/45"
+  },
+  {
+    "modelId": "openai/whisper-large-v3-turbo",
+    "displayName": "OpenAI Whisper Turbo INT8 (qualification pending)",
+    "languages": [
+      "en",
+      "fr"
+    ],
+    "modes": [
+      "offline"
+    ],
+    "backends": [
+      "cpu"
+    ],
+    "supportsAutoLanguage": true,
+    "supportsCodeSwitching": false,
+    "supportsSinging": false,
+    "maximumSeconds": null,
+    "executable": false,
+    "evidenceUrl": "https://github.com/rahulsharmavishwakarma/transcribe/issues/45"
+  }
+]
