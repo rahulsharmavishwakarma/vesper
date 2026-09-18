@@ -20,12 +20,16 @@ the same checks before packaging. Stable PR check names are:
 
 The frontend job runs repository hooks, actionlint with ShellCheck, zizmor,
 and `make check-portable`: source formatting, ESLint, Ruff, shell linting,
-synchronized-version checks, Svelte/TypeScript, all Node tooling tests, all nine
+synchronized-version checks, Svelte/TypeScript, all Node tooling tests, all
 Python test modules, and the production frontend build. Python test discovery
 handles `test-*.py`, `test_*.py`, and `*.test.py` in `scripts/`; every module runs
 in an isolated interpreter, and any failure fails the job. These tests use
-synthetic data and require only the development dependencies in
-`requirements-dev.txt`, not optional model/inference Python environments.
+synthetic data and use the `dev` group in `pyproject.toml`, resolved by the
+versioned `uv.lock`. Optional model/inference projects are kept separate.
+`make python-lock-check` checks all Python lockfiles and generated benchmark
+exports. CI installs uv 0.12.15 through a SHA-pinned action and selects Python
+3.12. The frontend job caches downloads under `.cache/uv`, keyed by lockfiles;
+only pushes to `main` save that cache. Security jobs disable cache reuse.
 
 Native-protocol tests in `scripts/test-vibevoice-bitnet.py` launch synthetic
 children through the real resource wrapper. It uses BSD `/usr/bin/time -l` on
@@ -140,8 +144,11 @@ make workflows
 make check
 ```
 
-`setup-checks` creates `.tooling/ci-venv`, installs the pinned direct Python
-dependencies, and downloads Chromium. On Linux install Chromium system libraries
+Install [uv](https://docs.astral.sh/uv/getting-started/installation/) first.
+`setup-checks` runs `uv sync --locked` to create `.venv` from `pyproject.toml`
+and `uv.lock`, then downloads Chromium. Python 3.12+ is required; uv can provision
+the interpreter. Old `.tooling/ci-venv` directories are preserved and unused.
+On Linux install Chromium system libraries
 with `PLAYWRIGHT_BROWSERS_PATH="$PWD/.cache/playwright" npm exec playwright install --with-deps chromium`. Hooks provision their own
 isolated environments, including Go-based actionlint, ShellCheck and Gitleaks;
 the first installation requires network access. `make hooks` installs both
@@ -170,10 +177,38 @@ also cannot establish coverage of untracked files; scan an isolated copy of the
 eligible source files with `gitleaks dir --redact` separately. Never point a broad
 scanner or artifact upload at local private recordings or downloaded models.
 
-Refresh hook revisions periodically with `pre-commit autoupdate --freeze`, review
+Refresh hook revisions periodically with `uv run --locked pre-commit autoupdate --freeze`, review
 the changes, and rerun checks. Dependabot manages Actions pins, not these hook
-revisions. Python direct dependencies are pinned; transitive development
-requirements are resolved by pip and checked by pip-audit on each security run.
+revisions. Python direct and transitive dependencies are locked by uv. Change
+contributor dependencies with `uv add --dev` / `uv remove --dev` and include the
+manifest and lockfile together. Benchmark projects retain generated requirements
+exports for existing consumers; regenerate them using the commands below and
+copy each export to its corresponding `benchmarks/asr/` requirements file:
+
+```sh
+mkdir -p .cache
+uv export --locked --project benchmarks/asr/python/audio-frontend --no-dev --no-emit-project --output-file .cache/audio-frontend-requirements.txt
+uv export --locked --project benchmarks/asr/python/vibevoice --no-dev --no-emit-project --output-file .cache/vibevoice-reference-requirements.txt
+```
+
+The export commands intentionally match `make python-lock-check`, including the
+generated header. Keep hashes and environment markers; do not hand-edit exports.
+Dependabot updates the uv manifests/locks; its benchmark PRs need regenerated
+exports before the check passes. Historical benchmark results require fresh
+qualification before attributing them to changed environments.
+
+Frontend coverage is shared between local hooks and CI:
+
+| Check | Local command | Hook stage |
+| --- | --- | --- |
+| TypeScript/Svelte/JavaScript formatting (Prettier) | `make fmt-web-check` | pre-commit |
+| TypeScript/Svelte/JavaScript lint (ESLint, warnings denied) | `make lint-web` | pre-commit |
+| Svelte and TypeScript diagnostics | `make check-web` | pre-commit |
+| Frontend helper and repository tests (Node) | `make test-tools` | pre-commit |
+| Mocked-native UI regressions (Playwright/Chromium) | `make test-browser` | pre-push |
+
+`make hooks` installs both stages. CI runs those checks independently of local
+hook installation; the portable job also builds frontend assets.
 
 ## Security gates
 
@@ -193,11 +228,11 @@ source/native-library SHA-256 values. They do not exclude entire files, paths or
 rules; a synthetic API-key control was separately confirmed to fail the scanner.
 
 The dependency job installs packages without lifecycle scripts, runs `npm audit`
-against production **and development** dependencies, audits `requirements-dev.txt`
-with pip-audit, and runs cargo-audit 0.22.2 against RustSec with
+against production **and development** dependencies, runs `make audit-python`,
+and runs cargo-audit 0.22.2 against RustSec with
 known vulnerabilities denied. RustSec maintenance and soundness warnings stay
 visible for dependency-upgrade planning without broad ignores. Dependabot checks
-npm, Cargo, GitHub Actions, Docker and Python development inputs weekly, with
+npm, Cargo, GitHub Actions, Docker and the three uv projects weekly, with
 routing labels, five open PRs per ecosystem and a seven-day version-update
 cooldown. Security-update behavior is governed separately by Dependabot. The
 optional manually dispatched container job scans the
@@ -205,6 +240,14 @@ final runnable image and fails for high or critical vulnerabilities, including
 findings that do not yet have an upstream fix. A temporary exception therefore
 requires an explicit, narrow, reviewed policy change rather than being silently
 filtered.
+
+`make audit-python` generates an ignored, hashed requirements export of the
+locked `dev` group, then runs `uv run --locked pip-audit --strict --require-hashes
+--disable-pip` against it. The audit cannot silently resolve newer transitive
+versions. Its gate covers the contributor graph on the audit runner, not the
+optional benchmark/model environments; those remain explicitly unqualified by
+this security result. All manifests and lockfiles stay versioned, while `.venv`
+and `.cache` stay ignored.
 
 The 2026-09-19 RustSec audit found no known vulnerabilities in the lockfile. cargo-audit still reports seven allowed transitive
 warnings: `RUSTSEC-2024-0370`, `RUSTSEC-2024-0429`, and the five `unic-*`
