@@ -1,0 +1,39 @@
+{
+  "name": "transcribe-workspace",
+  "version": "0.1.0",
+  "private": true,
+  "workspaces": [
+    "apps/desktop"
+  ],
+  "engines": {
+    "node": "^22.13.0 || >=24.0.0",
+    "npm": ">=10"
+  },
+  "scripts": {
+    "dev": "npm run dev --workspace @transcribe/desktop",
+    "build": "npm run build --workspace @transcribe/desktop",
+    "check": "npm run check --workspace @transcribe/desktop",
+    "preview": "npm run preview --workspace @transcribe/desktop",
+    "desktop:dev": "cd apps/desktop && tauri dev",
+    "desktop:build": "cd apps/desktop && tauri build -- --locked",
+    "rust:check": "make check-rust",
+    "rust:test": "make test-rust",
+    "rust:lint": "make lint-rust",
+    "rust:fmt": "make fmt-rust-check",
+    "lint": "eslint scripts apps/desktop *.mjs --max-warnings 0",
+    "format:check": "prettier --ignore-path .gitignore --check \"apps/desktop/**/*.{js,mjs,ts,svelte,css,html}\" \"scripts/**/*.{js,mjs,ts}\" \"*.mjs\" \"*.json\"",
+    "format": "prettier --ignore-path .gitignore --write \"apps/desktop/**/*.{js,mjs,ts,svelte,css,html}\" \"scripts/**/*.{js,mjs,ts}\" \"*.mjs\" \"*.json\""
+  },
+  "devDependencies": {
+    "@eslint/js": "10.0.1",
+    "@playwright/test": "1.63.0",
+    "@tauri-apps/cli": "2.11.4",
+    "eslint": "10.10.0",
+    "eslint-config-prettier": "10.1.8",
+    "eslint-plugin-svelte": "3.23.0",
+    "globals": "17.12.0",
+    "prettier": "3.9.8",
+    "prettier-plugin-svelte": "4.1.1",
+    "typescript-eslint": "8.70.0"
+  }
+}
