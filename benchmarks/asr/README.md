@@ -6,7 +6,7 @@ The runner accepts either a built-in `--model MODEL_ID` or one validated custom 
 
 This benchmark runs the application's real Rust/native inference path. It is not a Python proxy and it does not treat a publisher score as a local result. Corpora, raw reports, detailed generated JSON, machine environments, and process/source inventories live below `.cache/benchmarks/` and are intentionally gitignored. Source control keeps preparation and scoring code, input manifests, capability metadata, fixtures, tests, and human-reviewed Markdown conclusions. A result is not made more trustworthy by committing a large debug snapshot.
 
-Detailed local summaries use `.cache/benchmarks/results/<run-id>/debug-summary.json`. Before removing a legacy tracked report, preserve and hash it with `python3 scripts/archive-debug-reports.py PATH...`; `python3 scripts/archive-debug-reports.py --verify` checks the ignored local index. A publishable machine-readable result is exceptional: it must be compact, sanitized, path-independent, required by a documented consumer, and generated separately from the debug report.
+Detailed local summaries use `.cache/benchmarks/results/<run-id>/debug-summary.json`. Before removing a legacy tracked report, preserve and hash it with `uv run --locked python scripts/archive-debug-reports.py PATH...`; `uv run --locked python scripts/archive-debug-reports.py --verify` checks the ignored local index. A publishable machine-readable result is exceptional: it must be compact, sanitized, path-independent, required by a documented consumer, and generated separately from the debug report.
 
 [15 September 2026 continuous-speech and completed-audio screen](2026-09-15-screen.md) records local results, the supported-context quality regression, default Cohere→Qwen checks, and the limits of these measurements.
 
@@ -46,6 +46,30 @@ The [18 September VibeVoice CPU reference screen](../../docs/validation/vibevoic
 
 The subsequent [quantized BitNet CPU benchmark](../../docs/validation/vibevoice-bitnet-2026-09-18.md) executes the verified specialized GGUF pair using the official native CLI and resident-file server. It includes matching corpus controls, thread and normalization ablations, a fresh Cohere comparison, raw-output/completion instrumentation and a separately measured decoder-position correction. Memory-blocked long input and failed hotword/JSON output remain visible. The native server's token output is not an incremental-audio streaming adapter; this development benchmark does not make the capability entry executable in the application.
 
+### Python environments
+
+Use uv and the versioned `pyproject.toml` / `uv.lock` for each environment:
+
+| Project | Purpose | Python/platform |
+| --- | --- | --- |
+| Repository root, `dev` group | Tests, NumPy/soundfile preparation and summaries | Python 3.12+ |
+| Repository root, `benchmark` group | PyArrow corpus preparation | Python 3.12+ |
+| `benchmarks/asr/python/audio-frontend` | ONNX Runtime and LiteRT frontend probes | Python 3.12, macOS Apple silicon |
+| `benchmarks/asr/python/vibevoice` | Frozen Torch/Transformers reference probe | Python 3.12, macOS Apple silicon |
+
+Run scripts from the repository root with `uv run --locked python scripts/SCRIPT.py`,
+adding `--group benchmark` for PyArrow or `--project` for an isolated probe.
+`--project` selects the environment while retaining the caller's working directory.
+Each project is non-distributable and keeps its `.venv` ignored. Existing direct
+version pins are preserved; resolving the environment is not model qualification.
+
+The two requirements files are generated compatibility exports, not editable
+dependency sources. Update the owning manifest and lockfile first, regenerate
+the export as described in [CI and releases](../../docs/ci-and-releases.md), and
+run `make python-lock-check`. Dated reports preserve their original setup commands
+as historical evidence; use this section for new runs. The normal contributor
+install does not install Torch, ONNX Runtime or LiteRT.
+
 ### Reproduce the frontend screen
 
 The completed [19 September denoising follow-up](../../docs/validation/denoising-followup-2026-09-19.md) records 2,153 attempts using fixed original/enhanced mixtures, known-gain diagnostics and bounded-observer streaming. Mixing helps several speech cases but introduces noise regressions; input level is a substantial contributor to quiet-speech errors. Native contracts and corpus reproduction pass, while contention prevents an isolated latency claim. Run instructions and evidence limits are in the report; detailed JSON stays in the ignored result cache and application defaults remain unchanged.
@@ -53,10 +77,9 @@ The completed [19 September denoising follow-up](../../docs/validation/denoising
 Prepare the public FLEURS corpora using the instructions below. The frontend asset helper copies matching files from those directories, verifies every audio hash, and can generate the fixed non-speech and macOS Samantha controls. Synthesized audio depends on the voice/OS build: a mismatched hash is a new corpus, not permission to silently replace the pinned reference. Models stay in the ignored benchmark cache; these are development dependencies only.
 
 ```sh
-uv venv --python 3.12 .cache/audio-eval-venv
-uv pip install --python .cache/audio-eval-venv/bin/python -r benchmarks/asr/audio-frontend-requirements.txt
+uv sync --locked --project benchmarks/asr/python/audio-frontend
 
-python3 scripts/prepare-audio-frontend-assets.py \
+uv run --locked python scripts/prepare-audio-frontend-assets.py \
   --manifest benchmarks/asr/manifests/audio-frontends-screen.json \
   --corpus .cache/benchmarks/audio-frontends/corpus \
   --source-corpus .cache/benchmarks/datasets/fleurs-en-us \
@@ -86,7 +109,7 @@ For Ear, obtain the author fixture `Tests/EarTests/Resources/ear_frontend_golden
 
 ```sh
 OMP_NUM_THREADS=1 OPENBLAS_NUM_THREADS=1 VECLIB_MAXIMUM_THREADS=1 \
-  .cache/audio-eval-venv/bin/python scripts/benchmark-desert-ant.py ear \
+  uv run --locked --project benchmarks/asr/python/audio-frontend python scripts/benchmark-desert-ant.py ear \
   --artifacts benchmarks/asr/audio-frontend-artifacts.json \
   --model-root .cache/benchmarks/models/audio-frontends \
   --manifest benchmarks/asr/manifests/audio-frontends-screen.json \
@@ -266,8 +289,8 @@ Do not tune on these held-out clips. Training and threshold selection need separ
 Use `scripts/qualify-whisper.py ... --application` to run Small, Turbo and Cohere through the same frozen `transcribe-eval` binary. The default without `--application` remains the historical native-probe protocol. Build once before timing; record source, binary, native-library and artifact hashes, and keep competing work out of the measurement window. `--english-only` creates a separate repeated English pass; preserve the initial pass rather than overwriting it.
 
 ```sh
-python3 scripts/qualify-whisper.py RESULT_DIR WHISPER_ARTIFACT_DIR AUDIO_REGRESSION_DIR FLEURS_LANGUAGE_DIR --application
-python3 scripts/summarize-whisper.py RESULT_DIR PUBLICATION.json --repeat-root ENGLISH_REPEAT_DIR
+uv run --locked python scripts/qualify-whisper.py RESULT_DIR WHISPER_ARTIFACT_DIR AUDIO_REGRESSION_DIR FLEURS_LANGUAGE_DIR --application
+uv run --locked python scripts/summarize-whisper.py RESULT_DIR PUBLICATION.json --repeat-root ENGLISH_REPEAT_DIR
 ```
 
 `RESULT_DIR` must contain `binaries/transcribe-eval`, `environment.json`, `native-provenance.json`, `source.json` and `post-freeze-changes.json`; the runner creates manifests, process logs and a failure ledger. The historical artifact-directory argument is unused in application mode because the real installer owns artifact selection. The summarizer separates cleanup failures from ASR failures and excludes bogus non-speech scores for the historical unreferenced stitched-speech soak. Keep its original report hash and execution evidence.
@@ -293,6 +316,6 @@ The [application-path report](../../docs/validation/audio-frontend-integration-2
 
 The application evaluator accepts `--vad` and `--denoiser off|dpdfnet4|dpdfnet8`; these invoke the same manager frontend as the desktop, including warnings/fallback evidence. They work with completed recordings and the existing `--streaming --realtime --chunk-ms 20` Nemotron mode. They do not add streaming decoder support to other models.
 
-Use `scripts/prepare-frontend-integration.py` with the existing audio-eval environment and cached public FLEURS/MS-SNSD/regression assets to freeze a new selection before inference. Build `cargo build --release -p transcribe-eval`, then run `python3 scripts/qualify-frontend-integration.py streaming`, followed by the `quality` and `soak` phases sequentially. The runner freezes the binary/source hashes, preserves failed processes, records competing work and sampled RSS, and never changes settings based on results. The soak is 30 minutes of paced synthetic repetition and is excluded from accuracy. Frozen attributed public references and recipes are in [the dated manifests](manifests/frontend-integration-2026-09-18/quality.json). Once those manifests exist, preparation rebuilds that exact selection and checks every generated audio hash; it refuses an existing output directory. Original waveforms remain local. The initial run is under `.cache/benchmarks/results/frontend-integration-2026-09-18`; it includes a retained metadata-only split-schema preflight failure. Do not overwrite completed evidence to restart a run.
+Use `scripts/prepare-frontend-integration.py` with the root uv environment and cached public FLEURS/MS-SNSD/regression assets to freeze a new selection before inference. Build `cargo build --release -p transcribe-eval`, then run `uv run --locked python scripts/qualify-frontend-integration.py streaming`, followed by the `quality` and `soak` phases sequentially. The runner freezes the binary/source hashes, preserves failed processes, records competing work and sampled RSS, and never changes settings based on results. The soak is 30 minutes of paced synthetic repetition and is excluded from accuracy. Frozen attributed public references and recipes are in [the dated manifests](manifests/frontend-integration-2026-09-18/quality.json). Once those manifests exist, preparation rebuilds that exact selection and checks every generated audio hash; it refuses an existing output directory. Original waveforms remain local. The initial run is under `.cache/benchmarks/results/frontend-integration-2026-09-18`; it includes a retained metadata-only split-schema preflight failure. Do not overwrite completed evidence to restart a run.
 
 Installed contracts can be run using `TRANSCRIBE_SMOKE_MODELS` and `TRANSCRIBE_SMOKE_AUDIO` with the ignored tests `installed_frontends_packetization_tails_and_100_recording_resets`, `live_frontend_cancel_fallback_and_reset_isolation`, `live_frontend_load_failure_uses_original_audio_and_retains_asr_errors`, and `live_frontend_device_rates_match_completed_processing`. The live tests need the pinned CPU Nemotron runtime/model plus the same frontend artifact layout. They use public speech fixtures. Full hashes are checked before native model construction. Device-rate tests compare irregular 44.1/48 kHz delivery against completed processing of the same synthetic-rate waveform; they do not substitute for microphone quality qualification.
