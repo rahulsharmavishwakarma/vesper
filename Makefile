@@ -3,11 +3,15 @@ SHELL := /bin/sh
 
 # Every recipe uses the same optional local Rust/CMake environment as development.
 RUN = . ./scripts/dev-env.sh &&
-PYTHON ?= $(if $(wildcard .tooling/ci-venv/bin/python),.tooling/ci-venv/bin/python,python3)
-PRE_COMMIT ?= $(if $(wildcard .tooling/ci-venv/bin/pre-commit),.tooling/ci-venv/bin/pre-commit,pre-commit)
-RUFF ?= $(if $(wildcard .tooling/ci-venv/bin/ruff),.tooling/ci-venv/bin/ruff,ruff)
-SHELLCHECK ?= $(if $(wildcard .tooling/ci-venv/bin/shellcheck),.tooling/ci-venv/bin/shellcheck,shellcheck)
-SHFMT ?= $(if $(wildcard .tooling/ci-venv/bin/shfmt),.tooling/ci-venv/bin/shfmt,shfmt)
+UV ?= uv
+UV_RUN = $(UV) run --locked
+PYTHON = $(UV_RUN) python
+PRE_COMMIT = $(UV_RUN) pre-commit
+RUFF = $(UV_RUN) ruff
+SHELLCHECK = $(UV_RUN) shellcheck
+SHFMT = $(UV_RUN) shfmt
+UV_CACHE_DIR ?= $(CURDIR)/.cache/uv
+export UV_CACHE_DIR
 HASH_PROBE := benchmarks/asr/hash-probe/Cargo.toml
 PLAYWRIGHT_BROWSERS_PATH ?= $(CURDIR)/.cache/playwright
 export PLAYWRIGHT_BROWSERS_PATH
@@ -21,6 +25,7 @@ export HF_REPO HF_WEIGHTS HF_REVISION HF_OUTPUT
 
 .PHONY: help setup setup-checks hooks precommit prepush workflows dev web model-profile build build-debug build-web check check-fast check-web test-tools test-python test-browser benchmark-contract version-check version-set container-build container-smoke fmt fmt-check lint test smoke-native models sherpa-runtime test-native-report
 .PHONY: check-portable check-rust fmt-rust fmt-rust-check fmt-web fmt-web-check fmt-python fmt-python-check fmt-shell fmt-shell-check lint-rust lint-web lint-python lint-shell test-rust doc-rust
+.PHONY: python-lock-check audit-python
 
 help: ## Show available commands
 	@awk 'BEGIN { FS = ":.*## "; printf "Usage: make <target>\n\n" } /^[a-zA-Z_-]+:.*## / { printf "  %-14s %s\n", $$1, $$2 }' Makefile
@@ -38,10 +43,23 @@ test-native-report: ## Test native completion, reset, cutoff and numerical-error
 	$(RUN) sh scripts/test-native-report.sh
 
 setup-checks: ## Install isolated Python tooling and the Chromium test browser
-	$(PYTHON) -c 'import sys; sys.exit(0 if sys.version_info >= (3, 12) else "Python 3.12+ is required; use make setup-checks PYTHON=python3.12")'
-	$(PYTHON) -m venv .tooling/ci-venv
-	.tooling/ci-venv/bin/python -m pip install -r requirements-dev.txt
+	$(UV) sync --locked
 	npm exec playwright install chromium
+
+python-lock-check: ## Verify Python manifests, lockfiles and compatibility exports
+	$(UV) lock --check
+	$(UV) lock --check --project benchmarks/asr/python/audio-frontend
+	$(UV) lock --check --project benchmarks/asr/python/vibevoice
+	@mkdir -p .cache
+	$(UV) export --locked --project benchmarks/asr/python/audio-frontend --no-dev --no-emit-project --output-file .cache/audio-frontend-requirements.txt > /dev/null
+	cmp benchmarks/asr/audio-frontend-requirements.txt .cache/audio-frontend-requirements.txt
+	$(UV) export --locked --project benchmarks/asr/python/vibevoice --no-dev --no-emit-project --output-file .cache/vibevoice-reference-requirements.txt > /dev/null
+	cmp benchmarks/asr/vibevoice-reference-requirements.txt .cache/vibevoice-reference-requirements.txt
+
+audit-python: ## Audit the locked contributor dependency graph without re-resolving it
+	@mkdir -p .cache
+	$(UV) export --locked --only-group dev --no-emit-project --output-file .cache/python-audit-requirements.txt > /dev/null
+	$(UV_RUN) pip-audit --strict --require-hashes --disable-pip -r .cache/python-audit-requirements.txt
 
 hooks: ## Install the pre-commit and pre-push Git hooks
 	$(PRE_COMMIT) install --install-hooks
@@ -76,9 +94,9 @@ build-web: ## Build frontend assets
 
 check: check-fast test-python test-browser test-native-report check-rust lint-rust test-rust doc-rust ## Run all deterministic language, native and browser checks
 
-check-fast: fmt-check lint-web lint-python lint-shell check-web test-tools ## Run formatting, portable lints/types and Node tests before each commit
+check-fast: python-lock-check fmt-check lint-web lint-python lint-shell check-web test-tools ## Run formatting, portable lints/types and Node tests before each commit
 
-check-portable: fmt-web-check fmt-python-check fmt-shell-check lint-web lint-python lint-shell check-web test-tools test-python build-web ## Run portable checks shared with the frontend CI job
+check-portable: python-lock-check fmt-web-check fmt-python-check fmt-shell-check lint-web lint-python lint-shell check-web test-tools test-python build-web ## Run portable checks shared with the frontend CI job
 
 test-tools: version-check ## Test frontend data helpers and repository tooling
 	node --test apps/desktop/src/lib/*.test.mjs scripts/*.test.mjs

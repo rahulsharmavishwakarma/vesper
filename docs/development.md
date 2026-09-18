@@ -20,8 +20,9 @@ attaches it to GitHub Releases for a stable direct download URL.
 
 ## Contributor checks
 
-After `make setup`, use Python 3.12+ and run `make setup-checks` and `make hooks`.
-Tools live in `.tooling/ci-venv` and Chromium in `.cache/playwright` (override with
+After `make setup`, install [uv](https://docs.astral.sh/uv/getting-started/installation/)
+(0.12.15 or a compatible 0.12 release) and run `make setup-checks` and `make hooks`.
+uv manages Python 3.12+ and the locked tools in `.venv`; Chromium lives in `.cache/playwright` (override with
 `PLAYWRIGHT_BROWSERS_PATH`). The application still needs no Python runtime.
 `make check` runs all language format/lint checks, Node/Python/browser regressions,
 Rust all-target tests, doctests, strict Clippy/rustdoc and the native suite;
@@ -29,6 +30,73 @@ Rust all-target tests, doctests, strict Clippy/rustdoc and the native suite;
 [CI and releases](ci-and-releases.md) for setup and hosted limitations.
 Rust updates change `rust-toolchain.toml` and must pass macOS native tests and app-bundle validation. The
 workspace's minimum Rust metadata is not independently covered by CI.
+
+## Python tooling policy
+
+All Python work uses **uv** with an owning **`pyproject.toml`**. This includes
+contributor checks, scripts, tests, benchmark preparation and research environments.
+Python remains development/research tooling; the desktop application has no Python
+runtime requirement.
+
+- Declare dependencies, `requires-python` and supported tool settings in
+  `pyproject.toml`. Put development/test tools in `[dependency-groups]`; use the
+  existing owning project rather than creating a separate manifest for each script.
+- Add/remove dependencies with `uv add` and `uv remove`. Keep the generated
+  `uv.lock` in version control with dependency changes; do not edit it manually.
+- Use `uv sync` to prepare the isolated project environment and `uv run` for Python
+  scripts, formatting, linting and tests. Keep virtual environments and caches ignored.
+- CI must use `uv sync --locked` and `uv run --locked` with the required dependency
+  groups, so stale metadata fails instead of silently changing the resolution.
+- Do not add parallel pip/pipx, manual virtualenv, Poetry/Pipenv or hand-maintained
+  requirements workflows. If an external tool requires requirements format, generate
+  it with `uv export` from the manifest/lockfile and document the export command.
+  Independently installed Python CLI tools use `uv tool install` with a pinned version;
+  shared project checks belong in the project's dependency groups.
+
+Run from the repository root. The default `dev` group provides all contributor
+checks; the optional `benchmark` group adds PyArrow for corpus preparation:
+
+```sh
+uv sync --locked
+uv run --locked python scripts/run-python-tests.py
+uv run --locked --group benchmark python scripts/prepare-accent-benchmark.py --help
+make python-lock-check
+make audit-python
+```
+
+Use `uv add --dev PACKAGE` / `uv remove --dev PACKAGE` for contributor tools.
+Ruff configuration lives in the root `pyproject.toml`. Make targets invoke
+Python, Ruff, pre-commit, ShellCheck and shfmt through `uv run --locked`; old
+`.tooling/ci-venv` installations are preserved but no longer selected. Set
+`UV_PYTHON=3.12` to match CI. The Makefile keeps uv's download cache in ignored
+`.cache/uv`; `UV_CACHE_DIR` can override it. The app's Rust/npm version metadata
+is independent of the non-distributable Python tooling project's version.
+
+Model probes use separate macOS Apple-silicon/Python 3.12 projects under
+`benchmarks/asr/python/audio-frontend` and `benchmarks/asr/python/vibevoice`, each
+with its own manifest and lockfile. Their incompatible NumPy/model dependencies
+are isolated from contributor checks. See [benchmark Python setup](../benchmarks/asr/README.md#python-environments).
+The retained benchmark requirements files are generated compatibility exports;
+`make python-lock-check` verifies they match their locks. Dated validation reports
+retain their original commands as historical evidence; use the current benchmark
+setup for new work. Resolving a probe's dependencies does not qualify its model
+or reproduce an earlier measurement.
+
+### Git worktrees and ignored caches
+
+A worktree is a separate checkout with its own branch, index and working-tree
+status. If one lives under ignored `.cache/`, its source changes are still
+tracked relative to that checkout. Inspect it with
+`git -C .cache/WORKTREE_NAME status --short` and `git worktree list`.
+Its manifests, lockfiles and source changes can be committed on its branch;
+the parent checkout does not stage the `.cache` directory. Python `.venv`, uv
+caches, browser downloads and generated artifacts remain ignored in each
+checkout. Commit authorization and signature requirements still apply.
+
+Command references: Astral's [project guide](https://docs.astral.sh/uv/guides/projects/),
+[dependency groups](https://docs.astral.sh/uv/concepts/projects/dependencies/#development-dependencies),
+[locking and syncing](https://docs.astral.sh/uv/concepts/projects/sync/) and
+[standalone tools](https://docs.astral.sh/uv/guides/tools/).
 
 ## Prerequisites
 

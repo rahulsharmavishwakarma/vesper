@@ -10,7 +10,7 @@ Do not include recordings, transcripts, Hugging Face tokens, downloaded model we
 
 ## Development setup
 
-Install the platform prerequisites in [docs/development.md](docs/development.md), then run:
+Install the platform prerequisites and uv in [docs/development.md](docs/development.md), then run:
 
 ```sh
 make setup
@@ -20,12 +20,16 @@ make check
 ```
 
 The application runtime does not require Python. Contributor checks use Python
-3.12 or newer. `make setup-checks` installs pinned Python tooling into an isolated
-project environment and downloads Chromium; hooks provision their own tools.
-For an independently managed [pre-commit](https://pre-commit.com/) installation:
+3.12 or newer. `make setup-checks` syncs locked Python tooling into `.venv`
+and downloads Chromium; hooks provision their own tools.
+All Python work follows the [uv and pyproject.toml policy](docs/development.md#python-tooling-policy).
+Use `uv add --dev` / `uv remove --dev` for contributor dependencies and include
+the resulting `pyproject.toml` and `uv.lock` changes together. For an independently managed
+[pre-commit](https://pre-commit.com/) installation, install
+[uv](https://docs.astral.sh/uv/getting-started/installation/) first, then run:
 
 ```sh
-pipx install pre-commit==4.6.1
+uv tool install pre-commit==4.6.1
 pre-commit --version
 make hooks
 ```
@@ -48,6 +52,8 @@ Use the narrowest relevant test while developing, then run `make check` before s
 | `make fmt` / `make fmt-check` | Apply / verify Rust, Python, frontend and shell formatting |
 | `make check-portable` | Frontend/Node/Python/shell format, lint, type, test and build checks |
 | `make test-python` | All deterministic Python tooling test modules |
+| `make python-lock-check` | Verify Python lockfiles and generated benchmark requirements |
+| `make audit-python` | Audit the locked contributor dependencies |
 | `make test-browser` | Existing mocked-native UI scenarios in Chromium |
 | `make workflows` | Actionlint/ShellCheck and zizmor workflow validation |
 | `make test` / `make test-rust` | All Rust workspace targets, doctests and the isolated probe |
