@@ -1,0 +1,225 @@
+{
+  "schemaVersion": 1,
+  "verifiedAtUtc": "2026-09-15T22:49:54.474473+00:00",
+  "runtimeRevision": "11afbd009a7f8c08f4bcf2fc1b265d0df4670fbf",
+  "knfRevision": "b09e686fe2084732ddd30d1ef80acfc0f13eaf01",
+  "sources": [
+    {
+      "id": "vad_wrapper",
+      "repository": "k2-fsa/sherpa-onnx",
+      "revision": "11afbd009a7f8c08f4bcf2fc1b265d0df4670fbf",
+      "url": "https://github.com/k2-fsa/sherpa-onnx/blob/11afbd009a7f8c08f4bcf2fc1b265d0df4670fbf/sherpa-onnx/csrc/voice-activity-detector.cc",
+      "rawUrl": "https://raw.githubusercontent.com/k2-fsa/sherpa-onnx/11afbd009a7f8c08f4bcf2fc1b265d0df4670fbf/sherpa-onnx/csrc/voice-activity-detector.cc",
+      "sha256": "d8761999ff708637ea7ed1636484afa2d75854a7a7fb07e39ae4e68a2f6d0d15",
+      "sizeBytes": 8025,
+      "relevantLineRanges": [
+        [
+          48,
+          134
+        ],
+        [
+          160,
+          195
+        ]
+      ],
+      "evidenceClass": "official source capability",
+      "finding": "AcceptWaveform ORs IsSpeech across all processed windows, then updates segment boundaries once at the final buffer tail. Reset clears model, queued segments, ring buffer and last_. Flush does not infer the residual last_ samples."
+    },
+    {
+      "id": "vad_model",
+      "repository": "k2-fsa/sherpa-onnx",
+      "revision": "11afbd009a7f8c08f4bcf2fc1b265d0df4670fbf",
+      "url": "https://github.com/k2-fsa/sherpa-onnx/blob/11afbd009a7f8c08f4bcf2fc1b265d0df4670fbf/sherpa-onnx/csrc/silero-vad-model.cc",
+      "rawUrl": "https://raw.githubusercontent.com/k2-fsa/sherpa-onnx/11afbd009a7f8c08f4bcf2fc1b265d0df4670fbf/sherpa-onnx/csrc/silero-vad-model.cc",
+      "sha256": "a78f9205159e264138647660353f7a7a2cd01204574fa33b1c31a2ab9d278af8",
+      "sizeBytes": 14211,
+      "relevantLineRanges": [
+        [
+          91,
+          191
+        ],
+        [
+          226,
+          247
+        ]
+      ],
+      "evidenceClass": "official source capability",
+      "finding": "v5-compatible model handling uses a configured512-sample shift plus64-sample overlap at16kHz. Per-window hysteresis/state is distinct from wrapper call-level segmentation."
+    },
+    {
+      "id": "online_stft",
+      "repository": "k2-fsa/sherpa-onnx",
+      "revision": "11afbd009a7f8c08f4bcf2fc1b265d0df4670fbf",
+      "url": "https://github.com/k2-fsa/sherpa-onnx/blob/11afbd009a7f8c08f4bcf2fc1b265d0df4670fbf/sherpa-onnx/csrc/online-speech-denoiser-stft-impl.h",
+      "rawUrl": "https://raw.githubusercontent.com/k2-fsa/sherpa-onnx/11afbd009a7f8c08f4bcf2fc1b265d0df4670fbf/sherpa-onnx/csrc/online-speech-denoiser-stft-impl.h",
+      "sha256": "5ec43424a1c5bf48c198dd7aaad3e19cc01d366e779fbc8196e8146f8514e124",
+      "sizeBytes": 10482,
+      "relevantLineRanges": [
+        [
+          25,
+          31
+        ],
+        [
+          183,
+          234
+        ],
+        [
+          264,
+          316
+        ]
+      ],
+      "evidenceClass": "official source capability",
+      "finding": "Online config does not carry center or pad_mode. Analysis state starts at zero; pending input is consumed in exact hops; the first320-sample frame is160zeros plus first160input samples for these artifacts. Flush pads pending remainder and drains an extra hop, then resets."
+    },
+    {
+      "id": "online_dpdf",
+      "repository": "k2-fsa/sherpa-onnx",
+      "revision": "11afbd009a7f8c08f4bcf2fc1b265d0df4670fbf",
+      "url": "https://github.com/k2-fsa/sherpa-onnx/blob/11afbd009a7f8c08f4bcf2fc1b265d0df4670fbf/sherpa-onnx/csrc/online-speech-denoiser-dpdfnet-impl.h",
+      "rawUrl": "https://raw.githubusercontent.com/k2-fsa/sherpa-onnx/11afbd009a7f8c08f4bcf2fc1b265d0df4670fbf/sherpa-onnx/csrc/online-speech-denoiser-dpdfnet-impl.h",
+      "sha256": "510dd7be04eae4aaff68cd9069fc54c4f2e98722042de8a098411870d7b13366",
+      "sizeBytes": 4326,
+      "relevantLineRanges": [
+        [
+          47,
+          58
+        ],
+        [
+          90,
+          118
+        ]
+      ],
+      "evidenceClass": "official source capability",
+      "finding": "Metadata supplies sample rate, FFT, hop, window length and window type. Recurrent model state passes between every ProcessFrame and is reset on Reset/Flush."
+    },
+    {
+      "id": "offline_dpdf",
+      "repository": "k2-fsa/sherpa-onnx",
+      "revision": "11afbd009a7f8c08f4bcf2fc1b265d0df4670fbf",
+      "url": "https://github.com/k2-fsa/sherpa-onnx/blob/11afbd009a7f8c08f4bcf2fc1b265d0df4670fbf/sherpa-onnx/csrc/offline-speech-denoiser-dpdfnet-impl.h",
+      "rawUrl": "https://raw.githubusercontent.com/k2-fsa/sherpa-onnx/11afbd009a7f8c08f4bcf2fc1b265d0df4670fbf/sherpa-onnx/csrc/offline-speech-denoiser-dpdfnet-impl.h",
+      "sha256": "e5c3e5078a9a3e687eda97256c5caa69cc8b9e543e8d2ac93cb5261381e1770a",
+      "sizeBytes": 7758,
+      "relevantLineRanges": [
+        [
+          64,
+          95
+        ],
+        [
+          154,
+          180
+        ]
+      ],
+      "evidenceClass": "official source capability",
+      "finding": "Offline forwards center/pad_mode to KNF STFT and applies ShiftWaveform by twice window_length,640samples for these artifacts. State starts from model initial state and passes between frames."
+    },
+    {
+      "id": "knf_stft",
+      "repository": "csukuangfj/kaldi-native-fbank",
+      "revision": "b09e686fe2084732ddd30d1ef80acfc0f13eaf01",
+      "url": "https://github.com/csukuangfj/kaldi-native-fbank/blob/b09e686fe2084732ddd30d1ef80acfc0f13eaf01/kaldi-native-fbank/csrc/stft.cc",
+      "rawUrl": "https://raw.githubusercontent.com/csukuangfj/kaldi-native-fbank/b09e686fe2084732ddd30d1ef80acfc0f13eaf01/kaldi-native-fbank/csrc/stft.cc",
+      "sha256": "bb7f38ac5f41e6d3b8125b7fd83a3a8a54b0a2f3be72fa566353192717aa3d93",
+      "sizeBytes": 4284,
+      "relevantLineRanges": [
+        [
+          53,
+          105
+        ],
+        [
+          108,
+          126
+        ]
+      ],
+      "evidenceClass": "official source capability",
+      "finding": "Centered reflect mode pads160samples on each side at n_fft320. Left padding reverses input[1:161], so first frame is reflected input prehistory plus first160samples. The first frame differs from streaming zero prehistory if source begins with nonzero signal."
+    },
+    {
+      "id": "knf_istft",
+      "repository": "csukuangfj/kaldi-native-fbank",
+      "revision": "b09e686fe2084732ddd30d1ef80acfc0f13eaf01",
+      "url": "https://github.com/csukuangfj/kaldi-native-fbank/blob/b09e686fe2084732ddd30d1ef80acfc0f13eaf01/kaldi-native-fbank/csrc/istft.cc",
+      "rawUrl": "https://raw.githubusercontent.com/csukuangfj/kaldi-native-fbank/b09e686fe2084732ddd30d1ef80acfc0f13eaf01/kaldi-native-fbank/csrc/istft.cc",
+      "sha256": "ac4c08e3cf1826478d88264e839c286f6908c33f8fd5ed577072c1977ec69e44",
+      "sizeBytes": 4489,
+      "relevantLineRanges": [
+        [
+          42,
+          67
+        ],
+        [
+          116,
+          141
+        ]
+      ],
+      "evidenceClass": "official source capability",
+      "finding": "Offline FFT/iSTFT normalizes overlap-add by the summed squared window and removes centered padding; online uses direct DFT and its own overlap-add. These implementation differences prevent asserting bit identity from the shared checkpoint alone."
+    }
+  ],
+  "artifacts": [
+    {
+      "id": "dpdfnet4",
+      "url": "https://github.com/k2-fsa/sherpa-onnx/releases/download/speech-enhancement-models/dpdfnet4.onnx",
+      "revision": "sherpa-speech-enhancement-models; content-addressed",
+      "sha256": "71b588bc26163941aa82a592cce924b08c1fbdc0879fe44f5a2d4eac44bd8420",
+      "sizeBytes": 11707436,
+      "metadata": {
+        "model_type": "dpdfnet",
+        "version": "1",
+        "profile": "dpdfnet_16khz",
+        "sample_rate": "16000",
+        "n_fft": "320",
+        "hop_length": "160",
+        "window_length": "320",
+        "window_type": "vorbis",
+        "normalized": "0",
+        "center": "1",
+        "pad_mode": "reflect",
+        "freq_bins": "161",
+        "erb_bins": "32",
+        "spec_bins": "96",
+        "state_size": "52592",
+        "erb_norm_state_size": "32",
+        "spec_norm_state_size": "96",
+        "erb_norm_init": "-60,-60.9677429,-61.935482,-62.9032249,-63.8709679,-64.838707,-65.8064499,-66.7741928,-67.7419357,-68.7096786,-69.6774216,-70.6451569,-71.6128998,-72.5806427,-73.5483856,-74.5161285,-75.4838715,-76.4516144,-77.4193573,-78.3871002,-79.3548355,-80.3225784,-81.2903214,-82.2580643,-83.2258072,-84.1935501,-85.1612854,-86.1290283,-87.0967712,-88.0645142,-89.0322571,-90",
+        "spec_norm_init": "0.00100000005,0.000990526401,0.000981052639,0.000971578993,0.000962105289,0.000952631643,0.000943157938,0.000933684234,0.000924210588,0.000914736884,0.000905263238,0.000895789533,0.000886315829,0.000876842183,0.000867368479,0.000857894775,0.000848421128,0.000838947424,0.00082947372,0.000820000074,0.00081052637,0.000801052665,0.000791579019,0.000782105315,0.000772631611,0.000763157965,0.00075368426,0.000744210556,0.00073473691,0.000725263206,0.000715789502,0.000706315855,0.000696842151,0.000687368447,0.000677894801,0.000668421097,0.000658947392,0.000649473746,0.000640000042,0.000630526338,0.000621052692,0.000611578987,0.000602105283,0.000592631637,0.000583157933,0.000573684229,0.000564210583,0.000554736878,0.000545263174,0.000535789528,0.000526315824,0.000516842119,0.000507368473,0.000497894769,0.000488421123,0.000478947419,0.000469473714,0.000460000068,0.000450526364,0.00044105266,0.000431579014,0.00042210531,0.000412631605,0.000403157959,0.000393684255,0.000384210551,0.000374736905,0.0003652632,0.000355789496,0.00034631585,0.000336842146,0.000327368442,0.000317894795,0.000308421091,0.000298947387,0.000289473741,0.000280000037,0.000270526332,0.000261052686,0.000251578982,0.000242105336,0.000232631632,0.000223157927,0.000213684281,0.000204210577,0.000194736873,0.000185263227,0.000175789522,0.000166315818,0.000156842172,0.000147368468,0.000137894764,0.000128421118,0.000118947413,0.000109473709,0.000100000063"
+      },
+      "metadataMethod": "Read ONNX ModelProto metadata_props as protobuf fields; no inference session or model execution"
+    },
+    {
+      "id": "dpdfnet8",
+      "url": "https://github.com/k2-fsa/sherpa-onnx/releases/download/speech-enhancement-models/dpdfnet8.onnx",
+      "revision": "sherpa-speech-enhancement-models; content-addressed",
+      "sha256": "2751c1f5a4e849d23a07c675b4c838158b249b42152f10cc318522dd339134f0",
+      "sizeBytes": 14623619,
+      "metadata": {
+        "model_type": "dpdfnet",
+        "version": "1",
+        "profile": "dpdfnet_16khz",
+        "sample_rate": "16000",
+        "n_fft": "320",
+        "hop_length": "160",
+        "window_length": "320",
+        "window_type": "vorbis",
+        "normalized": "0",
+        "center": "1",
+        "pad_mode": "reflect",
+        "freq_bins": "161",
+        "erb_bins": "32",
+        "spec_bins": "96",
+        "state_size": "66928",
+        "erb_norm_state_size": "32",
+        "spec_norm_state_size": "96",
+        "erb_norm_init": "-60,-60.9677429,-61.935482,-62.9032249,-63.8709679,-64.838707,-65.8064499,-66.7741928,-67.7419357,-68.7096786,-69.6774216,-70.6451569,-71.6128998,-72.5806427,-73.5483856,-74.5161285,-75.4838715,-76.4516144,-77.4193573,-78.3871002,-79.3548355,-80.3225784,-81.2903214,-82.2580643,-83.2258072,-84.1935501,-85.1612854,-86.1290283,-87.0967712,-88.0645142,-89.0322571,-90",
+        "spec_norm_init": "0.00100000005,0.000990526401,0.000981052639,0.000971578993,0.000962105289,0.000952631643,0.000943157938,0.000933684234,0.000924210588,0.000914736884,0.000905263238,0.000895789533,0.000886315829,0.000876842183,0.000867368479,0.000857894775,0.000848421128,0.000838947424,0.00082947372,0.000820000074,0.00081052637,0.000801052665,0.000791579019,0.000782105315,0.000772631611,0.000763157965,0.00075368426,0.000744210556,0.00073473691,0.000725263206,0.000715789502,0.000706315855,0.000696842151,0.000687368447,0.000677894801,0.000668421097,0.000658947392,0.000649473746,0.000640000042,0.000630526338,0.000621052692,0.000611578987,0.000602105283,0.000592631637,0.000583157933,0.000573684229,0.000564210583,0.000554736878,0.000545263174,0.000535789528,0.000526315824,0.000516842119,0.000507368473,0.000497894769,0.000488421123,0.000478947419,0.000469473714,0.000460000068,0.000450526364,0.00044105266,0.000431579014,0.00042210531,0.000412631605,0.000403157959,0.000393684255,0.000384210551,0.000374736905,0.0003652632,0.000355789496,0.00034631585,0.000336842146,0.000327368442,0.000317894795,0.000308421091,0.000298947387,0.000289473741,0.000280000037,0.000270526332,0.000261052686,0.000251578982,0.000242105336,0.000232631632,0.000223157927,0.000213684281,0.000204210577,0.000194736873,0.000185263227,0.000175789522,0.000166315818,0.000156842172,0.000147368468,0.000137894764,0.000128421118,0.000118947413,0.000109473709,0.000100000063"
+      },
+      "metadataMethod": "Read ONNX ModelProto metadata_props as protobuf fields; no inference session or model execution"
+    }
+  ],
+  "interpretation": {
+    "vad": "Observed packetization-dependent segments are supported by call-level native wrapper aggregation. A deterministic host adapter feeding at mostone512-sample-shift frame per invocation can decouple native segmentation from arbitrary capture callbacks; production integration and end-to-end timing remain unqualified.",
+    "dpdf": "Offline reflected startup versus online zero startup is a verified source/artifact configuration difference. It is a plausible explanation for greater divergence on energetic hard starts, not a causally isolated explanation of the measured numerical differences.",
+    "scope": "Source/artifact inspection only in this evidence record. No new model runs. No paper speedup or quality claim.",
+    "timestamps": "VAD SpeechSegment.start is an absolute sample offset in accepted native input. Benchmark intersects native intervals with real input range and subtracts explicit64-sample initial context. Detected callback count is not speech duration."
+  }
+}
