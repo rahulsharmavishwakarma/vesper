@@ -1,0 +1,646 @@
+{
+  "schemaVersion": 1,
+  "date": "2026-09-16",
+  "evidenceClass": "local text/event replay; authored synthetic episodes and simulated public-corpus feedback kept separate",
+  "applicationRevision": "592e0084fe5cf486b4d56c575423e9a4f219bfb8 + unstaged files identified below",
+  "sourceFileSha256": {
+    "Cargo.lock": "fc56034af5c639f334a3af028888c5d22d3666c8b699d18801d044c613155102",
+    "crates/transcribe-core/src/learning.rs": "6408cd177ad99931581fcea505f3e8f6ef0d70ff932cc276ce4642e98f062842",
+    "crates/transcribe-core/src/memory.rs": "ad2caa5759f01ce86960ad436deae9d949de3f4a0693fc36c7f1ebeae76da24d",
+    "crates/transcribe-core/src/personalization.rs": "c8f0b8efaa0b7c6f2d6effaca3a5b86bef37c68fcd5d2fe3b54b15acde073949",
+    "crates/transcribe-data/src/learning.rs": "6aac462ad980b9741267c5575454c10b0933f5598c71d934d8a014cee30bdee8",
+    "crates/transcribe-data/src/personalization.rs": "5cde71b07145a276ac22c3c9f252fac13af668c3d6b017c8b50f069f212ae225",
+    "crates/transcribe-data/src/lib.rs": "76d636af0542e4157f1c68396d49abab1258df3854089b54c51e27ac3c0b31ac",
+    "crates/transcribe-data/examples/automatic_learning_replay.rs": "34bfae6878f0e1257b1eaea0dfcf500955f2ec8b9c49ce869b2920e11271f49d",
+    "crates/transcribe-inference/src/personalization.rs": "8f2583d13c04bfb843274576c3cbe9a68878b17265778e625e0952ef1b588078",
+    "apps/desktop/src-tauri/src/runtime.rs": "8dfa2199a1bc880048fc4881896bd29adb4da8235cbba992913113ade9460d07",
+    "apps/desktop/src/lib/components/TranscriptionPanel.svelte": "dfc64694a26f89ff8e454c5a6ab8fcada2cea02b7b88a96020aa76392c74f737",
+    "apps/desktop/src/lib/components/PersonalizationPanel.svelte": "f95e484ad1c53954a2630e398e3d0755b61f0fb0eb5d99e4df3fc68e2dae97b1",
+    "scripts/prepare-automatic-learning-replay.mjs": "df24241024e4915c05bf77db0e055be43b94e0ee1f3ed195c88201b981ea7cfa",
+    "apps/desktop/src-tauri/src/commands.rs": "d2a2d400a20103c81121e54ef7da147aab48c50f6662385234b70a9bdf91fd28",
+    "apps/desktop/src-tauri/src/lib.rs": "848c0c709936da82ad98ce6942b915a01b5175fc3b4bd693bbf9c0719f6a1228",
+    "apps/desktop/src/lib/api/personalization.ts": "abb8443632818777d2c5fa6870ed067d3ddbfa172d96150f63a5f5a0e27767d1",
+    "apps/desktop/src/lib/api/runtime.ts": "c7f994d9d8e4c5ebe1156ff7f64a40ccbbb2be7bc459953670cdd472ef8ef240",
+    "apps/desktop/src/lib/history.ts": "75c225234f0f4933af7f99a918d996abbb3b56847c05ae1996e0028ec9d3354b"
+  },
+  "replayBinarySha256": "a8c3d46f157ce63048fd7ffbd5ffc61bf41cdb18c39d11d81860be35435d5e64",
+  "environment": {
+    "hardware": "Apple M5 Pro (Mac17,8); 64 GiB RAM",
+    "operatingSystem": "macOS 26.6.2 (25G83)",
+    "build": "Rust release; Cargo.lock pinned",
+    "backend": "single-process CPU application memory, no ASR/cleanup calls",
+    "threads": "no inference threads; sequential replay",
+    "modelState": "not loaded for replay; profile/store grow chronologically; fresh SQLite connection per measured mutation; OS disk cache not cleared",
+    "powerThermals": "not measured during this component timing run",
+    "driver": "no accelerator used in replay",
+    "scope": "not end-to-end, stop-to-final, microphone or power qualification"
+  },
+  "scoreDefinition": "transcribe_core::word_edits: whitespace tokens, edge punctuation trimmed, lowercase Levenshtein; not the normalized WER from transcribe-eval",
+  "cachedHypothesisProvenance": {
+    "environment": {
+      "label": "m5-pro-local-memory-cpu",
+      "hardware": "Apple M5 Pro; 18 logical CPUs; 64 GiB RAM",
+      "operatingSystem": "macOS 26.6.2 (25G83)",
+      "powerMode": "AC power; power mode 0; no thermal/performance warning recorded at start",
+      "backend": "cpu",
+      "precision": "Nemotron Q8_0; Qwen Q4_0 when enabled",
+      "threads": 8,
+      "applicationRevision": "592e0084fe5cf486b4d56c575423e9a4f219bfb8+unstaged-sha256:b309d037b1c4e444ed764efc1dd78e4cec64317be5cd0aa0e0ddce2789d44089",
+      "runtimeRevision": "NeMo-Speech.cpp 4f9676226f667d14608487df744f375db87127f8; llama.cpp e79e4bf660e19f2ad851e06c6913f7a8c5852621; sherpa-onnx 11afbd009a7f8c08f4bcf2fc1b265d0df4670fbf",
+      "driver": "CPU; no accelerator driver",
+      "notes": "Release build. Explicit CPU runtime artifact, no Auto fallback. Corpus replay excludes microphone/UI. First sample includes model load; later Nemotron samples use resident weights. Calibrated memory derived only from separate corpus references, not user history. Worker threads clamp to 8; source/manifest/profile hashes accompany report. No competing benchmark during runs. Peak RSS captured separately by /usr/bin/time -l; no continuous power/thermal trace."
+    },
+    "modelVersions": {
+      "asr": {
+        "adapter": {
+          "architecture": "nemo_cache_aware_fastconformer_rnnt",
+          "capabilities": {
+            "backends": [
+              "auto",
+              "cpu",
+              "metal",
+              "cuda",
+              "vulkan",
+              "rocm"
+            ],
+            "cacheState": "rnnt",
+            "completePrefixState": false,
+            "completionReport": false,
+            "contextualPhrases": true,
+            "languages": [
+              "auto",
+              "en",
+              "hi",
+              "fr"
+            ],
+            "nativeStreaming": true,
+            "offline": true,
+            "residentWeights": true
+          },
+          "kind": "nemo_rnnt",
+          "runtime": "NeMo-Speech.cpp",
+          "runtimeRevision": "4f9676226f667d14608487df744f375db87127f8",
+          "task": "speech_recognition"
+        },
+        "artifactFiles": [
+          "nemotron-3.5-asr-streaming-0.6b.q8_0.gguf"
+        ],
+        "executionEvidence": "not-observed",
+        "interface": "versioned-c-abi",
+        "languageMode": "prompted-or-automatic",
+        "modelId": "nvidia/nemotron-3.5-asr-streaming-0.6b",
+        "modelLifetime": "resident-until-selection-change-or-exit",
+        "provider": null,
+        "requestedBackend": "cpu",
+        "runtime": "NeMo-Speech.cpp",
+        "runtimeRevision": "4f9676226f667d14608487df744f375db87127f8",
+        "runtimeVersion": "0.1.0",
+        "selectedProvider": "cpu",
+        "streamingMode": "native-live-microphone-and-offline-file"
+      },
+      "rewriter": null
+    },
+    "artifactProvenance": {
+      "applicationVersion": "0.1.0",
+      "artifacts": [
+        {
+          "archive": null,
+          "backend": null,
+          "license": "OpenMDW-1.1",
+          "modelId": "nvidia/nemotron-3.5-asr-streaming-0.6b",
+          "name": "nemotron-3.5-asr-streaming-0.6b.q8_0.gguf",
+          "platform": null,
+          "quantization": "q8_0",
+          "relativePath": "nemotron-3.5-asr-streaming-0.6b/nemotron-3.5-asr-streaming-0.6b.q8_0.gguf",
+          "revision": "ea30d66debe3740a08b573244286791d423d6b3e",
+          "role": "asr",
+          "sha256": "3fc991d3badad7277c11030a7519832cddaf2057aafed6d4b25147e953a070b1",
+          "sizeBytes": 742090464,
+          "url": "https://huggingface.co/nvidia/nemotron-3.5-asr-streaming-0.6b/resolve/ea30d66debe3740a08b573244286791d423d6b3e/nemotron-3.5-asr-streaming-0.6b.q8_0.gguf"
+        },
+        {
+          "archive": "tar_gz",
+          "backend": "cpu",
+          "license": "Apache-2.0 runtime; bundled third-party notices apply",
+          "modelId": "nvidia/nemotron-3.5-asr-streaming-0.6b",
+          "name": "nemo-speech-0.1.0-macos-aarch64-cpu.tar.gz",
+          "platform": "macos-aarch64",
+          "quantization": null,
+          "relativePath": "nemo-speech-runtime/archives/nemo-speech-0.1.0-macos-aarch64-cpu.tar.gz",
+          "revision": "4f9676226f667d14608487df744f375db87127f8",
+          "role": "asr_runtime",
+          "sha256": "971661d38d4bf97a63c528d13041a964316d25068d8df045e5b4839848092f25",
+          "sizeBytes": 3299661,
+          "url": "https://github.com/NVIDIA/NeMo-Speech.cpp/releases/download/v0.1.0/nemo-speech-0.1.0-macos-aarch64-cpu.tar.gz"
+        }
+      ],
+      "asrRuntime": "NeMo-Speech.cpp 0.1.0",
+      "customAsr": null,
+      "customRewriter": null,
+      "rewriterRuntime": null
+    }
+  },
+  "results": {
+    "constructed": {
+      "fixtureSha256": "8f5872f8210939dcac37a8a6499ced02e23cf26f1e00cc386fe95dba02c89f59",
+      "kind": "chronological text/event replay; no new ASR execution or real-user measurement",
+      "policyVersion": 1,
+      "schemaVersion": 1,
+      "source": {
+        "kind": "authored synthetic interaction sequence; not real user behavior",
+        "note": "Expected outputs are withheld from automatic learning. Edits occur after scoring. Manual comparator receives explicit remember labels.",
+        "policy": "v1 gates frozen before this replay"
+      },
+      "fullResultsSha256": "df019ef86ce9dae5dd0f74076953c342597d1cf74bef1a37700c9b01223f1618",
+      "modes": [
+        {
+          "applicationTiming": {
+            "count": 27,
+            "meanMs": 0.005657407407407409,
+            "p50Ms": 0.003584,
+            "p95Ms": 0.008208,
+            "p99Ms": 0.053625
+          },
+          "candidateCount": 0,
+          "feedbackTiming": null,
+          "memoryCount": 0,
+          "mode": "off",
+          "observationTiming": null,
+          "possibleRepairSignals": 0,
+          "timingDefinitions": {
+            "application": "in-memory profile.personalize only",
+            "feedback": "open SQLite, learn_from_edit, commit and close; excludes frontend IPC",
+            "observation": "open SQLite, observe_learning, commit and close"
+          },
+          "attempted": 27,
+          "failures": [],
+          "expectedChecks": 0,
+          "failedExpectedChecks": [],
+          "scoredEpisodes": 27,
+          "rawWordEdits": 16,
+          "memoryWordEdits": 16,
+          "improved": 0,
+          "worsened": 0,
+          "byLanguage": {
+            "auto": {
+              "samples": 1,
+              "rawWordEdits": 2,
+              "memoryWordEdits": 2
+            },
+            "en": {
+              "samples": 25,
+              "rawWordEdits": 14,
+              "memoryWordEdits": 14
+            },
+            "fr": {
+              "samples": 1,
+              "rawWordEdits": 0,
+              "memoryWordEdits": 0
+            }
+          }
+        },
+        {
+          "applicationTiming": {
+            "count": 27,
+            "meanMs": 0.004077074074074076,
+            "p50Ms": 0.002667,
+            "p95Ms": 0.009292,
+            "p99Ms": 0.032041
+          },
+          "candidateCount": 0,
+          "feedbackTiming": null,
+          "memoryCount": 3,
+          "mode": "manual_oracle",
+          "observationTiming": null,
+          "possibleRepairSignals": 0,
+          "timingDefinitions": {
+            "application": "in-memory profile.personalize only",
+            "feedback": "open SQLite, learn_from_edit, commit and close; excludes frontend IPC",
+            "observation": "open SQLite, observe_learning, commit and close"
+          },
+          "attempted": 27,
+          "failures": [],
+          "expectedChecks": 0,
+          "failedExpectedChecks": [],
+          "scoredEpisodes": 27,
+          "rawWordEdits": 16,
+          "memoryWordEdits": 7,
+          "improved": 7,
+          "worsened": 1,
+          "byLanguage": {
+            "auto": {
+              "samples": 1,
+              "rawWordEdits": 2,
+              "memoryWordEdits": 2
+            },
+            "en": {
+              "samples": 25,
+              "rawWordEdits": 14,
+              "memoryWordEdits": 3
+            },
+            "fr": {
+              "samples": 1,
+              "rawWordEdits": 0,
+              "memoryWordEdits": 2
+            }
+          }
+        },
+        {
+          "applicationTiming": {
+            "count": 27,
+            "meanMs": 0.0029214074074074086,
+            "p50Ms": 0.002542,
+            "p95Ms": 0.004333,
+            "p99Ms": 0.0065
+          },
+          "candidateCount": 3,
+          "feedbackTiming": {
+            "count": 11,
+            "meanMs": 0.19753800000000002,
+            "p50Ms": 0.185834,
+            "p95Ms": 0.311125,
+            "p99Ms": 0.311125
+          },
+          "memoryCount": 2,
+          "mode": "automatic_edits",
+          "observationTiming": null,
+          "possibleRepairSignals": 0,
+          "timingDefinitions": {
+            "application": "in-memory profile.personalize only",
+            "feedback": "open SQLite, learn_from_edit, commit and close; excludes frontend IPC",
+            "observation": "open SQLite, observe_learning, commit and close"
+          },
+          "attempted": 27,
+          "failures": [],
+          "expectedChecks": 27,
+          "failedExpectedChecks": [],
+          "scoredEpisodes": 27,
+          "rawWordEdits": 16,
+          "memoryWordEdits": 7,
+          "improved": 5,
+          "worsened": 0,
+          "byLanguage": {
+            "auto": {
+              "samples": 1,
+              "rawWordEdits": 2,
+              "memoryWordEdits": 2
+            },
+            "en": {
+              "samples": 25,
+              "rawWordEdits": 14,
+              "memoryWordEdits": 5
+            },
+            "fr": {
+              "samples": 1,
+              "rawWordEdits": 0,
+              "memoryWordEdits": 0
+            }
+          }
+        },
+        {
+          "applicationTiming": {
+            "count": 27,
+            "meanMs": 0.003472333333333335,
+            "p50Ms": 0.003166,
+            "p95Ms": 0.005208,
+            "p99Ms": 0.007167
+          },
+          "candidateCount": 3,
+          "feedbackTiming": {
+            "count": 11,
+            "meanMs": 0.20096572727272727,
+            "p50Ms": 0.192208,
+            "p95Ms": 0.275667,
+            "p99Ms": 0.275667
+          },
+          "memoryCount": 2,
+          "mode": "automatic_usage_retry",
+          "observationTiming": {
+            "count": 27,
+            "meanMs": 0.1994012962962963,
+            "p50Ms": 0.203375,
+            "p95Ms": 0.277417,
+            "p99Ms": 0.29224999999999995
+          },
+          "possibleRepairSignals": 1,
+          "timingDefinitions": {
+            "application": "in-memory profile.personalize only",
+            "feedback": "open SQLite, learn_from_edit, commit and close; excludes frontend IPC",
+            "observation": "open SQLite, observe_learning, commit and close"
+          },
+          "attempted": 27,
+          "failures": [],
+          "expectedChecks": 27,
+          "failedExpectedChecks": [],
+          "scoredEpisodes": 27,
+          "rawWordEdits": 16,
+          "memoryWordEdits": 7,
+          "improved": 5,
+          "worsened": 0,
+          "byLanguage": {
+            "auto": {
+              "samples": 1,
+              "rawWordEdits": 2,
+              "memoryWordEdits": 2
+            },
+            "en": {
+              "samples": 25,
+              "rawWordEdits": 14,
+              "memoryWordEdits": 5
+            },
+            "fr": {
+              "samples": 1,
+              "rawWordEdits": 0,
+              "memoryWordEdits": 0
+            }
+          }
+        }
+      ]
+    },
+    "public": {
+      "fixtureSha256": "1fe3ba1144d80b0c52bc4edd0d605f0155fbc8349f2da28490f8ea9d3df3acc0",
+      "kind": "chronological text/event replay; no new ASR execution or real-user measurement",
+      "policyVersion": 1,
+      "schemaVersion": 1,
+      "source": {
+        "attribution": [
+          {
+            "attribution": "Google FLEURS; FLoRes sentences",
+            "id": "fleurs-en_us-dev",
+            "license": "CC-BY-4.0",
+            "name": "FLEURS en_us dev",
+            "redistribution": "Retain CC-BY-4.0 attribution.",
+            "revision": "70bb2e84b976b7e960aa89f1c648e09c59f894dd; audio-sha256:2658fda72f199e12676ecac9415094667a4e14e149b146e568ea00b2a2f0954c; metadata-sha256:9d57ee7e91e9d4c92edb39f6bbea668ef8dc2a3ff96eb510d5580b2ad05d17ec",
+            "url": "https://huggingface.co/datasets/google/fleurs/tree/70bb2e84b976b7e960aa89f1c648e09c59f894dd/data/en_us"
+          },
+          {
+            "attribution": "Google FLEURS; FLoRes sentences",
+            "id": "fleurs-hi_in-dev",
+            "license": "CC-BY-4.0",
+            "name": "FLEURS hi_in dev",
+            "redistribution": "Retain CC-BY-4.0 attribution.",
+            "revision": "70bb2e84b976b7e960aa89f1c648e09c59f894dd; audio-sha256:9adbca6d6fc70e40c121910941bcd7c8906eee60b402b6d21b4bd160e20030c7; metadata-sha256:cea87c57a37a0d38ed0afce30e68a35ad7b3945414648430fee09a54ca7b72ba",
+            "url": "https://huggingface.co/datasets/google/fleurs/tree/70bb2e84b976b7e960aa89f1c648e09c59f894dd/data/hi_in"
+          },
+          {
+            "attribution": "AI4Bharat Svarah",
+            "id": "svarah",
+            "license": "CC-BY-4.0",
+            "name": "Svarah Indian English mixed read/spontaneous corpus",
+            "redistribution": "Retain CC-BY-4.0 attribution; local source accessed under dataset terms.",
+            "revision": "ebbf7777fe771490696a3f7b007097606fa8c924",
+            "url": "https://huggingface.co/datasets/ai4bharat/Svarah"
+          },
+          {
+            "attribution": "Google FLEURS; FLoRes sentences",
+            "id": "fleurs-en_us-test",
+            "license": "CC-BY-4.0",
+            "name": "FLEURS en_us test",
+            "redistribution": "Retain CC-BY-4.0 attribution.",
+            "revision": "70bb2e84b976b7e960aa89f1c648e09c59f894dd; audio-sha256:d9c2e37b41aacd41bc283554a0a82b5476b36887049774ecb2819dcaaa55a356; metadata-sha256:74c046239374deeb60fa63f258f907388093a32bcaa3140965f70ef05c79f7ca",
+            "url": "https://huggingface.co/datasets/google/fleurs/tree/70bb2e84b976b7e960aa89f1c648e09c59f894dd/data/en_us"
+          },
+          {
+            "attribution": "Google FLEURS; FLoRes sentences",
+            "id": "fleurs-hi_in-test",
+            "license": "CC-BY-4.0",
+            "name": "FLEURS hi_in test",
+            "redistribution": "Retain CC-BY-4.0 attribution.",
+            "revision": "70bb2e84b976b7e960aa89f1c648e09c59f894dd; audio-sha256:47c238b9cf7016ba596639bb3038b0c89dc6e85759f16d09c4f58c6dfa25c65f; metadata-sha256:889e82e2875490f9533ff59ab67326fcfa01cf828fc4412758aaaa1f442a729f",
+            "url": "https://huggingface.co/datasets/google/fleurs/tree/70bb2e84b976b7e960aa89f1c648e09c59f894dd/data/hi_in"
+          }
+        ],
+        "heldoutEpisodes": 48,
+        "inputs": [
+          {
+            "file": ".cache/benchmarks/personalization-2026-09-16/calibration.json",
+            "sha256": "4e6d210ef53202e049161b552f0b4e2ce8a27a406e5166f2df05c79dea90e95c"
+          },
+          {
+            "file": ".cache/benchmarks/personalization-2026-09-16/results/calibration-nemotron.json",
+            "sha256": "fa6f5fe684b1e01aff480126673b903a482c3d00fa52858a67d4df3db9857ce5"
+          },
+          {
+            "file": ".cache/benchmarks/personalization-regressions-2026-09-16/fresh/holdout.json",
+            "sha256": "af514af77bfdbc5f0d1eba603be5a231337e7f48271a5dd410aef73f7aee72a0"
+          },
+          {
+            "file": ".cache/benchmarks/personalization-regressions-2026-09-16/results/nemotron-fresh.json",
+            "sha256": "a03bd55735d7df3afe14934d0bf0753b93277440e1068ba96525220f79096aed"
+          }
+        ],
+        "kind": "cached public ASR outputs with simulated correction feedback; no new recognition",
+        "learningEpisodes": 192,
+        "limitation": "One reference edit per calibration recording, not actual personal feedback. No duplicated teaching episodes to force promotion. Manual comparator blindly remembers generated review suggestions and is not a realistic user study."
+      },
+      "fullResultsSha256": "0c4ad5a2c859a6923e8361d712d0ed1274d65bcb5be10a56ee821251fed217f8",
+      "modes": [
+        {
+          "applicationTiming": {
+            "count": 240,
+            "meanMs": 0.01246159166666667,
+            "p50Ms": 0.009792,
+            "p95Ms": 0.028792,
+            "p99Ms": 0.035834000000000005
+          },
+          "candidateCount": 0,
+          "feedbackTiming": null,
+          "memoryCount": 0,
+          "mode": "off",
+          "observationTiming": null,
+          "possibleRepairSignals": 0,
+          "timingDefinitions": {
+            "application": "in-memory profile.personalize only",
+            "feedback": "open SQLite, learn_from_edit, commit and close; excludes frontend IPC",
+            "observation": "open SQLite, observe_learning, commit and close"
+          },
+          "attempted": 240,
+          "failures": [],
+          "expectedChecks": 0,
+          "failedExpectedChecks": [],
+          "scoredEpisodes": 48,
+          "rawWordEdits": 181,
+          "memoryWordEdits": 181,
+          "improved": 0,
+          "worsened": 0,
+          "byLanguage": {
+            "en": {
+              "samples": 24,
+              "rawWordEdits": 95,
+              "memoryWordEdits": 95
+            },
+            "hi": {
+              "samples": 24,
+              "rawWordEdits": 86,
+              "memoryWordEdits": 86
+            }
+          }
+        },
+        {
+          "applicationTiming": {
+            "count": 240,
+            "meanMs": 0.030556633333333316,
+            "p50Ms": 0.026667,
+            "p95Ms": 0.058458,
+            "p99Ms": 0.07258300000000001
+          },
+          "candidateCount": 0,
+          "feedbackTiming": null,
+          "memoryCount": 50,
+          "mode": "manual_oracle",
+          "observationTiming": null,
+          "possibleRepairSignals": 0,
+          "timingDefinitions": {
+            "application": "in-memory profile.personalize only",
+            "feedback": "open SQLite, learn_from_edit, commit and close; excludes frontend IPC",
+            "observation": "open SQLite, observe_learning, commit and close"
+          },
+          "attempted": 240,
+          "failures": [],
+          "expectedChecks": 0,
+          "failedExpectedChecks": [],
+          "scoredEpisodes": 48,
+          "rawWordEdits": 181,
+          "memoryWordEdits": 175,
+          "improved": 6,
+          "worsened": 0,
+          "byLanguage": {
+            "en": {
+              "samples": 24,
+              "rawWordEdits": 95,
+              "memoryWordEdits": 94
+            },
+            "hi": {
+              "samples": 24,
+              "rawWordEdits": 86,
+              "memoryWordEdits": 81
+            }
+          }
+        },
+        {
+          "applicationTiming": {
+            "count": 240,
+            "meanMs": 0.009313208333333333,
+            "p50Ms": 0.0077919999999999994,
+            "p95Ms": 0.019708,
+            "p99Ms": 0.0245
+          },
+          "candidateCount": 14,
+          "feedbackTiming": {
+            "count": 192,
+            "meanMs": 0.27302885937499993,
+            "p50Ms": 0.27875000000000005,
+            "p95Ms": 0.36162500000000003,
+            "p99Ms": 0.49120800000000003
+          },
+          "memoryCount": 0,
+          "mode": "automatic_edits",
+          "observationTiming": null,
+          "possibleRepairSignals": 0,
+          "timingDefinitions": {
+            "application": "in-memory profile.personalize only",
+            "feedback": "open SQLite, learn_from_edit, commit and close; excludes frontend IPC",
+            "observation": "open SQLite, observe_learning, commit and close"
+          },
+          "attempted": 240,
+          "failures": [],
+          "expectedChecks": 0,
+          "failedExpectedChecks": [],
+          "scoredEpisodes": 48,
+          "rawWordEdits": 181,
+          "memoryWordEdits": 181,
+          "improved": 0,
+          "worsened": 0,
+          "byLanguage": {
+            "en": {
+              "samples": 24,
+              "rawWordEdits": 95,
+              "memoryWordEdits": 95
+            },
+            "hi": {
+              "samples": 24,
+              "rawWordEdits": 86,
+              "memoryWordEdits": 86
+            }
+          }
+        },
+        {
+          "applicationTiming": {
+            "count": 240,
+            "meanMs": 0.009805529166666663,
+            "p50Ms": 0.008167,
+            "p95Ms": 0.020583,
+            "p99Ms": 0.024292
+          },
+          "candidateCount": 16,
+          "feedbackTiming": {
+            "count": 192,
+            "meanMs": 0.39661869791666665,
+            "p50Ms": 0.379583,
+            "p95Ms": 0.607916,
+            "p99Ms": 0.8418749999999999
+          },
+          "memoryCount": 0,
+          "mode": "automatic_usage_retry",
+          "observationTiming": {
+            "count": 240,
+            "meanMs": 0.45978578750000004,
+            "p50Ms": 0.462292,
+            "p95Ms": 0.7146669999999999,
+            "p99Ms": 0.880125
+          },
+          "possibleRepairSignals": 0,
+          "timingDefinitions": {
+            "application": "in-memory profile.personalize only",
+            "feedback": "open SQLite, learn_from_edit, commit and close; excludes frontend IPC",
+            "observation": "open SQLite, observe_learning, commit and close"
+          },
+          "attempted": 240,
+          "failures": [],
+          "expectedChecks": 0,
+          "failedExpectedChecks": [],
+          "scoredEpisodes": 48,
+          "rawWordEdits": 181,
+          "memoryWordEdits": 181,
+          "improved": 0,
+          "worsened": 0,
+          "byLanguage": {
+            "en": {
+              "samples": 24,
+              "rawWordEdits": 95,
+              "memoryWordEdits": 95
+            },
+            "hi": {
+              "samples": 24,
+              "rawWordEdits": 86,
+              "memoryWordEdits": 86
+            }
+          }
+        }
+      ]
+    }
+  },
+  "validation": {
+    "workspaceRustPassed": 195,
+    "additionalNewReviewOwnershipRegressionPassed": 1,
+    "nodePassed": 70,
+    "optionalDefaultIgnored": 15,
+    "installedNativePassed": [
+      "file pipeline: original speech/predictions/export provenance",
+      "Nemotron CPU: consecutive streaming, profile changes, cancellation/reset",
+      "Qwen embedded template: message formatting and role token rejection"
+    ],
+    "browser": "production Svelte components with mocked native commands: Copy commits once, undo keeps draft, edit failure/retry, collection off, forget, preference save failure/retry, late old-result failure preserves recovered text and new result; no JavaScript errors observed",
+    "initialFailures": [
+      "workspace model-download fixture could not bind loopback in sandbox; complete make test passed with local socket access",
+      "generic native smoke runner used a model root without the CPU runtime; explicit stream test passed with existing verified CPU model root"
+    ],
+    "limits": [
+      "No real user longitudinal study or fresh public ASR accuracy run for automatic learning.",
+      "Public held-out references were withheld from feedback; one edit per calibration recording.",
+      "Manual comparator receives oracle remember annotations and uses broader suggestions.",
+      "Application/feedback/observation timings exclude IPC, frontend, audio, ASR, cleanup and native insertion.",
+      "Controlled expected-output assertions do not estimate real-world error rates."
+    ]
+  }
+}
