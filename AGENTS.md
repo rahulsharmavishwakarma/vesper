@@ -47,6 +47,8 @@ Reference the relevant GitHub issue in every commit message (for example, `Refs 
 
 Use the repository's existing Git author/committer identity. Do not override `--author`, add another author, or append AI/co-author attribution, `Co-authored-by`, or unsolicited sign-off trailers. Git's required author metadata still uses the owner's configured identity.
 
+Every new commit must be GPG-signed with the configured signing key. Never create unsigned commits or disable signing to work around an error. If the key locks, preserve the staged batch and wait for the owner to unlock it. Verify each new commit's signature.
+
 This permission covers local commits only. Do not push, create release tags, publish releases or change repository visibility unless separately authorized. These are persistent project preferences; no repeated staging/commit approval is needed within this scope.
 
 ## Approval before major changes

@@ -38,6 +38,11 @@ Git author/committer metadata remains required. Local commit permission does not
 authorize a push, release tag, publication or visibility change. These preferences
 are also recorded in `AGENTS.md` for future repository sessions.
 
+Every new commit must retain the configured GPG signature. Verify it with
+`git verify-commit HEAD`; never disable signing or create an unsigned fallback.
+If the key is locked or the passphrase prompt is unavailable, preserve the staged
+batch and wait for the owner to unlock the key locally.
+
 ## Label taxonomy
 
 Every issue should have at least one truthful work-type label. Use `enhancement` for both features and enhancements so the repository does not maintain duplicate concepts.
