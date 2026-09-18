@@ -1,0 +1,2011 @@
+{
+  "schemaVersion": 1,
+  "date": "2026-09-15",
+  "issue": 32,
+  "environment": {
+    "label": "Long-audio Qwen/Cohere qualification",
+    "hardware": "Apple M5 Pro; 68719476736 bytes RAM",
+    "operatingSystem": "26.6.2 (25G83); arm64",
+    "powerMode": "unknown; headless sandbox",
+    "backend": "cpu",
+    "precision": "INT8 ONNX; bundled native Release build; Rust debug orchestration",
+    "threads": 8,
+    "applicationRevision": "uncommitted-eval-binary-sha256:be991f02c77bcffabf1f62b5821e751567c1a57570822de4c9efe0c423a58429",
+    "runtimeRevision": "sherpa-onnx 1.13.8 / 11afbd009a7f8c08f4bcf2fc1b265d0df4670fbf",
+    "driver": "not-applicable-for-cpu",
+    "notes": "One recognizer per job, fresh stream per segment. Peak RSS measured externally by time -l. No writing pass. This run is not comparable to other hardware, language, corpus or precision envelopes."
+  },
+  "measurementNotes": [
+    "ASR milliseconds use the actual manager: verification, per-job load and decode; excludes capture/import/archive/writing/UI time.",
+    "Peak RSS covers each sequential four-sample benchmark process, including scorer/input buffers; not weights-only memory.",
+    "Native qualifiers measure recognizer load/decode without manager artifact verification per case.",
+    "Filesystem caches may be warm; single observations, no latency distribution or power/thermal measurement.",
+    "The 413-second MUCS sample exposed the old output cap and is an exploratory regression after the structural correction, not untouched held-out evaluation.",
+    "No segment thresholds were tuned on these fixtures. Segments preserve sample coverage, not guaranteed word accuracy."
+  ],
+  "models": {
+    "Qwen/Qwen3-ASR-0.6B": {
+      "adapter": {
+        "architecture": "qwen3_asr",
+        "capabilities": {
+          "backends": [
+            "auto",
+            "cpu"
+          ],
+          "cacheState": "encoder_decoder",
+          "completePrefixState": false,
+          "completionReport": true,
+          "contextualPhrases": false,
+          "languages": [
+            "auto",
+            "en",
+            "hi",
+            "fr"
+          ],
+          "nativeStreaming": false,
+          "offline": true,
+          "residentWeights": false
+        },
+        "kind": "qwen_asr",
+        "runtime": "sherpa-onnx",
+        "runtimeRevision": "11afbd009a7f8c08f4bcf2fc1b265d0df4670fbf",
+        "task": "speech_recognition"
+      },
+      "artifacts": [
+        {
+          "archive": null,
+          "backend": null,
+          "license": "Apache-2.0 (original model; export card has no separate license declaration)",
+          "modelId": "Qwen/Qwen3-ASR-0.6B",
+          "name": "conv_frontend.onnx",
+          "platform": null,
+          "quantization": null,
+          "relativePath": "qwen3-asr-0.6b/conv_frontend.onnx",
+          "revision": "68818b2313fe77bd06f6a7c5068ff3ef59d02b8a",
+          "role": "asr",
+          "sha256": "d22dc4423e0940e49884e903d2ea2f7e5567c14fc1aed97e4e26d6b8f208ef9e",
+          "sizeBytes": 44148281,
+          "url": "https://huggingface.co/csukuangfj2/sherpa-onnx-qwen3-asr-0.6B-int8-2026-03-25/resolve/68818b2313fe77bd06f6a7c5068ff3ef59d02b8a/conv_frontend.onnx"
+        },
+        {
+          "archive": null,
+          "backend": null,
+          "license": "Apache-2.0 (original model; export card has no separate license declaration)",
+          "modelId": "Qwen/Qwen3-ASR-0.6B",
+          "name": "encoder.int8.onnx",
+          "platform": null,
+          "quantization": null,
+          "relativePath": "qwen3-asr-0.6b/encoder.int8.onnx",
+          "revision": "68818b2313fe77bd06f6a7c5068ff3ef59d02b8a",
+          "role": "asr",
+          "sha256": "60748d3e6744a57c9c91e1b17424a6c2990567e8adceb0783940c03ed98fa9d9",
+          "sizeBytes": 182491662,
+          "url": "https://huggingface.co/csukuangfj2/sherpa-onnx-qwen3-asr-0.6B-int8-2026-03-25/resolve/68818b2313fe77bd06f6a7c5068ff3ef59d02b8a/encoder.int8.onnx"
+        },
+        {
+          "archive": null,
+          "backend": null,
+          "license": "Apache-2.0 (original model; export card has no separate license declaration)",
+          "modelId": "Qwen/Qwen3-ASR-0.6B",
+          "name": "decoder.int8.onnx",
+          "platform": null,
+          "quantization": null,
+          "relativePath": "qwen3-asr-0.6b/decoder.int8.onnx",
+          "revision": "68818b2313fe77bd06f6a7c5068ff3ef59d02b8a",
+          "role": "asr",
+          "sha256": "4f6885be5959ae26af3089d38ee7972c5fafbeeb1cf8d5e76eab6d8b61ca5771",
+          "sizeBytes": 755914231,
+          "url": "https://huggingface.co/csukuangfj2/sherpa-onnx-qwen3-asr-0.6B-int8-2026-03-25/resolve/68818b2313fe77bd06f6a7c5068ff3ef59d02b8a/decoder.int8.onnx"
+        },
+        {
+          "archive": null,
+          "backend": null,
+          "license": "Apache-2.0 (original model; export card has no separate license declaration)",
+          "modelId": "Qwen/Qwen3-ASR-0.6B",
+          "name": "tokenizer/vocab.json",
+          "platform": null,
+          "quantization": null,
+          "relativePath": "qwen3-asr-0.6b/tokenizer/vocab.json",
+          "revision": "68818b2313fe77bd06f6a7c5068ff3ef59d02b8a",
+          "role": "asr",
+          "sha256": "ca10d7e9fb3ed18575dd1e277a2579c16d108e32f27439684afa0e10b1440910",
+          "sizeBytes": 2776833,
+          "url": "https://huggingface.co/csukuangfj2/sherpa-onnx-qwen3-asr-0.6B-int8-2026-03-25/resolve/68818b2313fe77bd06f6a7c5068ff3ef59d02b8a/tokenizer/vocab.json"
+        },
+        {
+          "archive": null,
+          "backend": null,
+          "license": "Apache-2.0 (original model; export card has no separate license declaration)",
+          "modelId": "Qwen/Qwen3-ASR-0.6B",
+          "name": "tokenizer/merges.txt",
+          "platform": null,
+          "quantization": null,
+          "relativePath": "qwen3-asr-0.6b/tokenizer/merges.txt",
+          "revision": "68818b2313fe77bd06f6a7c5068ff3ef59d02b8a",
+          "role": "asr",
+          "sha256": "8831e4f1a044471340f7c0a83d7bd71306a5b867e95fd870f74d0c5308a904d5",
+          "sizeBytes": 1671853,
+          "url": "https://huggingface.co/csukuangfj2/sherpa-onnx-qwen3-asr-0.6B-int8-2026-03-25/resolve/68818b2313fe77bd06f6a7c5068ff3ef59d02b8a/tokenizer/merges.txt"
+        },
+        {
+          "archive": null,
+          "backend": null,
+          "license": "Apache-2.0 (original model; export card has no separate license declaration)",
+          "modelId": "Qwen/Qwen3-ASR-0.6B",
+          "name": "tokenizer/tokenizer_config.json",
+          "platform": null,
+          "quantization": null,
+          "relativePath": "qwen3-asr-0.6b/tokenizer/tokenizer_config.json",
+          "revision": "68818b2313fe77bd06f6a7c5068ff3ef59d02b8a",
+          "role": "asr",
+          "sha256": "4942d005604266809309cabc9f4e9cb89ce855d59b14681fdc0e1cc62ea26c4c",
+          "sizeBytes": 12487,
+          "url": "https://huggingface.co/csukuangfj2/sherpa-onnx-qwen3-asr-0.6B-int8-2026-03-25/resolve/68818b2313fe77bd06f6a7c5068ff3ef59d02b8a/tokenizer/tokenizer_config.json"
+        }
+      ],
+      "completionReportVersion": 1,
+      "decoderBudget": {
+        "maxNewTokens": 512,
+        "maxTotalTokens": 512
+      },
+      "executionEvidence": "not-observed",
+      "language": "hi",
+      "maxRecordingSeconds": 0,
+      "modelId": "Qwen/Qwen3-ASR-0.6B",
+      "modelLifetime": "per-job",
+      "provider": null,
+      "requestedBackend": "cpu",
+      "revision": "68818b2313fe77bd06f6a7c5068ff3ef59d02b8a",
+      "runtime": "sherpa-onnx",
+      "runtimeBuildId": "48de319e110df610b6d53933f47f5669f3cf18b837c5974d2c40d21668586bf5",
+      "runtimePatchSha256": "cc53fa27fc98252436a12dafcc04c458be2ff98d6024d51a7a639b960df6bdfc",
+      "runtimeRevision": "11afbd009a7f8c08f4bcf2fc1b265d0df4670fbf",
+      "runtimeVersion": "1.13.8",
+      "segmentation": {
+        "boundaryLookbackMs": 1000,
+        "boundaryStepMs": 10,
+        "energyWindowMs": 100,
+        "maxSegmentSeconds": 10,
+        "overlapSamples": 0,
+        "policy": "balanced-low-energy-v1",
+        "streamLifetime": "per-segment"
+      },
+      "selectedProvider": "cpu"
+    },
+    "CohereLabs/cohere-transcribe-03-2026": {
+      "adapter": {
+        "architecture": "cohere_asr",
+        "capabilities": {
+          "backends": [
+            "auto",
+            "cpu"
+          ],
+          "cacheState": "encoder_decoder",
+          "completePrefixState": false,
+          "completionReport": true,
+          "contextualPhrases": false,
+          "languages": [
+            "en",
+            "fr"
+          ],
+          "nativeStreaming": false,
+          "offline": true,
+          "residentWeights": false
+        },
+        "kind": "cohere_asr",
+        "runtime": "sherpa-onnx",
+        "runtimeRevision": "11afbd009a7f8c08f4bcf2fc1b265d0df4670fbf",
+        "task": "speech_recognition"
+      },
+      "artifacts": [
+        {
+          "archive": null,
+          "backend": null,
+          "license": "Apache-2.0 (original model; export card has no separate license declaration)",
+          "modelId": "CohereLabs/cohere-transcribe-03-2026",
+          "name": "encoder.int8.onnx",
+          "platform": null,
+          "quantization": null,
+          "relativePath": "cohere-transcribe/encoder.int8.onnx",
+          "revision": "156a470cf08eefe706a0004f3c52d9ee567ca7a0",
+          "role": "asr",
+          "sha256": "cf704f8cfa90e3f0a76f9ffc05998bdf00ba9ae983192c14a85a3a5eb008b367",
+          "sizeBytes": 3090822,
+          "url": "https://huggingface.co/csukuangfj2/sherpa-onnx-cohere-transcribe-14-lang-int8-2026-04-01/resolve/156a470cf08eefe706a0004f3c52d9ee567ca7a0/encoder.int8.onnx"
+        },
+        {
+          "archive": null,
+          "backend": null,
+          "license": "Apache-2.0 (original model; export card has no separate license declaration)",
+          "modelId": "CohereLabs/cohere-transcribe-03-2026",
+          "name": "encoder.int8.onnx.data",
+          "platform": null,
+          "quantization": null,
+          "relativePath": "cohere-transcribe/encoder.int8.onnx.data",
+          "revision": "156a470cf08eefe706a0004f3c52d9ee567ca7a0",
+          "role": "asr",
+          "sha256": "bcf1b7148c8518ae52df1ad2d2fc2b4e89261ea23e6c874eef1d9f55bcbaa4a3",
+          "sizeBytes": 2731503072,
+          "url": "https://huggingface.co/csukuangfj2/sherpa-onnx-cohere-transcribe-14-lang-int8-2026-04-01/resolve/156a470cf08eefe706a0004f3c52d9ee567ca7a0/encoder.int8.onnx.data"
+        },
+        {
+          "archive": null,
+          "backend": null,
+          "license": "Apache-2.0 (original model; export card has no separate license declaration)",
+          "modelId": "CohereLabs/cohere-transcribe-03-2026",
+          "name": "decoder.int8.onnx",
+          "platform": null,
+          "quantization": null,
+          "relativePath": "cohere-transcribe/decoder.int8.onnx",
+          "revision": "156a470cf08eefe706a0004f3c52d9ee567ca7a0",
+          "role": "asr",
+          "sha256": "8372ca6c8ff4db8b916ca3592f5c757a715e691b9edec751ba19b29fc854baf9",
+          "sizeBytes": 153250705,
+          "url": "https://huggingface.co/csukuangfj2/sherpa-onnx-cohere-transcribe-14-lang-int8-2026-04-01/resolve/156a470cf08eefe706a0004f3c52d9ee567ca7a0/decoder.int8.onnx"
+        },
+        {
+          "archive": null,
+          "backend": null,
+          "license": "Apache-2.0 (original model; export card has no separate license declaration)",
+          "modelId": "CohereLabs/cohere-transcribe-03-2026",
+          "name": "tokens.txt",
+          "platform": null,
+          "quantization": null,
+          "relativePath": "cohere-transcribe/tokens.txt",
+          "revision": "156a470cf08eefe706a0004f3c52d9ee567ca7a0",
+          "role": "asr",
+          "sha256": "013ede043ae2480e3a9205cc34550d9686100cc682bacc90f702facdfbb93035",
+          "sizeBytes": 207437,
+          "url": "https://huggingface.co/csukuangfj2/sherpa-onnx-cohere-transcribe-14-lang-int8-2026-04-01/resolve/156a470cf08eefe706a0004f3c52d9ee567ca7a0/tokens.txt"
+        }
+      ],
+      "completionReportVersion": 1,
+      "decoderBudget": null,
+      "executionEvidence": "not-observed",
+      "language": "fr",
+      "maxRecordingSeconds": 0,
+      "modelId": "CohereLabs/cohere-transcribe-03-2026",
+      "modelLifetime": "per-job",
+      "provider": null,
+      "requestedBackend": "cpu",
+      "revision": "156a470cf08eefe706a0004f3c52d9ee567ca7a0",
+      "runtime": "sherpa-onnx",
+      "runtimeBuildId": "48de319e110df610b6d53933f47f5669f3cf18b837c5974d2c40d21668586bf5",
+      "runtimePatchSha256": "cc53fa27fc98252436a12dafcc04c458be2ff98d6024d51a7a639b960df6bdfc",
+      "runtimeRevision": "11afbd009a7f8c08f4bcf2fc1b265d0df4670fbf",
+      "runtimeVersion": "1.13.8",
+      "segmentation": {
+        "boundaryLookbackMs": 1000,
+        "boundaryStepMs": 10,
+        "energyWindowMs": 100,
+        "maxSegmentSeconds": 10,
+        "overlapSamples": 0,
+        "policy": "balanced-low-energy-v1",
+        "streamLifetime": "per-segment"
+      },
+      "selectedProvider": "cpu"
+    }
+  },
+  "fixtures": {
+    "en_us": {
+      "schemaVersion": 1,
+      "sources": [
+        {
+          "id": "google-fleurs-test",
+          "name": "Google FLEURS test",
+          "url": "https://huggingface.co/datasets/google/fleurs",
+          "revision": "70bb2e84b976b7e960aa89f1c648e09c59f894dd",
+          "license": "CC-BY-4.0",
+          "attribution": "Google; Conneau et al., FLEURS (2022)",
+          "redistribution": "Retain attribution and CC-BY-4.0 license."
+        }
+      ],
+      "samples": [
+        {
+          "id": "en_us-baseline",
+          "sourceId": "google-fleurs-test",
+          "split": "test",
+          "language": "en",
+          "audioPath": "en_us-baseline.wav",
+          "sha256": "7603cae3294309ef70d234180cefccc3b13865ee525262228a636069b9b62841",
+          "reference": "All nouns, alongside the word Sie for you, always begin with a capital letter, even in the middle of a sentence.",
+          "durationSeconds": 8.76,
+          "scenario": "read",
+          "replayKind": "natural"
+        },
+        {
+          "id": "en_us-repeat3",
+          "sourceId": "google-fleurs-test",
+          "split": "test",
+          "language": "en",
+          "audioPath": "en_us-repeat3.wav",
+          "sha256": "ed045dbd0dac6927127aebcc522465097eabfd799be7c14be0183c03a8aba8d2",
+          "reference": "All nouns, alongside the word Sie for you, always begin with a capital letter, even in the middle of a sentence. All nouns, alongside the word Sie for you, always begin with a capital letter, even in the middle of a sentence. All nouns, alongside the word Sie for you, always begin with a capital letter, even in the middle of a sentence.",
+          "durationSeconds": 26.28,
+          "scenario": "read",
+          "replayKind": "synthetic_soak"
+        },
+        {
+          "id": "en_us-shifted-repeat3",
+          "sourceId": "google-fleurs-test",
+          "split": "test",
+          "language": "en",
+          "audioPath": "en_us-shifted-repeat3.wav",
+          "sha256": "9988dca48f3b191358039bb3699de26110427f0ec8949d121a110e8599e22e89",
+          "reference": "All nouns, alongside the word Sie for you, always begin with a capital letter, even in the middle of a sentence. All nouns, alongside the word Sie for you, always begin with a capital letter, even in the middle of a sentence. All nouns, alongside the word Sie for you, always begin with a capital letter, even in the middle of a sentence.",
+          "durationSeconds": 28.28,
+          "scenario": "read",
+          "replayKind": "synthetic_soak"
+        },
+        {
+          "id": "en_us-natural-long",
+          "sourceId": "google-fleurs-test",
+          "split": "test",
+          "language": "en",
+          "audioPath": "en_us-natural-long.wav",
+          "sha256": "33aca50159ec2e3cbcc894eb26faa916d6badb1b49fb75994973561540a7f012",
+          "reference": "However, due to the slow communication channels, styles in the west could lag behind by 25 to 30 year.",
+          "durationSeconds": 10.56,
+          "scenario": "read",
+          "replayKind": "natural"
+        }
+      ]
+    },
+    "fr_fr": {
+      "schemaVersion": 1,
+      "sources": [
+        {
+          "id": "google-fleurs-test",
+          "name": "Google FLEURS test",
+          "url": "https://huggingface.co/datasets/google/fleurs",
+          "revision": "70bb2e84b976b7e960aa89f1c648e09c59f894dd",
+          "license": "CC-BY-4.0",
+          "attribution": "Google; Conneau et al., FLEURS (2022)",
+          "redistribution": "Retain attribution and CC-BY-4.0 license."
+        }
+      ],
+      "samples": [
+        {
+          "id": "fr_fr-baseline",
+          "sourceId": "google-fleurs-test",
+          "split": "test",
+          "language": "fr",
+          "audioPath": "fr_fr-baseline.wav",
+          "sha256": "05ccf3ccc2ab4b72d056c3f02e3ffcf6ea0f37b1c42bea5c35789c85291fbdc5",
+          "reference": "Il a ajouté qu’« on ne devrait cependant pas leur demander d’assumer des obligations qui dépassent leur stade de développement, leur responsabilité et leurs capacités. »",
+          "durationSeconds": 8.28,
+          "scenario": "read",
+          "replayKind": "natural"
+        },
+        {
+          "id": "fr_fr-repeat3",
+          "sourceId": "google-fleurs-test",
+          "split": "test",
+          "language": "fr",
+          "audioPath": "fr_fr-repeat3.wav",
+          "sha256": "20a09a320c944adb81a72ca3e0ea373df3b50066685ba8f46b5e2b623ea2d79d",
+          "reference": "Il a ajouté qu’« on ne devrait cependant pas leur demander d’assumer des obligations qui dépassent leur stade de développement, leur responsabilité et leurs capacités. » Il a ajouté qu’« on ne devrait cependant pas leur demander d’assumer des obligations qui dépassent leur stade de développement, leur responsabilité et leurs capacités. » Il a ajouté qu’« on ne devrait cependant pas leur demander d’assumer des obligations qui dépassent leur stade de développement, leur responsabilité et leurs capacités. »",
+          "durationSeconds": 24.84,
+          "scenario": "read",
+          "replayKind": "synthetic_soak"
+        },
+        {
+          "id": "fr_fr-shifted-repeat3",
+          "sourceId": "google-fleurs-test",
+          "split": "test",
+          "language": "fr",
+          "audioPath": "fr_fr-shifted-repeat3.wav",
+          "sha256": "16853488a85d10fa07fbd9b9cc176da1c496bb3ec9295c50fbac69596161e416",
+          "reference": "Il a ajouté qu’« on ne devrait cependant pas leur demander d’assumer des obligations qui dépassent leur stade de développement, leur responsabilité et leurs capacités. » Il a ajouté qu’« on ne devrait cependant pas leur demander d’assumer des obligations qui dépassent leur stade de développement, leur responsabilité et leurs capacités. » Il a ajouté qu’« on ne devrait cependant pas leur demander d’assumer des obligations qui dépassent leur stade de développement, leur responsabilité et leurs capacités. »",
+          "durationSeconds": 26.84,
+          "scenario": "read",
+          "replayKind": "synthetic_soak"
+        },
+        {
+          "id": "fr_fr-natural-long",
+          "sourceId": "google-fleurs-test",
+          "split": "test",
+          "language": "fr",
+          "audioPath": "fr_fr-natural-long.wav",
+          "sha256": "c834367fd212902124bdd0e0f6c1f16b5561af6386600f145e5aec50008b298d",
+          "reference": "L’accident a eu lieu en terrain montagneux, et il semblerait que cela ait été causé par un incendie malveillant.",
+          "durationSeconds": 10.2,
+          "scenario": "read",
+          "replayKind": "natural"
+        }
+      ]
+    },
+    "hi_in": {
+      "schemaVersion": 1,
+      "sources": [
+        {
+          "id": "google-fleurs-test",
+          "name": "Google FLEURS test",
+          "url": "https://huggingface.co/datasets/google/fleurs",
+          "revision": "70bb2e84b976b7e960aa89f1c648e09c59f894dd",
+          "license": "CC-BY-4.0",
+          "attribution": "Google; Conneau et al., FLEURS (2022)",
+          "redistribution": "Retain attribution and CC-BY-4.0 license."
+        }
+      ],
+      "samples": [
+        {
+          "id": "hi_in-baseline",
+          "sourceId": "google-fleurs-test",
+          "split": "test",
+          "language": "hi",
+          "audioPath": "hi_in-baseline.wav",
+          "sha256": "217f3abbd8e9cd3767d6e8b87d49fbf82421fc920a103de026b4586d7e644dc5",
+          "reference": "कुछ अणुओं में अस्थिर केंद्रक होता है, जिसका मतलब यह है कि उनमें थोड़े या बिना किसी झटके से टूटने की प्रवृत्ति होती है,",
+          "durationSeconds": 9.12,
+          "scenario": "read",
+          "replayKind": "natural"
+        },
+        {
+          "id": "hi_in-repeat3",
+          "sourceId": "google-fleurs-test",
+          "split": "test",
+          "language": "hi",
+          "audioPath": "hi_in-repeat3.wav",
+          "sha256": "6457e38fff7b931dff909e3bcc364bed73e29d1620a405376f639f2015ee0637",
+          "reference": "कुछ अणुओं में अस्थिर केंद्रक होता है, जिसका मतलब यह है कि उनमें थोड़े या बिना किसी झटके से टूटने की प्रवृत्ति होती है, कुछ अणुओं में अस्थिर केंद्रक होता है, जिसका मतलब यह है कि उनमें थोड़े या बिना किसी झटके से टूटने की प्रवृत्ति होती है, कुछ अणुओं में अस्थिर केंद्रक होता है, जिसका मतलब यह है कि उनमें थोड़े या बिना किसी झटके से टूटने की प्रवृत्ति होती है,",
+          "durationSeconds": 27.36,
+          "scenario": "read",
+          "replayKind": "synthetic_soak"
+        },
+        {
+          "id": "hi_in-shifted-repeat3",
+          "sourceId": "google-fleurs-test",
+          "split": "test",
+          "language": "hi",
+          "audioPath": "hi_in-shifted-repeat3.wav",
+          "sha256": "4e4bbe6547cccc1a75f110a7a653f4bcd44295819add251c38326026b77855ce",
+          "reference": "कुछ अणुओं में अस्थिर केंद्रक होता है, जिसका मतलब यह है कि उनमें थोड़े या बिना किसी झटके से टूटने की प्रवृत्ति होती है, कुछ अणुओं में अस्थिर केंद्रक होता है, जिसका मतलब यह है कि उनमें थोड़े या बिना किसी झटके से टूटने की प्रवृत्ति होती है, कुछ अणुओं में अस्थिर केंद्रक होता है, जिसका मतलब यह है कि उनमें थोड़े या बिना किसी झटके से टूटने की प्रवृत्ति होती है,",
+          "durationSeconds": 29.36,
+          "scenario": "read",
+          "replayKind": "synthetic_soak"
+        },
+        {
+          "id": "hi_in-natural-long",
+          "sourceId": "google-fleurs-test",
+          "split": "test",
+          "language": "hi",
+          "audioPath": "hi_in-natural-long.wav",
+          "sha256": "b63e6ae5a8a5b53fcd5b60c467790baca13ca0c8490d35418d692ef7751a5459",
+          "reference": "ग्रीनलैंड को बहुत कम जगह बसाया गया था. नॉर्स सगास में वे कहते हैं कि एरिक रेड हत्या के लिए आइसलैंड से निर्वासित किया गया था, और आगे पश्चिम की यात्रा करते समय, ग्रीनलैंड मिला जिसे ग्रीनलैंड नाम दिया गया.",
+          "durationSeconds": 13.8,
+          "scenario": "read",
+          "replayKind": "natural"
+        }
+      ]
+    }
+  },
+  "naturalFleursSources": [
+    {
+      "language": "en_us",
+      "archiveUrl": "https://huggingface.co/datasets/google/fleurs/resolve/70bb2e84b976b7e960aa89f1c648e09c59f894dd/data/en_us/audio/test.tar.gz",
+      "member": "test/1003119935936341070.wav",
+      "archivePrefixBytesRead": 491520,
+      "sha256": "33aca50159ec2e3cbcc894eb26faa916d6badb1b49fb75994973561540a7f012",
+      "frames": 168960,
+      "reference": "However, due to the slow communication channels, styles in the west could lag behind by 25 to 30 year."
+    },
+    {
+      "language": "fr_fr",
+      "archiveUrl": "https://huggingface.co/datasets/google/fleurs/resolve/70bb2e84b976b7e960aa89f1c648e09c59f894dd/data/fr_fr/audio/test.tar.gz",
+      "member": "test/10043298898524273336.wav",
+      "archivePrefixBytesRead": 389120,
+      "sha256": "c834367fd212902124bdd0e0f6c1f16b5561af6386600f145e5aec50008b298d",
+      "frames": 163200,
+      "reference": "L’accident a eu lieu en terrain montagneux, et il semblerait que cela ait été causé par un incendie malveillant."
+    },
+    {
+      "language": "hi_in",
+      "archiveUrl": "https://huggingface.co/datasets/google/fleurs/resolve/70bb2e84b976b7e960aa89f1c648e09c59f894dd/data/hi_in/audio/test.tar.gz",
+      "member": "test/10014385262415025488.wav",
+      "archivePrefixBytesRead": 1208320,
+      "sha256": "b63e6ae5a8a5b53fcd5b60c467790baca13ca0c8490d35418d692ef7751a5459",
+      "frames": 220800,
+      "reference": "ग्रीनलैंड को बहुत कम जगह बसाया गया था. नॉर्स सगास में वे कहते हैं कि एरिक रेड हत्या के लिए आइसलैंड से निर्वासित किया गया था, और आगे पश्चिम की यात्रा करते समय, ग्रीनलैंड मिला जिसे ग्रीनलैंड नाम दिया गया."
+    }
+  ],
+  "mucsFixture": {
+    "schemaVersion": 1,
+    "sources": [
+      {
+        "id": "openslr-104-mucs-hi-en-test",
+        "name": "MUCS 2021 Hindi-English code-switching test set",
+        "url": "https://www.openslr.org/resources/104/Hindi-English_test.tar.gz",
+        "revision": "sha256:93e358b3bf8233a897fcd353c1f4f98fdda6b8c01b7eed17a70c7dd26e984b37",
+        "license": "CC-BY-SA-4.0",
+        "attribution": "Microsoft Research India; MUCS 2021; distributed by OpenSLR as SLR104",
+        "redistribution": "Redistributions must retain attribution and use the same license."
+      }
+    ],
+    "samples": [
+      {
+        "id": "103085_w5Jyq3XMbb3WwiKQ_0000",
+        "sourceId": "openslr-104-mucs-hi-en-test",
+        "split": "test",
+        "language": "hi",
+        "audioPath": "audio/103085_w5Jyq3XMbb3WwiKQ_0000.wav",
+        "sha256": "60e92764b84dfd06e6da6003d3b6acb7da97114534b0c89fea204a2c75c27892",
+        "reference": "लिबर ऑफिस impress में एक प्रस्तुति document बनाना और बुनियादी formatting के इस spoken tutorial में आपका स्वागत है",
+        "durationSeconds": 8,
+        "scenario": "technical_lecture",
+        "replayKind": "natural",
+        "speakerId": "103085"
+      },
+      {
+        "id": "w5Jyq3XMbb3WwiKQ-full",
+        "sourceId": "openslr-104-mucs-hi-en-test",
+        "split": "test",
+        "language": "hi",
+        "audioPath": "audio/w5Jyq3XMbb3WwiKQ-full.wav",
+        "sha256": "158e3c08a0d4fe8d586c92a82e363f7e1331a6911127f7ea0b3fa1cc50260fe2",
+        "reference": "लिबर ऑफिस impress में एक प्रस्तुति document बनाना और बुनियादी formatting के इस spoken tutorial में आपका स्वागत है इस tutorial में हम impress window के भागों के बारे में सीखेंगे और कैसे स्लाइड इन्सर्ट करें और कॉपी करें फॉन्ट तथा फॉन्ट को फॉर्मेट करना सीखेंगे यहाँ हम अपने ऑपरेटिंग सिस्टम के रूप में gnu/linux और लिबरऑफिस वर्जन 334 का उपयोग कर रहे हैं चलिए अपनी प्रस्तुति प्रेजैटेशन sample impress open करते हैं जिसे पिछले tutorial में बनाया था चलिए देखते हैं कि screen पर क्या क्या है मध्य में हम खाली जगह देखते है जोकि workspace है जहाँ हम काम करेंगे जैसे कि आप देख सकते हैं workspace में 5 tabs हैं जिन्हें view buttons कहते हैं फिलहाल normal टैब चुनित हैं यह मुख्य view है अलगअलग slides बनाने के लिए outline view प्रत्येक slide के outline format में विषय शीर्षक bulleted और क्रमांकित सूचियाँ बताता है notes view प्रत्येक slide में notes जोड़ने की सुविधा देता है जोकि प्रस्तुतिकरण के वक्त नज़र नहीं the handout view slides को हैन्डाउट के रूप में print करने की सुविधा देता है यहाँ हमें एक पेज पर कितने slides print करने हैं इसका चुनाव कर सकते हैं slide sorter view slides की थम्बनेल बताता है अब फिर से normal view button पर click करते हैं screen की बाईं ओर आप slides pane देखते हैं यह प्रस्तुति में slides के थम्बनेल सम्मिलित करता है दाएँ तरफ tasks pane हैं जिसमें अनुभाग है लेआउट्स section में पहले से ही कुछ सैम्पल लेआउट्स मौजूद हैं हम उनका उपयोग ऐसे ही कर सकते हैं या आवश्यकता अनुसार कुछ बदलाव करके उपयोग कर सकते हैं जैसे जैसे हम इन tutorial में आगे बढ़ेंगे इन sections को विस्तार में देखेंगे चलिए अब सीखते हैं कि कैसे slide को insert करें यानि जोड़ें slides pane में दूसरी slide पर क्लिक करके उसे चुनें अब insert और slide पर click करें हम देखते हैं कि दूसरी slide के बाद एक नई खाली slide जुड़ गई है slide पर शीर्षक लिखने के लिए टेक्स्टबार में click to add title पर click करें अब short term strategy type करें और text box के बाहर click करें अतः शीर्षक इस तरह से जोड़ सकते हैं यहाँ दो तरीके है जिससे हम slide की प्रतिलिपि डुप्लिकेट बना सकते हैं पहले तरीके को देखते हैं insert पर click करें और फिर duplicate slide पर click करें हम देख सकते हैं कि एक नई duplicate slide हमारी पहली बनाई गई slide के बाद जोड़ी गई है या तो workspace pane में जाकर slide sorter क्लिक करके slide sorter view पर जाएँ अब सातवीं स्लाइड को कॉपी करें स्लाइड पर राइट क्लिक करें और कांटेक्स्ट मेन्यू से copy चुनें आखरी स्लाइड पर राइट क्लिक करें paste पर क्लिक करें after चुनें और ok click करें प्रेसेंटेशन के अंत में आपने स्लाइड की एक कॉपी बना ली है चलिए अब फोंट्स और फोंट्स को फॉर्मेट करने के कुछ तरीके देखते हैं long term goal नामक slide पर double क्लिक करके उसे चुनते हैं body टेक्स्ट बॉक्स पर क्लिक करें और पुरे टेक्स्ट को चुनें अब इसे डिलीट करें अब निम्न टाइप करें : reduce costs reduce dependence on few vendors develop customized applications libreoffice writer documents में font का प्रकार और font size को जिस प्रकार बदला था यहाँ भी वैसे ही कर सकते हैं text की एक line चुनें text format टूलबार में font type को albany से arial black में बदलें और font size को 32 से 40 में बदलें text box से बाहर कहीं भी click करें ध्यान दें कि font बदल गई है हम main menu से format पर क्लिक करके और फिर character option पर क्लिक करके भी font को बदल सकते हैं यह एक डायलॉग बॉक्स खोलेगा जिसमें हम अपनी आवश्यकतानुसार फॉन्ट स्टाइल और साइज़ सेट कर सकते हैं इस डायलॉग बॉक्स को बंद करते हैं font का color बदलने के लिए हम development up to present नामक slide को चुनते हैं body text box पर click करते हैं और फिर सारे text को चुनते हैं font color icon के पास में डाउन arrow पर click करें और जो चाहिए वो color चुनें text box के बाहर कहीं भी click करें colour में हुए बदलाव को देखें libreoffice documents में जिस प्रकार से bold italics और underline जैसे formatting की थी यहाँ भी उसी प्रकार से कर सकते हैं recommendations नामक slide को चुनें body text box पर click करें और text की एक line चुनें अब bold italics और underline icons पर click करें text box के बाहर कहीं भी click करें text में हुए बदलाव पर ध्यान दें अब हम इस tutorial की समाप्ति की ओर हैं संक्षिप्त में बताते हैं कि हमने क्या सीखा इस tutorial में हमने इम्प्रेस विंडो के भागों के बारे में सीखा और कैसे स्लाइड इन्सर्ट करें और कॉपी करें फॉन्ट to फॉन्ट को फॉर्मेट करना सीखा इस व्यापक नियत कार्य की कोशिश करें एक नयी प्रस्तुति बनाए तीसरी और चौथी slide के बीच एक slide जोड़ें प्रस्तुति के अंत में चौथी स्लाइड की एक कॉपी बनाए दूसरी स्लाइड में एक टेक्स्ट बॉक्स बनाए उसमें कुछ टेक्स्ट टाइप करें text के format को 32 font size में बदलें text को bold italic underlined करें और नीला रंग दें निम्न link पर उपलब्ध video देखें यह spoken tutorial project को सारांशित करता है यदि आपके पास अच्छा bandwidth नहीं है तो आप इसे download करके देख सकते हैं spoken tutorial project team spoken tutorial का उपयोग करके कार्यशालाएँ भी चलाते हैं जो online test pass करते हैं उनको प्रमाणपत्र भी देते हैं अधिक जानकारी के लिए कृपया हमें contact @spokentutorial org पर लिखें spoken tutorial project talktoateacher project का हिस्सा है यह भारत सरकार के एमएचआरडी के आईसीटी के माध्यम से राष्ट्रीय साक्षरता mission द्वारा समर्थित है इस mission पर अधिक जानकारी के लिए उपलब्ध लिंक पर संपर्क करें यह स्क्रिप्ट सकीना शेख द्वारा अनुवादित है आईआई टी बॉम्बे की ओर से मैं रवि कुमार अब आपसे विदा लेता हूँ हमसे जुड़ने के लिए धन्यवाद",
+        "durationSeconds": 413,
+        "scenario": "technical_lecture",
+        "replayKind": "natural",
+        "speakerId": "103085"
+      }
+    ]
+  },
+  "runs": [
+    {
+      "report": "qwen-en",
+      "modelId": "Qwen/Qwen3-ASR-0.6B",
+      "sampleId": "en_us-baseline",
+      "sourceId": "google-fleurs-test",
+      "language": "en",
+      "configuredLanguage": "en",
+      "scenario": "read",
+      "replayKind": "natural",
+      "mode": "offline",
+      "pace": null,
+      "audioSeconds": 8.76,
+      "chunkMs": null,
+      "residentRun": false,
+      "setupMs": 13.208834,
+      "asrMs": 3301.659584,
+      "cleanupMs": null,
+      "realTimeFactor": 0.37690177899543376,
+      "firstPartialMs": null,
+      "stopToFinalMs": null,
+      "partialUpdates": 0,
+      "partialEditDistance": 0,
+      "rawHypothesis": "All nouns alongside the words \"say\" for you always begin with a capital letter, even in the middle of a sentence.",
+      "cleanedHypothesis": null,
+      "rawScore": {
+        "normalizedReference": "all nouns alongside the word sie for you always begin with a capital letter even in the middle of a sentence",
+        "normalizedHypothesis": "all nouns alongside the words say for you always begin with a capital letter even in the middle of a sentence",
+        "wordErrorRate": {
+          "edits": 2,
+          "referenceUnits": 21,
+          "rate": 0.09523809523809523
+        },
+        "graphemeErrorRate": {
+          "edits": 3,
+          "referenceUnits": 88,
+          "rate": 0.03409090909090909
+        }
+      },
+      "cleanedScore": null,
+      "error": null
+    },
+    {
+      "report": "qwen-en",
+      "modelId": "Qwen/Qwen3-ASR-0.6B",
+      "sampleId": "en_us-repeat3",
+      "sourceId": "google-fleurs-test",
+      "language": "en",
+      "configuredLanguage": "en",
+      "scenario": "read",
+      "replayKind": "synthetic_soak",
+      "mode": "offline",
+      "pace": null,
+      "audioSeconds": 26.28,
+      "chunkMs": null,
+      "residentRun": false,
+      "setupMs": 40.569292,
+      "asrMs": 4215.288417,
+      "cleanupMs": null,
+      "realTimeFactor": 0.16039910262557078,
+      "firstPartialMs": null,
+      "stopToFinalMs": null,
+      "partialUpdates": 0,
+      "partialEditDistance": 0,
+      "rawHypothesis": "All nouns alongside the words \"say\" for you always begin with a capital letter, even in the middle of a sentence. All nouns alongside the words \"say\" for you always begin with a capital letter, even in the middle of a sentence. All nouns alongside the words \"say\" for you always begin with a capital letter, even in the middle of a sentence.",
+      "cleanedHypothesis": null,
+      "rawScore": {
+        "normalizedReference": "all nouns alongside the word sie for you always begin with a capital letter even in the middle of a sentence all nouns alongside the word sie for you always begin with a capital letter even in the middle of a sentence all nouns alongside the word sie for you always begin with a capital letter even in the middle of a sentence",
+        "normalizedHypothesis": "all nouns alongside the words say for you always begin with a capital letter even in the middle of a sentence all nouns alongside the words say for you always begin with a capital letter even in the middle of a sentence all nouns alongside the words say for you always begin with a capital letter even in the middle of a sentence",
+        "wordErrorRate": {
+          "edits": 6,
+          "referenceUnits": 63,
+          "rate": 0.09523809523809523
+        },
+        "graphemeErrorRate": {
+          "edits": 9,
+          "referenceUnits": 264,
+          "rate": 0.03409090909090909
+        }
+      },
+      "cleanedScore": null,
+      "error": null
+    },
+    {
+      "report": "qwen-en",
+      "modelId": "Qwen/Qwen3-ASR-0.6B",
+      "sampleId": "en_us-shifted-repeat3",
+      "sourceId": "google-fleurs-test",
+      "language": "en",
+      "configuredLanguage": "en",
+      "scenario": "read",
+      "replayKind": "synthetic_soak",
+      "mode": "offline",
+      "pace": null,
+      "audioSeconds": 28.28,
+      "chunkMs": null,
+      "residentRun": false,
+      "setupMs": 44.788583,
+      "asrMs": 4250.601791,
+      "cleanupMs": null,
+      "realTimeFactor": 0.15030416516973127,
+      "firstPartialMs": null,
+      "stopToFinalMs": null,
+      "partialUpdates": 0,
+      "partialEditDistance": 0,
+      "rawHypothesis": "All nouns alongside the world say for you always begin with a capital letter, even in the middle of a sentence. All nouns, alongside the world, say for you always begin with a capital letter, even in the middle of a sentence. All nouns alongside the world say, \"For you.\" Always begin with a capital letter, even in the middle of a sentence.",
+      "cleanedHypothesis": null,
+      "rawScore": {
+        "normalizedReference": "all nouns alongside the word sie for you always begin with a capital letter even in the middle of a sentence all nouns alongside the word sie for you always begin with a capital letter even in the middle of a sentence all nouns alongside the word sie for you always begin with a capital letter even in the middle of a sentence",
+        "normalizedHypothesis": "all nouns alongside the world say for you always begin with a capital letter even in the middle of a sentence all nouns alongside the world say for you always begin with a capital letter even in the middle of a sentence all nouns alongside the world say for you always begin with a capital letter even in the middle of a sentence",
+        "wordErrorRate": {
+          "edits": 6,
+          "referenceUnits": 63,
+          "rate": 0.09523809523809523
+        },
+        "graphemeErrorRate": {
+          "edits": 9,
+          "referenceUnits": 264,
+          "rate": 0.03409090909090909
+        }
+      },
+      "cleanedScore": null,
+      "error": null
+    },
+    {
+      "report": "qwen-en",
+      "modelId": "Qwen/Qwen3-ASR-0.6B",
+      "sampleId": "en_us-natural-long",
+      "sourceId": "google-fleurs-test",
+      "language": "en",
+      "configuredLanguage": "en",
+      "scenario": "read",
+      "replayKind": "natural",
+      "mode": "offline",
+      "pace": null,
+      "audioSeconds": 10.56,
+      "chunkMs": null,
+      "residentRun": false,
+      "setupMs": 16.685958,
+      "asrMs": 3225.871584,
+      "cleanupMs": null,
+      "realTimeFactor": 0.3054802636363636,
+      "firstPartialMs": null,
+      "stopToFinalMs": null,
+      "partialUpdates": 0,
+      "partialEditDistance": 0,
+      "rawHypothesis": "However, due to the slow communication channels. Styles in the West could lag behind by 25 to 30 years.",
+      "cleanedHypothesis": null,
+      "rawScore": {
+        "normalizedReference": "however due to the slow communication channels styles in the west could lag behind by 25 to 30 year",
+        "normalizedHypothesis": "however due to the slow communication channels styles in the west could lag behind by 25 to 30 years",
+        "wordErrorRate": {
+          "edits": 1,
+          "referenceUnits": 19,
+          "rate": 0.05263157894736842
+        },
+        "graphemeErrorRate": {
+          "edits": 1,
+          "referenceUnits": 81,
+          "rate": 0.012345679012345678
+        }
+      },
+      "cleanedScore": null,
+      "error": null
+    },
+    {
+      "report": "qwen-fr",
+      "modelId": "Qwen/Qwen3-ASR-0.6B",
+      "sampleId": "fr_fr-baseline",
+      "sourceId": "google-fleurs-test",
+      "language": "fr",
+      "configuredLanguage": "fr",
+      "scenario": "read",
+      "replayKind": "natural",
+      "mode": "offline",
+      "pace": null,
+      "audioSeconds": 8.28,
+      "chunkMs": null,
+      "residentRun": false,
+      "setupMs": 12.768165999999999,
+      "asrMs": 3383.2529999999997,
+      "cleanupMs": null,
+      "realTimeFactor": 0.4086054347826087,
+      "firstPartialMs": null,
+      "stopToFinalMs": null,
+      "partialUpdates": 0,
+      "partialEditDistance": 0,
+      "rawHypothesis": "Il ajoutait qu'on ne devrait cependant pas leur demander d'assumer des obligations qui n'épassent leur statut de développeur, de responsabilité et de capacité.",
+      "cleanedHypothesis": null,
+      "rawScore": {
+        "normalizedReference": "il a ajouté qu on ne devrait cependant pas leur demander d assumer des obligations qui dépassent leur stade de développement leur responsabilité et leurs capacités",
+        "normalizedHypothesis": "il ajoutait qu on ne devrait cependant pas leur demander d assumer des obligations qui n épassent leur statut de développeur de responsabilité et de capacité",
+        "wordErrorRate": {
+          "edits": 9,
+          "referenceUnits": 26,
+          "rate": 0.34615384615384615
+        },
+        "graphemeErrorRate": {
+          "edits": 20,
+          "referenceUnits": 138,
+          "rate": 0.14492753623188406
+        }
+      },
+      "cleanedScore": null,
+      "error": null
+    },
+    {
+      "report": "qwen-fr",
+      "modelId": "Qwen/Qwen3-ASR-0.6B",
+      "sampleId": "fr_fr-repeat3",
+      "sourceId": "google-fleurs-test",
+      "language": "fr",
+      "configuredLanguage": "fr",
+      "scenario": "read",
+      "replayKind": "synthetic_soak",
+      "mode": "offline",
+      "pace": null,
+      "audioSeconds": 24.84,
+      "chunkMs": null,
+      "residentRun": false,
+      "setupMs": 35.687875,
+      "asrMs": 4570.920042,
+      "cleanupMs": null,
+      "realTimeFactor": 0.18401449444444445,
+      "firstPartialMs": null,
+      "stopToFinalMs": null,
+      "partialUpdates": 0,
+      "partialEditDistance": 0,
+      "rawHypothesis": "Il ajoutait qu'on ne devrait cependant pas leur demander d'assumer les obligations qui nées par leur statut de développeur, de responsabilité et de capacité. Il ajoutait qu'on ne devrait cependant pas leur demander d'assumer des obligations qui dépassent leur statut de développeur, de responsabilité et de capacité. Il a ajouté qu'on ne devrait cependant pas leur demander d'assumer des obligations qui dépassent leur statut de développeur, de responsabilité et de capacité.",
+      "cleanedHypothesis": null,
+      "rawScore": {
+        "normalizedReference": "il a ajouté qu on ne devrait cependant pas leur demander d assumer des obligations qui dépassent leur stade de développement leur responsabilité et leurs capacités il a ajouté qu on ne devrait cependant pas leur demander d assumer des obligations qui dépassent leur stade de développement leur responsabilité et leurs capacités il a ajouté qu on ne devrait cependant pas leur demander d assumer des obligations qui dépassent leur stade de développement leur responsabilité et leurs capacités",
+        "normalizedHypothesis": "il ajoutait qu on ne devrait cependant pas leur demander d assumer les obligations qui nées par leur statut de développeur de responsabilité et de capacité il ajoutait qu on ne devrait cependant pas leur demander d assumer des obligations qui dépassent leur statut de développeur de responsabilité et de capacité il a ajouté qu on ne devrait cependant pas leur demander d assumer des obligations qui dépassent leur statut de développeur de responsabilité et de capacité",
+        "wordErrorRate": {
+          "edits": 22,
+          "referenceUnits": 78,
+          "rate": 0.28205128205128205
+        },
+        "graphemeErrorRate": {
+          "edits": 61,
+          "referenceUnits": 414,
+          "rate": 0.1473429951690821
+        }
+      },
+      "cleanedScore": null,
+      "error": null
+    },
+    {
+      "report": "qwen-fr",
+      "modelId": "Qwen/Qwen3-ASR-0.6B",
+      "sampleId": "fr_fr-shifted-repeat3",
+      "sourceId": "google-fleurs-test",
+      "language": "fr",
+      "configuredLanguage": "fr",
+      "scenario": "read",
+      "replayKind": "synthetic_soak",
+      "mode": "offline",
+      "pace": null,
+      "audioSeconds": 26.84,
+      "chunkMs": null,
+      "residentRun": false,
+      "setupMs": 38.001542,
+      "asrMs": 4755.240958,
+      "cleanupMs": null,
+      "realTimeFactor": 0.1771699313710879,
+      "firstPartialMs": null,
+      "stopToFinalMs": null,
+      "partialUpdates": 0,
+      "partialEditDistance": 0,
+      "rawHypothesis": "Il ajoutait qu'on ne devrait cependant pas leur demander d'assumer les obligations qui dépasse leur statut de développeur. Le responsabilité. Et leur capacité. Il ajoutait qu'on ne devrait cependant pas leur demander d'assumer les obligations qui dépassent leur statut de développeur, de responsabilité et de capacité. Il a ajouté qu'on ne devrait cependant pas leur demander d'assumer les obligations qui dépassent leur statut de développeur, de responsabilité et de capacité.",
+      "cleanedHypothesis": null,
+      "rawScore": {
+        "normalizedReference": "il a ajouté qu on ne devrait cependant pas leur demander d assumer des obligations qui dépassent leur stade de développement leur responsabilité et leurs capacités il a ajouté qu on ne devrait cependant pas leur demander d assumer des obligations qui dépassent leur stade de développement leur responsabilité et leurs capacités il a ajouté qu on ne devrait cependant pas leur demander d assumer des obligations qui dépassent leur stade de développement leur responsabilité et leurs capacités",
+        "normalizedHypothesis": "il ajoutait qu on ne devrait cependant pas leur demander d assumer les obligations qui dépasse leur statut de développeur le responsabilité et leur capacité il ajoutait qu on ne devrait cependant pas leur demander d assumer les obligations qui dépassent leur statut de développeur de responsabilité et de capacité il a ajouté qu on ne devrait cependant pas leur demander d assumer les obligations qui dépassent leur statut de développeur de responsabilité et de capacité",
+        "wordErrorRate": {
+          "edits": 23,
+          "referenceUnits": 78,
+          "rate": 0.2948717948717949
+        },
+        "graphemeErrorRate": {
+          "edits": 54,
+          "referenceUnits": 414,
+          "rate": 0.13043478260869565
+        }
+      },
+      "cleanedScore": null,
+      "error": null
+    },
+    {
+      "report": "qwen-fr",
+      "modelId": "Qwen/Qwen3-ASR-0.6B",
+      "sampleId": "fr_fr-natural-long",
+      "sourceId": "google-fleurs-test",
+      "language": "fr",
+      "configuredLanguage": "fr",
+      "scenario": "read",
+      "replayKind": "natural",
+      "mode": "offline",
+      "pace": null,
+      "audioSeconds": 10.2,
+      "chunkMs": null,
+      "residentRun": false,
+      "setupMs": 15.508167,
+      "asrMs": 3402.506792,
+      "cleanupMs": null,
+      "realTimeFactor": 0.333579097254902,
+      "firstPartialMs": null,
+      "stopToFinalMs": null,
+      "partialUpdates": 0,
+      "partialEditDistance": 0,
+      "rawHypothesis": "L'accident a eu lieu en terrain montagneux. Il semblerait que cela était causé par un incendie malveillant.",
+      "cleanedHypothesis": null,
+      "rawScore": {
+        "normalizedReference": "l accident a eu lieu en terrain montagneux et il semblerait que cela ait été causé par un incendie malveillant",
+        "normalizedHypothesis": "l accident a eu lieu en terrain montagneux il semblerait que cela était causé par un incendie malveillant",
+        "wordErrorRate": {
+          "edits": 3,
+          "referenceUnits": 20,
+          "rate": 0.15
+        },
+        "graphemeErrorRate": {
+          "edits": 7,
+          "referenceUnits": 91,
+          "rate": 0.07692307692307693
+        }
+      },
+      "cleanedScore": null,
+      "error": null
+    },
+    {
+      "report": "qwen-hi",
+      "modelId": "Qwen/Qwen3-ASR-0.6B",
+      "sampleId": "hi_in-baseline",
+      "sourceId": "google-fleurs-test",
+      "language": "hi",
+      "configuredLanguage": "hi",
+      "scenario": "read",
+      "replayKind": "natural",
+      "mode": "offline",
+      "pace": null,
+      "audioSeconds": 9.12,
+      "chunkMs": null,
+      "residentRun": false,
+      "setupMs": 13.946290999999999,
+      "asrMs": 4383.893834,
+      "cleanupMs": null,
+      "realTimeFactor": 0.48069011337719303,
+      "firstPartialMs": null,
+      "stopToFinalMs": null,
+      "partialUpdates": 0,
+      "partialEditDistance": 0,
+      "rawHypothesis": "कुछ आंगुओं में आस्तर केंद्रक होता है, जिसका मतलब यहाँ की उनमें थोड़े या बिना किसी झटके से टूटने की प्रवृति होती है।",
+      "cleanedHypothesis": null,
+      "rawScore": {
+        "normalizedReference": "कुछ अणुओं में अस्थिर केंद्रक होता है जिसका मतलब यह है कि उनमें थोड़े या बिना किसी झटके से टूटने की प्रवृत्ति होती है",
+        "normalizedHypothesis": "कुछ आंगुओं में आस्तर केंद्रक होता है जिसका मतलब यहाँ की उनमें थोड़े या बिना किसी झटके से टूटने की प्रवृति होती है",
+        "wordErrorRate": {
+          "edits": 6,
+          "referenceUnits": 24,
+          "rate": 0.25
+        },
+        "graphemeErrorRate": {
+          "edits": 8,
+          "referenceUnits": 50,
+          "rate": 0.16
+        }
+      },
+      "cleanedScore": null,
+      "error": null
+    },
+    {
+      "report": "qwen-hi",
+      "modelId": "Qwen/Qwen3-ASR-0.6B",
+      "sampleId": "hi_in-repeat3",
+      "sourceId": "google-fleurs-test",
+      "language": "hi",
+      "configuredLanguage": "hi",
+      "scenario": "read",
+      "replayKind": "synthetic_soak",
+      "mode": "offline",
+      "pace": null,
+      "audioSeconds": 27.36,
+      "chunkMs": null,
+      "residentRun": false,
+      "setupMs": 38.205000000000005,
+      "asrMs": 7208.160916,
+      "cleanupMs": null,
+      "realTimeFactor": 0.26345617383040937,
+      "firstPartialMs": null,
+      "stopToFinalMs": null,
+      "partialUpdates": 0,
+      "partialEditDistance": 0,
+      "rawHypothesis": "कुछ आंगुओं में आस्तर केंद्रक होता है, जिसका मतलब यहाँ की उनमें थोड़े या बिना किसी झटके से टूटने की प्रवृति होती है। कुछ आंगुओं में आस्तर केंद्रक होता है, जिसका मतलब यहाँ की उनमें थोड़े या बिना किसी झटके से टूटने की प्रवृति होती है। कुछ आंगुओं में आस्तर केंद्रक होता है, जिसका मतलब यहाँ की उनमें थोड़े या बिना किसी झटके से टूटने की प्रवृति होती है।",
+      "cleanedHypothesis": null,
+      "rawScore": {
+        "normalizedReference": "कुछ अणुओं में अस्थिर केंद्रक होता है जिसका मतलब यह है कि उनमें थोड़े या बिना किसी झटके से टूटने की प्रवृत्ति होती है कुछ अणुओं में अस्थिर केंद्रक होता है जिसका मतलब यह है कि उनमें थोड़े या बिना किसी झटके से टूटने की प्रवृत्ति होती है कुछ अणुओं में अस्थिर केंद्रक होता है जिसका मतलब यह है कि उनमें थोड़े या बिना किसी झटके से टूटने की प्रवृत्ति होती है",
+        "normalizedHypothesis": "कुछ आंगुओं में आस्तर केंद्रक होता है जिसका मतलब यहाँ की उनमें थोड़े या बिना किसी झटके से टूटने की प्रवृति होती है कुछ आंगुओं में आस्तर केंद्रक होता है जिसका मतलब यहाँ की उनमें थोड़े या बिना किसी झटके से टूटने की प्रवृति होती है कुछ आंगुओं में आस्तर केंद्रक होता है जिसका मतलब यहाँ की उनमें थोड़े या बिना किसी झटके से टूटने की प्रवृति होती है",
+        "wordErrorRate": {
+          "edits": 18,
+          "referenceUnits": 72,
+          "rate": 0.25
+        },
+        "graphemeErrorRate": {
+          "edits": 24,
+          "referenceUnits": 150,
+          "rate": 0.16
+        }
+      },
+      "cleanedScore": null,
+      "error": null
+    },
+    {
+      "report": "qwen-hi",
+      "modelId": "Qwen/Qwen3-ASR-0.6B",
+      "sampleId": "hi_in-shifted-repeat3",
+      "sourceId": "google-fleurs-test",
+      "language": "hi",
+      "configuredLanguage": "hi",
+      "scenario": "read",
+      "replayKind": "synthetic_soak",
+      "mode": "offline",
+      "pace": null,
+      "audioSeconds": 29.36,
+      "chunkMs": null,
+      "residentRun": false,
+      "setupMs": 40.836166999999996,
+      "asrMs": 7130.448542,
+      "cleanupMs": null,
+      "realTimeFactor": 0.242862688760218,
+      "firstPartialMs": null,
+      "stopToFinalMs": null,
+      "partialUpdates": 0,
+      "partialEditDistance": 0,
+      "rawHypothesis": "कुछ आंगों में आस्थिर केंद्रक होता है, जिसका मतलब यहाँ की उनमें थोड़े या बिना किसी झटके से टूटने की प्रवृत्ति. कुछ आंगुओं में आस्तिक एंड्रक होता है, जिसका मतलब यहाँ कि उनमें थोड़े या बिना किसी झटके से टूटने की प्रवृत्ति होती है। कुछ आंवों में आस्तर केंद्रक होता है, जिसका मतलब यहां की उनमें थोड़े या बिना किसी झटके से टूटने की प्रवृत्ति होती है।",
+      "cleanedHypothesis": null,
+      "rawScore": {
+        "normalizedReference": "कुछ अणुओं में अस्थिर केंद्रक होता है जिसका मतलब यह है कि उनमें थोड़े या बिना किसी झटके से टूटने की प्रवृत्ति होती है कुछ अणुओं में अस्थिर केंद्रक होता है जिसका मतलब यह है कि उनमें थोड़े या बिना किसी झटके से टूटने की प्रवृत्ति होती है कुछ अणुओं में अस्थिर केंद्रक होता है जिसका मतलब यह है कि उनमें थोड़े या बिना किसी झटके से टूटने की प्रवृत्ति होती है",
+        "normalizedHypothesis": "कुछ आंगों में आस्थिर केंद्रक होता है जिसका मतलब यहाँ की उनमें थोड़े या बिना किसी झटके से टूटने की प्रवृत्ति कुछ आंगुओं में आस्तिक एंड्रक होता है जिसका मतलब यहाँ कि उनमें थोड़े या बिना किसी झटके से टूटने की प्रवृत्ति होती है कुछ आंवों में आस्तर केंद्रक होता है जिसका मतलब यहां की उनमें थोड़े या बिना किसी झटके से टूटने की प्रवृत्ति होती है",
+        "wordErrorRate": {
+          "edits": 17,
+          "referenceUnits": 72,
+          "rate": 0.2361111111111111
+        },
+        "graphemeErrorRate": {
+          "edits": 27,
+          "referenceUnits": 150,
+          "rate": 0.18
+        }
+      },
+      "cleanedScore": null,
+      "error": null
+    },
+    {
+      "report": "qwen-hi",
+      "modelId": "Qwen/Qwen3-ASR-0.6B",
+      "sampleId": "hi_in-natural-long",
+      "sourceId": "google-fleurs-test",
+      "language": "hi",
+      "configuredLanguage": "hi",
+      "scenario": "read",
+      "replayKind": "natural",
+      "mode": "offline",
+      "pace": null,
+      "audioSeconds": 13.8,
+      "chunkMs": null,
+      "residentRun": false,
+      "setupMs": 19.492834000000002,
+      "asrMs": 4871.057583,
+      "cleanupMs": null,
+      "realTimeFactor": 0.352975187173913,
+      "firstPartialMs": null,
+      "stopToFinalMs": null,
+      "partialUpdates": 0,
+      "partialEditDistance": 0,
+      "rawHypothesis": "Greenland को बहुत कम जगह बसाया गया था, North सगास में वे कहते हैं कि Eric Red. तिया के लिए आईएस लैंड से निर्वासित किया गया था, और आगे पश्चिम की यात्रा करते समय ग्रीनलैंड मिला जिसे ग्रीनलैंड नाम दिया गया.",
+      "cleanedHypothesis": null,
+      "rawScore": {
+        "normalizedReference": "ग्रीनलैंड को बहुत कम जगह बसाया गया था नॉर्स सगास में वे कहते हैं कि एरिक रेड हत्या के लिए आइसलैंड से निर्वासित किया गया था और आगे पश्चिम की यात्रा करते समय ग्रीनलैंड मिला जिसे ग्रीनलैंड नाम दिया गया",
+        "normalizedHypothesis": "greenland को बहुत कम जगह बसाया गया था north सगास में वे कहते हैं कि eric red तिया के लिए आईएस लैंड से निर्वासित किया गया था और आगे पश्चिम की यात्रा करते समय ग्रीनलैंड मिला जिसे ग्रीनलैंड नाम दिया गया",
+        "wordErrorRate": {
+          "edits": 7,
+          "referenceUnits": 40,
+          "rate": 0.175
+        },
+        "graphemeErrorRate": {
+          "edits": 25,
+          "referenceUnits": 90,
+          "rate": 0.2777777777777778
+        }
+      },
+      "cleanedScore": null,
+      "error": null
+    },
+    {
+      "report": "cohere-en",
+      "modelId": "CohereLabs/cohere-transcribe-03-2026",
+      "sampleId": "en_us-baseline",
+      "sourceId": "google-fleurs-test",
+      "language": "en",
+      "configuredLanguage": "en",
+      "scenario": "read",
+      "replayKind": "natural",
+      "mode": "offline",
+      "pace": null,
+      "audioSeconds": 8.76,
+      "chunkMs": null,
+      "residentRun": false,
+      "setupMs": 12.394917,
+      "asrMs": 7437.551708,
+      "cleanupMs": null,
+      "realTimeFactor": 0.8490355831050228,
+      "firstPartialMs": null,
+      "stopToFinalMs": null,
+      "partialUpdates": 0,
+      "partialEditDistance": 0,
+      "rawHypothesis": "All nouns alongside the words saved for you always begin with a capital letter, even in the middle of a sentence.",
+      "cleanedHypothesis": null,
+      "rawScore": {
+        "normalizedReference": "all nouns alongside the word sie for you always begin with a capital letter even in the middle of a sentence",
+        "normalizedHypothesis": "all nouns alongside the words saved for you always begin with a capital letter even in the middle of a sentence",
+        "wordErrorRate": {
+          "edits": 2,
+          "referenceUnits": 21,
+          "rate": 0.09523809523809523
+        },
+        "graphemeErrorRate": {
+          "edits": 4,
+          "referenceUnits": 88,
+          "rate": 0.045454545454545456
+        }
+      },
+      "cleanedScore": null,
+      "error": null
+    },
+    {
+      "report": "cohere-en",
+      "modelId": "CohereLabs/cohere-transcribe-03-2026",
+      "sampleId": "en_us-repeat3",
+      "sourceId": "google-fleurs-test",
+      "language": "en",
+      "configuredLanguage": "en",
+      "scenario": "read",
+      "replayKind": "synthetic_soak",
+      "mode": "offline",
+      "pace": null,
+      "audioSeconds": 26.28,
+      "chunkMs": null,
+      "residentRun": false,
+      "setupMs": 39.476834000000004,
+      "asrMs": 8152.342624999999,
+      "cleanupMs": null,
+      "realTimeFactor": 0.31021090658295275,
+      "firstPartialMs": null,
+      "stopToFinalMs": null,
+      "partialUpdates": 0,
+      "partialEditDistance": 0,
+      "rawHypothesis": "All nouns alongside the words saved for you always begin with a capital letter, even in the middle of a sentence. All nouns alongside the words saved for you always begin with a capital letter, even in the middle of a sentence. All nouns alongside the words saved for you always begin with a capital letter, even in the middle of a sentence.",
+      "cleanedHypothesis": null,
+      "rawScore": {
+        "normalizedReference": "all nouns alongside the word sie for you always begin with a capital letter even in the middle of a sentence all nouns alongside the word sie for you always begin with a capital letter even in the middle of a sentence all nouns alongside the word sie for you always begin with a capital letter even in the middle of a sentence",
+        "normalizedHypothesis": "all nouns alongside the words saved for you always begin with a capital letter even in the middle of a sentence all nouns alongside the words saved for you always begin with a capital letter even in the middle of a sentence all nouns alongside the words saved for you always begin with a capital letter even in the middle of a sentence",
+        "wordErrorRate": {
+          "edits": 6,
+          "referenceUnits": 63,
+          "rate": 0.09523809523809523
+        },
+        "graphemeErrorRate": {
+          "edits": 12,
+          "referenceUnits": 264,
+          "rate": 0.045454545454545456
+        }
+      },
+      "cleanedScore": null,
+      "error": null
+    },
+    {
+      "report": "cohere-en",
+      "modelId": "CohereLabs/cohere-transcribe-03-2026",
+      "sampleId": "en_us-shifted-repeat3",
+      "sourceId": "google-fleurs-test",
+      "language": "en",
+      "configuredLanguage": "en",
+      "scenario": "read",
+      "replayKind": "synthetic_soak",
+      "mode": "offline",
+      "pace": null,
+      "audioSeconds": 28.28,
+      "chunkMs": null,
+      "residentRun": false,
+      "setupMs": 42.629833,
+      "asrMs": 8230.769499999999,
+      "cleanupMs": null,
+      "realTimeFactor": 0.29104559759547377,
+      "firstPartialMs": null,
+      "stopToFinalMs": null,
+      "partialUpdates": 0,
+      "partialEditDistance": 0,
+      "rawHypothesis": "All nouns alongside the world say for you always begin with a capital letter, even in the middle of a sentence. All nouns alongside the world say for you always begin with a capital letter, even in the middle of a sentence. All nouns alongside the world say for you. Always begin with a capital letter, even in the middle of a sentence.",
+      "cleanedHypothesis": null,
+      "rawScore": {
+        "normalizedReference": "all nouns alongside the word sie for you always begin with a capital letter even in the middle of a sentence all nouns alongside the word sie for you always begin with a capital letter even in the middle of a sentence all nouns alongside the word sie for you always begin with a capital letter even in the middle of a sentence",
+        "normalizedHypothesis": "all nouns alongside the world say for you always begin with a capital letter even in the middle of a sentence all nouns alongside the world say for you always begin with a capital letter even in the middle of a sentence all nouns alongside the world say for you always begin with a capital letter even in the middle of a sentence",
+        "wordErrorRate": {
+          "edits": 6,
+          "referenceUnits": 63,
+          "rate": 0.09523809523809523
+        },
+        "graphemeErrorRate": {
+          "edits": 9,
+          "referenceUnits": 264,
+          "rate": 0.03409090909090909
+        }
+      },
+      "cleanedScore": null,
+      "error": null
+    },
+    {
+      "report": "cohere-en",
+      "modelId": "CohereLabs/cohere-transcribe-03-2026",
+      "sampleId": "en_us-natural-long",
+      "sourceId": "google-fleurs-test",
+      "language": "en",
+      "configuredLanguage": "en",
+      "scenario": "read",
+      "replayKind": "natural",
+      "mode": "offline",
+      "pace": null,
+      "audioSeconds": 10.56,
+      "chunkMs": null,
+      "residentRun": false,
+      "setupMs": 16.170958,
+      "asrMs": 7419.217458,
+      "cleanupMs": null,
+      "realTimeFactor": 0.7025774107954545,
+      "firstPartialMs": null,
+      "stopToFinalMs": null,
+      "partialUpdates": 0,
+      "partialEditDistance": 0,
+      "rawHypothesis": "However, due to the slow communication channels. Styles in the West could lag behind by twenty five to thirty years.",
+      "cleanedHypothesis": null,
+      "rawScore": {
+        "normalizedReference": "however due to the slow communication channels styles in the west could lag behind by 25 to 30 year",
+        "normalizedHypothesis": "however due to the slow communication channels styles in the west could lag behind by twenty five to thirty years",
+        "wordErrorRate": {
+          "edits": 4,
+          "referenceUnits": 19,
+          "rate": 0.21052631578947367
+        },
+        "graphemeErrorRate": {
+          "edits": 17,
+          "referenceUnits": 81,
+          "rate": 0.20987654320987653
+        }
+      },
+      "cleanedScore": null,
+      "error": null
+    },
+    {
+      "report": "cohere-fr",
+      "modelId": "CohereLabs/cohere-transcribe-03-2026",
+      "sampleId": "fr_fr-baseline",
+      "sourceId": "google-fleurs-test",
+      "language": "fr",
+      "configuredLanguage": "fr",
+      "scenario": "read",
+      "replayKind": "natural",
+      "mode": "offline",
+      "pace": null,
+      "audioSeconds": 8.28,
+      "chunkMs": null,
+      "residentRun": false,
+      "setupMs": 11.696959,
+      "asrMs": 7576.76525,
+      "cleanupMs": null,
+      "realTimeFactor": 0.9150682669082126,
+      "firstPartialMs": null,
+      "stopToFinalMs": null,
+      "partialUpdates": 0,
+      "partialEditDistance": 0,
+      "rawHypothesis": "Il ajoutait qu’on ne devrait cependant pas leur demander d’assumer des obligations qui dépassent leur stade de développement, de responsabilité et leurs capacités.",
+      "cleanedHypothesis": null,
+      "rawScore": {
+        "normalizedReference": "il a ajouté qu on ne devrait cependant pas leur demander d assumer des obligations qui dépassent leur stade de développement leur responsabilité et leurs capacités",
+        "normalizedHypothesis": "il ajoutait qu on ne devrait cependant pas leur demander d assumer des obligations qui dépassent leur stade de développement de responsabilité et leurs capacités",
+        "wordErrorRate": {
+          "edits": 3,
+          "referenceUnits": 26,
+          "rate": 0.11538461538461539
+        },
+        "graphemeErrorRate": {
+          "edits": 7,
+          "referenceUnits": 138,
+          "rate": 0.050724637681159424
+        }
+      },
+      "cleanedScore": null,
+      "error": null
+    },
+    {
+      "report": "cohere-fr",
+      "modelId": "CohereLabs/cohere-transcribe-03-2026",
+      "sampleId": "fr_fr-repeat3",
+      "sourceId": "google-fleurs-test",
+      "language": "fr",
+      "configuredLanguage": "fr",
+      "scenario": "read",
+      "replayKind": "synthetic_soak",
+      "mode": "offline",
+      "pace": null,
+      "audioSeconds": 24.84,
+      "chunkMs": null,
+      "residentRun": false,
+      "setupMs": 34.381792000000004,
+      "asrMs": 8369.228916999999,
+      "cleanupMs": null,
+      "realTimeFactor": 0.33692547975040255,
+      "firstPartialMs": null,
+      "stopToFinalMs": null,
+      "partialUpdates": 0,
+      "partialEditDistance": 0,
+      "rawHypothesis": "Il ajoutait qu’on ne devrait cependant pas leur demander d’assumer des obligations qui dépassent leur stade de développement, de responsabilité et leur capacité. Il ajoutait qu’on ne devrait cependant pas leur demander d’assumer des obligations qui dépassent leur stade de développement, de responsabilité et leur capacité. Il ajoutait qu’on ne devrait cependant pas leur demander d’assumer des obligations qui dépassent leur stade de développement, de responsabilité et leur capacité.",
+      "cleanedHypothesis": null,
+      "rawScore": {
+        "normalizedReference": "il a ajouté qu on ne devrait cependant pas leur demander d assumer des obligations qui dépassent leur stade de développement leur responsabilité et leurs capacités il a ajouté qu on ne devrait cependant pas leur demander d assumer des obligations qui dépassent leur stade de développement leur responsabilité et leurs capacités il a ajouté qu on ne devrait cependant pas leur demander d assumer des obligations qui dépassent leur stade de développement leur responsabilité et leurs capacités",
+        "normalizedHypothesis": "il ajoutait qu on ne devrait cependant pas leur demander d assumer des obligations qui dépassent leur stade de développement de responsabilité et leur capacité il ajoutait qu on ne devrait cependant pas leur demander d assumer des obligations qui dépassent leur stade de développement de responsabilité et leur capacité il ajoutait qu on ne devrait cependant pas leur demander d assumer des obligations qui dépassent leur stade de développement de responsabilité et leur capacité",
+        "wordErrorRate": {
+          "edits": 15,
+          "referenceUnits": 78,
+          "rate": 0.19230769230769232
+        },
+        "graphemeErrorRate": {
+          "edits": 27,
+          "referenceUnits": 414,
+          "rate": 0.06521739130434782
+        }
+      },
+      "cleanedScore": null,
+      "error": null
+    },
+    {
+      "report": "cohere-fr",
+      "modelId": "CohereLabs/cohere-transcribe-03-2026",
+      "sampleId": "fr_fr-shifted-repeat3",
+      "sourceId": "google-fleurs-test",
+      "language": "fr",
+      "configuredLanguage": "fr",
+      "scenario": "read",
+      "replayKind": "synthetic_soak",
+      "mode": "offline",
+      "pace": null,
+      "audioSeconds": 26.84,
+      "chunkMs": null,
+      "residentRun": false,
+      "setupMs": 37.155625,
+      "asrMs": 8438.097292,
+      "cleanupMs": null,
+      "realTimeFactor": 0.31438514500745157,
+      "firstPartialMs": null,
+      "stopToFinalMs": null,
+      "partialUpdates": 0,
+      "partialEditDistance": 0,
+      "rawHypothesis": "Il ajoutait qu'on ne devrait cependant pas leur demander d'assumer des obligations qui dépassent leur stade de développement, de responsabilité et de responsabilité. Et leur capacité. Il ajoutait qu'on ne devrait cependant pas leur demander d'assumer des obligations qui dépassent leur stade de développement, de responsabilité et leur capacité. Il ajoutait qu'on ne devrait cependant pas leur demander d'assumer des obligations qui dépassent leur stade de développement, de responsabilité et leur capacité.",
+      "cleanedHypothesis": null,
+      "rawScore": {
+        "normalizedReference": "il a ajouté qu on ne devrait cependant pas leur demander d assumer des obligations qui dépassent leur stade de développement leur responsabilité et leurs capacités il a ajouté qu on ne devrait cependant pas leur demander d assumer des obligations qui dépassent leur stade de développement leur responsabilité et leurs capacités il a ajouté qu on ne devrait cependant pas leur demander d assumer des obligations qui dépassent leur stade de développement leur responsabilité et leurs capacités",
+        "normalizedHypothesis": "il ajoutait qu on ne devrait cependant pas leur demander d assumer des obligations qui dépassent leur stade de développement de responsabilité et de responsabilité et leur capacité il ajoutait qu on ne devrait cependant pas leur demander d assumer des obligations qui dépassent leur stade de développement de responsabilité et leur capacité il ajoutait qu on ne devrait cependant pas leur demander d assumer des obligations qui dépassent leur stade de développement de responsabilité et leur capacité",
+        "wordErrorRate": {
+          "edits": 18,
+          "referenceUnits": 78,
+          "rate": 0.23076923076923078
+        },
+        "graphemeErrorRate": {
+          "edits": 42,
+          "referenceUnits": 414,
+          "rate": 0.10144927536231885
+        }
+      },
+      "cleanedScore": null,
+      "error": null
+    },
+    {
+      "report": "cohere-fr",
+      "modelId": "CohereLabs/cohere-transcribe-03-2026",
+      "sampleId": "fr_fr-natural-long",
+      "sourceId": "google-fleurs-test",
+      "language": "fr",
+      "configuredLanguage": "fr",
+      "scenario": "read",
+      "replayKind": "natural",
+      "mode": "offline",
+      "pace": null,
+      "audioSeconds": 10.2,
+      "chunkMs": null,
+      "residentRun": false,
+      "setupMs": 14.211041,
+      "asrMs": 7448.799583,
+      "cleanupMs": null,
+      "realTimeFactor": 0.7302744689215687,
+      "firstPartialMs": null,
+      "stopToFinalMs": null,
+      "partialUpdates": 0,
+      "partialEditDistance": 0,
+      "rawHypothesis": "L'accident a eu lieu en terrain montagneux. Il semblerait que cela ait été causé par un incendie malveillant.",
+      "cleanedHypothesis": null,
+      "rawScore": {
+        "normalizedReference": "l accident a eu lieu en terrain montagneux et il semblerait que cela ait été causé par un incendie malveillant",
+        "normalizedHypothesis": "l accident a eu lieu en terrain montagneux il semblerait que cela ait été causé par un incendie malveillant",
+        "wordErrorRate": {
+          "edits": 1,
+          "referenceUnits": 20,
+          "rate": 0.05
+        },
+        "graphemeErrorRate": {
+          "edits": 2,
+          "referenceUnits": 91,
+          "rate": 0.02197802197802198
+        }
+      },
+      "cleanedScore": null,
+      "error": null
+    },
+    {
+      "report": "qwen-natural-413s",
+      "modelId": "Qwen/Qwen3-ASR-0.6B",
+      "sampleId": "103085_w5Jyq3XMbb3WwiKQ_0000",
+      "sourceId": "openslr-104-mucs-hi-en-test",
+      "language": "hi",
+      "configuredLanguage": "hi",
+      "scenario": "technical_lecture",
+      "replayKind": "natural",
+      "mode": "offline",
+      "pace": null,
+      "audioSeconds": 8.0,
+      "chunkMs": null,
+      "residentRun": false,
+      "setupMs": 11.744792,
+      "asrMs": 4014.420917,
+      "cleanupMs": null,
+      "realTimeFactor": 0.501802614625,
+      "firstPartialMs": null,
+      "stopToFinalMs": null,
+      "partialUpdates": 0,
+      "partialEditDistance": 0,
+      "rawHypothesis": "लिबर ऑफ़ इस इम्प्रेस में एक प्रस्तुति डॉक्यूमेंट बनाना और बुनियादी फॉर्मेटिंग के इस स्पोकेन टिट्यूरल में आपका स्वागत",
+      "cleanedHypothesis": null,
+      "rawScore": {
+        "normalizedReference": "लिबर ऑफिस impress में एक प्रस्तुति document बनाना और बुनियादी formatting के इस spoken tutorial में आपका स्वागत है",
+        "normalizedHypothesis": "लिबर ऑफ़ इस इम्प्रेस में एक प्रस्तुति डॉक्यूमेंट बनाना और बुनियादी फॉर्मेटिंग के इस स्पोकेन टिट्यूरल में आपका स्वागत",
+        "wordErrorRate": {
+          "edits": 8,
+          "referenceUnits": 19,
+          "rate": 0.42105263157894735
+        },
+        "graphemeErrorRate": {
+          "edits": 42,
+          "referenceUnits": 71,
+          "rate": 0.5915492957746479
+        }
+      },
+      "cleanedScore": null,
+      "error": null
+    },
+    {
+      "report": "qwen-natural-413s",
+      "modelId": "Qwen/Qwen3-ASR-0.6B",
+      "sampleId": "w5Jyq3XMbb3WwiKQ-full",
+      "sourceId": "openslr-104-mucs-hi-en-test",
+      "language": "hi",
+      "configuredLanguage": "hi",
+      "scenario": "technical_lecture",
+      "replayKind": "natural",
+      "mode": "offline",
+      "pace": null,
+      "audioSeconds": 413.0,
+      "chunkMs": null,
+      "residentRun": false,
+      "setupMs": 591.9757079999999,
+      "asrMs": 57777.611625,
+      "cleanupMs": null,
+      "realTimeFactor": 0.13989736470944308,
+      "firstPartialMs": null,
+      "stopToFinalMs": null,
+      "partialUpdates": 0,
+      "partialEditDistance": 0,
+      "rawHypothesis": "लिबर ऑफ़ इस इम्प्रेस में एक प्रस्तुति डॉक्यूमेंट बनाना और बुनियादी फॉर्मेटिंग के इस स्पोकेंट टिट्यूअल में आपका स्वागत है। इस ट्यूटोरियल में हम इम्प्रेस विंडो के भागों के बारे में सीखेंगे और कैसे स्लाइड इनसर्ट करें और कॉपी करें. फॉन तथा फॉन को फॉर्मेट करना सिखेंगे। यहां हम अपने ऑपरेटिंग सिस्टम के रूप में जेनुल लिनक्स और लिबर ऑफिस वर्जन 3.0, 3.4 का उपयोग कर रहे हैं। चलिए अपनी प्रस्तुति सेमेल इंप्रेस ओपन करते हैं, जिसे पिछले ट्यूटोरियल में बनाया था। चलिए देखते हैं कि स्क्रीन पर क्या-क्या है। मध्य में हम खाली जगह देखते हैं, जो कि वर्कस्पेस है, जहां हम काम करेंगे। जैसे कि आप देख सकते हैं. Workspace में पांच tabs हैं, जिन्हें View buttons कहते हैं। फिलहाल normal tab चुनें थे, यह मुख्य view है, अलग-अलग slide बनाने के लिए. Outline view प्रत्येक slide के outline format में विशेष शीर्षक, bulleted और क्रमांकित सूचीयां बताता है. Notes view प्रत्येक slide में. Note जोड़ने की सुविधा देता है, जो कि प्रस्तुति करने के वक्त नज़र नहीं आते। Handout View, Slides को Handout के रूप में प्रिंट करने की. स्विधा देता है यहाँ हमें एक पेज पर कितने स्लाइड प्रिंट करने हैं इसका चुनाव कर सकते हैं स्लाइड सॉर्टर व्यू स्लाइड्स की थम नेल बताता है अब फिर से normal view button पर click करते हैं, screen की बाईं ओर अब slides pane देखते हैं, यह प्रस्तुति में slides के थमनेल सम्मिलित करता है. दायातरफ़ तास पेन है जिसमें अनुभाग है लियाउट सेक्शन में पहले से ही कुछ सेम्पल लियाउट. मौजूद हैं हम उनका उपयोग ऐसे ही कर सकते हैं या आवश्यकता उत्सर्ग कुछ बदलाव करके उपयोग कर सकते हैं जैसे जैसे हम इन ट्यूटोरियल में आगे बढ़ेंगे इन फेक्शंस को विस्तार में देखेंगे। चलिए देखते हैं कि कैसे स्लाइड को इंसर्ट करें, यानी जोड़े, स्लाइड स्पेन में, दूसरी स्लाइड पर क्लिक करके उसे चुनें। अब insert और slide पर क्लिक करें। हम देखते हैं कि दूसरी slide के बाद एक नई खाली slide जुड़ गई है। Slide पर शीर्षक क्लिक ने के लिए, Text bar में Click to Add Title पर क्लिक करें, Up Short Term Strategy type करें. और टेक्स्ट बॉक्स के बाहर क्लिक करें। अतः शीशा किस तरह से जोड़ सकते हैं? यहाँ दो तरीके हैं, जिससे हम स्लाइड की पतलीपी बना सकते हैं। पहले तरीके को देखते हैं, insert पर क्लिक करें, और फिर duplicate slide पर क्लिक करें। हम देख सकते हैं कि एक नई duplicate slide हमारी. पहली बनाई गई स्लाइड के बाद जोड़ी गई है या तो वर्क स्पेस पेन में जाकर स्लाइड सॉर्टर क्लिक करके स्लाइड सॉर्टर व्यू पर जाएं अब साथ में स्लाइड को कॉपी करें, स्लाइड पर राइट क्लिक करें, और कॉन्टैक्ट मैनुअल से कॉपी जुनैं आखिर स्लाइड पर राइट क्लिक करें. Paste पर क्लिक करें. After चुने और OK क्लिक करें. Presentation के अंत में. आपने Slide की एक कॉपी बना ली है। चलिए फ़ोन्स और फ़ोन्स को फ़ोर्मेट करने के कुछ तरीके देखते हैं। Long term goal. नमक स्लाइड पर डबल क्लिक करके, उसे चुनते हैं। बॉडी टेक्स्ट बॉक्स पर क्लिक करें, और पूरे टेक्स्ट को चुनें। अब इसे डिलीट करें। अब निम्न तरीके करें: Reduce cost, reduce dependence on few vendors, develop customized applications. लिबर ऑफिस राइटर डॉक्यूमेंट्स में फॉन्ट का प्रकार और फॉन्ट साइज को जिस प्रकार बदला था यहाँ भी वैसे ही कर सकते हैं टेक्स्ट की एक लाइन जो ने टेक्स्ट फॉर्मेट टूलबार में फ़ोन टाइप को एलबैनी से एडियल ब्लैक में बदले हैं और फ़ोन साइज को 20:40 में बदले। Text box से बाहर कहीं भी click करें, ध्यान दें कि font बदल गई है। हम. Main menu से Format पर क्लिक करके, और फिर Character option पर क्लिक करके भी font को बदल सकते हैं। यह एक dialog box खोलेगा. जिसमें हम अपनी आवश्यकता निर्सार, फ़ॉन्ट, स्टाइल और साइज सेट कर सकते हैं। इस डायलॉग बॉक्स को बंद करते हैं। फ़ॉन्ट का कलर बदलने के लिए. हम Development up to Present नामक slide को चुनते हैं। Body Text Box पर क्लिक करते हैं, Office सारे Text को चुनते हैं। फोन कलर आइकन के पास में डाउन एयरोपर क्लिक करें और जो चाहिए वो कलर चुनें टेक्स्ट बॉक्स के बाहर कहीं भी क्लिक करें. कलर में हुए बदलाव को देखें। लिबर ऑफ़ इस डॉक्युमेंट्स में जिस प्रकार से बोल, इटालिक और अंडरलाइन जैसे फॉर्मेटिंग की थी, यहाँ भी उसी प्रकार से कर सकते हैं। रेकमेंडेशंस नामक स्लाइड को चुनें, बॉडी टेक्स्ट बॉक्स पर क्लिक करें और टेक्स्ट की एक लाइन चुनें. अब bold italic और underline icon पर क्लिक करें, टेक्स्ट बॉक्स के बाहर कहीं भी क्लिक करें, टेक्स्ट में हुए बदलाव पर. थान दे अब हम स्टीटोरल के समाप्ति की ओर हैं संक्षिप्त में बताते हैं कि हमने क्या सिखा स्टीटोरल में हमने इमेंट विंडो के भागों के बारे में सिखा, और कैसे स्लाइड इनसर्ट करें और कॉपी करें, फॉन्ट तथा फॉन्ट को फॉर्मेट करना सिखा. इस व्यापक नियत कार्य की कोशिश करें, एक नई प्रस्तुति बनाएं, तीसरी और चौथी स्लाइड के बीच एक स्लाइड जोड़ें. प्रस्तुति के अंत में चौथी slide की एक copy बनाए, दूसरी slide में एक text box बनाए, उसमें कुछ text type करें. Text के format को 15 font size में बदलें。 Text को bold italic underline करें。 और नीलांग दें। निम्नलिखित पर उपलब्ध वीडियो देखें। यह स्पोकन टिटूल प्रोजेक्ट को सारांशित करता है। यदि आपके पास अच्छा बैनर्थ नहीं है, तो आप इसे डाउनलोड करके देख सकते हैं। Spoken Tutorial Project Team Spoken Tutorial का उपयोग. पीओकरके कार्यशालाएं भी चलाते हैं, जो ऑनलाइन टेस्ट पास करते हैं, उनको प्रमाणपत्र भी देते हैं, अतिज्ञानकारी के लिए कृपया हमें contact at spokenhyphentutorial dot o r g पर लिखें। Spoken Tutorial Project Talk to a teacher project का हिस्सा है। यह भारत सरकार के महाजार्डी के आईसीटी के माध्यम से राष्ट्रीय साक्षरता मिशन द्वारा समर्थित है। इस मिशन पर अधिक जानकारी के लिए. उपलब्ध लिंक पर सम्पर्क करें: spoken-tutorial.org/slash/ntro यह स्क्रिप्ट सकिना शेख तुरंत अनुवादित है। आईटी बॉम्बे की ओर से मेरा विकमार अबाब से विदा लेता हूं। हमसे जुड़ने के लिए धन्यवाद।",
+      "cleanedHypothesis": null,
+      "rawScore": {
+        "normalizedReference": "लिबर ऑफिस impress में एक प्रस्तुति document बनाना और बुनियादी formatting के इस spoken tutorial में आपका स्वागत है इस tutorial में हम impress window के भागों के बारे में सीखेंगे और कैसे स्लाइड इन्सर्ट करें और कॉपी करें फॉन्ट तथा फॉन्ट को फॉर्मेट करना सीखेंगे यहाँ हम अपने ऑपरेटिंग सिस्टम के रूप में gnu linux और लिबरऑफिस वर्जन 334 का उपयोग कर रहे हैं चलिए अपनी प्रस्तुति प्रेजैटेशन sample impress open करते हैं जिसे पिछले tutorial में बनाया था चलिए देखते हैं कि screen पर क्या क्या है मध्य में हम खाली जगह देखते है जोकि workspace है जहाँ हम काम करेंगे जैसे कि आप देख सकते हैं workspace में 5 tabs हैं जिन्हें view buttons कहते हैं फिलहाल normal टैब चुनित हैं यह मुख्य view है अलगअलग slides बनाने के लिए outline view प्रत्येक slide के outline format में विषय शीर्षक bulleted और क्रमांकित सूचियाँ बताता है notes view प्रत्येक slide में notes जोड़ने की सुविधा देता है जोकि प्रस्तुतिकरण के वक्त नज़र नहीं the handout view slides को हैन्डाउट के रूप में print करने की सुविधा देता है यहाँ हमें एक पेज पर कितने slides print करने हैं इसका चुनाव कर सकते हैं slide sorter view slides की थम्बनेल बताता है अब फिर से normal view button पर click करते हैं screen की बाईं ओर आप slides pane देखते हैं यह प्रस्तुति में slides के थम्बनेल सम्मिलित करता है दाएँ तरफ tasks pane हैं जिसमें अनुभाग है लेआउट्स section में पहले से ही कुछ सैम्पल लेआउट्स मौजूद हैं हम उनका उपयोग ऐसे ही कर सकते हैं या आवश्यकता अनुसार कुछ बदलाव करके उपयोग कर सकते हैं जैसे जैसे हम इन tutorial में आगे बढ़ेंगे इन sections को विस्तार में देखेंगे चलिए अब सीखते हैं कि कैसे slide को insert करें यानि जोड़ें slides pane में दूसरी slide पर क्लिक करके उसे चुनें अब insert और slide पर click करें हम देखते हैं कि दूसरी slide के बाद एक नई खाली slide जुड़ गई है slide पर शीर्षक लिखने के लिए टेक्स्टबार में click to add title पर click करें अब short term strategy type करें और text box के बाहर click करें अतः शीर्षक इस तरह से जोड़ सकते हैं यहाँ दो तरीके है जिससे हम slide की प्रतिलिपि डुप्लिकेट बना सकते हैं पहले तरीके को देखते हैं insert पर click करें और फिर duplicate slide पर click करें हम देख सकते हैं कि एक नई duplicate slide हमारी पहली बनाई गई slide के बाद जोड़ी गई है या तो workspace pane में जाकर slide sorter क्लिक करके slide sorter view पर जाएँ अब सातवीं स्लाइड को कॉपी करें स्लाइड पर राइट क्लिक करें और कांटेक्स्ट मेन्यू से copy चुनें आखरी स्लाइड पर राइट क्लिक करें paste पर क्लिक करें after चुनें और ok click करें प्रेसेंटेशन के अंत में आपने स्लाइड की एक कॉपी बना ली है चलिए अब फोंट्स और फोंट्स को फॉर्मेट करने के कुछ तरीके देखते हैं long term goal नामक slide पर double क्लिक करके उसे चुनते हैं body टेक्स्ट बॉक्स पर क्लिक करें और पुरे टेक्स्ट को चुनें अब इसे डिलीट करें अब निम्न टाइप करें reduce costs reduce dependence on few vendors develop customized applications libreoffice writer documents में font का प्रकार और font size को जिस प्रकार बदला था यहाँ भी वैसे ही कर सकते हैं text की एक line चुनें text format टूलबार में font type को albany से arial black में बदलें और font size को 32 से 40 में बदलें text box से बाहर कहीं भी click करें ध्यान दें कि font बदल गई है हम main menu से format पर क्लिक करके और फिर character option पर क्लिक करके भी font को बदल सकते हैं यह एक डायलॉग बॉक्स खोलेगा जिसमें हम अपनी आवश्यकतानुसार फॉन्ट स्टाइल और साइज़ सेट कर सकते हैं इस डायलॉग बॉक्स को बंद करते हैं font का color बदलने के लिए हम development up to present नामक slide को चुनते हैं body text box पर click करते हैं और फिर सारे text को चुनते हैं font color icon के पास में डाउन arrow पर click करें और जो चाहिए वो color चुनें text box के बाहर कहीं भी click करें colour में हुए बदलाव को देखें libreoffice documents में जिस प्रकार से bold italics और underline जैसे formatting की थी यहाँ भी उसी प्रकार से कर सकते हैं recommendations नामक slide को चुनें body text box पर click करें और text की एक line चुनें अब bold italics और underline icons पर click करें text box के बाहर कहीं भी click करें text में हुए बदलाव पर ध्यान दें अब हम इस tutorial की समाप्ति की ओर हैं संक्षिप्त में बताते हैं कि हमने क्या सीखा इस tutorial में हमने इम्प्रेस विंडो के भागों के बारे में सीखा और कैसे स्लाइड इन्सर्ट करें और कॉपी करें फॉन्ट to फॉन्ट को फॉर्मेट करना सीखा इस व्यापक नियत कार्य की कोशिश करें एक नयी प्रस्तुति बनाए तीसरी और चौथी slide के बीच एक slide जोड़ें प्रस्तुति के अंत में चौथी स्लाइड की एक कॉपी बनाए दूसरी स्लाइड में एक टेक्स्ट बॉक्स बनाए उसमें कुछ टेक्स्ट टाइप करें text के format को 32 font size में बदलें text को bold italic underlined करें और नीला रंग दें निम्न link पर उपलब्ध video देखें यह spoken tutorial project को सारांशित करता है यदि आपके पास अच्छा bandwidth नहीं है तो आप इसे download करके देख सकते हैं spoken tutorial project team spoken tutorial का उपयोग करके कार्यशालाएँ भी चलाते हैं जो online test pass करते हैं उनको प्रमाणपत्र भी देते हैं अधिक जानकारी के लिए कृपया हमें contact spokentutorial org पर लिखें spoken tutorial project talktoateacher project का हिस्सा है यह भारत सरकार के एमएचआरडी के आईसीटी के माध्यम से राष्ट्रीय साक्षरता mission द्वारा समर्थित है इस mission पर अधिक जानकारी के लिए उपलब्ध लिंक पर संपर्क करें यह स्क्रिप्ट सकीना शेख द्वारा अनुवादित है आईआई टी बॉम्बे की ओर से मैं रवि कुमार अब आपसे विदा लेता हूँ हमसे जुड़ने के लिए धन्यवाद",
+        "normalizedHypothesis": "लिबर ऑफ़ इस इम्प्रेस में एक प्रस्तुति डॉक्यूमेंट बनाना और बुनियादी फॉर्मेटिंग के इस स्पोकेंट टिट्यूअल में आपका स्वागत है इस ट्यूटोरियल में हम इम्प्रेस विंडो के भागों के बारे में सीखेंगे और कैसे स्लाइड इनसर्ट करें और कॉपी करें फॉन तथा फॉन को फॉर्मेट करना सिखेंगे यहां हम अपने ऑपरेटिंग सिस्टम के रूप में जेनुल लिनक्स और लिबर ऑफिस वर्जन 3 0 3 4 का उपयोग कर रहे हैं चलिए अपनी प्रस्तुति सेमेल इंप्रेस ओपन करते हैं जिसे पिछले ट्यूटोरियल में बनाया था चलिए देखते हैं कि स्क्रीन पर क्या क्या है मध्य में हम खाली जगह देखते हैं जो कि वर्कस्पेस है जहां हम काम करेंगे जैसे कि आप देख सकते हैं workspace में पांच tabs हैं जिन्हें view buttons कहते हैं फिलहाल normal tab चुनें थे यह मुख्य view है अलग अलग slide बनाने के लिए outline view प्रत्येक slide के outline format में विशेष शीर्षक bulleted और क्रमांकित सूचीयां बताता है notes view प्रत्येक slide में note जोड़ने की सुविधा देता है जो कि प्रस्तुति करने के वक्त नज़र नहीं आते handout view slides को handout के रूप में प्रिंट करने की स्विधा देता है यहाँ हमें एक पेज पर कितने स्लाइड प्रिंट करने हैं इसका चुनाव कर सकते हैं स्लाइड सॉर्टर व्यू स्लाइड्स की थम नेल बताता है अब फिर से normal view button पर click करते हैं screen की बाईं ओर अब slides pane देखते हैं यह प्रस्तुति में slides के थमनेल सम्मिलित करता है दायातरफ़ तास पेन है जिसमें अनुभाग है लियाउट सेक्शन में पहले से ही कुछ सेम्पल लियाउट मौजूद हैं हम उनका उपयोग ऐसे ही कर सकते हैं या आवश्यकता उत्सर्ग कुछ बदलाव करके उपयोग कर सकते हैं जैसे जैसे हम इन ट्यूटोरियल में आगे बढ़ेंगे इन फेक्शंस को विस्तार में देखेंगे चलिए देखते हैं कि कैसे स्लाइड को इंसर्ट करें यानी जोड़े स्लाइड स्पेन में दूसरी स्लाइड पर क्लिक करके उसे चुनें अब insert और slide पर क्लिक करें हम देखते हैं कि दूसरी slide के बाद एक नई खाली slide जुड़ गई है slide पर शीर्षक क्लिक ने के लिए text bar में click to add title पर क्लिक करें up short term strategy type करें और टेक्स्ट बॉक्स के बाहर क्लिक करें अतः शीशा किस तरह से जोड़ सकते हैं यहाँ दो तरीके हैं जिससे हम स्लाइड की पतलीपी बना सकते हैं पहले तरीके को देखते हैं insert पर क्लिक करें और फिर duplicate slide पर क्लिक करें हम देख सकते हैं कि एक नई duplicate slide हमारी पहली बनाई गई स्लाइड के बाद जोड़ी गई है या तो वर्क स्पेस पेन में जाकर स्लाइड सॉर्टर क्लिक करके स्लाइड सॉर्टर व्यू पर जाएं अब साथ में स्लाइड को कॉपी करें स्लाइड पर राइट क्लिक करें और कॉन्टैक्ट मैनुअल से कॉपी जुनैं आखिर स्लाइड पर राइट क्लिक करें paste पर क्लिक करें after चुने और ok क्लिक करें presentation के अंत में आपने slide की एक कॉपी बना ली है चलिए फ़ोन्स और फ़ोन्स को फ़ोर्मेट करने के कुछ तरीके देखते हैं long term goal नमक स्लाइड पर डबल क्लिक करके उसे चुनते हैं बॉडी टेक्स्ट बॉक्स पर क्लिक करें और पूरे टेक्स्ट को चुनें अब इसे डिलीट करें अब निम्न तरीके करें reduce cost reduce dependence on few vendors develop customized applications लिबर ऑफिस राइटर डॉक्यूमेंट्स में फॉन्ट का प्रकार और फॉन्ट साइज को जिस प्रकार बदला था यहाँ भी वैसे ही कर सकते हैं टेक्स्ट की एक लाइन जो ने टेक्स्ट फॉर्मेट टूलबार में फ़ोन टाइप को एलबैनी से एडियल ब्लैक में बदले हैं और फ़ोन साइज को 20 40 में बदले text box से बाहर कहीं भी click करें ध्यान दें कि font बदल गई है हम main menu से format पर क्लिक करके और फिर character option पर क्लिक करके भी font को बदल सकते हैं यह एक dialog box खोलेगा जिसमें हम अपनी आवश्यकता निर्सार फ़ॉन्ट स्टाइल और साइज सेट कर सकते हैं इस डायलॉग बॉक्स को बंद करते हैं फ़ॉन्ट का कलर बदलने के लिए हम development up to present नामक slide को चुनते हैं body text box पर क्लिक करते हैं office सारे text को चुनते हैं फोन कलर आइकन के पास में डाउन एयरोपर क्लिक करें और जो चाहिए वो कलर चुनें टेक्स्ट बॉक्स के बाहर कहीं भी क्लिक करें कलर में हुए बदलाव को देखें लिबर ऑफ़ इस डॉक्युमेंट्स में जिस प्रकार से बोल इटालिक और अंडरलाइन जैसे फॉर्मेटिंग की थी यहाँ भी उसी प्रकार से कर सकते हैं रेकमेंडेशंस नामक स्लाइड को चुनें बॉडी टेक्स्ट बॉक्स पर क्लिक करें और टेक्स्ट की एक लाइन चुनें अब bold italic और underline icon पर क्लिक करें टेक्स्ट बॉक्स के बाहर कहीं भी क्लिक करें टेक्स्ट में हुए बदलाव पर थान दे अब हम स्टीटोरल के समाप्ति की ओर हैं संक्षिप्त में बताते हैं कि हमने क्या सिखा स्टीटोरल में हमने इमेंट विंडो के भागों के बारे में सिखा और कैसे स्लाइड इनसर्ट करें और कॉपी करें फॉन्ट तथा फॉन्ट को फॉर्मेट करना सिखा इस व्यापक नियत कार्य की कोशिश करें एक नई प्रस्तुति बनाएं तीसरी और चौथी स्लाइड के बीच एक स्लाइड जोड़ें प्रस्तुति के अंत में चौथी slide की एक copy बनाए दूसरी slide में एक text box बनाए उसमें कुछ text type करें text के format को 15 font size में बदलें text को bold italic underline करें और नीलांग दें निम्नलिखित पर उपलब्ध वीडियो देखें यह स्पोकन टिटूल प्रोजेक्ट को सारांशित करता है यदि आपके पास अच्छा बैनर्थ नहीं है तो आप इसे डाउनलोड करके देख सकते हैं spoken tutorial project team spoken tutorial का उपयोग पीओकरके कार्यशालाएं भी चलाते हैं जो ऑनलाइन टेस्ट पास करते हैं उनको प्रमाणपत्र भी देते हैं अतिज्ञानकारी के लिए कृपया हमें contact at spokenhyphentutorial dot o r g पर लिखें spoken tutorial project talk to a teacher project का हिस्सा है यह भारत सरकार के महाजार्डी के आईसीटी के माध्यम से राष्ट्रीय साक्षरता मिशन द्वारा समर्थित है इस मिशन पर अधिक जानकारी के लिए उपलब्ध लिंक पर सम्पर्क करें spoken tutorial org slash ntro यह स्क्रिप्ट सकिना शेख तुरंत अनुवादित है आईटी बॉम्बे की ओर से मेरा विकमार अबाब से विदा लेता हूं हमसे जुड़ने के लिए धन्यवाद",
+        "wordErrorRate": {
+          "edits": 275,
+          "referenceUnits": 989,
+          "rate": 0.2780586450960566
+        },
+        "graphemeErrorRate": {
+          "edits": 948,
+          "referenceUnits": 2893,
+          "rate": 0.32768752160387143
+        }
+      },
+      "cleanedScore": null,
+      "error": null
+    }
+  ],
+  "processMeasurements": {
+    "qwen-en": {
+      "peakProcessRssBytes": 1995014144
+    },
+    "qwen-fr": {
+      "peakProcessRssBytes": 1879474176
+    },
+    "qwen-hi": {
+      "peakProcessRssBytes": 2060795904
+    },
+    "cohere-en": {
+      "peakProcessRssBytes": 4551426048
+    },
+    "cohere-fr": {
+      "peakProcessRssBytes": 4483661824
+    },
+    "qwen-natural-413s": {
+      "peakProcessRssBytes": 2168602624
+    }
+  },
+  "nativeQualifiers": [
+    {
+      "test": "qualify_qwen3_asr_public_fixtures",
+      "peakProcessRssBytes": 1816952832,
+      "cases": [
+        {
+          "audioSeconds": 8.76,
+          "decodeSeconds": 0.482200583,
+          "error": null,
+          "fixture": "fleurs-en_us.wav",
+          "language": "en",
+          "loadSeconds": 0.955044209,
+          "model": "Qwen/Qwen3-ASR-0.6B",
+          "report": "{\"schemaVersion\":1,\"stopReason\":\"eos\",\"inputContextTruncated\":false}",
+          "text": "All nouns alongside the words \"say\" for you always begin with a capital letter, even in the middle of a sentence."
+        },
+        {
+          "case": "reuse-must-reject",
+          "model": "Qwen/Qwen3-ASR-0.6B",
+          "report": "{\"schemaVersion\":1,\"stopReason\":\"max_new_tokens\",\"inputContextTruncated\":false}"
+        },
+        {
+          "case": "forced-context-loss",
+          "model": "Qwen/Qwen3-ASR-0.6B",
+          "report": "{\"schemaVersion\":1,\"stopReason\":\"context_limit\",\"inputContextTruncated\":true}"
+        },
+        {
+          "audioSeconds": 8.28,
+          "decodeSeconds": 0.626587291,
+          "error": null,
+          "fixture": "fleurs-fr_fr.wav",
+          "language": "fr",
+          "loadSeconds": 0.926698208,
+          "model": "Qwen/Qwen3-ASR-0.6B",
+          "report": "{\"schemaVersion\":1,\"stopReason\":\"eos\",\"inputContextTruncated\":false}",
+          "text": "Il ajoutait qu'on ne devrait cependant pas leur demander d'assumer des obligations qui n'épassent leur statut de développeur, de responsabilité et de capacité."
+        },
+        {
+          "audioSeconds": 10.0,
+          "decodeSeconds": 0.48587575,
+          "error": null,
+          "fixture": "fleurs-en_us-padded-10s.wav",
+          "language": "en",
+          "loadSeconds": 0.902116,
+          "model": "Qwen/Qwen3-ASR-0.6B",
+          "report": "{\"schemaVersion\":1,\"stopReason\":\"eos\",\"inputContextTruncated\":false}",
+          "text": "All nouns, alongside the world, say for you always begin with a capital letter, even in the middle of a sentence."
+        },
+        {
+          "applicationDigitalSilence": true,
+          "audioSeconds": 1.0,
+          "fixture": "silence-1s.wav",
+          "model": "Qwen/Qwen3-ASR-0.6B",
+          "seconds": 4.2875e-05
+        },
+        {
+          "applicationDigitalSilence": true,
+          "audioSeconds": 10.0,
+          "fixture": "silence-10s.wav",
+          "model": "Qwen/Qwen3-ASR-0.6B",
+          "seconds": 0.000339625
+        },
+        {
+          "audioSeconds": 9.12,
+          "decodeSeconds": 1.338699375,
+          "error": null,
+          "fixture": "fleurs-hi_in.wav",
+          "language": "hi",
+          "loadSeconds": 0.902540125,
+          "model": "Qwen/Qwen3-ASR-0.6B",
+          "report": "{\"schemaVersion\":1,\"stopReason\":\"eos\",\"inputContextTruncated\":false}",
+          "text": "कुछ आंगुओं में आस्तर केंद्रक होता है, जिसका मतलब यहाँ की उनमें थोड़े या बिना किसी झटके से टूटने की प्रवृति होती है।"
+        },
+        {
+          "audioSeconds": 8.76,
+          "decodeSeconds": 0.521137459,
+          "error": null,
+          "fixture": "fleurs-en_us.wav",
+          "language": "auto",
+          "loadSeconds": 0.913437167,
+          "model": "Qwen/Qwen3-ASR-0.6B",
+          "report": "{\"schemaVersion\":1,\"stopReason\":\"eos\",\"inputContextTruncated\":false}",
+          "text": "All nouns, alongside the words \"say\" for you, always begin with a capital letter, even in the middle of a sentence."
+        }
+      ]
+    },
+    {
+      "test": "qualify_qwen_long_audio",
+      "peakProcessRssBytes": 1998880768,
+      "cases": [
+        {
+          "audioSeconds": 26.28,
+          "case": "long-production-path",
+          "error": null,
+          "fixture": "fleurs-en_us.wav",
+          "language": "en",
+          "leadingSilenceSamples": 0,
+          "model": "Qwen/Qwen3-ASR-0.6B",
+          "repeat": 3,
+          "seconds": 2.5277374999999997,
+          "segments": [
+            {
+              "elapsedSeconds": 1.5028537910000002,
+              "endSample": 140160,
+              "totalSamples": 420480
+            },
+            {
+              "elapsedSeconds": 2.01145225,
+              "endSample": 280320,
+              "totalSamples": 420480
+            },
+            {
+              "elapsedSeconds": 2.4991820000000002,
+              "endSample": 420480,
+              "totalSamples": 420480
+            }
+          ],
+          "text": "All nouns alongside the words \"say\" for you always begin with a capital letter, even in the middle of a sentence. All nouns alongside the words \"say\" for you always begin with a capital letter, even in the middle of a sentence. All nouns alongside the words \"say\" for you always begin with a capital letter, even in the middle of a sentence."
+        },
+        {
+          "audioSeconds": 28.28,
+          "case": "long-production-path",
+          "error": null,
+          "fixture": "fleurs-en_us.wav",
+          "language": "en",
+          "leadingSilenceSamples": 32000,
+          "model": "Qwen/Qwen3-ASR-0.6B",
+          "repeat": 3,
+          "seconds": 2.470689834,
+          "segments": [
+            {
+              "elapsedSeconds": 1.414278084,
+              "endSample": 147307,
+              "totalSamples": 452480
+            },
+            {
+              "elapsedSeconds": 1.9196748750000001,
+              "endSample": 291894,
+              "totalSamples": 452480
+            },
+            {
+              "elapsedSeconds": 2.161413084,
+              "endSample": 369947,
+              "totalSamples": 452480
+            },
+            {
+              "elapsedSeconds": 2.444318167,
+              "endSample": 452480,
+              "totalSamples": 452480
+            }
+          ],
+          "text": "All nouns alongside the world say for you always begin with a capital letter, even in the middle of a sentence. All nouns, alongside the world, say for you always begin with a capital letter, even in the middle of a sentence. All nouns alongside the world say, \"For you.\" Always begin with a capital letter, even in the middle of a sentence."
+        },
+        {
+          "audioSeconds": 24.84,
+          "case": "long-production-path",
+          "error": null,
+          "fixture": "fleurs-fr_fr.wav",
+          "language": "fr",
+          "leadingSilenceSamples": 0,
+          "model": "Qwen/Qwen3-ASR-0.6B",
+          "repeat": 3,
+          "seconds": 2.793588584,
+          "segments": [
+            {
+              "elapsedSeconds": 1.490198709,
+              "endSample": 127040,
+              "totalSamples": 397440
+            },
+            {
+              "elapsedSeconds": 2.120367917,
+              "endSample": 259520,
+              "totalSamples": 397440
+            },
+            {
+              "elapsedSeconds": 2.769744292,
+              "endSample": 397440,
+              "totalSamples": 397440
+            }
+          ],
+          "text": "Il ajoutait qu'on ne devrait cependant pas leur demander d'assumer les obligations qui nées par leur statut de développeur, de responsabilité et de capacité. Il ajoutait qu'on ne devrait cependant pas leur demander d'assumer des obligations qui dépassent leur statut de développeur, de responsabilité et de capacité. Il a ajouté qu'on ne devrait cependant pas leur demander d'assumer des obligations qui dépassent leur statut de développeur, de responsabilité et de capacité."
+        },
+        {
+          "audioSeconds": 26.84,
+          "case": "long-production-path",
+          "error": null,
+          "fixture": "fleurs-fr_fr.wav",
+          "language": "fr",
+          "leadingSilenceSamples": 32000,
+          "model": "Qwen/Qwen3-ASR-0.6B",
+          "repeat": 3,
+          "seconds": 2.854458583,
+          "segments": [
+            {
+              "elapsedSeconds": 1.5229247080000001,
+              "endSample": 140267,
+              "totalSamples": 429440
+            },
+            {
+              "elapsedSeconds": 2.200209166,
+              "endSample": 284054,
+              "totalSamples": 429440
+            },
+            {
+              "elapsedSeconds": 2.8302945409999998,
+              "endSample": 429440,
+              "totalSamples": 429440
+            }
+          ],
+          "text": "Il ajoutait qu'on ne devrait cependant pas leur demander d'assumer les obligations qui dépasse leur statut de développeur. Le responsabilité. Et leur capacité. Il ajoutait qu'on ne devrait cependant pas leur demander d'assumer les obligations qui dépassent leur statut de développeur, de responsabilité et de capacité. Il a ajouté qu'on ne devrait cependant pas leur demander d'assumer les obligations qui dépassent leur statut de développeur, de responsabilité et de capacité."
+        },
+        {
+          "audioSeconds": 27.36,
+          "case": "long-production-path",
+          "error": null,
+          "fixture": "fleurs-hi_in.wav",
+          "language": "hi",
+          "leadingSilenceSamples": 0,
+          "model": "Qwen/Qwen3-ASR-0.6B",
+          "repeat": 3,
+          "seconds": 5.027619292,
+          "segments": [
+            {
+              "elapsedSeconds": 2.325270208,
+              "endSample": 145920,
+              "totalSamples": 437760
+            },
+            {
+              "elapsedSeconds": 3.6544348749999997,
+              "endSample": 291840,
+              "totalSamples": 437760
+            },
+            {
+              "elapsedSeconds": 5.005024,
+              "endSample": 437760,
+              "totalSamples": 437760
+            }
+          ],
+          "text": "कुछ आंगुओं में आस्तर केंद्रक होता है, जिसका मतलब यहाँ की उनमें थोड़े या बिना किसी झटके से टूटने की प्रवृति होती है। कुछ आंगुओं में आस्तर केंद्रक होता है, जिसका मतलब यहाँ की उनमें थोड़े या बिना किसी झटके से टूटने की प्रवृति होती है। कुछ आंगुओं में आस्तर केंद्रक होता है, जिसका मतलब यहाँ की उनमें थोड़े या बिना किसी झटके से टूटने की प्रवृति होती है।"
+        },
+        {
+          "audioSeconds": 29.36,
+          "case": "long-production-path",
+          "error": null,
+          "fixture": "fleurs-hi_in.wav",
+          "language": "hi",
+          "leadingSilenceSamples": 32000,
+          "model": "Qwen/Qwen3-ASR-0.6B",
+          "repeat": 3,
+          "seconds": 5.062128459,
+          "segments": [
+            {
+              "elapsedSeconds": 2.245131709,
+              "endSample": 153547,
+              "totalSamples": 469760
+            },
+            {
+              "elapsedSeconds": 3.657938875,
+              "endSample": 311654,
+              "totalSamples": 469760
+            },
+            {
+              "elapsedSeconds": 5.038142792,
+              "endSample": 469760,
+              "totalSamples": 469760
+            }
+          ],
+          "text": "कुछ आंगों में आस्थिर केंद्रक होता है, जिसका मतलब यहाँ की उनमें थोड़े या बिना किसी झटके से टूटने की प्रवृत्ति. कुछ आंगुओं में आस्तिक एंड्रक होता है, जिसका मतलब यहाँ कि उनमें थोड़े या बिना किसी झटके से टूटने की प्रवृत्ति होती है। कुछ आंवों में आस्तर केंद्रक होता है, जिसका मतलब यहां की उनमें थोड़े या बिना किसी झटके से टूटने की प्रवृत्ति होती है।"
+        },
+        {
+          "audioSeconds": 27.36,
+          "case": "long-production-path",
+          "error": null,
+          "fixture": "fleurs-hi_in.wav",
+          "language": "auto",
+          "leadingSilenceSamples": 0,
+          "model": "Qwen/Qwen3-ASR-0.6B",
+          "repeat": 3,
+          "seconds": 6.34382525,
+          "segments": [
+            {
+              "elapsedSeconds": 2.842430334,
+              "endSample": 145920,
+              "totalSamples": 437760
+            },
+            {
+              "elapsedSeconds": 4.721143042,
+              "endSample": 291840,
+              "totalSamples": 437760
+            },
+            {
+              "elapsedSeconds": 6.319169792,
+              "endSample": 437760,
+              "totalSamples": 437760
+            }
+          ],
+          "text": "कुछ आंग्यों में आस्थिर कैंड्रा कोता है, जिसका मतलब यहाँ की उनमें थोड़े या बिना किसी झटके से टूटने की प्रवृत्ति होती है। कुछ आंग्यों में आस्थिर कैंड्रा कोता है, जिसका मतलब यहाँ की उनमें थोड़े या बिना किसी झटके से टूटने की प्रवृत्ति होती है। कुछ आंग्यों में आस्थिर कैंड्रा कोता है, जिसका मतलब यहाँ की उनमें थोड़े या बिना किसी झटके से टूटने की प्रवृत्ति होती है।"
+        },
+        {
+          "audioSeconds": 29.36,
+          "case": "long-production-path",
+          "error": null,
+          "fixture": "fleurs-hi_in.wav",
+          "language": "auto",
+          "leadingSilenceSamples": 32000,
+          "model": "Qwen/Qwen3-ASR-0.6B",
+          "repeat": 3,
+          "seconds": 5.209151417,
+          "segments": [
+            {
+              "elapsedSeconds": 2.297151875,
+              "endSample": 153547,
+              "totalSamples": 469760
+            },
+            {
+              "elapsedSeconds": 3.7358751249999997,
+              "endSample": 311654,
+              "totalSamples": 469760
+            },
+            {
+              "elapsedSeconds": 5.1851525,
+              "endSample": 469760,
+              "totalSamples": 469760
+            }
+          ],
+          "text": "कुछ आंवों में आस्त्र केंद्रक होता है, जिसका मतलब यहाँ की उनमें थोड़े या बिना किसी झटके से टूटने की प्रवृत्ति. कुछ अनुमोक्ष में आस्तिक एंड्रक होता है जिसका मतलब यहां कि उनमें थोड़े या बिना किसी झटके से टूटने की प्रवृत्ति होती है कुछ आंवों में आस्थिर केंद्रक होता है, जिसका मतलब यहाँ की उनमें थोड़े या बिना किसी झटके से टूटने की प्रवृत्ति होती है।"
+        },
+        {
+          "case": "native-isolation-failure-cancellation",
+          "model": "Qwen/Qwen3-ASR-0.6B",
+          "passed": true
+        }
+      ]
+    },
+    {
+      "test": "qualify_cohere_long_audio",
+      "peakProcessRssBytes": 4590206976,
+      "cases": [
+        {
+          "audioSeconds": 26.28,
+          "case": "long-production-path",
+          "error": null,
+          "fixture": "fleurs-en_us.wav",
+          "language": "en",
+          "leadingSilenceSamples": 0,
+          "model": "CohereLabs/cohere-transcribe-03-2026",
+          "repeat": 3,
+          "seconds": 3.223624792,
+          "segments": [
+            {
+              "elapsedSeconds": 2.298685959,
+              "endSample": 140160,
+              "totalSamples": 420480
+            },
+            {
+              "elapsedSeconds": 2.742137292,
+              "endSample": 280320,
+              "totalSamples": 420480
+            },
+            {
+              "elapsedSeconds": 3.176202584,
+              "endSample": 420480,
+              "totalSamples": 420480
+            }
+          ],
+          "text": "All nouns alongside the words saved for you always begin with a capital letter, even in the middle of a sentence. All nouns alongside the words saved for you always begin with a capital letter, even in the middle of a sentence. All nouns alongside the words saved for you always begin with a capital letter, even in the middle of a sentence."
+        },
+        {
+          "audioSeconds": 28.28,
+          "case": "long-production-path",
+          "error": null,
+          "fixture": "fleurs-en_us.wav",
+          "language": "en",
+          "leadingSilenceSamples": 32000,
+          "model": "CohereLabs/cohere-transcribe-03-2026",
+          "repeat": 3,
+          "seconds": 3.265130166,
+          "segments": [
+            {
+              "elapsedSeconds": 2.225712125,
+              "endSample": 147307,
+              "totalSamples": 452480
+            },
+            {
+              "elapsedSeconds": 2.6782655,
+              "endSample": 291894,
+              "totalSamples": 452480
+            },
+            {
+              "elapsedSeconds": 2.930935625,
+              "endSample": 369947,
+              "totalSamples": 452480
+            },
+            {
+              "elapsedSeconds": 3.217971041,
+              "endSample": 452480,
+              "totalSamples": 452480
+            }
+          ],
+          "text": "All nouns alongside the world say for you always begin with a capital letter, even in the middle of a sentence. All nouns alongside the world say for you always begin with a capital letter, even in the middle of a sentence. All nouns alongside the world say for you. Always begin with a capital letter, even in the middle of a sentence."
+        },
+        {
+          "audioSeconds": 24.84,
+          "case": "long-production-path",
+          "error": null,
+          "fixture": "fleurs-fr_fr.wav",
+          "language": "fr",
+          "leadingSilenceSamples": 0,
+          "model": "CohereLabs/cohere-transcribe-03-2026",
+          "repeat": 3,
+          "seconds": 3.362922416,
+          "segments": [
+            {
+              "elapsedSeconds": 2.273885333,
+              "endSample": 127040,
+              "totalSamples": 397440
+            },
+            {
+              "elapsedSeconds": 2.791441125,
+              "endSample": 259520,
+              "totalSamples": 397440
+            },
+            {
+              "elapsedSeconds": 3.31934325,
+              "endSample": 397440,
+              "totalSamples": 397440
+            }
+          ],
+          "text": "Il ajoutait qu’on ne devrait cependant pas leur demander d’assumer des obligations qui dépassent leur stade de développement, de responsabilité et leur capacité. Il ajoutait qu’on ne devrait cependant pas leur demander d’assumer des obligations qui dépassent leur stade de développement, de responsabilité et leur capacité. Il ajoutait qu’on ne devrait cependant pas leur demander d’assumer des obligations qui dépassent leur stade de développement, de responsabilité et leur capacité."
+        },
+        {
+          "audioSeconds": 26.84,
+          "case": "long-production-path",
+          "error": null,
+          "fixture": "fleurs-fr_fr.wav",
+          "language": "fr",
+          "leadingSilenceSamples": 32000,
+          "model": "CohereLabs/cohere-transcribe-03-2026",
+          "repeat": 3,
+          "seconds": 3.478641542,
+          "segments": [
+            {
+              "elapsedSeconds": 2.323435417,
+              "endSample": 140267,
+              "totalSamples": 429440
+            },
+            {
+              "elapsedSeconds": 2.889819584,
+              "endSample": 284054,
+              "totalSamples": 429440
+            },
+            {
+              "elapsedSeconds": 3.432986417,
+              "endSample": 429440,
+              "totalSamples": 429440
+            }
+          ],
+          "text": "Il ajoutait qu'on ne devrait cependant pas leur demander d'assumer des obligations qui dépassent leur stade de développement, de responsabilité et de responsabilité. Et leur capacité. Il ajoutait qu'on ne devrait cependant pas leur demander d'assumer des obligations qui dépassent leur stade de développement, de responsabilité et leur capacité. Il ajoutait qu'on ne devrait cependant pas leur demander d'assumer des obligations qui dépassent leur stade de développement, de responsabilité et leur capacité."
+        },
+        {
+          "case": "native-isolation-failure-cancellation",
+          "model": "CohereLabs/cohere-transcribe-03-2026",
+          "passed": true
+        }
+      ]
+    }
+  ],
+  "archiveQualification": {
+    "test": "new_offline_asr_pipeline_preserves_audio_and_provenance",
+    "passed": true,
+    "peakProcessRssBytes": 4792254464,
+    "cases": [
+      {
+        "audioSeconds": 26.28,
+        "cleanupEnabled": false,
+        "filePipelineSeconds": 4.375821917,
+        "model": "Qwen/Qwen3-ASR-0.6B",
+        "postStopPipelineSeconds": 4.408441917,
+        "publicFixture": "fleurs-en_us.wav repeated 3 times"
+      },
+      {
+        "audioSeconds": 26.28,
+        "cleanupEnabled": false,
+        "filePipelineSeconds": 10.657066791,
+        "model": "CohereLabs/cohere-transcribe-03-2026",
+        "postStopPipelineSeconds": 8.699309208,
+        "publicFixture": "fleurs-en_us.wav repeated 3 times"
+      }
+    ]
+  },
+  "preservedInitialFailure": {
+    "outputBudget": 128,
+    "contextBudget": 512,
+    "applicationRevision": "uncommitted-long-asr:e841cdd752fe25e7aa12e9a9b77669615bbc05abbbf7d3b2d01ebd3d2896b7f3",
+    "peakProcessRssBytes": 2165866496,
+    "run": {
+      "sampleId": "w5Jyq3XMbb3WwiKQ-full",
+      "sourceId": "openslr-104-mucs-hi-en-test",
+      "language": "hi",
+      "configuredLanguage": "hi",
+      "scenario": "technical_lecture",
+      "replayKind": "natural",
+      "mode": "offline",
+      "pace": null,
+      "audioSeconds": 413.0,
+      "chunkMs": null,
+      "residentRun": false,
+      "setupMs": 581.020625,
+      "asrMs": 18513.739375,
+      "cleanupMs": null,
+      "realTimeFactor": 0.044827456113801456,
+      "firstPartialMs": null,
+      "stopToFinalMs": null,
+      "partialUpdates": 0,
+      "partialEditDistance": 0,
+      "rawHypothesis": null,
+      "cleanedHypothesis": null,
+      "rawScore": null,
+      "cleanedScore": null,
+      "error": "speech transcription failed: part 12 could not be completed: speech decode failed: decoding stopped before completion (max_new_tokens); incomplete transcription was discarded"
+    }
+  },
+  "verification": {
+    "rustPassed": 143,
+    "rustOptInSkippedInOrdinarySuite": 13,
+    "javascriptPassed": 59,
+    "browserPassed": 14,
+    "nativeOptInPassedSeparately": 4,
+    "makeCheckPassed": true,
+    "macosDebugBuildPassed": true,
+    "staged": false,
+    "committed": false
+  }
+}
