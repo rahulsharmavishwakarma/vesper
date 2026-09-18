@@ -1,0 +1,100 @@
+{
+  "schemaVersion": 1,
+  "sources": [
+    {
+      "id": "fleurs-en_us-test",
+      "name": "FLEURS English (United States) test set",
+      "url": "https://huggingface.co/datasets/google/fleurs/tree/70bb2e84b976b7e960aa89f1c648e09c59f894dd/data/en_us",
+      "revision": "70bb2e84b976b7e960aa89f1c648e09c59f894dd; audio-sha256:d9c2e37b41aacd41bc283554a0a82b5476b36887049774ecb2819dcaaa55a356; metadata-sha256:74c046239374deeb60fa63f258f907388093a32bcaa3140965f70ef05c79f7ca",
+      "license": "CC-BY-4.0",
+      "attribution": "Google FLEURS; derived from the FLoRes evaluation sentences",
+      "redistribution": "Redistributions must retain attribution under CC-BY-4.0."
+    },
+    {
+      "id": "fleurs-hi_in-test",
+      "name": "FLEURS Hindi (India) test set",
+      "url": "https://huggingface.co/datasets/google/fleurs/tree/70bb2e84b976b7e960aa89f1c648e09c59f894dd/data/hi_in",
+      "revision": "70bb2e84b976b7e960aa89f1c648e09c59f894dd; audio-sha256:47c238b9cf7016ba596639bb3038b0c89dc6e85759f16d09c4f58c6dfa25c65f; metadata-sha256:889e82e2875490f9533ff59ab67326fcfa01cf828fc4412758aaaa1f442a729f",
+      "license": "CC-BY-4.0",
+      "attribution": "Google FLEURS; derived from the FLoRes evaluation sentences",
+      "redistribution": "Redistributions must retain attribution under CC-BY-4.0."
+    },
+    {
+      "id": "synthetic-dictation-controls",
+      "name": "Task-authored synthetic English dictation controls",
+      "url": "https://github.com/rahulsharmavishwakarma/transcribe/issues/41",
+      "revision": "controls-v1; macOS26.6.2; say Samantha; rate175; PCM16 mono16kHz",
+      "license": "Task-authored text; generated audio retained locally only",
+      "attribution": "Original synthetic control sentences generated for this benchmark, spoken by macOS Samantha",
+      "redistribution": "No synthesized audio is redistributed; text, parameters and hashes only."
+    },
+    {
+      "id": "audio-frontend-synthetic-noise",
+      "name": "Deterministic non-speech diagnostics",
+      "url": "https://github.com/rahulsharmavishwakarma/transcribe/issues/42",
+      "revision": "noise-v1; 16000Hz PCM16; LCG1664525+1013904223 seed17",
+      "license": "Task-authored mathematical signals",
+      "attribution": "Generated non-speech controls; not recorded natural environments",
+      "redistribution": "May redistribute mathematical recipes and generated signals"
+    },
+    {
+      "id": "ms-snsd-noise-test",
+      "name": "MS-SNSD environmental test noise",
+      "url": "https://github.com/microsoft/MS-SNSD/tree/fe61c4ba0d9ac8dd7e23d719cc79f8947e1dc742/noise_test",
+      "revision": "fe61c4ba0d9ac8dd7e23d719cc79f8947e1dc742; individual hashes in assets manifest",
+      "license": "Collection: Freesound CC0 and DEMAND CC-BY-SA3 per official README; code MIT",
+      "attribution": "Microsoft MS-SNSD; Reddy et al., Interspeech2019; original sound contributors",
+      "redistribution": "Audio retained locally; no assumption of MIT audio licensing"
+    }
+  ],
+  "samples": [
+    {
+      "id": "en_us-11974497390699501411--clean",
+      "sourceId": "fleurs-en_us-test",
+      "split": "test",
+      "language": "en-US",
+      "audioPath": "en_us-11974497390699501411--clean.wav",
+      "sha256": "ff3f24289273e664640d6b00387a81aa135e61e4b62095ffd16a4b9819c92d5a",
+      "reference": "The find also grants insight into the evolution of feathers in birds.",
+      "durationSeconds": 4.62,
+      "scenario": "read",
+      "replayKind": "natural",
+      "baseId": "en_us-11974497390699501411",
+      "variant": "clean",
+      "sourceAudioSha256": "ca6864a315a8ea4ab486c8852c5aa814a6b561443ab51d8e36d83cd167380930",
+      "noiseId": "AirConditioner_1.wav",
+      "corpusLane": "natural"
+    },
+    {
+      "id": "continuous-180s",
+      "sourceId": "fleurs-en_us-test",
+      "split": "test",
+      "language": "en-US",
+      "audioPath": "continuous-180s.wav",
+      "sha256": "22f838c637918e5fa89a506d1141da65ce8bc6ac941aaffa4755aab003789e58",
+      "reference": "",
+      "durationSeconds": 180.0,
+      "scenario": "noise",
+      "replayKind": "synthetic_soak",
+      "corpusLane": "contract",
+      "variant": "continuous"
+    },
+    {
+      "id": "en_us-11974497390699501411--clean--reset",
+      "sourceId": "fleurs-en_us-test",
+      "split": "test",
+      "language": "en-US",
+      "audioPath": "en_us-11974497390699501411--clean.wav",
+      "sha256": "ff3f24289273e664640d6b00387a81aa135e61e4b62095ffd16a4b9819c92d5a",
+      "reference": "The find also grants insight into the evolution of feathers in birds.",
+      "durationSeconds": 4.62,
+      "scenario": "read",
+      "replayKind": "natural",
+      "baseId": "en_us-11974497390699501411",
+      "variant": "clean",
+      "sourceAudioSha256": "ca6864a315a8ea4ab486c8852c5aa814a6b561443ab51d8e36d83cd167380930",
+      "noiseId": "AirConditioner_1.wav",
+      "corpusLane": "reset"
+    }
+  ]
+}
