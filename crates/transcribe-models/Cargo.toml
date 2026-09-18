@@ -1,0 +1,26 @@
+[package]
+name = "transcribe-models"
+version.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+publish.workspace = true
+
+[dependencies]
+transcribe-core.workspace = true
+serde.workspace = true
+serde_json.workspace = true
+sha2.workspace = true
+tempfile.workspace = true
+thiserror.workspace = true
+reqwest = { version = "0.12", default-features = false, features = ["blocking", "rustls-tls"] }
+flate2 = "1"
+tar = "0.4"
+zip = { version = "2", default-features = false, features = ["deflate"] }
+
+# sha2 0.10 otherwise selects software SHA-256 on aarch64. Qualify additional
+# targets separately; this backend retains CPU detection and software fallback.
+[target.'cfg(all(target_arch = "aarch64", target_os = "macos"))'.dependencies]
+sha2 = { workspace = true, features = ["asm"] }
+
+[lints]
+workspace = true
