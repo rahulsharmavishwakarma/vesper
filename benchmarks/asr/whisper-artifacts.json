@@ -1,0 +1,83 @@
+{
+  "schemaVersion": 1,
+  "models": [
+    {
+      "model": "tiny",
+      "publisher": "csukuangfj/sherpa-onnx-whisper-tiny",
+      "revision": "65176e2deb88badc814a94058666cadccc29b61c",
+      "license": "MIT upstream OpenAI Whisper; see pinned export model card and upstream LICENSE",
+      "files": [
+        {
+          "role": "decoder",
+          "filename": "tiny-decoder.int8.onnx",
+          "size": 89855401,
+          "sha256": "d2fece8dd42771f1df975c6c0445770d0c292bf7547c2cae04a6c0cc57540925"
+        },
+        {
+          "role": "encoder",
+          "filename": "tiny-encoder.int8.onnx",
+          "size": 12937772,
+          "sha256": "d24fb083ae3b1041fc24e97971d60e280c9342201fbb67b0ab428a8b4a51a434"
+        },
+        {
+          "role": "tokens",
+          "filename": "tiny-tokens.txt",
+          "size": 816730,
+          "sha256": "b34b360dbb493e781e479794586d661700670d65564001f23024971d1f2fa126"
+        }
+      ]
+    },
+    {
+      "model": "small",
+      "publisher": "csukuangfj/sherpa-onnx-whisper-small",
+      "revision": "8f3c18b358db4d1f2fc1eae49d75cd20989e4309",
+      "license": "MIT upstream OpenAI Whisper; see pinned export model card and upstream LICENSE",
+      "files": [
+        {
+          "role": "decoder",
+          "filename": "small-decoder.int8.onnx",
+          "size": 262226114,
+          "sha256": "acad50b5c782696e91b55914cc5ab4f756f1532f76e22aa6fc615f39fb69a8ee"
+        },
+        {
+          "role": "encoder",
+          "filename": "small-encoder.int8.onnx",
+          "size": 112442483,
+          "sha256": "4cbe7b22fa9026b843b60a68640c747de05bafb1a11b57edc0e66c232d9f33a9"
+        },
+        {
+          "role": "tokens",
+          "filename": "small-tokens.txt",
+          "size": 816730,
+          "sha256": "b34b360dbb493e781e479794586d661700670d65564001f23024971d1f2fa126"
+        }
+      ]
+    },
+    {
+      "model": "turbo",
+      "publisher": "csukuangfj/sherpa-onnx-whisper-turbo",
+      "revision": "2ca6ff69fc878651b770880507669577ac41c2ff",
+      "license": "MIT upstream OpenAI Whisper; see pinned export model card and upstream LICENSE",
+      "files": [
+        {
+          "role": "decoder",
+          "filename": "turbo-decoder.int8.onnx",
+          "size": 361080764,
+          "sha256": "20accd02388482eb3a46bd615631adfdc85e1eb2c7db9ea3f02a40ffe6b81547"
+        },
+        {
+          "role": "encoder",
+          "filename": "turbo-encoder.int8.onnx",
+          "size": 674716297,
+          "sha256": "b02dcdf54f348741e93fe732b67d933c8dcb6735655f710640143081db38878b"
+        },
+        {
+          "role": "tokens",
+          "filename": "turbo-tokens.txt",
+          "size": 816730,
+          "sha256": "b34b360dbb493e781e479794586d661700670d65564001f23024971d1f2fa126"
+        }
+      ]
+    }
+  ]
+}
