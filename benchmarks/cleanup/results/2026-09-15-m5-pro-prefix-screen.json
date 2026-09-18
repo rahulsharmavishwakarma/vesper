@@ -1,0 +1,3578 @@
+{
+  "schemaVersion": 1,
+  "evidenceClass": "local-measurement-screening",
+  "date": "2026-09-15",
+  "applicationBaseRevision": "592e0084fe5cf486b4d56c575423e9a4f219bfb8",
+  "uncommittedSource": {
+    "files": [
+      {
+        "path": "Cargo.lock",
+        "sha256": "a6b132f90d404c0b845c6fa94f5cb8f324d19140fb0548e817aaa598440350ea"
+      },
+      {
+        "path": "Cargo.toml",
+        "sha256": "16ec669d275cac80c2c53648fbfd3e91fadcf616094fe3e9ed3e9dbef513d205"
+      },
+      {
+        "path": "apps/desktop/src-tauri/src/commands.rs",
+        "sha256": "bfab910dc89e5e8060c28f8fc3b35228a34f7c60ba38a7a901c93d4de7578314"
+      },
+      {
+        "path": "apps/desktop/src-tauri/src/diagnostics.rs",
+        "sha256": "a9f24d9e5f6116859e3edcf9c8df2213594bfde1811b31da6195d293009aef5a"
+      },
+      {
+        "path": "apps/desktop/src-tauri/src/lib.rs",
+        "sha256": "119f9309f31681779bc831c7950b6177c09e3cf81d90f911e7794c4f15e299cb"
+      },
+      {
+        "path": "apps/desktop/src-tauri/src/main.rs",
+        "sha256": "68ab6e33527e5c95cb61c766cb1094c6a588b29971e43d622a7203536077dded"
+      },
+      {
+        "path": "apps/desktop/src-tauri/src/menu_bar.rs",
+        "sha256": "52a2afa5ded6468bd8140276034d5bbb4b1f1b840e04e21c914d79f1ff705dc8"
+      },
+      {
+        "path": "apps/desktop/src-tauri/src/resources.rs",
+        "sha256": "831a3db63dbd055852080573b1bc02abaeb36f92cdaecb1343abed16e2c2bd0e"
+      },
+      {
+        "path": "apps/desktop/src-tauri/src/runtime.rs",
+        "sha256": "ffcd65ad2a9bb482255dd9777282701175acd60cd658b3d637eb93689385916b"
+      },
+      {
+        "path": "apps/desktop/src-tauri/src/settings.rs",
+        "sha256": "e31617723227a133869338bff1ee636fac6ec2f7dc3307d17c3a134cf26c655f"
+      },
+      {
+        "path": "apps/desktop/src-tauri/src/shortcuts.rs",
+        "sha256": "d894d662953e9b684ad1b9fda771c0a54a68257109237acf4857b8d7496046ff"
+      },
+      {
+        "path": "apps/desktop/src-tauri/src/storage.rs",
+        "sha256": "c49adc3a8aa24b6600d7b821cfff3a5f21c3b860f436cd56ec0f378dc688cc16"
+      },
+      {
+        "path": "crates/transcribe-audio/src/capture.rs",
+        "sha256": "328bd1f0f008f5eccb1ae3a4b5fd6a6709666e1ae38ba42b505ee2432ed3a05a"
+      },
+      {
+        "path": "crates/transcribe-audio/src/decode.rs",
+        "sha256": "1b9f3296b87273622d1e8fb74b05293bdf4ff45f081df1b7363857611631e146"
+      },
+      {
+        "path": "crates/transcribe-audio/src/lib.rs",
+        "sha256": "c03f974d0698b72b964e5279b4063768cd3cf6e3228c38e159357ccc5e78af80"
+      },
+      {
+        "path": "crates/transcribe-audio/src/pcm.rs",
+        "sha256": "9103a21b6d24ea60781f11e41fa31a42c9757396fe5e79edbd7962f7caea19cd"
+      },
+      {
+        "path": "crates/transcribe-audio/src/pitch.rs",
+        "sha256": "96ca27789403ab5ff58cde551446e391c140663421ad42547cafad3787856ad7"
+      },
+      {
+        "path": "crates/transcribe-core/src/adapters.rs",
+        "sha256": "b81d76af67b7d585283dc1d2bb4d24523184747a185a936a0638c0434d8f25cb"
+      },
+      {
+        "path": "crates/transcribe-core/src/config.rs",
+        "sha256": "50b4a8fb6814e6baaf0a2480e69c2082be812899e1261ab78db04b09b5fd6601"
+      },
+      {
+        "path": "crates/transcribe-core/src/error.rs",
+        "sha256": "ad50c47d9e62a252aea8d7b73649d783ecc1a972a41b868bf14b9f32a147147a"
+      },
+      {
+        "path": "crates/transcribe-core/src/huggingface.rs",
+        "sha256": "ed8837f1c76cf8bf6cb80bbbddcdee535b7838d451dc6cbe1fc11b81ac777f1a"
+      },
+      {
+        "path": "crates/transcribe-core/src/lib.rs",
+        "sha256": "5c90c9b3e62dc80e017710daed419f7c43c34695d52036fde3c2b5096565ff7b"
+      },
+      {
+        "path": "crates/transcribe-core/src/model.rs",
+        "sha256": "bc098e6e751cf5ee64fd3d3ab7a29d215092ab582b5eb9495695b4c6bf2f4241"
+      },
+      {
+        "path": "crates/transcribe-core/src/personalization.rs",
+        "sha256": "4fb374d3bc9276efc8db429d8658d72e2188095c6e24c9aff5b7ab47c3a95aba"
+      },
+      {
+        "path": "crates/transcribe-core/src/transcript.rs",
+        "sha256": "9a3dfba16fe6686ad116969ca8e7d9311bebbff68559a22e0b2b02c228185c02"
+      },
+      {
+        "path": "crates/transcribe-data/src/lib.rs",
+        "sha256": "f19be9b1cc086e8924b36a43d08f0d95c9732df799b8fbc8431117373ce31ced"
+      },
+      {
+        "path": "crates/transcribe-data/src/personalization.rs",
+        "sha256": "40e6527b51e06f556cc71a424e29cb69a35bc3c9cf02c0e6e574cbcfe5b9b022"
+      },
+      {
+        "path": "crates/transcribe-eval/src/lib.rs",
+        "sha256": "05401c78903ea5672f5cb4be65e40d4752a16693beff3cc02ee15fb3e44bd64f"
+      },
+      {
+        "path": "crates/transcribe-eval/src/main.rs",
+        "sha256": "33daa65e53b850131691d0a00a325fcc9d6bad7e7a0d69fed5a18a7f6aa46d40"
+      },
+      {
+        "path": "crates/transcribe-eval/src/manifest.rs",
+        "sha256": "47ba0a3a5a74e07272780e85231d77772c947c781767cc2043b8547d94585884"
+      },
+      {
+        "path": "crates/transcribe-eval/src/metrics.rs",
+        "sha256": "bdc3ead2e78f235553e6db05beb374fe1df5de4019a0e726798b73d5a3481b3d"
+      },
+      {
+        "path": "crates/transcribe-eval/src/recommendation.rs",
+        "sha256": "63b379674b11aa1dcf928df9c90af2bbb0cb8ff836086b155b42e0535b26dbc4"
+      },
+      {
+        "path": "crates/transcribe-inference/build.rs",
+        "sha256": "ee73c2f29dec2359cbf8300b5ea7db23c46e3eee1d61b0137c2472d4404476ac"
+      },
+      {
+        "path": "crates/transcribe-inference/examples/cleanup.rs",
+        "sha256": "10daac2e715a1c67e0c482e76fffae1192a6219d805bdcce629cd1c0deb81bd1"
+      },
+      {
+        "path": "crates/transcribe-inference/examples/pipeline.rs",
+        "sha256": "a2045e21c5d278cfb3eaa195349b196cafa464a90b7b67454acef1866bd240c4"
+      },
+      {
+        "path": "crates/transcribe-inference/src/adapters.rs",
+        "sha256": "efe03dcca1db7d2c14b61963bb67b905a78c4274f7e52c4434077a3e148ee5e8"
+      },
+      {
+        "path": "crates/transcribe-inference/src/capabilities.rs",
+        "sha256": "e337e773530a040c31884014558ac8677cc298e22b01ba885fa11930c8c11c2b"
+      },
+      {
+        "path": "crates/transcribe-inference/src/fidelity.rs",
+        "sha256": "ddff769304ba125abade25b6fd087f88df310fff2daf9d3140f249b11148f2be"
+      },
+      {
+        "path": "crates/transcribe-inference/src/kyutai.rs",
+        "sha256": "e0daa871ee76d6fdffa42a3f9e052eaeb4ca7e45bcb17347528cdf7e55853767"
+      },
+      {
+        "path": "crates/transcribe-inference/src/lib.rs",
+        "sha256": "3901659af912f56fe511da9bc4d04a4bbdce21d61230d65c1882778d2b4cfd79"
+      },
+      {
+        "path": "crates/transcribe-inference/src/manager.rs",
+        "sha256": "37d0d1e5a0aa39584457d58d7f52e8ec3939f9bf428e9561aaff7549f9461471"
+      },
+      {
+        "path": "crates/transcribe-inference/src/nemotron.rs",
+        "sha256": "e7706c6f79d700550ffbcc1cc60c0a01ecd48af422a0497c9fc24488480a321f"
+      },
+      {
+        "path": "crates/transcribe-inference/src/offline_asr.rs",
+        "sha256": "56ec7c8261e82e17c133f40ba443c0b977509a9ce5f2da1f75dab78337ce9ebc"
+      },
+      {
+        "path": "crates/transcribe-inference/src/parakeet.rs",
+        "sha256": "51c22aa339d2285ff1895b76327ea8d4777f1349611a5e77fe7223ea2feed1c9"
+      },
+      {
+        "path": "crates/transcribe-inference/src/personalization.rs",
+        "sha256": "e044a5114b331c43eacf6b9a422d2066b4d77cbf0c7e6758914b9b639ed665a2"
+      },
+      {
+        "path": "crates/transcribe-inference/src/qwen.rs",
+        "sha256": "d30ca5ff0451649d5acc80f070f77efbfc80ec5293daa1c5ddcbefbe2d781ad0"
+      },
+      {
+        "path": "crates/transcribe-models/examples/install.rs",
+        "sha256": "ad6f51dc7cb3a6a543a47398cfcb30bf07bfcd079c3a1a761cac492b8d96c50b"
+      },
+      {
+        "path": "crates/transcribe-models/src/lib.rs",
+        "sha256": "fff74ca9a85f256750f7de84a110637f2e26f9f6d197bd33f4722a79e4a65783"
+      },
+      {
+        "path": "crates/transcribe-models/src/storage.rs",
+        "sha256": "92e14c811a610224197c635e2f2d18f13dce4323859e2e5ac03781aa25a17be8"
+      },
+      {
+        "path": "crates/transcribe-nemo/src/lib.rs",
+        "sha256": "f40c18f5bbc9ae80dfb4a4574bcf8fd1eb475902012758cea1067a47023a1f6c"
+      }
+    ],
+    "aggregateSha256": "fe017643bc45645b7a3c3fd3ae3ccfb3c44ac04096fc98ccf51bd0e1035329d0"
+  },
+  "environment": {
+    "cpu": "Apple M5 Pro",
+    "logicalCpus": 18,
+    "memoryBytes": 68719476736,
+    "os": "macOS 26.6.2 (25G83)",
+    "backend": "explicit CPU",
+    "threads": 8,
+    "power": "AC; lowpowermode=0",
+    "thermalTelemetry": "not collected",
+    "build": "cargo test dev Rust profile; bundled native build",
+    "nCtx": 4096,
+    "batch": 512,
+    "ubatch": 128,
+    "sampling": "greedy",
+    "cachePayloadLimitBytes": 67108864
+  },
+  "model": {
+    "repository": "ggml-org/Qwen3.5-0.8B-GGUF",
+    "revision": "8fea620810c4afa23dd6443f999a48574c1611a3",
+    "artifact": "Qwen3.5-0.8B-Q4_0.gguf",
+    "sha256": "57d1997790d1744fba5b40a7317df71ea5e2acee28c47e78f0cce39c0703f8cf",
+    "llamaCppRevision": "e79e4bf660e19f2ad851e06c6913f7a8c5852621",
+    "rustBinding": "llama-cpp-2 0.1.156"
+  },
+  "protocol": {
+    "fixture": "qwen::tests::measure_two_pass_prefix_reuse, synthetic English technical-tail transcript",
+    "metric": "wall time around Rewriter::rewrite, including two sequential passes and fidelity; excludes model load, ASR, capture, queue, storage and UI",
+    "warmup": "one uncached reference, three cached rewrites; resident weights throughout",
+    "order": "30 pairs alternating uncached/cached order",
+    "equivalence": "all 60 outputs exactly matched successful uncached reference with README.txt retained",
+    "limitations": [
+      "One synthetic English fixture; not a held-out corpus or user-visible latency benchmark",
+      "No upstream CLI comparison, independent cold starts, power draw or sustained thermal study",
+      "Other CPUs, GPUs, precisions, personalized prompts and custom GGUF unqualified",
+      "P90 descriptive for this run; no p99 or universal SOTA claim"
+    ]
+  },
+  "summary": {
+    "uncached": {
+      "runs": 30,
+      "medianRewriteMs": 838.9635000000001,
+      "p90RewriteMs": 868.509,
+      "minRewriteMs": 818.917,
+      "maxRewriteMs": 891.885,
+      "failedFidelity": 0,
+      "medianPassMs": {
+        "technical-tail": 294.0045,
+        "full-cleanup": 545.1034999999999
+      }
+    },
+    "cached": {
+      "runs": 30,
+      "medianRewriteMs": 366.2495,
+      "p90RewriteMs": 378.96,
+      "minRewriteMs": 353.454,
+      "maxRewriteMs": 408.137,
+      "failedFidelity": 0,
+      "medianPassMs": {
+        "technical-tail": 170.131,
+        "full-cleanup": 195.5845
+      }
+    },
+    "medianReductionPercent": 56.34500189817555,
+    "retainedCacheBytes": 46841268
+  },
+  "samples": [
+    {
+      "benchmark": "two-pass-prefix-v1",
+      "cached": false,
+      "metrics": {
+        "outcome": "accepted",
+        "passes": [
+          {
+            "contextUs": 6107,
+            "firstTokenUs": 173306,
+            "generatedTokens": 25,
+            "generationUs": 132914,
+            "outcome": "completed",
+            "pass": "technical-tail",
+            "prefillUs": 166639,
+            "prefilledTokens": 178,
+            "prefixHit": false,
+            "promptTokens": 178,
+            "restoreUs": 0,
+            "retainedCacheBytes": 46841268,
+            "snapshotUs": 0,
+            "tokenizationUs": 405,
+            "totalUs": 307567
+          },
+          {
+            "contextUs": 6380,
+            "firstTokenUs": 401260,
+            "generatedTokens": 29,
+            "generationUs": 152775,
+            "outcome": "completed",
+            "pass": "full-cleanup",
+            "prefillUs": 393935,
+            "prefilledTokens": 423,
+            "prefixHit": false,
+            "promptTokens": 423,
+            "restoreUs": 0,
+            "retainedCacheBytes": 46841268,
+            "snapshotUs": 0,
+            "tokenizationUs": 802,
+            "totalUs": 555376
+          }
+        ],
+        "personalization": {
+          "exampleIds": [],
+          "outputIntent": "verbatim",
+          "profileRevision": 0,
+          "vocabularyIds": []
+        },
+        "personalizationDroppedForBudget": false,
+        "tailDecision": "accepted",
+        "tailPersonalization": null
+      },
+      "pair": 0,
+      "rewriteUs": 863409,
+      "threads": 8
+    },
+    {
+      "benchmark": "two-pass-prefix-v1",
+      "cached": true,
+      "metrics": {
+        "outcome": "accepted",
+        "passes": [
+          {
+            "contextUs": 6050,
+            "firstTokenUs": 44396,
+            "generatedTokens": 25,
+            "generationUs": 129000,
+            "outcome": "completed",
+            "pass": "technical-tail",
+            "prefillUs": 37243,
+            "prefilledTokens": 38,
+            "prefixHit": true,
+            "promptTokens": 178,
+            "restoreUs": 403,
+            "retainedCacheBytes": 46841268,
+            "snapshotUs": 0,
+            "tokenizationUs": 397,
+            "totalUs": 174647
+          },
+          {
+            "contextUs": 5912,
+            "firstTokenUs": 48495,
+            "generatedTokens": 29,
+            "generationUs": 149553,
+            "outcome": "completed",
+            "pass": "full-cleanup",
+            "prefillUs": 40595,
+            "prefilledTokens": 40,
+            "prefixHit": true,
+            "promptTokens": 423,
+            "restoreUs": 541,
+            "retainedCacheBytes": 46841268,
+            "snapshotUs": 0,
+            "tokenizationUs": 779,
+            "totalUs": 199327
+          }
+        ],
+        "personalization": {
+          "exampleIds": [],
+          "outputIntent": "verbatim",
+          "profileRevision": 0,
+          "vocabularyIds": []
+        },
+        "personalizationDroppedForBudget": false,
+        "tailDecision": "accepted",
+        "tailPersonalization": null
+      },
+      "pair": 0,
+      "rewriteUs": 374420,
+      "threads": 8
+    },
+    {
+      "benchmark": "two-pass-prefix-v1",
+      "cached": true,
+      "metrics": {
+        "outcome": "accepted",
+        "passes": [
+          {
+            "contextUs": 5946,
+            "firstTokenUs": 46380,
+            "generatedTokens": 25,
+            "generationUs": 128987,
+            "outcome": "completed",
+            "pass": "technical-tail",
+            "prefillUs": 39355,
+            "prefilledTokens": 38,
+            "prefixHit": true,
+            "promptTokens": 178,
+            "restoreUs": 384,
+            "retainedCacheBytes": 46841268,
+            "snapshotUs": 0,
+            "tokenizationUs": 388,
+            "totalUs": 176630
+          },
+          {
+            "contextUs": 5987,
+            "firstTokenUs": 48084,
+            "generatedTokens": 29,
+            "generationUs": 149818,
+            "outcome": "completed",
+            "pass": "full-cleanup",
+            "prefillUs": 40109,
+            "prefilledTokens": 40,
+            "prefixHit": true,
+            "promptTokens": 423,
+            "restoreUs": 484,
+            "retainedCacheBytes": 46841268,
+            "snapshotUs": 0,
+            "tokenizationUs": 757,
+            "totalUs": 199142
+          }
+        ],
+        "personalization": {
+          "exampleIds": [],
+          "outputIntent": "verbatim",
+          "profileRevision": 0,
+          "vocabularyIds": []
+        },
+        "personalizationDroppedForBudget": false,
+        "tailDecision": "accepted",
+        "tailPersonalization": null
+      },
+      "pair": 1,
+      "rewriteUs": 376226,
+      "threads": 8
+    },
+    {
+      "benchmark": "two-pass-prefix-v1",
+      "cached": false,
+      "metrics": {
+        "outcome": "accepted",
+        "passes": [
+          {
+            "contextUs": 5659,
+            "firstTokenUs": 170457,
+            "generatedTokens": 25,
+            "generationUs": 130252,
+            "outcome": "completed",
+            "pass": "technical-tail",
+            "prefillUs": 164267,
+            "prefilledTokens": 178,
+            "prefixHit": false,
+            "promptTokens": 178,
+            "restoreUs": 0,
+            "retainedCacheBytes": 46841268,
+            "snapshotUs": 0,
+            "tokenizationUs": 387,
+            "totalUs": 302043
+          },
+          {
+            "contextUs": 6294,
+            "firstTokenUs": 419455,
+            "generatedTokens": 29,
+            "generationUs": 150656,
+            "outcome": "completed",
+            "pass": "full-cleanup",
+            "prefillUs": 412219,
+            "prefilledTokens": 423,
+            "prefixHit": false,
+            "promptTokens": 423,
+            "restoreUs": 0,
+            "retainedCacheBytes": 46841268,
+            "snapshotUs": 0,
+            "tokenizationUs": 799,
+            "totalUs": 571428
+          }
+        ],
+        "personalization": {
+          "exampleIds": [],
+          "outputIntent": "verbatim",
+          "profileRevision": 0,
+          "vocabularyIds": []
+        },
+        "personalizationDroppedForBudget": false,
+        "tailDecision": "accepted",
+        "tailPersonalization": null
+      },
+      "pair": 1,
+      "rewriteUs": 873944,
+      "threads": 8
+    },
+    {
+      "benchmark": "two-pass-prefix-v1",
+      "cached": false,
+      "metrics": {
+        "outcome": "accepted",
+        "passes": [
+          {
+            "contextUs": 5851,
+            "firstTokenUs": 167455,
+            "generatedTokens": 25,
+            "generationUs": 128481,
+            "outcome": "completed",
+            "pass": "technical-tail",
+            "prefillUs": 161072,
+            "prefilledTokens": 178,
+            "prefixHit": false,
+            "promptTokens": 178,
+            "restoreUs": 0,
+            "retainedCacheBytes": 46841268,
+            "snapshotUs": 0,
+            "tokenizationUs": 395,
+            "totalUs": 297337
+          },
+          {
+            "contextUs": 5843,
+            "firstTokenUs": 395127,
+            "generatedTokens": 29,
+            "generationUs": 150891,
+            "outcome": "completed",
+            "pass": "full-cleanup",
+            "prefillUs": 388384,
+            "prefilledTokens": 423,
+            "prefixHit": false,
+            "promptTokens": 423,
+            "restoreUs": 0,
+            "retainedCacheBytes": 46841268,
+            "snapshotUs": 0,
+            "tokenizationUs": 761,
+            "totalUs": 547469
+          }
+        ],
+        "personalization": {
+          "exampleIds": [],
+          "outputIntent": "verbatim",
+          "profileRevision": 0,
+          "vocabularyIds": []
+        },
+        "personalizationDroppedForBudget": false,
+        "tailDecision": "accepted",
+        "tailPersonalization": null
+      },
+      "pair": 2,
+      "rewriteUs": 845269,
+      "threads": 8
+    },
+    {
+      "benchmark": "two-pass-prefix-v1",
+      "cached": true,
+      "metrics": {
+        "outcome": "accepted",
+        "passes": [
+          {
+            "contextUs": 6091,
+            "firstTokenUs": 44610,
+            "generatedTokens": 25,
+            "generationUs": 124527,
+            "outcome": "completed",
+            "pass": "technical-tail",
+            "prefillUs": 37172,
+            "prefilledTokens": 38,
+            "prefixHit": true,
+            "promptTokens": 178,
+            "restoreUs": 497,
+            "retainedCacheBytes": 46841268,
+            "snapshotUs": 0,
+            "tokenizationUs": 392,
+            "totalUs": 170508
+          },
+          {
+            "contextUs": 5855,
+            "firstTokenUs": 48156,
+            "generatedTokens": 29,
+            "generationUs": 146813,
+            "outcome": "completed",
+            "pass": "full-cleanup",
+            "prefillUs": 40380,
+            "prefilledTokens": 40,
+            "prefixHit": true,
+            "promptTokens": 423,
+            "restoreUs": 453,
+            "retainedCacheBytes": 46841268,
+            "snapshotUs": 0,
+            "tokenizationUs": 772,
+            "totalUs": 196228
+          }
+        ],
+        "personalization": {
+          "exampleIds": [],
+          "outputIntent": "verbatim",
+          "profileRevision": 0,
+          "vocabularyIds": []
+        },
+        "personalizationDroppedForBudget": false,
+        "tailDecision": "accepted",
+        "tailPersonalization": null
+      },
+      "pair": 2,
+      "rewriteUs": 367178,
+      "threads": 8
+    },
+    {
+      "benchmark": "two-pass-prefix-v1",
+      "cached": true,
+      "metrics": {
+        "outcome": "accepted",
+        "passes": [
+          {
+            "contextUs": 5856,
+            "firstTokenUs": 46254,
+            "generatedTokens": 25,
+            "generationUs": 130330,
+            "outcome": "completed",
+            "pass": "technical-tail",
+            "prefillUs": 39140,
+            "prefilledTokens": 38,
+            "prefixHit": true,
+            "promptTokens": 178,
+            "restoreUs": 412,
+            "retainedCacheBytes": 46841268,
+            "snapshotUs": 0,
+            "tokenizationUs": 400,
+            "totalUs": 177857
+          },
+          {
+            "contextUs": 6398,
+            "firstTokenUs": 48467,
+            "generatedTokens": 29,
+            "generationUs": 150908,
+            "outcome": "completed",
+            "pass": "full-cleanup",
+            "prefillUs": 39957,
+            "prefilledTokens": 40,
+            "prefixHit": true,
+            "promptTokens": 423,
+            "restoreUs": 469,
+            "retainedCacheBytes": 46841268,
+            "snapshotUs": 0,
+            "tokenizationUs": 777,
+            "totalUs": 200644
+          }
+        ],
+        "personalization": {
+          "exampleIds": [],
+          "outputIntent": "verbatim",
+          "profileRevision": 0,
+          "vocabularyIds": []
+        },
+        "personalizationDroppedForBudget": false,
+        "tailDecision": "accepted",
+        "tailPersonalization": null
+      },
+      "pair": 3,
+      "rewriteUs": 378945,
+      "threads": 8
+    },
+    {
+      "benchmark": "two-pass-prefix-v1",
+      "cached": false,
+      "metrics": {
+        "outcome": "accepted",
+        "passes": [
+          {
+            "contextUs": 5933,
+            "firstTokenUs": 170601,
+            "generatedTokens": 25,
+            "generationUs": 128421,
+            "outcome": "completed",
+            "pass": "technical-tail",
+            "prefillUs": 164146,
+            "prefilledTokens": 178,
+            "prefixHit": false,
+            "promptTokens": 178,
+            "restoreUs": 0,
+            "retainedCacheBytes": 46841268,
+            "snapshotUs": 0,
+            "tokenizationUs": 384,
+            "totalUs": 300404
+          },
+          {
+            "contextUs": 6035,
+            "firstTokenUs": 399530,
+            "generatedTokens": 29,
+            "generationUs": 166762,
+            "outcome": "completed",
+            "pass": "full-cleanup",
+            "prefillUs": 392573,
+            "prefilledTokens": 423,
+            "prefixHit": false,
+            "promptTokens": 423,
+            "restoreUs": 0,
+            "retainedCacheBytes": 46841268,
+            "snapshotUs": 0,
+            "tokenizationUs": 775,
+            "totalUs": 567630
+          }
+        ],
+        "personalization": {
+          "exampleIds": [],
+          "outputIntent": "verbatim",
+          "profileRevision": 0,
+          "vocabularyIds": []
+        },
+        "personalizationDroppedForBudget": false,
+        "tailDecision": "accepted",
+        "tailPersonalization": null
+      },
+      "pair": 3,
+      "rewriteUs": 868509,
+      "threads": 8
+    },
+    {
+      "benchmark": "two-pass-prefix-v1",
+      "cached": false,
+      "metrics": {
+        "outcome": "accepted",
+        "passes": [
+          {
+            "contextUs": 6151,
+            "firstTokenUs": 169682,
+            "generatedTokens": 25,
+            "generationUs": 127343,
+            "outcome": "completed",
+            "pass": "technical-tail",
+            "prefillUs": 162993,
+            "prefilledTokens": 178,
+            "prefixHit": false,
+            "promptTokens": 178,
+            "restoreUs": 0,
+            "retainedCacheBytes": 46841268,
+            "snapshotUs": 0,
+            "tokenizationUs": 396,
+            "totalUs": 298402
+          },
+          {
+            "contextUs": 5976,
+            "firstTokenUs": 395516,
+            "generatedTokens": 29,
+            "generationUs": 150435,
+            "outcome": "completed",
+            "pass": "full-cleanup",
+            "prefillUs": 388637,
+            "prefilledTokens": 423,
+            "prefixHit": false,
+            "promptTokens": 423,
+            "restoreUs": 0,
+            "retainedCacheBytes": 46841268,
+            "snapshotUs": 0,
+            "tokenizationUs": 759,
+            "totalUs": 547342
+          }
+        ],
+        "personalization": {
+          "exampleIds": [],
+          "outputIntent": "verbatim",
+          "profileRevision": 0,
+          "vocabularyIds": []
+        },
+        "personalizationDroppedForBudget": false,
+        "tailDecision": "accepted",
+        "tailPersonalization": null
+      },
+      "pair": 4,
+      "rewriteUs": 846207,
+      "threads": 8
+    },
+    {
+      "benchmark": "two-pass-prefix-v1",
+      "cached": true,
+      "metrics": {
+        "outcome": "accepted",
+        "passes": [
+          {
+            "contextUs": 6492,
+            "firstTokenUs": 44607,
+            "generatedTokens": 25,
+            "generationUs": 125704,
+            "outcome": "completed",
+            "pass": "technical-tail",
+            "prefillUs": 36895,
+            "prefilledTokens": 38,
+            "prefixHit": true,
+            "promptTokens": 178,
+            "restoreUs": 398,
+            "retainedCacheBytes": 46841268,
+            "snapshotUs": 0,
+            "tokenizationUs": 406,
+            "totalUs": 171547
+          },
+          {
+            "contextUs": 6089,
+            "firstTokenUs": 47915,
+            "generatedTokens": 29,
+            "generationUs": 146559,
+            "outcome": "completed",
+            "pass": "full-cleanup",
+            "prefillUs": 39996,
+            "prefilledTokens": 40,
+            "prefixHit": true,
+            "promptTokens": 423,
+            "restoreUs": 454,
+            "retainedCacheBytes": 46841268,
+            "snapshotUs": 0,
+            "tokenizationUs": 742,
+            "totalUs": 195729
+          }
+        ],
+        "personalization": {
+          "exampleIds": [],
+          "outputIntent": "verbatim",
+          "profileRevision": 0,
+          "vocabularyIds": []
+        },
+        "personalizationDroppedForBudget": false,
+        "tailDecision": "accepted",
+        "tailPersonalization": null
+      },
+      "pair": 4,
+      "rewriteUs": 367733,
+      "threads": 8
+    },
+    {
+      "benchmark": "two-pass-prefix-v1",
+      "cached": true,
+      "metrics": {
+        "outcome": "accepted",
+        "passes": [
+          {
+            "contextUs": 5828,
+            "firstTokenUs": 46110,
+            "generatedTokens": 25,
+            "generationUs": 125065,
+            "outcome": "completed",
+            "pass": "technical-tail",
+            "prefillUs": 39163,
+            "prefilledTokens": 38,
+            "prefixHit": true,
+            "promptTokens": 178,
+            "restoreUs": 410,
+            "retainedCacheBytes": 46841268,
+            "snapshotUs": 0,
+            "tokenizationUs": 389,
+            "totalUs": 172435
+          },
+          {
+            "contextUs": 6048,
+            "firstTokenUs": 47519,
+            "generatedTokens": 29,
+            "generationUs": 146672,
+            "outcome": "completed",
+            "pass": "full-cleanup",
+            "prefillUs": 39559,
+            "prefilledTokens": 40,
+            "prefixHit": true,
+            "promptTokens": 423,
+            "restoreUs": 470,
+            "retainedCacheBytes": 46841268,
+            "snapshotUs": 0,
+            "tokenizationUs": 770,
+            "totalUs": 195508
+          }
+        ],
+        "personalization": {
+          "exampleIds": [],
+          "outputIntent": "verbatim",
+          "profileRevision": 0,
+          "vocabularyIds": []
+        },
+        "personalizationDroppedForBudget": false,
+        "tailDecision": "accepted",
+        "tailPersonalization": null
+      },
+      "pair": 5,
+      "rewriteUs": 368398,
+      "threads": 8
+    },
+    {
+      "benchmark": "two-pass-prefix-v1",
+      "cached": false,
+      "metrics": {
+        "outcome": "accepted",
+        "passes": [
+          {
+            "contextUs": 5773,
+            "firstTokenUs": 168578,
+            "generatedTokens": 25,
+            "generationUs": 129905,
+            "outcome": "completed",
+            "pass": "technical-tail",
+            "prefillUs": 162253,
+            "prefilledTokens": 178,
+            "prefixHit": false,
+            "promptTokens": 178,
+            "restoreUs": 0,
+            "retainedCacheBytes": 46841268,
+            "snapshotUs": 0,
+            "tokenizationUs": 400,
+            "totalUs": 299865
+          },
+          {
+            "contextUs": 5996,
+            "firstTokenUs": 402274,
+            "generatedTokens": 29,
+            "generationUs": 168438,
+            "outcome": "completed",
+            "pass": "full-cleanup",
+            "prefillUs": 395380,
+            "prefilledTokens": 423,
+            "prefixHit": false,
+            "promptTokens": 423,
+            "restoreUs": 0,
+            "retainedCacheBytes": 46841268,
+            "snapshotUs": 0,
+            "tokenizationUs": 757,
+            "totalUs": 572089
+          }
+        ],
+        "personalization": {
+          "exampleIds": [],
+          "outputIntent": "verbatim",
+          "profileRevision": 0,
+          "vocabularyIds": []
+        },
+        "personalizationDroppedForBudget": false,
+        "tailDecision": "accepted",
+        "tailPersonalization": null
+      },
+      "pair": 5,
+      "rewriteUs": 872431,
+      "threads": 8
+    },
+    {
+      "benchmark": "two-pass-prefix-v1",
+      "cached": false,
+      "metrics": {
+        "outcome": "accepted",
+        "passes": [
+          {
+            "contextUs": 6352,
+            "firstTokenUs": 168446,
+            "generatedTokens": 25,
+            "generationUs": 126559,
+            "outcome": "completed",
+            "pass": "technical-tail",
+            "prefillUs": 161550,
+            "prefilledTokens": 178,
+            "prefixHit": false,
+            "promptTokens": 178,
+            "restoreUs": 0,
+            "retainedCacheBytes": 46841268,
+            "snapshotUs": 0,
+            "tokenizationUs": 408,
+            "totalUs": 296418
+          },
+          {
+            "contextUs": 5926,
+            "firstTokenUs": 392241,
+            "generatedTokens": 29,
+            "generationUs": 149844,
+            "outcome": "completed",
+            "pass": "full-cleanup",
+            "prefillUs": 385405,
+            "prefilledTokens": 423,
+            "prefixHit": false,
+            "promptTokens": 423,
+            "restoreUs": 0,
+            "retainedCacheBytes": 46841268,
+            "snapshotUs": 0,
+            "tokenizationUs": 755,
+            "totalUs": 543508
+          }
+        ],
+        "personalization": {
+          "exampleIds": [],
+          "outputIntent": "verbatim",
+          "profileRevision": 0,
+          "vocabularyIds": []
+        },
+        "personalizationDroppedForBudget": false,
+        "tailDecision": "accepted",
+        "tailPersonalization": null
+      },
+      "pair": 6,
+      "rewriteUs": 840396,
+      "threads": 8
+    },
+    {
+      "benchmark": "two-pass-prefix-v1",
+      "cached": true,
+      "metrics": {
+        "outcome": "accepted",
+        "passes": [
+          {
+            "contextUs": 5965,
+            "firstTokenUs": 43801,
+            "generatedTokens": 25,
+            "generationUs": 123799,
+            "outcome": "completed",
+            "pass": "technical-tail",
+            "prefillUs": 36771,
+            "prefilledTokens": 38,
+            "prefixHit": true,
+            "promptTokens": 178,
+            "restoreUs": 392,
+            "retainedCacheBytes": 46841268,
+            "snapshotUs": 0,
+            "tokenizationUs": 401,
+            "totalUs": 168960
+          },
+          {
+            "contextUs": 5970,
+            "firstTokenUs": 48264,
+            "generatedTokens": 29,
+            "generationUs": 147469,
+            "outcome": "completed",
+            "pass": "full-cleanup",
+            "prefillUs": 40556,
+            "prefilledTokens": 40,
+            "prefixHit": true,
+            "promptTokens": 423,
+            "restoreUs": 456,
+            "retainedCacheBytes": 46841268,
+            "snapshotUs": 0,
+            "tokenizationUs": 746,
+            "totalUs": 197089
+          }
+        ],
+        "personalization": {
+          "exampleIds": [],
+          "outputIntent": "verbatim",
+          "profileRevision": 0,
+          "vocabularyIds": []
+        },
+        "personalizationDroppedForBudget": false,
+        "tailDecision": "accepted",
+        "tailPersonalization": null
+      },
+      "pair": 6,
+      "rewriteUs": 366508,
+      "threads": 8
+    },
+    {
+      "benchmark": "two-pass-prefix-v1",
+      "cached": true,
+      "metrics": {
+        "outcome": "accepted",
+        "passes": [
+          {
+            "contextUs": 5627,
+            "firstTokenUs": 43912,
+            "generatedTokens": 25,
+            "generationUs": 122996,
+            "outcome": "completed",
+            "pass": "technical-tail",
+            "prefillUs": 37207,
+            "prefilledTokens": 38,
+            "prefixHit": true,
+            "promptTokens": 178,
+            "restoreUs": 389,
+            "retainedCacheBytes": 46841268,
+            "snapshotUs": 0,
+            "tokenizationUs": 385,
+            "totalUs": 168210
+          },
+          {
+            "contextUs": 5764,
+            "firstTokenUs": 47833,
+            "generatedTokens": 29,
+            "generationUs": 146541,
+            "outcome": "completed",
+            "pass": "full-cleanup",
+            "prefillUs": 40208,
+            "prefilledTokens": 40,
+            "prefixHit": true,
+            "promptTokens": 423,
+            "restoreUs": 470,
+            "retainedCacheBytes": 46841268,
+            "snapshotUs": 0,
+            "tokenizationUs": 746,
+            "totalUs": 195661
+          }
+        ],
+        "personalization": {
+          "exampleIds": [],
+          "outputIntent": "verbatim",
+          "profileRevision": 0,
+          "vocabularyIds": []
+        },
+        "personalizationDroppedForBudget": false,
+        "tailDecision": "accepted",
+        "tailPersonalization": null
+      },
+      "pair": 7,
+      "rewriteUs": 364309,
+      "threads": 8
+    },
+    {
+      "benchmark": "two-pass-prefix-v1",
+      "cached": false,
+      "metrics": {
+        "outcome": "accepted",
+        "passes": [
+          {
+            "contextUs": 5744,
+            "firstTokenUs": 169023,
+            "generatedTokens": 25,
+            "generationUs": 127021,
+            "outcome": "completed",
+            "pass": "technical-tail",
+            "prefillUs": 162736,
+            "prefilledTokens": 178,
+            "prefixHit": false,
+            "promptTokens": 178,
+            "restoreUs": 0,
+            "retainedCacheBytes": 46841268,
+            "snapshotUs": 0,
+            "tokenizationUs": 404,
+            "totalUs": 298283
+          },
+          {
+            "contextUs": 6658,
+            "firstTokenUs": 396746,
+            "generatedTokens": 29,
+            "generationUs": 165045,
+            "outcome": "completed",
+            "pass": "full-cleanup",
+            "prefillUs": 389161,
+            "prefilledTokens": 423,
+            "prefixHit": false,
+            "promptTokens": 423,
+            "restoreUs": 0,
+            "retainedCacheBytes": 46841268,
+            "snapshotUs": 0,
+            "tokenizationUs": 786,
+            "totalUs": 563140
+          }
+        ],
+        "personalization": {
+          "exampleIds": [],
+          "outputIntent": "verbatim",
+          "profileRevision": 0,
+          "vocabularyIds": []
+        },
+        "personalizationDroppedForBudget": false,
+        "tailDecision": "accepted",
+        "tailPersonalization": null
+      },
+      "pair": 7,
+      "rewriteUs": 861902,
+      "threads": 8
+    },
+    {
+      "benchmark": "two-pass-prefix-v1",
+      "cached": false,
+      "metrics": {
+        "outcome": "accepted",
+        "passes": [
+          {
+            "contextUs": 6162,
+            "firstTokenUs": 165893,
+            "generatedTokens": 25,
+            "generationUs": 125196,
+            "outcome": "completed",
+            "pass": "technical-tail",
+            "prefillUs": 159202,
+            "prefilledTokens": 178,
+            "prefixHit": false,
+            "promptTokens": 178,
+            "restoreUs": 0,
+            "retainedCacheBytes": 46841268,
+            "snapshotUs": 0,
+            "tokenizationUs": 396,
+            "totalUs": 292482
+          },
+          {
+            "contextUs": 6164,
+            "firstTokenUs": 394897,
+            "generatedTokens": 29,
+            "generationUs": 150375,
+            "outcome": "completed",
+            "pass": "full-cleanup",
+            "prefillUs": 387821,
+            "prefilledTokens": 423,
+            "prefixHit": false,
+            "promptTokens": 423,
+            "restoreUs": 0,
+            "retainedCacheBytes": 46841268,
+            "snapshotUs": 0,
+            "tokenizationUs": 772,
+            "totalUs": 546699
+          }
+        ],
+        "personalization": {
+          "exampleIds": [],
+          "outputIntent": "verbatim",
+          "profileRevision": 0,
+          "vocabularyIds": []
+        },
+        "personalizationDroppedForBudget": false,
+        "tailDecision": "accepted",
+        "tailPersonalization": null
+      },
+      "pair": 8,
+      "rewriteUs": 839634,
+      "threads": 8
+    },
+    {
+      "benchmark": "two-pass-prefix-v1",
+      "cached": true,
+      "metrics": {
+        "outcome": "accepted",
+        "passes": [
+          {
+            "contextUs": 6098,
+            "firstTokenUs": 44484,
+            "generatedTokens": 25,
+            "generationUs": 125002,
+            "outcome": "completed",
+            "pass": "technical-tail",
+            "prefillUs": 37280,
+            "prefilledTokens": 38,
+            "prefixHit": true,
+            "promptTokens": 178,
+            "restoreUs": 396,
+            "retainedCacheBytes": 46841268,
+            "snapshotUs": 0,
+            "tokenizationUs": 401,
+            "totalUs": 170786
+          },
+          {
+            "contextUs": 5739,
+            "firstTokenUs": 47536,
+            "generatedTokens": 29,
+            "generationUs": 146360,
+            "outcome": "completed",
+            "pass": "full-cleanup",
+            "prefillUs": 40101,
+            "prefilledTokens": 40,
+            "prefixHit": true,
+            "promptTokens": 423,
+            "restoreUs": 451,
+            "retainedCacheBytes": 46841268,
+            "snapshotUs": 0,
+            "tokenizationUs": 757,
+            "totalUs": 195240
+          }
+        ],
+        "personalization": {
+          "exampleIds": [],
+          "outputIntent": "verbatim",
+          "profileRevision": 0,
+          "vocabularyIds": []
+        },
+        "personalizationDroppedForBudget": false,
+        "tailDecision": "accepted",
+        "tailPersonalization": null
+      },
+      "pair": 8,
+      "rewriteUs": 366476,
+      "threads": 8
+    },
+    {
+      "benchmark": "two-pass-prefix-v1",
+      "cached": true,
+      "metrics": {
+        "outcome": "accepted",
+        "passes": [
+          {
+            "contextUs": 5657,
+            "firstTokenUs": 45372,
+            "generatedTokens": 25,
+            "generationUs": 127138,
+            "outcome": "completed",
+            "pass": "technical-tail",
+            "prefillUs": 38550,
+            "prefilledTokens": 38,
+            "prefixHit": true,
+            "promptTokens": 178,
+            "restoreUs": 410,
+            "retainedCacheBytes": 46841268,
+            "snapshotUs": 0,
+            "tokenizationUs": 394,
+            "totalUs": 173782
+          },
+          {
+            "contextUs": 5877,
+            "firstTokenUs": 47756,
+            "generatedTokens": 29,
+            "generationUs": 146864,
+            "outcome": "completed",
+            "pass": "full-cleanup",
+            "prefillUs": 39933,
+            "prefilledTokens": 40,
+            "prefixHit": true,
+            "promptTokens": 423,
+            "restoreUs": 470,
+            "retainedCacheBytes": 46841268,
+            "snapshotUs": 0,
+            "tokenizationUs": 753,
+            "totalUs": 195986
+          }
+        ],
+        "personalization": {
+          "exampleIds": [],
+          "outputIntent": "verbatim",
+          "profileRevision": 0,
+          "vocabularyIds": []
+        },
+        "personalizationDroppedForBudget": false,
+        "tailDecision": "accepted",
+        "tailPersonalization": null
+      },
+      "pair": 9,
+      "rewriteUs": 370252,
+      "threads": 8
+    },
+    {
+      "benchmark": "two-pass-prefix-v1",
+      "cached": false,
+      "metrics": {
+        "outcome": "accepted",
+        "passes": [
+          {
+            "contextUs": 5859,
+            "firstTokenUs": 169788,
+            "generatedTokens": 25,
+            "generationUs": 127464,
+            "outcome": "completed",
+            "pass": "technical-tail",
+            "prefillUs": 163416,
+            "prefilledTokens": 178,
+            "prefixHit": false,
+            "promptTokens": 178,
+            "restoreUs": 0,
+            "retainedCacheBytes": 46841268,
+            "snapshotUs": 0,
+            "tokenizationUs": 377,
+            "totalUs": 298650
+          },
+          {
+            "contextUs": 6058,
+            "firstTokenUs": 394511,
+            "generatedTokens": 29,
+            "generationUs": 165260,
+            "outcome": "completed",
+            "pass": "full-cleanup",
+            "prefillUs": 387559,
+            "prefilledTokens": 423,
+            "prefixHit": false,
+            "promptTokens": 423,
+            "restoreUs": 0,
+            "retainedCacheBytes": 46841268,
+            "snapshotUs": 0,
+            "tokenizationUs": 757,
+            "totalUs": 561220
+          }
+        ],
+        "personalization": {
+          "exampleIds": [],
+          "outputIntent": "verbatim",
+          "profileRevision": 0,
+          "vocabularyIds": []
+        },
+        "personalizationDroppedForBudget": false,
+        "tailDecision": "accepted",
+        "tailPersonalization": null
+      },
+      "pair": 9,
+      "rewriteUs": 860333,
+      "threads": 8
+    },
+    {
+      "benchmark": "two-pass-prefix-v1",
+      "cached": false,
+      "metrics": {
+        "outcome": "accepted",
+        "passes": [
+          {
+            "contextUs": 5868,
+            "firstTokenUs": 165838,
+            "generatedTokens": 25,
+            "generationUs": 125541,
+            "outcome": "completed",
+            "pass": "technical-tail",
+            "prefillUs": 159437,
+            "prefilledTokens": 178,
+            "prefixHit": false,
+            "promptTokens": 178,
+            "restoreUs": 0,
+            "retainedCacheBytes": 46841268,
+            "snapshotUs": 0,
+            "tokenizationUs": 402,
+            "totalUs": 292802
+          },
+          {
+            "contextUs": 5740,
+            "firstTokenUs": 392142,
+            "generatedTokens": 29,
+            "generationUs": 148970,
+            "outcome": "completed",
+            "pass": "full-cleanup",
+            "prefillUs": 385493,
+            "prefilledTokens": 423,
+            "prefixHit": false,
+            "promptTokens": 423,
+            "restoreUs": 0,
+            "retainedCacheBytes": 46841268,
+            "snapshotUs": 0,
+            "tokenizationUs": 769,
+            "totalUs": 542528
+          }
+        ],
+        "personalization": {
+          "exampleIds": [],
+          "outputIntent": "verbatim",
+          "profileRevision": 0,
+          "vocabularyIds": []
+        },
+        "personalizationDroppedForBudget": false,
+        "tailDecision": "accepted",
+        "tailPersonalization": null
+      },
+      "pair": 10,
+      "rewriteUs": 835800,
+      "threads": 8
+    },
+    {
+      "benchmark": "two-pass-prefix-v1",
+      "cached": true,
+      "metrics": {
+        "outcome": "accepted",
+        "passes": [
+          {
+            "contextUs": 5971,
+            "firstTokenUs": 43865,
+            "generatedTokens": 25,
+            "generationUs": 123841,
+            "outcome": "completed",
+            "pass": "technical-tail",
+            "prefillUs": 36837,
+            "prefilledTokens": 38,
+            "prefixHit": true,
+            "promptTokens": 178,
+            "restoreUs": 396,
+            "retainedCacheBytes": 46841268,
+            "snapshotUs": 0,
+            "tokenizationUs": 396,
+            "totalUs": 169026
+          },
+          {
+            "contextUs": 5584,
+            "firstTokenUs": 47637,
+            "generatedTokens": 29,
+            "generationUs": 146298,
+            "outcome": "completed",
+            "pass": "full-cleanup",
+            "prefillUs": 40349,
+            "prefilledTokens": 40,
+            "prefixHit": true,
+            "promptTokens": 423,
+            "restoreUs": 462,
+            "retainedCacheBytes": 46841268,
+            "snapshotUs": 0,
+            "tokenizationUs": 761,
+            "totalUs": 195275
+          }
+        ],
+        "personalization": {
+          "exampleIds": [],
+          "outputIntent": "verbatim",
+          "profileRevision": 0,
+          "vocabularyIds": []
+        },
+        "personalizationDroppedForBudget": false,
+        "tailDecision": "accepted",
+        "tailPersonalization": null
+      },
+      "pair": 10,
+      "rewriteUs": 364761,
+      "threads": 8
+    },
+    {
+      "benchmark": "two-pass-prefix-v1",
+      "cached": true,
+      "metrics": {
+        "outcome": "accepted",
+        "passes": [
+          {
+            "contextUs": 5658,
+            "firstTokenUs": 44590,
+            "generatedTokens": 25,
+            "generationUs": 123866,
+            "outcome": "completed",
+            "pass": "technical-tail",
+            "prefillUs": 37866,
+            "prefilledTokens": 38,
+            "prefixHit": true,
+            "promptTokens": 178,
+            "restoreUs": 393,
+            "retainedCacheBytes": 46841268,
+            "snapshotUs": 0,
+            "tokenizationUs": 403,
+            "totalUs": 169754
+          },
+          {
+            "contextUs": 5688,
+            "firstTokenUs": 47423,
+            "generatedTokens": 29,
+            "generationUs": 146199,
+            "outcome": "completed",
+            "pass": "full-cleanup",
+            "prefillUs": 40072,
+            "prefilledTokens": 40,
+            "prefixHit": true,
+            "promptTokens": 423,
+            "restoreUs": 451,
+            "retainedCacheBytes": 46841268,
+            "snapshotUs": 0,
+            "tokenizationUs": 743,
+            "totalUs": 194960
+          }
+        ],
+        "personalization": {
+          "exampleIds": [],
+          "outputIntent": "verbatim",
+          "profileRevision": 0,
+          "vocabularyIds": []
+        },
+        "personalizationDroppedForBudget": false,
+        "tailDecision": "accepted",
+        "tailPersonalization": null
+      },
+      "pair": 11,
+      "rewriteUs": 365170,
+      "threads": 8
+    },
+    {
+      "benchmark": "two-pass-prefix-v1",
+      "cached": false,
+      "metrics": {
+        "outcome": "accepted",
+        "passes": [
+          {
+            "contextUs": 5836,
+            "firstTokenUs": 166120,
+            "generatedTokens": 25,
+            "generationUs": 125424,
+            "outcome": "completed",
+            "pass": "technical-tail",
+            "prefillUs": 159728,
+            "prefilledTokens": 178,
+            "prefixHit": false,
+            "promptTokens": 178,
+            "restoreUs": 0,
+            "retainedCacheBytes": 46841268,
+            "snapshotUs": 0,
+            "tokenizationUs": 421,
+            "totalUs": 292947
+          },
+          {
+            "contextUs": 5822,
+            "firstTokenUs": 401530,
+            "generatedTokens": 29,
+            "generationUs": 164068,
+            "outcome": "completed",
+            "pass": "full-cleanup",
+            "prefillUs": 394761,
+            "prefilledTokens": 423,
+            "prefixHit": false,
+            "promptTokens": 423,
+            "restoreUs": 0,
+            "retainedCacheBytes": 46841268,
+            "snapshotUs": 0,
+            "tokenizationUs": 761,
+            "totalUs": 567215
+          }
+        ],
+        "personalization": {
+          "exampleIds": [],
+          "outputIntent": "verbatim",
+          "profileRevision": 0,
+          "vocabularyIds": []
+        },
+        "personalizationDroppedForBudget": false,
+        "tailDecision": "accepted",
+        "tailPersonalization": null
+      },
+      "pair": 11,
+      "rewriteUs": 860623,
+      "threads": 8
+    },
+    {
+      "benchmark": "two-pass-prefix-v1",
+      "cached": false,
+      "metrics": {
+        "outcome": "accepted",
+        "passes": [
+          {
+            "contextUs": 6253,
+            "firstTokenUs": 168581,
+            "generatedTokens": 25,
+            "generationUs": 125630,
+            "outcome": "completed",
+            "pass": "technical-tail",
+            "prefillUs": 161749,
+            "prefilledTokens": 178,
+            "prefixHit": false,
+            "promptTokens": 178,
+            "restoreUs": 0,
+            "retainedCacheBytes": 46841268,
+            "snapshotUs": 0,
+            "tokenizationUs": 446,
+            "totalUs": 296053
+          },
+          {
+            "contextUs": 6292,
+            "firstTokenUs": 394858,
+            "generatedTokens": 29,
+            "generationUs": 155629,
+            "outcome": "completed",
+            "pass": "full-cleanup",
+            "prefillUs": 387632,
+            "prefilledTokens": 423,
+            "prefixHit": false,
+            "promptTokens": 423,
+            "restoreUs": 0,
+            "retainedCacheBytes": 46841268,
+            "snapshotUs": 0,
+            "tokenizationUs": 793,
+            "totalUs": 551652
+          }
+        ],
+        "personalization": {
+          "exampleIds": [],
+          "outputIntent": "verbatim",
+          "profileRevision": 0,
+          "vocabularyIds": []
+        },
+        "personalizationDroppedForBudget": false,
+        "tailDecision": "accepted",
+        "tailPersonalization": null
+      },
+      "pair": 12,
+      "rewriteUs": 848190,
+      "threads": 8
+    },
+    {
+      "benchmark": "two-pass-prefix-v1",
+      "cached": true,
+      "metrics": {
+        "outcome": "accepted",
+        "passes": [
+          {
+            "contextUs": 6197,
+            "firstTokenUs": 44775,
+            "generatedTokens": 25,
+            "generationUs": 131426,
+            "outcome": "completed",
+            "pass": "technical-tail",
+            "prefillUs": 37335,
+            "prefilledTokens": 38,
+            "prefixHit": true,
+            "promptTokens": 178,
+            "restoreUs": 416,
+            "retainedCacheBytes": 46841268,
+            "snapshotUs": 0,
+            "tokenizationUs": 434,
+            "totalUs": 177642
+          },
+          {
+            "contextUs": 6478,
+            "firstTokenUs": 49729,
+            "generatedTokens": 29,
+            "generationUs": 162974,
+            "outcome": "completed",
+            "pass": "full-cleanup",
+            "prefillUs": 41066,
+            "prefilledTokens": 40,
+            "prefixHit": true,
+            "promptTokens": 423,
+            "restoreUs": 476,
+            "retainedCacheBytes": 46841268,
+            "snapshotUs": 0,
+            "tokenizationUs": 919,
+            "totalUs": 213831
+          }
+        ],
+        "personalization": {
+          "exampleIds": [],
+          "outputIntent": "verbatim",
+          "profileRevision": 0,
+          "vocabularyIds": []
+        },
+        "personalizationDroppedForBudget": false,
+        "tailDecision": "accepted",
+        "tailPersonalization": null
+      },
+      "pair": 12,
+      "rewriteUs": 391918,
+      "threads": 8
+    },
+    {
+      "benchmark": "two-pass-prefix-v1",
+      "cached": true,
+      "metrics": {
+        "outcome": "accepted",
+        "passes": [
+          {
+            "contextUs": 6301,
+            "firstTokenUs": 46788,
+            "generatedTokens": 25,
+            "generationUs": 132253,
+            "outcome": "completed",
+            "pass": "technical-tail",
+            "prefillUs": 39204,
+            "prefilledTokens": 38,
+            "prefixHit": true,
+            "promptTokens": 178,
+            "restoreUs": 414,
+            "retainedCacheBytes": 46841268,
+            "snapshotUs": 0,
+            "tokenizationUs": 400,
+            "totalUs": 180132
+          },
+          {
+            "contextUs": 5778,
+            "firstTokenUs": 47469,
+            "generatedTokens": 29,
+            "generationUs": 149851,
+            "outcome": "completed",
+            "pass": "full-cleanup",
+            "prefillUs": 39833,
+            "prefilledTokens": 40,
+            "prefixHit": true,
+            "promptTokens": 423,
+            "restoreUs": 452,
+            "retainedCacheBytes": 46841268,
+            "snapshotUs": 0,
+            "tokenizationUs": 747,
+            "totalUs": 198386
+          }
+        ],
+        "personalization": {
+          "exampleIds": [],
+          "outputIntent": "verbatim",
+          "profileRevision": 0,
+          "vocabularyIds": []
+        },
+        "personalizationDroppedForBudget": false,
+        "tailDecision": "accepted",
+        "tailPersonalization": null
+      },
+      "pair": 13,
+      "rewriteUs": 378960,
+      "threads": 8
+    },
+    {
+      "benchmark": "two-pass-prefix-v1",
+      "cached": false,
+      "metrics": {
+        "outcome": "accepted",
+        "passes": [
+          {
+            "contextUs": 5750,
+            "firstTokenUs": 167814,
+            "generatedTokens": 25,
+            "generationUs": 121340,
+            "outcome": "completed",
+            "pass": "technical-tail",
+            "prefillUs": 161541,
+            "prefilledTokens": 178,
+            "prefixHit": false,
+            "promptTokens": 178,
+            "restoreUs": 0,
+            "retainedCacheBytes": 46841268,
+            "snapshotUs": 0,
+            "tokenizationUs": 392,
+            "totalUs": 290338
+          },
+          {
+            "contextUs": 5873,
+            "firstTokenUs": 396368,
+            "generatedTokens": 29,
+            "generationUs": 143662,
+            "outcome": "completed",
+            "pass": "full-cleanup",
+            "prefillUs": 389619,
+            "prefilledTokens": 423,
+            "prefixHit": false,
+            "promptTokens": 423,
+            "restoreUs": 0,
+            "retainedCacheBytes": 46841268,
+            "snapshotUs": 0,
+            "tokenizationUs": 739,
+            "totalUs": 541200
+          }
+        ],
+        "personalization": {
+          "exampleIds": [],
+          "outputIntent": "verbatim",
+          "profileRevision": 0,
+          "vocabularyIds": []
+        },
+        "personalizationDroppedForBudget": false,
+        "tailDecision": "accepted",
+        "tailPersonalization": null
+      },
+      "pair": 13,
+      "rewriteUs": 831991,
+      "threads": 8
+    },
+    {
+      "benchmark": "two-pass-prefix-v1",
+      "cached": false,
+      "metrics": {
+        "outcome": "accepted",
+        "passes": [
+          {
+            "contextUs": 5896,
+            "firstTokenUs": 163686,
+            "generatedTokens": 25,
+            "generationUs": 121551,
+            "outcome": "completed",
+            "pass": "technical-tail",
+            "prefillUs": 157259,
+            "prefilledTokens": 178,
+            "prefixHit": false,
+            "promptTokens": 178,
+            "restoreUs": 0,
+            "retainedCacheBytes": 46841268,
+            "snapshotUs": 0,
+            "tokenizationUs": 395,
+            "totalUs": 286416
+          },
+          {
+            "contextUs": 5770,
+            "firstTokenUs": 385642,
+            "generatedTokens": 29,
+            "generationUs": 145134,
+            "outcome": "completed",
+            "pass": "full-cleanup",
+            "prefillUs": 378951,
+            "prefilledTokens": 423,
+            "prefixHit": false,
+            "promptTokens": 423,
+            "restoreUs": 0,
+            "retainedCacheBytes": 46841268,
+            "snapshotUs": 0,
+            "tokenizationUs": 777,
+            "totalUs": 532046
+          }
+        ],
+        "personalization": {
+          "exampleIds": [],
+          "outputIntent": "verbatim",
+          "profileRevision": 0,
+          "vocabularyIds": []
+        },
+        "personalizationDroppedForBudget": false,
+        "tailDecision": "accepted",
+        "tailPersonalization": null
+      },
+      "pair": 14,
+      "rewriteUs": 818917,
+      "threads": 8
+    },
+    {
+      "benchmark": "two-pass-prefix-v1",
+      "cached": true,
+      "metrics": {
+        "outcome": "accepted",
+        "passes": [
+          {
+            "contextUs": 5617,
+            "firstTokenUs": 43025,
+            "generatedTokens": 25,
+            "generationUs": 120096,
+            "outcome": "completed",
+            "pass": "technical-tail",
+            "prefillUs": 36357,
+            "prefilledTokens": 38,
+            "prefixHit": true,
+            "promptTokens": 178,
+            "restoreUs": 386,
+            "retainedCacheBytes": 46841268,
+            "snapshotUs": 0,
+            "tokenizationUs": 394,
+            "totalUs": 164273
+          },
+          {
+            "contextUs": 5668,
+            "firstTokenUs": 47066,
+            "generatedTokens": 29,
+            "generationUs": 140540,
+            "outcome": "completed",
+            "pass": "full-cleanup",
+            "prefillUs": 39733,
+            "prefilledTokens": 40,
+            "prefixHit": true,
+            "promptTokens": 423,
+            "restoreUs": 443,
+            "retainedCacheBytes": 46841268,
+            "snapshotUs": 0,
+            "tokenizationUs": 743,
+            "totalUs": 188743
+          }
+        ],
+        "personalization": {
+          "exampleIds": [],
+          "outputIntent": "verbatim",
+          "profileRevision": 0,
+          "vocabularyIds": []
+        },
+        "personalizationDroppedForBudget": false,
+        "tailDecision": "accepted",
+        "tailPersonalization": null
+      },
+      "pair": 14,
+      "rewriteUs": 353454,
+      "threads": 8
+    },
+    {
+      "benchmark": "two-pass-prefix-v1",
+      "cached": true,
+      "metrics": {
+        "outcome": "accepted",
+        "passes": [
+          {
+            "contextUs": 5716,
+            "firstTokenUs": 43911,
+            "generatedTokens": 25,
+            "generationUs": 119716,
+            "outcome": "completed",
+            "pass": "technical-tail",
+            "prefillUs": 37142,
+            "prefilledTokens": 38,
+            "prefixHit": true,
+            "promptTokens": 178,
+            "restoreUs": 388,
+            "retainedCacheBytes": 46841268,
+            "snapshotUs": 0,
+            "tokenizationUs": 371,
+            "totalUs": 164784
+          },
+          {
+            "contextUs": 5574,
+            "firstTokenUs": 47327,
+            "generatedTokens": 29,
+            "generationUs": 146861,
+            "outcome": "completed",
+            "pass": "full-cleanup",
+            "prefillUs": 40088,
+            "prefilledTokens": 40,
+            "prefixHit": true,
+            "promptTokens": 423,
+            "restoreUs": 446,
+            "retainedCacheBytes": 46841268,
+            "snapshotUs": 0,
+            "tokenizationUs": 733,
+            "totalUs": 195326
+          }
+        ],
+        "personalization": {
+          "exampleIds": [],
+          "outputIntent": "verbatim",
+          "profileRevision": 0,
+          "vocabularyIds": []
+        },
+        "personalizationDroppedForBudget": false,
+        "tailDecision": "accepted",
+        "tailPersonalization": null
+      },
+      "pair": 15,
+      "rewriteUs": 360560,
+      "threads": 8
+    },
+    {
+      "benchmark": "two-pass-prefix-v1",
+      "cached": false,
+      "metrics": {
+        "outcome": "accepted",
+        "passes": [
+          {
+            "contextUs": 5655,
+            "firstTokenUs": 163649,
+            "generatedTokens": 25,
+            "generationUs": 129430,
+            "outcome": "completed",
+            "pass": "technical-tail",
+            "prefillUs": 157485,
+            "prefilledTokens": 178,
+            "prefixHit": false,
+            "promptTokens": 178,
+            "restoreUs": 0,
+            "retainedCacheBytes": 46841268,
+            "snapshotUs": 0,
+            "tokenizationUs": 377,
+            "totalUs": 294325
+          },
+          {
+            "contextUs": 5943,
+            "firstTokenUs": 386160,
+            "generatedTokens": 29,
+            "generationUs": 152692,
+            "outcome": "completed",
+            "pass": "full-cleanup",
+            "prefillUs": 379318,
+            "prefilledTokens": 423,
+            "prefixHit": false,
+            "promptTokens": 423,
+            "restoreUs": 0,
+            "retainedCacheBytes": 46841268,
+            "snapshotUs": 0,
+            "tokenizationUs": 766,
+            "totalUs": 540036
+          }
+        ],
+        "personalization": {
+          "exampleIds": [],
+          "outputIntent": "verbatim",
+          "profileRevision": 0,
+          "vocabularyIds": []
+        },
+        "personalizationDroppedForBudget": false,
+        "tailDecision": "accepted",
+        "tailPersonalization": null
+      },
+      "pair": 15,
+      "rewriteUs": 834805,
+      "threads": 8
+    },
+    {
+      "benchmark": "two-pass-prefix-v1",
+      "cached": false,
+      "metrics": {
+        "outcome": "accepted",
+        "passes": [
+          {
+            "contextUs": 5503,
+            "firstTokenUs": 164755,
+            "generatedTokens": 25,
+            "generationUs": 127471,
+            "outcome": "completed",
+            "pass": "technical-tail",
+            "prefillUs": 158706,
+            "prefilledTokens": 178,
+            "prefixHit": false,
+            "promptTokens": 178,
+            "restoreUs": 0,
+            "retainedCacheBytes": 46841268,
+            "snapshotUs": 0,
+            "tokenizationUs": 402,
+            "totalUs": 293684
+          },
+          {
+            "contextUs": 6194,
+            "firstTokenUs": 388395,
+            "generatedTokens": 29,
+            "generationUs": 143281,
+            "outcome": "completed",
+            "pass": "full-cleanup",
+            "prefillUs": 381310,
+            "prefilledTokens": 423,
+            "prefixHit": false,
+            "promptTokens": 423,
+            "restoreUs": 0,
+            "retainedCacheBytes": 46841268,
+            "snapshotUs": 0,
+            "tokenizationUs": 759,
+            "totalUs": 532894
+          }
+        ],
+        "personalization": {
+          "exampleIds": [],
+          "outputIntent": "verbatim",
+          "profileRevision": 0,
+          "vocabularyIds": []
+        },
+        "personalizationDroppedForBudget": false,
+        "tailDecision": "accepted",
+        "tailPersonalization": null
+      },
+      "pair": 16,
+      "rewriteUs": 827018,
+      "threads": 8
+    },
+    {
+      "benchmark": "two-pass-prefix-v1",
+      "cached": true,
+      "metrics": {
+        "outcome": "accepted",
+        "passes": [
+          {
+            "contextUs": 5525,
+            "firstTokenUs": 43464,
+            "generatedTokens": 25,
+            "generationUs": 119583,
+            "outcome": "completed",
+            "pass": "technical-tail",
+            "prefillUs": 36898,
+            "prefilledTokens": 38,
+            "prefixHit": true,
+            "promptTokens": 178,
+            "restoreUs": 402,
+            "retainedCacheBytes": 46841268,
+            "snapshotUs": 0,
+            "tokenizationUs": 376,
+            "totalUs": 164217
+          },
+          {
+            "contextUs": 5679,
+            "firstTokenUs": 47654,
+            "generatedTokens": 29,
+            "generationUs": 140245,
+            "outcome": "completed",
+            "pass": "full-cleanup",
+            "prefillUs": 40278,
+            "prefilledTokens": 40,
+            "prefixHit": true,
+            "promptTokens": 423,
+            "restoreUs": 448,
+            "retainedCacheBytes": 46841268,
+            "snapshotUs": 0,
+            "tokenizationUs": 765,
+            "totalUs": 189104
+          }
+        ],
+        "personalization": {
+          "exampleIds": [],
+          "outputIntent": "verbatim",
+          "profileRevision": 0,
+          "vocabularyIds": []
+        },
+        "personalizationDroppedForBudget": false,
+        "tailDecision": "accepted",
+        "tailPersonalization": null
+      },
+      "pair": 16,
+      "rewriteUs": 353758,
+      "threads": 8
+    },
+    {
+      "benchmark": "two-pass-prefix-v1",
+      "cached": true,
+      "metrics": {
+        "outcome": "accepted",
+        "passes": [
+          {
+            "contextUs": 5983,
+            "firstTokenUs": 44308,
+            "generatedTokens": 25,
+            "generationUs": 119467,
+            "outcome": "completed",
+            "pass": "technical-tail",
+            "prefillUs": 37251,
+            "prefilledTokens": 38,
+            "prefixHit": true,
+            "promptTokens": 178,
+            "restoreUs": 390,
+            "retainedCacheBytes": 46841268,
+            "snapshotUs": 0,
+            "tokenizationUs": 395,
+            "totalUs": 164925
+          },
+          {
+            "contextUs": 5686,
+            "firstTokenUs": 47651,
+            "generatedTokens": 29,
+            "generationUs": 147048,
+            "outcome": "completed",
+            "pass": "full-cleanup",
+            "prefillUs": 40284,
+            "prefilledTokens": 40,
+            "prefixHit": true,
+            "promptTokens": 423,
+            "restoreUs": 462,
+            "retainedCacheBytes": 46841268,
+            "snapshotUs": 0,
+            "tokenizationUs": 741,
+            "totalUs": 195819
+          }
+        ],
+        "personalization": {
+          "exampleIds": [],
+          "outputIntent": "verbatim",
+          "profileRevision": 0,
+          "vocabularyIds": []
+        },
+        "personalizationDroppedForBudget": false,
+        "tailDecision": "accepted",
+        "tailPersonalization": null
+      },
+      "pair": 17,
+      "rewriteUs": 361176,
+      "threads": 8
+    },
+    {
+      "benchmark": "two-pass-prefix-v1",
+      "cached": false,
+      "metrics": {
+        "outcome": "accepted",
+        "passes": [
+          {
+            "contextUs": 5649,
+            "firstTokenUs": 165897,
+            "generatedTokens": 25,
+            "generationUs": 134310,
+            "outcome": "completed",
+            "pass": "technical-tail",
+            "prefillUs": 159715,
+            "prefilledTokens": 178,
+            "prefixHit": false,
+            "promptTokens": 178,
+            "restoreUs": 0,
+            "retainedCacheBytes": 46841268,
+            "snapshotUs": 0,
+            "tokenizationUs": 398,
+            "totalUs": 301445
+          },
+          {
+            "contextUs": 6117,
+            "firstTokenUs": 387462,
+            "generatedTokens": 29,
+            "generationUs": 147696,
+            "outcome": "completed",
+            "pass": "full-cleanup",
+            "prefillUs": 380433,
+            "prefilledTokens": 423,
+            "prefixHit": false,
+            "promptTokens": 423,
+            "restoreUs": 0,
+            "retainedCacheBytes": 46841268,
+            "snapshotUs": 0,
+            "tokenizationUs": 779,
+            "totalUs": 536393
+          }
+        ],
+        "personalization": {
+          "exampleIds": [],
+          "outputIntent": "verbatim",
+          "profileRevision": 0,
+          "vocabularyIds": []
+        },
+        "personalizationDroppedForBudget": false,
+        "tailDecision": "accepted",
+        "tailPersonalization": null
+      },
+      "pair": 17,
+      "rewriteUs": 838293,
+      "threads": 8
+    },
+    {
+      "benchmark": "two-pass-prefix-v1",
+      "cached": false,
+      "metrics": {
+        "outcome": "accepted",
+        "passes": [
+          {
+            "contextUs": 5950,
+            "firstTokenUs": 163291,
+            "generatedTokens": 25,
+            "generationUs": 120228,
+            "outcome": "completed",
+            "pass": "technical-tail",
+            "prefillUs": 156822,
+            "prefilledTokens": 178,
+            "prefixHit": false,
+            "promptTokens": 178,
+            "restoreUs": 0,
+            "retainedCacheBytes": 46841268,
+            "snapshotUs": 0,
+            "tokenizationUs": 389,
+            "totalUs": 284732
+          },
+          {
+            "contextUs": 5715,
+            "firstTokenUs": 390705,
+            "generatedTokens": 29,
+            "generationUs": 148093,
+            "outcome": "completed",
+            "pass": "full-cleanup",
+            "prefillUs": 384114,
+            "prefilledTokens": 423,
+            "prefixHit": false,
+            "promptTokens": 423,
+            "restoreUs": 0,
+            "retainedCacheBytes": 46841268,
+            "snapshotUs": 0,
+            "tokenizationUs": 743,
+            "totalUs": 540100
+          }
+        ],
+        "personalization": {
+          "exampleIds": [],
+          "outputIntent": "verbatim",
+          "profileRevision": 0,
+          "vocabularyIds": []
+        },
+        "personalizationDroppedForBudget": false,
+        "tailDecision": "accepted",
+        "tailPersonalization": null
+      },
+      "pair": 18,
+      "rewriteUs": 825273,
+      "threads": 8
+    },
+    {
+      "benchmark": "two-pass-prefix-v1",
+      "cached": true,
+      "metrics": {
+        "outcome": "accepted",
+        "passes": [
+          {
+            "contextUs": 6094,
+            "firstTokenUs": 45696,
+            "generatedTokens": 25,
+            "generationUs": 124822,
+            "outcome": "completed",
+            "pass": "technical-tail",
+            "prefillUs": 38429,
+            "prefilledTokens": 38,
+            "prefixHit": true,
+            "promptTokens": 178,
+            "restoreUs": 407,
+            "retainedCacheBytes": 46841268,
+            "snapshotUs": 0,
+            "tokenizationUs": 397,
+            "totalUs": 171702
+          },
+          {
+            "contextUs": 5749,
+            "firstTokenUs": 47493,
+            "generatedTokens": 29,
+            "generationUs": 145170,
+            "outcome": "completed",
+            "pass": "full-cleanup",
+            "prefillUs": 39977,
+            "prefilledTokens": 40,
+            "prefixHit": true,
+            "promptTokens": 423,
+            "restoreUs": 458,
+            "retainedCacheBytes": 46841268,
+            "snapshotUs": 0,
+            "tokenizationUs": 740,
+            "totalUs": 193883
+          }
+        ],
+        "personalization": {
+          "exampleIds": [],
+          "outputIntent": "verbatim",
+          "profileRevision": 0,
+          "vocabularyIds": []
+        },
+        "personalizationDroppedForBudget": false,
+        "tailDecision": "accepted",
+        "tailPersonalization": null
+      },
+      "pair": 18,
+      "rewriteUs": 366023,
+      "threads": 8
+    },
+    {
+      "benchmark": "two-pass-prefix-v1",
+      "cached": true,
+      "metrics": {
+        "outcome": "accepted",
+        "passes": [
+          {
+            "contextUs": 5744,
+            "firstTokenUs": 45234,
+            "generatedTokens": 25,
+            "generationUs": 120340,
+            "outcome": "completed",
+            "pass": "technical-tail",
+            "prefillUs": 38398,
+            "prefilledTokens": 38,
+            "prefixHit": true,
+            "promptTokens": 178,
+            "restoreUs": 405,
+            "retainedCacheBytes": 46841268,
+            "snapshotUs": 0,
+            "tokenizationUs": 386,
+            "totalUs": 166792
+          },
+          {
+            "contextUs": 5570,
+            "firstTokenUs": 47820,
+            "generatedTokens": 29,
+            "generationUs": 144757,
+            "outcome": "completed",
+            "pass": "full-cleanup",
+            "prefillUs": 40576,
+            "prefilledTokens": 40,
+            "prefixHit": true,
+            "promptTokens": 423,
+            "restoreUs": 452,
+            "retainedCacheBytes": 46841268,
+            "snapshotUs": 0,
+            "tokenizationUs": 726,
+            "totalUs": 193785
+          }
+        ],
+        "personalization": {
+          "exampleIds": [],
+          "outputIntent": "verbatim",
+          "profileRevision": 0,
+          "vocabularyIds": []
+        },
+        "personalizationDroppedForBudget": false,
+        "tailDecision": "accepted",
+        "tailPersonalization": null
+      },
+      "pair": 19,
+      "rewriteUs": 361027,
+      "threads": 8
+    },
+    {
+      "benchmark": "two-pass-prefix-v1",
+      "cached": false,
+      "metrics": {
+        "outcome": "accepted",
+        "passes": [
+          {
+            "contextUs": 5593,
+            "firstTokenUs": 165565,
+            "generatedTokens": 25,
+            "generationUs": 122748,
+            "outcome": "completed",
+            "pass": "technical-tail",
+            "prefillUs": 159455,
+            "prefilledTokens": 178,
+            "prefixHit": false,
+            "promptTokens": 178,
+            "restoreUs": 0,
+            "retainedCacheBytes": 46841268,
+            "snapshotUs": 0,
+            "tokenizationUs": 387,
+            "totalUs": 289606
+          },
+          {
+            "contextUs": 5874,
+            "firstTokenUs": 387720,
+            "generatedTokens": 29,
+            "generationUs": 153862,
+            "outcome": "completed",
+            "pass": "full-cleanup",
+            "prefillUs": 380962,
+            "prefilledTokens": 423,
+            "prefixHit": false,
+            "promptTokens": 423,
+            "restoreUs": 0,
+            "retainedCacheBytes": 46841268,
+            "snapshotUs": 0,
+            "tokenizationUs": 748,
+            "totalUs": 542922
+          }
+        ],
+        "personalization": {
+          "exampleIds": [],
+          "outputIntent": "verbatim",
+          "profileRevision": 0,
+          "vocabularyIds": []
+        },
+        "personalizationDroppedForBudget": false,
+        "tailDecision": "accepted",
+        "tailPersonalization": null
+      },
+      "pair": 19,
+      "rewriteUs": 832974,
+      "threads": 8
+    },
+    {
+      "benchmark": "two-pass-prefix-v1",
+      "cached": false,
+      "metrics": {
+        "outcome": "accepted",
+        "passes": [
+          {
+            "contextUs": 6041,
+            "firstTokenUs": 173312,
+            "generatedTokens": 25,
+            "generationUs": 125273,
+            "outcome": "completed",
+            "pass": "technical-tail",
+            "prefillUs": 166716,
+            "prefilledTokens": 178,
+            "prefixHit": false,
+            "promptTokens": 178,
+            "restoreUs": 0,
+            "retainedCacheBytes": 46841268,
+            "snapshotUs": 0,
+            "tokenizationUs": 420,
+            "totalUs": 299862
+          },
+          {
+            "contextUs": 5693,
+            "firstTokenUs": 388703,
+            "generatedTokens": 29,
+            "generationUs": 142799,
+            "outcome": "completed",
+            "pass": "full-cleanup",
+            "prefillUs": 382140,
+            "prefilledTokens": 423,
+            "prefixHit": false,
+            "promptTokens": 423,
+            "restoreUs": 0,
+            "retainedCacheBytes": 46841268,
+            "snapshotUs": 0,
+            "tokenizationUs": 739,
+            "totalUs": 532837
+          }
+        ],
+        "personalization": {
+          "exampleIds": [],
+          "outputIntent": "verbatim",
+          "profileRevision": 0,
+          "vocabularyIds": []
+        },
+        "personalizationDroppedForBudget": false,
+        "tailDecision": "accepted",
+        "tailPersonalization": null
+      },
+      "pair": 20,
+      "rewriteUs": 833143,
+      "threads": 8
+    },
+    {
+      "benchmark": "two-pass-prefix-v1",
+      "cached": true,
+      "metrics": {
+        "outcome": "accepted",
+        "passes": [
+          {
+            "contextUs": 5617,
+            "firstTokenUs": 42688,
+            "generatedTokens": 25,
+            "generationUs": 121884,
+            "outcome": "completed",
+            "pass": "technical-tail",
+            "prefillUs": 36018,
+            "prefilledTokens": 38,
+            "prefixHit": true,
+            "promptTokens": 178,
+            "restoreUs": 390,
+            "retainedCacheBytes": 46841268,
+            "snapshotUs": 0,
+            "tokenizationUs": 391,
+            "totalUs": 165824
+          },
+          {
+            "contextUs": 5920,
+            "firstTokenUs": 49422,
+            "generatedTokens": 29,
+            "generationUs": 145697,
+            "outcome": "completed",
+            "pass": "full-cleanup",
+            "prefillUs": 41642,
+            "prefilledTokens": 40,
+            "prefixHit": true,
+            "promptTokens": 423,
+            "restoreUs": 461,
+            "retainedCacheBytes": 46841268,
+            "snapshotUs": 0,
+            "tokenizationUs": 719,
+            "totalUs": 196374
+          }
+        ],
+        "personalization": {
+          "exampleIds": [],
+          "outputIntent": "verbatim",
+          "profileRevision": 0,
+          "vocabularyIds": []
+        },
+        "personalizationDroppedForBudget": false,
+        "tailDecision": "accepted",
+        "tailPersonalization": null
+      },
+      "pair": 20,
+      "rewriteUs": 362640,
+      "threads": 8
+    },
+    {
+      "benchmark": "two-pass-prefix-v1",
+      "cached": true,
+      "metrics": {
+        "outcome": "accepted",
+        "passes": [
+          {
+            "contextUs": 5720,
+            "firstTokenUs": 44783,
+            "generatedTokens": 25,
+            "generationUs": 121640,
+            "outcome": "completed",
+            "pass": "technical-tail",
+            "prefillUs": 37973,
+            "prefilledTokens": 38,
+            "prefixHit": true,
+            "promptTokens": 178,
+            "restoreUs": 395,
+            "retainedCacheBytes": 46841268,
+            "snapshotUs": 0,
+            "tokenizationUs": 391,
+            "totalUs": 167631
+          },
+          {
+            "contextUs": 5726,
+            "firstTokenUs": 47791,
+            "generatedTokens": 29,
+            "generationUs": 142738,
+            "outcome": "completed",
+            "pass": "full-cleanup",
+            "prefillUs": 40293,
+            "prefilledTokens": 40,
+            "prefixHit": true,
+            "promptTokens": 423,
+            "restoreUs": 482,
+            "retainedCacheBytes": 46841268,
+            "snapshotUs": 0,
+            "tokenizationUs": 756,
+            "totalUs": 191819
+          }
+        ],
+        "personalization": {
+          "exampleIds": [],
+          "outputIntent": "verbatim",
+          "profileRevision": 0,
+          "vocabularyIds": []
+        },
+        "personalizationDroppedForBudget": false,
+        "tailDecision": "accepted",
+        "tailPersonalization": null
+      },
+      "pair": 21,
+      "rewriteUs": 359889,
+      "threads": 8
+    },
+    {
+      "benchmark": "two-pass-prefix-v1",
+      "cached": false,
+      "metrics": {
+        "outcome": "accepted",
+        "passes": [
+          {
+            "contextUs": 5613,
+            "firstTokenUs": 165346,
+            "generatedTokens": 25,
+            "generationUs": 125145,
+            "outcome": "completed",
+            "pass": "technical-tail",
+            "prefillUs": 159194,
+            "prefilledTokens": 178,
+            "prefixHit": false,
+            "promptTokens": 178,
+            "restoreUs": 0,
+            "retainedCacheBytes": 46841268,
+            "snapshotUs": 0,
+            "tokenizationUs": 407,
+            "totalUs": 291799
+          },
+          {
+            "contextUs": 5682,
+            "firstTokenUs": 385734,
+            "generatedTokens": 29,
+            "generationUs": 144015,
+            "outcome": "completed",
+            "pass": "full-cleanup",
+            "prefillUs": 379185,
+            "prefilledTokens": 423,
+            "prefixHit": false,
+            "promptTokens": 423,
+            "restoreUs": 0,
+            "retainedCacheBytes": 46841268,
+            "snapshotUs": 0,
+            "tokenizationUs": 737,
+            "totalUs": 531145
+          }
+        ],
+        "personalization": {
+          "exampleIds": [],
+          "outputIntent": "verbatim",
+          "profileRevision": 0,
+          "vocabularyIds": []
+        },
+        "personalizationDroppedForBudget": false,
+        "tailDecision": "accepted",
+        "tailPersonalization": null
+      },
+      "pair": 21,
+      "rewriteUs": 823388,
+      "threads": 8
+    },
+    {
+      "benchmark": "two-pass-prefix-v1",
+      "cached": false,
+      "metrics": {
+        "outcome": "accepted",
+        "passes": [
+          {
+            "contextUs": 5758,
+            "firstTokenUs": 162900,
+            "generatedTokens": 25,
+            "generationUs": 120675,
+            "outcome": "completed",
+            "pass": "technical-tail",
+            "prefillUs": 156620,
+            "prefilledTokens": 178,
+            "prefixHit": false,
+            "promptTokens": 178,
+            "restoreUs": 0,
+            "retainedCacheBytes": 46841268,
+            "snapshotUs": 0,
+            "tokenizationUs": 390,
+            "totalUs": 284890
+          },
+          {
+            "contextUs": 5681,
+            "firstTokenUs": 398359,
+            "generatedTokens": 29,
+            "generationUs": 150056,
+            "outcome": "completed",
+            "pass": "full-cleanup",
+            "prefillUs": 391786,
+            "prefilledTokens": 423,
+            "prefixHit": false,
+            "promptTokens": 423,
+            "restoreUs": 0,
+            "retainedCacheBytes": 46841268,
+            "snapshotUs": 0,
+            "tokenizationUs": 754,
+            "totalUs": 549751
+          }
+        ],
+        "personalization": {
+          "exampleIds": [],
+          "outputIntent": "verbatim",
+          "profileRevision": 0,
+          "vocabularyIds": []
+        },
+        "personalizationDroppedForBudget": false,
+        "tailDecision": "accepted",
+        "tailPersonalization": null
+      },
+      "pair": 22,
+      "rewriteUs": 835093,
+      "threads": 8
+    },
+    {
+      "benchmark": "two-pass-prefix-v1",
+      "cached": true,
+      "metrics": {
+        "outcome": "accepted",
+        "passes": [
+          {
+            "contextUs": 6410,
+            "firstTokenUs": 44464,
+            "generatedTokens": 25,
+            "generationUs": 122528,
+            "outcome": "completed",
+            "pass": "technical-tail",
+            "prefillUs": 36920,
+            "prefilledTokens": 38,
+            "prefixHit": true,
+            "promptTokens": 178,
+            "restoreUs": 409,
+            "retainedCacheBytes": 46841268,
+            "snapshotUs": 0,
+            "tokenizationUs": 419,
+            "totalUs": 168278
+          },
+          {
+            "contextUs": 5832,
+            "firstTokenUs": 47472,
+            "generatedTokens": 29,
+            "generationUs": 145370,
+            "outcome": "completed",
+            "pass": "full-cleanup",
+            "prefillUs": 39888,
+            "prefilledTokens": 40,
+            "prefixHit": true,
+            "promptTokens": 423,
+            "restoreUs": 489,
+            "retainedCacheBytes": 46841268,
+            "snapshotUs": 0,
+            "tokenizationUs": 769,
+            "totalUs": 194208
+          }
+        ],
+        "personalization": {
+          "exampleIds": [],
+          "outputIntent": "verbatim",
+          "profileRevision": 0,
+          "vocabularyIds": []
+        },
+        "personalizationDroppedForBudget": false,
+        "tailDecision": "accepted",
+        "tailPersonalization": null
+      },
+      "pair": 22,
+      "rewriteUs": 362941,
+      "threads": 8
+    },
+    {
+      "benchmark": "two-pass-prefix-v1",
+      "cached": true,
+      "metrics": {
+        "outcome": "accepted",
+        "passes": [
+          {
+            "contextUs": 5788,
+            "firstTokenUs": 42846,
+            "generatedTokens": 25,
+            "generationUs": 119614,
+            "outcome": "completed",
+            "pass": "technical-tail",
+            "prefillUs": 36000,
+            "prefilledTokens": 38,
+            "prefixHit": true,
+            "promptTokens": 178,
+            "restoreUs": 384,
+            "retainedCacheBytes": 46841268,
+            "snapshotUs": 0,
+            "tokenizationUs": 391,
+            "totalUs": 163736
+          },
+          {
+            "contextUs": 5736,
+            "firstTokenUs": 47390,
+            "generatedTokens": 29,
+            "generationUs": 142762,
+            "outcome": "completed",
+            "pass": "full-cleanup",
+            "prefillUs": 39953,
+            "prefilledTokens": 40,
+            "prefixHit": true,
+            "promptTokens": 423,
+            "restoreUs": 453,
+            "retainedCacheBytes": 46841268,
+            "snapshotUs": 0,
+            "tokenizationUs": 751,
+            "totalUs": 191461
+          }
+        ],
+        "personalization": {
+          "exampleIds": [],
+          "outputIntent": "verbatim",
+          "profileRevision": 0,
+          "vocabularyIds": []
+        },
+        "personalizationDroppedForBudget": false,
+        "tailDecision": "accepted",
+        "tailPersonalization": null
+      },
+      "pair": 23,
+      "rewriteUs": 355637,
+      "threads": 8
+    },
+    {
+      "benchmark": "two-pass-prefix-v1",
+      "cached": false,
+      "metrics": {
+        "outcome": "accepted",
+        "passes": [
+          {
+            "contextUs": 5723,
+            "firstTokenUs": 165668,
+            "generatedTokens": 25,
+            "generationUs": 120476,
+            "outcome": "completed",
+            "pass": "technical-tail",
+            "prefillUs": 159421,
+            "prefilledTokens": 178,
+            "prefixHit": false,
+            "promptTokens": 178,
+            "restoreUs": 0,
+            "retainedCacheBytes": 46841268,
+            "snapshotUs": 0,
+            "tokenizationUs": 395,
+            "totalUs": 287514
+          },
+          {
+            "contextUs": 5632,
+            "firstTokenUs": 393558,
+            "generatedTokens": 29,
+            "generationUs": 147308,
+            "outcome": "completed",
+            "pass": "full-cleanup",
+            "prefillUs": 387050,
+            "prefilledTokens": 423,
+            "prefixHit": false,
+            "promptTokens": 423,
+            "restoreUs": 0,
+            "retainedCacheBytes": 46841268,
+            "snapshotUs": 0,
+            "tokenizationUs": 741,
+            "totalUs": 542201
+          }
+        ],
+        "personalization": {
+          "exampleIds": [],
+          "outputIntent": "verbatim",
+          "profileRevision": 0,
+          "vocabularyIds": []
+        },
+        "personalizationDroppedForBudget": false,
+        "tailDecision": "accepted",
+        "tailPersonalization": null
+      },
+      "pair": 23,
+      "rewriteUs": 830153,
+      "threads": 8
+    },
+    {
+      "benchmark": "two-pass-prefix-v1",
+      "cached": false,
+      "metrics": {
+        "outcome": "accepted",
+        "passes": [
+          {
+            "contextUs": 5800,
+            "firstTokenUs": 163287,
+            "generatedTokens": 25,
+            "generationUs": 124252,
+            "outcome": "completed",
+            "pass": "technical-tail",
+            "prefillUs": 156967,
+            "prefilledTokens": 178,
+            "prefixHit": false,
+            "promptTokens": 178,
+            "restoreUs": 0,
+            "retainedCacheBytes": 46841268,
+            "snapshotUs": 0,
+            "tokenizationUs": 390,
+            "totalUs": 288887
+          },
+          {
+            "contextUs": 5930,
+            "firstTokenUs": 386293,
+            "generatedTokens": 29,
+            "generationUs": 151061,
+            "outcome": "completed",
+            "pass": "full-cleanup",
+            "prefillUs": 379402,
+            "prefilledTokens": 423,
+            "prefixHit": false,
+            "promptTokens": 423,
+            "restoreUs": 0,
+            "retainedCacheBytes": 46841268,
+            "snapshotUs": 0,
+            "tokenizationUs": 830,
+            "totalUs": 538755
+          }
+        ],
+        "personalization": {
+          "exampleIds": [],
+          "outputIntent": "verbatim",
+          "profileRevision": 0,
+          "vocabularyIds": []
+        },
+        "personalizationDroppedForBudget": false,
+        "tailDecision": "accepted",
+        "tailPersonalization": null
+      },
+      "pair": 24,
+      "rewriteUs": 828090,
+      "threads": 8
+    },
+    {
+      "benchmark": "two-pass-prefix-v1",
+      "cached": true,
+      "metrics": {
+        "outcome": "accepted",
+        "passes": [
+          {
+            "contextUs": 6388,
+            "firstTokenUs": 45107,
+            "generatedTokens": 25,
+            "generationUs": 124690,
+            "outcome": "completed",
+            "pass": "technical-tail",
+            "prefillUs": 37466,
+            "prefilledTokens": 38,
+            "prefixHit": true,
+            "promptTokens": 178,
+            "restoreUs": 409,
+            "retainedCacheBytes": 46841268,
+            "snapshotUs": 0,
+            "tokenizationUs": 404,
+            "totalUs": 171124
+          },
+          {
+            "contextUs": 6081,
+            "firstTokenUs": 47468,
+            "generatedTokens": 29,
+            "generationUs": 155548,
+            "outcome": "completed",
+            "pass": "full-cleanup",
+            "prefillUs": 39548,
+            "prefilledTokens": 40,
+            "prefixHit": true,
+            "promptTokens": 423,
+            "restoreUs": 463,
+            "retainedCacheBytes": 46841268,
+            "snapshotUs": 0,
+            "tokenizationUs": 822,
+            "totalUs": 204373
+          }
+        ],
+        "personalization": {
+          "exampleIds": [],
+          "outputIntent": "verbatim",
+          "profileRevision": 0,
+          "vocabularyIds": []
+        },
+        "personalizationDroppedForBudget": false,
+        "tailDecision": "accepted",
+        "tailPersonalization": null
+      },
+      "pair": 24,
+      "rewriteUs": 375971,
+      "threads": 8
+    },
+    {
+      "benchmark": "two-pass-prefix-v1",
+      "cached": true,
+      "metrics": {
+        "outcome": "accepted",
+        "passes": [
+          {
+            "contextUs": 5823,
+            "firstTokenUs": 43539,
+            "generatedTokens": 25,
+            "generationUs": 129960,
+            "outcome": "completed",
+            "pass": "technical-tail",
+            "prefillUs": 36635,
+            "prefilledTokens": 38,
+            "prefixHit": true,
+            "promptTokens": 178,
+            "restoreUs": 392,
+            "retainedCacheBytes": 46841268,
+            "snapshotUs": 0,
+            "tokenizationUs": 415,
+            "totalUs": 174814
+          },
+          {
+            "contextUs": 6642,
+            "firstTokenUs": 48351,
+            "generatedTokens": 29,
+            "generationUs": 145240,
+            "outcome": "completed",
+            "pass": "full-cleanup",
+            "prefillUs": 39626,
+            "prefilledTokens": 40,
+            "prefixHit": true,
+            "promptTokens": 423,
+            "restoreUs": 487,
+            "retainedCacheBytes": 46841268,
+            "snapshotUs": 0,
+            "tokenizationUs": 792,
+            "totalUs": 194931
+          }
+        ],
+        "personalization": {
+          "exampleIds": [],
+          "outputIntent": "verbatim",
+          "profileRevision": 0,
+          "vocabularyIds": []
+        },
+        "personalizationDroppedForBudget": false,
+        "tailDecision": "accepted",
+        "tailPersonalization": null
+      },
+      "pair": 25,
+      "rewriteUs": 370210,
+      "threads": 8
+    },
+    {
+      "benchmark": "two-pass-prefix-v1",
+      "cached": false,
+      "metrics": {
+        "outcome": "accepted",
+        "passes": [
+          {
+            "contextUs": 5914,
+            "firstTokenUs": 162979,
+            "generatedTokens": 25,
+            "generationUs": 121975,
+            "outcome": "completed",
+            "pass": "technical-tail",
+            "prefillUs": 156527,
+            "prefilledTokens": 178,
+            "prefixHit": false,
+            "promptTokens": 178,
+            "restoreUs": 0,
+            "retainedCacheBytes": 46841268,
+            "snapshotUs": 0,
+            "tokenizationUs": 402,
+            "totalUs": 286347
+          },
+          {
+            "contextUs": 6080,
+            "firstTokenUs": 379885,
+            "generatedTokens": 29,
+            "generationUs": 152970,
+            "outcome": "completed",
+            "pass": "full-cleanup",
+            "prefillUs": 372896,
+            "prefilledTokens": 423,
+            "prefixHit": false,
+            "promptTokens": 423,
+            "restoreUs": 0,
+            "retainedCacheBytes": 46841268,
+            "snapshotUs": 0,
+            "tokenizationUs": 762,
+            "totalUs": 534189
+          }
+        ],
+        "personalization": {
+          "exampleIds": [],
+          "outputIntent": "verbatim",
+          "profileRevision": 0,
+          "vocabularyIds": []
+        },
+        "personalizationDroppedForBudget": false,
+        "tailDecision": "accepted",
+        "tailPersonalization": null
+      },
+      "pair": 25,
+      "rewriteUs": 820991,
+      "threads": 8
+    },
+    {
+      "benchmark": "two-pass-prefix-v1",
+      "cached": false,
+      "metrics": {
+        "outcome": "accepted",
+        "passes": [
+          {
+            "contextUs": 6476,
+            "firstTokenUs": 164940,
+            "generatedTokens": 25,
+            "generationUs": 123368,
+            "outcome": "completed",
+            "pass": "technical-tail",
+            "prefillUs": 157922,
+            "prefilledTokens": 178,
+            "prefixHit": false,
+            "promptTokens": 178,
+            "restoreUs": 0,
+            "retainedCacheBytes": 46841268,
+            "snapshotUs": 0,
+            "tokenizationUs": 404,
+            "totalUs": 289697
+          },
+          {
+            "contextUs": 5981,
+            "firstTokenUs": 384767,
+            "generatedTokens": 29,
+            "generationUs": 147097,
+            "outcome": "completed",
+            "pass": "full-cleanup",
+            "prefillUs": 377879,
+            "prefilledTokens": 423,
+            "prefixHit": false,
+            "promptTokens": 423,
+            "restoreUs": 0,
+            "retainedCacheBytes": 46841268,
+            "snapshotUs": 0,
+            "tokenizationUs": 766,
+            "totalUs": 533223
+          }
+        ],
+        "personalization": {
+          "exampleIds": [],
+          "outputIntent": "verbatim",
+          "profileRevision": 0,
+          "vocabularyIds": []
+        },
+        "personalizationDroppedForBudget": false,
+        "tailDecision": "accepted",
+        "tailPersonalization": null
+      },
+      "pair": 26,
+      "rewriteUs": 823381,
+      "threads": 8
+    },
+    {
+      "benchmark": "two-pass-prefix-v1",
+      "cached": true,
+      "metrics": {
+        "outcome": "accepted",
+        "passes": [
+          {
+            "contextUs": 6153,
+            "firstTokenUs": 43322,
+            "generatedTokens": 25,
+            "generationUs": 120841,
+            "outcome": "completed",
+            "pass": "technical-tail",
+            "prefillUs": 36085,
+            "prefilledTokens": 38,
+            "prefixHit": true,
+            "promptTokens": 178,
+            "restoreUs": 408,
+            "retainedCacheBytes": 46841268,
+            "snapshotUs": 0,
+            "tokenizationUs": 401,
+            "totalUs": 165472
+          },
+          {
+            "contextUs": 5921,
+            "firstTokenUs": 46305,
+            "generatedTokens": 29,
+            "generationUs": 142720,
+            "outcome": "completed",
+            "pass": "full-cleanup",
+            "prefillUs": 38669,
+            "prefilledTokens": 40,
+            "prefixHit": true,
+            "promptTokens": 423,
+            "restoreUs": 480,
+            "retainedCacheBytes": 46841268,
+            "snapshotUs": 0,
+            "tokenizationUs": 759,
+            "totalUs": 190360
+          }
+        ],
+        "personalization": {
+          "exampleIds": [],
+          "outputIntent": "verbatim",
+          "profileRevision": 0,
+          "vocabularyIds": []
+        },
+        "personalizationDroppedForBudget": false,
+        "tailDecision": "accepted",
+        "tailPersonalization": null
+      },
+      "pair": 26,
+      "rewriteUs": 356284,
+      "threads": 8
+    },
+    {
+      "benchmark": "two-pass-prefix-v1",
+      "cached": true,
+      "metrics": {
+        "outcome": "accepted",
+        "passes": [
+          {
+            "contextUs": 6038,
+            "firstTokenUs": 43265,
+            "generatedTokens": 25,
+            "generationUs": 120013,
+            "outcome": "completed",
+            "pass": "technical-tail",
+            "prefillUs": 36177,
+            "prefilledTokens": 38,
+            "prefixHit": true,
+            "promptTokens": 178,
+            "restoreUs": 389,
+            "retainedCacheBytes": 46841268,
+            "snapshotUs": 0,
+            "tokenizationUs": 395,
+            "totalUs": 164664
+          },
+          {
+            "contextUs": 5689,
+            "firstTokenUs": 45869,
+            "generatedTokens": 29,
+            "generationUs": 144497,
+            "outcome": "completed",
+            "pass": "full-cleanup",
+            "prefillUs": 38439,
+            "prefilledTokens": 40,
+            "prefixHit": true,
+            "promptTokens": 423,
+            "restoreUs": 460,
+            "retainedCacheBytes": 46841268,
+            "snapshotUs": 0,
+            "tokenizationUs": 756,
+            "totalUs": 191657
+          }
+        ],
+        "personalization": {
+          "exampleIds": [],
+          "outputIntent": "verbatim",
+          "profileRevision": 0,
+          "vocabularyIds": []
+        },
+        "personalizationDroppedForBudget": false,
+        "tailDecision": "accepted",
+        "tailPersonalization": null
+      },
+      "pair": 27,
+      "rewriteUs": 356766,
+      "threads": 8
+    },
+    {
+      "benchmark": "two-pass-prefix-v1",
+      "cached": false,
+      "metrics": {
+        "outcome": "accepted",
+        "passes": [
+          {
+            "contextUs": 5934,
+            "firstTokenUs": 164658,
+            "generatedTokens": 25,
+            "generationUs": 122635,
+            "outcome": "completed",
+            "pass": "technical-tail",
+            "prefillUs": 158183,
+            "prefilledTokens": 178,
+            "prefixHit": false,
+            "promptTokens": 178,
+            "restoreUs": 0,
+            "retainedCacheBytes": 46841268,
+            "snapshotUs": 0,
+            "tokenizationUs": 401,
+            "totalUs": 288553
+          },
+          {
+            "contextUs": 5759,
+            "firstTokenUs": 387055,
+            "generatedTokens": 29,
+            "generationUs": 164464,
+            "outcome": "completed",
+            "pass": "full-cleanup",
+            "prefillUs": 380396,
+            "prefilledTokens": 423,
+            "prefixHit": false,
+            "promptTokens": 423,
+            "restoreUs": 0,
+            "retainedCacheBytes": 46841268,
+            "snapshotUs": 0,
+            "tokenizationUs": 761,
+            "totalUs": 552804
+          }
+        ],
+        "personalization": {
+          "exampleIds": [],
+          "outputIntent": "verbatim",
+          "profileRevision": 0,
+          "vocabularyIds": []
+        },
+        "personalizationDroppedForBudget": false,
+        "tailDecision": "accepted",
+        "tailPersonalization": null
+      },
+      "pair": 27,
+      "rewriteUs": 841824,
+      "threads": 8
+    },
+    {
+      "benchmark": "two-pass-prefix-v1",
+      "cached": false,
+      "metrics": {
+        "outcome": "accepted",
+        "passes": [
+          {
+            "contextUs": 6124,
+            "firstTokenUs": 168775,
+            "generatedTokens": 25,
+            "generationUs": 127246,
+            "outcome": "completed",
+            "pass": "technical-tail",
+            "prefillUs": 162106,
+            "prefilledTokens": 178,
+            "prefixHit": false,
+            "promptTokens": 178,
+            "restoreUs": 0,
+            "retainedCacheBytes": 46841268,
+            "snapshotUs": 0,
+            "tokenizationUs": 409,
+            "totalUs": 297317
+          },
+          {
+            "contextUs": 6216,
+            "firstTokenUs": 390692,
+            "generatedTokens": 29,
+            "generationUs": 161527,
+            "outcome": "completed",
+            "pass": "full-cleanup",
+            "prefillUs": 383514,
+            "prefilledTokens": 423,
+            "prefixHit": false,
+            "promptTokens": 423,
+            "restoreUs": 0,
+            "retainedCacheBytes": 46841268,
+            "snapshotUs": 0,
+            "tokenizationUs": 815,
+            "totalUs": 553550
+          }
+        ],
+        "personalization": {
+          "exampleIds": [],
+          "outputIntent": "verbatim",
+          "profileRevision": 0,
+          "vocabularyIds": []
+        },
+        "personalizationDroppedForBudget": false,
+        "tailDecision": "accepted",
+        "tailPersonalization": null
+      },
+      "pair": 28,
+      "rewriteUs": 851356,
+      "threads": 8
+    },
+    {
+      "benchmark": "two-pass-prefix-v1",
+      "cached": true,
+      "metrics": {
+        "outcome": "accepted",
+        "passes": [
+          {
+            "contextUs": 6833,
+            "firstTokenUs": 48404,
+            "generatedTokens": 25,
+            "generationUs": 136960,
+            "outcome": "completed",
+            "pass": "technical-tail",
+            "prefillUs": 40251,
+            "prefilledTokens": 38,
+            "prefixHit": true,
+            "promptTokens": 178,
+            "restoreUs": 425,
+            "retainedCacheBytes": 46841268,
+            "snapshotUs": 0,
+            "tokenizationUs": 431,
+            "totalUs": 186697
+          },
+          {
+            "contextUs": 7252,
+            "firstTokenUs": 51898,
+            "generatedTokens": 29,
+            "generationUs": 156604,
+            "outcome": "completed",
+            "pass": "full-cleanup",
+            "prefillUs": 42386,
+            "prefilledTokens": 40,
+            "prefixHit": true,
+            "promptTokens": 423,
+            "restoreUs": 514,
+            "retainedCacheBytes": 46841268,
+            "snapshotUs": 0,
+            "tokenizationUs": 864,
+            "totalUs": 209851
+          }
+        ],
+        "personalization": {
+          "exampleIds": [],
+          "outputIntent": "verbatim",
+          "profileRevision": 0,
+          "vocabularyIds": []
+        },
+        "personalizationDroppedForBudget": false,
+        "tailDecision": "accepted",
+        "tailPersonalization": null
+      },
+      "pair": 28,
+      "rewriteUs": 397053,
+      "threads": 8
+    },
+    {
+      "benchmark": "two-pass-prefix-v1",
+      "cached": true,
+      "metrics": {
+        "outcome": "accepted",
+        "passes": [
+          {
+            "contextUs": 6477,
+            "firstTokenUs": 46423,
+            "generatedTokens": 25,
+            "generationUs": 138393,
+            "outcome": "completed",
+            "pass": "technical-tail",
+            "prefillUs": 38627,
+            "prefilledTokens": 38,
+            "prefixHit": true,
+            "promptTokens": 178,
+            "restoreUs": 435,
+            "retainedCacheBytes": 46841268,
+            "snapshotUs": 0,
+            "tokenizationUs": 432,
+            "totalUs": 186178
+          },
+          {
+            "contextUs": 7365,
+            "firstTokenUs": 53539,
+            "generatedTokens": 29,
+            "generationUs": 166474,
+            "outcome": "completed",
+            "pass": "full-cleanup",
+            "prefillUs": 43911,
+            "prefilledTokens": 40,
+            "prefixHit": true,
+            "promptTokens": 423,
+            "restoreUs": 530,
+            "retainedCacheBytes": 46841268,
+            "snapshotUs": 0,
+            "tokenizationUs": 822,
+            "totalUs": 221403
+          }
+        ],
+        "personalization": {
+          "exampleIds": [],
+          "outputIntent": "verbatim",
+          "profileRevision": 0,
+          "vocabularyIds": []
+        },
+        "personalizationDroppedForBudget": false,
+        "tailDecision": "accepted",
+        "tailPersonalization": null
+      },
+      "pair": 29,
+      "rewriteUs": 408137,
+      "threads": 8
+    },
+    {
+      "benchmark": "two-pass-prefix-v1",
+      "cached": false,
+      "metrics": {
+        "outcome": "accepted",
+        "passes": [
+          {
+            "contextUs": 7235,
+            "firstTokenUs": 179867,
+            "generatedTokens": 25,
+            "generationUs": 134808,
+            "outcome": "completed",
+            "pass": "technical-tail",
+            "prefillUs": 172017,
+            "prefilledTokens": 178,
+            "prefixHit": false,
+            "promptTokens": 178,
+            "restoreUs": 0,
+            "retainedCacheBytes": 46841268,
+            "snapshotUs": 0,
+            "tokenizationUs": 446,
+            "totalUs": 316031
+          },
+          {
+            "contextUs": 6873,
+            "firstTokenUs": 418902,
+            "generatedTokens": 29,
+            "generationUs": 154999,
+            "outcome": "completed",
+            "pass": "full-cleanup",
+            "prefillUs": 411020,
+            "prefilledTokens": 423,
+            "prefixHit": false,
+            "promptTokens": 423,
+            "restoreUs": 0,
+            "retainedCacheBytes": 46841268,
+            "snapshotUs": 0,
+            "tokenizationUs": 845,
+            "totalUs": 575320
+          }
+        ],
+        "personalization": {
+          "exampleIds": [],
+          "outputIntent": "verbatim",
+          "profileRevision": 0,
+          "vocabularyIds": []
+        },
+        "personalizationDroppedForBudget": false,
+        "tailDecision": "accepted",
+        "tailPersonalization": null
+      },
+      "pair": 29,
+      "rewriteUs": 891885,
+      "threads": 8
+    }
+  ]
+}
