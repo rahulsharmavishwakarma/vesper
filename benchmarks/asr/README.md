@@ -44,6 +44,14 @@ The [18 September Whisper native screen](../../docs/validation/whisper-2026-09-1
 
 The [18 September VibeVoice CPU reference screen](../../docs/validation/vibevoice-2026-09-18.md) uses the pinned Microsoft step API, `scripts/probe-vibevoice.py`, and the canonical Rust `score_json` helper. The [family inventory](vibevoice-inventory.json) separates total parameters from backbone labels and quantized file sizes. No complete official VibeVoice ASR model satisfies a strict <2B total limit; the requested Streaming-1.5B is an out-of-budget reference, with no production adapter.
 
+The maintained Python probe now uses Transformers 5.10.1 with a
+[verified publisher-source patch](../../patches/vibevoice/README.md). Follow the
+[current compatibility checks](../../docs/development.md#python-tooling-policy)
+before replaying those plans. The source/checkpoint revisions remain pinned;
+the probe verifies all loaded tensors, tying and streaming cache progression.
+Historical reports describe their original environments and do not transfer
+unchanged to this port.
+
 The subsequent [quantized BitNet CPU benchmark](../../docs/validation/vibevoice-bitnet-2026-09-18.md) executes the verified specialized GGUF pair using the official native CLI and resident-file server. It includes matching corpus controls, thread and normalization ablations, a fresh Cohere comparison, raw-output/completion instrumentation and a separately measured decoder-position correction. Memory-blocked long input and failed hotword/JSON output remain visible. The native server's token output is not an incremental-audio streaming adapter; this development benchmark does not make the capability entry executable in the application.
 
 ### Python environments

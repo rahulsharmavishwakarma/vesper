@@ -1,0 +1,20 @@
+{
+  "sourceRevision": "1541f590c7099820f10ea012f48d2399282df69f",
+  "modelRevision": "4262d23d8a539a6530cf64fbd0b1751ef9a30853",
+  "transformersVersion": "5.10.1",
+  "patchSha256": "f8f5753ed60f9d307d73fcc3fae7ca9317b5ecc39c9cd52fb097f589544e70c5",
+  "files": {
+    "vibevoice/modular/modular_vibevoice_text_tokenizer.py": {
+      "before": "03df076a9d7da769de4243e09c880d5787b2db360b568e9efecb77932b13f8e5",
+      "after": "bf30b9229ea50b5dd03985dd5a17780a33c9eb25ec2dd823767b726f4e190130"
+    },
+    "vibevoice/modular/modeling_vibevoice_asr.py": {
+      "before": "847f1613ad836d8f2176ce90c27b4405af27b4f236320637cc693237b09facbb",
+      "after": "1827d4c94ef180c457ace52f358fe485f20f755dfbe7f2bab0b23aebb4687af4"
+    },
+    "vibevoice/modular/modular_vibevoice_tokenizer.py": {
+      "before": "f2fdcdaff26a685510c982634cad3be8258b299f89566a87188c932fd85f816d",
+      "after": "83a5cc35f6d39a45dc3b7764aa353a4f5f2c850222eba82ec7e3c8652e742bf0"
+    }
+  }
+}

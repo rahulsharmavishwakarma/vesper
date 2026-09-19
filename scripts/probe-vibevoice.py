@@ -18,6 +18,8 @@ import sys
 import time
 from pathlib import Path
 
+from vibevoice_compat import prepare_source
+
 
 def digest(path):
     value = hashlib.sha256()
@@ -96,7 +98,11 @@ def main():
         started = time.perf_counter()
         report["provenance"] = check_artifacts(args.root)
         report["verificationMs"] = (time.perf_counter() - started) * 1000
-        sys.path.insert(0, str((args.root / "source").resolve()))
+        prepared_source, compatibility = prepare_source(args.root)
+        report["compatibilityPatch"] = compatibility
+        if importlib.metadata.version("transformers") != compatibility["transformersVersion"]:
+            raise ValueError("Use the locked VibeVoice environment for this compatibility patch")
+        sys.path.insert(0, prepared_source.name)
         import numpy as np
         import torch
         from vibevoice.modular.modeling_vibevoice_asr import (
@@ -131,16 +137,51 @@ def main():
             str(model_path),
             local_files_only=True,
         )
-        model = (
-            VibeVoiceASRForConditionalGeneration.from_pretrained(
-                str(model_path),
-                torch_dtype=torch.float32,
-                attn_implementation="sdpa",
-                local_files_only=True,
-            )
-            .to("cpu")
-            .eval()
+        model, loading_info = VibeVoiceASRForConditionalGeneration.from_pretrained(
+            str(model_path),
+            dtype=torch.float32,
+            attn_implementation="sdpa",
+            local_files_only=True,
+            output_loading_info=True,
         )
+        report["loadingInfo"] = {
+            key: sorted(value) if isinstance(value, set) else value
+            for key, value in loading_info.items()
+        }
+        if any(
+            loading_info.get(key)
+            for key in ("missing_keys", "unexpected_keys", "mismatched_keys", "error_msgs")
+        ):
+            raise ValueError("Checkpoint loading has unexplained missing or incompatible weights")
+        model = model.to("cpu").eval()
+        from safetensors import safe_open
+
+        # A major loader upgrade must not silently reinitialize trained weights.
+        # Check every tensor, including the duplicated tied embeddings, exactly.
+        checked_tensors = 0
+        weight_map = json.loads((model_path / "model.safetensors.index.json").read_text())[
+            "weight_map"
+        ]
+        loaded_state = model.state_dict()
+        for shard in sorted(set(weight_map.values())):
+            with safe_open(model_path / shard, framework="pt", device="cpu") as checkpoint:
+                for name in checkpoint.keys():
+                    actual = loaded_state[name]
+                    expected = checkpoint.get_tensor(name).to(actual.dtype)
+                    if not torch.equal(actual, expected):
+                        raise ValueError(f"Loaded tensor differs from pinned checkpoint: {name}")
+                    checked_tensors += 1
+        del loaded_state, actual, expected
+        report["checkpointTensorsVerified"] = checked_tensors
+        report["tiedEmbeddingIdentity"] = (
+            model.get_input_embeddings().weight is model.get_output_embeddings().weight
+        )
+        if model.config.tie_word_embeddings and not report["tiedEmbeddingIdentity"]:
+            raise ValueError("Expected tied embeddings do not share parameter identity")
+        acoustic = model.model.acoustic_tokenizer
+        report["acousticSamplingStd"] = acoustic.fix_std.item()
+        if report["acousticSamplingStd"] != float(acoustic.config.fix_std):
+            raise ValueError("Acoustic sampling buffer differs from the pinned configuration")
         report["loadMs"] = (time.perf_counter() - started) * 1000
         report["loadedUniqueParameters"] = sum(p.numel() for p in model.parameters())
         report["loadedParameterBytes"] = sum(
@@ -201,6 +242,7 @@ def main():
                     processor.tokenizer,
                     context_info=item.get("hotwords"),
                 )
+                row["initialCacheLength"] = cache_length(session["past_key_values"])
                 row["promptPrefillMs"] = (time.perf_counter() - request_start) * 1000
                 first_partial = None
                 for position in range(0, len(audio), advance):
@@ -231,6 +273,8 @@ def main():
                     )
                     finished = time.perf_counter()
                     after = cache_length(session["past_key_values"])
+                    if after <= before:
+                        raise ValueError("Streaming cache did not advance")
                     count = after - before - features.shape[1] - 3
                     chunk = {
                         "startSample": position,
@@ -240,6 +284,8 @@ def main():
                         "audioReadyMs": ready * 1000,
                         "encoderMs": (encoded - chunk_start) * 1000,
                         "decoderMs": (finished - encoded) * 1000,
+                        "cacheBefore": before,
+                        "cacheAfter": after,
                         "emissionMs": (finished - request_start) * 1000,
                         "firstGeneratedTokenMs": first_token[0] if first_token else None,
                         "backlogBeforeComputeMs": max(

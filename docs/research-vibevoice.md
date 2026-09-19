@@ -92,16 +92,24 @@ entry. An isolated Python probe establishes only its measured reference-runtime
 envelope. It does not qualify the Rust application, the writer pipeline, an
 accelerator, or a production streaming lifetime.
 
-The maintained Python probe environment now pins Torch 2.13.0, Transformers
-4.57.6, Diffusers 0.38.0, Safetensors 0.8.0 and Tokenizers 0.22.2. Accelerate is
-not installed: this probe uses direct CPU model loading with no device dispatch.
-Imports, verified checkpoint loading and a one-recording public-audio smoke test
-passed with this stack on 19 September 2026. The dated full-screen results retain
-their original environment and are not requalified by this smoke test.
-Transformers 4 still has known advisories; upgrading to 5 requires adapting the
-pinned publisher code, not just changing a package version. See
-[dependency security status](ci-and-releases.md#dependency-security-status-and-upstream-limits)
-for the exact findings, validation scope and failing audit gates.
+The maintained isolated probe environment pins Torch 2.13.0, Transformers 5.10.1,
+Hub 1.5.0, Diffusers 0.38.0, Safetensors 0.8.0 and Tokenizers 0.22.2.
+[The reviewed compatibility patch](../patches/vibevoice/README.md) adapts the
+publisher's tokenizer, initialization and tied-weight APIs; it is a local port,
+not upstream support for Transformers 5. The checkpoint and its weights remain
+unchanged. Each probe run verifies source/patch provenance, all checkpoint
+tensors, tied-parameter identity and the non-persistent acoustic sampling buffer
+before decoding. Accelerate remains absent. The [dependency compatibility
+validation](validation/dependency-security-compat-2026-09-19.md) records the local
+port checks and their limits.
+
+Run the tokenizer comparison with the recorded 4.57.6 baseline and replay the
+same public plans before accepting changes. This checks the existing manual
+streaming API, not TTS, alternate checkpoints, direct tokenizer construction,
+or application integration. The dated 18 September results retain their
+original environment and are not overwritten by dependency requalification.
+See [dependency security status](ci-and-releases.md#dependency-security-status-and-upstream-limits)
+for the audit policy and exact scope.
 
 The official file generator pre-encodes every window before yielding text.
 Paced tests must instead use `init_streaming_state`, `encode_speech`, and

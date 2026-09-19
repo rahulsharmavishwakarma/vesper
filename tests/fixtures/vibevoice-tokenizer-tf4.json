@@ -1,0 +1,5807 @@
+{
+  "schemaVersion": 1,
+  "packages": {
+    "transformers": "4.57.6",
+    "tokenizers": "0.22.2",
+    "torch": "2.13.0",
+    "huggingface-hub": "0.36.2",
+    "diffusers": "0.38.0"
+  },
+  "model": "microsoft/VibeVoice-ASR-Streaming-1.5B",
+  "modelRevision": "4262d23d8a539a6530cf64fbd0b1751ef9a30853",
+  "sourceRevision": "1541f590c7099820f10ea012f48d2399282df69f",
+  "tokenizerLength": 151669,
+  "baseVocabSize": 151643,
+  "vocabSha256": "9e9312da4bbf3a57e80b115d666a0f3f2d9ac5ceff399190f65fc287b253723a",
+  "tokenizerProperties": {
+    "eos_token_id": 151643,
+    "bos_token_id": null,
+    "unk_token_id": null,
+    "pad_token_id": 151643,
+    "speech_start_id": 151646,
+    "speech_end_id": 151647,
+    "speech_pad_id": 151648,
+    "text_chunk_end_id": 151665,
+    "pad_id": 151655
+  },
+  "specialTokens": [
+    {
+      "text": "<|box_start|>",
+      "id": 151648,
+      "encoded": [
+        151648
+      ],
+      "decodedSkipSpecial": ""
+    },
+    {
+      "text": "<|endoftext|>",
+      "id": 151643,
+      "encoded": [
+        151643
+      ],
+      "decodedSkipSpecial": ""
+    },
+    {
+      "text": "<|im_end|>",
+      "id": 151645,
+      "encoded": [
+        151645
+      ],
+      "decodedSkipSpecial": ""
+    },
+    {
+      "text": "<|im_start|>",
+      "id": 151644,
+      "encoded": [
+        151644
+      ],
+      "decodedSkipSpecial": ""
+    },
+    {
+      "text": "<|image_pad|>",
+      "id": 151655,
+      "encoded": [
+        151655
+      ],
+      "decodedSkipSpecial": ""
+    },
+    {
+      "text": "<|object_ref_end|>",
+      "id": 151647,
+      "encoded": [
+        151647
+      ],
+      "decodedSkipSpecial": ""
+    },
+    {
+      "text": "<|object_ref_start|>",
+      "id": 151646,
+      "encoded": [
+        151646
+      ],
+      "decodedSkipSpecial": ""
+    },
+    {
+      "text": "<|text_chunk_end|>",
+      "id": 151665,
+      "encoded": [
+        151665
+      ],
+      "decodedSkipSpecial": ""
+    }
+  ],
+  "addedTokens": [
+    {
+      "id": 151643,
+      "content": "<|endoftext|>",
+      "single_word": false,
+      "lstrip": false,
+      "rstrip": false,
+      "normalized": false,
+      "special": true
+    },
+    {
+      "id": 151644,
+      "content": "<|im_start|>",
+      "single_word": false,
+      "lstrip": false,
+      "rstrip": false,
+      "normalized": false,
+      "special": true
+    },
+    {
+      "id": 151645,
+      "content": "<|im_end|>",
+      "single_word": false,
+      "lstrip": false,
+      "rstrip": false,
+      "normalized": false,
+      "special": true
+    },
+    {
+      "id": 151646,
+      "content": "<|object_ref_start|>",
+      "single_word": false,
+      "lstrip": false,
+      "rstrip": false,
+      "normalized": false,
+      "special": true
+    },
+    {
+      "id": 151647,
+      "content": "<|object_ref_end|>",
+      "single_word": false,
+      "lstrip": false,
+      "rstrip": false,
+      "normalized": false,
+      "special": true
+    },
+    {
+      "id": 151648,
+      "content": "<|box_start|>",
+      "single_word": false,
+      "lstrip": false,
+      "rstrip": false,
+      "normalized": false,
+      "special": true
+    },
+    {
+      "id": 151649,
+      "content": "<|box_end|>",
+      "single_word": false,
+      "lstrip": false,
+      "rstrip": false,
+      "normalized": false,
+      "special": true
+    },
+    {
+      "id": 151650,
+      "content": "<|quad_start|>",
+      "single_word": false,
+      "lstrip": false,
+      "rstrip": false,
+      "normalized": false,
+      "special": true
+    },
+    {
+      "id": 151651,
+      "content": "<|quad_end|>",
+      "single_word": false,
+      "lstrip": false,
+      "rstrip": false,
+      "normalized": false,
+      "special": true
+    },
+    {
+      "id": 151652,
+      "content": "<|vision_start|>",
+      "single_word": false,
+      "lstrip": false,
+      "rstrip": false,
+      "normalized": false,
+      "special": true
+    },
+    {
+      "id": 151653,
+      "content": "<|vision_end|>",
+      "single_word": false,
+      "lstrip": false,
+      "rstrip": false,
+      "normalized": false,
+      "special": true
+    },
+    {
+      "id": 151654,
+      "content": "<|vision_pad|>",
+      "single_word": false,
+      "lstrip": false,
+      "rstrip": false,
+      "normalized": false,
+      "special": true
+    },
+    {
+      "id": 151655,
+      "content": "<|image_pad|>",
+      "single_word": false,
+      "lstrip": false,
+      "rstrip": false,
+      "normalized": false,
+      "special": true
+    },
+    {
+      "id": 151656,
+      "content": "<|video_pad|>",
+      "single_word": false,
+      "lstrip": false,
+      "rstrip": false,
+      "normalized": false,
+      "special": true
+    },
+    {
+      "id": 151657,
+      "content": "<tool_call>",
+      "single_word": false,
+      "lstrip": false,
+      "rstrip": false,
+      "normalized": false,
+      "special": false
+    },
+    {
+      "id": 151658,
+      "content": "</tool_call>",
+      "single_word": false,
+      "lstrip": false,
+      "rstrip": false,
+      "normalized": false,
+      "special": false
+    },
+    {
+      "id": 151659,
+      "content": "<|fim_prefix|>",
+      "single_word": false,
+      "lstrip": false,
+      "rstrip": false,
+      "normalized": false,
+      "special": false
+    },
+    {
+      "id": 151660,
+      "content": "<|fim_middle|>",
+      "single_word": false,
+      "lstrip": false,
+      "rstrip": false,
+      "normalized": false,
+      "special": false
+    },
+    {
+      "id": 151661,
+      "content": "<|fim_suffix|>",
+      "single_word": false,
+      "lstrip": false,
+      "rstrip": false,
+      "normalized": false,
+      "special": false
+    },
+    {
+      "id": 151662,
+      "content": "<|fim_pad|>",
+      "single_word": false,
+      "lstrip": false,
+      "rstrip": false,
+      "normalized": false,
+      "special": false
+    },
+    {
+      "id": 151663,
+      "content": "<|repo_name|>",
+      "single_word": false,
+      "lstrip": false,
+      "rstrip": false,
+      "normalized": false,
+      "special": false
+    },
+    {
+      "id": 151664,
+      "content": "<|file_sep|>",
+      "single_word": false,
+      "lstrip": false,
+      "rstrip": false,
+      "normalized": false,
+      "special": false
+    },
+    {
+      "id": 151665,
+      "content": "<|text_chunk_end|>",
+      "single_word": false,
+      "lstrip": false,
+      "rstrip": false,
+      "normalized": false,
+      "special": true
+    },
+    {
+      "id": 151666,
+      "content": "<|AUDIO|>",
+      "single_word": false,
+      "lstrip": false,
+      "rstrip": false,
+      "normalized": false,
+      "special": true
+    },
+    {
+      "id": 151667,
+      "content": "<|audio_bos|>",
+      "single_word": false,
+      "lstrip": false,
+      "rstrip": false,
+      "normalized": false,
+      "special": true
+    },
+    {
+      "id": 151668,
+      "content": "<|audio_eos|>",
+      "single_word": false,
+      "lstrip": false,
+      "rstrip": false,
+      "normalized": false,
+      "special": true
+    }
+  ],
+  "controls": [
+    {
+      "id": "empty",
+      "text": "",
+      "encodings": [
+        {
+          "addSpecialTokens": false,
+          "ids": [],
+          "tokens": [],
+          "offsets": [],
+          "attentionMask": [],
+          "decoded": "",
+          "decodedSkipSpecial": ""
+        },
+        {
+          "addSpecialTokens": true,
+          "ids": [],
+          "tokens": [],
+          "offsets": [],
+          "attentionMask": [],
+          "decoded": "",
+          "decodedSkipSpecial": ""
+        }
+      ]
+    },
+    {
+      "id": "ascii",
+      "text": "The quick brown fox can't jump 123.45 metres; OK?",
+      "encodings": [
+        {
+          "addSpecialTokens": false,
+          "ids": [
+            785,
+            3974,
+            13876,
+            38835,
+            646,
+            944,
+            7784,
+            220,
+            16,
+            17,
+            18,
+            13,
+            19,
+            20,
+            36256,
+            26,
+            10402,
+            30
+          ],
+          "tokens": [
+            "The",
+            "Ġquick",
+            "Ġbrown",
+            "Ġfox",
+            "Ġcan",
+            "'t",
+            "Ġjump",
+            "Ġ",
+            "1",
+            "2",
+            "3",
+            ".",
+            "4",
+            "5",
+            "Ġmetres",
+            ";",
+            "ĠOK",
+            "?"
+          ],
+          "offsets": [
+            [
+              0,
+              3
+            ],
+            [
+              3,
+              9
+            ],
+            [
+              9,
+              15
+            ],
+            [
+              15,
+              19
+            ],
+            [
+              19,
+              23
+            ],
+            [
+              23,
+              25
+            ],
+            [
+              25,
+              30
+            ],
+            [
+              30,
+              31
+            ],
+            [
+              31,
+              32
+            ],
+            [
+              32,
+              33
+            ],
+            [
+              33,
+              34
+            ],
+            [
+              34,
+              35
+            ],
+            [
+              35,
+              36
+            ],
+            [
+              36,
+              37
+            ],
+            [
+              37,
+              44
+            ],
+            [
+              44,
+              45
+            ],
+            [
+              45,
+              48
+            ],
+            [
+              48,
+              49
+            ]
+          ],
+          "attentionMask": [
+            1,
+            1,
+            1,
+            1,
+            1,
+            1,
+            1,
+            1,
+            1,
+            1,
+            1,
+            1,
+            1,
+            1,
+            1,
+            1,
+            1,
+            1
+          ],
+          "decoded": "The quick brown fox can't jump 123.45 metres; OK?",
+          "decodedSkipSpecial": "The quick brown fox can't jump 123.45 metres; OK?"
+        },
+        {
+          "addSpecialTokens": true,
+          "ids": [
+            785,
+            3974,
+            13876,
+            38835,
+            646,
+            944,
+            7784,
+            220,
+            16,
+            17,
+            18,
+            13,
+            19,
+            20,
+            36256,
+            26,
+            10402,
+            30
+          ],
+          "tokens": [
+            "The",
+            "Ġquick",
+            "Ġbrown",
+            "Ġfox",
+            "Ġcan",
+            "'t",
+            "Ġjump",
+            "Ġ",
+            "1",
+            "2",
+            "3",
+            ".",
+            "4",
+            "5",
+            "Ġmetres",
+            ";",
+            "ĠOK",
+            "?"
+          ],
+          "offsets": [
+            [
+              0,
+              3
+            ],
+            [
+              3,
+              9
+            ],
+            [
+              9,
+              15
+            ],
+            [
+              15,
+              19
+            ],
+            [
+              19,
+              23
+            ],
+            [
+              23,
+              25
+            ],
+            [
+              25,
+              30
+            ],
+            [
+              30,
+              31
+            ],
+            [
+              31,
+              32
+            ],
+            [
+              32,
+              33
+            ],
+            [
+              33,
+              34
+            ],
+            [
+              34,
+              35
+            ],
+            [
+              35,
+              36
+            ],
+            [
+              36,
+              37
+            ],
+            [
+              37,
+              44
+            ],
+            [
+              44,
+              45
+            ],
+            [
+              45,
+              48
+            ],
+            [
+              48,
+              49
+            ]
+          ],
+          "attentionMask": [
+            1,
+            1,
+            1,
+            1,
+            1,
+            1,
+            1,
+            1,
+            1,
+            1,
+            1,
+            1,
+            1,
+            1,
+            1,
+            1,
+            1,
+            1
+          ],
+          "decoded": "The quick brown fox can't jump 123.45 metres; OK?",
+          "decodedSkipSpecial": "The quick brown fox can't jump 123.45 metres; OK?"
+        }
+      ]
+    },
+    {
+      "id": "whitespace",
+      "text": " leading  spaces\tbetween\nlines\r\nWindows\n\nend ",
+      "encodings": [
+        {
+          "addSpecialTokens": false,
+          "ids": [
+            6388,
+            220,
+            12621,
+            2233,
+            10053,
+            198,
+            7969,
+            319,
+            13164,
+            271,
+            408,
+            220
+          ],
+          "tokens": [
+            "Ġleading",
+            "Ġ",
+            "Ġspaces",
+            "ĉb",
+            "etween",
+            "Ċ",
+            "lines",
+            "čĊ",
+            "Windows",
+            "ĊĊ",
+            "end",
+            "Ġ"
+          ],
+          "offsets": [
+            [
+              0,
+              8
+            ],
+            [
+              8,
+              9
+            ],
+            [
+              9,
+              16
+            ],
+            [
+              16,
+              18
+            ],
+            [
+              18,
+              24
+            ],
+            [
+              24,
+              25
+            ],
+            [
+              25,
+              30
+            ],
+            [
+              30,
+              32
+            ],
+            [
+              32,
+              39
+            ],
+            [
+              39,
+              41
+            ],
+            [
+              41,
+              44
+            ],
+            [
+              44,
+              45
+            ]
+          ],
+          "attentionMask": [
+            1,
+            1,
+            1,
+            1,
+            1,
+            1,
+            1,
+            1,
+            1,
+            1,
+            1,
+            1
+          ],
+          "decoded": " leading  spaces\tbetween\nlines\r\nWindows\n\nend ",
+          "decodedSkipSpecial": " leading  spaces\tbetween\nlines\r\nWindows\n\nend "
+        },
+        {
+          "addSpecialTokens": true,
+          "ids": [
+            6388,
+            220,
+            12621,
+            2233,
+            10053,
+            198,
+            7969,
+            319,
+            13164,
+            271,
+            408,
+            220
+          ],
+          "tokens": [
+            "Ġleading",
+            "Ġ",
+            "Ġspaces",
+            "ĉb",
+            "etween",
+            "Ċ",
+            "lines",
+            "čĊ",
+            "Windows",
+            "ĊĊ",
+            "end",
+            "Ġ"
+          ],
+          "offsets": [
+            [
+              0,
+              8
+            ],
+            [
+              8,
+              9
+            ],
+            [
+              9,
+              16
+            ],
+            [
+              16,
+              18
+            ],
+            [
+              18,
+              24
+            ],
+            [
+              24,
+              25
+            ],
+            [
+              25,
+              30
+            ],
+            [
+              30,
+              32
+            ],
+            [
+              32,
+              39
+            ],
+            [
+              39,
+              41
+            ],
+            [
+              41,
+              44
+            ],
+            [
+              44,
+              45
+            ]
+          ],
+          "attentionMask": [
+            1,
+            1,
+            1,
+            1,
+            1,
+            1,
+            1,
+            1,
+            1,
+            1,
+            1,
+            1
+          ],
+          "decoded": " leading  spaces\tbetween\nlines\r\nWindows\n\nend ",
+          "decodedSkipSpecial": " leading  spaces\tbetween\nlines\r\nWindows\n\nend "
+        }
+      ]
+    },
+    {
+      "id": "unicode_spaces",
+      "text": "A B C D　E",
+      "encodings": [
+        {
+          "addSpecialTokens": false,
+          "ids": [
+            32,
+            4102,
+            33,
+            378,
+            231,
+            34,
+            378,
+            107,
+            35,
+            22441,
+            36
+          ],
+          "tokens": [
+            "A",
+            "Âł",
+            "B",
+            "âĢ",
+            "ī",
+            "C",
+            "âĢ",
+            "¯",
+            "D",
+            "ãĢĢ",
+            "E"
+          ],
+          "offsets": [
+            [
+              0,
+              1
+            ],
+            [
+              1,
+              2
+            ],
+            [
+              2,
+              3
+            ],
+            [
+              3,
+              4
+            ],
+            [
+              3,
+              4
+            ],
+            [
+              4,
+              5
+            ],
+            [
+              5,
+              6
+            ],
+            [
+              5,
+              6
+            ],
+            [
+              6,
+              7
+            ],
+            [
+              7,
+              8
+            ],
+            [
+              8,
+              9
+            ]
+          ],
+          "attentionMask": [
+            1,
+            1,
+            1,
+            1,
+            1,
+            1,
+            1,
+            1,
+            1,
+            1,
+            1
+          ],
+          "decoded": "A B C D　E",
+          "decodedSkipSpecial": "A B C D　E"
+        },
+        {
+          "addSpecialTokens": true,
+          "ids": [
+            32,
+            4102,
+            33,
+            378,
+            231,
+            34,
+            378,
+            107,
+            35,
+            22441,
+            36
+          ],
+          "tokens": [
+            "A",
+            "Âł",
+            "B",
+            "âĢ",
+            "ī",
+            "C",
+            "âĢ",
+            "¯",
+            "D",
+            "ãĢĢ",
+            "E"
+          ],
+          "offsets": [
+            [
+              0,
+              1
+            ],
+            [
+              1,
+              2
+            ],
+            [
+              2,
+              3
+            ],
+            [
+              3,
+              4
+            ],
+            [
+              3,
+              4
+            ],
+            [
+              4,
+              5
+            ],
+            [
+              5,
+              6
+            ],
+            [
+              5,
+              6
+            ],
+            [
+              6,
+              7
+            ],
+            [
+              7,
+              8
+            ],
+            [
+              8,
+              9
+            ]
+          ],
+          "attentionMask": [
+            1,
+            1,
+            1,
+            1,
+            1,
+            1,
+            1,
+            1,
+            1,
+            1,
+            1
+          ],
+          "decoded": "A B C D　E",
+          "decodedSkipSpecial": "A B C D　E"
+        }
+      ]
+    },
+    {
+      "id": "punctuation",
+      "text": "Hello—world… ‘quotes’ “double”; <tag> & [brackets] {braces} / \\.",
+      "encodings": [
+        {
+          "addSpecialTokens": false,
+          "ids": [
+            9707,
+            2293,
+            14615,
+            1940,
+            3369,
+            53282,
+            527,
+            1036,
+            4331,
+            65445,
+            366,
+            4578,
+            29,
+            609,
+            508,
+            1323,
+            18382,
+            60,
+            314,
+            1323,
+            2434,
+            92,
+            608,
+            1124,
+            13
+          ],
+          "tokens": [
+            "Hello",
+            "âĢĶ",
+            "world",
+            "âĢ¦",
+            "ĠâĢĺ",
+            "quotes",
+            "âĢĻ",
+            "ĠâĢľ",
+            "double",
+            "âĢĿ;",
+            "Ġ<",
+            "tag",
+            ">",
+            "Ġ&",
+            "Ġ[",
+            "br",
+            "ackets",
+            "]",
+            "Ġ{",
+            "br",
+            "aces",
+            "}",
+            "Ġ/",
+            "Ġ\\",
+            "."
+          ],
+          "offsets": [
+            [
+              0,
+              5
+            ],
+            [
+              5,
+              6
+            ],
+            [
+              6,
+              11
+            ],
+            [
+              11,
+              12
+            ],
+            [
+              12,
+              14
+            ],
+            [
+              14,
+              20
+            ],
+            [
+              20,
+              21
+            ],
+            [
+              21,
+              23
+            ],
+            [
+              23,
+              29
+            ],
+            [
+              29,
+              31
+            ],
+            [
+              31,
+              33
+            ],
+            [
+              33,
+              36
+            ],
+            [
+              36,
+              37
+            ],
+            [
+              37,
+              39
+            ],
+            [
+              39,
+              41
+            ],
+            [
+              41,
+              43
+            ],
+            [
+              43,
+              49
+            ],
+            [
+              49,
+              50
+            ],
+            [
+              50,
+              52
+            ],
+            [
+              52,
+              54
+            ],
+            [
+              54,
+              58
+            ],
+            [
+              58,
+              59
+            ],
+            [
+              59,
+              61
+            ],
+            [
+              61,
+              63
+            ],
+            [
+              63,
+              64
+            ]
+          ],
+          "attentionMask": [
+            1,
+            1,
+            1,
+            1,
+            1,
+            1,
+            1,
+            1,
+            1,
+            1,
+            1,
+            1,
+            1,
+            1,
+            1,
+            1,
+            1,
+            1,
+            1,
+            1,
+            1,
+            1,
+            1,
+            1,
+            1
+          ],
+          "decoded": "Hello—world… ‘quotes’ “double”; <tag> & [brackets] {braces} / \\.",
+          "decodedSkipSpecial": "Hello—world… ‘quotes’ “double”; <tag> & [brackets] {braces} / \\."
+        },
+        {
+          "addSpecialTokens": true,
+          "ids": [
+            9707,
+            2293,
+            14615,
+            1940,
+            3369,
+            53282,
+            527,
+            1036,
+            4331,
+            65445,
+            366,
+            4578,
+            29,
+            609,
+            508,
+            1323,
+            18382,
+            60,
+            314,
+            1323,
+            2434,
+            92,
+            608,
+            1124,
+            13
+          ],
+          "tokens": [
+            "Hello",
+            "âĢĶ",
+            "world",
+            "âĢ¦",
+            "ĠâĢĺ",
+            "quotes",
+            "âĢĻ",
+            "ĠâĢľ",
+            "double",
+            "âĢĿ;",
+            "Ġ<",
+            "tag",
+            ">",
+            "Ġ&",
+            "Ġ[",
+            "br",
+            "ackets",
+            "]",
+            "Ġ{",
+            "br",
+            "aces",
+            "}",
+            "Ġ/",
+            "Ġ\\",
+            "."
+          ],
+          "offsets": [
+            [
+              0,
+              5
+            ],
+            [
+              5,
+              6
+            ],
+            [
+              6,
+              11
+            ],
+            [
+              11,
+              12
+            ],
+            [
+              12,
+              14
+            ],
+            [
+              14,
+              20
+            ],
+            [
+              20,
+              21
+            ],
+            [
+              21,
+              23
+            ],
+            [
+              23,
+              29
+            ],
+            [
+              29,
+              31
+            ],
+            [
+              31,
+              33
+            ],
+            [
+              33,
+              36
+            ],
+            [
+              36,
+              37
+            ],
+            [
+              37,
+              39
+            ],
+            [
+              39,
+              41
+            ],
+            [
+              41,
+              43
+            ],
+            [
+              43,
+              49
+            ],
+            [
+              49,
+              50
+            ],
+            [
+              50,
+              52
+            ],
+            [
+              52,
+              54
+            ],
+            [
+              54,
+              58
+            ],
+            [
+              58,
+              59
+            ],
+            [
+              59,
+              61
+            ],
+            [
+              61,
+              63
+            ],
+            [
+              63,
+              64
+            ]
+          ],
+          "attentionMask": [
+            1,
+            1,
+            1,
+            1,
+            1,
+            1,
+            1,
+            1,
+            1,
+            1,
+            1,
+            1,
+            1,
+            1,
+            1,
+            1,
+            1,
+            1,
+            1,
+            1,
+            1,
+            1,
+            1,
+            1,
+            1
+          ],
+          "decoded": "Hello—world… ‘quotes’ “double”; <tag> & [brackets] {braces} / \\.",
+          "decodedSkipSpecial": "Hello—world… ‘quotes’ “double”; <tag> & [brackets] {braces} / \\."
+        }
+      ]
+    },
+    {
+      "id": "nfc",
+      "text": "café naïve résumé",
+      "encodings": [
+        {
+          "addSpecialTokens": false,
+          "ids": [
+            924,
+            58858,
+            94880,
+            586,
+            9333,
+            1242,
+            963
+          ],
+          "tokens": [
+            "ca",
+            "fÃ©",
+            "ĠnaÃ¯",
+            "ve",
+            "ĠrÃ©",
+            "sum",
+            "Ã©"
+          ],
+          "offsets": [
+            [
+              0,
+              2
+            ],
+            [
+              2,
+              4
+            ],
+            [
+              4,
+              8
+            ],
+            [
+              8,
+              10
+            ],
+            [
+              10,
+              13
+            ],
+            [
+              13,
+              16
+            ],
+            [
+              16,
+              17
+            ]
+          ],
+          "attentionMask": [
+            1,
+            1,
+            1,
+            1,
+            1,
+            1,
+            1
+          ],
+          "decoded": "café naïve résumé",
+          "decodedSkipSpecial": "café naïve résumé"
+        },
+        {
+          "addSpecialTokens": true,
+          "ids": [
+            924,
+            58858,
+            94880,
+            586,
+            9333,
+            1242,
+            963
+          ],
+          "tokens": [
+            "ca",
+            "fÃ©",
+            "ĠnaÃ¯",
+            "ve",
+            "ĠrÃ©",
+            "sum",
+            "Ã©"
+          ],
+          "offsets": [
+            [
+              0,
+              2
+            ],
+            [
+              2,
+              4
+            ],
+            [
+              4,
+              8
+            ],
+            [
+              8,
+              10
+            ],
+            [
+              10,
+              13
+            ],
+            [
+              13,
+              16
+            ],
+            [
+              16,
+              17
+            ]
+          ],
+          "attentionMask": [
+            1,
+            1,
+            1,
+            1,
+            1,
+            1,
+            1
+          ],
+          "decoded": "café naïve résumé",
+          "decodedSkipSpecial": "café naïve résumé"
+        }
+      ]
+    },
+    {
+      "id": "nfd",
+      "text": "café naïve résumé",
+      "encodings": [
+        {
+          "addSpecialTokens": false,
+          "ids": [
+            924,
+            58858,
+            94880,
+            586,
+            9333,
+            1242,
+            963
+          ],
+          "tokens": [
+            "ca",
+            "fÃ©",
+            "ĠnaÃ¯",
+            "ve",
+            "ĠrÃ©",
+            "sum",
+            "Ã©"
+          ],
+          "offsets": [
+            [
+              0,
+              2
+            ],
+            [
+              2,
+              4
+            ],
+            [
+              5,
+              9
+            ],
+            [
+              10,
+              12
+            ],
+            [
+              12,
+              15
+            ],
+            [
+              16,
+              19
+            ],
+            [
+              19,
+              20
+            ]
+          ],
+          "attentionMask": [
+            1,
+            1,
+            1,
+            1,
+            1,
+            1,
+            1
+          ],
+          "decoded": "café naïve résumé",
+          "decodedSkipSpecial": "café naïve résumé"
+        },
+        {
+          "addSpecialTokens": true,
+          "ids": [
+            924,
+            58858,
+            94880,
+            586,
+            9333,
+            1242,
+            963
+          ],
+          "tokens": [
+            "ca",
+            "fÃ©",
+            "ĠnaÃ¯",
+            "ve",
+            "ĠrÃ©",
+            "sum",
+            "Ã©"
+          ],
+          "offsets": [
+            [
+              0,
+              2
+            ],
+            [
+              2,
+              4
+            ],
+            [
+              5,
+              9
+            ],
+            [
+              10,
+              12
+            ],
+            [
+              12,
+              15
+            ],
+            [
+              16,
+              19
+            ],
+            [
+              19,
+              20
+            ]
+          ],
+          "attentionMask": [
+            1,
+            1,
+            1,
+            1,
+            1,
+            1,
+            1
+          ],
+          "decoded": "café naïve résumé",
+          "decodedSkipSpecial": "café naïve résumé"
+        }
+      ]
+    },
+    {
+      "id": "hindi",
+      "text": "नमस्ते, आज मौसम अच्छा है।",
+      "encodings": [
+        {
+          "addSpecialTokens": false,
+          "ids": [
+            60096,
+            87244,
+            78368,
+            30484,
+            97,
+            34370,
+            11,
+            14925,
+            228,
+            146114,
+            91217,
+            12619,
+            234,
+            78368,
+            87244,
+            14925,
+            227,
+            146113,
+            30484,
+            249,
+            23868,
+            84310,
+            12619,
+            230,
+            146031
+          ],
+          "tokens": [
+            "à¤¨",
+            "à¤®",
+            "à¤¸",
+            "à¥įà¤",
+            "¤",
+            "à¥ĩ",
+            ",",
+            "Ġà¤",
+            "Ĩ",
+            "à¤ľ",
+            "Ġà¤®",
+            "à¥",
+            "Į",
+            "à¤¸",
+            "à¤®",
+            "Ġà¤",
+            "ħ",
+            "à¤ļ",
+            "à¥įà¤",
+            "Ľ",
+            "à¤¾",
+            "Ġà¤¹",
+            "à¥",
+            "Ī",
+            "à¥¤"
+          ],
+          "offsets": [
+            [
+              0,
+              1
+            ],
+            [
+              1,
+              2
+            ],
+            [
+              2,
+              3
+            ],
+            [
+              3,
+              5
+            ],
+            [
+              4,
+              5
+            ],
+            [
+              5,
+              6
+            ],
+            [
+              6,
+              7
+            ],
+            [
+              7,
+              9
+            ],
+            [
+              8,
+              9
+            ],
+            [
+              9,
+              10
+            ],
+            [
+              10,
+              12
+            ],
+            [
+              12,
+              13
+            ],
+            [
+              12,
+              13
+            ],
+            [
+              13,
+              14
+            ],
+            [
+              14,
+              15
+            ],
+            [
+              15,
+              17
+            ],
+            [
+              16,
+              17
+            ],
+            [
+              17,
+              18
+            ],
+            [
+              18,
+              20
+            ],
+            [
+              19,
+              20
+            ],
+            [
+              20,
+              21
+            ],
+            [
+              21,
+              23
+            ],
+            [
+              23,
+              24
+            ],
+            [
+              23,
+              24
+            ],
+            [
+              24,
+              25
+            ]
+          ],
+          "attentionMask": [
+            1,
+            1,
+            1,
+            1,
+            1,
+            1,
+            1,
+            1,
+            1,
+            1,
+            1,
+            1,
+            1,
+            1,
+            1,
+            1,
+            1,
+            1,
+            1,
+            1,
+            1,
+            1,
+            1,
+            1,
+            1
+          ],
+          "decoded": "नमस्ते, आज मौसम अच्छा है।",
+          "decodedSkipSpecial": "नमस्ते, आज मौसम अच्छा है।"
+        },
+        {
+          "addSpecialTokens": true,
+          "ids": [
+            60096,
+            87244,
+            78368,
+            30484,
+            97,
+            34370,
+            11,
+            14925,
+            228,
+            146114,
+            91217,
+            12619,
+            234,
+            78368,
+            87244,
+            14925,
+            227,
+            146113,
+            30484,
+            249,
+            23868,
+            84310,
+            12619,
+            230,
+            146031
+          ],
+          "tokens": [
+            "à¤¨",
+            "à¤®",
+            "à¤¸",
+            "à¥įà¤",
+            "¤",
+            "à¥ĩ",
+            ",",
+            "Ġà¤",
+            "Ĩ",
+            "à¤ľ",
+            "Ġà¤®",
+            "à¥",
+            "Į",
+            "à¤¸",
+            "à¤®",
+            "Ġà¤",
+            "ħ",
+            "à¤ļ",
+            "à¥įà¤",
+            "Ľ",
+            "à¤¾",
+            "Ġà¤¹",
+            "à¥",
+            "Ī",
+            "à¥¤"
+          ],
+          "offsets": [
+            [
+              0,
+              1
+            ],
+            [
+              1,
+              2
+            ],
+            [
+              2,
+              3
+            ],
+            [
+              3,
+              5
+            ],
+            [
+              4,
+              5
+            ],
+            [
+              5,
+              6
+            ],
+            [
+              6,
+              7
+            ],
+            [
+              7,
+              9
+            ],
+            [
+              8,
+              9
+            ],
+            [
+              9,
+              10
+            ],
+            [
+              10,
+              12
+            ],
+            [
+              12,
+              13
+            ],
+            [
+              12,
+              13
+            ],
+            [
+              13,
+              14
+            ],
+            [
+              14,
+              15
+            ],
+            [
+              15,
+              17
+            ],
+            [
+              16,
+              17
+            ],
+            [
+              17,
+              18
+            ],
+            [
+              18,
+              20
+            ],
+            [
+              19,
+              20
+            ],
+            [
+              20,
+              21
+            ],
+            [
+              21,
+              23
+            ],
+            [
+              23,
+              24
+            ],
+            [
+              23,
+              24
+            ],
+            [
+              24,
+              25
+            ]
+          ],
+          "attentionMask": [
+            1,
+            1,
+            1,
+            1,
+            1,
+            1,
+            1,
+            1,
+            1,
+            1,
+            1,
+            1,
+            1,
+            1,
+            1,
+            1,
+            1,
+            1,
+            1,
+            1,
+            1,
+            1,
+            1,
+            1,
+            1
+          ],
+          "decoded": "नमस्ते, आज मौसम अच्छा है।",
+          "decodedSkipSpecial": "नमस्ते, आज मौसम अच्छा है।"
+        }
+      ]
+    },
+    {
+      "id": "hindi_english",
+      "text": "कल meeting में Python और GitHub पर बात करेंगे।",
+      "encodings": [
+        {
+          "addSpecialTokens": false,
+          "ids": [
+            64704,
+            91811,
+            6438,
+            91217,
+            54784,
+            224,
+            13027,
+            14925,
+            242,
+            44179,
+            32095,
+            83636,
+            44179,
+            14925,
+            105,
+            31411,
+            97,
+            47809,
+            44179,
+            54784,
+            224,
+            145959,
+            34370,
+            146031
+          ],
+          "tokens": [
+            "à¤ķ",
+            "à¤²",
+            "Ġmeeting",
+            "Ġà¤®",
+            "à¥ĩà¤",
+            "Ĥ",
+            "ĠPython",
+            "Ġà¤",
+            "Ķ",
+            "à¤°",
+            "ĠGitHub",
+            "Ġà¤ª",
+            "à¤°",
+            "Ġà¤",
+            "¬",
+            "à¤¾à¤",
+            "¤",
+            "Ġà¤ķ",
+            "à¤°",
+            "à¥ĩà¤",
+            "Ĥ",
+            "à¤Ĺ",
+            "à¥ĩ",
+            "à¥¤"
+          ],
+          "offsets": [
+            [
+              0,
+              1
+            ],
+            [
+              1,
+              2
+            ],
+            [
+              2,
+              10
+            ],
+            [
+              10,
+              12
+            ],
+            [
+              12,
+              14
+            ],
+            [
+              13,
+              14
+            ],
+            [
+              14,
+              21
+            ],
+            [
+              21,
+              23
+            ],
+            [
+              22,
+              23
+            ],
+            [
+              23,
+              24
+            ],
+            [
+              24,
+              31
+            ],
+            [
+              31,
+              33
+            ],
+            [
+              33,
+              34
+            ],
+            [
+              34,
+              36
+            ],
+            [
+              35,
+              36
+            ],
+            [
+              36,
+              38
+            ],
+            [
+              37,
+              38
+            ],
+            [
+              38,
+              40
+            ],
+            [
+              40,
+              41
+            ],
+            [
+              41,
+              43
+            ],
+            [
+              42,
+              43
+            ],
+            [
+              43,
+              44
+            ],
+            [
+              44,
+              45
+            ],
+            [
+              45,
+              46
+            ]
+          ],
+          "attentionMask": [
+            1,
+            1,
+            1,
+            1,
+            1,
+            1,
+            1,
+            1,
+            1,
+            1,
+            1,
+            1,
+            1,
+            1,
+            1,
+            1,
+            1,
+            1,
+            1,
+            1,
+            1,
+            1,
+            1,
+            1
+          ],
+          "decoded": "कल meeting में Python और GitHub पर बात करेंगे।",
+          "decodedSkipSpecial": "कल meeting में Python और GitHub पर बात करेंगे।"
+        },
+        {
+          "addSpecialTokens": true,
+          "ids": [
+            64704,
+            91811,
+            6438,
+            91217,
+            54784,
+            224,
+            13027,
+            14925,
+            242,
+            44179,
+            32095,
+            83636,
+            44179,
+            14925,
+            105,
+            31411,
+            97,
+            47809,
+            44179,
+            54784,
+            224,
+            145959,
+            34370,
+            146031
+          ],
+          "tokens": [
+            "à¤ķ",
+            "à¤²",
+            "Ġmeeting",
+            "Ġà¤®",
+            "à¥ĩà¤",
+            "Ĥ",
+            "ĠPython",
+            "Ġà¤",
+            "Ķ",
+            "à¤°",
+            "ĠGitHub",
+            "Ġà¤ª",
+            "à¤°",
+            "Ġà¤",
+            "¬",
+            "à¤¾à¤",
+            "¤",
+            "Ġà¤ķ",
+            "à¤°",
+            "à¥ĩà¤",
+            "Ĥ",
+            "à¤Ĺ",
+            "à¥ĩ",
+            "à¥¤"
+          ],
+          "offsets": [
+            [
+              0,
+              1
+            ],
+            [
+              1,
+              2
+            ],
+            [
+              2,
+              10
+            ],
+            [
+              10,
+              12
+            ],
+            [
+              12,
+              14
+            ],
+            [
+              13,
+              14
+            ],
+            [
+              14,
+              21
+            ],
+            [
+              21,
+              23
+            ],
+            [
+              22,
+              23
+            ],
+            [
+              23,
+              24
+            ],
+            [
+              24,
+              31
+            ],
+            [
+              31,
+              33
+            ],
+            [
+              33,
+              34
+            ],
+            [
+              34,
+              36
+            ],
+            [
+              35,
+              36
+            ],
+            [
+              36,
+              38
+            ],
+            [
+              37,
+              38
+            ],
+            [
+              38,
+              40
+            ],
+            [
+              40,
+              41
+            ],
+            [
+              41,
+              43
+            ],
+            [
+              42,
+              43
+            ],
+            [
+              43,
+              44
+            ],
+            [
+              44,
+              45
+            ],
+            [
+              45,
+              46
+            ]
+          ],
+          "attentionMask": [
+            1,
+            1,
+            1,
+            1,
+            1,
+            1,
+            1,
+            1,
+            1,
+            1,
+            1,
+            1,
+            1,
+            1,
+            1,
+            1,
+            1,
+            1,
+            1,
+            1,
+            1,
+            1,
+            1,
+            1
+          ],
+          "decoded": "कल meeting में Python और GitHub पर बात करेंगे।",
+          "decodedSkipSpecial": "कल meeting में Python और GitHub पर बात करेंगे।"
+        }
+      ]
+    },
+    {
+      "id": "chinese",
+      "text": "你好，今天的天气很好。",
+      "encodings": [
+        {
+          "addSpecialTokens": false,
+          "ids": [
+            108386,
+            3837,
+            106560,
+            104307,
+            101243,
+            1773
+          ],
+          "tokens": [
+            "ä½łå¥½",
+            "ï¼Į",
+            "ä»Ĭå¤©çļĦ",
+            "å¤©æ°Ķ",
+            "å¾Īå¥½",
+            "ãĢĤ"
+          ],
+          "offsets": [
+            [
+              0,
+              2
+            ],
+            [
+              2,
+              3
+            ],
+            [
+              3,
+              6
+            ],
+            [
+              6,
+              8
+            ],
+            [
+              8,
+              10
+            ],
+            [
+              10,
+              11
+            ]
+          ],
+          "attentionMask": [
+            1,
+            1,
+            1,
+            1,
+            1,
+            1
+          ],
+          "decoded": "你好，今天的天气很好。",
+          "decodedSkipSpecial": "你好，今天的天气很好。"
+        },
+        {
+          "addSpecialTokens": true,
+          "ids": [
+            108386,
+            3837,
+            106560,
+            104307,
+            101243,
+            1773
+          ],
+          "tokens": [
+            "ä½łå¥½",
+            "ï¼Į",
+            "ä»Ĭå¤©çļĦ",
+            "å¤©æ°Ķ",
+            "å¾Īå¥½",
+            "ãĢĤ"
+          ],
+          "offsets": [
+            [
+              0,
+              2
+            ],
+            [
+              2,
+              3
+            ],
+            [
+              3,
+              6
+            ],
+            [
+              6,
+              8
+            ],
+            [
+              8,
+              10
+            ],
+            [
+              10,
+              11
+            ]
+          ],
+          "attentionMask": [
+            1,
+            1,
+            1,
+            1,
+            1,
+            1
+          ],
+          "decoded": "你好，今天的天气很好。",
+          "decodedSkipSpecial": "你好，今天的天气很好。"
+        }
+      ]
+    },
+    {
+      "id": "japanese",
+      "text": "こんにちは。音声を書き起こします。",
+      "encodings": [
+        {
+          "addSpecialTokens": false,
+          "ids": [
+            89015,
+            1773,
+            78685,
+            70074,
+            29412,
+            132497,
+            131413,
+            77334,
+            1773
+          ],
+          "tokens": [
+            "ãģĵãĤĵãģ«ãģ¡ãģ¯",
+            "ãĢĤ",
+            "éŁ³",
+            "å£°",
+            "ãĤĴ",
+            "æĽ¸ãģį",
+            "èµ·ãģĵ",
+            "ãģĹãģ¾ãģĻ",
+            "ãĢĤ"
+          ],
+          "offsets": [
+            [
+              0,
+              5
+            ],
+            [
+              5,
+              6
+            ],
+            [
+              6,
+              7
+            ],
+            [
+              7,
+              8
+            ],
+            [
+              8,
+              9
+            ],
+            [
+              9,
+              11
+            ],
+            [
+              11,
+              13
+            ],
+            [
+              13,
+              16
+            ],
+            [
+              16,
+              17
+            ]
+          ],
+          "attentionMask": [
+            1,
+            1,
+            1,
+            1,
+            1,
+            1,
+            1,
+            1,
+            1
+          ],
+          "decoded": "こんにちは。音声を書き起こします。",
+          "decodedSkipSpecial": "こんにちは。音声を書き起こします。"
+        },
+        {
+          "addSpecialTokens": true,
+          "ids": [
+            89015,
+            1773,
+            78685,
+            70074,
+            29412,
+            132497,
+            131413,
+            77334,
+            1773
+          ],
+          "tokens": [
+            "ãģĵãĤĵãģ«ãģ¡ãģ¯",
+            "ãĢĤ",
+            "éŁ³",
+            "å£°",
+            "ãĤĴ",
+            "æĽ¸ãģį",
+            "èµ·ãģĵ",
+            "ãģĹãģ¾ãģĻ",
+            "ãĢĤ"
+          ],
+          "offsets": [
+            [
+              0,
+              5
+            ],
+            [
+              5,
+              6
+            ],
+            [
+              6,
+              7
+            ],
+            [
+              7,
+              8
+            ],
+            [
+              8,
+              9
+            ],
+            [
+              9,
+              11
+            ],
+            [
+              11,
+              13
+            ],
+            [
+              13,
+              16
+            ],
+            [
+              16,
+              17
+            ]
+          ],
+          "attentionMask": [
+            1,
+            1,
+            1,
+            1,
+            1,
+            1,
+            1,
+            1,
+            1
+          ],
+          "decoded": "こんにちは。音声を書き起こします。",
+          "decodedSkipSpecial": "こんにちは。音声を書き起こします。"
+        }
+      ]
+    },
+    {
+      "id": "korean",
+      "text": "안녕하세요. 음성을 텍스트로 변환합니다.",
+      "encodings": [
+        {
+          "addSpecialTokens": false,
+          "ids": [
+            126246,
+            144370,
+            91145,
+            13,
+            16751,
+            234,
+            132818,
+            10764,
+            44104,
+            53189,
+            17380,
+            46319,
+            65238,
+            60838,
+            13
+          ],
+          "tokens": [
+            "ìķĪ",
+            "ëħķ",
+            "íķĺìĦ¸ìļĶ",
+            ".",
+            "ĠìĿ",
+            "Į",
+            "ìĦ±ìĿĦ",
+            "Ġí",
+            "ħį",
+            "ìĬ¤íĬ¸",
+            "ë¡ľ",
+            "Ġë³Ģ",
+            "íĻĺ",
+            "íķ©ëĭĪëĭ¤",
+            "."
+          ],
+          "offsets": [
+            [
+              0,
+              1
+            ],
+            [
+              1,
+              2
+            ],
+            [
+              2,
+              5
+            ],
+            [
+              5,
+              6
+            ],
+            [
+              6,
+              8
+            ],
+            [
+              7,
+              8
+            ],
+            [
+              8,
+              10
+            ],
+            [
+              10,
+              12
+            ],
+            [
+              11,
+              12
+            ],
+            [
+              12,
+              14
+            ],
+            [
+              14,
+              15
+            ],
+            [
+              15,
+              17
+            ],
+            [
+              17,
+              18
+            ],
+            [
+              18,
+              21
+            ],
+            [
+              21,
+              22
+            ]
+          ],
+          "attentionMask": [
+            1,
+            1,
+            1,
+            1,
+            1,
+            1,
+            1,
+            1,
+            1,
+            1,
+            1,
+            1,
+            1,
+            1,
+            1
+          ],
+          "decoded": "안녕하세요. 음성을 텍스트로 변환합니다.",
+          "decodedSkipSpecial": "안녕하세요. 음성을 텍스트로 변환합니다."
+        },
+        {
+          "addSpecialTokens": true,
+          "ids": [
+            126246,
+            144370,
+            91145,
+            13,
+            16751,
+            234,
+            132818,
+            10764,
+            44104,
+            53189,
+            17380,
+            46319,
+            65238,
+            60838,
+            13
+          ],
+          "tokens": [
+            "ìķĪ",
+            "ëħķ",
+            "íķĺìĦ¸ìļĶ",
+            ".",
+            "ĠìĿ",
+            "Į",
+            "ìĦ±ìĿĦ",
+            "Ġí",
+            "ħį",
+            "ìĬ¤íĬ¸",
+            "ë¡ľ",
+            "Ġë³Ģ",
+            "íĻĺ",
+            "íķ©ëĭĪëĭ¤",
+            "."
+          ],
+          "offsets": [
+            [
+              0,
+              1
+            ],
+            [
+              1,
+              2
+            ],
+            [
+              2,
+              5
+            ],
+            [
+              5,
+              6
+            ],
+            [
+              6,
+              8
+            ],
+            [
+              7,
+              8
+            ],
+            [
+              8,
+              10
+            ],
+            [
+              10,
+              12
+            ],
+            [
+              11,
+              12
+            ],
+            [
+              12,
+              14
+            ],
+            [
+              14,
+              15
+            ],
+            [
+              15,
+              17
+            ],
+            [
+              17,
+              18
+            ],
+            [
+              18,
+              21
+            ],
+            [
+              21,
+              22
+            ]
+          ],
+          "attentionMask": [
+            1,
+            1,
+            1,
+            1,
+            1,
+            1,
+            1,
+            1,
+            1,
+            1,
+            1,
+            1,
+            1,
+            1,
+            1
+          ],
+          "decoded": "안녕하세요. 음성을 텍스트로 변환합니다.",
+          "decodedSkipSpecial": "안녕하세요. 음성을 텍스트로 변환합니다."
+        }
+      ]
+    },
+    {
+      "id": "arabic",
+      "text": "مرحبًا، هذا اختبار للتعرف على الكلام.",
+      "encodings": [
+        {
+          "addSpecialTokens": false,
+          "ids": [
+            124122,
+            126381,
+            127837,
+            68785,
+            128280,
+            136837,
+            124422,
+            131037,
+            125215,
+            128248,
+            142518,
+            13
+          ],
+          "tokens": [
+            "ÙħØ±",
+            "ØŃØ¨",
+            "ÙĭØ§",
+            "ØĮ",
+            "ĠÙĩØ°Ø§",
+            "ĠØ§Ø®Øª",
+            "Ø¨Ø§Ø±",
+            "ĠÙĦÙĦØª",
+            "Ø¹Ø±Ùģ",
+            "ĠØ¹ÙĦÙī",
+            "ĠØ§ÙĦÙĥÙĦØ§Ùħ",
+            "."
+          ],
+          "offsets": [
+            [
+              0,
+              2
+            ],
+            [
+              2,
+              4
+            ],
+            [
+              4,
+              6
+            ],
+            [
+              6,
+              7
+            ],
+            [
+              7,
+              11
+            ],
+            [
+              11,
+              15
+            ],
+            [
+              15,
+              18
+            ],
+            [
+              18,
+              22
+            ],
+            [
+              22,
+              25
+            ],
+            [
+              25,
+              29
+            ],
+            [
+              29,
+              36
+            ],
+            [
+              36,
+              37
+            ]
+          ],
+          "attentionMask": [
+            1,
+            1,
+            1,
+            1,
+            1,
+            1,
+            1,
+            1,
+            1,
+            1,
+            1,
+            1
+          ],
+          "decoded": "مرحبًا، هذا اختبار للتعرف على الكلام.",
+          "decodedSkipSpecial": "مرحبًا، هذا اختبار للتعرف على الكلام."
+        },
+        {
+          "addSpecialTokens": true,
+          "ids": [
+            124122,
+            126381,
+            127837,
+            68785,
+            128280,
+            136837,
+            124422,
+            131037,
+            125215,
+            128248,
+            142518,
+            13
+          ],
+          "tokens": [
+            "ÙħØ±",
+            "ØŃØ¨",
+            "ÙĭØ§",
+            "ØĮ",
+            "ĠÙĩØ°Ø§",
+            "ĠØ§Ø®Øª",
+            "Ø¨Ø§Ø±",
+            "ĠÙĦÙĦØª",
+            "Ø¹Ø±Ùģ",
+            "ĠØ¹ÙĦÙī",
+            "ĠØ§ÙĦÙĥÙĦØ§Ùħ",
+            "."
+          ],
+          "offsets": [
+            [
+              0,
+              2
+            ],
+            [
+              2,
+              4
+            ],
+            [
+              4,
+              6
+            ],
+            [
+              6,
+              7
+            ],
+            [
+              7,
+              11
+            ],
+            [
+              11,
+              15
+            ],
+            [
+              15,
+              18
+            ],
+            [
+              18,
+              22
+            ],
+            [
+              22,
+              25
+            ],
+            [
+              25,
+              29
+            ],
+            [
+              29,
+              36
+            ],
+            [
+              36,
+              37
+            ]
+          ],
+          "attentionMask": [
+            1,
+            1,
+            1,
+            1,
+            1,
+            1,
+            1,
+            1,
+            1,
+            1,
+            1,
+            1
+          ],
+          "decoded": "مرحبًا، هذا اختبار للتعرف على الكلام.",
+          "decodedSkipSpecial": "مرحبًا، هذا اختبار للتعرف على الكلام."
+        }
+      ]
+    },
+    {
+      "id": "urdu",
+      "text": "سلام، یہ آواز کی تحریر کا امتحان ہے۔",
+      "encodings": [
+        {
+          "addSpecialTokens": false,
+          "ids": [
+            124941,
+            68785,
+            220,
+            14391,
+            145016,
+            125108,
+            123920,
+            39697,
+            45593,
+            14391,
+            39434,
+            124925,
+            89820,
+            45593,
+            5703,
+            12961,
+            10176,
+            123997,
+            39423,
+            220,
+            145016,
+            145146,
+            145738
+          ],
+          "tokens": [
+            "Ø³ÙĦØ§Ùħ",
+            "ØĮ",
+            "Ġ",
+            "ÛĮ",
+            "Ûģ",
+            "ĠØ¢",
+            "ÙĪØ§",
+            "Ø²",
+            "ĠÚ©",
+            "ÛĮ",
+            "ĠØª",
+            "ØŃØ±",
+            "ÛĮØ±",
+            "ĠÚ©",
+            "Ø§",
+            "ĠØ§",
+            "Ùħ",
+            "ØªØŃ",
+            "Ø§ÙĨ",
+            "Ġ",
+            "Ûģ",
+            "ÛĴ",
+            "ÛĶ"
+          ],
+          "offsets": [
+            [
+              0,
+              4
+            ],
+            [
+              4,
+              5
+            ],
+            [
+              5,
+              6
+            ],
+            [
+              6,
+              7
+            ],
+            [
+              7,
+              8
+            ],
+            [
+              8,
+              10
+            ],
+            [
+              10,
+              12
+            ],
+            [
+              12,
+              13
+            ],
+            [
+              13,
+              15
+            ],
+            [
+              15,
+              16
+            ],
+            [
+              16,
+              18
+            ],
+            [
+              18,
+              20
+            ],
+            [
+              20,
+              22
+            ],
+            [
+              22,
+              24
+            ],
+            [
+              24,
+              25
+            ],
+            [
+              25,
+              27
+            ],
+            [
+              27,
+              28
+            ],
+            [
+              28,
+              30
+            ],
+            [
+              30,
+              32
+            ],
+            [
+              32,
+              33
+            ],
+            [
+              33,
+              34
+            ],
+            [
+              34,
+              35
+            ],
+            [
+              35,
+              36
+            ]
+          ],
+          "attentionMask": [
+            1,
+            1,
+            1,
+            1,
+            1,
+            1,
+            1,
+            1,
+            1,
+            1,
+            1,
+            1,
+            1,
+            1,
+            1,
+            1,
+            1,
+            1,
+            1,
+            1,
+            1,
+            1,
+            1
+          ],
+          "decoded": "سلام، یہ آواز کی تحریر کا امتحان ہے۔",
+          "decodedSkipSpecial": "سلام، یہ آواز کی تحریر کا امتحان ہے۔"
+        },
+        {
+          "addSpecialTokens": true,
+          "ids": [
+            124941,
+            68785,
+            220,
+            14391,
+            145016,
+            125108,
+            123920,
+            39697,
+            45593,
+            14391,
+            39434,
+            124925,
+            89820,
+            45593,
+            5703,
+            12961,
+            10176,
+            123997,
+            39423,
+            220,
+            145016,
+            145146,
+            145738
+          ],
+          "tokens": [
+            "Ø³ÙĦØ§Ùħ",
+            "ØĮ",
+            "Ġ",
+            "ÛĮ",
+            "Ûģ",
+            "ĠØ¢",
+            "ÙĪØ§",
+            "Ø²",
+            "ĠÚ©",
+            "ÛĮ",
+            "ĠØª",
+            "ØŃØ±",
+            "ÛĮØ±",
+            "ĠÚ©",
+            "Ø§",
+            "ĠØ§",
+            "Ùħ",
+            "ØªØŃ",
+            "Ø§ÙĨ",
+            "Ġ",
+            "Ûģ",
+            "ÛĴ",
+            "ÛĶ"
+          ],
+          "offsets": [
+            [
+              0,
+              4
+            ],
+            [
+              4,
+              5
+            ],
+            [
+              5,
+              6
+            ],
+            [
+              6,
+              7
+            ],
+            [
+              7,
+              8
+            ],
+            [
+              8,
+              10
+            ],
+            [
+              10,
+              12
+            ],
+            [
+              12,
+              13
+            ],
+            [
+              13,
+              15
+            ],
+            [
+              15,
+              16
+            ],
+            [
+              16,
+              18
+            ],
+            [
+              18,
+              20
+            ],
+            [
+              20,
+              22
+            ],
+            [
+              22,
+              24
+            ],
+            [
+              24,
+              25
+            ],
+            [
+              25,
+              27
+            ],
+            [
+              27,
+              28
+            ],
+            [
+              28,
+              30
+            ],
+            [
+              30,
+              32
+            ],
+            [
+              32,
+              33
+            ],
+            [
+              33,
+              34
+            ],
+            [
+              34,
+              35
+            ],
+            [
+              35,
+              36
+            ]
+          ],
+          "attentionMask": [
+            1,
+            1,
+            1,
+            1,
+            1,
+            1,
+            1,
+            1,
+            1,
+            1,
+            1,
+            1,
+            1,
+            1,
+            1,
+            1,
+            1,
+            1,
+            1,
+            1,
+            1,
+            1,
+            1
+          ],
+          "decoded": "سلام، یہ آواز کی تحریر کا امتحان ہے۔",
+          "decodedSkipSpecial": "سلام، یہ آواز کی تحریر کا امتحان ہے۔"
+        }
+      ]
+    },
+    {
+      "id": "thai",
+      "text": "สวัสดี วันนี้อากาศดี",
+      "encodings": [
+        {
+          "addSpecialTokens": false,
+          "ids": [
+            143126,
+            23271,
+            125136,
+            28319,
+            220,
+            37213,
+            66256,
+            20184,
+            124032,
+            131711,
+            37033,
+            28319
+          ],
+          "tokens": [
+            "à¸ªà¸§",
+            "à¸±",
+            "à¸ªà¸Ķ",
+            "à¸µ",
+            "Ġ",
+            "à¸§",
+            "à¸±à¸Ļ",
+            "à¸Ļ",
+            "à¸µà¹ī",
+            "à¸Ńà¸²à¸ģà¸²à¸¨",
+            "à¸Ķ",
+            "à¸µ"
+          ],
+          "offsets": [
+            [
+              0,
+              2
+            ],
+            [
+              2,
+              3
+            ],
+            [
+              3,
+              5
+            ],
+            [
+              5,
+              6
+            ],
+            [
+              6,
+              7
+            ],
+            [
+              7,
+              8
+            ],
+            [
+              8,
+              10
+            ],
+            [
+              10,
+              11
+            ],
+            [
+              11,
+              13
+            ],
+            [
+              13,
+              18
+            ],
+            [
+              18,
+              19
+            ],
+            [
+              19,
+              20
+            ]
+          ],
+          "attentionMask": [
+            1,
+            1,
+            1,
+            1,
+            1,
+            1,
+            1,
+            1,
+            1,
+            1,
+            1,
+            1
+          ],
+          "decoded": "สวัสดี วันนี้อากาศดี",
+          "decodedSkipSpecial": "สวัสดี วันนี้อากาศดี"
+        },
+        {
+          "addSpecialTokens": true,
+          "ids": [
+            143126,
+            23271,
+            125136,
+            28319,
+            220,
+            37213,
+            66256,
+            20184,
+            124032,
+            131711,
+            37033,
+            28319
+          ],
+          "tokens": [
+            "à¸ªà¸§",
+            "à¸±",
+            "à¸ªà¸Ķ",
+            "à¸µ",
+            "Ġ",
+            "à¸§",
+            "à¸±à¸Ļ",
+            "à¸Ļ",
+            "à¸µà¹ī",
+            "à¸Ńà¸²à¸ģà¸²à¸¨",
+            "à¸Ķ",
+            "à¸µ"
+          ],
+          "offsets": [
+            [
+              0,
+              2
+            ],
+            [
+              2,
+              3
+            ],
+            [
+              3,
+              5
+            ],
+            [
+              5,
+              6
+            ],
+            [
+              6,
+              7
+            ],
+            [
+              7,
+              8
+            ],
+            [
+              8,
+              10
+            ],
+            [
+              10,
+              11
+            ],
+            [
+              11,
+              13
+            ],
+            [
+              13,
+              18
+            ],
+            [
+              18,
+              19
+            ],
+            [
+              19,
+              20
+            ]
+          ],
+          "attentionMask": [
+            1,
+            1,
+            1,
+            1,
+            1,
+            1,
+            1,
+            1,
+            1,
+            1,
+            1,
+            1
+          ],
+          "decoded": "สวัสดี วันนี้อากาศดี",
+          "decodedSkipSpecial": "สวัสดี วันนี้อากาศดี"
+        }
+      ]
+    },
+    {
+      "id": "cyrillic",
+      "text": "Привет, это проверка распознавания речи.",
+      "encodings": [
+        {
+          "addSpecialTokens": false,
+          "ids": [
+            53645,
+            26991,
+            8178,
+            11,
+            67879,
+            68456,
+            13132,
+            77776,
+            136711,
+            2108,
+            17753,
+            38180,
+            18108,
+            55757,
+            1802,
+            13
+          ],
+          "tokens": [
+            "ÐŁÑĢ",
+            "Ð¸Ð²",
+            "ÐµÑĤ",
+            ",",
+            "ĠÑįÑĤÐ¾",
+            "ĠÐ¿ÑĢÐ¾Ð²ÐµÑĢ",
+            "ÐºÐ°",
+            "ĠÑĢÐ°Ñģ",
+            "Ð¿Ð¾Ð·",
+            "Ð½",
+            "Ð°Ð²",
+            "Ð°Ð½Ð¸Ñı",
+            "ĠÑĢ",
+            "ÐµÑĩ",
+            "Ð¸",
+            "."
+          ],
+          "offsets": [
+            [
+              0,
+              2
+            ],
+            [
+              2,
+              4
+            ],
+            [
+              4,
+              6
+            ],
+            [
+              6,
+              7
+            ],
+            [
+              7,
+              11
+            ],
+            [
+              11,
+              18
+            ],
+            [
+              18,
+              20
+            ],
+            [
+              20,
+              24
+            ],
+            [
+              24,
+              27
+            ],
+            [
+              27,
+              28
+            ],
+            [
+              28,
+              30
+            ],
+            [
+              30,
+              34
+            ],
+            [
+              34,
+              36
+            ],
+            [
+              36,
+              38
+            ],
+            [
+              38,
+              39
+            ],
+            [
+              39,
+              40
+            ]
+          ],
+          "attentionMask": [
+            1,
+            1,
+            1,
+            1,
+            1,
+            1,
+            1,
+            1,
+            1,
+            1,
+            1,
+            1,
+            1,
+            1,
+            1,
+            1
+          ],
+          "decoded": "Привет, это проверка распознавания речи.",
+          "decodedSkipSpecial": "Привет, это проверка распознавания речи."
+        },
+        {
+          "addSpecialTokens": true,
+          "ids": [
+            53645,
+            26991,
+            8178,
+            11,
+            67879,
+            68456,
+            13132,
+            77776,
+            136711,
+            2108,
+            17753,
+            38180,
+            18108,
+            55757,
+            1802,
+            13
+          ],
+          "tokens": [
+            "ÐŁÑĢ",
+            "Ð¸Ð²",
+            "ÐµÑĤ",
+            ",",
+            "ĠÑįÑĤÐ¾",
+            "ĠÐ¿ÑĢÐ¾Ð²ÐµÑĢ",
+            "ÐºÐ°",
+            "ĠÑĢÐ°Ñģ",
+            "Ð¿Ð¾Ð·",
+            "Ð½",
+            "Ð°Ð²",
+            "Ð°Ð½Ð¸Ñı",
+            "ĠÑĢ",
+            "ÐµÑĩ",
+            "Ð¸",
+            "."
+          ],
+          "offsets": [
+            [
+              0,
+              2
+            ],
+            [
+              2,
+              4
+            ],
+            [
+              4,
+              6
+            ],
+            [
+              6,
+              7
+            ],
+            [
+              7,
+              11
+            ],
+            [
+              11,
+              18
+            ],
+            [
+              18,
+              20
+            ],
+            [
+              20,
+              24
+            ],
+            [
+              24,
+              27
+            ],
+            [
+              27,
+              28
+            ],
+            [
+              28,
+              30
+            ],
+            [
+              30,
+              34
+            ],
+            [
+              34,
+              36
+            ],
+            [
+              36,
+              38
+            ],
+            [
+              38,
+              39
+            ],
+            [
+              39,
+              40
+            ]
+          ],
+          "attentionMask": [
+            1,
+            1,
+            1,
+            1,
+            1,
+            1,
+            1,
+            1,
+            1,
+            1,
+            1,
+            1,
+            1,
+            1,
+            1,
+            1
+          ],
+          "decoded": "Привет, это проверка распознавания речи.",
+          "decodedSkipSpecial": "Привет, это проверка распознавания речи."
+        }
+      ]
+    },
+    {
+      "id": "emoji",
+      "text": "Voice 🎙️ café 👩🏽‍💻 family 👨‍👩‍👧‍👦",
+      "encodings": [
+        {
+          "addSpecialTokens": false,
+          "ids": [
+            51167,
+            11162,
+            236,
+            247,
+            30543,
+            51950,
+            61804,
+            102,
+            145375,
+            378,
+            235,
+            145851,
+            2997,
+            61804,
+            101,
+            378,
+            235,
+            145233,
+            378,
+            235,
+            145665,
+            378,
+            235,
+            145988
+          ],
+          "tokens": [
+            "Voice",
+            "ĠðŁ",
+            "İ",
+            "Ļ",
+            "ï¸ı",
+            "ĠcafÃ©",
+            "ĠðŁĳ",
+            "©",
+            "ðŁı½",
+            "âĢ",
+            "į",
+            "ðŁĴ»",
+            "Ġfamily",
+            "ĠðŁĳ",
+            "¨",
+            "âĢ",
+            "į",
+            "ðŁĳ©",
+            "âĢ",
+            "į",
+            "ðŁĳ§",
+            "âĢ",
+            "į",
+            "ðŁĳ¦"
+          ],
+          "offsets": [
+            [
+              0,
+              5
+            ],
+            [
+              5,
+              7
+            ],
+            [
+              6,
+              7
+            ],
+            [
+              6,
+              7
+            ],
+            [
+              7,
+              8
+            ],
+            [
+              8,
+              13
+            ],
+            [
+              13,
+              15
+            ],
+            [
+              14,
+              15
+            ],
+            [
+              15,
+              16
+            ],
+            [
+              16,
+              17
+            ],
+            [
+              16,
+              17
+            ],
+            [
+              17,
+              18
+            ],
+            [
+              18,
+              25
+            ],
+            [
+              25,
+              27
+            ],
+            [
+              26,
+              27
+            ],
+            [
+              27,
+              28
+            ],
+            [
+              27,
+              28
+            ],
+            [
+              28,
+              29
+            ],
+            [
+              29,
+              30
+            ],
+            [
+              29,
+              30
+            ],
+            [
+              30,
+              31
+            ],
+            [
+              31,
+              32
+            ],
+            [
+              31,
+              32
+            ],
+            [
+              32,
+              33
+            ]
+          ],
+          "attentionMask": [
+            1,
+            1,
+            1,
+            1,
+            1,
+            1,
+            1,
+            1,
+            1,
+            1,
+            1,
+            1,
+            1,
+            1,
+            1,
+            1,
+            1,
+            1,
+            1,
+            1,
+            1,
+            1,
+            1,
+            1
+          ],
+          "decoded": "Voice 🎙️ café 👩🏽‍💻 family 👨‍👩‍👧‍👦",
+          "decodedSkipSpecial": "Voice 🎙️ café 👩🏽‍💻 family 👨‍👩‍👧‍👦"
+        },
+        {
+          "addSpecialTokens": true,
+          "ids": [
+            51167,
+            11162,
+            236,
+            247,
+            30543,
+            51950,
+            61804,
+            102,
+            145375,
+            378,
+            235,
+            145851,
+            2997,
+            61804,
+            101,
+            378,
+            235,
+            145233,
+            378,
+            235,
+            145665,
+            378,
+            235,
+            145988
+          ],
+          "tokens": [
+            "Voice",
+            "ĠðŁ",
+            "İ",
+            "Ļ",
+            "ï¸ı",
+            "ĠcafÃ©",
+            "ĠðŁĳ",
+            "©",
+            "ðŁı½",
+            "âĢ",
+            "į",
+            "ðŁĴ»",
+            "Ġfamily",
+            "ĠðŁĳ",
+            "¨",
+            "âĢ",
+            "į",
+            "ðŁĳ©",
+            "âĢ",
+            "į",
+            "ðŁĳ§",
+            "âĢ",
+            "į",
+            "ðŁĳ¦"
+          ],
+          "offsets": [
+            [
+              0,
+              5
+            ],
+            [
+              5,
+              7
+            ],
+            [
+              6,
+              7
+            ],
+            [
+              6,
+              7
+            ],
+            [
+              7,
+              8
+            ],
+            [
+              8,
+              13
+            ],
+            [
+              13,
+              15
+            ],
+            [
+              14,
+              15
+            ],
+            [
+              15,
+              16
+            ],
+            [
+              16,
+              17
+            ],
+            [
+              16,
+              17
+            ],
+            [
+              17,
+              18
+            ],
+            [
+              18,
+              25
+            ],
+            [
+              25,
+              27
+            ],
+            [
+              26,
+              27
+            ],
+            [
+              27,
+              28
+            ],
+            [
+              27,
+              28
+            ],
+            [
+              28,
+              29
+            ],
+            [
+              29,
+              30
+            ],
+            [
+              29,
+              30
+            ],
+            [
+              30,
+              31
+            ],
+            [
+              31,
+              32
+            ],
+            [
+              31,
+              32
+            ],
+            [
+              32,
+              33
+            ]
+          ],
+          "attentionMask": [
+            1,
+            1,
+            1,
+            1,
+            1,
+            1,
+            1,
+            1,
+            1,
+            1,
+            1,
+            1,
+            1,
+            1,
+            1,
+            1,
+            1,
+            1,
+            1,
+            1,
+            1,
+            1,
+            1,
+            1
+          ],
+          "decoded": "Voice 🎙️ café 👩🏽‍💻 family 👨‍👩‍👧‍👦",
+          "decodedSkipSpecial": "Voice 🎙️ café 👩🏽‍💻 family 👨‍👩‍👧‍👦"
+        }
+      ]
+    },
+    {
+      "id": "special_tokens",
+      "text": "<|endoftext|><|im_start|>user\nhello<|im_end|><|object_ref_start|><|object_ref_end|><|box_start|><|image_pad|><|text_chunk_end|>",
+      "encodings": [
+        {
+          "addSpecialTokens": false,
+          "ids": [
+            151643,
+            151644,
+            872,
+            198,
+            14990,
+            151645,
+            151646,
+            151647,
+            151648,
+            151655,
+            151665
+          ],
+          "tokens": [
+            "<|endoftext|>",
+            "<|im_start|>",
+            "user",
+            "Ċ",
+            "hello",
+            "<|im_end|>",
+            "<|object_ref_start|>",
+            "<|object_ref_end|>",
+            "<|box_start|>",
+            "<|image_pad|>",
+            "<|text_chunk_end|>"
+          ],
+          "offsets": [
+            [
+              0,
+              13
+            ],
+            [
+              13,
+              25
+            ],
+            [
+              25,
+              29
+            ],
+            [
+              29,
+              30
+            ],
+            [
+              30,
+              35
+            ],
+            [
+              35,
+              45
+            ],
+            [
+              45,
+              65
+            ],
+            [
+              65,
+              83
+            ],
+            [
+              83,
+              96
+            ],
+            [
+              96,
+              109
+            ],
+            [
+              109,
+              127
+            ]
+          ],
+          "attentionMask": [
+            1,
+            1,
+            1,
+            1,
+            1,
+            1,
+            1,
+            1,
+            1,
+            1,
+            1
+          ],
+          "decoded": "<|endoftext|><|im_start|>user\nhello<|im_end|><|object_ref_start|><|object_ref_end|><|box_start|><|image_pad|><|text_chunk_end|>",
+          "decodedSkipSpecial": "user\nhello"
+        },
+        {
+          "addSpecialTokens": true,
+          "ids": [
+            151643,
+            151644,
+            872,
+            198,
+            14990,
+            151645,
+            151646,
+            151647,
+            151648,
+            151655,
+            151665
+          ],
+          "tokens": [
+            "<|endoftext|>",
+            "<|im_start|>",
+            "user",
+            "Ċ",
+            "hello",
+            "<|im_end|>",
+            "<|object_ref_start|>",
+            "<|object_ref_end|>",
+            "<|box_start|>",
+            "<|image_pad|>",
+            "<|text_chunk_end|>"
+          ],
+          "offsets": [
+            [
+              0,
+              13
+            ],
+            [
+              13,
+              25
+            ],
+            [
+              25,
+              29
+            ],
+            [
+              29,
+              30
+            ],
+            [
+              30,
+              35
+            ],
+            [
+              35,
+              45
+            ],
+            [
+              45,
+              65
+            ],
+            [
+              65,
+              83
+            ],
+            [
+              83,
+              96
+            ],
+            [
+              96,
+              109
+            ],
+            [
+              109,
+              127
+            ]
+          ],
+          "attentionMask": [
+            1,
+            1,
+            1,
+            1,
+            1,
+            1,
+            1,
+            1,
+            1,
+            1,
+            1
+          ],
+          "decoded": "<|endoftext|><|im_start|>user\nhello<|im_end|><|object_ref_start|><|object_ref_end|><|box_start|><|image_pad|><|text_chunk_end|>",
+          "decodedSkipSpecial": "user\nhello"
+        }
+      ]
+    },
+    {
+      "id": "streaming_prompt",
+      "text": "You are a helpful assistant that transcribes audio input into text output. Please transcribe the following audios streamingly with these keys: speaker, content\n",
+      "encodings": [
+        {
+          "addSpecialTokens": false,
+          "ids": [
+            2610,
+            525,
+            264,
+            10950,
+            17847,
+            429,
+            1356,
+            55136,
+            7699,
+            1946,
+            1119,
+            1467,
+            2550,
+            13,
+            5209,
+            1356,
+            3114,
+            279,
+            2701,
+            6136,
+            3530,
+            4269,
+            11307,
+            448,
+            1493,
+            6894,
+            25,
+            18601,
+            11,
+            2213,
+            198
+          ],
+          "tokens": [
+            "You",
+            "Ġare",
+            "Ġa",
+            "Ġhelpful",
+            "Ġassistant",
+            "Ġthat",
+            "Ġtrans",
+            "cribes",
+            "Ġaudio",
+            "Ġinput",
+            "Ġinto",
+            "Ġtext",
+            "Ġoutput",
+            ".",
+            "ĠPlease",
+            "Ġtrans",
+            "cribe",
+            "Ġthe",
+            "Ġfollowing",
+            "Ġaud",
+            "ios",
+            "Ġstream",
+            "ingly",
+            "Ġwith",
+            "Ġthese",
+            "Ġkeys",
+            ":",
+            "Ġspeaker",
+            ",",
+            "Ġcontent",
+            "Ċ"
+          ],
+          "offsets": [
+            [
+              0,
+              3
+            ],
+            [
+              3,
+              7
+            ],
+            [
+              7,
+              9
+            ],
+            [
+              9,
+              17
+            ],
+            [
+              17,
+              27
+            ],
+            [
+              27,
+              32
+            ],
+            [
+              32,
+              38
+            ],
+            [
+              38,
+              44
+            ],
+            [
+              44,
+              50
+            ],
+            [
+              50,
+              56
+            ],
+            [
+              56,
+              61
+            ],
+            [
+              61,
+              66
+            ],
+            [
+              66,
+              73
+            ],
+            [
+              73,
+              74
+            ],
+            [
+              74,
+              81
+            ],
+            [
+              81,
+              87
+            ],
+            [
+              87,
+              92
+            ],
+            [
+              92,
+              96
+            ],
+            [
+              96,
+              106
+            ],
+            [
+              106,
+              110
+            ],
+            [
+              110,
+              113
+            ],
+            [
+              113,
+              120
+            ],
+            [
+              120,
+              125
+            ],
+            [
+              125,
+              130
+            ],
+            [
+              130,
+              136
+            ],
+            [
+              136,
+              141
+            ],
+            [
+              141,
+              142
+            ],
+            [
+              142,
+              150
+            ],
+            [
+              150,
+              151
+            ],
+            [
+              151,
+              159
+            ],
+            [
+              159,
+              160
+            ]
+          ],
+          "attentionMask": [
+            1,
+            1,
+            1,
+            1,
+            1,
+            1,
+            1,
+            1,
+            1,
+            1,
+            1,
+            1,
+            1,
+            1,
+            1,
+            1,
+            1,
+            1,
+            1,
+            1,
+            1,
+            1,
+            1,
+            1,
+            1,
+            1,
+            1,
+            1,
+            1,
+            1,
+            1
+          ],
+          "decoded": "You are a helpful assistant that transcribes audio input into text output. Please transcribe the following audios streamingly with these keys: speaker, content\n",
+          "decodedSkipSpecial": "You are a helpful assistant that transcribes audio input into text output. Please transcribe the following audios streamingly with these keys: speaker, content\n"
+        },
+        {
+          "addSpecialTokens": true,
+          "ids": [
+            2610,
+            525,
+            264,
+            10950,
+            17847,
+            429,
+            1356,
+            55136,
+            7699,
+            1946,
+            1119,
+            1467,
+            2550,
+            13,
+            5209,
+            1356,
+            3114,
+            279,
+            2701,
+            6136,
+            3530,
+            4269,
+            11307,
+            448,
+            1493,
+            6894,
+            25,
+            18601,
+            11,
+            2213,
+            198
+          ],
+          "tokens": [
+            "You",
+            "Ġare",
+            "Ġa",
+            "Ġhelpful",
+            "Ġassistant",
+            "Ġthat",
+            "Ġtrans",
+            "cribes",
+            "Ġaudio",
+            "Ġinput",
+            "Ġinto",
+            "Ġtext",
+            "Ġoutput",
+            ".",
+            "ĠPlease",
+            "Ġtrans",
+            "cribe",
+            "Ġthe",
+            "Ġfollowing",
+            "Ġaud",
+            "ios",
+            "Ġstream",
+            "ingly",
+            "Ġwith",
+            "Ġthese",
+            "Ġkeys",
+            ":",
+            "Ġspeaker",
+            ",",
+            "Ġcontent",
+            "Ċ"
+          ],
+          "offsets": [
+            [
+              0,
+              3
+            ],
+            [
+              3,
+              7
+            ],
+            [
+              7,
+              9
+            ],
+            [
+              9,
+              17
+            ],
+            [
+              17,
+              27
+            ],
+            [
+              27,
+              32
+            ],
+            [
+              32,
+              38
+            ],
+            [
+              38,
+              44
+            ],
+            [
+              44,
+              50
+            ],
+            [
+              50,
+              56
+            ],
+            [
+              56,
+              61
+            ],
+            [
+              61,
+              66
+            ],
+            [
+              66,
+              73
+            ],
+            [
+              73,
+              74
+            ],
+            [
+              74,
+              81
+            ],
+            [
+              81,
+              87
+            ],
+            [
+              87,
+              92
+            ],
+            [
+              92,
+              96
+            ],
+            [
+              96,
+              106
+            ],
+            [
+              106,
+              110
+            ],
+            [
+              110,
+              113
+            ],
+            [
+              113,
+              120
+            ],
+            [
+              120,
+              125
+            ],
+            [
+              125,
+              130
+            ],
+            [
+              130,
+              136
+            ],
+            [
+              136,
+              141
+            ],
+            [
+              141,
+              142
+            ],
+            [
+              142,
+              150
+            ],
+            [
+              150,
+              151
+            ],
+            [
+              151,
+              159
+            ],
+            [
+              159,
+              160
+            ]
+          ],
+          "attentionMask": [
+            1,
+            1,
+            1,
+            1,
+            1,
+            1,
+            1,
+            1,
+            1,
+            1,
+            1,
+            1,
+            1,
+            1,
+            1,
+            1,
+            1,
+            1,
+            1,
+            1,
+            1,
+            1,
+            1,
+            1,
+            1,
+            1,
+            1,
+            1,
+            1,
+            1,
+            1
+          ],
+          "decoded": "You are a helpful assistant that transcribes audio input into text output. Please transcribe the following audios streamingly with these keys: speaker, content\n",
+          "decodedSkipSpecial": "You are a helpful assistant that transcribes audio input into text output. Please transcribe the following audios streamingly with these keys: speaker, content\n"
+        }
+      ]
+    },
+    {
+      "id": "streaming_prompt_context",
+      "text": "You are a helpful assistant that transcribes audio input into text output. Please transcribe the following audios streamingly with these keys: speaker, content and extra info: Python, GitHub, राहुल\n",
+      "encodings": [
+        {
+          "addSpecialTokens": false,
+          "ids": [
+            2610,
+            525,
+            264,
+            10950,
+            17847,
+            429,
+            1356,
+            55136,
+            7699,
+            1946,
+            1119,
+            1467,
+            2550,
+            13,
+            5209,
+            1356,
+            3114,
+            279,
+            2701,
+            6136,
+            3530,
+            4269,
+            11307,
+            448,
+            1493,
+            6894,
+            25,
+            18601,
+            11,
+            2213,
+            323,
+            4960,
+            3546,
+            25,
+            13027,
+            11,
+            32095,
+            11,
+            14925,
+            108,
+            31411,
+            117,
+            72653,
+            91811,
+            198
+          ],
+          "tokens": [
+            "You",
+            "Ġare",
+            "Ġa",
+            "Ġhelpful",
+            "Ġassistant",
+            "Ġthat",
+            "Ġtrans",
+            "cribes",
+            "Ġaudio",
+            "Ġinput",
+            "Ġinto",
+            "Ġtext",
+            "Ġoutput",
+            ".",
+            "ĠPlease",
+            "Ġtrans",
+            "cribe",
+            "Ġthe",
+            "Ġfollowing",
+            "Ġaud",
+            "ios",
+            "Ġstream",
+            "ingly",
+            "Ġwith",
+            "Ġthese",
+            "Ġkeys",
+            ":",
+            "Ġspeaker",
+            ",",
+            "Ġcontent",
+            "Ġand",
+            "Ġextra",
+            "Ġinfo",
+            ":",
+            "ĠPython",
+            ",",
+            "ĠGitHub",
+            ",",
+            "Ġà¤",
+            "°",
+            "à¤¾à¤",
+            "¹",
+            "à¥ģ",
+            "à¤²",
+            "Ċ"
+          ],
+          "offsets": [
+            [
+              0,
+              3
+            ],
+            [
+              3,
+              7
+            ],
+            [
+              7,
+              9
+            ],
+            [
+              9,
+              17
+            ],
+            [
+              17,
+              27
+            ],
+            [
+              27,
+              32
+            ],
+            [
+              32,
+              38
+            ],
+            [
+              38,
+              44
+            ],
+            [
+              44,
+              50
+            ],
+            [
+              50,
+              56
+            ],
+            [
+              56,
+              61
+            ],
+            [
+              61,
+              66
+            ],
+            [
+              66,
+              73
+            ],
+            [
+              73,
+              74
+            ],
+            [
+              74,
+              81
+            ],
+            [
+              81,
+              87
+            ],
+            [
+              87,
+              92
+            ],
+            [
+              92,
+              96
+            ],
+            [
+              96,
+              106
+            ],
+            [
+              106,
+              110
+            ],
+            [
+              110,
+              113
+            ],
+            [
+              113,
+              120
+            ],
+            [
+              120,
+              125
+            ],
+            [
+              125,
+              130
+            ],
+            [
+              130,
+              136
+            ],
+            [
+              136,
+              141
+            ],
+            [
+              141,
+              142
+            ],
+            [
+              142,
+              150
+            ],
+            [
+              150,
+              151
+            ],
+            [
+              151,
+              159
+            ],
+            [
+              159,
+              163
+            ],
+            [
+              163,
+              169
+            ],
+            [
+              169,
+              174
+            ],
+            [
+              174,
+              175
+            ],
+            [
+              175,
+              182
+            ],
+            [
+              182,
+              183
+            ],
+            [
+              183,
+              190
+            ],
+            [
+              190,
+              191
+            ],
+            [
+              191,
+              193
+            ],
+            [
+              192,
+              193
+            ],
+            [
+              193,
+              195
+            ],
+            [
+              194,
+              195
+            ],
+            [
+              195,
+              196
+            ],
+            [
+              196,
+              197
+            ],
+            [
+              197,
+              198
+            ]
+          ],
+          "attentionMask": [
+            1,
+            1,
+            1,
+            1,
+            1,
+            1,
+            1,
+            1,
+            1,
+            1,
+            1,
+            1,
+            1,
+            1,
+            1,
+            1,
+            1,
+            1,
+            1,
+            1,
+            1,
+            1,
+            1,
+            1,
+            1,
+            1,
+            1,
+            1,
+            1,
+            1,
+            1,
+            1,
+            1,
+            1,
+            1,
+            1,
+            1,
+            1,
+            1,
+            1,
+            1,
+            1,
+            1,
+            1,
+            1
+          ],
+          "decoded": "You are a helpful assistant that transcribes audio input into text output. Please transcribe the following audios streamingly with these keys: speaker, content and extra info: Python, GitHub, राहुल\n",
+          "decodedSkipSpecial": "You are a helpful assistant that transcribes audio input into text output. Please transcribe the following audios streamingly with these keys: speaker, content and extra info: Python, GitHub, राहुल\n"
+        },
+        {
+          "addSpecialTokens": true,
+          "ids": [
+            2610,
+            525,
+            264,
+            10950,
+            17847,
+            429,
+            1356,
+            55136,
+            7699,
+            1946,
+            1119,
+            1467,
+            2550,
+            13,
+            5209,
+            1356,
+            3114,
+            279,
+            2701,
+            6136,
+            3530,
+            4269,
+            11307,
+            448,
+            1493,
+            6894,
+            25,
+            18601,
+            11,
+            2213,
+            323,
+            4960,
+            3546,
+            25,
+            13027,
+            11,
+            32095,
+            11,
+            14925,
+            108,
+            31411,
+            117,
+            72653,
+            91811,
+            198
+          ],
+          "tokens": [
+            "You",
+            "Ġare",
+            "Ġa",
+            "Ġhelpful",
+            "Ġassistant",
+            "Ġthat",
+            "Ġtrans",
+            "cribes",
+            "Ġaudio",
+            "Ġinput",
+            "Ġinto",
+            "Ġtext",
+            "Ġoutput",
+            ".",
+            "ĠPlease",
+            "Ġtrans",
+            "cribe",
+            "Ġthe",
+            "Ġfollowing",
+            "Ġaud",
+            "ios",
+            "Ġstream",
+            "ingly",
+            "Ġwith",
+            "Ġthese",
+            "Ġkeys",
+            ":",
+            "Ġspeaker",
+            ",",
+            "Ġcontent",
+            "Ġand",
+            "Ġextra",
+            "Ġinfo",
+            ":",
+            "ĠPython",
+            ",",
+            "ĠGitHub",
+            ",",
+            "Ġà¤",
+            "°",
+            "à¤¾à¤",
+            "¹",
+            "à¥ģ",
+            "à¤²",
+            "Ċ"
+          ],
+          "offsets": [
+            [
+              0,
+              3
+            ],
+            [
+              3,
+              7
+            ],
+            [
+              7,
+              9
+            ],
+            [
+              9,
+              17
+            ],
+            [
+              17,
+              27
+            ],
+            [
+              27,
+              32
+            ],
+            [
+              32,
+              38
+            ],
+            [
+              38,
+              44
+            ],
+            [
+              44,
+              50
+            ],
+            [
+              50,
+              56
+            ],
+            [
+              56,
+              61
+            ],
+            [
+              61,
+              66
+            ],
+            [
+              66,
+              73
+            ],
+            [
+              73,
+              74
+            ],
+            [
+              74,
+              81
+            ],
+            [
+              81,
+              87
+            ],
+            [
+              87,
+              92
+            ],
+            [
+              92,
+              96
+            ],
+            [
+              96,
+              106
+            ],
+            [
+              106,
+              110
+            ],
+            [
+              110,
+              113
+            ],
+            [
+              113,
+              120
+            ],
+            [
+              120,
+              125
+            ],
+            [
+              125,
+              130
+            ],
+            [
+              130,
+              136
+            ],
+            [
+              136,
+              141
+            ],
+            [
+              141,
+              142
+            ],
+            [
+              142,
+              150
+            ],
+            [
+              150,
+              151
+            ],
+            [
+              151,
+              159
+            ],
+            [
+              159,
+              163
+            ],
+            [
+              163,
+              169
+            ],
+            [
+              169,
+              174
+            ],
+            [
+              174,
+              175
+            ],
+            [
+              175,
+              182
+            ],
+            [
+              182,
+              183
+            ],
+            [
+              183,
+              190
+            ],
+            [
+              190,
+              191
+            ],
+            [
+              191,
+              193
+            ],
+            [
+              192,
+              193
+            ],
+            [
+              193,
+              195
+            ],
+            [
+              194,
+              195
+            ],
+            [
+              195,
+              196
+            ],
+            [
+              196,
+              197
+            ],
+            [
+              197,
+              198
+            ]
+          ],
+          "attentionMask": [
+            1,
+            1,
+            1,
+            1,
+            1,
+            1,
+            1,
+            1,
+            1,
+            1,
+            1,
+            1,
+            1,
+            1,
+            1,
+            1,
+            1,
+            1,
+            1,
+            1,
+            1,
+            1,
+            1,
+            1,
+            1,
+            1,
+            1,
+            1,
+            1,
+            1,
+            1,
+            1,
+            1,
+            1,
+            1,
+            1,
+            1,
+            1,
+            1,
+            1,
+            1,
+            1,
+            1,
+            1,
+            1
+          ],
+          "decoded": "You are a helpful assistant that transcribes audio input into text output. Please transcribe the following audios streamingly with these keys: speaker, content and extra info: Python, GitHub, राहुल\n",
+          "decodedSkipSpecial": "You are a helpful assistant that transcribes audio input into text output. Please transcribe the following audios streamingly with these keys: speaker, content and extra info: Python, GitHub, राहुल\n"
+        }
+      ]
+    }
+  ],
+  "chatTemplates": [
+    {
+      "conversationId": 0,
+      "messages": [
+        {
+          "role": "user",
+          "content": "Please transcribe this audio."
+        }
+      ],
+      "addGenerationPrompt": false,
+      "rendered": "<|im_start|>user\nPlease transcribe this audio.<|im_end|>\n",
+      "ids": [
+        151644,
+        872,
+        198,
+        5501,
+        1356,
+        3114,
+        419,
+        7699,
+        13,
+        151645,
+        198
+      ]
+    },
+    {
+      "conversationId": 0,
+      "messages": [
+        {
+          "role": "user",
+          "content": "Please transcribe this audio."
+        }
+      ],
+      "addGenerationPrompt": true,
+      "rendered": "<|im_start|>user\nPlease transcribe this audio.<|im_end|>\n<|im_start|>assistant\n",
+      "ids": [
+        151644,
+        872,
+        198,
+        5501,
+        1356,
+        3114,
+        419,
+        7699,
+        13,
+        151645,
+        198,
+        151644,
+        77091,
+        198
+      ]
+    },
+    {
+      "conversationId": 1,
+      "messages": [
+        {
+          "role": "system",
+          "content": "Preserve punctuation."
+        },
+        {
+          "role": "user",
+          "content": "नमस्ते — hello!"
+        },
+        {
+          "role": "assistant",
+          "content": "Speaker 1: नमस्ते — hello!"
+        }
+      ],
+      "addGenerationPrompt": false,
+      "rendered": "<|im_start|>system\nPreserve punctuation.<|im_end|>\n<|im_start|>user\nनमस्ते — hello!<|im_end|>\n<|im_start|>assistant\nSpeaker 1: नमस्ते — hello!<|im_end|>\n",
+      "ids": [
+        151644,
+        8948,
+        198,
+        14367,
+        5852,
+        61503,
+        13,
+        151645,
+        198,
+        151644,
+        872,
+        198,
+        60096,
+        87244,
+        78368,
+        30484,
+        97,
+        34370,
+        1959,
+        23811,
+        0,
+        151645,
+        198,
+        151644,
+        77091,
+        198,
+        82036,
+        220,
+        16,
+        25,
+        14925,
+        101,
+        87244,
+        78368,
+        30484,
+        97,
+        34370,
+        1959,
+        23811,
+        0,
+        151645,
+        198
+      ]
+    },
+    {
+      "conversationId": 1,
+      "messages": [
+        {
+          "role": "system",
+          "content": "Preserve punctuation."
+        },
+        {
+          "role": "user",
+          "content": "नमस्ते — hello!"
+        },
+        {
+          "role": "assistant",
+          "content": "Speaker 1: नमस्ते — hello!"
+        }
+      ],
+      "addGenerationPrompt": true,
+      "rendered": "<|im_start|>system\nPreserve punctuation.<|im_end|>\n<|im_start|>user\nनमस्ते — hello!<|im_end|>\n<|im_start|>assistant\nSpeaker 1: नमस्ते — hello!<|im_end|>\n<|im_start|>assistant\n",
+      "ids": [
+        151644,
+        8948,
+        198,
+        14367,
+        5852,
+        61503,
+        13,
+        151645,
+        198,
+        151644,
+        872,
+        198,
+        60096,
+        87244,
+        78368,
+        30484,
+        97,
+        34370,
+        1959,
+        23811,
+        0,
+        151645,
+        198,
+        151644,
+        77091,
+        198,
+        82036,
+        220,
+        16,
+        25,
+        14925,
+        101,
+        87244,
+        78368,
+        30484,
+        97,
+        34370,
+        1959,
+        23811,
+        0,
+        151645,
+        198,
+        151644,
+        77091,
+        198
+      ]
+    }
+  ]
+}
