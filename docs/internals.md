@@ -227,3 +227,16 @@ These limits are enforced in code and should be changed there first; documentati
 [ADR-0019](adrs/0019-shared-audio-frontend.md) adds one shared frontend to the existing inference worker. Models → Audio processing enables advisory Silero speech intervals and optional DPDFNet4/8 noise reduction; both default off. Install the selected audio models through the existing download controls. Full recordings and live-capable ASR use the same stateful resampling/enhancement contract. Completed-only ASR processes the frontend at Stop.
 
 Original recordings remain intact. Missing optional audio models do not block recording when the required speech/writer files are installed. Frontend startup failures use original audio with a warning; mid-stream failures invalidate live drafts in both views and use original audio for completed fallback. The UI reconciles drafts with the active operation even when failure and completion occur between polls. Cancellation is propagated. Execution evidence includes frontend artifact/runtime identities, load costs, resampling/native/finalization times, a bounded dispatch histogram, sample counts and capped advisory intervals. VAD never rejects audio; enhancement remains experimental because clearer audio can produce worse words. Ear/Uhm are not production stages.
+
+The independent `audioFrontend.autoLevelEnabled` option automatically selects
+the existing Silero package for bounded level adjustment, even when timing
+annotations are disabled. Its analysis-only conditioned input does not replace
+the archived recording. The shared session buffers deterministic 512-sample
+frames, uses original PCM for level/noise estimates, then sends gain-adjusted
+PCM through the selected denoiser (or directly to ASR). No per-ASR gain path or
+output inverse gain exists. Final tails and cancellation reset both envelopes
+and all estimates. Metrics include `automaticLevel` frame/gain/noise/peak
+counters, `levelUs`, and `enhancedOutputPeak`; these distinguish DSP cost from
+the encompassing `nativeUs` processing timer. `nativeUs` includes level DSP;
+do not add the two fields as independent stage costs. See the automatic-level extension in [ADR-0019](adrs/0019-shared-audio-frontend.md)
+for the experimental thresholds, detector semantics and 32 ms framing cost.

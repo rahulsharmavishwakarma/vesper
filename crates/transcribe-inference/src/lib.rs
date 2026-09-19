@@ -177,7 +177,7 @@ pub fn model_versions(config: &AppConfig) -> Value {
     let mut versions = json!({
         "audioFrontend": {"settings":config.audio_frontend,"sampleRate":16000,"provider":"cpu","nativeGraphThreads":1,
             "runtimeBuildId":env!("TRANSCRIBE_SHERPA_BUILD_ID"), "runtimePatchSha256":env!("TRANSCRIBE_SHERPA_PATCH_SHA256"),
-            "vadPolicy":"advisory-original-pcm", "denoiserApi":"online-in-both-modes",
+            "vadPolicy":audio_frontend::vad_policy(&config.audio_frontend), "denoiserApi":"online-in-both-modes",
             "artifacts":transcribe_models::selected(config).unwrap_or_default().into_iter().filter(|a| a.role == "audio_frontend").collect::<Vec<_>>()},
         "asr": asr,
         "rewriter": {"modelId":config.models.rewriter.id(), "runtime":"llama-cpp-2", "runtimeVersion":"0.1.156", "artifactFile":rewrite_filename(config.rewrite_quantization), "provider":qwen::provider(config), "modelLifetime":"resident-weights-fresh-context-per-request", "thinkingEnabled":false, "contextTokens":qwen::CONTEXT_TOKENS, "maxOutputTokens":qwen::MAX_OUTPUT_TOKENS, "sampling":{"strategy":"greedy"}, "fidelityGuard":"lexical-v1"}

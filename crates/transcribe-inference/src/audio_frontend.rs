@@ -1,5 +1,6 @@
 //! Shared streaming/completed audio processing. Frozen weights, CPU, advisory
-//! VAD only. Original PCM is retained by the caller for completed fallback.
+//! VAD and optional level adjustment/enhancement. The caller retains original PCM
+//! for completed fallback.
 use crate::{artifact_identity::ArtifactIdentity, check_cancelled, native, InferenceError, Result};
 use serde::Serialize;
 use sherpa_onnx::{
@@ -13,6 +14,9 @@ use std::{
 };
 use transcribe_audio::{MonoPcm, StreamingResampler, ASR_SAMPLE_RATE};
 use transcribe_core::{AppConfig, AudioFrontendConfig};
+
+mod level;
+pub use level::LevelMetrics;
 
 const VAD_FRAME: usize = 512;
 const VAD_CONTEXT: usize = 64;
@@ -72,7 +76,7 @@ impl Models {
         };
         check_cancelled(cancelled)?;
         let start = Instant::now();
-        let vad = if config.audio_frontend.vad_enabled {
+        let vad = if config.audio_frontend.vad_enabled || config.audio_frontend.auto_level_enabled {
             Some(
                 VoiceActivityDetector::create(
                     &VadModelConfig {
@@ -201,6 +205,11 @@ impl FrontendCache {
             models: self.models.as_ref(),
             resampler: None,
             pending_vad: Vec::new(),
+            pending_level: Vec::new(),
+            level: config
+                .audio_frontend
+                .auto_level_enabled
+                .then(level::LevelController::default),
             vad_frames: 0,
             native_output: 0,
             delay_remaining: if self.models.as_ref().is_some_and(|m| m.denoiser.is_some()) {
@@ -241,12 +250,17 @@ pub struct FrontendMetrics {
     pub speech_intervals: Vec<SpeechInterval>,
     pub omitted_intervals: usize,
     pub finalized: bool,
+    pub automatic_level: Option<LevelMetrics>,
+    pub level_us: u64,
+    pub enhanced_output_peak: f32,
 }
 impl FrontendMetrics {
     pub fn evidence(&self) -> serde_json::Value {
         serde_json::json!({"runtime":"sherpa-onnx", "runtimeVersion":"1.13.8",
             "runtimeBuildId":env!("TRANSCRIBE_SHERPA_BUILD_ID"), "runtimePatchSha256":env!("TRANSCRIBE_SHERPA_PATCH_SHA256"),
-            "initializedProvider":"cpu", "nativeGraphThreads":1, "vadPolicy":"advisory-original-pcm",
+            "initializedProvider":"cpu", "nativeGraphThreads":1, "vadPolicy":vad_policy(&self.settings),
+            "automaticLevelPolicy":if self.settings.auto_level_enabled {Some("bounded-level-v1")} else {None},
+            "automaticLevelFrameSamples":level::FRAME,
             "denoiserApi":"online-in-both-modes", "sampleRate":16000, "dispatchHistogramBucketUs":1000, "metrics":self})
     }
 }
@@ -255,6 +269,8 @@ pub struct FrontendSession<'a> {
     models: Option<&'a Models>,
     resampler: Option<StreamingResampler>,
     pending_vad: Vec<f32>,
+    pending_level: Vec<f32>,
+    level: Option<level::LevelController>,
     vad_frames: usize,
     native_output: usize,
     delay_remaining: usize,
@@ -320,6 +336,10 @@ impl FrontendSession<'_> {
         let mut out = self.process(&tail, cancelled)?;
         let native_start = Instant::now();
         if self.metrics.input_samples_16k > 0 {
+            if !self.pending_level.is_empty() {
+                let pending = std::mem::take(&mut self.pending_level);
+                out.extend(self.level_frame(&pending, cancelled)?);
+            }
             if self.models.is_some_and(|m| m.vad.is_some()) {
                 // Advance past all real tail samples, including native context lag.
                 self.pending_vad.resize(
@@ -375,6 +395,14 @@ impl FrontendSession<'_> {
         let mut out = Vec::with_capacity(pcm.len());
         for block in pcm.chunks(BLOCK) {
             check_cancelled(cancelled)?;
+            if self.level.is_some() {
+                self.pending_level.extend_from_slice(block);
+                while self.pending_level.len() >= level::FRAME {
+                    let frame: Vec<_> = self.pending_level.drain(..level::FRAME).collect();
+                    out.extend(self.level_frame(&frame, cancelled)?);
+                }
+                continue;
+            }
             if self.models.is_some_and(|m| m.vad.is_some()) {
                 self.pending_vad.extend_from_slice(block);
                 while self.pending_vad.len() >= VAD_FRAME {
@@ -392,10 +420,36 @@ impl FrontendSession<'_> {
         self.metrics.native_us += micros(start);
         Ok(out)
     }
-    fn vad_frame(&mut self, frame: &[f32], cancelled: &AtomicBool) -> Result<()> {
+    fn level_frame(&mut self, frame: &[f32], cancelled: &AtomicBool) -> Result<Vec<f32>> {
+        let start = Instant::now();
+        let mut detection = self
+            .level
+            .as_mut()
+            .expect("automatic level enabled")
+            .detection_input(frame);
+        // Only the detector sees padding; gain/noise statistics see real PCM.
+        detection.resize(VAD_FRAME, 0.0);
+        self.metrics.level_us += micros(start);
+        let speech = self.vad_frame(&detection, cancelled)?;
+        let start = Instant::now();
+        let controller = self.level.as_mut().expect("automatic level enabled");
+        let adjusted = controller.apply(frame, speech);
+        self.metrics.automatic_level = Some(controller.metrics.clone());
+        self.metrics.level_us += micros(start);
+        if let Some(denoiser) = self.models.and_then(|m| m.denoiser.as_ref()) {
+            self.accept_denoised(denoiser.run(&adjusted, 16000))
+        } else {
+            self.metrics.output_samples_16k += adjusted.len();
+            Ok(adjusted)
+        }
+    }
+    fn vad_frame(&mut self, frame: &[f32], cancelled: &AtomicBool) -> Result<bool> {
         check_cancelled(cancelled)?;
+        let mut speech = false;
         if let Some(vad) = self.models.and_then(|m| m.vad.as_ref()) {
             vad.accept_waveform(frame);
+            // Flush clears native segment state. Read live activity first.
+            speech = vad.detected();
             self.vad_frames += 1;
             self.drain_vad(false);
             if self.vad_frames % VAD_BOOKKEEPING_FRAMES == 0 {
@@ -403,7 +457,7 @@ impl FrontendSession<'_> {
                 self.drain_vad(true);
             }
         }
-        Ok(())
+        Ok(speech)
     }
     fn drain_vad(&mut self, bookkeeping_split: bool) {
         let Some(vad) = self.models.and_then(|m| m.vad.as_ref()) else {
@@ -414,6 +468,9 @@ impl FrontendSession<'_> {
                 break;
             };
             vad.pop();
+            if !self.metrics.settings.vad_enabled {
+                continue;
+            }
             let start = (segment.start().max(0) as usize)
                 .saturating_sub(VAD_CONTEXT)
                 .min(self.metrics.input_samples_16k);
@@ -443,11 +500,25 @@ impl FrontendSession<'_> {
         let skip = self.delay_remaining.min(audio.samples.len());
         self.delay_remaining -= skip;
         audio.samples.drain(..skip);
+        self.metrics.enhanced_output_peak = audio
+            .samples
+            .iter()
+            .fold(self.metrics.enhanced_output_peak, |peak, sample| {
+                peak.max(sample.abs())
+            });
         self.metrics.output_samples_16k += audio.samples.len();
         if self.metrics.output_samples_16k > self.metrics.input_samples_16k {
             return Err(native("audio frontend", "denoiser emitted synthetic tail"));
         }
         Ok(audio.samples)
+    }
+}
+
+pub(crate) fn vad_policy(settings: &AudioFrontendConfig) -> &'static str {
+    if settings.auto_level_enabled {
+        "level-conditioned-analysis-no-audio-deletion"
+    } else {
+        "advisory-original-pcm"
     }
 }
 impl Drop for FrontendSession<'_> {
@@ -537,6 +608,115 @@ mod tests {
                 .is_err(),
             "bad bytes never enter native load"
         );
+    }
+
+    #[test]
+    #[ignore = "requires pinned frontend models and a public speech fixture"]
+    fn automatic_level_native_packet_prefix_tail_and_reset_contracts() {
+        let root = PathBuf::from(std::env::var_os("TRANSCRIBE_SMOKE_MODELS").expect("models"));
+        let audio = transcribe_audio::decode_file(
+            Path::new(&std::env::var_os("TRANSCRIBE_SMOKE_AUDIO").expect("public fixture")),
+            60,
+        )
+        .unwrap();
+        let flag = AtomicBool::new(false);
+        let mut config = AppConfig::default();
+        config.audio_frontend.auto_level_enabled = true;
+        let mut cache = FrontendCache::default();
+        // No annotation opt-in is needed to use speech evidence for level control.
+        assert!(!config.audio_frontend.vad_enabled);
+        for denoiser in [
+            NoiseReduction::Off,
+            NoiseReduction::Dpdfnet4,
+            NoiseReduction::Dpdfnet8,
+        ] {
+            config.audio_frontend.noise_reduction = denoiser;
+            for length in [0, 1, 447, 511, 512, 513, 1023, audio.samples().len()] {
+                let input = MonoPcm::new(
+                    audio.samples()[..length].iter().map(|x| x * 0.03).collect(),
+                    16000,
+                )
+                .unwrap();
+                let (expected, stats) =
+                    process_completed(&mut cache, &input, &config, &root, &flag).unwrap();
+                let mut session = cache.start(&config, &root, &flag).unwrap();
+                let mut actual = Vec::new();
+                let mut offset = 0;
+                for size in [1, 159, 319, 17, 1600, 511].into_iter().cycle() {
+                    if offset == length {
+                        break;
+                    }
+                    let end = (offset + size).min(length);
+                    actual.extend(
+                        session
+                            .push(&input.samples()[offset..end], 16000, &flag)
+                            .unwrap(),
+                    );
+                    offset = end;
+                    assert!(session.pending_level.len() < level::FRAME);
+                    assert_eq!(
+                        &actual[..],
+                        &expected.samples()[..actual.len()],
+                        "causal prefix changed"
+                    );
+                }
+                actual.extend(session.finish(&flag).unwrap());
+                assert_eq!(actual, expected.samples());
+                assert_eq!(actual.len(), length);
+                assert!(session.metrics().speech_intervals.is_empty());
+                assert_eq!(
+                    serde_json::to_value(&session.metrics().automatic_level).unwrap(),
+                    serde_json::to_value(&stats.automatic_level).unwrap()
+                );
+                if let Some(level) = &stats.automatic_level {
+                    assert_eq!(level.samples, length);
+                    assert!(level.max_gain_db <= 30.0001);
+                    assert!(level.output_peak <= 0.950001);
+                }
+                assert!(session.finish(&flag).is_err());
+                assert!(session.push(&[0.0], 16000, &flag).is_err());
+            }
+            let (baseline, _) =
+                process_completed(&mut cache, &audio, &config, &root, &flag).unwrap();
+            for cycle in 0..6 {
+                {
+                    let mut b = cache.start(&config, &root, &flag).unwrap();
+                    b.push(&vec![0.7; 4000 + cycle], 48000, &flag).unwrap();
+                    if cycle % 3 == 0 {
+                        b.finish(&flag).unwrap();
+                    }
+                    if cycle % 3 == 1 {
+                        flag.store(true, Ordering::Release);
+                        assert!(matches!(b.finish(&flag), Err(InferenceError::Cancelled)));
+                        flag.store(false, Ordering::Release);
+                    }
+                }
+                let (after, _) =
+                    process_completed(&mut cache, &audio, &config, &root, &flag).unwrap();
+                assert_eq!(
+                    after.samples(),
+                    baseline.samples(),
+                    "state crossed recordings"
+                );
+            }
+            // Unconfirmed stationary noise and digital silence must not gain.
+            for amplitude in [0.0, 0.00001, 0.01] {
+                let mut state = 42_u32;
+                let noise = (0..32000)
+                    .map(|_| {
+                        state ^= state << 13;
+                        state ^= state >> 17;
+                        state ^= state << 5;
+                        amplitude * (state as f64 / u32::MAX as f64 * 2.0 - 1.0) as f32
+                    })
+                    .collect();
+                let input = MonoPcm::new(noise, 16000).unwrap();
+                let (_, stats) =
+                    process_completed(&mut cache, &input, &config, &root, &flag).unwrap();
+                assert_eq!(stats.automatic_level.unwrap().max_gain_db, 0.0);
+            }
+        }
+        eprintln!("automatic level: 24 packet/tail schedules, 18 mixed reset cycles, 9 noise/silence cases passed");
     }
 
     #[test]

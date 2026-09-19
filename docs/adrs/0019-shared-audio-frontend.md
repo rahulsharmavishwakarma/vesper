@@ -10,6 +10,54 @@ The user approved the concrete first-stage integration after reviewing its data 
 
 ## Decision
 
+### Approved automatic level extension (19 September 2026)
+
+The user approved the [bounded automatic-level proposal](https://github.com/rahulsharmavishwakarma/transcribe/issues/42#issuecomment-5740777803)
+with “ok complete it.” `audioFrontend.autoLevelEnabled` is an independent opt-in
+setting. It reuses the shared frontend and resident Silero handle; it changes no
+ASR adapter, native kernel, decoder, checkpoint or model ownership.
+
+The experimental `bounded-level-v1` controller uses deterministic 512-sample
+(32 ms) frames in both recording modes. A separate continuous gain envelope
+conditions only the detector's input (target −26 dBFS, maximum 60 dB). This is
+not a noise classifier. The detector's public `detected()` value is hysteretic,
+not a probability; it is read before bookkeeping flush. Original samples feed
+the main level/noise estimates. Main gain begins at unity, targets −32 dBFS,
+and is limited to 30 dB, estimated noise and current-frame 0.95 peak headroom.
+The −50 dBFS noise target limits additional amplification; it does not reduce
+already-louder noise to that level. The frame-endpoint gain budget is 30 dB/s
+up and 120 dB/s down, with amplitude interpolation inside the frame and
+immediate reduction when headroom demands it. A held speech-level estimate
+with 6 dB/s release limits chasing abrupt falling tails; gradual level declines
+can still permit gain increases. Initial non-speech confirmation is not
+immediately treated as noise. These constants are engineering hypotheses.
+
+Frame buffering adds up to 32 ms before processing (in addition to resampling,
+VAD response, denoising and ASR latency). No utterance lookahead or silence
+deletion is used. A final partial frame contributes only real samples to gain
+statistics and output; detector-only padding stays internal. Session reset
+clears both envelopes and noise/speech estimates. Advisory intervals, when
+requested together with automatic level, describe conditioned detector input;
+the off mode retains original-PCM annotations. Post-denoiser peaks are measured
+separately, because safe input peaks do not guarantee safe enhanced output.
+`firstSpeechSample` and `firstGainSample` identify the affected frame's start;
+they are not decision/emission timestamps. Decisions become available at frame
+end, up to 32 ms later. A startup false detection can permit gain before a noise
+estimate exists, so the noise ceiling is an estimate-based constraint, not a
+guarantee that arbitrary background sounds will remain unamplified.
+
+This is frozen-weight application DSP supported by Sherpa 1.13.8's public API.
+[Pinned WebRTC AGC2](https://webrtc.googlesource.com/src/+/b32e4b35e6025f044e88f4cc3169523b3021e3a9/modules/audio_processing/agc2/adaptive_digital_gain_controller.cc)
+provides design references for speech/noise constraints and gain limits; its
+post-suppression placement and constants are not copied as validated settings.
+The [artifact research](https://arxiv.org/abs/2404.14860v1) and the local
+[matched-level diagnostic](../validation/denoising-followup-2026-09-19.md#gain-matched-diagnostic-results)
+motivate qualification, not a guarantee of automatic-policy accuracy. Runtime
+and artifact revisions below remain unchanged. Default promotion, automatic
+denoiser switching, endpointing and training remain outside this extension.
+
+### Original optional frontend decision
+
 Use the existing Rust inference worker and Sherpa 1.13.8 dependency. A selected `FrontendCache` owns Silero v6.2 and at most one DPDFNet4/8 handle. `FrontendSession` borrows it exclusively, resets native recurrent state at entry and Drop, and owns fresh resampling/framing/alignment/annotation state. Full hash verification precedes native creation; shared observed-file identities invalidate resident reuse after changes. Finalization checks identity again. Unload releases frontend and existing ASR/writer handles together.
 
 Both settings default off. Silero produces advisory intervals on original canonical PCM, preserving every sample for ASR. Noise reduction is an explicit experimental choice. No probability threshold veto, silence deletion, automatic endpoint, language switch, filler removal, adaptive enhancer selection or weight training is introduced.

@@ -122,19 +122,20 @@ pub enum NoiseReduction {
     Dpdfnet8,
 }
 
-/// Experimental frozen-weight frontends. Speech detection only annotates;
-/// it never vetoes recognition or deletes audio.
+/// Experimental frozen-weight frontends. Speech detection provides annotations
+/// and guides optional level adjustment; it never vetoes recognition or deletes audio.
 #[derive(Debug, Clone, Default, PartialEq, Eq, Serialize, Deserialize)]
 #[serde(default, rename_all = "camelCase", deny_unknown_fields)]
 pub struct AudioFrontendConfig {
     pub vad_enabled: bool,
+    pub auto_level_enabled: bool,
     pub noise_reduction: NoiseReduction,
 }
 
 impl AudioFrontendConfig {
     pub fn model_ids(&self) -> Vec<&'static str> {
         let mut ids = Vec::new();
-        if self.vad_enabled {
+        if self.vad_enabled || self.auto_level_enabled {
             ids.push("silero-v6.2");
         }
         match self.noise_reduction {
@@ -146,7 +147,7 @@ impl AudioFrontendConfig {
     }
 
     pub fn enabled(&self) -> bool {
-        self.vad_enabled || self.noise_reduction != NoiseReduction::Off
+        self.vad_enabled || self.auto_level_enabled || self.noise_reduction != NoiseReduction::Off
     }
 }
 
@@ -400,6 +401,12 @@ mod tests {
         use super::*;
         let old: AppConfig = serde_json::from_str("{}").unwrap();
         assert!(!old.audio_frontend.enabled());
+        assert!(!old.audio_frontend.auto_level_enabled);
+        let automatic: AppConfig =
+            serde_json::from_value(serde_json::json!({"audioFrontend":{"autoLevelEnabled":true}}))
+                .unwrap();
+        assert!(automatic.audio_frontend.enabled());
+        assert_eq!(automatic.audio_frontend.model_ids(), ["silero-v6.2"]);
         let selected: AppConfig = serde_json::from_value(
             serde_json::json!({"audioFrontend":{"vadEnabled":true,"noiseReduction":"dpdfnet4"}}),
         )
@@ -415,6 +422,7 @@ mod tests {
         for value in [
             serde_json::json!({"noiseReduction":"unknown"}),
             serde_json::json!({"skipSilence":true}),
+            serde_json::json!({"autoLevelEnabled":"yes"}),
             serde_json::Value::Null,
         ] {
             assert!(serde_json::from_value::<AppConfig>(
