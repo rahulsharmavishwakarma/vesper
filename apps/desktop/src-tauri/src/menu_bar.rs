@@ -81,6 +81,7 @@ fn destination(id: &str) -> Option<&'static str> {
         "tray-history" => Some("history"),
         "tray-models" => Some("models"),
         "tray-settings" => Some("settings"),
+        "tray-about" => Some("about"),
         _ => None,
     }
 }
@@ -142,6 +143,7 @@ pub fn setup(app: &tauri::AppHandle) -> tauri::Result<()> {
     let history = MenuItem::with_id(app, "tray-history", "History", true, None::<&str>)?;
     let models = MenuItem::with_id(app, "tray-models", "Models…", true, None::<&str>)?;
     let settings = MenuItem::with_id(app, "tray-settings", "Settings…", true, Some("CmdOrCtrl+,"))?;
+    let about = MenuItem::with_id(app, "tray-about", "About transcribe…", true, None::<&str>)?;
     let quit = MenuItem::with_id(
         app,
         "tray-quit",
@@ -160,6 +162,7 @@ pub fn setup(app: &tauri::AppHandle) -> tauri::Result<()> {
             &history,
             &models,
             &settings,
+            &about,
             &PredefinedMenuItem::separator(app)?,
             &quit,
         ],
@@ -199,6 +202,28 @@ pub fn setup(app: &tauri::AppHandle) -> tauri::Result<()> {
         navigation: Mutex::new(None),
         stopped: Arc::clone(&stopped),
     });
+    // Retain the platform's Edit/Window menus and route About to the shared sheet.
+    #[cfg(target_os = "macos")]
+    {
+        let native_menu = Menu::default(app)?;
+        let items = native_menu.items()?;
+        if let Some(app_menu) = items.first().and_then(|item| item.as_submenu()) {
+            app_menu.remove_at(0)?;
+            app_menu.prepend(&MenuItem::with_id(
+                app,
+                "app-about",
+                "About transcribe…",
+                true,
+                None::<&str>,
+            )?)?;
+        }
+        app.set_menu(native_menu)?;
+        app.on_menu_event(|app, event| {
+            if event.id.as_ref() == "app-about" {
+                let _ = show_main(app, Some("about"));
+            }
+        });
+    }
     let app = app.clone();
     std::thread::Builder::new()
         .name("transcribe-menu-status".into())
@@ -318,6 +343,7 @@ mod tests {
         assert_eq!(destination("tray-history"), Some("history"));
         assert_eq!(destination("tray-models"), Some("models"));
         assert_eq!(destination("tray-settings"), Some("settings"));
+        assert_eq!(destination("tray-about"), Some("about"));
         for id in [
             "tray-open",
             "tray-capture",

@@ -156,6 +156,7 @@ pub fn run() {
             dictation::start_capture_drag,
             dictation::copy_dictation,
             menu_bar::take_menu_navigation,
+            commands::get_app_info,
             commands::get_app_status,
             commands::get_engine_diagnostics,
             commands::get_accelerator_capabilities,

@@ -33,6 +33,32 @@ fn notify_transcription(
 }
 
 #[derive(Serialize)]
+#[serde(rename_all = "camelCase")]
+pub struct AppInfo {
+    name: &'static str,
+    version: &'static str,
+    build_type: &'static str,
+    os: &'static str,
+    arch: &'static str,
+}
+
+/// Compiled metadata remains available even when settings or models cannot load.
+#[tauri::command]
+pub fn get_app_info() -> AppInfo {
+    AppInfo {
+        name: "transcribe",
+        version: env!("CARGO_PKG_VERSION"),
+        build_type: if cfg!(debug_assertions) {
+            "development"
+        } else {
+            "release"
+        },
+        os: std::env::consts::OS,
+        arch: std::env::consts::ARCH,
+    }
+}
+
+#[derive(Serialize)]
 pub struct AppStatus {
     name: &'static str,
     version: &'static str,

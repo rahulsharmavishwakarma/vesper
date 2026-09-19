@@ -394,6 +394,17 @@ make version-check TAG=v0.2.0
 `make version-set` changes files but never creates a commit, tag, or release.
 Review its diff and run `make check` in the version pull request.
 
+The current synchronizer has a coverage gap: its explicit package list omits
+`transcribe-desktop-platform` and `transcribe-eval`. At revision `7a596c1`, a
+temporary-copy bump from `0.1.0` to `0.1.1` left those two `Cargo.lock` entries at
+`0.1.0`, while `checkVersions` reported success. Its version expression also
+accepts `0.1.1-01`, although [SemVer](https://semver.org/#spec-item-9) disallows
+leading zeroes in numeric prerelease identifiers. The 12 existing version and
+publisher tests pass without detecting these cases. Until corrected, a passing
+version check is not evidence that every workspace package was updated. Repair
+workspace discovery and add independent coverage before the next version bump;
+these findings belong to the existing [release-policy issue #63](https://github.com/rahulsharmavishwakarma/transcribe/issues/63).
+
 ## Release workflow and download URL
 
 A pushed `vX.Y.Z` or `vX.Y.Z-prerelease` tag runs the reusable test/security gates,
@@ -417,8 +428,10 @@ A specific release has a permanent version URL, for example:
 https://github.com/rahulsharmavishwakarma/transcribe/releases/download/v0.1.0/transcribe-macos-arm64.dmg
 ```
 
-These are planned endpoints until the workflow is pushed and a release succeeds.
-The repository must be public for anonymous downloads. A prerelease does not
+These are planned endpoints until a release succeeds. At the 2026-09-19 review,
+the repository is private and has no published releases. The repository hosting
+release assets must be public for anonymous downloads; this can be a separate
+distribution repository while source remains private. A prerelease does not
 replace the latest stable link; use its version-specific URL. See GitHub's
 [release-link documentation](https://docs.github.com/en/repositories/releasing-projects-on-github/linking-to-releases).
 
@@ -466,6 +479,89 @@ Release workflows never download or bundle ASR/cleanup model weights. Model and
 runtime downloads retain their own pinned versions, licenses, sizes and hashes.
 `make build-debug` explicitly builds only the `.app`, keeping DMG creation out of
 routine debug/native PR checks.
+
+## About information and updater readiness
+
+The [release roadmap #62](https://github.com/rahulsharmavishwakarma/transcribe/issues/62)
+separates policy, Apple signing, updater delivery and UI. The following is a
+proposal based on the 2026-09-19 review, not implemented updater behavior or
+approval to introduce it.
+
+### Existing app information and proposed placement
+
+`get_app_info` returns app name, compiled Cargo package version, build type and
+target OS/architecture without reading settings or inspecting models. The
+browser preview reads the desktop npm manifest and identifies itself as a
+preview. Both currently report `0.1.0`. The selected A03 About sheet is available
+from Settings, the sidebar and native About menus. Build revision and release
+channel are not supplied by this metadata contract; a release build is not
+proof of stable-channel publication. Copy app info includes only displayed
+metadata. The updater section states that automatic updates are unavailable.
+
+The remaining About/update proposal builds on that sheet:
+
+- App name, installed version, build type/channel and OS/architecture. Use
+  explicit build metadata for Development, Beta and Stable; a version without
+  a prerelease suffix does not establish that a local build is a stable release.
+- **Copy app info** for version, build revision when available, and platform.
+  Exclude transcripts, recordings, local paths and credentials.
+- Release notes and support links only when their destinations are accessible
+  to the intended user. Keep model selection on Models and resource readings
+  in Application status.
+- Once qualified distribution exists, show **Check for updates**, last check,
+  concise release notes, download progress and **Install and restart**. An
+  optional automatic-check setting may check quietly after startup; download
+  and installation remain explicit actions. Do not show a working-looking
+  update button before its service exists.
+
+The macOS application menu should expose the same About/update actions.
+[Apple's menu guidance](https://developer.apple.com/design/human-interface-guidelines/the-menu-bar)
+is the platform reference; [VS Code's FAQ](https://code.visualstudio.com/docs/supporting/faq)
+documents version information in About and a preference for automatic updates.
+These are interaction references, not a visual template.
+The information-only section can precede the updater work in
+[issue #66](https://github.com/rahulsharmavishwakarma/transcribe/issues/66).
+
+### Updater contract and missing release gates
+
+No updater plugin, public key, endpoint, updater archive or manifest is currently
+configured. The release workflow builds DMG/checksum assets and has both tag-push
+and release-published triggers. Concurrency serializes runs; it does not establish
+build-once promotion. Protected promotion and Apple signing/notarization remain
+separate prerequisites.
+
+[Tauri's updater guide](https://v2.tauri.app/plugin/updater/) specifies signed
+macOS `.app.tar.gz` packages and platform manifests; the DMG serves manual
+installation. Updater signatures and [Apple distribution signing](https://v2.tauri.app/distribute/sign/macos/)
+have different purposes. Publish both formats from the same qualified app.
+Use immutable version-specific archive URLs, an HTTPS feed, and separate stable
+and beta routes. Do not enable automatic checks before a trusted release exists.
+
+The official updater **v2.11.0** source establishes these API limits; this is
+upstream source evidence, not a tested project integration or a dependency choice:
+
+| Planned behavior | Verified limit and design consequence |
+| --- | --- |
+| Cancel a download | The [JS API](https://github.com/tauri-apps/plugins-workspace/blob/updater-v2.11.0/plugins/updater/guest-js/index.ts) has no cancellation/AbortSignal. Resource `close()` does not cancel the cloned native transfer. True cancellation needs separately scoped implementation; do not label dismissal as cancellation. |
+| Show download size in advance | Standard check metadata lacks size. Publish optional per-platform size metadata or obtain asset metadata separately; otherwise omit the estimate. During download, total length may be absent, requiring indeterminate progress. |
+| Show ready after transfer | The [native download implementation](https://github.com/tauri-apps/plugins-workspace/blob/updater-v2.11.0/plugins/updater/src/updater.rs) emits transfer completion before signature verification. Await successful `download()` resolution before offering installation. |
+| Install later | macOS `install()` replaces the app bundle immediately; restarting is separate. Guard installation and restart together against active recording, transcription, model operations and unsaved changes. |
+| Keep a downloaded update after quitting | [JS-backed downloads](https://github.com/tauri-apps/plugins-workspace/blob/updater-v2.11.0/plugins/updater/src/commands.rs) live in an in-memory resource. Session-only deferral is available; persistent caching/resume requires additional design. |
+
+Private release assets require authorized access according to
+[GitHub's asset API](https://docs.github.com/en/rest/releases/assets#get-a-release-asset).
+A static URL is insufficient for anonymous users. Choose public distribution
+hosting or explicitly design authenticated delivery; never embed a maintainer
+token in the app. Changing source-repository visibility is not required by the
+public-distribution option.
+
+Before implementation, approve the delivery location, signing-key ownership,
+release/channel policy and exact update interaction scope in #62–#66. Validate
+the selected dependency versions with an older signed app updating on a clean
+supported Mac: wrong signatures, offline/missing feed, unknown size, interrupted
+download, busy-state races, install permissions, preserved settings/history/models
+and the actual version after restart. Windows and Linux require their own
+packaging and qualification before advertising update support there.
 
 ## Public-source exclusions
 

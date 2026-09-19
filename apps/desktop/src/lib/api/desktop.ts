@@ -34,6 +34,25 @@ export function getEnvironment(): AppEnvironment {
   return isTauri() ? 'desktop' : 'browser-preview';
 }
 
+export interface AppInfo {
+  name: string;
+  version: string;
+  buildType: 'development' | 'release' | 'browser-preview';
+  os: string;
+  arch: string;
+}
+
+export async function getAppInfo(): Promise<AppInfo> {
+  if (isTauri()) return invoke<AppInfo>('get_app_info');
+  return {
+    name: 'transcribe',
+    version: desktopPackage.version,
+    buildType: 'browser-preview',
+    os: 'browser',
+    arch: '',
+  };
+}
+
 /** The response contract for the Rust `get_app_status` command. */
 export interface AppStatus {
   name: string;
