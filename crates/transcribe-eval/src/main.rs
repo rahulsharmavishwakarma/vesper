@@ -184,6 +184,7 @@ fn parse_run(arguments: &[String]) -> Result<RunOptions, String> {
             "--realtime" => options.pace = ReplayPace::RealTime,
             "--cleanup" => options.cleanup = true,
             "--vad" => options.audio_frontend.vad_enabled = true,
+            "--auto-level" => options.audio_frontend.auto_level_enabled = true,
             "--denoiser" => {
                 index += 1;
                 options.audio_frontend.noise_reduction =
@@ -675,11 +676,27 @@ fn parse_backend(value: &str) -> Result<ComputeBackend, String> {
 }
 
 fn usage() -> String {
-    "usage:\n  transcribe-eval validate MANIFEST\n  transcribe-eval run MANIFEST CORPUS_ROOT MODEL_ROOT ENVIRONMENT OUTPUT [--model MODEL_ID | --asr-profile PROFILE_JSON] [--streaming] [--realtime] [--cleanup] [--vad] [--denoiser off|dpdfnet4|dpdfnet8] [--language auto|en|fr|hi] [--chunk-ms 20] [--profile EVALUATION_MEMORY]\n  transcribe-eval build-memory CALIBRATION_MANIFEST BASELINE_REPORT OUTPUT\n  transcribe-eval recommend REQUEST_JSON CAPABILITIES_JSON EVIDENCE_JSON".into()
+    "usage:\n  transcribe-eval validate MANIFEST\n  transcribe-eval run MANIFEST CORPUS_ROOT MODEL_ROOT ENVIRONMENT OUTPUT [--model MODEL_ID | --asr-profile PROFILE_JSON] [--streaming] [--realtime] [--cleanup] [--vad] [--auto-level] [--denoiser off|dpdfnet4|dpdfnet8] [--language auto|en|fr|hi] [--chunk-ms 20] [--profile EVALUATION_MEMORY]\n  transcribe-eval build-memory CALIBRATION_MANIFEST BASELINE_REPORT OUTPUT\n  transcribe-eval recommend REQUEST_JSON CAPABILITIES_JSON EVIDENCE_JSON".into()
 }
 
 #[cfg(test)]
 mod tests {
+    #[test]
+    fn automatic_level_flag_selects_shared_frontend_without_annotations() {
+        let args = [
+            "manifest",
+            "corpus",
+            "models",
+            "environment",
+            "output",
+            "--auto-level",
+        ]
+        .map(str::to_owned);
+        let options = super::parse_run(&args).unwrap();
+        assert!(options.audio_frontend.auto_level_enabled);
+        assert!(!options.audio_frontend.vad_enabled);
+        assert_eq!(options.audio_frontend.model_ids(), ["silero-v6.2"]);
+    }
     use super::*;
 
     #[test]

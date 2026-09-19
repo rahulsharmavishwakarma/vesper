@@ -211,3 +211,114 @@ uv run --locked python scripts/summarize-denoising-gain.py
 ```
 
 Preparation refuses an existing output directory. The launcher now enters an isolated execution directory backed by the frozen harness, binary and inputs. The measured run began with the preceding launcher revision: a concurrent commit hook temporarily restored the committed pre-refactor runner during one process, which tripped the source hash guard. That original attempt and guard record remain intact; remaining jobs resumed using the original frozen harness, and a separate confirmation repeats the affected comparison. The report preserves this event rather than claiming an uninterrupted integrity pass. Both orchestration revisions and the measured Python/NumPy/soundfile versions are retained locally; updating the launcher does not relabel the measured native source revision.
+
+## Automatic level implementation and qualification
+
+The subsequently approved [automatic-level extension](../adrs/0019-shared-audio-frontend.md#approved-automatic-level-extension-19-september-2026) is implemented as **Models → Audio processing → Automatically adjust quiet speech**, default off. It shares one causal frontend across completed recordings and native streaming, reuses Silero v6.2 and the explicitly selected DPDF denoiser, and adds no model, runtime, decoder or ASR adapter. The production policy estimates gain from received audio; it does not know the artificial attenuation used by the diagnostic above.
+
+**Verdict: useful on some quiet recordings, unsuitable as a universal default.** On six newly selected English recordings, standalone automatic gain changes Cohere quiet WER from 82% to 63%, leaves Small at 58%, and worsens Turbo from 7% to 17%. With DPDF4 it reduces quiet WER for all three recognizers, but their errors remain much higher than clean-speech results. Several noisy and noise-only outcomes regress. These are small, descriptive local comparisons; they do not reproduce the oracle diagnostic's accuracy recovery or qualify automatic noise routing.
+
+### Completed recording results
+
+Six fresh FLEURS base recordings, one per sex × duration stratum, each have clean, ×0.03 amplitude and nominal 0 dB recorded-noise mixtures. File IDs were excluded against earlier local manifests; this does not establish speaker or training-set disjointness. Six reused noise controls and two synthetic meaning controls bring each profile to 26 cases. Three recognizers × six profiles produce **468 planned and retained attempts**. Development used two previously observed recordings, with 24 initial-policy and 24 revised-policy attempts retained separately. The initial policy released gain between syllables; the revised policy holds it during confirmed speech. No tuning followed inspection of the fresh matrix.
+
+WER %, lower is better. Each ordinary cell has six recordings / 100 reference words. Parentheses identify incomplete scoring, which must not be ranked as a complete quality pass. “Level” is automatic gain; D4/D8 are the existing full denoisers.
+
+| ASR | Condition | Raw | Level | D4 | Level + D4 | D8 | Level + D8 |
+| --- | --- | ---: | ---: | ---: | ---: | ---: | ---: |
+| Cohere | Clean | 7 | 6 | 9 | 6 | 8 | 3 |
+| Cohere | Quiet | 82 | 63 | 85 | 72 | 87 | 66 |
+| Cohere | Noise mixture | 13 | 12 | 36 | 38 | 17 | 20 |
+| Whisper Small | Clean | 5 | 4 | 5 | 5 | 5 | 4 |
+| Whisper Small | Quiet | 58 | 58 | 87 | 70 | 58 | 48 |
+| Whisper Small | Noise mixture | 27 | 27 | 46 | 46 | 7.89 (5/6) | 11.84 (5/6) |
+| Whisper Turbo | Clean | 3 | 3 | 3 | 5 | 3 | 4 |
+| Whisper Turbo | Quiet | 7 | 17 | 64 | 49 | 48 | 37 |
+| Whisper Turbo | Noise mixture | 9 | 7 | 32 | 35 | 21 | 17 |
+
+Small's two incomplete cells each score 76 reference words and retain one model-token-limit failure. Turbo Level additionally fails one noise-only case with that same limit: **three ASR failures total**. The writer rejects 16 outputs (12 output-limit and four fidelity rejections); delivered natural-speech aggregate WER equals raw WER in every lane, using the existing raw-text fallback. Failures are preserved rather than scored as successful empty transcripts.
+
+Noise-only false transcripts, out of six attempts per cell:
+
+| ASR | Raw | Level | D4 | Level + D4 | D8 | Level + D8 |
+| --- | ---: | ---: | ---: | ---: | ---: | ---: |
+| Cohere | 0 | 0 | 0 | 0 | 0 | 0 |
+| Whisper Small | 4 | 4 | 3 | 5 | 2 | 2 |
+| Whisper Turbo | 5 | 4 + 1 ASR failure | 5 | 5 | 5 | 5 |
+
+The two synthetic negation/amount and date/time controls are excluded from natural-speech WER. Their lexical scores are unchanged when Level is added to each corresponding raw/denoiser profile. This checks regression on those fixtures; it is not a human semantic or factual-fidelity certification.
+
+### Cost, implementation checks and measurement envelope
+
+All 18 completed-audio processes were contended and started on battery. Observed median frontend compute was 2.38 ms per audio-second for Level, 108.80 for D4, 113.66 for Level + D4, 181.80 for D8 and 187.84 for Level + D8. These full-frontend measurements include gain DSP in `nativeUs`; `levelUs` is a subset and must not be added again. Per-frame integer-microsecond truncation makes the small isolated DSP totals unsuitable for precise microbenchmarks. Frontend model load/verification, ASR, writing and application delivery are separate costs. The controller adds up to 32 ms of framing before processing; compute cost and user-visible latency are different quantities.
+
+The completed-audio matrix has no frontend fallback, unfinished frontend or sample-length mismatch. Main gain never exceeds 30 dB; controller output peak stays below 0.950001 and observed post-denoiser peak below 0.799. These are measured input cases, not a universal post-denoiser bound. Noise estimates and conditioned speech detection can be wrong, especially at startup; the setting does not guarantee that background sounds remain unamplified.
+
+Passed checks include 105 core/inference/evaluator unit tests, five final controller tests, 16 settings tests and five report-accounting tests; final all-target Clippy, formatting, Python lint, Svelte checks and ESLint also pass. Model-backed tests cover 24 packet/prefix/tail schedules, 18 reset/cancel/drop cycles and nine noise/silence cases across Off/D4/D8. A separate test verifies exact completed/irregular-packet PCM and rounded lengths at 16, 44.1 and 48 kHz for all three denoiser choices. Browser preview verifies default-off behavior, independent controls, save/reload and a 390-pixel layout; it is not native microphone verification.
+
+The measured source is base `7a596c1af9a61038dbc6dc8ae1d71e42df27d7f8` plus the frozen source snapshot. The release evaluator SHA-256 is `f242ab3b3ce0d77bf57bf10fcb30422069b788626812791a0de10a62dbcae63f`; controller SHA-256 is `8bd8cbf0ea417ddfc6658f4b68aba7c0582d3ac4c8a2d5a52944ba2587d697f9`. The 73-entry quality source inventory is preserved; production sources remain unchanged. Later phases additionally snapshot the new device-rate test, and the corrected soak uses the manifest/metadata-only Python driver revision described below. Hardware is Apple M5 Pro, 18 logical CPUs, 64 GiB, macOS 27.0 (26A428), CPU backend. Completed ASRs use the existing INT8 artifacts and eight threads; the Qwen writer uses Q4_0. Frontend threads remain one. Sherpa 1.13.8, upstream `11afbd009a7f8c08f4bcf2fc1b265d0df4670fbf`, native build `67ce39e3334e098b428e0e94284c3b6a0846e014a5c08000c02ae28f393ebc7b`, and the ADR's pinned frontend artifacts are unchanged. Exact model revisions/hashes, settings, process RSS and power/thermal snapshots remain in each local execution envelope.
+
+Reproduce with the locked project and cached public inputs using `scripts/qualify-automatic-level.py`: `prepare` once, then `development`, `quality`, `streaming`, `soak`, and `summarize`. Detailed reports, generated manifests and frozen sources stay in `.cache/benchmarks/results/automatic-level-2026-09-19/`; no new benchmark JSON is tracked. Keep the earlier development revision in its own directory when changing a candidate. Primary research and exact API distinctions are in ADR-0019: framed speech/noise constraints motivate this frozen-weight application policy; its thresholds are engineering hypotheses, not validated paper defaults. No runtime-internal kernel or training/checkpoint technique is claimed.
+
+### Streaming replay and continuous recording
+
+Sixteen short attempts exercise the actual application manager with Nemotron Q8_0, four native graph threads, 20 ms paced packets, artifact-default 56-frame left / three-frame right context and nominal 320 ms encoder advance. No automatic endpoint is enabled. Each profile runs the same 5.46-second English utterance clean, attenuated and noise-mixed, plus an AC-noise-only control. These fixtures overlap the completed-audio matrix and are not an independent accuracy holdout.
+
+| Profile | Clean WER % | Quiet WER % | Noisy WER % | First partial, clean / noisy ms | Stop-to-final range, four cases ms |
+| --- | ---: | ---: | ---: | ---: | ---: |
+| Raw | 11.76 | 100 | 23.53 | 1,344 / 1,001 | 56.7–67.1 |
+| Level | 5.88 | 100 | 23.53 | 1,305 / 1,024 | 59.5–91.0 |
+| D4 | 17.65 | 100 | 70.59 | 1,371 / 1,671 | 52.3–82.7 |
+| Level + D4 | 11.76 | 100 | 70.59 | 1,393 / 1,694 | 64.7–87.0 |
+
+All 16 attempts complete with no frontend fallback; all active frontends preserve exact sample count and finalize. The noise-only control produces no words. Every quiet attempt produces no words and no first partial, despite successful execution. First-partial timing starts before stream creation: the clean case is cold in each process, while the noisy case is resident. Stop-to-final surrounds `session.finish()` and a small first-partial scan; it is not automatic endpoint or word-emission latency. `asrMs` also includes paced feeding and the partial-edit observer. Partial update/edit-distance counts are retained, but framing changes update frequency, so fewer updates cannot establish greater stability. The evaluator retains partial snapshots; bounded controller state does not establish bounded application memory.
+
+All four short-stream processes start on battery and are contended, with peak process RSS 0.965–1.020 GiB. The original quality/short-stream overview inherited an AC-power label and eight-thread field; the per-process power ledger and ASR execution evidence are authoritative (battery and four Nemotron threads). The corrected driver uses an explicit per-process power reference and phase-appropriate thread metadata. Original files are preserved. No isolated speedup, physical microphone, queue-drop, word-emission, power-consumption, sustained thermal, other-language or target-edge qualification is implied.
+
+The first two continuous-replay launches reject a manifest enum (`synthetic` instead of the supported `synthetic_soak`) before inference. They remain in `soak-preflight`, with their original manifest, logs, hashes and six missing-result slots. The corrected manifest passes the native evaluator's validation; only its replay-kind label changes. The summary preserves preflight failures alongside the subsequent run rather than relabeling them successful. A reporting regression verifies that a successful retry cannot erase an earlier failed launch.
+
+The corrected continuous comparison completes all six cases: a short recording,
+123.65 seconds of concatenated public speech with 250 ms pauses, then the same
+short recording again, for Raw and Level + D4. Both profiles reproduce their
+before/after raw transcript hashes exactly. The enabled frontend preserves
+**1,978,400 input/output samples**, finalizes and never falls back. Long-case
+Stop-to-final is 55.8 ms raw and 54.0 ms with Level + D4; first partial is 986.6
+and 1,053.0 ms respectively. These are single resident, paced, contended
+observations, not evidence of an improvement in Stop latency. Peak process RSS
+is 0.988 / 1.041 GiB. Both processes start on battery. The continuous fixture is
+synthetic composition and excluded from natural-speech accuracy aggregation;
+two minutes does not qualify sustained thermals or long-running application
+memory behavior.
+
+The final summary retains **538 evaluation results plus six missing preflight
+slots**, across 34 launches. There are no unaccounted jobs, duplicate/unexpected
+rows, unreadable reports or changed-input processes. Its strict totals remain
+two failed processes, six missing rows, three real ASR token-limit failures and
+16 writer rejections; it must not be presented as an all-pass quality matrix.
+All 490 post-development recorded/streaming results are present. Frozen
+execution inventories verify for completed audio, short streaming, the archived
+preflight and corrected continuous run; production source and binary identities
+are unchanged. Default promotion remains blocked by the measured quality
+regressions and outstanding microphone/language/device qualification.
+
+### Integration verification
+
+The completed change was checked against main base `2c0e3b7` after the subsequent
+microphone-waveform and push-hook fixes. `make check` passes: 283 Rust tests,
+101 Node tests, 13 Python suites and the browser regression, with no failures.
+Twenty-four installed-model/OS-specific Rust tests remain ignored by that
+deterministic command; the explicitly executed model-backed contracts and audio
+qualification above are separate evidence. Workspace checking, strict Clippy,
+native report tests, formatting, lint, Svelte checking, frontend build and
+warnings-denied Rust documentation also pass. `make precommit` passes its
+repository-wide checks, including secret scanning, workflow syntax and security
+lint; version consistency is included in the checks.
+
+This integration review changes documentation and clarifies source comments;
+the measured inference logic is unchanged. Historical benchmark source/binary
+hashes still identify the measured build, not a newly timed main build. The
+[default-selection policy](../model-presets.md#choosing-the-default-from-benchmarks)
+now explicitly requires compatible, comparable benchmark evidence and retains
+the provisional Cohere/Qwen default. No new default, automatic model router,
+noise gate or release qualification is claimed by passing the implementation
+checks.

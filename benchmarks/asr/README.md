@@ -315,6 +315,22 @@ The shared test performs 100 mixed cycles, cold-versus-resident text comparisons
 
 ### Shared audio frontend qualification
 
+The opt-in automatic-level policy uses `transcribe-eval run ... --auto-level`,
+independently of `--vad` annotations and `--denoiser`. Its application-path
+qualification helper is `uv run --locked python scripts/qualify-automatic-level.py`:
+run `prepare` once, then `development`, `quality`, `streaming`, `soak`, and
+`summarize` after building the release evaluator. Cached public FLEURS/MS-SNSD
+audio from the existing frontend benchmarks is required. `prepare` refuses to
+overwrite prior input; binaries, source snapshots, generated manifests and
+detailed results stay in the ignored benchmark cache. Preserve earlier attempts
+when a development revision changes. The fixed matrix separates fresh read
+speech, artificial attenuation/noise, reused noise/meaning controls and paced
+continuous replay. It does not qualify real whispers, physical microphones,
+other languages or target devices. See [the frontend ADR](../../docs/adrs/0019-shared-audio-frontend.md)
+and [measured automatic-level results](../../docs/validation/denoising-followup-2026-09-19.md#automatic-level-implementation-and-qualification).
+The 468-attempt recorded-audio matrix has mixed accuracy and preserved ASR/noise
+failures; successful execution does not justify enabling this policy by default.
+
 The [application-path report](../../docs/validation/audio-frontend-integration-2026-09-18.md) separates completed-audio quality, paced replay, native contracts, preserved failures and remaining qualification gaps.
 
 The application evaluator accepts `--vad` and `--denoiser off|dpdfnet4|dpdfnet8`; these invoke the same manager frontend as the desktop, including warnings/fallback evidence. They work with completed recordings and the existing `--streaming --realtime --chunk-ms 20` Nemotron mode. They do not add streaming decoder support to other models.
