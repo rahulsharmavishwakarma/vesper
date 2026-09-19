@@ -2459,6 +2459,55 @@ await test('Split keeps errors and progress inside its signal pod', async () => 
   assert(!target.querySelector('.capture-note'), 'Error created a third surface');
 });
 
+await test('TextEdit evaluation is opt-in, saves through existing settings, and restores off', async () => {
+  let saved = defaultSettings();
+  const state = await setup({
+    main: true,
+    intercept: (command, state, args) => {
+      if (command === 'get_settings') return structuredClone(saved);
+      if (command === 'save_settings') {
+        saved = JSON.parse(JSON.stringify(args.settings));
+        return saved;
+      }
+      if (command === 'reset_settings') {
+        saved = defaultSettings();
+        return saved;
+      }
+    },
+  });
+  const button = (label) =>
+    [...target.querySelectorAll('button')].find((b) => b.textContent.trim() === label);
+  await until(() => target.querySelector('#text-edit-observation'), 'Observer setting missing');
+  button('Settings').click();
+  await tick();
+  const input = target.querySelector('#text-edit-observation');
+  assert(!input.checked, 'External observation silently opted in');
+  assert(
+    target.querySelector('#text-edit-observation-help').textContent.includes('32'),
+    'Bounded observation disclosure missing',
+  );
+  target.querySelector('label[for="text-edit-observation"]').click();
+  await tick();
+  assert(
+    input.checked && !saved.textEditObservation,
+    'Checkbox failed or saved before explicit Save',
+  );
+  input.focus();
+  assert(document.activeElement === input, 'Checkbox lost native focus');
+  button('Save changes').click();
+  await until(() => saved.textEditObservation, 'Observer setting not saved');
+  await until(() => !button('Restore defaults').disabled, 'Save stuck');
+  button('Restore defaults').click();
+  await until(
+    () => !saved.textEditObservation && !input.checked,
+    'Reset did not disable observation',
+  );
+  assert(
+    !state.counts.start_recording && !state.counts.toggle_dictation,
+    'Settings opened microphone',
+  );
+});
+
 await test('Capture settings preview all six designs, save explicitly and restore Split', async () => {
   let saved = defaultSettings();
   const state = await setup({

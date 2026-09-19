@@ -58,6 +58,11 @@ review. Edit **Your text** before copying when necessary. **Copy text** waits fo
 your edit to save and stays busy until copying finishes. If saving fails, your
 edit remains visible; use **Retry saving edit**, then copy again.
 
+With default Qwen formatting-only cleanup, the app preserves dictated
+contractions and can automatically retry a failed short cleanup once. A retry
+can add processing time. If the result still fails the checks, the original
+transcript remains available. This recovery needs no setting or per-word setup.
+
 ### Experimental audio processing
 
 In **Models → Audio processing**, **Automatically adjust quiet speech** enables
@@ -156,3 +161,13 @@ do not include transcript text.
 If the problem persists, follow [Support](../SUPPORT.md). Include the application
 version, macOS version, selected model and a synthetic reproduction. Do not
 include private audio, transcripts or credentials.
+
+## Background personalization analysis
+
+When you save a correction inside transcribe, the app also attempts a small local analysis while idle, using the writing model only if it is already loaded. Recording interrupts this work. This experimental analysis helps evaluate intent and context; its guesses do not yet change your words or preferences. Automatic spelling learning continues as before.
+
+The app may retain bounded before/after text and one recent attempt locally for up to 30 days, even when saving audio for training is off. At most 256 results are retained, with expiry applied when the store is next accessed. Undo learning removes that result’s analysis; Forget learned words also removes all of this analysis. No audio or training labels are created by it. See [semantic personalization](personalization/semantic-shadow.md) for details and current evidence.
+
+### Optional TextEdit correction evaluation
+
+In **Settings → Storage and improvement**, **Evaluate corrections in TextEdit** enables a separate local evaluation after automatic paste. It is off by default. The first adapter requires plain-text TextEdit with English menus on Mac and a direct keyboard layout. It observes the inserted text and up to 32 adjacent UTF-16 units on each side for at most one minute; it may abstain when the field, selection or boundaries change. Only inserted/edited text is retained locally, at most 256 records for 30 days. These candidates do not teach your dictionary yet. Disabling stops observation; **Forget learned spellings** also deletes retained candidates. Ordinary in-app spelling learning remains automatic. See the [full scope and limitations](personalization/external-observer.md).

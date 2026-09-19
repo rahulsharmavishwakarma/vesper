@@ -322,3 +322,13 @@ test('audio processing migrates off and validates opt-in model choices', () => {
     assert.ok(validateSettings({ ...defaultSettings(), audioFrontend }).length);
   }
 });
+
+test('external TextEdit evaluation is separate, defaults off, and rejects invalid consent', () => {
+  assert.equal(defaultSettings().textEditObservation, false);
+  const old = defaultSettings();
+  delete old.textEditObservation;
+  assert.equal(parseStoredSettings(old).textEditObservation, false);
+  for (const invalid of [null, 'true', 1]) {
+    assert.ok(validateSettings({ ...defaultSettings(), textEditObservation: invalid }).length > 0);
+  }
+});

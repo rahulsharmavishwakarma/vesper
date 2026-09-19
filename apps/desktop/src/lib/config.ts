@@ -124,6 +124,7 @@ export interface AppConfig {
   captureDesign: CaptureDesign;
   notificationsEnabled: boolean;
   collectTrainingData: boolean;
+  textEditObservation: boolean;
   improvementMode: ImprovementMode;
 }
 
@@ -184,6 +185,7 @@ export function defaultSettings(): AppConfig {
     captureDesign: 'split',
     notificationsEnabled: false,
     collectTrainingData: true,
+    textEditObservation: false,
     improvementMode: 'review_required',
   };
 }
@@ -499,6 +501,8 @@ export function validateSettings(value: unknown): string[] {
     errors.push('Choose where completed dictation goes.');
   if (typeof value.notificationsEnabled !== 'boolean')
     errors.push('Choose whether desktop notifications are enabled.');
+  if (typeof value.textEditObservation !== 'boolean')
+    errors.push('Choose whether to observe TextEdit corrections.');
   if (typeof value.collectTrainingData !== 'boolean')
     errors.push('Choose whether training data is collected.');
   if (!isOneOf(value.improvementMode, ['review_required', 'automatic']))
