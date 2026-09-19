@@ -1,6 +1,6 @@
 # Personalization implementation guide
 
-The application remembers vocabulary on this device independently of the selected speech or writing model. Phase A adds automatic spelling learning from ordinary edits; no model training, cloud inference, embedding service or semantic analysis job runs in this loop.
+The application remembers vocabulary on this device independently of the selected speech or writing model. Phase A adds automatic spelling learning from ordinary edits; no model training, cloud inference or embedding service runs in this loop. The separate [semantic shadow path](semantic-shadow.md) analyzes bounded edits locally without activating its guesses.
 
 Implementation approval: [issue #34](https://github.com/rahulsharmavishwakarma/transcribe/issues/34#issuecomment-5688739690). Decision: [ADR-0016](../adrs/0016-automatic-local-spelling-learning.md). Research and future work: [automatic-personalization research](../research-automatic-personalization.md).
 
@@ -17,15 +17,18 @@ The [September 2026 RSI research review](../research-rsi-2026-09.md) compares Dr
 | Editing and feedback capture | [Editable drafts](draft-editing.md): commit points, Copy, revision checks, failures and review separation |
 | Automatic vocabulary | [Dictionary learning](automatic-dictionary.md): candidate admission, independent support, guards and limitations |
 | Context and in-context examples | [Context selection](context-selection.md): pre-ASR hints, post-ASR retrieval, budgets and model support |
-| Intent and writing preferences | [Intent and writing](intent-and-writing.md): existing explicit examples and output-form routing; automatic semantic learning is deferred |
+| Intent and writing preferences | [Intent and writing](intent-and-writing.md): existing explicit examples and output-form routing; automatic semantic proposals are isolated in [shadow evaluation](semantic-shadow.md) |
 | Repeat dictation | [Retry evidence](retry-evidence.md): temporal/lexical cues, correlated attempts and uncertainty |
 | Lifecycle and privacy | [Storage and privacy](storage-and-privacy.md): schemas, quotas, epochs, undo and deletion |
 | Evidence of benefit | [Evaluation](evaluation.md): replay, comparison limits, timing and qualification |
+| Native qualification procedure | [Protocol](native-qualification.md): frozen controls, installed-model replay, natural sessions and acceptance gates |
 
 Automatic local learning is core desktop behavior, including for existing profiles. There is no **Learn as I dictate** switch and no setup or per-word confirmation is needed. Settings → Your vocabulary and writing explains the behavior and retains inspection, removal and **Forget automatic learning**. Forget clears learned evidence; fresh recordings can teach again, while old result contexts cannot recreate forgotten evidence. This product requirement supersedes the earlier off-by-default rollout choice; broad personal benefit still needs qualification. **Apply my saved corrections** controls the final alias-replacement stage. Recognition hints have a separate opt-in switch and depend on the adapter.
 
-Background execution is event-driven: transcription workers record bounded usage/retry evidence, and completed draft edits invoke the existing blocking-worker command for admission and SQLite persistence. These operations are awaited within their worker; they can contribute to completion/save latency and are not an idle-only scheduler. Nothing polls or trains while idle. See [storage and privacy](storage-and-privacy.md) for migration and deletion semantics.
+Background execution is event-driven: transcription workers record bounded usage/retry evidence, and completed draft edits invoke the existing blocking-worker command for admission and SQLite persistence. These operations are awaited within their worker; they can contribute to completion/save latency and are not an idle-only scheduler. Phase B also has a single cancellable idle analysis slot on the existing inference owner; it never loads a model for background work or trains weights. See [storage and privacy](storage-and-privacy.md) for migration and deletion semantics.
 
-The first implementation observes edits made in **Your text**, and bounded usage/retry evidence from the app's results. It cannot observe corrections made after pasting into another application. History review remains a separate, explicit target-labeling workflow. A routine edit never labels an entire recording as verified speech.
+Automatic spelling learning observes edits made in **Your text**, and bounded usage/retry evidence from the app's results. The optional TextEdit observer described below stores external candidates separately; they do not teach spelling memory. History review remains a separate, explicit target-labeling workflow. A routine edit never labels an entire recording as verified speech.
 
 Current boundaries include one small replacement per completed edit, explicit language for automatic activation, conservative script-independent spelling similarity, English-only retry cues, and bounded lexical teaching context alongside the selected project. Rich style extraction, semantic intent/repair classification, automatic external-document context and acoustic accent adaptation are not implemented by phase A.
+
+The [persistent policy shadow evaluator](policy-experiment.md#persistent-application-shadow-evaluation) checks explicit edits against six frozen policies without changing the active learner. The separately enabled [TextEdit observer](external-observer.md) retains bounded external candidates without teaching vocabulary. Both follow the existing Undo/Forget lifecycle.
