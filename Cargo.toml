@@ -1,5 +1,6 @@
 # transcribe Rust workspace; member paths are relative to this manifest.
 [workspace]
+exclude = ["vendor/glib", "tests/glib-backport"]
 members = [
     "apps/desktop/src-tauri",
     "crates/transcribe-core",
@@ -51,3 +52,8 @@ opt-level = 3
 
 [profile.dev.package.transcribe-models]
 opt-level = 2
+
+# GTK3 requires GLib 0.18. This source contains the upstream VariantStrIter fix.
+# scripts/audit-rust.py verifies its full provenance before the strict audit.
+[patch.crates-io]
+glib = { path = "vendor/glib" }
