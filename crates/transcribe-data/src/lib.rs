@@ -1,7 +1,12 @@
 //! Local audio and correction storage. This crate does not run inference or training.
 
+mod external_shadow;
 mod learning;
 mod personalization;
+pub mod policy;
+mod policy_shadow;
+mod semantic;
+pub use external_shadow::ExternalShadowRecord;
 pub use learning::{
     learning_audio_key, AutomaticLearningState, DictationPersonalizationSnapshot, EditSupport,
     LearningCandidate, LearningEvent, LearningEventKind,
@@ -9,6 +14,10 @@ pub use learning::{
 pub use personalization::{
     CorrectionSuggestion, LearningDashboard, RememberCorrection, ReplayGroup, ReviewCandidate,
 };
+pub use policy_shadow::{
+    PolicyReservation, PolicyShadowDecision, PolicyShadowJob, PolicyShadowState,
+};
+pub use semantic::SemanticShadowRecord;
 
 use std::fs::{self, File, OpenOptions};
 use std::io::{BufWriter, Read, Write};
@@ -166,14 +175,28 @@ pub struct DatasetStore {
 
 impl DatasetStore {
     pub fn open(root: PathBuf) -> Result<Self> {
+        Self::open_with_lock_timeout(root, Duration::from_secs(5))
+    }
+
+    /// Background completion must not wait seconds behind a foreground writer.
+    /// This bounds SQLite lock waiting, not filesystem or native call duration.
+    pub fn open_shadow_completion(root: PathBuf) -> Result<Self> {
+        Self::open_with_lock_timeout(root, Duration::from_millis(25))
+    }
+
+    fn open_with_lock_timeout(root: PathBuf, lock_timeout: Duration) -> Result<Self> {
         fs::create_dir_all(&root)?;
         let root = root.canonicalize()?;
         fs::create_dir_all(root.join("audio"))?;
         if !root.join("audio").canonicalize()?.starts_with(&root) {
             return Err(DatasetError::UnsafeAudioPath("audio".into()));
         }
-        let connection = Connection::open(root.join("sessions.sqlite3"))?;
-        connection.busy_timeout(Duration::from_secs(5))?;
+        let mut connection = Connection::open(root.join("sessions.sqlite3"))?;
+        connection.busy_timeout(lock_timeout)?;
+        // Reserve the writer before reading mutation inputs. In WAL mode a
+        // deferred read cannot upgrade after a background writer commits, even
+        // with a busy timeout. Explicit read-only snapshots stay deferred.
+        connection.set_transaction_behavior(rusqlite::TransactionBehavior::Immediate);
         connection.execute_batch(
             "PRAGMA journal_mode = WAL;
              PRAGMA synchronous = FULL;
@@ -190,9 +213,22 @@ impl DatasetStore {
              CREATE TABLE IF NOT EXISTS automatic_learning (
                  id INTEGER PRIMARY KEY CHECK(id = 1),
                  state_json TEXT NOT NULL
+             );
+             CREATE TABLE IF NOT EXISTS external_shadow (token TEXT PRIMARY KEY NOT NULL, created_at INTEGER NOT NULL, record_json TEXT NOT NULL);
+             CREATE TABLE IF NOT EXISTS policy_shadow (id INTEGER PRIMARY KEY CHECK(id=1), state_json TEXT NOT NULL);
+             CREATE TABLE IF NOT EXISTS policy_shadow_job (id INTEGER PRIMARY KEY CHECK(id=1), request_json TEXT NOT NULL);
+             CREATE TABLE IF NOT EXISTS semantic_shadow (
+                 result_id TEXT PRIMARY KEY NOT NULL,
+                 created_at INTEGER NOT NULL,
+                 request_json TEXT NOT NULL,
+                 report_json TEXT NOT NULL
              );",
         )?;
-        Ok(Self { root, connection })
+        let store = Self { root, connection };
+        store.prune_semantic_shadow()?;
+        store.prune_external_shadow()?;
+        store.policy_shadow_state()?;
+        Ok(store)
     }
 
     /// Copy original bytes into managed storage; an import never invents a transcript.

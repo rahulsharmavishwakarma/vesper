@@ -138,7 +138,10 @@ impl DatasetStore {
     pub fn dictation_personalization_snapshot(&self) -> Result<DictationPersonalizationSnapshot> {
         // Persist the existing desktop enable migration before the read transaction.
         self.dictation_personalization()?;
-        let tx = self.connection.unchecked_transaction()?;
+        let tx = rusqlite::Transaction::new_unchecked(
+            &self.connection,
+            rusqlite::TransactionBehavior::Deferred,
+        )?;
         let snapshot = DictationPersonalizationSnapshot {
             profile: self.personalization()?,
             learning: self.automatic_learning_state()?,
@@ -548,6 +551,9 @@ impl DatasetStore {
 
     pub fn undo_learning_for_result(&self, result_id: &str) -> Result<usize> {
         let tx = self.connection.unchecked_transaction()?;
+        self.invalidate_semantic_result(result_id)?;
+        self.invalidate_policy_result(result_id)?;
+        self.invalidate_external_result(result_id)?;
         let state = self.automatic_learning_state()?;
         let prefix = format!("{result_id}:");
         let candidate_ids: Vec<_> = state
@@ -612,6 +618,10 @@ impl DatasetStore {
             word.usage_count = 0;
         }
         profile.learning_epoch = profile.learning_epoch.saturating_add(1);
+        tx.execute("DELETE FROM semantic_shadow", [])?;
+        tx.execute("DELETE FROM policy_shadow", [])?;
+        tx.execute("DELETE FROM policy_shadow_job", [])?;
+        tx.execute("DELETE FROM external_shadow", [])?;
         put_profile(&tx, &mut profile)?;
         put_state(&tx, &AutomaticLearningState::default())?;
         tx.commit()?;
@@ -681,6 +691,11 @@ impl DatasetStore {
         }
         if invalidate {
             next.learning_epoch = next.learning_epoch.saturating_add(1);
+            self.connection.execute("DELETE FROM semantic_shadow", [])?;
+            self.connection.execute("DELETE FROM policy_shadow", [])?;
+            self.connection
+                .execute("DELETE FROM policy_shadow_job", [])?;
+            self.connection.execute("DELETE FROM external_shadow", [])?;
         }
         prune(&mut state, stamp());
         // The surrounding profile transaction commits this atomically.
@@ -790,6 +805,53 @@ mod tests {
     use super::*;
     const CONTEXT_HEARD: &str = "Open read me for deployment";
     const CONTEXT_EDITED: &str = "Open README.md for deployment";
+
+    #[test]
+    fn draft_transaction_keeps_background_writes_from_invalidating_its_snapshot() {
+        let (_dir, store, profile) = setup();
+        let background = DatasetStore::open(store.root.clone()).unwrap();
+        background
+            .connection
+            .busy_timeout(std::time::Duration::ZERO)
+            .unwrap();
+        let tx = store.connection.unchecked_transaction().unwrap();
+        assert_eq!(store.personalization().unwrap(), profile);
+
+        // A shadow write between the foreground read and write must yield,
+        // rather than commit a new WAL snapshot and break the user's edit.
+        let error = background
+            .connection
+            .execute(
+                "INSERT INTO policy_shadow_job(id, request_json) VALUES(1, '{}')",
+                [],
+            )
+            .unwrap_err();
+        assert_eq!(
+            error.sqlite_error_code(),
+            Some(rusqlite::ErrorCode::DatabaseBusy)
+        );
+        store
+            .learn_edit_in_transaction(
+                &tx,
+                &context(&profile, "concurrent-edit"),
+                0,
+                CONTEXT_HEARD,
+                CONTEXT_EDITED,
+            )
+            .unwrap();
+        tx.commit().unwrap();
+        assert_eq!(
+            store.automatic_learning_state().unwrap().candidates.len(),
+            1
+        );
+        background
+            .connection
+            .execute(
+                "INSERT INTO policy_shadow_job(id, request_json) VALUES(1, '{}')",
+                [],
+            )
+            .unwrap();
+    }
 
     #[test]
     fn post_asr_context_guard_requires_observable_cues_and_preserves_manual_entries() {

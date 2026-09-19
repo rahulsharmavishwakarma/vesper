@@ -373,6 +373,11 @@ impl DatasetStore {
     pub fn undo_personalization(&self, id: &str) -> Result<SessionRecord> {
         let tx = self.connection.unchecked_transaction()?;
         let mut record = read_record(&tx, id)?;
+        tx.execute(
+            "DELETE FROM semantic_shadow WHERE json_extract(request_json, '$.sessionId') = ?1",
+            [id],
+        )?;
+        self.invalidate_shadow_session(id)?;
         record.personalization_rejected = true;
         if let Some(evidence) = &record.personalization_evidence {
             self.suspend_automatic_in_transaction(

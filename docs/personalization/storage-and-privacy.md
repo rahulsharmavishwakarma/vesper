@@ -14,13 +14,20 @@ Independent support now also retains up to 16 teaching terms of at most 64 UTF-8
 
 ## Bounds and expiry
 
-The store retains at most **128 active vocabulary entries**, **64 reviewed examples**, **256 non-active candidates**, and **1,024 recent events**. Each serialized event is limited to **4,096 bytes**. A candidate has at most **16 compact independent support records**. Unsupported observed/provisional candidates and recent events expire after 30 days when the next learning/profile mutation prunes the store. There is no timer-based retention scheduler. Learning runs on existing transcription workers and `spawn_blocking` draft commands when an event arrives; it does not require an idle polling service, extra model calls or a new model owner. A draft command awaits its transaction before confirming save, and result observation is awaited on the transcription worker. Background thread execution does not imply zero completion latency.
+The store retains at most **128 active vocabulary entries**, **64 reviewed examples**, **256 non-active candidates**, and **1,024 recent events**. Each serialized event is limited to **4,096 bytes**. A candidate has at most **16 compact independent support records**. Unsupported observed/provisional candidates and recent events expire after 30 days when the next learning/profile mutation prunes the store. There is no timer-based retention scheduler. Phase-A spelling learning runs on existing transcription workers and `spawn_blocking` draft commands when an event arrives, without extra model calls. [Phase B shadow analysis](semantic-shadow.md) separately uses the existing resident writer during idle time. A draft command awaits its transaction before confirming save, and result observation is awaited on the transcription worker. Background thread execution does not imply zero completion latency.
 
 Active support remains compact after event expiry. Suspended entries keep their negative decision until explicitly changed, removed or displaced by the bounded candidate quota; their disabled vocabulary entries still prevent automatic re-enabling. Expiry and quota eviction are not evidence that a spelling is wrong. The inspector displays up to 32 recent candidates; the underlying store remains separately bounded.
 
 Teaching cues remain with active compact support after recent-event expiry, so a learned word does not lose all context merely because its event aged out. Suspending a candidate clears its cues. Removing/evicting a candidate removes its owned cues; Forget clears the entire automatic state. The term-content maximum is 16 KiB per candidate (384 possible retained candidates give a 6 MiB theoretical term-byte ceiling), plus identifiers and JSON overhead; this is a data bound, not a measured process-RAM budget. One operation snapshots profile and learning state together and neither reads live evidence during cleanup nor mutates that snapshot.
 
 ## Undo, conflicts and deletion
+
+Mutating SQLite transactions reserve the writer before reading their inputs.
+This prevents a background shadow write from invalidating a foreground draft's
+read snapshot before it saves. Read-only profile/evidence snapshots remain
+deferred; shadow-state pruning uses an existing mutation transaction or opens
+its own immediate transaction. Background completion keeps its 25-ms lock-wait
+limit and may abstain when busy. See SQLite's [WAL isolation contract](https://www.sqlite.org/isolation.html).
 
 Undoing an applied inferred memory disables its vocabulary entry and suspends the candidate transactionally. An ordinary edit reverting the canonical spelling to the known alias is also negative evidence. Neither action learns an automatic reverse rule. Undo learning preserves the user's authored draft.
 
@@ -34,4 +41,10 @@ The migration from the retired opt-in gate also advances the epoch. An operation
 
 Audio retention follows `collectTrainingData`. Automatic local learning does not enable audio collection. With collection off, minimal feedback records still persist and the current draft remains ephemeral. The desktop creates its local SQLite store when preparing its first personalization snapshot even if audio retention is off; no source audio or full draft is archived by that step. A single bounded recent microphone transcript may remain in runtime memory for retry comparison, as described in [retry evidence](retry-evidence.md).
 
-The future training `improvementMode` setting is unchanged. An ordinary draft or inferred candidate does not become a supervised export target. Export eligibility still uses separately reviewed verbatim/cleanup targets. The feedback store is not included as a training-label source. Everything runs locally using installed components; no clipboard polling, external-editor observation or cloud inference is added.
+The future training `improvementMode` setting is unchanged. An ordinary draft or inferred candidate does not become a supervised export target. Export eligibility still uses separately reviewed verbatim/cleanup targets. The feedback store is not included as a training-label source. Everything runs locally using installed components. Ordinary in-app learning performs no clipboard polling or external observation. The separately enabled TextEdit shadow observer is described below; it uses bounded AX ranges, without cloud inference.
+
+## Semantic shadow text
+
+The separate local `semantic_shadow` table retains up to 256 bounded edit requests/proposals for 30 days, pruned on store access. It can contain before/after and one earlier-attempt text even when audio collection is off; it stores no audio and creates no training session. Undo removes a result’s evidence; Forget clears all shadow records and invalidates old callbacks. Exact request/revision/epoch checks prevent stale completion from recreating them. Shadow guesses never enter active vocabulary, preferences or reviewed exports. See the [full contract](semantic-shadow.md#persistence-deletion-and-isolation).
+
+Policy shadow storage retains compact pre-event counterfactual scores/source identities, 256 cases, 32 routed scopes and eight decisions per scope for 30 days. It contains no raw transcript/profile snapshot. Its one pending job is never replayed after restart. [External TextEdit shadow storage](external-observer.md#storage-and-deletion) separately retains up to 256 inserted/edited text records for 30 days when explicitly enabled, even with audio collection off; adjacent guards are never stored. Neither table enters active vocabulary or reviewed exports. Undo invalidates related evidence; Forget clears both tables and pending reservations.
