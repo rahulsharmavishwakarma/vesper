@@ -24,6 +24,29 @@ The current binding contract is modifier + supported physical key, as described 
 
 These are interaction precedents, not evidence that transcribe implements the products' native key-capture internals or their full key support.
 
+## About and updates studies
+
+The [standalone HTML samples](design/about-updates/index.html) compare three
+proposed layouts: A01 Quiet settings, A02 Split view and A03 About sheet. See the
+[preview guide](design/about-updates/README.md) for the interactive states and
+selection export. These are local review artifacts in the ignored `docs/design/`
+directory, consistent with the repository's treatment of exploratory studies.
+The implemented direction is **A03 About sheet**. Settings, the sidebar and
+native About entries open the same modal with app identity/version, Copy app info
+and the update section. It preserves the shared graphite/sage controls, keyboard
+dismissal and focus recovery demonstrated in the sample. Metadata comes from
+`get_app_info`, independently of model/settings readiness. A release build is
+not labeled as a verified stable release channel.
+
+The samples use illustrative release data and simulated operations. The real
+sheet reports that automatic updates are unavailable and provides no simulated
+download controls. Update controls depend on qualified distribution. Installation must wait for
+active work to finish, and dismissal must not imply native download cancellation.
+Keep technical signing/feed details out of the ordinary user flow. The proposed
+interaction and implementation limits are tracked in issues
+[#66](https://github.com/rahulsharmavishwakarma/transcribe/issues/66) and
+[#65](https://github.com/rahulsharmavishwakarma/transcribe/issues/65).
+
 ## Verification
 
 Exercise the whole task with pointer and keyboard input: initial value, entering edit mode, valid and invalid input, cancellation, focus movement, saving, failure/retry, and reloading. Include slow asynchronous setup and navigation while work is pending. Check narrow and desktop layouts using the rendered component; do not rely solely on a screenshot or a synthetic event pass. Reduced motion must preserve the same state and feedback. Keep real OS shortcut and permission qualification separate from browser mocks.

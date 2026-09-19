@@ -53,6 +53,7 @@
   import CaptureDesignPicker from './lib/components/CaptureDesignPicker.svelte';
   import DictationPreferences from './lib/components/DictationPreferences.svelte';
   import ApplicationStatus from './lib/components/ApplicationStatus.svelte';
+  import AboutSheet from './lib/components/AboutSheet.svelte';
   import DownloadProgress from './lib/components/DownloadProgress.svelte';
   import {
     acceleratorOptions,
@@ -99,6 +100,7 @@
   const cleanupDownload = $derived(downloadTarget(draft, 'rewriter'));
   let datasetRevision = $state(0);
   let removalDialog: ModelRemovalDialog | undefined = $state();
+  let aboutSheet: AboutSheet | undefined = $state();
   const savedCleanupEnabled = $derived(engineSettings?.cleanupEnabled ?? true);
   let savedRecordingLimit = $state(0);
   type View = 'dictate' | 'history' | 'models' | 'settings';
@@ -397,6 +399,10 @@
       const followMenuNavigation = async () => {
         try {
           const view = await invoke<string | null>('take_menu_navigation');
+          if (!disposed && view === 'about') {
+            aboutSheet?.open();
+            return;
+          }
           if (!disposed && views.some((candidate) => candidate.id === view)) navigate(view as View);
         } catch (cause) {
           if (!disposed) statusError = `Could not open the requested screen. ${message(cause)}`;
@@ -453,6 +459,9 @@
         {/each}
       </nav>
       <div class="sidebar-foot">
+        <button type="button" class="ghost" onclick={() => aboutSheet?.open()}
+          >About transcribe</button
+        >
         {#if pipelineBusy}<button
             type="button"
             class="activity-link"
@@ -1109,6 +1118,15 @@
           </div>
         </div>
       </form>
+      <section
+        class="settings-section"
+        hidden={activeView !== 'settings'}
+        aria-labelledby="about-settings-heading"
+      >
+        <h2 id="about-settings-heading">About</h2>
+        <p class="note">App version and information.</p>
+        <button type="button" onclick={() => aboutSheet?.open()}>About transcribe</button>
+      </section>
       {#if loaded}
         <PersonalizationPanel
           desktop={environment === 'desktop'}
@@ -1163,5 +1181,12 @@
         externalBusy={pipelineBusy}
       />
     </main>
+    <AboutSheet
+      bind:this={aboutSheet}
+      fallbackFocus={() =>
+        document
+          .querySelector<HTMLElement>('.sidebar nav button[aria-current="page"]')
+          ?.focus({ preventScroll: true })}
+    />
   </div>
 {/if}

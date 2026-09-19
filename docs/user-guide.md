@@ -11,6 +11,22 @@ available, open its DMG and drag `transcribe.app` to Applications.
 
 ## First launch
 
+### App information
+
+Open **Settings → About → About transcribe**, the sidebar's **About transcribe**
+button, or **About transcribe…** in the native menu to view the About sheet.
+It shows the compiled application version, development/release build type and
+platform. **Copy app info** copies only those details; it does not include
+recordings, transcripts or local paths. If clipboard access fails, the sheet
+provides selected text for manual copying. Escape or Close returns you to the
+previous screen without changing your settings.
+
+Automatic application updates are not connected yet. The sheet reports this
+instead of offering a check/download/restart action. Model downloads continue
+to be managed separately in **Models**.
+
+### Initial setup
+
 1. Open **Models** and select speech and writing models. The writing model is
    used only when text cleanup is enabled.
 2. Download the selected files. **Save & download** saves a pending selection

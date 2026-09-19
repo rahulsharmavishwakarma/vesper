@@ -219,6 +219,14 @@ async function setup({ recording = false, preview = false, main = false, interce
             message: '',
             shortcut_error: null,
           };
+        case 'get_app_info':
+          return {
+            name: 'transcribe',
+            version: '9.8.7',
+            buildType: 'release',
+            os: 'macos',
+            arch: 'aarch64',
+          };
         case 'plugin:window|hide':
           return null;
         default:
@@ -2904,6 +2912,121 @@ await test('Shared disclosure arrows track native open state and retain keyboard
     !details.open && document.activeElement === summary,
     'Disclosure did not close with focus retained',
   );
+});
+
+await test('About sheet uses native metadata, copies only app info and restores focus', async () => {
+  const state = await setup({ main: true });
+  const opener = target.querySelector('.sidebar-foot button');
+  opener.focus();
+  opener.click();
+  await until(() => target.querySelector('.about-sheet .version'), 'About metadata not loaded');
+  const sheet = target.querySelector('.about-sheet');
+  assert(sheet.open, 'About dialog did not open');
+  assert(
+    sheet.textContent.includes('9.8.7'),
+    'Used frontend package version instead of native metadata',
+  );
+  assert(
+    sheet.textContent.includes('Release build') && !sheet.textContent.includes('Stable'),
+    'Build type was mislabeled as a stable channel',
+  );
+  assert(sheet.textContent.includes('macOS · Apple silicon'), 'Native platform not shown');
+  assert(
+    ![...sheet.querySelectorAll('button')].some((button) =>
+      /update|restart/i.test(button.textContent),
+    ),
+    'Unavailable updater has an actionable control',
+  );
+  assert(!state.counts.start_recording, 'About started recording');
+  const descriptor = Object.getOwnPropertyDescriptor(navigator, 'clipboard');
+  let copied;
+  try {
+    Object.defineProperty(navigator, 'clipboard', {
+      configurable: true,
+      value: {
+        writeText: async (text) => {
+          copied = text;
+        },
+      },
+    });
+    sheet.querySelector('.copy').click();
+    await until(
+      () => sheet.textContent.includes('App information copied.'),
+      'Copy feedback missing',
+    );
+    assert(
+      copied ===
+        'transcribe\nVersion: 9.8.7\nBuild: Release build\nPlatform: macOS · Apple silicon',
+      'Copy included unrelated data or incorrect metadata',
+    );
+  } finally {
+    if (descriptor) Object.defineProperty(navigator, 'clipboard', descriptor);
+    else delete navigator.clipboard;
+  }
+  sheet.querySelector('.close').click();
+  await until(
+    () => !sheet.open && document.activeElement === opener,
+    'Focus did not return to About opener',
+  );
+  opener.click();
+  opener.style.display = 'none';
+  sheet.querySelector('.close').click();
+  await until(
+    () => document.activeElement === target.querySelector('.sidebar nav [aria-current="page"]'),
+    'Closing About did not recover focus when its opener became hidden',
+  );
+});
+
+await test('About remains accessible when metadata fails and offers clipboard recovery', async () => {
+  let fail = true;
+  await setup({
+    main: true,
+    intercept: (command) =>
+      command === 'get_app_info' && fail
+        ? Promise.reject(new Error('Metadata unavailable'))
+        : undefined,
+  });
+  target.querySelector('.sidebar-foot button').click();
+  const sheet = target.querySelector('.about-sheet');
+  await until(() => sheet.querySelector('[role="alert"]'), 'About load failure not shown');
+  fail = false;
+  [...sheet.querySelectorAll('button')]
+    .find((button) => button.textContent === 'Try again')
+    .click();
+  await until(() => sheet.querySelector('.copy'), 'Retry did not recover metadata');
+  const descriptor = Object.getOwnPropertyDescriptor(navigator, 'clipboard');
+  try {
+    Object.defineProperty(navigator, 'clipboard', {
+      configurable: true,
+      value: {
+        writeText: async () => {
+          throw new Error('Clipboard denied');
+        },
+      },
+    });
+    sheet.querySelector('.copy').click();
+    await until(() => sheet.querySelector('textarea'), 'Clipboard fallback missing');
+    const fallback = sheet.querySelector('textarea');
+    assert(
+      fallback.value.includes('9.8.7') && fallback.selectionEnd === fallback.value.length,
+      'Fallback app information was not selected',
+    );
+  } finally {
+    if (descriptor) Object.defineProperty(navigator, 'clipboard', descriptor);
+    else delete navigator.clipboard;
+  }
+});
+
+await test('Native About menu request opens the shared sheet after startup', async () => {
+  await setup({
+    main: true,
+    intercept: (command) => (command === 'take_menu_navigation' ? 'about' : undefined),
+  });
+  await until(
+    () => target.querySelector('.about-sheet')?.open,
+    'Native About navigation was dropped',
+  );
+  await until(() => target.querySelector('.about-sheet .version'), 'Native About metadata missing');
 });
 
 if (unexpected.length)
