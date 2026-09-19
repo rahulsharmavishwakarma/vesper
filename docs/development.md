@@ -28,6 +28,12 @@ uv manages Python 3.12+ and the locked tools in `.venv`; Chromium lives in `.cac
 Rust all-target tests, doctests, strict Clippy/rustdoc and the native suite;
 `make precommit` adds repository and workflow/security hygiene. See
 [CI and releases](ci-and-releases.md) for setup and hosted limitations.
+Automatic commits retain the existing format/lint/type and Node checks. Automatic
+pushes run file hygiene and version consistency only; they do not compile Rust,
+start Chromium or rerun the full suite while the remote connection waits. Use
+`make prepush` to exercise those quick checks, and run `make check` explicitly
+before pushing when you need full local validation. CI still runs the complete
+portable, browser and macOS native checks on pull requests and `main`.
 Rust updates change `rust-toolchain.toml` and must pass macOS native tests and app-bundle validation. The
 workspace's minimum Rust metadata is not independently covered by CI.
 

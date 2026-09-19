@@ -57,9 +57,11 @@ repos:
         pass_filenames: false
         always_run: true
         stages: [pre-commit]
-      - id: transcribe-full-check
-        name: transcribe full language, native and browser suite
-        entry: make check
+      # Git has contacted the remote before pre-push runs. Keep native builds
+      # and browser tests in explicit `make check` and the existing CI jobs.
+      - id: transcribe-push-check
+        name: transcribe version consistency
+        entry: make version-check
         language: system
         pass_filenames: false
         always_run: true

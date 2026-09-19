@@ -37,9 +37,11 @@ make hooks
 The pre-commit hook scans staged changes with Gitleaks, rejects private keys,
 checks workflow syntax/security, and runs Rust/Python/frontend/shell formatting,
 ESLint, Ruff, ShellCheck, frontend diagnostics and Node tests. The pre-push hook
-runs the complete suite, including Python/browser regressions, all Rust target
-tests, doctests and strict Clippy/rustdoc. Run pre-commit checks manually
-with `make precommit` and the pre-push stage with `make prepush`. See the
+runs lightweight file hygiene and version consistency, without holding an open
+SSH connection through compilation. Run the complete suite explicitly with
+`make check` before pushing; CI also runs Python/browser regressions, all Rust
+target tests, doctests and strict Clippy/rustdoc. Run pre-commit checks manually
+with `make precommit` and the quick pre-push stage with `make prepush`. See the
 [hook setup and untracked-file caveat](docs/ci-and-releases.md#local-setup-and-hook-scope).
 
 ## Testing changes

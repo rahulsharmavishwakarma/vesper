@@ -77,7 +77,7 @@ hooks: ## Install the pre-commit and pre-push Git hooks
 precommit: ## Run all pre-commit checks against the repository
 	$(PRE_COMMIT) run --all-files --show-diff-on-failure
 
-prepush: ## Run the full suite through the pre-push hook
+prepush: ## Run lightweight push checks; use make check for the full local suite
 	$(PRE_COMMIT) run --hook-stage pre-push --all-files
 
 workflows: ## Lint Actions syntax, embedded shell scripts, and workflow security

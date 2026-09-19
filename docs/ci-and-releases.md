@@ -155,7 +155,18 @@ with `PLAYWRIGHT_BROWSERS_PATH="$PWD/.cache/playwright" npm exec playwright inst
 isolated environments, including Go-based actionlint, ShellCheck and Gitleaks;
 the first installation requires network access. `make hooks` installs both
 pre-commit and pre-push. `make precommit` runs the pre-commit stage; `make prepush`
-runs the full application/tooling suite. `make check-fast` runs formatting for
+runs lightweight file hygiene and version-consistency checks. The automatic push
+hook does not compile Rust, run browser tests or invoke `make check`: Git has
+already contacted the remote when it invokes pre-push, so a long build can leave
+the SSH connection idle until it disconnects. Run `make check` explicitly before
+`git push` for full local validation, without an open push connection. All full
+checks remain in the existing PR/main/merge-group CI jobs. SSH keep-alives can
+help an unreliable connection, but are not a replacement for this shorter hook.
+Existing installed hooks read the updated configuration; reinstalling or using
+`--no-verify` is unnecessary. Initial tool provisioning still needs setup and may
+take longer than a run with cached tools.
+
+`make check-fast` runs formatting for
 Rust/Python/frontend/shell, ESLint/Ruff/ShellCheck, Svelte/TypeScript diagnostics
 and Node tests. `make fmt` applies all source formatters; `make fmt-check` checks
 without editing. `make lint` runs all language linters. Individual targets use
@@ -207,10 +218,22 @@ Frontend coverage is shared between local hooks and CI:
 | TypeScript/Svelte/JavaScript lint (ESLint, warnings denied) | `make lint-web` | pre-commit |
 | Svelte and TypeScript diagnostics | `make check-web` | pre-commit |
 | Frontend helper and repository tests (Node) | `make test-tools` | pre-commit |
-| Mocked-native UI regressions (Playwright/Chromium) | `make test-browser` | pre-push |
+| Version consistency | `make version-check` | pre-push |
+| Mocked-native UI regressions (Playwright/Chromium) | `make test-browser` | Explicit local check and CI |
 
 `make hooks` installs both stages. CI runs those checks independently of local
 hook installation; the portable job also builds frontend assets.
+
+Hook staging follows [pre-commit's stage configuration](https://pre-commit.com/#confining-hooks-to-run-at-certain-stages).
+The remote-ref timing is documented in [Git's pre-push hook contract](https://git-scm.com/docs/githooks#_pre_push).
+
+Local verification on 19 September 2026: the actual `make prepush` stage finished
+in 0.50 seconds with existing hook environments. A deliberate Tauri version
+mismatch failed in 0.47 seconds, and its file was restored afterward. Cargo,
+npm, Chromium and CMake were replaced with failing sentinels on the test PATH;
+none was invoked. The pre-commit stage, explicit `make check` recipes and hosted
+CI jobs are unchanged. These are local warm-tool measurements, not a promise
+about first-time setup or network latency.
 
 ## Security gates
 
