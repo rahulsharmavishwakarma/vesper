@@ -6,7 +6,7 @@ use crate::{
 };
 use serde::{Deserialize, Serialize};
 
-pub const LEARNING_POLICY_VERSION: u32 = 2;
+pub const LEARNING_POLICY_VERSION: u32 = 4;
 pub const MAX_LEARNING_TEXT_BYTES: usize = 8192;
 pub const MAX_TEACHING_TERMS: usize = 16;
 pub const MAX_TEACHING_TERM_BYTES: usize = 64;
@@ -106,16 +106,25 @@ pub fn automatic_spelling_pair(before: &str, after: &str) -> Option<CorrectionPa
         return None;
     }
     let pair = correction_suggestions(before, after).pop()?;
-    if pair.heard.split_whitespace().count() > 3 || pair.intended.split_whitespace().count() != 1 {
+    let intended_words = pair.intended.split_whitespace().count();
+    if pair.heard.split_whitespace().count() > 3 || intended_words > 3 {
+        return None;
+    }
+    // Multiple target words are a boundary repair, not a phrase-rewriting rule.
+    let joined = |text: &str| text.split_whitespace().collect::<String>().to_lowercase();
+    if intended_words > 1 && joined(&pair.heard) != joined(&pair.intended) {
         return None;
     }
     let common = [
         "good", "bad", "yes", "okay", "ok", "cat", "dog", "send", "delete", "add", "remove",
         "start", "stop", "more", "less", "formal", "casual", "left", "right", "public", "private",
+        "this", "that", "these", "those", "who", "what", "why", "how", "where", "when", "here",
+        "there", "and", "or", "but", "if", "then", "can",
     ];
-    if common.contains(&pair.heard.to_lowercase().as_str())
-        || common.contains(&pair.intended.to_lowercase().as_str())
-    {
+    if [&pair.heard, &pair.intended].iter().any(|text| {
+        text.split_whitespace()
+            .any(|word| common.contains(&word.to_lowercase().as_str()))
+    }) {
         return None;
     }
     // Plausibly related spelling or a supplied identifier; this is not a phonetic decoder.
@@ -132,7 +141,10 @@ pub fn automatic_spelling_pair(before: &str, after: &str) -> Option<CorrectionPa
         }],
         ..Default::default()
     };
-    (profile.personalize(before, Language::English).text == after).then_some(pair)
+    let replay = profile.personalize(before, Language::English);
+    (!replay.evidence.applied.is_empty()
+        && crate::memory::spelling_replay_matches(&replay.text, after))
+    .then_some(pair)
 }
 
 pub fn technical_spelling(text: &str) -> bool {
@@ -149,6 +161,15 @@ pub fn technical_spelling(text: &str) -> bool {
 }
 
 fn related_spelling(a: &str, b: &str) -> bool {
+    // Short acronym repairs still need ordinary independent correction support.
+    // Lowercase short words never inherit this exception.
+    if (3..=8).contains(&a.len())
+        && a.len() == b.len()
+        && a.bytes().chain(b.bytes()).all(|c| c.is_ascii_uppercase())
+        && a.bytes().zip(b.bytes()).filter(|(a, b)| a != b).count() == 1
+    {
+        return true;
+    }
     let a: Vec<_> = a
         .to_lowercase()
         .chars()
@@ -317,6 +338,95 @@ mod tests {
             assert!(automatic_spelling_pair(a, b).is_none(), "{a} -> {b}");
         }
     }
+    #[test]
+    fn corrected_names_acronyms_and_spelling_with_formatting_are_candidates() {
+        for (before, after, heard, intended) in [
+            (
+                "Route through LakeviewGardens station",
+                "Route through Lakeview Gardens station",
+                "LakeviewGardens",
+                "Lakeview Gardens",
+            ),
+            (
+                "Meet at WhiteRiverFalls station",
+                "Meet at White River Falls station",
+                "WhiteRiverFalls",
+                "White River Falls",
+            ),
+            (
+                "Inspect the JXR driver",
+                "Inspect the JXL driver",
+                "JXR",
+                "JXL",
+            ),
+            (
+                "deploy kubernets, to staging",
+                "Deploy kubernetes to staging.",
+                "kubernets",
+                "kubernetes",
+            ),
+        ] {
+            assert_eq!(
+                automatic_spelling_pair(before, after),
+                Some(CorrectionPair {
+                    heard: heard.into(),
+                    intended: intended.into(),
+                }),
+                "{before} -> {after}"
+            );
+        }
+    }
+
+    #[test]
+    fn correction_admission_keeps_meaning_and_structure_guards() {
+        for (before, after) in [
+            ("This build works", "These build works"),
+            ("Those builds work", "These builds work"),
+            ("Ask WHO tomorrow", "Ask WHY tomorrow"),
+            ("The CAT label", "The CAR label"),
+            (
+                "Route through NorthGate station",
+                "Route through South Gate station",
+            ),
+            ("Deploy kubernets tomorrow", "Deploy kubernetes today"),
+            ("Deploy kubernets twice", "Do not deploy kubernetes twice"),
+            (
+                "Deploy kubernets to 12 nodes",
+                "Deploy kubernetes to 21 nodes",
+            ),
+            (
+                "Deploy 'kubernets' to staging",
+                "Deploy 'kubernetes' to staging",
+            ),
+            (
+                "Deploy kubernets to staging",
+                "Deploy 'kubernetes' to staging",
+            ),
+            (
+                "Deploy kubernets to staging?",
+                "Deploy kubernetes to staging.",
+            ),
+            (
+                "Deploy kubernets. Restart staging",
+                "Deploy kubernetes, restart staging",
+            ),
+            (
+                "Deploy kubernets\nRestart staging",
+                "Deploy kubernetes Restart staging",
+            ),
+            (
+                "Deploy kubernets and inspect kubernets",
+                "Deploy kubernetes and inspect kubernets",
+            ),
+            ("Inspect JXR driver", "Inspect JXL driver and restart"),
+        ] {
+            assert!(
+                automatic_spelling_pair(before, after).is_none(),
+                "{before} -> {after}"
+            );
+        }
+    }
+
     #[test]
     fn retries_need_more_than_similarity_and_never_resolve_a_spelling() {
         let prior = "Open the atlas deployment";

@@ -324,6 +324,37 @@ pub fn correction_suggestions(input: &str, reviewed: &str) -> Vec<CorrectionPair
     vec![CorrectionPair { heard, intended }]
 }
 
+/// Only admission may ignore minor presentation edits; live replacement remains exact.
+/// Keep lexical order, token boundaries, quotes, newlines and sentence structure.
+pub(crate) fn spelling_replay_matches(replayed: &str, edited: &str) -> bool {
+    let a = tokens(replayed);
+    let b = tokens(edited);
+    if a.len() != b.len() {
+        return false;
+    }
+    let gap = |text: &str, terminal: bool| {
+        let mut value: String = text
+            .chars()
+            .filter(|c| !matches!(c, ' ' | '\t' | ','))
+            .collect();
+        if terminal && value == "." {
+            value.clear();
+        }
+        value
+    };
+    let (mut a_end, mut b_end) = (0, 0);
+    for (left, right) in a.iter().zip(&b) {
+        if left.text.to_lowercase() != right.text.to_lowercase()
+            || gap(&replayed[a_end..left.start], false) != gap(&edited[b_end..right.start], false)
+        {
+            return false;
+        }
+        a_end = left.end;
+        b_end = right.end;
+    }
+    gap(&replayed[a_end..], true) == gap(&edited[b_end..], true)
+}
+
 /// Used for bounded replay, not a replacement for the native ASR qualification suite.
 pub fn word_edits(reference: &str, hypothesis: &str) -> Option<usize> {
     let a = tokens(reference)

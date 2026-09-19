@@ -133,6 +133,20 @@ Manage spellings, recurring corrections and writing preferences in
 contribute to local spelling memory for later recordings. Raw predictions remain
 available, and remembered changes can be inspected, undone or forgotten.
 
+Correct spellings directly in **Your text**; there is no separate Remember step.
+The app can learn eligible joined/split names, closely related spellings and
+narrow acronym corrections, even when the edit includes minor formatting.
+Ordinary terms need corrections from two independent recordings before they
+are reused in matching context. Replaying the same recording does not count
+twice. Sentence rewrites and changed decisions are not global dictionary rules,
+and some valid corrections still fall outside the current learning rules.
+
+If you restore an earlier spelling in the same draft, its withdrawn correction
+no longer counts as supporting evidence. Correcting an automatically remembered
+word to another eligible spelling pauses the rejected rule. Fresh corrections
+of the original recognition error can then teach its replacement; the app keeps
+your current draft immediately while waiting for that support.
+
 Personal vocabulary persists across model changes. These local corrections do
 not train model weights or activate a new model. Read the
 [personalization guide](personalization/README.md) for the exact learning,

@@ -115,6 +115,13 @@ impl DictationPersonalizationSnapshot {
                     )
             });
             entry.enabled &= eligible;
+            if entry.enabled {
+                // The raw-text evidence guard already established this operation's
+                // context. First-edit tags must not veto later independent cues in
+                // cleanup retrieval or final application. Persisted/pre-ASR scope
+                // and manual entries remain unchanged.
+                entry.context.clear();
+            }
         }
         selected
     }
@@ -236,22 +243,48 @@ impl DatasetStore {
             outcome.status = "This edit was already processed.".into();
             return Ok(outcome);
         }
-        // A reversal is feedback against the inferred mapping, not a new reverse alias.
+        let pair = automatic_spelling_pair(before, after);
+        let result_prefix = format!("{}:", context.result_id);
+        let mut withdrawn = Vec::new();
+        for candidate in &mut state.candidates {
+            if after.len() <= transcribe_core::MAX_LEARNING_TEXT_BYTES
+                && scope(candidate.language, &candidate.project, context)
+                && !memory_phrase_occurs(after, &candidate.phrase)
+            {
+                let previous = candidate.support.len();
+                candidate
+                    .support
+                    .retain(|support| !support.event_id.starts_with(&result_prefix));
+                if previous != candidate.support.len() {
+                    withdrawn.push(candidate.id.clone());
+                    candidate.reason =
+                        "Support withdrawn after the user revised this draft.".into();
+                }
+            }
+        }
+        // Rejected automatic output is negative evidence, including a third
+        // spelling. Do not turn a generated intermediate word into an audio alias.
         for entry in &mut profile.vocabulary {
             if entry.automatic_source.is_some()
                 && entry.enabled
                 && scope(entry.language, &entry.project, context)
-                && memory_phrase_occurs(before, &entry.phrase)
-                && !memory_phrase_occurs(after, &entry.phrase)
-                && entry.aliases.iter().any(|a| memory_phrase_occurs(after, a))
+                && (withdrawn.contains(entry.automatic_source.as_ref().unwrap())
+                    || (memory_phrase_occurs(before, &entry.phrase)
+                        && !memory_phrase_occurs(after, &entry.phrase)
+                        && (entry.aliases.iter().any(|a| memory_phrase_occurs(after, a))
+                            || pair
+                                .as_ref()
+                                .is_some_and(|p| p.heard.eq_ignore_ascii_case(&entry.phrase)))))
             {
                 entry.enabled = false;
                 suspend(&mut state, entry.automatic_source.as_deref().unwrap());
                 outcome.suspended += 1;
             }
         }
-        let pair = automatic_spelling_pair(before, after);
-        if let Some(pair) = pair.as_ref().filter(|_| outcome.suspended == 0) {
+        if let Some(pair) = pair
+            .as_ref()
+            .filter(|_| outcome.suspended == 0 && withdrawn.is_empty())
+        {
             let position = state.candidates.iter().position(|c| {
                 c.phrase == pair.intended
                     && c.alias == pair.heard
@@ -325,9 +358,10 @@ impl DatasetStore {
                     2
                 };
                 let conflict = profile.vocabulary.iter().any(|v| {
-                    (v.project.is_empty()
-                        || candidate.project.is_empty()
-                        || v.project.eq_ignore_ascii_case(&candidate.project))
+                    (v.enabled || v.automatic_source.is_none())
+                        && (v.project.is_empty()
+                            || candidate.project.is_empty()
+                            || v.project.eq_ignore_ascii_case(&candidate.project))
                         && (v.language == Language::Auto
                             || candidate.language == Language::Auto
                             || v.language == candidate.language)
@@ -394,7 +428,9 @@ impl DatasetStore {
         outcome.profile_revision = profile.revision;
         outcome.elapsed_micros = started.elapsed().as_micros().min(u64::MAX as u128) as u64;
         outcome.status = if outcome.suspended > 0 {
-            "Reversed learned spelling paused."
+            "Rejected learned spelling paused."
+        } else if !withdrawn.is_empty() {
+            "Draft updated; earlier spelling evidence withdrawn."
         } else if !outcome.activated.is_empty() {
             "Spelling remembered for relevant future dictation."
         } else if outcome.provisional > 0 {
@@ -906,6 +942,47 @@ mod tests {
     }
 
     #[test]
+    fn prior_policy_evidence_upgrades_without_rewriting_or_adding_support_on_read() {
+        for version in [2, 3] {
+            let (_dir, store, p) = setup();
+            store
+                .learn_from_edit(&context(&p, "original"), 0, CONTEXT_HEARD, CONTEXT_EDITED)
+                .unwrap();
+            let mut previous =
+                serde_json::to_value(store.automatic_learning_state().unwrap()).unwrap();
+            previous["policyVersion"] = json!(version);
+            let encoded = serde_json::to_string(&previous).unwrap();
+            store
+                .connection
+                .execute("UPDATE automatic_learning SET state_json=?1", [&encoded])
+                .unwrap();
+            let current = store.automatic_learning_state().unwrap();
+            assert_eq!(current.policy_version, LEARNING_POLICY_VERSION);
+            assert_eq!(current.candidates[0].support.len(), 1);
+            let read_stored = || {
+                store
+                    .connection
+                    .query_row("SELECT state_json FROM automatic_learning", [], |r| {
+                        r.get::<_, String>(0)
+                    })
+                    .unwrap()
+            };
+            assert_eq!(read_stored(), encoded);
+            store
+                .observe_learning(&context(&p, "observation"), CONTEXT_HEARD, None)
+                .unwrap();
+            let written: serde_json::Value = serde_json::from_str(&read_stored()).unwrap();
+            assert_eq!(written["policyVersion"], LEARNING_POLICY_VERSION);
+            assert_eq!(
+                store.automatic_learning_state().unwrap().candidates[0]
+                    .support
+                    .len(),
+                1
+            );
+        }
+    }
+
+    #[test]
     fn legacy_context_is_not_fabricated_and_new_independent_edits_upgrade_atomically() {
         let (_dir, store, p) = setup();
         store
@@ -1193,6 +1270,267 @@ mod tests {
             1
         );
         assert_eq!(edit(&context(&p, "later"), 0).activated, ["Martellys"]);
+    }
+    #[test]
+    fn revised_automatic_target_pauses_old_mapping_and_allows_fresh_support() {
+        let (_dir, store, p) = setup();
+        for id in ["first", "second"] {
+            store
+                .learn_from_edit(
+                    &context(&p, id),
+                    0,
+                    "Meet Jonathon tomorrow",
+                    "Meet Jonathan tomorrow",
+                )
+                .unwrap();
+        }
+        let outcome = store
+            .learn_from_edit(
+                &context(&p, "revision"),
+                0,
+                "Meet Jonathan tomorrow",
+                "Meet Jonatan tomorrow",
+            )
+            .unwrap();
+        assert_eq!(outcome.suspended, 1);
+        assert!(outcome.activated.is_empty());
+        assert_eq!(
+            store
+                .dictation_personalization_snapshot()
+                .unwrap()
+                .post_asr_profile("Meet Jonathon tomorrow", Language::English)
+                .personalize("Meet Jonathon tomorrow", Language::English)
+                .text,
+            "Meet Jonathon tomorrow"
+        );
+        // The displayed intermediate spelling is not a new audio error label.
+        assert!(!store
+            .automatic_learning_state()
+            .unwrap()
+            .candidates
+            .iter()
+            .any(|c| c.alias == "Jonathan"));
+        for (id, activated) in [("fresh-one", false), ("fresh-two", true)] {
+            let outcome = store
+                .learn_from_edit(
+                    &context(&p, id),
+                    0,
+                    "Meet Jonathon tomorrow",
+                    "Meet Jonatan tomorrow",
+                )
+                .unwrap();
+            assert_eq!(!outcome.activated.is_empty(), activated);
+        }
+        assert_eq!(
+            store
+                .dictation_personalization_snapshot()
+                .unwrap()
+                .post_asr_profile("Meet Jonathon tomorrow", Language::English)
+                .personalize("Meet Jonathon tomorrow", Language::English)
+                .text,
+            "Meet Jonatan tomorrow"
+        );
+        assert!(
+            !store
+                .personalization()
+                .unwrap()
+                .vocabulary
+                .iter()
+                .find(|v| v.phrase == "Jonathan")
+                .unwrap()
+                .enabled
+        );
+    }
+
+    #[test]
+    fn retracting_provisional_edit_withdraws_only_that_results_support() {
+        let (_dir, store, p) = setup();
+        let before = "Meet Martellis tomorrow";
+        let after = "Meet Martellys tomorrow";
+        store
+            .learn_from_edit(&context(&p, "first"), 0, before, after)
+            .unwrap();
+        store
+            .learn_from_edit(&context(&p, "first"), 1, after, before)
+            .unwrap();
+        let state = store.automatic_learning_state().unwrap();
+        assert_eq!(
+            state.candidates.len(),
+            1,
+            "retraction must not teach a reverse alias"
+        );
+        assert!(state.candidates[0].support.is_empty());
+        let next = store
+            .learn_from_edit(&context(&p, "second"), 0, before, after)
+            .unwrap();
+        assert!(next.activated.is_empty());
+        assert_eq!(next.provisional, 1);
+        // Duplicate callback from the retracted result cannot restore its support.
+        store
+            .learn_from_edit(&context(&p, "first"), 0, before, after)
+            .unwrap();
+        assert_eq!(
+            store.automatic_learning_state().unwrap().candidates[0]
+                .support
+                .len(),
+            1
+        );
+        assert_eq!(
+            store
+                .learn_from_edit(&context(&p, "third"), 0, before, after)
+                .unwrap()
+                .activated,
+            ["Martellys"]
+        );
+    }
+
+    #[test]
+    fn later_teaching_context_reaches_application_without_changing_stored_hint_scope() {
+        let (_dir, store, mut p) = setup();
+        p.active_project.clear();
+        let p = store.save_personalization(p).unwrap();
+        for (id, before, after) in [
+            ("first", "Deploy kubernets alpha", "Deploy kubernetes alpha"),
+            ("second", "Manage kubernets beta", "Manage kubernetes beta"),
+        ] {
+            let mut c = context(&p, id);
+            c.project.clear();
+            store.learn_from_edit(&c, 0, before, after).unwrap();
+        }
+        let snapshot = store.dictation_personalization_snapshot().unwrap();
+        let stored = snapshot.profile.clone();
+        for raw in ["Deploy kubernets alpha", "Manage kubernets beta"] {
+            assert_eq!(
+                snapshot
+                    .post_asr_profile(raw, Language::English)
+                    .personalize(raw, Language::English)
+                    .text,
+                raw.replace("kubernets", "kubernetes")
+            );
+        }
+        for raw in [
+            "Discuss kubernets gamma",
+            "Manage 'kubernets' beta",
+            "Inspect kubernets 'beta'",
+        ] {
+            assert_eq!(
+                snapshot
+                    .post_asr_profile(raw, Language::English)
+                    .personalize(raw, Language::English)
+                    .text,
+                raw
+            );
+        }
+        assert_eq!(
+            snapshot
+                .post_asr_profile("Manage kubernets beta", Language::Hindi)
+                .personalize("Manage kubernets beta", Language::Hindi)
+                .text,
+            "Manage kubernets beta"
+        );
+        assert_eq!(store.personalization().unwrap(), stored);
+        assert!(!stored.vocabulary[0].context.is_empty());
+    }
+
+    #[test]
+    fn rejected_target_keeps_manual_conflicts_and_other_results_support() {
+        for enabled in [false, true] {
+            let (_dir, store, mut p) = setup();
+            p.vocabulary.push(VocabularyEntry {
+                id: "manual".into(),
+                phrase: "Jonathan".into(),
+                aliases: vec!["Jonathon".into()],
+                language: Language::English,
+                project: "repo".into(),
+                enabled,
+                ..Default::default()
+            });
+            let p = store.save_personalization(p).unwrap();
+            for id in ["first", "second"] {
+                let outcome = store
+                    .learn_from_edit(
+                        &context(&p, id),
+                        0,
+                        "Meet Jonathon tomorrow",
+                        "Meet Jonatan tomorrow",
+                    )
+                    .unwrap();
+                assert!(outcome.activated.is_empty());
+            }
+            assert_eq!(store.personalization().unwrap().vocabulary, p.vocabulary);
+        }
+        let (_dir, store, p) = setup();
+        for id in ["first", "second"] {
+            store
+                .learn_from_edit(
+                    &context(&p, id),
+                    0,
+                    "Meet Jonathon tomorrow",
+                    "Meet Jonathan tomorrow",
+                )
+                .unwrap();
+        }
+        let outcome = store
+            .learn_from_edit(
+                &context(&p, "second"),
+                1,
+                "Meet Jonathan tomorrow",
+                "Meet Jonathon tomorrow",
+            )
+            .unwrap();
+        assert_eq!(outcome.suspended, 1);
+        let state = store.automatic_learning_state().unwrap();
+        assert_eq!(state.candidates[0].support.len(), 1);
+        assert_eq!(state.candidates[0].support[0].event_id, "first:0");
+        assert!(state.candidates[0].support[0].teaching_terms.is_empty());
+    }
+
+    #[test]
+    fn quote_and_intent_rewrites_do_not_suspend_unapplied_automatic_targets() {
+        let (_dir, store, p) = setup();
+        for id in ["first", "second"] {
+            store
+                .learn_from_edit(
+                    &context(&p, id),
+                    0,
+                    "Meet Jonathon tomorrow",
+                    "Meet Jonathan tomorrow",
+                )
+                .unwrap();
+        }
+        for (id, before, after) in [
+            (
+                "quoted",
+                "Meet 'Jonathan' tomorrow",
+                "Meet Jonatan tomorrow",
+            ),
+            ("intent", "Meet Jonathan tomorrow", "Cancel tomorrow"),
+        ] {
+            assert_eq!(
+                store
+                    .learn_from_edit(&context(&p, id), 0, before, after)
+                    .unwrap()
+                    .suspended,
+                0
+            );
+        }
+        assert!(store.personalization().unwrap().vocabulary[0].enabled);
+    }
+
+    #[test]
+    fn oversized_draft_is_unknown_context_not_evidence_of_a_retracted_target() {
+        let (_dir, store, p) = setup();
+        let c = context(&p, "first");
+        store
+            .learn_from_edit(&c, 0, "Meet Martellis tomorrow", "Meet Martellys tomorrow")
+            .unwrap();
+        let after = format!("Meet Martellys tomorrow {}", "context ".repeat(1100));
+        store
+            .learn_from_edit(&c, 1, "Meet Martellys tomorrow", &after)
+            .unwrap();
+        let state = store.automatic_learning_state().unwrap();
+        assert_eq!(state.candidates[0].support.len(), 1);
+        assert_eq!(state.candidates[0].state, CandidateState::Provisional);
     }
     #[test]
     fn observations_and_retry_signals_never_activate_or_duplicate_usage() {

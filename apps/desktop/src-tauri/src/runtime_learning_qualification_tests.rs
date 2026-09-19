@@ -265,6 +265,210 @@ fn chronological_desktop_learning_against_frozen_memory() {
         .any(|r| r["kind"] == "unflagged_reversal"));
 }
 
+/// Authored controls for ordinary edits, later use and correction removal.
+#[test]
+fn ordinary_correction_learning_reuses_names_acronyms_and_formatted_edits() {
+    let directory = tempfile::tempdir().unwrap();
+    let inference = Arc::new(transcribe_inference::InferenceManager::new().unwrap());
+    let mut rows = vec![];
+    for (alias, canonical, cue) in [
+        ("BrooksidePark", "Brookside Park", "station"),
+        ("QTX", "QTY", "driver"),
+        ("postgress", "postgres", "cluster"),
+    ] {
+        for undo in [false, true] {
+            let root = directory.path().join(format!("{alias}-{undo}"));
+            let complete = |source: u16, raw: &str, model_switch: bool| {
+                // Authored session/source boundaries; not independent real recordings.
+                let runtime = Arc::new(Runtime::default());
+                let mut work = context(&root, &runtime, &inference, &format!("{source}"));
+                if model_switch {
+                    work.config.models.asr = AsrModel::Nemotron35AsrStreaming06b;
+                }
+                let pcm = MonoPcm::new(vec![f32::from(source) / 100.0; 1600], 16000).unwrap();
+                let mut result = work.complete_raw(&pcm, &mut None, raw.into()).unwrap();
+                work.observe_result(&mut result, true);
+                runtime.publish(result.clone());
+                (runtime, result)
+            };
+            for (attempt, source) in [1, 1, 2].into_iter().enumerate() {
+                let raw = if attempt < 2 {
+                    format!("inspect {alias}, {cue}")
+                } else {
+                    format!("Maintain {alias} {cue}")
+                };
+                let target = if attempt < 2 {
+                    format!("Inspect {canonical} {cue}.")
+                } else {
+                    format!("Maintain {canonical} {cue}")
+                };
+                let (runtime, result) = complete(source, &raw, false);
+                assert_eq!(final_text(&result), raw);
+                let edited = runtime
+                    .edit_latest_draft(root.clone(), &result.result_id, 0, target)
+                    .unwrap();
+                let outcome = edited.learning_outcome.unwrap();
+                if attempt < 2 {
+                    assert!(outcome.activated.is_empty());
+                    assert_eq!(outcome.provisional, 1);
+                } else {
+                    assert_eq!(outcome.activated, [canonical]);
+                }
+                let state = DatasetStore::open(root.clone())
+                    .unwrap()
+                    .automatic_learning_state()
+                    .unwrap();
+                let candidate = state.candidates.iter().find(|c| c.alias == alias).unwrap();
+                assert_eq!(candidate.support.len(), if attempt < 2 { 1 } else { 2 });
+            }
+            for raw in [
+                format!("Describe {alias} sculpture"),
+                format!("Inspect '{alias}' {cue}"),
+            ] {
+                let (_, result) = complete(3, &raw, false);
+                assert_eq!(final_text(&result), raw);
+            }
+            let raw = format!("Inspect {alias} {cue} again");
+            let target = format!("Inspect {canonical} {cue} again");
+            let (runtime, result) = complete(4, &raw, true);
+            assert_eq!(final_text(&result), target);
+            assert_eq!(word_edits(&target, final_text(&result)), Some(0));
+            assert!(word_edits(&target, &raw).unwrap() > 0);
+            if undo {
+                runtime
+                    .undo_unsaved_with_learning(&result.result_id, root.clone())
+                    .unwrap();
+            } else {
+                let reversed = runtime
+                    .edit_latest_draft(root.clone(), &result.result_id, 0, raw.clone())
+                    .unwrap();
+                assert_eq!(reversed.learning_outcome.unwrap().suspended, 1);
+            }
+            let (_, paused) = complete(5, &raw, false);
+            assert_eq!(final_text(&paused), raw);
+            let store = DatasetStore::open(root.clone()).unwrap();
+            store
+                .forget_automatic_learning(store.personalization().unwrap().revision)
+                .unwrap();
+            assert!(store
+                .automatic_learning_state()
+                .unwrap()
+                .candidates
+                .is_empty());
+            assert!(store.personalization().unwrap().vocabulary.is_empty());
+            assert!(store.list_sessions().unwrap().is_empty());
+            assert_eq!(fs::read_dir(root.join("audio")).unwrap().count(), 0);
+            rows.push(json!({"alias":alias,"canonical":canonical,"undo":undo,
+                "distinctSupport":2,"duplicateSupportAdded":false,
+                "rawWordEdits":word_edits(&target,&raw),"learningWordEdits":0,
+                "wrongContextAndQuoteUnchanged":true,"suspensionPassed":true,"forgetPassed":true}));
+        }
+    }
+    report(
+        &json!({"schemaVersion":1,"policyVersion":transcribe_core::LEARNING_POLICY_VERSION,
+        "evidenceClass":"authored desktop/SQLite lifecycle controls; raw text and PCM identities are simulated, no ASR or natural feedback",
+        "totals":{"families":3,"lifecycles":rows.len()},"rows":rows}),
+    );
+}
+
+/// Replay recorded public text through the edit transaction without re-running ASR.
+/// A successful diagnostic does not imply that any correction is learnable.
+#[test]
+fn public_correction_admission_diagnostic() {
+    const HYPOTHESES: &str =
+        include_str!("../../../../benchmarks/cleanup/native-learning-safety.json");
+    let manifest: Value = serde_json::from_str(PUBLIC).unwrap();
+    let hypotheses: Value = serde_json::from_str(HYPOTHESES).unwrap();
+    let samples: Vec<PublicSample> = serde_json::from_value(manifest["samples"].clone()).unwrap();
+    let directory = tempfile::tempdir().unwrap();
+    let inference = Arc::new(transcribe_inference::InferenceManager::new().unwrap());
+    let mut rows = vec![];
+    let mut reasons = std::collections::BTreeMap::new();
+    let mut persisted_edits = 0;
+    let mut eligible_edits = 0;
+    for sample in samples.iter().filter(|s| s.phase == "feedback") {
+        let hypothesis = hypotheses["cases"]
+            .as_array()
+            .unwrap()
+            .iter()
+            .find(|case| case["id"] == sample.id)
+            .unwrap();
+        let before = hypothesis["raw"].as_str().unwrap();
+        let after = &sample.reference;
+        let pair = transcribe_core::automatic_spelling_pair(before, after);
+        let proposed = transcribe_core::correction_suggestions(before, after).pop();
+        let reason = if before == after {
+            "unchanged"
+        } else if pair.is_some() {
+            "eligible"
+        } else if word_edits(before, after) == Some(0) {
+            "no-token-change"
+        } else if let Some(span) = &proposed {
+            if span.heard.split_whitespace().count() > 3
+                || span.intended.split_whitespace().count() != 1
+            {
+                "span-token-limit"
+            } else if transcribe_core::automatic_spelling_pair(&span.heard, &span.intended)
+                .is_none()
+            {
+                "isolated-pair-rejected"
+            } else {
+                "whole-edit-replay-rejected"
+            }
+        } else {
+            "no-safe-contiguous-span"
+        };
+        *reasons.entry(reason).or_insert(0_usize) += 1;
+        let root = directory.path().join(&sample.id);
+        let runtime = Arc::new(Runtime::default());
+        let work = context(&root, &runtime, &inference, &sample.id);
+        let pcm = MonoPcm::new(vec![0.2; 1600], 16000).unwrap();
+        let mut result = work.complete_raw(&pcm, &mut None, before.into()).unwrap();
+        work.observe_result(&mut result, true);
+        runtime.publish(result.clone());
+        assert_eq!(final_text(&result), before);
+        let outcome = if before != after {
+            let edited = runtime
+                .edit_latest_draft(root.clone(), &result.result_id, 0, after.clone())
+                .unwrap();
+            assert_eq!(edited.draft_transcript.as_deref(), Some(after.as_str()));
+            assert_eq!(edited.draft_revision, 1);
+            edited.learning_outcome
+        } else {
+            None
+        };
+        let store = DatasetStore::open(root.clone()).unwrap();
+        let state = store.automatic_learning_state().unwrap();
+        let events: Vec<_> = state
+            .events
+            .iter()
+            .filter(|event| matches!(event.kind, transcribe_data::LearningEventKind::UserEdit))
+            .collect();
+        assert_eq!(events.len(), usize::from(before != after));
+        for event in &events {
+            assert_eq!(event.context.result_id, result.result_id);
+            assert_eq!(event.pair, pair);
+        }
+        persisted_edits += events.len();
+        eligible_edits += usize::from(pair.is_some());
+        assert!(store.list_sessions().unwrap().is_empty());
+        assert_eq!(fs::read_dir(root.join("audio")).unwrap().count(), 0);
+        rows.push(json!({"sampleId":sample.id,"cohort":sample.cohort,
+            "reason":reason,"proposedSpan":proposed,"admittedPair":pair,
+            "persistedEdits":events.len(),"learningOutcome":outcome}));
+    }
+    report(
+        &json!({"schemaVersion":1,"policyVersion":transcribe_core::LEARNING_POLICY_VERSION,
+        "evidenceClass":"post-hoc recorded-public-text admission diagnostic; no new audio inference or natural feedback",
+        "manifestSha256":format!("{:x}",Sha256::digest(PUBLIC)),
+        "hypothesesSha256":format!("{:x}",Sha256::digest(HYPOTHESES)),
+        "totals":{"calibrationRows":rows.len(),"persistedEdits":persisted_edits,
+            "eligibleEdits":eligible_edits,"reasons":reasons},"rows":rows}),
+    );
+    assert_eq!(rows.len(), 19);
+    assert_eq!(persisted_edits, 18);
+}
+
 #[derive(Deserialize)]
 #[serde(rename_all = "camelCase", deny_unknown_fields)]
 struct PublicSample {
@@ -434,6 +638,388 @@ fn native_public_capture_learning_against_frozen_memory() {
     let value = json!({"schemaVersion":1,"evidenceClass":"native post-capture public-audio diagnostic; simulated reference feedback, no natural user sessions","manifestSha256":format!("{:x}",Sha256::digest(PUBLIC)),"modelProvenance":transcribe_models::provenance(&AppConfig::default()),"modelVersions":transcribe_inference::model_versions(&AppConfig::default()),"totals":summary,"matchedResidentBackendCompletion":times,"failures":failures,"rows":rows,"stopToVisibleFinalMs":Value::Null,"humanEditingTimeMs":Value::Null,"limitations":["Reuses previously screened public corpus; two different recordings per language-background cohort cannot establish speaker identity or longitudinal benefit.","Backend time starts at process_capture entry and ends after runtime publication; excludes microphone stop, IPC, WebView rendering and insertion.","Cold first request retained separately; exact execution evidence records loads, providers and request ordinals.","Collection is disabled; no audio, session or reviewed training target is archived."]});
     report(&value);
     assert!(failures.is_empty(), "{failures:?}");
+}
+
+#[test]
+fn revised_learning_lifecycles_use_ordinary_drafts_with_and_without_history() {
+    let directory = tempfile::tempdir().unwrap();
+    let inference = Arc::new(transcribe_inference::InferenceManager::new().unwrap());
+    for collect in [false, true] {
+        let root = directory.path().join(format!("revised-{collect}"));
+        let complete = |source: u16, raw: &str| {
+            let runtime = Arc::new(Runtime::default());
+            let mut work = context(&root, &runtime, &inference, &format!("{source}"));
+            work.config.collect_training_data = collect;
+            let pcm = MonoPcm::new(vec![f32::from(source) / 100.0; 1600], 16000).unwrap();
+            let capture =
+                transcribe_audio::CapturedAudio::new(pcm.samples().to_vec(), 16000, 1).unwrap();
+            let mut session = work.archive_capture(&capture).unwrap();
+            let mut result = work.complete_raw(&pcm, &mut session, raw.into()).unwrap();
+            work.observe_result(&mut result, true);
+            runtime.publish(result.clone());
+            assert_eq!(result.session.is_some(), collect);
+            (runtime, result)
+        };
+        let edit = |runtime: &Runtime, result: &PipelineResult, text: &str| {
+            let edited = runtime
+                .edit_latest_draft(
+                    root.clone(),
+                    &result.result_id,
+                    result.draft_revision,
+                    text.into(),
+                )
+                .unwrap();
+            assert_eq!(edited.draft_transcript.as_deref(), Some(text));
+            if let Some(session) = &edited.session {
+                assert_eq!(session.draft_transcript.as_deref(), Some(text));
+                assert_eq!(session.draft_revision, edited.draft_revision);
+            }
+            edited
+        };
+        let (runtime, first) = complete(1, "Visit Jonathon museum");
+        let first = edit(&runtime, &first, "Visit Jonathan museum");
+        assert_eq!(first.learning_outcome.as_ref().unwrap().provisional, 1);
+        edit(&runtime, &first, "Visit Jonathon museum");
+        let (runtime, second) = complete(2, "Visit Jonathon museum");
+        assert!(edit(&runtime, &second, "Visit Jonathan museum")
+            .learning_outcome
+            .unwrap()
+            .activated
+            .is_empty());
+        let (runtime, third) = complete(3, "Meet Jonathon station");
+        assert_eq!(
+            edit(&runtime, &third, "Meet Jonathan station")
+                .learning_outcome
+                .unwrap()
+                .activated,
+            ["Jonathan"]
+        );
+        let (runtime, later) = complete(4, "Find Jonathon station");
+        assert_eq!(final_text(&later), "Find Jonathan station");
+        let revised = edit(&runtime, &later, "Find Jonatan station");
+        assert_eq!(revised.learning_outcome.unwrap().suspended, 1);
+        for (source, raw) in [
+            (5, "Inspect Jonathon station"),
+            (6, "Locate Jonathon station"),
+        ] {
+            let (runtime, result) = complete(source, raw);
+            assert_eq!(final_text(&result), raw);
+            let edited = edit(&runtime, &result, &raw.replace("Jonathon", "Jonatan"));
+            assert_eq!(
+                !edited.learning_outcome.unwrap().activated.is_empty(),
+                source == 6
+            );
+        }
+        let (_, corrected) = complete(7, "Find Jonathon station");
+        assert_eq!(final_text(&corrected), "Find Jonatan station");
+        for (source, raw) in [
+            (8, "Sketch Jonathon sculpture"),
+            (9, "Find 'Jonathon' station"),
+        ] {
+            let (_, result) = complete(source, raw);
+            assert_eq!(final_text(&result), raw);
+        }
+        let store = DatasetStore::open(root.clone()).unwrap();
+        assert_eq!(store.list_sessions().unwrap().is_empty(), !collect);
+        assert_eq!(
+            fs::read_dir(root.join("audio")).unwrap().count() == 0,
+            !collect
+        );
+        store
+            .forget_automatic_learning(store.personalization().unwrap().revision)
+            .unwrap();
+        let (_, forgotten) = complete(10, "Find Jonathon station");
+        assert_eq!(final_text(&forgotten), "Find Jonathon station");
+    }
+}
+
+#[derive(Deserialize)]
+#[serde(rename_all = "camelCase")]
+struct RecurringSample {
+    id: String,
+    cohort: String,
+    kind: String,
+    phase: String,
+    spoken: String,
+    reference: String,
+    audio_path: String,
+    sha256: String,
+}
+
+#[test]
+#[ignore = "installed models and explicitly prepared synthetic recurring-term corpus"]
+fn native_recurring_spelling_learning_against_frozen_memory() {
+    let model_root = PathBuf::from(std::env::var_os("TRANSCRIBE_MODEL_DIR").unwrap());
+    let audio_root = PathBuf::from(std::env::var_os("TRANSCRIBE_LEARNING_AUDIO_ROOT").unwrap());
+    let manifest_bytes = fs::read(audio_root.join("manifest.json")).unwrap();
+    let manifest: Value = serde_json::from_slice(&manifest_bytes).unwrap();
+    let samples: Vec<RecurringSample> =
+        serde_json::from_value(manifest["samples"].clone()).unwrap();
+    assert_eq!(samples.len(), 72);
+    let kinds = [
+        "teach-one",
+        "duplicate",
+        "teach-two",
+        "reuse-new-context",
+        "wrong-context",
+        "no-alias",
+        "revise-target",
+        "fresh-one",
+        "fresh-two",
+        "reuse-revised",
+        "wrong-context-revised",
+        "forget",
+    ];
+    let mut hashes = BTreeSet::new();
+    for cohort in samples.chunks_exact(12) {
+        for (sample, kind) in cohort.iter().zip(kinds) {
+            assert_eq!(sample.kind, kind);
+            assert_eq!(sample.cohort, cohort[0].cohort);
+            assert_eq!(
+                sample.phase,
+                if matches!(
+                    kind,
+                    "teach-one"
+                        | "duplicate"
+                        | "teach-two"
+                        | "revise-target"
+                        | "fresh-one"
+                        | "fresh-two"
+                ) {
+                    "feedback"
+                } else {
+                    "audit"
+                }
+            );
+            assert!(Path::new(&sample.audio_path)
+                .components()
+                .all(|c| matches!(c, std::path::Component::Normal(_))));
+            assert_eq!(
+                format!(
+                    "{:x}",
+                    Sha256::digest(fs::read(audio_root.join(&sample.audio_path)).unwrap())
+                ),
+                sample.sha256
+            );
+            if kind == "duplicate" {
+                assert_eq!(sample.sha256, cohort[0].sha256);
+            } else if kind != "no-alias" {
+                assert!(hashes.insert(&sample.sha256), "unexpected duplicate speech");
+            }
+        }
+    }
+    let directory = tempfile::tempdir().unwrap();
+    let inference = Arc::new(transcribe_inference::InferenceManager::new().unwrap());
+    let mut rows = vec![];
+    let mut failures = vec![];
+    let mut request = 0;
+    for (cohort_index, cohort) in samples.chunks_exact(12).enumerate() {
+        let roots = [
+            directory.path().join(format!("frozen-{cohort_index}")),
+            directory.path().join(format!("learning-{cohort_index}")),
+        ];
+        let initial = DatasetStore::open(roots[0].clone())
+            .unwrap()
+            .dictation_personalization_snapshot()
+            .unwrap();
+        let mut duplicate_support = None;
+        for (index, sample) in cohort.iter().enumerate() {
+            let pcm =
+                transcribe_audio::decode_file(audio_root.join(&sample.audio_path), 0).unwrap();
+            let mut row = json!({"id":sample.id,"cohort":sample.cohort,"kind":sample.kind,"phase":sample.phase,
+                "reference":sample.reference,"audioSha256":sample.sha256,"audioSeconds":pcm.duration_seconds()});
+            let order = if (cohort_index + index) % 2 == 0 {
+                [0, 1]
+            } else {
+                [1, 0]
+            };
+            row["armOrder"] = json!(order);
+            for arm in order {
+                let name = if arm == 0 { "frozen" } else { "learning" };
+                let store = DatasetStore::open(roots[arm].clone()).unwrap();
+                if arm == 1 && sample.kind == "forget" {
+                    store
+                        .forget_automatic_learning(store.personalization().unwrap().revision)
+                        .unwrap();
+                }
+                // Synthetic episode boundary, not evidence of independent humans.
+                let runtime = Arc::new(Runtime::default());
+                let operation = format!("recurring-{request}");
+                let mut work = context(&roots[arm], &runtime, &inference, &operation);
+                work.config.cleanup_enabled = true;
+                work.model_root = model_root.clone();
+                if arm == 0 {
+                    freeze(&work, &initial, "");
+                }
+                runtime
+                    .begin("transcribing", "synthetic recurring-term replay")
+                    .unwrap();
+                runtime.diagnostics.begin(&operation, &work.config, false);
+                let capture =
+                    transcribe_audio::CapturedAudio::new(pcm.samples().to_vec(), 16000, 1).unwrap();
+                let start = Instant::now();
+                let result = work.process_capture(capture);
+                let elapsed = start.elapsed().as_secs_f64() * 1000.0;
+                runtime.finish(&result);
+                row[format!("{name}BackendCompletionMs")] = json!(elapsed);
+                row[format!("{name}ColdRequest")] = json!(request == 0);
+                row[format!("{name}Execution")] = inference.execution_evidence(&operation);
+                request += 1;
+                match result {
+                    Err(error) => {
+                        failures.push(format!("{} {name}: {error}", sample.id));
+                        row[format!("{name}Error")] = json!(error);
+                    }
+                    Ok(result) => {
+                        row[name] = json!(final_text(&result));
+                        row[format!("{name}Raw")] = json!(result.raw_transcript);
+                        row[format!("{name}WordEdits")] =
+                            json!(word_edits(&sample.reference, final_text(&result)));
+                        row[format!("{name}Warnings")] = json!(result.warnings);
+                        if !result.warnings.is_empty() {
+                            failures.push(format!("{} {name}: warnings", sample.id));
+                        }
+                        let selected = work
+                            .personalization_snapshot()
+                            .unwrap()
+                            .post_asr_profile(&result.raw_transcript, Language::English);
+                        row[format!("{name}SelectedMemories")] = json!(selected
+                            .vocabulary
+                            .iter()
+                            .filter(|v| v.enabled && v.automatic_source.is_some())
+                            .count());
+                        row[format!("{name}AppliedMemories")] = json!(result
+                            .personalization_evidence
+                            .as_ref()
+                            .map_or(0, |e| e.applied.len()));
+                        if arm == 0 && sample.phase == "audit" && sample.kind.starts_with("reuse-")
+                        {
+                            row["reuseOpportunity"] = json!(
+                                transcribe_core::memory_phrase_occurs(
+                                    &result.raw_transcript,
+                                    &sample.spoken
+                                ) && word_edits(&sample.reference, final_text(&result))
+                                    .is_some_and(|n| n > 0)
+                            );
+                        }
+                        if arm == 1 && sample.phase == "feedback" {
+                            row["eligibleDisplayedPair"] =
+                                json!(transcribe_core::automatic_spelling_pair(
+                                    final_text(&result),
+                                    &sample.reference
+                                ));
+                            let start = Instant::now();
+                            match runtime.edit_latest_draft(
+                                roots[arm].clone(),
+                                &result.result_id,
+                                0,
+                                sample.reference.clone(),
+                            ) {
+                                Ok(edited) => {
+                                    row["learningOutcome"] = json!(edited.learning_outcome)
+                                }
+                                Err(error) => {
+                                    failures.push(format!("{} feedback: {error}", sample.id))
+                                }
+                            }
+                            row["editToMemoryReadyMs"] =
+                                json!(start.elapsed().as_secs_f64() * 1000.0);
+                        }
+                        assert!(result.session.is_none());
+                    }
+                }
+                let state = store.automatic_learning_state().unwrap();
+                let support = state
+                    .candidates
+                    .iter()
+                    .map(|c| c.support.len())
+                    .sum::<usize>();
+                row[format!("{name}Support")] = json!(support);
+                row[format!("{name}Candidates")] = json!(state.candidates);
+                row[format!("{name}ActiveMemories")] = json!(store
+                    .personalization()
+                    .unwrap()
+                    .vocabulary
+                    .iter()
+                    .filter(|v| v.enabled)
+                    .count());
+                if arm == 1 && sample.kind == "teach-one" {
+                    duplicate_support = Some(support);
+                }
+                if arm == 1 && sample.kind == "duplicate" && duplicate_support != Some(support) {
+                    failures.push(format!(
+                        "{}: duplicated audio changed independent support",
+                        sample.id
+                    ));
+                }
+                assert!(store.list_sessions().unwrap().is_empty());
+                assert_eq!(fs::read_dir(roots[arm].join("audio")).unwrap().count(), 0);
+                if arm == 0 {
+                    assert!(state.candidates.is_empty());
+                    assert!(state.events.is_empty());
+                    assert!(store.personalization().unwrap().vocabulary.is_empty());
+                }
+            }
+            println!(
+                "completed_recurring_pair={} phase={}",
+                sample.id, sample.phase
+            );
+            rows.push(row);
+        }
+    }
+    let mut summary = totals(&rows);
+    summary["requests"] = json!(request);
+    summary["failures"] = json!(failures.len());
+    summary["reuseOpportunities"] = json!(rows
+        .iter()
+        .filter(|r| r["reuseOpportunity"] == true)
+        .count());
+    summary["feedbackRows"] = json!(rows.iter().filter(|r| r["phase"] == "feedback").count());
+    summary["eligibleFeedbackPairs"] = json!(rows
+        .iter()
+        .filter(|r| !r["eligibleDisplayedPair"].is_null())
+        .count());
+    summary["activations"] = json!(rows
+        .iter()
+        .filter_map(|r| r["learningOutcome"]["activated"].as_array())
+        .map(Vec::len)
+        .sum::<usize>());
+    summary["auditRowsWithSelectedMemory"] =
+        json!(rows
+            .iter()
+            .filter(|r| r["phase"] == "audit"
+                && r["learningSelectedMemories"].as_u64().unwrap_or(0) > 0)
+            .count());
+    summary["auditRowsWithDeterministicApplication"] = json!(rows
+        .iter()
+        .filter(|r| r["phase"] == "audit" && r["learningAppliedMemories"].as_u64().unwrap_or(0) > 0)
+        .count());
+    let mut timings = json!({});
+    for name in ["frozen", "learning"] {
+        timings[name] = timing(
+            &rows
+                .iter()
+                .filter(|r| r["frozenColdRequest"] == false && r["learningColdRequest"] == false)
+                .filter_map(|r| r[format!("{name}BackendCompletionMs")].as_f64())
+                .collect::<Vec<_>>(),
+        );
+    }
+    let passed = failures.is_empty()
+        && summary["harmed"] == 0
+        && summary["improved"].as_u64().unwrap() > 0
+        && summary["reuseOpportunities"].as_u64().unwrap() > 0;
+    report(
+        &json!({"schemaVersion":1,"policyVersion":transcribe_core::LEARNING_POLICY_VERSION,
+        "evidenceClass":manifest["evidenceClass"],"manifestSha256":format!("{:x}",Sha256::digest(manifest_bytes)),
+        "corpusProvenance":manifest["provenance"],"modelProvenance":transcribe_models::provenance(&AppConfig::default()),
+        "modelVersions":transcribe_inference::model_versions(&AppConfig::default()),"totals":summary,"gatesPassed":passed,
+        "matchedResidentBackendCompletion":timings,"failures":failures,"rows":rows,
+        "stopToVisibleFinalMs":Value::Null,"humanEditingTimeMs":Value::Null,"limitations":manifest["limitations"]}),
+    );
+    assert!(
+        passed,
+        "recurring learning diagnostic gates failed: {summary}"
+    );
 }
 
 /// Post-hoc wiring diagnostic: one public source and an authored identifier preference.
