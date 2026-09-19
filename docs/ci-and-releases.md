@@ -254,7 +254,7 @@ rules; a synthetic API-key control was separately confirmed to fail the scanner.
 
 The dependency job installs packages without lifecycle scripts, runs `npm audit`
 against production **and development** dependencies, runs `make audit-python`,
-and runs cargo-audit 0.22.2 against RustSec with
+and runs the verified-source `make audit-rust` wrapper with cargo-audit 0.22.2 against RustSec with
 known vulnerabilities and `unsound` advisories denied. Maintenance warnings stay
 visible for dependency-upgrade planning without broad ignores. Separate
 Apple-silicon macOS matrix jobs audit both isolated Python benchmark graphs;
@@ -295,64 +295,56 @@ known advisories.
 | Diffusers 0.35.1 | Updated to 0.38.0, requiring Safetensors 0.8.0 | 9, 10 |
 | Transformers 4.51.3 | Updated to 4.57.6, with Tokenizers 0.22.2 | 2–7 |
 
-The remaining Transformers alerts are `GHSA-69w3-r845-3855`,
-`GHSA-29pf-2h5f-8g72`, `GHSA-fgcw-684q-jj6r`, and
-`GHSA-xrqw-3rrv-vx5w` (Dependabot 8, 13, 14, 16). Their listed fixes require
-Transformers 5, up to 5.10.0. The pinned Microsoft VibeVoice source explicitly
-requires Transformers `<5.0.0`. It imports the removed Qwen2 fast-tokenizer module
-and uses the older `tie_weights` signature and tied-weight key representation.
-A version-only upgrade is incompatible; a maintained source port or a compatible
-upstream release needs its own implementation and model qualification.
-[Microsoft dependency contract](https://github.com/microsoft/VibeVoice/blob/1541f590c7099820f10ea012f48d2399282df69f/pyproject.toml),
-[pinned tokenizer](https://github.com/microsoft/VibeVoice/blob/1541f590c7099820f10ea012f48d2399282df69f/vibevoice/modular/modular_vibevoice_text_tokenizer.py),
-[Transformers 5.10 Qwen2 modules](https://github.com/huggingface/transformers/tree/v5.10.0/src/transformers/models/qwen2),
-[model-loading API](https://github.com/huggingface/transformers/blob/v5.10.0/src/transformers/modeling_utils.py).
+The earlier compatible-only update still left Transformers 4.57.6 findings and
+GLib 0.18.5 / RUSTSEC-2024-0429 in the maintained graphs. The owner approved the
+following source-level remediation in [issue #57](https://github.com/rahulsharmavishwakarma/transcribe/issues/57).
 
-The local VibeVoice audit fails with eight returned records representing five
-distinct PYSEC IDs: four corresponding to those Dependabot alerts and
-`PYSEC-2025-217` / `CVE-2025-14929` for X-CLIP checkpoint conversion. Three IDs
-appear twice in the advisory response; do not count those as separate flaws or
-discard the extra X-CLIP finding. The latter also affects 4.57.6 according to the
-[PyPA advisory](https://github.com/pypa/advisory-database/blob/main/vulns/transformers/PYSEC-2025-217.yaml).
-These are optional research dependencies, outside the packaged desktop runtime.
-Verified pinned source/artifacts, offline loading and the probe's limited APIs
-reduce exposure; they do not remediate the package-level findings.
+The isolated VibeVoice environment now uses Transformers 5.10.1 and Hub 1.5.0.
+A [pinned compatibility patch](../patches/vibevoice/README.md) adapts the exact
+publisher source to tokenizer, loader initialization and tied-weight APIs. It
+preserves the existing checkpoint. The probe refuses altered source/patches,
+checks every loaded tensor against the checkpoint, and records patch provenance.
+The original publisher source requires Transformers <5: this is a maintained
+port, not a claim of upstream compatibility. Version 5.10.0 was yanked; 5.10.1
+is the candidate validated here. Historical benchmark reports retain their
+original runtime versions and measurements.
 
-Dependabot alert 1 is `GHSA-wrw7-89jp-8q8g` / `RUSTSEC-2024-0429` in GLib 0.18.5.
-Tauri 2.11.5's Linux GTK3/WebKitGTK dependency graph requires the 0.18 family;
-the advisory's patched range starts at 0.20. A direct dependency on 0.20 would
-leave the affected transitive copy present. The upstream 0.18 branch still
-contains the affected iterator implementation. Fixing that graph needs a
-compatible upstream backport or a separately reviewed maintained patch/fork;
-manually changing the lockfile version is not a fix.
-[RustSec advisory](https://rustsec.org/advisories/RUSTSEC-2024-0429.html),
-[Tauri dependencies](https://github.com/tauri-apps/tauri/blob/tauri-v2.11.5/crates/tauri/Cargo.toml),
-[GLib 0.18 implementation](https://github.com/gtk-rs/gtk-rs-core/blob/0.18/glib/src/variant_iter.rs).
+Tauri 2's Linux GTK3 graph still requires GLib 0.18. The workspace now resolves
+it to [maintained GLib 0.18.5 source](../patches/glib/README.md), with the upstream
+mutable out-pointer fix. Both original metadata and MIT notices are retained;
+the package version is not relabeled. GLib remains absent from the macOS target
+graph. The optimized standalone iterator regression runs in the Linux security
+job before its audit.
 
-`cargo tree --workspace --locked --target aarch64-apple-darwin --invert glib`
-and the Intel macOS equivalent have no GLib dependency; the Linux equivalent
-does. This establishes target exclusion for the Mac build, not a repaired
-cross-platform lockfile. The new `cargo audit --deny unsound` fails on this
-advisory even though cargo-audit classifies it as a soundness warning. Six other
-maintenance warnings remain visible: `RUSTSEC-2024-0370` and the `unic-*`
-advisories `RUSTSEC-2025-0075`, `0080`, `0081`, `0098`, and `0100`.
+Cargo-audit does not match crates.io advisories against local path packages.
+Run `make audit-rust`, which verifies every vendor file hash, the Cargo patch,
+lockfile and actual resolved package path **before** applying the owner-approved
+exception. Modified, missing, extra, symlinked, registry or duplicate GLib source
+fails verification. The wrapper restores only GLib's original crates.io identity
+and checksum in a temporary audit-only lockfile, then runs `cargo audit --file
+<temporary-lock> --deny unsound --ignore RUSTSEC-2024-0429`. The actual build
+lockfile remains untouched. This deliberately preserves matching against every
+other present or future GLib advisory; a synthetic second advisory tests that
+failure with the real client. Six existing maintenance warnings remain visible;
+all other vulnerabilities and unsoundness findings remain fatal. Direct
+cargo-audit omits both source verification and GLib registry-advisory coverage
+and is not a substitute for this wrapper.
 
-Local validation on macOS passed lock/export checks, audits of all contributor
-groups and the audio frontend, all pre-commit checks (including workflow security,
-formatting, language lints/types and Node tests), and 51 tests across ten Python
-suites. The updated VibeVoice import/load/inference smoke passed without
-Accelerate. The smoke used verified existing artifacts and
-one 4.62-second public FLEURS recording; both chunks completed with full audio
-coverage and no case error. This verifies basic compatibility, not repeatability
-of dated accuracy/latency results or complete model qualification. The VibeVoice
-and strict Rust audits intentionally remain failing until their upstream
-blockers are resolved; CI has no `continue-on-error` or advisory exceptions.
+The end-of-file formatter excludes only GLib's upstream `LICENSE` and
+`.cargo_vcs_info.json`, preserving their original end-of-file whitespace. Their hashes
+remain enforced by the source guard; secret and dependency scans still include
+the vendor tree.
 
-CodeQL and private-repository dependency review are not enabled because this
-repository does not currently have GitHub Advanced Security. Revisit those gates
-if the repository becomes public or the plan changes. Regardless of scanner
-output, a committed real secret must be revoked and rotated; deleting the text in
-a later commit is not remediation.
+The Python audit does not use advisory exceptions. Both package audits must
+pass independently of model qualification. The [compatibility validation](validation/dependency-security-compat-2026-09-19.md)
+records the security regressions and model checks. See the patch READMEs for update and
+removal conditions, and `docs/research-vibevoice.md` for the reference runtime's
+scope. Do not replace the checks with `continue-on-error` or a global ignore.
+
+Primary sources: [Microsoft's pinned dependency contract](https://github.com/microsoft/VibeVoice/blob/1541f590c7099820f10ea012f48d2399282df69f/pyproject.toml),
+[Transformers 5.10.1](https://github.com/huggingface/transformers/releases/tag/v5.10.1),
+[RustSec advisory](https://rustsec.org/advisories/RUSTSEC-2024-0429.html), and
+[upstream GLib fix](https://github.com/gtk-rs/gtk-rs-core/commit/05dff0ee696f9bcd8617cd48c4b812d046d440cb).
 
 ## Optional browser-preview container
 

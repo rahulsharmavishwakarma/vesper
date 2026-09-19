@@ -79,8 +79,13 @@ jobs:
           make audit-python
       - name: Install pinned RustSec client
         run: cargo install cargo-audit --version 0.22.2 --locked
-      - name: Audit Cargo.lock against RustSec advisories
-        run: cargo audit --deny unsound
+      - name: Test the maintained GLib backport with optimizations enabled
+        run: |
+          sudo apt-get update
+          sudo apt-get install --yes --no-install-recommends libglib2.0-dev pkg-config
+          make test-glib-backport
+      - name: Verify patched GLib and audit Cargo.lock against RustSec advisories
+        run: make audit-rust
 
   python-benchmarks:
     name: Python benchmarks (${{ matrix.project }})

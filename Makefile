@@ -25,7 +25,7 @@ export HF_REPO HF_WEIGHTS HF_REVISION HF_OUTPUT
 
 .PHONY: help setup setup-checks hooks precommit prepush workflows dev web model-profile build build-debug build-web check check-fast check-web test-tools test-python test-browser benchmark-contract version-check version-set container-build container-smoke fmt fmt-check lint test smoke-native models sherpa-runtime test-native-report
 .PHONY: check-portable check-rust fmt-rust fmt-rust-check fmt-web fmt-web-check fmt-python fmt-python-check fmt-shell fmt-shell-check lint-rust lint-web lint-python lint-shell test-rust doc-rust
-.PHONY: python-lock-check audit-python audit-python-audio-frontend audit-python-vibevoice
+.PHONY: python-lock-check audit-python audit-python-audio-frontend audit-python-vibevoice audit-rust test-glib-backport
 
 help: ## Show available commands
 	@awk 'BEGIN { FS = ":.*## "; printf "Usage: make <target>\n\n" } /^[a-zA-Z_-]+:.*## / { printf "  %-14s %s\n", $$1, $$2 }' Makefile
@@ -60,6 +60,13 @@ audit-python: ## Audit every locked contributor dependency group without re-reso
 	@mkdir -p .cache
 	$(UV) export --locked --all-groups --no-emit-project --output-file .cache/python-audit-requirements.txt > /dev/null
 	$(UV_RUN) pip-audit --strict --require-hashes --disable-pip -r .cache/python-audit-requirements.txt
+
+audit-rust: ## Verify the GLib backport and run the strict RustSec audit
+	$(RUN) $(PYTHON) -m unittest discover -s scripts -p test_rust_audit.py
+	$(RUN) $(PYTHON) scripts/audit-rust.py
+
+test-glib-backport: ## Run optimized GLib iterator regressions (requires system GLib)
+	$(RUN) cargo test --release --locked --manifest-path tests/glib-backport/Cargo.toml
 
 audit-python-audio-frontend: PYTHON_AUDIT_PROJECT = audio-frontend
 audit-python-vibevoice: PYTHON_AUDIT_PROJECT = vibevoice
@@ -154,10 +161,12 @@ fmt-check: fmt-rust-check fmt-web-check fmt-python-check fmt-shell-check ## Chec
 fmt-rust: ## Format the Rust workspace and isolated integrity probe
 	$(RUN) cargo fmt --all
 	$(RUN) cargo fmt --manifest-path $(HASH_PROBE)
+	$(RUN) cargo fmt --manifest-path tests/glib-backport/Cargo.toml
 
 fmt-rust-check: ## Check Rust workspace and integrity-probe formatting
 	$(RUN) cargo fmt --all -- --check
 	$(RUN) cargo fmt --manifest-path $(HASH_PROBE) -- --check
+	$(RUN) cargo fmt --manifest-path tests/glib-backport/Cargo.toml -- --check
 
 fmt-web: ## Format TypeScript, JavaScript, Svelte, CSS, HTML and root JSON
 	npm run format
