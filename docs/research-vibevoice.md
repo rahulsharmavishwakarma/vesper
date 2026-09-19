@@ -92,6 +92,17 @@ entry. An isolated Python probe establishes only its measured reference-runtime
 envelope. It does not qualify the Rust application, the writer pipeline, an
 accelerator, or a production streaming lifetime.
 
+The maintained Python probe environment now pins Torch 2.13.0, Transformers
+4.57.6, Diffusers 0.38.0, Safetensors 0.8.0 and Tokenizers 0.22.2. Accelerate is
+not installed: this probe uses direct CPU model loading with no device dispatch.
+Imports, verified checkpoint loading and a one-recording public-audio smoke test
+passed with this stack on 19 September 2026. The dated full-screen results retain
+their original environment and are not requalified by this smoke test.
+Transformers 4 still has known advisories; upgrading to 5 requires adapting the
+pinned publisher code, not just changing a package version. See
+[dependency security status](ci-and-releases.md#dependency-security-status-and-upstream-limits)
+for the exact findings, validation scope and failing audit gates.
+
 The official file generator pre-encodes every window before yielding text.
 Paced tests must instead use `init_streaming_state`, `encode_speech`, and
 `streaming_generate_step`. The probe retains the required lookahead, creates

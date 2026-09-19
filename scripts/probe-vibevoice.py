@@ -113,7 +113,6 @@ def main():
                 "transformers",
                 "diffusers",
                 "numpy",
-                "accelerate",
                 "safetensors",
                 "tokenizers",
             )
@@ -137,7 +136,6 @@ def main():
                 str(model_path),
                 torch_dtype=torch.float32,
                 attn_implementation="sdpa",
-                low_cpu_mem_usage=True,
                 local_files_only=True,
             )
             .to("cpu")

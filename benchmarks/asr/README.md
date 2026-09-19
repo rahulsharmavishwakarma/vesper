@@ -60,8 +60,11 @@ Use uv and the versioned `pyproject.toml` / `uv.lock` for each environment:
 Run scripts from the repository root with `uv run --locked python scripts/SCRIPT.py`,
 adding `--group benchmark` for PyArrow or `--project` for an isolated probe.
 `--project` selects the environment while retaining the caller's working directory.
-Each project is non-distributable and keeps its `.venv` ignored. Existing direct
-version pins are preserved; resolving the environment is not model qualification.
+Each project is non-distributable and keeps its `.venv` ignored. Direct versions
+are pinned; resolving the environment is not model qualification. Run
+`make audit-python-audio-frontend` and `make audit-python-vibevoice` on
+Apple-silicon macOS before new benchmark work. See the
+[known dependency advisories and upstream blockers](../../docs/ci-and-releases.md#dependency-security-status-and-upstream-limits).
 
 The two requirements files are generated compatibility exports, not editable
 dependency sources. Update the owning manifest and lockfile first, regenerate
