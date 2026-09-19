@@ -238,7 +238,7 @@ impl AudioRecorder {
             .clone()
     }
 
-    /// RMS of the most recent 40 ms of captured audio, normalized to [0, 1].
+    /// DC-free RMS of the most recent 40 ms of captured audio, normalized to [0, 1].
     /// Reading the meter never starts capture or takes a capture/status lock.
     pub fn current_level(&self) -> f32 {
         f32::from_bits(self.level.load(Ordering::Relaxed))
@@ -823,7 +823,7 @@ mod tests {
         let mut meter = RmsMeter::new(50, 1); // Two-sample window for these callback boundary fixtures.
         let level = || f32::from_bits(state.level.load(Ordering::Relaxed));
         capture_samples(&[0.3_f32, 0.4], &mut producer, &state, 100, &mut meter);
-        assert!((level() - 0.125_f32.sqrt()).abs() < 0.00001);
+        assert!((level() - 0.05).abs() < 0.00001); // Mean 0.35 is DC, not sound.
         assert_eq!(consumer.pop().unwrap(), 0.3);
         assert_eq!(consumer.pop().unwrap(), 0.4);
         capture_samples(&[0.0_f32, 0.0], &mut producer, &state, 100, &mut meter);
