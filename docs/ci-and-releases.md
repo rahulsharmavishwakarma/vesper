@@ -17,6 +17,8 @@ the same checks before packaging. Stable PR check names are:
 3. `Check / Rust (macOS)`
 4. `Security / Secrets`
 5. `Security / Dependencies`
+6. `Security / Python benchmarks (audio-frontend)`
+7. `Security / Python benchmarks (vibevoice)`
 
 The frontend job runs repository hooks, actionlint with ShellCheck, zizmor,
 and `make check-portable`: source formatting, ESLint, Ruff, shell linting,
@@ -230,8 +232,10 @@ rules; a synthetic API-key control was separately confirmed to fail the scanner.
 The dependency job installs packages without lifecycle scripts, runs `npm audit`
 against production **and development** dependencies, runs `make audit-python`,
 and runs cargo-audit 0.22.2 against RustSec with
-known vulnerabilities denied. RustSec maintenance and soundness warnings stay
-visible for dependency-upgrade planning without broad ignores. Dependabot checks
+known vulnerabilities and `unsound` advisories denied. Maintenance warnings stay
+visible for dependency-upgrade planning without broad ignores. Separate
+Apple-silicon macOS matrix jobs audit both isolated Python benchmark graphs;
+one failure does not cancel the other job. Dependabot checks
 npm, Cargo, GitHub Actions, Docker and the three uv projects weekly, with
 routing labels, five open PRs per ecosystem and a seven-day version-update
 cooldown. Security-update behavior is governed separately by Dependabot. The
@@ -242,18 +246,84 @@ requires an explicit, narrow, reviewed policy change rather than being silently
 filtered.
 
 `make audit-python` generates an ignored, hashed requirements export of the
-locked `dev` group, then runs `uv run --locked pip-audit --strict --require-hashes
+locked contributor groups (`dev` and `benchmark`), then runs
+`uv run --locked pip-audit --strict --require-hashes
 --disable-pip` against it. The audit cannot silently resolve newer transitive
-versions. Its gate covers the contributor graph on the audit runner, not the
-optional benchmark/model environments; those remain explicitly unqualified by
-this security result. All manifests and lockfiles stay versioned, while `.venv`
-and `.cache` stay ignored.
+versions. `make audit-python-audio-frontend` and `make audit-python-vibevoice`
+use the same auditor against fresh exports of their owning locks. They require
+Apple-silicon macOS: running these exports through a Linux auditor would skip
+their platform-marked dependencies and could produce an empty, misleading pass.
+The audit jobs install only contributor tools, not model runtimes or weights.
+All manifests and lockfiles stay versioned, while `.venv` and `.cache` stay ignored.
 
-The 2026-09-19 RustSec audit found no known vulnerabilities in the lockfile. cargo-audit still reports seven allowed transitive
-warnings: `RUSTSEC-2024-0370`, `RUSTSEC-2024-0429`, and the five `unic-*`
-maintenance advisories `RUSTSEC-2025-0075`, `0080`, `0081`, `0098`, and `0100`.
-They remain visible in every run and should be removed through upstream dependency
-upgrades; they are not hidden with audit ignores.
+### Dependency security status and upstream limits
+
+The 2026-09-19 remediation resolves 12 of the 17 inventoried Dependabot findings
+in the local dependency graph. These changes have to reach the default branch
+before GitHub can re-evaluate its alerts. No alert was dismissed, dependency
+marker removed, or advisory ignored. [Issue #57](https://github.com/rahulsharmavishwakarma/transcribe/issues/57)
+tracks the remaining work; this is not a claim that the repository is free of
+known advisories.
+
+| Optional VibeVoice dependency | Result | Dependabot alerts addressed |
+| --- | --- | --- |
+| Accelerate 1.10.1 | Removed; the CPU probe does not use its APIs or device dispatch | 17 |
+| Torch 2.8.0 | Updated to 2.13.0 | 11, 12, 15 |
+| Diffusers 0.35.1 | Updated to 0.38.0, requiring Safetensors 0.8.0 | 9, 10 |
+| Transformers 4.51.3 | Updated to 4.57.6, with Tokenizers 0.22.2 | 2–7 |
+
+The remaining Transformers alerts are `GHSA-69w3-r845-3855`,
+`GHSA-29pf-2h5f-8g72`, `GHSA-fgcw-684q-jj6r`, and
+`GHSA-xrqw-3rrv-vx5w` (Dependabot 8, 13, 14, 16). Their listed fixes require
+Transformers 5, up to 5.10.0. The pinned Microsoft VibeVoice source explicitly
+requires Transformers `<5.0.0`. It imports the removed Qwen2 fast-tokenizer module
+and uses the older `tie_weights` signature and tied-weight key representation.
+A version-only upgrade is incompatible; a maintained source port or a compatible
+upstream release needs its own implementation and model qualification.
+[Microsoft dependency contract](https://github.com/microsoft/VibeVoice/blob/1541f590c7099820f10ea012f48d2399282df69f/pyproject.toml),
+[pinned tokenizer](https://github.com/microsoft/VibeVoice/blob/1541f590c7099820f10ea012f48d2399282df69f/vibevoice/modular/modular_vibevoice_text_tokenizer.py),
+[Transformers 5.10 Qwen2 modules](https://github.com/huggingface/transformers/tree/v5.10.0/src/transformers/models/qwen2),
+[model-loading API](https://github.com/huggingface/transformers/blob/v5.10.0/src/transformers/modeling_utils.py).
+
+The local VibeVoice audit fails with eight returned records representing five
+distinct PYSEC IDs: four corresponding to those Dependabot alerts and
+`PYSEC-2025-217` / `CVE-2025-14929` for X-CLIP checkpoint conversion. Three IDs
+appear twice in the advisory response; do not count those as separate flaws or
+discard the extra X-CLIP finding. The latter also affects 4.57.6 according to the
+[PyPA advisory](https://github.com/pypa/advisory-database/blob/main/vulns/transformers/PYSEC-2025-217.yaml).
+These are optional research dependencies, outside the packaged desktop runtime.
+Verified pinned source/artifacts, offline loading and the probe's limited APIs
+reduce exposure; they do not remediate the package-level findings.
+
+Dependabot alert 1 is `GHSA-wrw7-89jp-8q8g` / `RUSTSEC-2024-0429` in GLib 0.18.5.
+Tauri 2.11.5's Linux GTK3/WebKitGTK dependency graph requires the 0.18 family;
+the advisory's patched range starts at 0.20. A direct dependency on 0.20 would
+leave the affected transitive copy present. The upstream 0.18 branch still
+contains the affected iterator implementation. Fixing that graph needs a
+compatible upstream backport or a separately reviewed maintained patch/fork;
+manually changing the lockfile version is not a fix.
+[RustSec advisory](https://rustsec.org/advisories/RUSTSEC-2024-0429.html),
+[Tauri dependencies](https://github.com/tauri-apps/tauri/blob/tauri-v2.11.5/crates/tauri/Cargo.toml),
+[GLib 0.18 implementation](https://github.com/gtk-rs/gtk-rs-core/blob/0.18/glib/src/variant_iter.rs).
+
+`cargo tree --workspace --locked --target aarch64-apple-darwin --invert glib`
+and the Intel macOS equivalent have no GLib dependency; the Linux equivalent
+does. This establishes target exclusion for the Mac build, not a repaired
+cross-platform lockfile. The new `cargo audit --deny unsound` fails on this
+advisory even though cargo-audit classifies it as a soundness warning. Six other
+maintenance warnings remain visible: `RUSTSEC-2024-0370` and the `unic-*`
+advisories `RUSTSEC-2025-0075`, `0080`, `0081`, `0098`, and `0100`.
+
+Local validation on macOS passed lock/export checks, audits of all contributor
+groups and the audio frontend, all pre-commit checks (including workflow security,
+formatting, language lints/types and Node tests), and 51 tests across ten Python
+suites. The updated VibeVoice import/load/inference smoke passed without
+Accelerate. The smoke used verified existing artifacts and
+one 4.62-second public FLEURS recording; both chunks completed with full audio
+coverage and no case error. This verifies basic compatibility, not repeatability
+of dated accuracy/latency results or complete model qualification. The VibeVoice
+and strict Rust audits intentionally remain failing until their upstream
+blockers are resolved; CI has no `continue-on-error` or advisory exceptions.
 
 CodeQL and private-repository dependency review are not enabled because this
 repository does not currently have GitHub Advanced Security. Revisit those gates

@@ -62,6 +62,9 @@ uv run --locked python scripts/run-python-tests.py
 uv run --locked --group benchmark python scripts/prepare-accent-benchmark.py --help
 make python-lock-check
 make audit-python
+# Apple-silicon macOS benchmark dependency audits:
+make audit-python-audio-frontend
+make audit-python-vibevoice
 ```
 
 Use `uv add --dev PACKAGE` / `uv remove --dev PACKAGE` for contributor tools.
@@ -81,6 +84,12 @@ The retained benchmark requirements files are generated compatibility exports;
 retain their original commands as historical evidence; use the current benchmark
 setup for new work. Resolving a probe's dependencies does not qualify its model
 or reproduce an earlier measurement.
+
+The audits check every contributor group and each isolated benchmark environment.
+Known upstream blockers and failing gates are documented in
+[dependency security status](ci-and-releases.md#dependency-security-status-and-upstream-limits);
+a successful contributor audit does not imply that optional inference packages
+are free of advisories.
 
 ### Git worktrees and ignored caches
 
