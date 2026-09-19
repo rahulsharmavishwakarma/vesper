@@ -1,5 +1,5 @@
 //! Offline bounded policy adaptation. Never opens the live app's dataset or runs inference.
-use serde::{Deserialize, Serialize};
+use serde::Deserialize;
 use serde_json::{json, Value};
 use sha2::{Digest, Sha256};
 use std::{
@@ -8,70 +8,15 @@ use std::{
     time::Instant,
 };
 use transcribe_core::{
-    automatic_spelling_pair, memory_words, word_edits, Language, LearningContext,
-    PersonalizationProfile,
+    automatic_spelling_pair, word_edits, LearningContext, PersonalizationProfile,
 };
 #[path = "policy_learning/scoped.rs"]
 mod scoped;
-use transcribe_data::{AutomaticLearningState, DatasetStore};
+use transcribe_data::{policy::*, DatasetStore};
 
 type Result<T> = std::result::Result<T, Box<dyn std::error::Error>>;
-const MIN_FEEDBACK: usize = 4;
-const MIN_IMPROVED: usize = 2;
 const FAILURE_BANK_LIMIT: usize = 64;
 
-#[derive(Debug, Clone, Copy, Default, PartialEq, Eq, PartialOrd, Ord, Serialize, Deserialize)]
-#[serde(rename_all = "camelCase", deny_unknown_fields)]
-struct Policy {
-    // An extra eligibility floor. The real learner's stricter guards still apply.
-    support_floor: u8,
-    context_overlap: u8,
-}
-impl Policy {
-    fn baseline() -> Self {
-        Self {
-            support_floor: 1,
-            context_overlap: 0,
-        }
-    }
-    fn context_default() -> Self {
-        Self {
-            support_floor: 1,
-            context_overlap: 1,
-        }
-    }
-    fn valid(self) -> bool {
-        (1..=3).contains(&self.support_floor) && self.context_overlap <= 1
-    }
-    fn neighbors(self) -> Vec<Self> {
-        (1..=3)
-            .flat_map(|s| {
-                (0..=1).map(move |c| Self {
-                    support_floor: s,
-                    context_overlap: c,
-                })
-            })
-            .filter(|p| {
-                self.support_floor.abs_diff(p.support_floor)
-                    + self.context_overlap.abs_diff(p.context_overlap)
-                    == 1
-            })
-            .collect()
-    }
-}
-
-#[derive(Clone, Deserialize)]
-#[serde(rename_all = "camelCase", deny_unknown_fields)]
-struct Input {
-    id: String,
-    source_key: String,
-    episode_id: String,
-    at_ms: u64,
-    project: String,
-    language: Language,
-    model_id: String,
-    text: String,
-}
 #[derive(Clone, Deserialize)]
 #[serde(rename_all = "camelCase", deny_unknown_fields)]
 struct Episode {
@@ -168,109 +113,6 @@ impl Manifest {
     }
 }
 
-#[derive(Clone, Default)]
-struct Snapshot {
-    profile: PersonalizationProfile,
-    evidence: AutomaticLearningState,
-    // Experimental, transient metadata from observable edits, not hidden references.
-    teaching_terms: BTreeMap<String, BTreeSet<String>>,
-}
-fn root(parents: &[usize], mut i: usize) -> usize {
-    while parents[i] != i {
-        i = parents[i];
-    }
-    i
-}
-/// Audio and repair-chain identities can connect transitively through duplicate events.
-fn components(pairs: &[(&str, &str)]) -> Vec<usize> {
-    let mut parents: Vec<_> = (0..pairs.len()).collect();
-    let mut sources = BTreeMap::new();
-    let mut chains = BTreeMap::new();
-    for (i, (source, chain)) in pairs.iter().enumerate() {
-        for previous in [sources.insert(*source, i), chains.insert(*chain, i)]
-            .into_iter()
-            .flatten()
-        {
-            let from = root(&parents, i);
-            let to = root(&parents, previous);
-            parents[from] = to;
-        }
-    }
-    (0..pairs.len()).map(|i| root(&parents, i)).collect()
-}
-fn terms(text: &str) -> BTreeSet<String> {
-    memory_words(text)
-        .into_iter()
-        .filter(|s| {
-            ![
-                "open", "run", "show", "use", "in", "for", "on", "of", "with", "this", "that", "it",
-            ]
-            .contains(&s.as_str())
-        })
-        .collect()
-}
-fn prediction(snapshot: &Snapshot, input: &Input, policy: Policy) -> Result<String> {
-    if !policy.valid() {
-        return Err("Invalid eligibility policy".into());
-    }
-    let mut profile = snapshot.profile.clone();
-    profile.active_project = input.project.clone();
-    let mut current_terms = terms(&input.text);
-    for p in terms(&input.project) {
-        current_terms.remove(&p);
-    }
-    for entry in &mut profile.vocabulary {
-        if !entry.enabled {
-            continue;
-        }
-        let Some(source) = &entry.automatic_source else {
-            continue;
-        };
-        let candidate = snapshot
-            .evidence
-            .candidates
-            .iter()
-            .find(|c| &c.id == source)
-            .ok_or("Automatic provenance missing from the experiment snapshot")?;
-        // Retained edit events include duplicate bridges omitted from accepted support.
-        let mut links: Vec<_> = candidate
-            .support
-            .iter()
-            .map(|s| (s.source_key.as_str(), s.episode_id.as_str()))
-            .collect();
-        for event in &snapshot.evidence.events {
-            if event.context.language == candidate.language
-                && event.context.project == candidate.project
-                && event
-                    .pair
-                    .as_ref()
-                    .is_some_and(|p| p.heard == candidate.alias && p.intended == candidate.phrase)
-            {
-                links.push((&event.context.source_key, &event.context.episode_id));
-            }
-        }
-        let groups = components(&links);
-        let independent: BTreeSet<_> = groups.iter().take(candidate.support.len()).collect();
-        if independent.len() < policy.support_floor as usize {
-            entry.enabled = false;
-        }
-        if policy.context_overlap > 0
-            && !candidate.support.iter().any(|s| {
-                snapshot
-                    .teaching_terms
-                    .get(&s.event_id)
-                    .is_some_and(|context| {
-                        context.intersection(&current_terms).count()
-                            >= policy.context_overlap as usize
-                    })
-            })
-        {
-            entry.enabled = false;
-        }
-    }
-    Ok(profile.personalize(&input.text, input.language).text)
-}
-
 struct Learner {
     // TempDir remains owned for the complete run; no user database path is accepted.
     _root: tempfile::TempDir,
@@ -349,95 +191,6 @@ impl Learner {
     }
 }
 
-/// Deliberately cannot contain hidden reference or audit labels.
-#[derive(Clone)]
-struct FeedbackCase {
-    snapshot: Snapshot,
-    input: Input,
-    desired: String,
-    failure: Option<String>,
-}
-#[derive(Debug, Clone, Default, PartialEq, Eq, Serialize)]
-#[serde(rename_all = "camelCase")]
-struct Comparison {
-    cases: usize,
-    independent_cases: usize,
-    incumbent_errors: usize,
-    candidate_errors: usize,
-    improved: usize,
-    regressed: usize,
-    incumbent_harmful: usize,
-    candidate_harmful: usize,
-    failures: Vec<String>,
-}
-fn compare(cases: &[FeedbackCase], incumbent: Policy, candidate: Policy) -> Comparison {
-    let mut score = Comparison::default();
-    let pairs: Vec<_> = cases
-        .iter()
-        .map(|c| (c.input.source_key.as_str(), c.input.episode_id.as_str()))
-        .collect();
-    let groups = components(&pairs);
-    // Give each independent component one vote, but inspect *every* member.
-    // Worst-case errors and any regression/failure make ordering or retry volume
-    // unable to hide adverse feedback or manufacture stronger evidence.
-    let mut grouped = BTreeMap::<usize, Comparison>::new();
-    for (index, c) in cases.iter().enumerate() {
-        score.cases += 1;
-        if let Some(error) = &c.failure {
-            score.failures.push(format!("{}: {error}", c.input.id));
-        }
-        let group = grouped.entry(groups[index]).or_default();
-        if c.failure.is_some() {
-            continue;
-        }
-        let evaluated = (|| -> Result<(usize, usize, usize)> {
-            let old = prediction(&c.snapshot, &c.input, incumbent)?;
-            let new = prediction(&c.snapshot, &c.input, candidate)?;
-            Ok((
-                word_edits(&c.desired, &old).ok_or("Incumbent score budget exceeded")?,
-                word_edits(&c.desired, &new).ok_or("Candidate score budget exceeded")?,
-                word_edits(&c.desired, &c.input.text).ok_or("Raw score budget exceeded")?,
-            ))
-        })();
-        match evaluated {
-            Ok((old, new, raw)) => {
-                group.incumbent_errors = group.incumbent_errors.max(old);
-                group.candidate_errors = group.candidate_errors.max(new);
-                group.improved |= usize::from(new < old);
-                group.regressed |= usize::from(new > old);
-                group.incumbent_harmful |= usize::from(old > raw);
-                group.candidate_harmful |= usize::from(new > raw);
-            }
-            Err(e) => score.failures.push(format!("{}: {e}", c.input.id)),
-        }
-    }
-    score.independent_cases = grouped.len();
-    for group in grouped.values() {
-        score.incumbent_errors += group.incumbent_errors;
-        score.candidate_errors += group.candidate_errors;
-        score.improved += usize::from(group.improved > 0 && group.regressed == 0);
-        score.regressed += group.regressed;
-        score.incumbent_harmful += group.incumbent_harmful;
-        score.candidate_harmful += group.candidate_harmful;
-    }
-    score.failures.sort();
-    score
-}
-fn passes(c: &Comparison) -> bool {
-    c.failures.is_empty()
-        && c.independent_cases >= MIN_FEEDBACK
-        && c.improved >= MIN_IMPROVED
-        && c.regressed == 0
-        && c.candidate_errors < c.incumbent_errors
-        && c.candidate_harmful <= c.incumbent_harmful
-}
-fn preserves_history(c: &Comparison) -> bool {
-    c.failures.is_empty()
-        && c.regressed == 0
-        && c.candidate_errors <= c.incumbent_errors
-        && c.candidate_harmful <= c.incumbent_harmful
-}
-
 /// Experimental memory of observable development/validation failures only.
 /// Historical cases can veto a change, but cannot supply fresh improvement votes.
 #[derive(Default)]
@@ -484,107 +237,6 @@ impl FailureBank {
         }
     }
 }
-fn proposal(cases: &[FeedbackCase], active: Policy) -> Option<Policy> {
-    proposal_with_history(cases, active, &[])
-}
-fn proposal_with_history(
-    cases: &[FeedbackCase],
-    active: Policy,
-    history: &[FeedbackCase],
-) -> Option<Policy> {
-    active
-        .neighbors()
-        .into_iter()
-        .filter_map(|p| {
-            let c = compare(cases, active, p);
-            (passes(&c) && preserves_history(&compare(history, active, p)))
-                .then_some(((c.candidate_harmful, c.candidate_errors, p), p))
-        })
-        .min_by_key(|(key, _)| *key)
-        .map(|(_, p)| p)
-}
-
-#[derive(Debug, Clone, Serialize, PartialEq)]
-#[serde(rename_all = "camelCase")]
-struct Decision {
-    round: String,
-    action: String,
-    previous: Policy,
-    proposed: Option<Policy>,
-    active: Policy,
-    development: Option<Comparison>,
-    validation: Option<Comparison>,
-    rollback: Option<Comparison>,
-    historical_validation: Option<Comparison>,
-    historical_rollback: Option<Comparison>,
-    bank_cases: usize,
-    reason: String,
-}
-#[derive(Default)]
-struct Controller {
-    active: Policy,
-    parent: Option<Policy>,
-    decisions: Vec<Decision>,
-}
-impl Controller {
-    fn new() -> Self {
-        Self {
-            active: Policy::baseline(),
-            ..Default::default()
-        }
-    }
-    fn finish(
-        &mut self,
-        id: &str,
-        candidate: Option<Policy>,
-        develop: &[FeedbackCase],
-        validation: &[FeedbackCase],
-    ) {
-        self.finish_with_history(id, candidate, develop, validation, &[]);
-    }
-    fn finish_with_history(
-        &mut self,
-        id: &str,
-        candidate: Option<Policy>,
-        develop: &[FeedbackCase],
-        validation: &[FeedbackCase],
-        history: &[FeedbackCase],
-    ) {
-        let previous = self.active;
-        let rollback = self.parent.map(|p| compare(validation, self.active, p));
-        let historical_rollback = self.parent.map(|p| compare(history, self.active, p));
-        if self.parent.is_some()
-            && rollback.as_ref().is_some_and(passes)
-            && historical_rollback.as_ref().is_some_and(preserves_history)
-        {
-            self.active = self.parent.take().unwrap();
-            self.decisions.push(Decision { round:id.into(), action:"rolled_back".into(), previous,
-                proposed:candidate, active:self.active, development:None, validation:None, rollback,
-                historical_validation:None, historical_rollback, bank_cases:history.len(),
-                reason:"Fresh independent feedback favors the saved previous policy without per-case regression.".into() });
-            return;
-        }
-        let development = candidate.map(|p| compare(develop, self.active, p));
-        let validation_score = candidate.map(|p| compare(validation, self.active, p));
-        let historical_validation = candidate.map(|p| compare(history, self.active, p));
-        let accepted = candidate.is_some_and(|p| self.active.neighbors().contains(&p))
-            && development.as_ref().is_some_and(passes)
-            && validation_score.as_ref().is_some_and(passes)
-            && historical_validation
-                .as_ref()
-                .is_some_and(preserves_history);
-        if accepted {
-            self.parent = Some(self.active);
-            self.active = candidate.unwrap();
-        }
-        self.decisions.push(Decision { round:id.into(), action:if accepted {"promoted"} else if candidate.is_some() {"rejected"} else {"unchanged"}.into(),
-            previous, proposed:candidate, active:self.active, development, validation:validation_score, rollback,
-            historical_validation, historical_rollback, bank_cases:history.len(),
-            reason:if accepted {"Proposal improved development and fresh validation with no per-case regressions."}
-                else {"Insufficient independent evidence, no strict gain, or a regression/failure; retain incumbent."}.into() });
-    }
-}
-
 #[derive(Default)]
 struct Timings {
     apply: Vec<f64>,
@@ -980,6 +632,7 @@ fn main() -> Result<()> {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use transcribe_core::Language;
     fn fixture() -> Manifest {
         serde_json::from_str(include_str!(
             "../../../benchmarks/asr/fixtures/policy-learning-episodes.json"

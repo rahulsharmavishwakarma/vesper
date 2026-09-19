@@ -1,52 +1,10 @@
 //! Offline lexical routing experiment. No production storage or inference ownership.
 use super::*;
 use std::collections::VecDeque;
-use transcribe_core::{language_matches, memory_phrase_occurs, project_matches};
 
 pub(super) const MAX_SCOPES: usize = 32;
 
-/// Keys depend only on observable pre-event memory and the current hypothesis.
-/// Multiple matching vocabulary entries or cues are deliberately ambiguous.
-pub(super) fn key(snapshot: &Snapshot, input: &Input) -> Option<String> {
-    let mut matched = 0;
-    let mut cues = BTreeSet::new();
-    let current = terms(&input.text);
-    for entry in &snapshot.profile.vocabulary {
-        if !entry.enabled
-            || !language_matches(entry.language, input.language)
-            || !project_matches(&entry.project, &input.project)
-            || !entry
-                .aliases
-                .iter()
-                .any(|a| memory_phrase_occurs(&input.text, a))
-        {
-            continue;
-        }
-        let source = entry.automatic_source.as_ref()?;
-        let candidate = snapshot
-            .evidence
-            .candidates
-            .iter()
-            .find(|c| &c.id == source)?;
-        matched += 1;
-        for support in &candidate.support {
-            if let Some(teaching) = snapshot.teaching_terms.get(&support.event_id) {
-                cues.extend(teaching.intersection(&current).cloned());
-            }
-        }
-    }
-    if matched != 1 || cues.len() != 1 {
-        return None;
-    }
-    Some(
-        json!([
-            input.project.trim().to_lowercase(),
-            input.language,
-            cues.first()?
-        ])
-        .to_string(),
-    )
-}
+pub(super) use transcribe_data::policy::scope_key as key;
 
 /// A correlated component cannot be split across scopes to hide disagreement.
 fn grouped(cases: &[FeedbackCase]) -> BTreeMap<String, Vec<FeedbackCase>> {
