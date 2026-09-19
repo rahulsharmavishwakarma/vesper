@@ -311,3 +311,417 @@ Source hashes, complete measurements, initial failures and final logs are local
 under `.cache/benchmarks/results/personalization-shadow-2026-09-19/integration-followup/`.
 These mechanical checks do not resolve semantic quality, natural-user benefit,
 TextEdit keyboard observation, external admission or live-policy promotion gates.
+
+## Native WebView replay — 20 September 2026
+
+The opt-in [WebView protocol](native-qualification.md#native-webview-replay)
+replays public Svarah PCM through the production `TranscriptionPanel`, actual
+Tauri IPC, installed models and the Rust/SQLite learner in macOS WKWebView.
+The fixed 38-recording manifest supplies one calibration and one audit clip for
+each of 19 language-background groups, each run against separate frozen-memory
+and learning stores: **76 requests**. Only calibration rows in the learning arm
+receive scripted edits through the ordinary draft field. These are English
+recordings, not qualification of 19 spoken languages or natural personal use.
+The microphone, ordinary user profile and external editors are not involved.
+
+The final `run-clean` completed all 76 requests with **zero warnings or failures**,
+matching visible DOM results, unchanged frozen evidence, empty audio/session
+archives, successful temporary-store cleanup and process exit 0. The 19 audit
+pairs still tied at **46 word edits**; 15 outputs per arm needed correction,
+with zero improved or harmed pairs and zero active memories. One calibration
+per cohort does not establish independent recurring support for a personal
+spelling. This replay passes its mechanical gates but demonstrates **no learning
+gain**. Admission thresholds were not relaxed to manufacture one.
+
+### Admission diagnosis
+
+A policy-2 follow-up through the actual desktop edit transaction isolates the zero-gain
+result more precisely: **all 18 changed drafts persisted their user-edit events,
+but none produced a provisional spelling pair**. Every recorded before-text
+matches the corresponding pinned public hypothesis in the existing cleanup
+fixture. Replaying those texts with the same reference edits reproduces the
+result without another ASR run. Events retain the correct result identity;
+the edited draft and revision update correctly with audio collection off.
+
+| First rejection stage in 19 calibration rows | Count |
+| --- | ---: |
+| Unchanged text; no edit submitted | 1 |
+| Case/punctuation changes with no token change | 9 |
+| No safe single contiguous replacement (including additions or broad edits) | 5 |
+| Replacement exceeds the one-token target limit | 1 |
+| Extracted pair also fails admission in isolation | 2 |
+| Pair passes alone but cannot reproduce the entire edited paragraph | 1 |
+
+Examples locate policy limitations: `Ambedkarnagar → Ambedkar Nagar` is rejected
+by the single-token target rule; `API → APY` fails the minimum-length spelling
+rule; `clause → Cloves` fails related-spelling admission. The whole-edit mismatch
+extracts `This → These` alongside formatting changes. That is a grammatical
+change, not evidence that a general spelling replacement should be learned;
+relaxing the whole-edit guard to admit it would be an unsafe interpretation.
+
+Thus the immediate bottleneck in this replay is **extraction/admission coverage**,
+before independent-support counting or retrieval. The earlier explanation that
+one calibration per cohort is insufficient remains a separate benchmark limit,
+but is not the first cause of these zero admissions. The existing eligible-edit
+control demonstrates persistence, activation and later reuse, so these results
+do not establish a disconnected feedback pipeline. They also do not establish
+that the current policy has adequate coverage for the product requirement.
+
+The public paired replay is useful for accuracy, isolation and timing, but it
+provides no eligible repeated-learning opportunity for the current policy.
+An efficacy comparison needs independently recorded recurring terms, eligible
+corrections and a later occurrence, plus unchanged and conflicting controls.
+Broadening support for names, acronyms or multiple edits needs separate labelled
+development cases and disjoint later-use audits; do not tune against this
+already inspected corpus or bypass meaning/number/negation guards. The authored
+harm remains a context ambiguity: the same observed phrase is expected to mean
+something different before any corrective feedback. The following explicit
+reversal suspends the learned mapping; hidden intent alone cannot supply that
+feedback.
+
+The diagnostic is `public_correction_admission_diagnostic` in the existing
+desktop qualification tests. It verifies event/draft persistence and reports
+admission counts without asserting that zero coverage is desirable. Its ignored
+local report is `admission-diagnostic.json` beside the native results. The public
+fixture references remain scripted feedback, not natural-user labels.
+After adding this diagnostic, all **62 desktop library tests pass** (six opt-in
+tests excluded), including the eligible-spelling activation/reuse control and
+chronological audit. Strict desktop test Clippy and Rust formatting also pass.
+
+### Native timings
+
+The table excludes the complete first pair before calculating either arm's
+resident statistics: **37 matched pairs**. Percentiles use nearest rank. All
+durations are milliseconds.
+
+| Measurement | Frozen mean | Learning mean | Frozen p95 | Learning p95 |
+| --- | ---: | ---: | ---: | ---: |
+| Native `process_capture` completion | 605.83 | 612.53 | 1182.67 | 1188.61 |
+| Stop click to first observed final DOM | 613.11 | 618.76 | 1189 | 1196 |
+| Stop click to render opportunity | 639.30 | 643.92 | 1218 | 1218 |
+| ASR stage | 426.10 | 427.76 | 766.81 | 772.95 |
+| Cleanup stage | 174.10 | 174.22 | 432.96 | 426.62 |
+
+The WebView clock starts immediately before clicking Stop. Final DOM readiness
+is observed with a requested 5 ms polling timer; after a matching result and
+Svelte update, two animation-frame callbacks and viewport/visibility checks
+define the render opportunity. It includes IPC, runtime and panel update but
+excludes real microphone stopping and does not timestamp physical pixel
+presentation. DOM polling and frame scheduling add observation delay. The test
+page mounts the production panel, not the entire application shell. Audio
+decoding is outside the timed region; backend timing starts at `process_capture`.
+Collection is off, so save timing is null, not zero. Stage percentiles are not
+additive. These are offline final results; there are no streaming partial timings.
+
+Learning's render-opportunity mean was **0.72% higher**, with equal p95; backend
+mean/p95 were **1.11%/0.50% higher**. Both satisfy the predeclared exploratory
+10% margins. This small uncontrolled diagnostic does not establish a production
+latency guarantee. The first frozen request was cold: backend **3692.63 ms**,
+DOM **3700 ms**, render opportunity **3731 ms**. Its already-resident learning
+partner measured **384.77/388/418 ms** and remains excluded with that pair.
+
+Eighteen changed calibration drafts generated scripted edit submissions; one
+reference was unchanged and correctly produced no edit. Submit-to-observed-save
+mean/p95 were **7.67/12 ms**, and the native edit command measured **4.46/5.79 ms**.
+These measure programmatic input and persistence, not human editing effort or
+time until background semantic analysis completes. The production shadow
+scheduler was invoked normally after successful edits; this run does not
+qualify semantic accuracy or live policy promotion.
+
+### Execution identity and retained failures
+
+This was a Cargo development build (unoptimized with debug information), base
+`85856cba5be867ea9b40464bc5d3bb5b80ec7ec8` plus the recorded unstaged harness.
+Executable SHA-256:
+`f7821db26c5c93700f7ef82a695ace49f460a7dc1f13d016ef00003811c9c8b6`.
+Manifest SHA-256:
+`0ca921ff8a0f788774644143cfa53987945cab817b01951439480b39eb238b6f`.
+The report retains every relevant source hash and actual provider evidence.
+
+Hardware was Mac17,8, 64 GiB memory, 18 logical CPUs, macOS 27.0 build 26A428.
+Auto initialized **CPU ASR with eight native graph threads** and **Metal cleanup**.
+The models were Cohere Transcribe int8 export revision
+`156a470cf08eefe706a0004f3c52d9ee567ca7a0` and Qwen3.5-0.8B Q4_0 revision
+`8fea620810c4afa23dd6443f999a48574c1611a3`, with all artifact hashes verified
+before replay. Runtime revisions were sherpa-onnx 1.13.8
+`11afbd009a7f8c08f4bcf2fc1b265d0df4670fbf` and llama-cpp-2 0.1.156
+`e79e4bf660e19f2ad851e06c6913f7a8c5852621`; the report also records the native
+build/patch identity. Cleanup used Minimal, greedy decoding and 4096-token
+contexts; audio preprocessing was off. No model weights or production inference
+ownership changed.
+
+The 57-second final process ran on battery (66% to 65%). Five sampled thermal
+checks reported no recorded thermal/performance warning. Darwin reported
+maximum host-process RSS **5,450,907,648 bytes** and peak footprint
+**3,865,402,136 bytes**; these do not account for the whole WebKit process group
+or total GPU memory. The browser inspection session was closed and compilation
+was serial with inference. Other host activity, power controls and sustained
+thermal behavior were not controlled or qualified.
+
+All four native attempts remain under the ignored local directory
+`.cache/benchmarks/results/native-learning-webview-2026-09-20/`:
+
+| Attempt | Retained result |
+| --- | --- |
+| `run-nilEd0` | All 76 rows completed, then Metal shutdown asserted and the process aborted. The corrected exit-aware summary fails this attempt. Its earlier incomplete scoring remains as historical evidence, not a pass. |
+| `run-fixed` | Explicit unload on the existing owner gave 76 passing rows and exit 0. Temporary-store cleanup was not yet asserted. |
+| `run-final` | All 76 rows completed, but the new temporary-store check failed; process exit 1 keeps this attempt failed. |
+| `run-clean` | Explicit worker release and temporary-store removal, returning event loop and joined watchdog: 76 passing rows, verified cleanup and exit 0. Final measurements above use only this attempt. |
+
+The fixes are confined to the test host. The launcher independently records
+process exit status; successful request rows cannot conceal an abort. The
+summarizer preserves warnings, missing/duplicate/misordered rows, incompatible
+execution settings, audit harms and truncated JSONL as failed gates. Eight
+report-integrity tests cover these cases, including an abort after all rows and
+a completion marker. Raw JSON/JSONL, logs and generated hashes remain ignored.
+
+The full `make check` passed: **110 Node tests**, all **15 Python suites**,
+the headless browser regression suite, native completion fixtures, **314 Rust
+tests** across workspace targets (31 opt-in tests excluded), locked dependency
+checks, formatting/linting, Svelte/TypeScript, strict all-target Clippy, doctests
+and rustdoc. A separate fresh report from the existing authored chronological
+test retained **22 audit rows**, word edits **10 → 4**, **five improved and one
+harmed** outputs. Its mechanics pass while that harmful substitution keeps
+personal-benefit qualification open. It is not pooled with public audio.
+
+**Qualification remains open.** Required evidence still includes natural
+multi-session corrections, actual microphone stop-to-visible timing, human
+editing actions/time, process restart, acoustic model changes and sustained
+resource behavior. Previously retained authored contradictory-use harm also
+remains unresolved. This native UI replay must not be presented as proof of
+recursive self-improvement or release qualification.
+
+## Correction admission follow-up
+
+The user's requirement is to reduce repeated correction work through ordinary
+use. Policy version 3 addresses a specific coverage gap in the existing local
+learner: joined/split names with identical joined letters (up to three target
+words), one-letter uppercase acronym repairs and single spelling corrections
+with limited presentation edits. It also rejects demonstrative/question-word
+rewrites such as `This → These`. The [dictionary contract](automatic-dictionary.md)
+defines the limits. There is no new model, network dependency, memory schema,
+inference owner, manual confirmation or training step.
+
+Before implementation, two new development/regression tests failed: a joined
+name did not become a candidate, and the old policy admitted a grammatical
+demonstrative substitution. Both pass after the change. The new guards retain
+number/date/negation, quote, sentence-boundary, unrelated-target, partial-repeat
+and changed-intent controls. Formatting tolerance applies only while extracting
+evidence; live memory replacement still preserves surrounding dictated text.
+
+Six authored desktop/SQLite lifecycles cover three correction families, each
+with reversal and Undo variants. Two eligible corrections with distinct
+simulated source/session identities activate the spelling. Repeating the first
+source adds no support. Later matching text uses the corrected form; wrong
+context and quoted aliases stay unchanged. An acoustic model setting changes
+without losing memory, but this test supplies raw text directly and does not
+claim acoustic model-switch qualification. Reversal and Undo suspend the
+mapping; Forget clears its records with audio/session collection off. These are
+constructed mechanism checks, not six independent users or natural sessions.
+
+The already-inspected public admission diagnostic changes from **0 to 2 eligible
+pairs among 18 persisted edits**: the word-boundary name and short acronym now
+become provisional candidates. They still need independent supporting edits.
+The other exclusions remain explicit: nine formatting-only edits, five with no
+safe contiguous replacement, two rejected isolated pairs and one unchanged
+recording. The isolated rejections are `clause → Cloves` and the grammatical
+`This → These`; neither is silently treated as a trusted spelling. This corpus
+is a development/regression source, not a new holdout.
+
+The earlier chronological audit still scores **10 → 4 word edits**, with five
+improved outputs and **one harmful substitution**. Its hidden-intent reversal
+case remains visible. Broader phonetic substitutions, multiple separate fixes
+in one edit, arbitrary multiword rewrites and semantic preferences remain
+unsupported by automatic dictionary admission. No claim of universal or
+monotonic improvement follows from the additional admitted candidates.
+
+Reports are local and ignored beside the original replay:
+`correction-lifecycles-v3.json`, `admission-diagnostic-v3.json` and
+`authored-v3.json`. Earlier policy-2 reports are retained separately. A policy-2
+store compatibility regression verifies that reading under version 3 does not
+rewrite the store or manufacture support; an ensuing evidence mutation writes
+the new policy metadata using the existing schema.
+
+The policy-3 WebView reruns **did not qualify UI latency** in this session.
+`run-policy-v3` retained 25 request rows with missing rendering opportunities;
+the display-awake retry retained 15, and a test-only focus retry acknowledged
+none. Each was explicitly stopped and retains a nonzero process outcome and
+failing report. The session reported unlocked, but the underlying reason for
+unavailable rendering callbacks was not established. No callback/visibility
+gate was relaxed. The unproven focus change was removed; a rendering preflight
+now prevents expensive inference when the host cannot provide frames. The
+earlier successful policy-2 UI timings are historical and do not qualify the
+updated policy. A new visible native session is still required.
+
+The complete `make check` passes after the policy change: **319 Rust tests**
+(31 opt-in tests excluded), **111 Node tests**, all **15 Python suites**, the
+headless browser regression, native completion fixtures, locked dependency
+checks, formatting/linting, Svelte/TypeScript, strict Clippy, doctests and
+rustdoc. This includes the new correction lifecycle and store-compatibility
+checks. Nine report-integrity tests also verify that missing calibration
+feedback cannot pass merely because a result was displayed.
+
+A separate installed-model native **Rust application pipeline** replay then
+passed **76/76 requests** with zero warnings/failures and process exit 0. Both
+new pairs produced provisional outcomes through real capture processing and
+ordinary draft persistence. Audit word edits remained **46 versus 46**, with
+zero improved/harmed pairs and no active memory. Each cohort still supplies only
+one correction, so the independent-support gate remains unmet. This confirms
+native admission wiring, not public-corpus efficacy or UI presentation.
+
+On the same Mac17,8 / 64 GiB / macOS 27.0 development-build envelope, actual
+providers were CPU ASR (eight native graph threads) and Metal cleanup, with the
+same verified model/runtime pins recorded above. The 37 matched resident pairs
+measured backend mean/p95 **592.99/1166.99 ms frozen** and
+**600.01/1170.02 ms learning**, excluding the entire first pair. The run took
+57 seconds on battery; it was serial with compilation and UI retries. These
+are backend completion durations, excluding microphone stop, WebView rendering
+and human editing; no UI latency or sustained thermal claim follows.
+`native-backend-v3.json`, its source identity and the complete test log remain
+beside the other ignored artifacts. Native test executable SHA-256:
+`79e9ed1f1f302b0f7bf0686b627e13b33cd7ede9e058693240d7446d2227adf7`.
+
+## Pipeline review and learning opportunities
+
+The 20 September review separates dataset suitability from implementation
+correctness. The 38-clip public replay supplies one feedback recording and one
+audit recording per isolated language-background cohort. Ordinary spellings
+need two independent supporting corrections. Moreover, neither of the two
+admitted pairs recurs in its cohort's audit recording: the later Hindi-cohort
+clip concerns single-use bags, not `Ambedkarnagar`; the later Tamil-cohort clip
+concerns Terra Greens products, not `API`/`APY`. There are **zero audit reuse
+opportunities for the two admitted mappings**, even if they were activated.
+The 46-versus-46 result therefore cannot decide whether supported recurring
+corrections improve later speech. These clips remain useful for native
+execution, latency, admission and failure diagnostics. Repeating them does not
+create independent feedback or fix this evaluation design.
+
+Three additional authored probes used fresh temporary SQLite stores and the
+production `learn_from_edit`, `dictation_personalization_snapshot`,
+`post_asr_profile` and `personalize` APIs. All three reproduced undesirable
+behavior under policy 3; they are findings, not passing acceptance tests:
+
+| Finding | Reproduction | Observed result |
+| --- | --- | --- |
+| Revised target leaves the old automatic mapping active | Teach `Jonathon → Jonathan` twice, then independently correct the displayed `Jonathan → Jonatan` twice, with `Meet … tomorrow` as the surrounding text. | The new target activates, but later raw `Jonathon` still becomes `Jonathan`. Reversal handling requires the original alias to reappear in the edit; the new mapping has the displayed intermediate word as its alias and fails raw-text eligibility. |
+| Retracted provisional evidence still counts | Correct `Meet Martellis tomorrow` to `Meet Martellys tomorrow`, then restore the original spelling in the same result's next draft revision. Supply one later independent correction to `Martellys`. | The first support is not withdrawn, and the mapping activates after only one remaining unretracted correction. The reversal loop visits active vocabulary, not provisional candidates. |
+| New teaching cues can pass selection but fail application | With no selected project, correct `Deploy kubernets alpha` to `Deploy kubernetes alpha`, then independently correct `Manage kubernets beta` to `Manage kubernetes beta`. | Activation succeeds and the raw-text selector enables the entry for `Manage kubernets beta`, but final output still contains `kubernets`. The stored context remains `alpha deploy`; the later generic context filter rejects the newly taught context. Cleanup retrieval has the same additional context filter. |
+
+The probes simulate distinct source and episode identifiers. They perform no
+ASR, cleanup inference, microphone capture or UI interaction and make no
+natural-user accuracy claim. Their source and outputs remain ignored alongside
+the native reports under `pipeline-review-2026-09-20/`. Production behavior was
+not changed by this review. The six earlier lifecycle controls retain a shared
+context cue and reverse an already active entry to its original alias; they do
+not cover these three cases. The prior full test-suite pass therefore does not
+invalidate these findings.
+
+A suitable efficacy evaluation needs chronological recurring-term episodes:
+independent eligible corrections, activation, then an unseen recording with
+the same alias and a supported context. It must separately score provisional
+retraction, revised targets, newly taught contexts and negative controls. The
+[qualification protocol](native-qualification.md#learning-opportunity-coverage)
+defines coverage reporting so a zero-opportunity batch is labelled insufficient
+for efficacy, rather than interpreted as proof of a broken or effective learner.
+
+## Policy-4 lifecycle fixes and recurring audio
+
+After the review, the user approved fixing the three lifecycle defects and
+running an opportunity-bearing batch. Policy 4 implements those fixes in the
+existing learner and post-ASR snapshot; it introduces no schema, model, service
+or training change. Retraction withdraws only the current result's support.
+An eligible correction of an active automatic target pauses that rule; fresh
+direct-alias corrections can support a different target, while manual conflicts
+remain protected. The generated intermediate spelling supplies no positive
+support. Later raw teaching cues now authorize both downstream stages without
+the first-edit context veto. Persisted/pre-ASR scope stays unchanged.
+
+The three new store regressions **failed before the fixes and passed afterward**.
+Additional controls cover manual/disabled-manual conflicts, other results'
+support, quoted and broad intent edits, duplicate callbacks, and oversized
+drafts: exceeding the lexical inspection budget means unknown, not evidence of
+retraction. Policy-2/3 stores remain readable without a read-time rewrite or
+manufactured support. The desktop lifecycle test passes through ordinary draft
+editing, SQLite persistence and later raw completion with History both enabled
+and disabled, including the three fixes, wrong context, quotes and Forget. This
+desktop test supplies constructed raw text; it does not run acoustic inference.
+
+The final full `make check` passes: **326 Rust tests** (32 opt-in tests excluded),
+**111 Node tests**, all **15 Python suites**, headless browser regressions,
+native completion fixtures, formatting/linting, type checks, strict Clippy and
+rustdoc. A sandboxed attempt stopped when existing process-monitoring tests
+could not execute `ps`; the full rerun with normal host permissions passes.
+
+The separate native batch contains **72 chronological rows × two arms = 144
+requests**, across two authored recurring spelling preferences and three local
+system voices: Samantha (`en_US`), Daniel (`en_GB`) and Rishi (`en_IN`). The corpus
+contains 64 unique WAV hashes; six intentional feedback duplicates and repeated
+non-learning control speech remain explicit. Voice labels are synthesis settings,
+not human accent qualification. Joined and underscore spellings represent
+authored user preferences, not proof that spaced ASR text misrepresents speech.
+All sentences, roles and target changes were fixed before recognition. Every
+audit label remains scoring-only. Each distinct utterance uses a simulated
+independent episode; no natural user/session identity is claimed.
+
+Corpus manifest SHA-256:
+`5521ee2f074db6fdb36d93f6c9b4f24eee70bcaa1cb550d5d9d560b8a55f85e1`.
+The [qualification protocol](native-qualification.md#reproduce-the-diagnostic-runs)
+provides the generator and native test command. The fixed corpus and reports
+remain ignored; no generated JSON or audio is added to version control.
+
+Three complete batches retain two separate provider envelopes. The sandboxed
+run fell back to CPU cleanup after Metal initialization failed. The unchanged
+corpus then ran twice with normal host access: actual ASR was CPU/eight threads
+and cleanup was Metal. The last run verifies the final code, including the
+oversized-draft guard, after the full checks. All three produced the same quality
+counts; repeated runs are not additional independent learning examples:
+
+| Measure | Result |
+| --- | --- |
+| Requests attempted | 144 in each run |
+| ASR completion failures | 10 in each run; no partial transcript accepted |
+| Cleanup warning/fallback requests | 32 in each run; raw text preserved |
+| Returned transcript results | 134 in each run, including the 32 fallbacks |
+| Feedback rows / eligible displayed pairs | 36 / 28 |
+| Mapping activations | 8 |
+| Realized audit reuse opportunities | 8 |
+| Audit rows with selected/applied automatic memory | 6 / 6 |
+| Paired audit rows scored / scheduled | 32 / 36 |
+| Paired audit word edits, frozen → learning | 30 → 18 |
+| Outputs needing correction, frozen → learning | 14 → 8 |
+| Improved / harmed scored audit outputs | 6 / 0 |
+| Overall diagnostic gate | **Failed**, process exit 101 in all three runs |
+
+All three Brookside voice scenarios activate the initial and revised spelling
+and improve two later audits each. Samantha and Daniel activate `CedarPoint`,
+but the later revised spelling lacks sufficient valid support. Rishi's Cedar
+scenario produces no activation: recognizer text such as `see the point` falls
+outside the guarded spelling policy. These scenarios are retained in the full
+report. The six improvements are an observed mechanism benefit on this authored
+corpus, not a general accuracy claim. The four unscored audit pairs remain
+failures; their absence from word-edit totals is explicit.
+
+The failure boundary is outside the three repaired learner lifecycles: five
+audio rows fail Cohere's `duration_token_limit` in both arms, and Qwen cleanup
+hits fidelity/output-limit guards on 32 requests. The gate remains failed;
+neither incomplete ASR prefixes nor rejected cleanup are relabelled as success.
+No decoder limit, model default, fidelity guard or score threshold was changed
+to pass this dataset. Those failures and broader phonetic admission coverage
+remain qualification blockers in #58.
+
+On the existing Mac17,8 / 64 GiB / macOS 27.0 development-build envelope with
+the same pinned Cohere/Qwen artifacts and runtime revisions recorded above,
+the final Metal run's 71 matched resident request pairs measured backend mean/p95
+**415.56/2804.88 ms frozen** and **478.40/2821.93 ms learning**. The entire first
+pair is excluded as cold; failed and fallback requests remain included in these
+timings. The mean increase exceeds the earlier exploratory 10% margin. These
+numbers exclude microphone stop, IPC, native UI rendering and human editing.
+The CPU-cleanup run measured **605.06/2779.65 ms frozen** and
+**665.56/2862.08 ms learning** and is not pooled with Metal results. All native
+runs were serial with compilation and other model tests.
+
+The final report is `recurring-native-v4-final.json`; earlier reports are
+`recurring-native-v4-run1.json` and `recurring-native-v4-metal.json`. Each retains
+source/model/binary identities and process outcomes. Final native test
+executable SHA-256:
+`04e6216184c510ca643fc443cbeacdb869021414390e0bf628ee98cf40a54549`.

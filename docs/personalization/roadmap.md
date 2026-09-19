@@ -59,7 +59,22 @@ Measure correction actions and editing seconds, recurrence of the same mistake, 
 
 This work belongs to the existing core/data/runtime evaluation paths. It does not require a new model. The [evaluation contract](evaluation.md) defines the release evidence and timing boundaries.
 
-The [native qualification protocol](native-qualification.md) now provides reproducible lifecycle and public-audio tests. The [measured results](evaluation.md#native-multi-session-qualification) preserve the initial cleanup failure and rejected prompt replacements; the [integrated bounded recovery](evaluation.md#integrated-native-recovery-verification) then resolves the six native cleanup warnings with 76 passing requests. Simulated contradictory-use harm and missing human/UI measurements remain. Passing these mechanism and cleanup gates does not complete A qualification or unblock a live adaptive controller.
+The [policy-3 correction follow-up](evaluation.md#correction-admission-follow-up)
+expands bounded name/acronym admission and tolerates limited formatting around a
+single spelling fix. Constructed later-use controls pass, while the inspected
+public corpus supplies only provisional support and the older authored audit
+retains a harmful substitution. This is an incremental dictionary fix; recurring
+natural-user benefit, broader correction coverage and semantic intent learning
+still require their own evidence.
+
+The [policy-4 lifecycle follow-up](evaluation.md#policy-4-lifecycle-fixes-and-recurring-audio)
+fixes retracted support, rejected learned targets and later taught context. Its
+recurring synthetic-audio benchmark demonstrates six improved scored audit
+outputs across three voices, but retains ASR completion failures and cleanup
+fallbacks in both arms. That diagnostic gate remains failed; it does not complete
+Phase A qualification or establish natural-user/accent benefit.
+
+The [native qualification protocol](native-qualification.md) provides reproducible lifecycle and public-audio tests. The [measured results](evaluation.md#native-multi-session-qualification) preserve the initial cleanup failure and rejected prompt replacements; the [integrated bounded recovery](evaluation.md#integrated-native-recovery-verification) then resolves the six native cleanup warnings with 76 passing requests. The [native WebView replay](evaluation.md#native-webview-replay--20-september-2026) adds production-panel rendering-opportunity measurements and clean-exit checks, with no audit gain from automatic learning. Simulated contradictory-use harm, real microphone stop-to-visible timing and natural editing-effort measurements remain. Passing these mechanism and cleanup gates does not complete A qualification or unblock a live adaptive controller.
 
 ## B: semantic personalization with frozen weights
 
