@@ -869,6 +869,21 @@
                 Audio processing <span class="note">Experimental</span>
               </h2>
               <div class="setting-toggle">
+                <label class="checkbox-field" for="models-auto-level"
+                  ><input
+                    id="models-auto-level"
+                    type="checkbox"
+                    bind:checked={draft.audioFrontend.autoLevelEnabled}
+                    disabled={pending !== null || pipelineBusy}
+                    aria-describedby="models-auto-level-help"
+                  /><span>Automatically adjust quiet speech</span></label
+                >
+                <p id="models-auto-level-help" class="note checkbox-help">
+                  Adjusts quiet speech with noise and volume limits, for live and completed
+                  recordings. Uses the speech detection model. Very quiet words may still be missed.
+                </p>
+              </div>
+              <div class="setting-toggle">
                 <label class="checkbox-field" for="models-vad"
                   ><input
                     id="models-vad"

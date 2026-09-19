@@ -20,6 +20,7 @@ export const AUDIO_FRONTENDS = {
 } as const;
 export type AudioFrontendConfig = {
   vadEnabled: boolean;
+  autoLevelEnabled: boolean;
   noiseReduction: 'off' | 'dpdfnet4' | 'dpdfnet8';
 };
 export type ImprovementMode = 'review_required' | 'automatic';
@@ -166,7 +167,7 @@ export function defaultSettings(): AppConfig {
       customRewriter: null,
     },
     cleanupEnabled: true,
-    audioFrontend: { vadEnabled: false, noiseReduction: 'off' },
+    audioFrontend: { vadEnabled: false, autoLevelEnabled: false, noiseReduction: 'off' },
     language: 'en',
     modelDirectory: null,
     cleanupPreset: 'minimal',
@@ -437,8 +438,11 @@ export function validateSettings(value: unknown): string[] {
   if (
     !isRecord(value.audioFrontend) ||
     typeof value.audioFrontend.vadEnabled !== 'boolean' ||
+    typeof value.audioFrontend.autoLevelEnabled !== 'boolean' ||
     !isOneOf(value.audioFrontend.noiseReduction, ['off', 'dpdfnet4', 'dpdfnet8']) ||
-    Object.keys(value.audioFrontend).some((key) => !['vadEnabled', 'noiseReduction'].includes(key))
+    Object.keys(value.audioFrontend).some(
+      (key) => !['vadEnabled', 'autoLevelEnabled', 'noiseReduction'].includes(key),
+    )
   )
     errors.push('Choose valid audio processing settings.');
   if (typeof value.cleanupEnabled !== 'boolean')

@@ -297,20 +297,26 @@ test('custom bindings persist, reject equivalent duplicates, and preserve an ava
 test('audio processing migrates off and validates opt-in model choices', () => {
   assert.deepEqual(parseStoredSettings({}).audioFrontend, {
     vadEnabled: false,
+    autoLevelEnabled: false,
     noiseReduction: 'off',
   });
   assert.deepEqual(parseStoredSettings({ audioFrontend: { vadEnabled: true } }).audioFrontend, {
     vadEnabled: true,
+    autoLevelEnabled: false,
     noiseReduction: 'off',
   });
   for (const noiseReduction of ['off', 'dpdfnet4', 'dpdfnet8']) {
-    const config = { ...defaultSettings(), audioFrontend: { vadEnabled: true, noiseReduction } };
+    const config = {
+      ...defaultSettings(),
+      audioFrontend: { vadEnabled: true, autoLevelEnabled: true, noiseReduction },
+    };
     assert.deepEqual(validateSettings(config), []);
     assert.deepEqual(parseStoredSettings(config).audioFrontend, config.audioFrontend);
   }
   for (const audioFrontend of [
     null,
-    { vadEnabled: true, noiseReduction: 'unknown' },
+    { vadEnabled: true, autoLevelEnabled: false, noiseReduction: 'unknown' },
+    { vadEnabled: false, autoLevelEnabled: 'yes', noiseReduction: 'off' },
     { vadEnabled: false, noiseReduction: 'off', skipSilence: true },
   ]) {
     assert.ok(validateSettings({ ...defaultSettings(), audioFrontend }).length);

@@ -31,6 +31,10 @@ or live captions. Other models have different capabilities. Use the
 [language compatibility guide](language-support-and-recommendations.md) when
 changing models rather than assuming every model supports every mode.
 
+Model defaults are reviewed against measured accuracy, failures and performance
+for the intended use. A newer release alone is not a reason to replace a model.
+The current selection remains provisional; see the [benchmark selection policy](model-presets.md#choosing-the-default-from-benchmarks).
+
 ## Record or import audio
 
 In **Dictate**, choose **Record**, wait for **Listening**, and speak. Choose
@@ -53,6 +57,23 @@ retains the raw text. Context-correction options can change wording and need
 review. Edit **Your text** before copying when necessary. **Copy text** waits for
 your edit to save and stays busy until copying finishes. If saving fails, your
 edit remains visible; use **Retry saving edit**, then copy again.
+
+### Experimental audio processing
+
+In **Models → Audio processing**, **Automatically adjust quiet speech** enables
+bounded automatic volume adjustment for both live transcription and completed
+recordings. It uses the existing speech detection model; install that model from
+**Audio model downloads** and save the setting. It starts off, independently of
+**Detect speech activity** (timing annotations) and **Noise reduction**.
+
+The adjustment combines speech detection with volume, estimated background noise
+and peak limits. It preserves all recorded samples and does not automatically
+switch denoisers or stop a recording. Very quiet or short words can still be
+missed, and noise may be mistaken for speech. The original recording remains
+available; processing failures use the existing original-audio fallback. Compare
+your own recordings before relying on this experimental option. Local testing
+found improvements on some quiet speech and regressions on other recordings,
+including quiet Whisper Turbo input. Leave it off when it reduces accuracy.
 
 ## Quick capture
 

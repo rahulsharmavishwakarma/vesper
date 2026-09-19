@@ -13,6 +13,36 @@ The menus are the user-facing catalog; there is no JSON profile import section.
 Previously saved custom profiles remain usable in their respective menus.
 Additional supported models should be added through the catalog process below.
 
+## Choosing the default from benchmarks
+
+Default selection follows comparable local application benchmarks, rather than
+release date or a publisher leaderboard. First require an executable, pinned
+adapter compatible with the requested language, recording mode, backend and
+duration. Then evaluate recognition and meaning preservation, noise-only false
+text, failures, latency and memory on the same held-out inputs and hardware.
+Keep cold/resident, streaming/completed, precision and preprocessing conditions
+separate. A faster or more accurate candidate that fails required quality gates
+does not become the default. The existing [recommendation evaluator](../benchmarks/asr/README.md#compare-and-recommend)
+supports explicit accuracy, latency and balanced objectives; its output is
+development evidence and does not automatically change saved settings.
+
+Cohere Transcribe with optional Qwen cleanup remains the current
+completed-recording default. This is a provisional product choice, not a claim
+that it wins every benchmark. In the [paired Whisper qualification](validation/whisper-adapter-2026-09-18.md),
+Turbo has lower clean-English WER, but noise and repeated-speech gates fail.
+The earlier Nemotron/Qwen comparison supports Nemotron for its named balanced
+CPU workloads; it does not rank Cohere, Whisper and every catalog entry in one
+comparable envelope. A new release or one favorable signal condition is
+insufficient evidence to replace the default. There is also no all-writer
+comparison establishing Qwen cleanup as a universal winner.
+
+Qualify optional gain and denoising separately for each model and artifact.
+One model's regression does not invalidate another model's measured improvement.
+The [automatic-level results](validation/denoising-followup-2026-09-19.md#automatic-level-implementation-and-qualification)
+remain mixed and limited; all optional audio-processing defaults stay off.
+The shared implementation does not add separate adapters or automatic
+model-specific processing presets for this policy.
+
 ## Additional choices
 
 | Model and original source | Languages declared upstream | File precision | Download bytes |
