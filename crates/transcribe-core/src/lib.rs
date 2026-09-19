@@ -8,6 +8,7 @@ mod learning;
 mod memory;
 mod model;
 mod personalization;
+mod semantic;
 mod shortcuts;
 mod transcript;
 
@@ -33,5 +34,6 @@ pub use personalization::{
     language_matches, CleanupExample, MemorySource, OutputIntent, PersonalizationProfile,
     VocabularyEntry,
 };
+pub use semantic::*;
 pub use shortcuts::{recording_shortcut_identity, same_recording_shortcut};
 pub use transcript::{PipelineStage, Transcript};
