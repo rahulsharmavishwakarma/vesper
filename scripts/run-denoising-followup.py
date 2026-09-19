@@ -128,13 +128,18 @@ def main():
                     "--cleanup",
                 ]
                 jobs.append((name, model, profile, command, manifest))
-    ledger_path = ROOT / f"processes-{phase}.json"
-    # Preparation creates processed manifests. Freeze each phase's complete input
-    # inventory before its first process, then verify before and after every job.
     pinned_paths = {exe, eval_exe, ROOT / "quality.json", ROOT / "streaming.json"}
     pinned_paths.update(manifest for _, _, _, _, manifest in jobs if manifest)
+    run_jobs(ROOT, phase, jobs, env, pinned_paths)
+
+
+def run_jobs(root, phase, jobs, env, pinned_paths):
+    """Run fixed native jobs sequentially; share integrity and failure accounting."""
+    runs = root / "runs"
+    runs.mkdir(exist_ok=True)
+    ledger_path = root / f"processes-{phase}.json"
     current_pins = {str(p): common.digest(p) for p in sorted(pinned_paths)}
-    pins_path = ROOT / f"execution-pins-{phase}.json"
+    pins_path = root / f"execution-pins-{phase}.json"
     if pins_path.exists() and read(pins_path) != current_pins:
         raise RuntimeError("Executable or input differs from this phase's frozen inventory")
     common.write(pins_path, current_pins)

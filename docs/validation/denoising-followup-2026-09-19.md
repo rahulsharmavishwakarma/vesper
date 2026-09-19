@@ -157,3 +157,57 @@ Run waveform verification after native timing, then publish the summary with its
 The runner refuses to overwrite unrecorded attempts. Quality and streaming freeze executable/input inventories before launch and verify them before/after each process. The initial contract/preparation processes used the preceding runner revision with post-execution binary hashes; that original harness and its fingerprint remain retained separately. Strengthening orchestration integrity did not change the native binary, selection, profiles or audio. Report hashes identify both harness revisions instead of attributing the first processes to the later checks.
 
 The fixed experiment and verification are complete. Broader languages, natural whispers, a new long streaming soak, physical capture behavior and target edge hardware remain outside this evidence.
+
+## Gain-matched diagnostic results
+
+The earlier gains survive the stricter control. **720 main attempts plus 24 confirmation attempts** are recorded. At the same restored per-recording RMS, pre-gain DPDF4 reduces Cohere WER from 22.93% to 5.81%, Small from 12.34% to 7.84%, and Turbo from 6.24% to 4.93%. These are direct-enhancement versus pre-gain-enhancement comparisons on the same 24 artificially attenuated English recordings, not improvements over unenhanced input. The raw restored controls score 5.81%, 7.98% and 5.37% respectively.
+
+WER percentages, lower is better. Each complete cell has 24 recordings / 689 reference words; a parenthetical denominator marks incomplete ASR scoring. “Pre-gain” uses the previously frozen pre-gain/restore waveform, then applies the common RMS match. Both denoiser arms therefore have the same final total RMS within each row.
+
+| ASR | Matched output level | Raw | DPDF4 direct | DPDF4 pre-gain | DPDF8 direct | DPDF8 pre-gain |
+| --- | --- | ---: | ---: | ---: | ---: | ---: |
+| Cohere | Quiet | 66.76 | 68.36 | 67.63 | 66.47 | 66.76 |
+| Cohere | Restored | 5.81 | 22.93 | 5.81 | 12.34 | 6.24 |
+| Whisper Small | Quiet | 32.95 | 55.30 | 33.24 | 52.69 | 33.09 |
+| Whisper Small | Restored | 7.98 | 12.34 | 7.84 | 10.16 | 6.97 |
+| Whisper Turbo | Quiet | 6.53 | 26.57 (21/24) | 6.24 | 14.38 (23/24) | 6.24 |
+| Whisper Turbo | Restored | 5.37 | 6.24 | 4.93 | 7.69 | 5.81 |
+
+Pre-gain DPDF4 versus direct DPDF4 at restored RMS changes WER by −17.13 / −4.50 / −1.31 points for Cohere / Small / Turbo. Descriptive paired 95% intervals are [−29.05, −7.01], [−11.83, −0.47] and [−2.63, −0.38]. They use 5,000 recording-level resamples and are unadjusted for multiple comparisons; these already observed clips are not a new holdout. All restored pre-gain comparisons against the corresponding **raw** control have intervals spanning zero. This supports recovering denoising regressions, not claiming a general accuracy advantage over raw speech.
+
+**Interpretation:** recognizer input level and enhancer input level both matter. At quiet RMS, Cohere stays near 67% WER even with pre-gain enhancement. At restored RMS, boosting DPDF4's already-enhanced output brings Turbo to 6.24%, while Cohere remains at 22.93% until enhancer-input conditioning is changed. Equal global RMS therefore explains much of some regressions but not all of them. Remaining differences can involve envelopes, spectral balance or speech/noise proportions; this experiment does not prove a particular distortion or native-runtime defect. Restored raw is calculated from the stored float32 quiet recording and need not be byte-identical to the original clean recording.
+
+All 72 unchanged quiet-raw controls reproduce the earlier raw/writer hashes and failure categories exactly. All 240 transformed waveforms pass exact scalar-PCM reconstruction, length, finite-value and hash checks; all 120 source waveforms and 485 frozen native source files verify. Maximum relative RMS error is 2.45e−9; no shared peak/gain reduction or clipping was needed. The largest applied gain was 1,511.06, which is a diagnostic observation, **not a safe automatic-gain recommendation**.
+
+The main matrix retains four ASR model-token-limit failures (three direct DPDF4 quiet and one direct DPDF8 quiet, all Turbo), plus 12 writer rejections (six fidelity, six output limit). None of the restored-level ASR attempts fails. Delivered aggregate WER equals raw WER in every lane; rejected writing retains raw text. The confirmation adds three writer rejections with identical failure/output results; it is not added to the main quality denominator.
+
+One of the 30 main processes tripped the shared-worktree source guard described below. Its 24 raw/writer hashes, scores and failure kinds match the separate frozen-harness confirmation exactly, with unchanged executable/manifest and clean confirmation integrity checks. The original event remains in the ledger and the strict `matrixComplete` flag remains false; all 720 planned main rows are present. There are no missing/duplicate rows, failed native processes or native exceptions. Six numerical/isolation and six reporting tests pass, including checks that a repeat cannot erase a guard failure or conceal changed outcomes.
+
+All 31 processes started on AC; 29 main processes and the confirmation are contended. One uncontended lane does not establish a comparative speedup. The inherited M5 Pro/CPU, quantization, threads, model/runtime pins and native source revision remain authoritative. No streaming AGC, physical-microphone, noise-only, language-generalization, edge-device or latency qualification is implied.
+
+**Decision:** pursue bounded causal level handling in the shared frontend; the promising accuracy recovery is real on this diagnostic. A production policy must still choose its gain without the original recording's known attenuation and pass fresh quiet/noisy speech, noise hallucination, onset/headroom and streaming reset/causality gates. Neither fixed mixing nor a normalization default is promoted. Detailed results, source inventories and generated manifests remain in the ignored `denoising-gain-matched-2026-09-19` cache.
+
+## Gain-matched diagnostic protocol
+
+The [subsequent fixed protocol](https://github.com/rahulsharmavishwakarma/transcribe/issues/42#issuecomment-5737484430) rechecks the promising pre-gain and post-gain outcomes while controlling one whole-recording energy difference. It reuses the 24 observed quiet clips and five cached waveforms: raw quiet, full DPDF4/8 quiet enhancement, and their pre-gain/restore outputs. Requested RMS targets are the raw quiet RMS and that RMS divided by 0.03. For each clip/level, one shared target is reduced if any arm would exceed peak 0.95 or gain 10,000. Every arm then receives a single positive scalar. No clipping, resampling or independent peak/gain limiting is used. Nonfinite, empty, mismatched or near-zero (RMS ≤ 1e-12) inputs are explicit unsuccessful preprocessing cases.
+
+Five arms × two levels × 24 clips × three recognizers gives 720 planned ASR/writer attempts. `scripts/qualify-denoising-gain.py prepare` produces float WAVs, verifies serialized PCM and freezes source/binary/harness/input hashes in `.cache/benchmarks/results/denoising-gain-matched-2026-09-19/`. Its `run` phase reuses the sequential integrity/failure accounting in `run-denoising-followup.py` and the preceding frozen native evaluator. The original tested application revision remains authoritative; a newer Python driver does not make that binary a current-source build. Models and runtime are unchanged. Derived manifests and reports remain in the ignored cache; the existing tracked source selection is reused.
+
+This is a completed-audio diagnostic using future audio and a known artificial gain. Equal total RMS does not equalize speech-active loudness, envelopes, spectral shape or SNR, and does not identify a runtime defect. [Le Roux et al.](https://arxiv.org/pdf/1811.02508), §2.3, show why a scalar-invariant waveform measure cannot expose gain errors; measured recognition remains necessary. This experiment does not reproduce Ochiai's reference-component decomposition or qualify a causal streaming controller. Noise-only, natural quiet speech and fresh-device gates remain outstanding regardless of its outcome.
+
+The next causal design should reuse the shared frontend rather than introduce per-ASR gain adapters. Official [WebRTC AGC2](https://webrtc.googlesource.com/src/+/b32e4b35e6025f044e88f4cc3169523b3021e3a9/modules/audio_processing/agc2/adaptive_digital_gain_controller.cc) at revision `b32e4b35e6025f044e88f4cc3169523b3021e3a9` provides implementation references for framed gain updates, speech confidence, noise constraints and limiter feedback. Its [configuration](https://webrtc.googlesource.com/src/+/b32e4b35e6025f044e88f4cc3169523b3021e3a9/api/audio/audio_processing.h) places adaptive gain after noise suppression; these defaults do not qualify pre-enhancer conditioning or transfer directly to Silero. A candidate must preserve prefixes, packet-independent state, headroom and exact reset/tail behavior, and test sudden loud onsets, silence, continuous noise and first-word loss. Applying a time-varying inverse gain to a delayed, stateful enhancer cannot be treated as exact undoing.
+
+Recent [SE-AGCNet research](https://arxiv.org/html/2606.25959v1) jointly trains enhancement and gain control with quiet-speech/noise objectives. Its bidirectional LSTM is a checkpoint/training approach, not a causal configuration switch for these DPDF weights. The paper's results are separate from this repository's measurements. No new model, dependency, WebRTC implementation or production gain policy is introduced by this diagnostic.
+
+Current reproduction/check commands use the repository's locked Python project:
+
+```sh
+uv run --locked python scripts/qualify-denoising-gain.py prepare
+uv run --locked python scripts/qualify-denoising-gain.py run
+uv run --locked python scripts/qualify-denoising-gain.py verify
+uv run --locked python scripts/test_denoising_gain.py
+uv run --locked python scripts/test_denoising_gain_report.py
+uv run --locked python scripts/summarize-denoising-gain.py
+```
+
+Preparation refuses an existing output directory. The launcher now enters an isolated execution directory backed by the frozen harness, binary and inputs. The measured run began with the preceding launcher revision: a concurrent commit hook temporarily restored the committed pre-refactor runner during one process, which tripped the source hash guard. That original attempt and guard record remain intact; remaining jobs resumed using the original frozen harness, and a separate confirmation repeats the affected comparison. The report preserves this event rather than claiming an uninterrupted integrity pass. Both orchestration revisions and the measured Python/NumPy/soundfile versions are retained locally; updating the launcher does not relabel the measured native source revision.
