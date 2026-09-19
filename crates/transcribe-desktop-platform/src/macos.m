@@ -20,6 +20,7 @@
     [super sendEvent:event];
 }
 @end
+void td_observation_cancel(void);
 static TDPanel *panel;
 static NSWindow *originalWindow;
 static NSView *originalContent;
@@ -150,6 +151,7 @@ void td_target_clear(uint64_t token) {
 void td_panel_destroy(void) {
     if (![NSThread isMainThread]) return;
     td_target_clear(0);
+    td_observation_cancel();
     restoreClipboard();
     [panel orderOut:nil];
     if (originalWindow && originalContent) {
@@ -199,7 +201,13 @@ static bool editable(AXUIElementRef element) {
              (__bridge NSString *)kAXComboBoxRole] containsObject:role ?: @""]) return false;
     NSNumber *enabled = attribute(element, kAXEnabledAttribute);
     Boolean settable = false;
-    return enabled.boolValue && AXUIElementIsAttributeSettable(element, kAXValueAttribute, &settable)
+    // TextEdit's NSTextView can omit AXEnabled while advertising a writable
+    // AXValue. Do not interpret a missing optional attribute as explicitly false.
+    pid_t pid = 0;
+    AXUIElementGetPid(element, &pid);
+    bool textEditArea = !enabled && [role isEqualToString:(__bridge NSString *)kAXTextAreaRole] &&
+        [[NSRunningApplication runningApplicationWithProcessIdentifier:pid].bundleIdentifier isEqualToString:@"com.apple.TextEdit"];
+    return (enabled.boolValue || textEditArea) && AXUIElementIsAttributeSettable(element, kAXValueAttribute, &settable)
         == kAXErrorSuccess && settable;
 }
 static AXUIElementRef focused(pid_t pid) {
@@ -278,6 +286,8 @@ static int pasteKeyCode(void) {
     CFRelease(source);
     return found;
 }
+#include "observation.m"
+
 int td_paste(uint64_t token, const char *text) {
     if (![NSThread isMainThread] || (td_permissions(false) & 6) != 6) return -1;
     if (!targetStillMatches(token)) return -2;
@@ -301,7 +311,9 @@ int td_paste(uint64_t token, const char *text) {
     CGEventRef up = CGEventCreateKeyboardEvent(NULL, (CGKeyCode)key, false);
     if (!down || !up) { if (down) CFRelease(down); if (up) CFRelease(up); return -1; }
     CGEventSetFlags(down, kCGEventFlagMaskCommand);
-    CGEventSetFlags(up, kCGEventFlagMaskCommand);
+    // The synthetic key-up must release our Command flag; otherwise subsequent
+    // dispatches can mistake it for a still-held physical modifier.
+    CGEventSetFlags(up, 0);
     NSInteger cleared = [board clearContents];
     if (![board setString:value forType:NSPasteboardTypeString]) {
         restoreSnapshot(board, cleared, saved);
@@ -309,6 +321,7 @@ int td_paste(uint64_t token, const char *text) {
     }
     NSInteger owned = board.changeCount;
     pendingClipboard = saved; pendingOwnership = owned;
+    beginObservation(token, value);
     // Consume before posting: another call can never duplicate this dispatch.
     td_target_clear(token);
     CGEventPost(kCGHIDEventTap, down); CGEventPost(kCGHIDEventTap, up);
