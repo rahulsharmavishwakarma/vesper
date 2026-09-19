@@ -97,6 +97,33 @@ Known upstream blockers and failing gates are documented in
 a successful contributor audit does not imply that optional inference packages
 are free of advisories.
 
+Run `make audit-rust` for Rust security checks. It verifies the maintained GLib
+source and actual Cargo resolution, then audits a temporary registry-equivalent
+lockfile with only the verified, repaired advisory excepted. Direct `cargo
+audit` misses crates.io advisory coverage for this path dependency. The
+Linux-only optimized regression is `make test-glib-backport`; install system
+GLib development files and pkg-config first. See the [backport maintenance
+procedure](../patches/glib/README.md) before updating vendor files or provenance.
+
+The VibeVoice research probe uses a [checksum-verified compatibility
+patch](../patches/vibevoice/README.md) for Transformers 5.10.1. After preparing
+the pinned model assets and public corpus under an ignored `ROOT`, run:
+
+```sh
+uv sync --locked --project benchmarks/asr/python/vibevoice
+uv run --locked --project benchmarks/asr/python/vibevoice python scripts/check-vibevoice-tokenizer.py --root ROOT --output ROOT/tokenizer-compat.json
+uv run --locked --project benchmarks/asr/python/vibevoice python scripts/probe-vibevoice.py --root ROOT --plan ROOT/plan-offline.json --output ROOT/runs/offline.json
+uv run --locked --project benchmarks/asr/python/vibevoice python scripts/probe-vibevoice.py --root ROOT --plan ROOT/plan-streaming.json --output ROOT/runs/streaming.json
+```
+
+Use fresh output filenames; existing reports are preserved. The compatibility
+check covers tokenizer equivalence, tied and untied synthetic checkpoint
+round trips, and separate publisher/built-in acoustic configuration dispatch.
+The actual probe additionally verifies every downloaded checkpoint tensor and
+per-chunk cache progression. Keep source patches, manifest/lock, generated
+requirements and fresh benchmark evidence together when upgrading this stack.
+These checks qualify the isolated reference probe, not an application adapter.
+
 ### Git worktrees and ignored caches
 
 A worktree is a separate checkout with its own branch, index and working-tree
