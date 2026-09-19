@@ -1,7 +1,13 @@
 <script lang="ts">
   import { onMount } from 'svelte';
   import { getAudioFeatures } from '../api/runtime';
-  import { followSignal, pitchCycles, reedPath } from '../voiceWaveform';
+  import {
+    followLevel,
+    waveformEnergy,
+    waveformCycles,
+    reedPath,
+    ReedMotion,
+  } from '../voiceWaveform';
   import { PitchDisplay } from '../pitchDisplay';
 
   let {
@@ -58,11 +64,7 @@
       document.removeEventListener('visibilitychange', updateVisibility);
     };
   });
-  const energy = $derived(
-    recording && Number.isFinite(rawLevel)
-      ? Math.max(0, Math.min(1, (20 * Math.log10(Math.max(rawLevel, 0.00001)) + 60) / 48))
-      : 0,
-  );
+  const energy = $derived(recording ? waveformEnergy(rawLevel) : 0);
 
   $effect(() => {
     const enabled = recording && desktop && visible && pageVisible;
@@ -129,21 +131,25 @@
       let last = performance.now();
       let phase = 0;
       let amplitude = 0;
-      let cycles = 3;
+      let targetCycles = 3;
+      const motion = new ReedMotion(compact);
       function draw(now: number) {
         const elapsed = Math.min(now - last, 50);
         last = now;
         const target = recording ? energy : 0.35;
         // Fast attack, softer release. Pitch validity is conditioned separately
         // so consonants do not delay the response to measured loudness.
-        amplitude = followSignal(amplitude, target, elapsed, target > amplitude ? 20 : 70);
-        const targetCycles = recording ? pitchCycles(pitchHz) : 3;
-        cycles = followSignal(cycles, targetCycles, elapsed, 35);
+        amplitude = followLevel(amplitude, target, elapsed);
         if (amplitude < 0.002 && target === 0) amplitude = 0;
+        // A missing estimate during consonants/noise is not a new pitch.
+        // Reset the visual spacing only after the waveform becomes quiet.
+        targetCycles = recording ? waveformCycles(targetCycles, pitchHz, amplitude === 0) : 3;
         // Recording shape changes only with measured input. A clock-driven
         // travelling wave is reserved for indeterminate transcription progress.
         if (!recording && amplitude > 0) phase = (phase + elapsed * 0.002) % (Math.PI * 2);
-        trace = reedPath(amplitude, cycles, phase, compact);
+        trace = recording
+          ? motion.path(amplitude, targetCycles, elapsed)
+          : reedPath(amplitude, 3, phase, compact);
         frame = requestAnimationFrame(draw);
       }
       frame = requestAnimationFrame(draw);

@@ -2098,6 +2098,12 @@ for (const main of [true, false])
       await until(() => nextReading === null, 'Unvoiced consonant was not sampled');
       await pause(90);
       assert(path() === higherPitch, 'A brief unvoiced consonant collapsed the wavelength');
+      telemetry.pitchHz = null;
+      await pause(500);
+      assert(path() === higherPitch, 'A longer unvoiced sound reshaped unchanged audio energy');
+      telemetry.pitchHz = 330;
+      await pause(120);
+      assert(path() === higherPitch, 'Pitch reacquisition jumped despite the same voice');
       nextReading = { level: 0.025, pitchHz: 660 };
       await until(() => nextReading === null, 'Octave outlier was not sampled');
       await pause(90);

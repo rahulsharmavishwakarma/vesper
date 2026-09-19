@@ -7,30 +7,51 @@ const WINDOW: usize = 512;
 const COMPARISON: usize = WINDOW / 2;
 const MIN_HZ: f32 = 60.0;
 const MAX_HZ: f32 = 700.0;
+const MAX_RATE: u32 = 384_000; // Same bound as captured PCM.
+const MAX_TAPS: usize = 4 * (MAX_RATE as usize / 8_000) - 3;
 
 pub(crate) fn estimate_pitch(samples: &[f32], rate: u32, channels: u16) -> Option<f32> {
-    if rate < 8_000 || channels == 0 {
+    if !(8_000..=MAX_RATE).contains(&rate) || channels == 0 || channels > 32 {
         return None;
     }
-    // Average short native-rate blocks for this disposable analysis view only.
-    // Keeping roughly 8 kHz bounds the difference calculation on high-rate mics.
-    // The exact effective rate also handles 44.1 kHz and other non-multiples.
+    // Filter before reducing to roughly 8 kHz. A single box average can alias
+    // high-frequency noise (e.g. 7.8 kHz at 48 kHz) into a false 200 Hz voice.
+    // Four cascaded stride-length boxes have a bounded, equivalent FIR here.
+    // This disposable view never changes captured or transcribed PCM.
     let stride = (rate as usize / 8_000).max(1);
     let analysis_rate = rate as f32 / stride as f32;
     let channels = usize::from(channels);
     let end = samples.len() / channels * channels;
     let block = stride * channels;
-    let start = end.checked_sub(WINDOW * block)?;
-    let mut mono = [0.0_f32; WINDOW];
-    for (output, input) in mono.iter_mut().zip(samples[start..end].chunks_exact(block)) {
-        let mut sum = 0.0_f64;
-        for &sample in input {
-            if !sample.is_finite() {
-                return None;
+    let taps = 4 * stride - 3;
+    let needed = WINDOW * stride + taps - stride;
+    let start = end.checked_sub(needed * channels)?;
+    let mut weights = [0.0_f64; MAX_TAPS];
+    // Coefficients of (1 + z + ... + z^(stride-1))^4, normalized to unity.
+    let choose = |n: usize| ((n + 1) * (n + 2) * (n + 3) / 6) as i64;
+    for (n, weight) in weights[..taps].iter_mut().enumerate() {
+        let mut coefficient = choose(n);
+        for (multiple, scale) in [(1, -4), (2, 6), (3, -4)] {
+            if n >= multiple * stride {
+                coefficient += scale * choose(n - multiple * stride);
             }
-            sum += f64::from(sample.clamp(-1.0, 1.0));
         }
-        *output = (sum / block as f64) as f32;
+        *weight = coefficient as f64 / stride.pow(4) as f64;
+    }
+    let mut mono = [0.0_f32; WINDOW];
+    for (index, output) in mono.iter_mut().enumerate() {
+        let begin = start + index * block;
+        let mut sum = 0.0_f64;
+        for (tap, &weight) in weights[..taps].iter().enumerate() {
+            for channel in 0..channels {
+                let sample = samples[begin + tap * channels + channel];
+                if !sample.is_finite() {
+                    return None;
+                }
+                sum += weight * f64::from(sample.clamp(-1.0, 1.0));
+            }
+        }
+        *output = (sum / channels as f64) as f32;
     }
     let mean = mono.iter().sum::<f32>() / WINDOW as f32;
     let variance = mono
@@ -159,5 +180,41 @@ mod tests {
             })
             .collect();
         assert_eq!(estimate_pitch(&noise, 48_000, 1), None);
+    }
+
+    #[test]
+    fn high_frequency_audio_cannot_alias_into_a_voice_pitch() {
+        for rate in [16_000, 44_100, 48_000, 96_000, 192_000, 384_000] {
+            let analysis_rate = rate as f32 / (rate / 8_000) as f32;
+            for multiple in 1..=(rate / 8_000) {
+                for folded in [65.0, 110.0, 220.0, 440.0, 650.0, 700.0] {
+                    for sign in [-1.0, 1.0] {
+                        let hz = multiple as f32 * analysis_rate + sign * folded;
+                        if hz >= rate as f32 / 2.0 {
+                            continue;
+                        }
+                        assert_eq!(
+                            estimate_pitch(&tone(rate, hz, 1.0, 1), rate, 1),
+                            None,
+                            "{hz} Hz at {rate} Hz must not become a voice pitch"
+                        );
+                    }
+                }
+            }
+        }
+    }
+
+    #[test]
+    fn quiet_voice_survives_out_of_band_interference() {
+        for rate in [16_000, 44_100, 48_000, 96_000, 192_000] {
+            let mut samples = tone(rate, 180.0, 0.01, 1);
+            let interference = tone(rate, rate as f32 / (rate / 8_000) as f32 - 220.0, 0.5, 1);
+            for (sample, noise) in samples.iter_mut().zip(interference) {
+                *sample += noise;
+            }
+            let original = samples.clone();
+            assert!(estimate_pitch(&samples, rate, 1).is_some_and(|hz| (hz - 180.0).abs() < 4.0));
+            assert_eq!(samples, original);
+        }
     }
 }

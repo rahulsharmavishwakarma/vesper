@@ -37,6 +37,11 @@ In **Dictate**, choose **Record**, wait for **Listening**, and speak. Choose
 **Stop and transcribe** when finished. To transcribe an existing recording, use
 the audio-file action instead. Review the result before using it.
 
+The waveform follows microphone level and estimated voice pitch. Quiet input
+produces smaller strokes; unvoiced sounds still register without forcing the
+spacing to jump. It is a recording indicator, not a speech/noise detector: fans,
+music and other audible sounds can also move it.
+
 There is no general application recording-time quota. Available memory, model
 limits and recognition quality still affect longer recordings. Supported
 long-audio adapters process recordings in internal segments; this does not
@@ -119,6 +124,7 @@ do not include transcript text.
 
 | Problem | First checks |
 | --- | --- |
+| Waveform does not match the microphone | Confirm the selected input device. After a native audio update, quit the running app and open the newly built version; a page reload does not update the audio code. Background sound can still register. |
 | Recording will not start | Confirm microphone permission, selected input device and model download status. Wait for Listening. |
 | A language or live captions are unavailable | Check the selected speech model's [supported languages and modes](language-support-and-recommendations.md). |
 | A model download fails | Check the connection, free disk space and model-folder access, then retry from Models. |
