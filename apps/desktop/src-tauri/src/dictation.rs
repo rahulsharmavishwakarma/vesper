@@ -601,9 +601,14 @@ pub async fn completed(
     if paste {
         let began = Instant::now();
         let text = text.unwrap_or_default();
+        let external = match result {
+            Ok(result) => crate::external_observation::reserve(app, result, &text).await,
+            Err(_) => None,
+        };
         let outcome = loop {
             let desktop = app.clone();
             let text = text.clone();
+            let external = external.clone();
             let outcome = on_main(app, move || {
                 let storage = desktop.state::<AppStorage>();
                 // Serialize cancellation vs the actual dispatch, not just a
@@ -617,6 +622,9 @@ pub async fn completed(
                     || storage.runtime.cancelled.load(Ordering::Relaxed)
                 {
                     return transcribe_desktop_platform::PasteResult::Unavailable;
+                }
+                if let Some(receipt) = external {
+                    crate::external_observation::arm(&desktop, id, receipt);
                 }
                 transcribe_desktop_platform::paste(id, &text)
             })

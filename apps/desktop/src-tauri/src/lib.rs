@@ -1,6 +1,7 @@
 mod commands;
 mod diagnostics;
 mod dictation;
+mod external_observation;
 mod menu_bar;
 mod resources;
 mod runtime;
@@ -163,6 +164,7 @@ pub fn run() {
             commands::get_selected_adapters,
             commands::get_personalization,
             commands::get_automatic_learning,
+            commands::get_learning_shadow_diagnostics,
             commands::forget_automatic_learning,
             commands::edit_latest_draft,
             commands::undo_latest_learning,
