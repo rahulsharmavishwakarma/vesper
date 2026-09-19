@@ -193,6 +193,156 @@ fn words(text: &str) -> Vec<String> {
         .collect()
 }
 
+/// Restore a dictated contraction that a formatting-only model expanded.
+/// All other words must align exactly. The ordinary guard still checks the
+/// repaired whole output, including number symbols and negation.
+pub(crate) fn restore_contractions(raw: &str, output: &str) -> Result<Option<String>> {
+    let edited = output.unicode_word_indices().collect::<Vec<_>>();
+    let normalize = |word: &str| word.replace('’', "'").to_lowercase();
+    let mut cursor = 0;
+    let mut replacements = vec![];
+    for original in raw.unicode_words() {
+        let Some(&(offset, word)) = edited.get(cursor) else {
+            return Ok(None);
+        };
+        let original_key = normalize(original);
+        if original_key == normalize(word) {
+            cursor += 1;
+            continue;
+        }
+        let Some(&(next_offset, next_word)) = edited.get(cursor + 1) else {
+            return Ok(None);
+        };
+        let between = &output[offset + word.len()..next_offset];
+        if between.is_empty()
+            || !between.chars().all(char::is_whitespace)
+            || !contraction_expansion(&original_key, &normalize(word), &normalize(next_word))
+        {
+            return Ok(None);
+        }
+        let replacement = if word.starts_with(|c: char| c.is_uppercase()) {
+            let mut chars = original.chars();
+            format!("{}{}", chars.next().unwrap().to_uppercase(), chars.as_str())
+        } else {
+            original.to_owned()
+        };
+        replacements.push((offset, next_offset + next_word.len(), replacement));
+        cursor += 2;
+    }
+    if cursor != edited.len() || replacements.is_empty() {
+        return Ok(None);
+    }
+    let mut repaired = output.to_owned();
+    for (start, end, original) in replacements.into_iter().rev() {
+        repaired.replace_range(start..end, &original);
+    }
+    validate(raw, &repaired, CleanupPreset::Minimal)?;
+    Ok(Some(repaired))
+}
+
+fn contraction_expansion(original: &str, first: &str, second: &str) -> bool {
+    if let Some(stem) = original.strip_suffix("n't") {
+        let verb = match stem {
+            "ca" => "can",
+            "wo" => "will",
+            "sha" => "shall",
+            value => value,
+        };
+        return matches!(
+            verb,
+            "can"
+                | "will"
+                | "shall"
+                | "is"
+                | "are"
+                | "was"
+                | "were"
+                | "do"
+                | "does"
+                | "did"
+                | "have"
+                | "has"
+                | "had"
+                | "could"
+                | "would"
+                | "should"
+                | "must"
+                | "need"
+        ) && first == verb
+            && second == "not";
+    }
+    let Some((subject, suffix)) = original.split_once('\'') else {
+        return false;
+    };
+    if subject != first {
+        return false;
+    }
+    match suffix {
+        "m" => subject == "i" && second == "am",
+        "re" => matches!(subject, "you" | "we" | "they") && second == "are",
+        "ve" => matches!(subject, "i" | "you" | "we" | "they") && second == "have",
+        "s" => matches!(subject, "he" | "she" | "it") && matches!(second, "is" | "has"),
+        "ll" => {
+            matches!(subject, "i" | "you" | "he" | "she" | "it" | "we" | "they") && second == "will"
+        }
+        "d" => {
+            matches!(subject, "i" | "you" | "he" | "she" | "it" | "we" | "they")
+                && matches!(second, "had" | "would")
+        }
+        _ => false,
+    }
+}
+
+#[cfg(test)]
+mod contraction_tests {
+    use super::*;
+    #[test]
+    fn restores_only_source_contractions_in_order() {
+        for (raw, generated) in [
+            ("it's ready", "It is ready."),
+            (
+                "we're ready but it isn't done",
+                "We are ready, but it is not done.",
+            ),
+            ("I’m here and I’ll wait", "I am here and I will wait."),
+            ("it's ready it's ready", "It is ready. It is ready."),
+            ("she said \"don't go\"", "She said \"do not go\"."),
+            ("I can't send -15.5%", "I can not send -15.5%."),
+        ] {
+            let repaired = restore_contractions(raw, generated).unwrap().unwrap();
+            validate(raw, &repaired, CleanupPreset::Minimal).unwrap();
+            assert!(!repaired.contains(" is not "));
+        }
+    }
+    #[test]
+    fn rejects_other_edits_missing_repeats_possessives_and_punctuation_crossing() {
+        for (raw, generated) in [
+            ("it's ready", "It is not ready."),
+            ("it's ready it's ready", "It is ready."),
+            ("it's ready", "It is already ready."),
+            ("it's ready", "It, is ready."),
+            ("it's ready", "It. Is ready."),
+            ("John's ready", "John is ready."),
+            ("it is ready", "It's ready."),
+            ("keep the words", "Keep the words."),
+        ] {
+            assert!(
+                restore_contractions(raw, generated).unwrap().is_none(),
+                "{raw} / {generated}"
+            );
+        }
+    }
+    #[test]
+    fn restoration_cannot_bypass_number_symbol_guard() {
+        for changed in ["It is +15.5%.", "It is 15.5.", "It is 16.5%."] {
+            assert!(!matches!(
+                restore_contractions("it's -15.5%", changed),
+                Ok(Some(_))
+            ));
+        }
+    }
+}
+
 fn numbers(text: &str) -> Vec<String> {
     let text = text.to_lowercase();
     text.unicode_word_indices()

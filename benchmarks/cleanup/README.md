@@ -1,5 +1,7 @@
 # Cleanup inference screening
 
+The [native-learning cleanup follow-up](../../docs/personalization/evaluation.md#cleanup-reliability-follow-up) separately investigates instruction echoes and formatting-policy violations. Two replacement prompts were rejected as primary prompts. The [bounded recovery](../../docs/personalization/evaluation.md#bounded-formatting-recovery) retains the original first pass, restores source contractions conservatively and permits one qualified short retry; development and disjoint qualification each have 58 text cases. [Reproduction](../../docs/personalization/native-qualification.md#reproduce-the-diagnostic-runs) retains both rejected experiments and the production comparison. This does not change the prefix-cache experiment below.
+
 This development experiment preserves the sequential technical-tail and full-cleanup passes. It measures whether reusing complete immutable prompt-prefix state improves the pinned Qwen3.5 runtime. It is not an ASR benchmark, SOTA comparison, or estimate of microphone-to-visible-text latency.
 
 ## Recorded CPU result
