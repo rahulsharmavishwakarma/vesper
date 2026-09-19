@@ -1,0 +1,28 @@
+{
+  "schemaVersion":1,
+  "origin":"authored holdout frozen after prompt-v2 development, before scoring; not independently reviewed natural feedback",
+  "cases":[
+    {"id":"redis","before":"Restart red is","after":"Restart Redis","relation":"repair","intent":null},
+    {"id":"filename","before":"Check cargo toml","after":"Check Cargo.toml","relation":"repair","intent":null},
+    {"id":"caps","before":"we arrived safely","after":"We arrived safely.","relation":"repair","intent":null},
+    {"id":"name","before":"Send it to Neeta","after":"Send it to Nita","relation":"repair","intent":null},
+    {"id":"change-time","before":"Leave at seven","after":"Instead leave at nine","relation":"changed_intent","intent":null},
+    {"id":"reverse","before":"Enable the alarm","after":"Do not enable the alarm","relation":"changed_intent","intent":null},
+    {"id":"amount","before":"Transfer 20 rupees","after":"Actually transfer 200 rupees","relation":"changed_intent","intent":null},
+    {"id":"cancel","before":"Reserve the room","after":"Cancel the room reservation","relation":"changed_intent","intent":null},
+    {"id":"append","before":"Bring a pen","after":"Bring a pen and a notebook","relation":"continuation","intent":null},
+    {"id":"detail","before":"The train stopped","after":"The train stopped near Pune","relation":"continuation","intent":null},
+    {"id":"more-work","before":"Build the package","after":"Build the package and publish the docs","relation":"continuation","intent":null},
+    {"id":"shopping","before":"Review the patch","after":"We need tomatoes","relation":"unrelated","intent":null},
+    {"id":"weather","before":"Book the hotel","after":"It is raining heavily","relation":"unrelated","intent":null},
+    {"id":"ambiguous","before":"four","after":"for","relation":"unknown","intent":null},
+    {"id":"ambiguous-name","before":"May","after":"June","relation":"unknown","intent":null},
+    {"id":"earlier-repair","earlier":"Launch post grass","before":"I meant Postgres","after":"Launch Postgres","relation":"repair","intent":null},
+    {"id":"earlier-contradiction","earlier":"Delete the backup","before":"Wait keep it","after":"Keep the backup","relation":"changed_intent","intent":null},
+    {"id":"hindi","before":"कल आएं","after":"कल मत आएं","relation":"changed_intent","intent":null},
+    {"id":"note","before":"Remember to buy tea","after":"Make a note to buy tea","relation":"repair","intent":"note"},
+    {"id":"message","before":"Tell Amir the build passed","after":"Write a message to Amir saying the build passed","relation":"repair","intent":"message"},
+    {"id":"memory-hit","before":"Run coop control","after":"Run kubectl","relation":"repair","intent":null,"memories":[{"id":"kubectl","phrase":"kubectl"},{"id":"notion","phrase":"Notion"}],"relevant":["kubectl"]},
+    {"id":"memory-miss","before":"Bring oranges","after":"Bring oranges and bananas","relation":"continuation","intent":null,"memories":[{"id":"redis","phrase":"Redis"}],"relevant":[]}
+  ]
+}

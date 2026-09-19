@@ -19,6 +19,10 @@ use crate::{
 const COMMAND_QUEUE: usize = 2;
 const STREAM_QUEUE: usize = 32;
 
+#[path = "manager_semantic.rs"]
+mod semantic;
+use semantic::SemanticQueue;
+
 pub type StreamingUpdateSink = Arc<dyn Fn(StreamingTranscript) + Send + Sync + 'static>;
 
 #[derive(Clone, Debug, Serialize, PartialEq)]
@@ -66,6 +70,7 @@ enum Command {
         completed: mpsc::SyncSender<Result<String>>,
     },
     Unload(mpsc::SyncSender<()>),
+    WakeSemantic,
     Shutdown,
 }
 
@@ -80,6 +85,7 @@ pub struct InferenceManager {
     sender: mpsc::SyncSender<Command>,
     worker: Mutex<Option<JoinHandle<()>>>,
     evidence: Arc<Mutex<serde_json::Value>>,
+    semantic: Arc<Mutex<SemanticQueue>>,
 }
 
 impl InferenceManager {
@@ -87,13 +93,16 @@ impl InferenceManager {
         let (sender, receiver) = mpsc::sync_channel(COMMAND_QUEUE);
         let evidence = Arc::new(Mutex::new(serde_json::json!({})));
         let worker_evidence = Arc::clone(&evidence);
+        let semantic = Arc::new(Mutex::new(SemanticQueue::default()));
+        let worker_semantic = Arc::clone(&semantic);
         let worker = thread::Builder::new()
             .name("transcribe-inference".into())
-            .spawn(move || worker_loop(receiver, worker_evidence))?;
+            .spawn(move || worker_loop(receiver, worker_evidence, worker_semantic))?;
         Ok(Self {
             sender,
             worker: Mutex::new(Some(worker)),
             evidence,
+            semantic,
         })
     }
 
@@ -295,12 +304,14 @@ impl InferenceManager {
     }
 
     fn send(&self, command: Command) -> Result<()> {
+        self.cancel_semantic();
         self.sender.send(command).map_err(worker_unavailable)
     }
 }
 
 impl Drop for InferenceManager {
     fn drop(&mut self) {
+        self.cancel_semantic();
         let _ = self.sender.send(Command::Shutdown);
         if let Ok(worker) = self.worker.get_mut() {
             if let Some(worker) = worker.take() {
@@ -553,9 +564,31 @@ fn prepare_audio(
     }
 }
 
-fn worker_loop(receiver: mpsc::Receiver<Command>, evidence: Arc<Mutex<serde_json::Value>>) {
+fn worker_loop(
+    receiver: mpsc::Receiver<Command>,
+    evidence: Arc<Mutex<serde_json::Value>>,
+    semantic: Arc<Mutex<SemanticQueue>>,
+) {
     let mut state = WorkerState::new();
-    while let Ok(command) = receiver.recv() {
+    loop {
+        // Park indefinitely without background work. Only a pending request
+        // needs the idle interval; foreground commands interrupt that interval.
+        let pending = semantic.lock().is_ok_and(|q| q.has_pending());
+        let received = if pending {
+            receiver.recv_timeout(std::time::Duration::from_millis(50))
+        } else {
+            receiver
+                .recv()
+                .map_err(|_| mpsc::RecvTimeoutError::Disconnected)
+        };
+        let command = match received {
+            Ok(command) => command,
+            Err(mpsc::RecvTimeoutError::Disconnected) => break,
+            Err(mpsc::RecvTimeoutError::Timeout) => {
+                semantic::run_pending(&state, &semantic);
+                continue;
+            }
+        };
         match command {
             Command::Transcribe {
                 audio,
@@ -677,7 +710,11 @@ fn worker_loop(receiver: mpsc::Receiver<Command>, evidence: Arc<Mutex<serde_json
                 state.unload();
                 let _ = reply.send(());
             }
-            Command::Shutdown => break,
+            Command::WakeSemantic => {}
+            Command::Shutdown => {
+                semantic::run_pending(&state, &semantic);
+                break;
+            }
         }
     }
 }

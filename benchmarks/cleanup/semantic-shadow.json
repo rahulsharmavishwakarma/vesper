@@ -1,0 +1,30 @@
+{
+  "schemaVersion": 1,
+  "origin": "authored independent labels; text classification only, no natural-user or accent efficacy claim",
+  "cases": [
+    {"id":"spelling","before":"Open read me","after":"Open README","relation":"repair","intent":null},
+    {"id":"identifier","before":"Use application ID","after":"Use application_id","relation":"repair","intent":null},
+    {"id":"punctuation","before":"hello priya how are you","after":"Hello Priya, how are you?","relation":"repair","intent":null},
+    {"id":"name","before":"Ask Preeya to review","after":"Ask Priya to review","relation":"repair","intent":null},
+    {"id":"date-reversal","before":"Meet on Friday","after":"Meet on Monday instead","relation":"changed_intent","intent":null},
+    {"id":"negation","before":"Approve the release","after":"Do not approve the release","relation":"changed_intent","intent":null},
+    {"id":"number","before":"Order 15 units","after":"Actually order 50 units","relation":"changed_intent","intent":null},
+    {"id":"decision","before":"I will attend","after":"I cannot attend after all","relation":"changed_intent","intent":null},
+    {"id":"continuation","before":"Buy milk","after":"Buy milk and bread","relation":"continuation","intent":null},
+    {"id":"details","before":"The service failed","after":"The service failed at noon","relation":"continuation","intent":null},
+    {"id":"additional-task","before":"Review the code","after":"Review the code and run tests","relation":"continuation","intent":null},
+    {"id":"additional-recipient","before":"Invite Priya","after":"Invite Priya and Rahul","relation":"continuation","intent":null},
+    {"id":"unrelated","before":"Schedule the meeting","after":"The weather is lovely","relation":"unrelated","intent":null},
+    {"id":"unrelated-topic","before":"Open the repository","after":"Buy some apples","relation":"unrelated","intent":null},
+    {"id":"ambiguous-short","before":"right","after":"write","relation":"unknown","intent":null},
+    {"id":"ambiguous-date","before":"Tuesday","after":"Thursday","relation":"unknown","intent":null},
+    {"id":"repair-chain","earlier":"Open read me","before":"I meant README","after":"Open README please","relation":"repair","intent":null},
+    {"id":"changed-chain","earlier":"Ship it today","before":"Actually hold it","after":"Do not ship it today","relation":"changed_intent","intent":null},
+    {"id":"unicode","before":"Cafe is open","after":"Café is open","relation":"repair","intent":null},
+    {"id":"hindi-negation","before":"आज भेजें","after":"आज मत भेजें","relation":"changed_intent","intent":null},
+    {"id":"message-form","before":"Tell Priya I am late","after":"Write a message to Priya saying I am late","relation":"repair","intent":"message"},
+    {"id":"verbatim-form","before":"Remove the fillers","after":"Keep my words verbatim including fillers","relation":"changed_intent","intent":"verbatim"},
+    {"id":"relevant-memory","before":"Open read me","after":"Open README","relation":"repair","intent":null,"memories":[{"id":"readme","phrase":"README"},{"id":"docker","phrase":"Docker"}],"relevant":["readme"]},
+    {"id":"irrelevant-memory","before":"Buy some milk","after":"Buy milk and bread","relation":"continuation","intent":null,"memories":[{"id":"docker","phrase":"Docker"}],"relevant":[]}
+  ]
+}
