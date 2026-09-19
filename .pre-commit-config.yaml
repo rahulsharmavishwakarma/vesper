@@ -24,6 +24,8 @@ repos:
       - id: check-yaml
       - id: destroyed-symlinks
       - id: end-of-file-fixer
+        # Preserve checksum-verified upstream bytes; the Rust audit checks both.
+        exclude: ^vendor/glib/(LICENSE|\.cargo_vcs_info\.json)$
       - id: mixed-line-ending
         args: [--fix=lf]
       - id: trailing-whitespace

@@ -1,5 +1,6 @@
 # Rust and frontend build artifacts
 /target/
+/tests/glib-backport/target/
 node_modules/
 build/
 dist/
