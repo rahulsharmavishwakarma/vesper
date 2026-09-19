@@ -1,0 +1,360 @@
+{
+  "schemaVersion": 1,
+  "sources": [
+    {
+      "id": "svarah",
+      "name": "Svarah Indian English, primary-language cohort screen",
+      "url": "https://huggingface.co/datasets/ai4bharat/Svarah",
+      "revision": "ebbf7777fe771490696a3f7b007097606fa8c924",
+      "license": "CC-BY-4.0",
+      "attribution": "AI4Bharat Svarah, Javed et al. (2023)",
+      "redistribution": "Retain CC-BY-4.0 attribution; selected cached WAV bytes are unchanged."
+    }
+  ],
+  "evidenceClass": "reused public diagnostic; corpus-reference edits are simulated, language background is not speaker identity",
+  "selection": "First two clips per cohort in the existing frozen selection order; no ASR prediction consulted. Independent cohort stores; first feedback, second audit.",
+  "samples": [
+    {
+      "id": "svarah-281474976906756_f3021_chunk_1",
+      "cohort": "Assamese",
+      "phase": "feedback",
+      "audioPath": "audio/svarah-281474976906756_f3021_chunk_1.wav",
+      "sha256": "aeafae3fdf2f63bc787077b42415a9b4b7e5e90f68cb09eee9e989113693de94",
+      "reference": "of user with application ID ZD2019",
+      "durationSeconds": 5.956875
+    },
+    {
+      "id": "svarah-281474976934186_f3139_chunk_0",
+      "cohort": "Assamese",
+      "phase": "audit",
+      "audioPath": "audio/svarah-281474976934186_f3139_chunk_0.wav",
+      "sha256": "a3df675a94e618c46fd56e47ee32b118af97289097ab0d3c23e3e83e6f53803a",
+      "reference": "Yes, I read a few and the recent one is Agni Devka by APJ Abdul Kalam.",
+      "durationSeconds": 10.66
+    },
+    {
+      "id": "svarah-281474976894329_f2299_chunk_0",
+      "cohort": "Bengali",
+      "phase": "feedback",
+      "audioPath": "audio/svarah-281474976894329_f2299_chunk_0.wav",
+      "sha256": "796baff00b20e3221185307ca6bd81590d4a0a4676c303484a51da56123d7140",
+      "reference": "I traveled to Louisiana purely for the food. The food there was very interesting and diverse. I also first time tried alligator in my life and it was pretty good and tasty.",
+      "durationSeconds": 14.11475
+    },
+    {
+      "id": "svarah-281474976897769_f1773_chunk_0",
+      "cohort": "Bengali",
+      "phase": "audit",
+      "audioPath": "audio/svarah-281474976897769_f1773_chunk_0.wav",
+      "sha256": "38174ef43ed2d64c31b2a3497e46946bda78575c2978c3c2f5406bfe39fa04f1",
+      "reference": "Ria, Obhi, Sion, Obhik, Shirsha.",
+      "durationSeconds": 5.0936875
+    },
+    {
+      "id": "svarah-281474976893845_f1948_chunk_6",
+      "cohort": "Bodo",
+      "phase": "feedback",
+      "audioPath": "audio/svarah-281474976893845_f1948_chunk_6.wav",
+      "sha256": "4feec7e767dad5b4733b53aa966c286e255ef9e120e4bb96478029601980247f",
+      "reference": "So, there are four types of mandalas that are used for different purposes. Like, the first one is outer mandala. So it's a basic kind of mandala that represents the universe",
+      "durationSeconds": 15.230125
+    },
+    {
+      "id": "svarah-281474976893848_f3250_chunk_2",
+      "cohort": "Bodo",
+      "phase": "audit",
+      "audioPath": "audio/svarah-281474976893848_f3250_chunk_2.wav",
+      "sha256": "1e6b9e042be6674a74f602dceedceca99fd27b1ffaea3755c27cb897c8b5258a",
+      "reference": "So Bihu is the essence of Assam. It is celebrated across the state.",
+      "durationSeconds": 6.25
+    },
+    {
+      "id": "svarah-281474976892334_f1872_chunk_3",
+      "cohort": "Dogri",
+      "phase": "feedback",
+      "audioPath": "audio/svarah-281474976892334_f1872_chunk_3.wav",
+      "sha256": "a981588f9d5904ecedc3ffbadbe10d3e646a7ff53218078ba3faf3933cc9aa47",
+      "reference": "YouTube channels. Many of them are already earning handsome amounts so the positive.",
+      "durationSeconds": 7.0800625
+    },
+    {
+      "id": "svarah-281474976892337_f1873_chunk_0",
+      "cohort": "Dogri",
+      "phase": "audit",
+      "audioPath": "audio/svarah-281474976892337_f1873_chunk_0.wav",
+      "sha256": "f4449790b1f2a560e36abaf718e626b6fe1cd6e2b3e7d7fed7624a59ac454d85",
+      "reference": "The UT of J&K and majorly population speaking Kashmiri and Dogri. Then some part with small population also talk in Poonchi and Gujri and Pahari. Mostly Kashmiri speaking population is in Kashmiri division and Dogri.",
+      "durationSeconds": 15.8396875
+    },
+    {
+      "id": "svarah-281474976887083_f2168_chunk_3",
+      "cohort": "Gujarati",
+      "phase": "feedback",
+      "audioPath": "audio/svarah-281474976887083_f2168_chunk_3.wav",
+      "sha256": "5090ec8f60c16497daabce571f4be49a0b6c997bb6074f83057b0bf468a5a34a",
+      "reference": "yes it caters different need and different sectors for example, hospitality, agriculture",
+      "durationSeconds": 7.043
+    },
+    {
+      "id": "svarah-281474976883991_f2291_chunk_1",
+      "cohort": "Gujarati",
+      "phase": "audit",
+      "audioPath": "audio/svarah-281474976883991_f2291_chunk_1.wav",
+      "sha256": "3bf5c2ef901cf79f6b9689d494416133fe7b00986fc7d4037d0479db4734e3f4",
+      "reference": "handle codes of conduct and there is one to investigate into Corruption into selections and one is I think",
+      "durationSeconds": 9.7564375
+    },
+    {
+      "id": "svarah-281474976884045_f1565_chunk_0",
+      "cohort": "Hindi",
+      "phase": "feedback",
+      "audioPath": "audio/svarah-281474976884045_f1565_chunk_0.wav",
+      "sha256": "b03c7ba7b24cc0372ee62d9d3188421694f149d93bf1894ab935e92d6e9feff5",
+      "reference": "Delhi Bus Rapid Transit System runs between Ambedkar Nagar and Delhi Gate.",
+      "durationSeconds": 4.33225
+    },
+    {
+      "id": "svarah-281474976893306_f1875_chunk_2",
+      "cohort": "Hindi",
+      "phase": "audit",
+      "audioPath": "audio/svarah-281474976893306_f1875_chunk_2.wav",
+      "sha256": "61ab86df52d9dd1974bd2279a9b28a079dbaaea068b1101c2b521a674f088d69",
+      "reference": "Specially these bags, the single use bags",
+      "durationSeconds": 4.728375
+    },
+    {
+      "id": "svarah-281474976887450_f996_chunk_0",
+      "cohort": "Kannada",
+      "phase": "feedback",
+      "audioPath": "audio/svarah-281474976887450_f996_chunk_0.wav",
+      "sha256": "60ae586b14fbe979c7271424e0971fe09048758919e851674c579f5747a65079",
+      "reference": "Find the top mutual fund schemes rated by credible agencies such as HDB Finance Services",
+      "durationSeconds": 6.934125
+    },
+    {
+      "id": "svarah-281474976888630_f3289_chunk_7",
+      "cohort": "Kannada",
+      "phase": "audit",
+      "audioPath": "audio/svarah-281474976888630_f3289_chunk_7.wav",
+      "sha256": "1f37de45cd9bdf6eafa4b036d8c82017d163348720001133501d487322b150b7",
+      "reference": "Eliot, a few of them.",
+      "durationSeconds": 5.32
+    },
+    {
+      "id": "svarah-281474976891471_f1218_chunk_0",
+      "cohort": "Kashmiri",
+      "phase": "feedback",
+      "audioPath": "audio/svarah-281474976891471_f1218_chunk_0.wav",
+      "sha256": "7a1e91bcedf2e3afe6da650bf7f1b8b4de55d0bad669ea563f9c5241ca8af1f3",
+      "reference": "Has the payment been confirmed for my order containing Bella Vita Organic EyeLift Under Eye Cream Gel , Manna Dates Rich First Baby Food and 1Organic Turmeric Powder",
+      "durationSeconds": 13.6235
+    },
+    {
+      "id": "svarah-281474976894268_f1720_chunk_18",
+      "cohort": "Kashmiri",
+      "phase": "audit",
+      "audioPath": "audio/svarah-281474976894268_f1720_chunk_18.wav",
+      "sha256": "0435b0244a8b0e087d11d214c68f814d8f5fa7b13cae35a0d686598724e112f3",
+      "reference": "designs to be active participants of the teaching learning process viz as to enable efficient learning",
+      "durationSeconds": 6.31425
+    },
+    {
+      "id": "svarah-281474976887212_f3245_chunk_2",
+      "cohort": "Konkani",
+      "phase": "feedback",
+      "audioPath": "audio/svarah-281474976887212_f3245_chunk_2.wav",
+      "sha256": "9ec9a115cad358ee4d0a96bb899c39b31ff2462f134213ee857e3108f2252280",
+      "reference": "We have taken road trips to many places of South India till now and each trip has been equally",
+      "durationSeconds": 7.28
+    },
+    {
+      "id": "svarah-281474976887641_f483_chunk_0",
+      "cohort": "Konkani",
+      "phase": "audit",
+      "audioPath": "audio/svarah-281474976887641_f483_chunk_0.wav",
+      "sha256": "7bd36e8f6f927f3da1d69a46556af70d5b371678bed271c222d083d701ed0648",
+      "reference": "Use OTP 783063 to fetch my COVID vaccination certificate for mobile number 92373191395",
+      "durationSeconds": 15.5521875
+    },
+    {
+      "id": "svarah-281474976888155_f3164_chunk_3",
+      "cohort": "Maithili",
+      "phase": "feedback",
+      "audioPath": "audio/svarah-281474976888155_f3164_chunk_3.wav",
+      "sha256": "927828e87d31cc25fae72d3887b5ead9e1b659ab57c0f1a563999c8e6bafa01f",
+      "reference": "So that can be corrected by landing just at the bottom of their body.",
+      "durationSeconds": 7.25
+    },
+    {
+      "id": "svarah-281474976901608_f2023_chunk_11",
+      "cohort": "Maithili",
+      "phase": "audit",
+      "audioPath": "audio/svarah-281474976901608_f2023_chunk_11.wav",
+      "sha256": "8cadad094afdd7ad0d74d7e8cb1f0245d6af0ab5c8cb1222c2255ceef0e8d1fe",
+      "reference": "to make us to make understand to the audience what are the role and functions of those bodies",
+      "durationSeconds": 6.4245625
+    },
+    {
+      "id": "svarah-281474976891387_f371_chunk_0",
+      "cohort": "Malayalam",
+      "phase": "feedback",
+      "audioPath": "audio/svarah-281474976891387_f371_chunk_0.wav",
+      "sha256": "e37a563d8d6ae9def3a3230a8dcf70e38bba36acdbb766815ad310db1685e6c3",
+      "reference": "The product The Earth Reserve Cloves is damaged, I want to return it.",
+      "durationSeconds": 5.982375
+    },
+    {
+      "id": "svarah-281474976887171_f3278_chunk_8",
+      "cohort": "Malayalam",
+      "phase": "audit",
+      "audioPath": "audio/svarah-281474976887171_f3278_chunk_8.wav",
+      "sha256": "564555ce7a91a609b0f77843a1711fbadd5ed1d7cdaffa9f9108f115c57198ee",
+      "reference": "So there are these bands or these new media enthusiasts who would you know take the time",
+      "durationSeconds": 9.48
+    },
+    {
+      "id": "svarah-281474976883779_f932_chunk_0",
+      "cohort": "Marathi",
+      "phase": "feedback",
+      "audioPath": "audio/svarah-281474976883779_f932_chunk_0.wav",
+      "sha256": "873077273b643590b4a86f3846248f049cba29417c7d0598b56745b17cf36e48",
+      "reference": "The items Makino Nacho Chips , The Baker's Dozen Burger Buns and Good Home Aroma Perfumed Air Freshener are currently not available, These will be available by this week",
+      "durationSeconds": 14.09025
+    },
+    {
+      "id": "svarah-281474976884135_f3212_chunk_3",
+      "cohort": "Marathi",
+      "phase": "audit",
+      "audioPath": "audio/svarah-281474976884135_f3212_chunk_3.wav",
+      "sha256": "fc9922d48d098f98d0b38bb39c889968140b3e4434d95cc3da97150622f13853",
+      "reference": "We have tu, tumhala, tumhi, apan sort of pronouns which we use when we address some people according",
+      "durationSeconds": 9.48
+    },
+    {
+      "id": "svarah-281474976888864_f2163_chunk_16",
+      "cohort": "Nepali",
+      "phase": "feedback",
+      "audioPath": "audio/svarah-281474976888864_f2163_chunk_16.wav",
+      "sha256": "9024102653bcf257f250084190c719451b62a271170305ad6f7dd9198d063103",
+      "reference": "like naturally we were just cooking our ancestor or our mother, our",
+      "durationSeconds": 6.0005625
+    },
+    {
+      "id": "svarah-281474976883849_f1707_chunk_0",
+      "cohort": "Nepali",
+      "phase": "audit",
+      "audioPath": "audio/svarah-281474976883849_f1707_chunk_0.wav",
+      "sha256": "4786eeb3bdc514367146ee7d012e6a7a1b0c68641a4fd539f454826f11beac6a",
+      "reference": "Yes, the book which I read and which has changed my perspective on something",
+      "durationSeconds": 9.637625
+    },
+    {
+      "id": "svarah-281474976898131_f2164_chunk_0",
+      "cohort": "Odia",
+      "phase": "feedback",
+      "audioPath": "audio/svarah-281474976898131_f2164_chunk_0.wav",
+      "sha256": "c2df139e30ea0c34f1e3b329139f1a9aa3c8061278c8057b445e113067919cbc",
+      "reference": "My district is one of the most demanding districts in Odisha as it has all the IT sectors available. All the major IT players like Infosys, Deloitte",
+      "durationSeconds": 14.070125
+    },
+    {
+      "id": "svarah-281474976897720_f2261_chunk_0",
+      "cohort": "Odia",
+      "phase": "audit",
+      "audioPath": "audio/svarah-281474976897720_f2261_chunk_0.wav",
+      "sha256": "2189763e8975266043ba08baed9fdec3b4586ddc817ef11e88cfa0be40c9e546",
+      "reference": "What is the most romantic trip you have taken with a partner? and why was it so special?",
+      "durationSeconds": 6.3428125
+    },
+    {
+      "id": "svarah-281474976888199_f1688_chunk_2",
+      "cohort": "Punjabi",
+      "phase": "feedback",
+      "audioPath": "audio/svarah-281474976888199_f1688_chunk_2.wav",
+      "sha256": "2a38b984721549351374511efd775012ccafd1790a55c73f4348c2032e9b4325",
+      "reference": "I also make sure to carry a first aid kit along with a few snacks and water for the trip",
+      "durationSeconds": 6.2788125
+    },
+    {
+      "id": "svarah-281474976909275_f3320_chunk_0",
+      "cohort": "Punjabi",
+      "phase": "audit",
+      "audioPath": "audio/svarah-281474976909275_f3320_chunk_0.wav",
+      "sha256": "4883975539f2b9837a8fb547529f9dc4e6b40304cb5203ff7777ccc8f2695631",
+      "reference": "In Punjab, so many hockey stadium and cycling velodrome with the capacity of 5000 to 10000.",
+      "durationSeconds": 8.68
+    },
+    {
+      "id": "svarah-281474976896770_f2203_chunk_1",
+      "cohort": "Sindhi",
+      "phase": "feedback",
+      "audioPath": "audio/svarah-281474976896770_f2203_chunk_1.wav",
+      "sha256": "9236c51f1ca18b1dd80b285fe46cefa5eb65a66aa39fa43a77c20bf2c1a24b4e",
+      "reference": "where the level of the English language was low, so not much attention was paid",
+      "durationSeconds": 6.2978125
+    },
+    {
+      "id": "svarah-281474976897535_f2230_chunk_1",
+      "cohort": "Sindhi",
+      "phase": "audit",
+      "audioPath": "audio/svarah-281474976897535_f2230_chunk_1.wav",
+      "sha256": "48ef23275eb5edf7d240a98bab58015edb1d5440eff18b07b096a62669868259",
+      "reference": "because yoga is an ancient spiritual practice",
+      "durationSeconds": 4.50175
+    },
+    {
+      "id": "svarah-281474976903196_f1339_chunk_0",
+      "cohort": "Tamil",
+      "phase": "feedback",
+      "audioPath": "audio/svarah-281474976903196_f1339_chunk_0.wav",
+      "sha256": "164d17341fd1a767c0743002d9ed12c28509bb89eb38800dc8169dc1f5724e2a",
+      "reference": "What is the total holding in my APY account with PRAN number 779181631619 ?",
+      "durationSeconds": 8.9965
+    },
+    {
+      "id": "svarah-281474976899471_f1200_chunk_0",
+      "cohort": "Tamil",
+      "phase": "audit",
+      "audioPath": "audio/svarah-281474976899471_f1200_chunk_0.wav",
+      "sha256": "e8e7c4b3a81c1fb16af47c3434a511adf60808e06b68741fb9e09530dd9b6f4b",
+      "reference": "List the newly launched products of brand Terra Greens ?",
+      "durationSeconds": 4.128125
+    },
+    {
+      "id": "svarah-281474976896706_f3294_chunk_5",
+      "cohort": "Telugu",
+      "phase": "feedback",
+      "audioPath": "audio/svarah-281474976896706_f3294_chunk_5.wav",
+      "sha256": "13caacea4fb47ccfec55c8d9b0c669f6e2bae5609de429c84c6411a0dbf9ef39",
+      "reference": "convenient for people to talk in English these days.",
+      "durationSeconds": 5.0838125
+    },
+    {
+      "id": "svarah-281474976884206_f2893_chunk_0",
+      "cohort": "Telugu",
+      "phase": "audit",
+      "audioPath": "audio/svarah-281474976884206_f2893_chunk_0.wav",
+      "sha256": "6827c2c66be32ff2cf0083d8e9f473877627d0375429ef5282dc94a7ec6ba2b8",
+      "reference": "Are there any Paid vaccination centres which provide Booster Dose of COVISHIELD",
+      "durationSeconds": 5.061
+    },
+    {
+      "id": "svarah-281474976900620_f637_chunk_0",
+      "cohort": "Urdu",
+      "phase": "feedback",
+      "audioPath": "audio/svarah-281474976900620_f637_chunk_0.wav",
+      "sha256": "9cd136e3e7c08c86f681490f5c359a4f03eeafa17401410117c668fe63d345a3",
+      "reference": "Are there any Free vaccination centres where Booster Dose of COVISHIELD is available for age group 18+ years?",
+      "durationSeconds": 7.7610625
+    },
+    {
+      "id": "svarah-281474976889300_f3157_chunk_0",
+      "cohort": "Urdu",
+      "phase": "audit",
+      "audioPath": "audio/svarah-281474976889300_f3157_chunk_0.wav",
+      "sha256": "0d829b9c8f947cbf46c56f8e66fe1644fe2860dd5d3f70e3b61b4068d9c2d1a9",
+      "reference": "India, Pakistan, Nepal, Afghanistan, Bhutan",
+      "durationSeconds": 4.84
+    }
+  ]
+}

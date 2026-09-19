@@ -16,6 +16,15 @@ use transcribe_data::{DatasetStore, SessionRecord};
 #[path = "runtime_learning_tests.rs"]
 mod learning_tests;
 
+#[cfg(test)]
+#[path = "runtime_learning_qualification_tests.rs"]
+mod learning_qualification_tests;
+
+#[path = "runtime_policy.rs"]
+mod policy;
+#[path = "runtime_semantic.rs"]
+mod semantic;
+
 #[derive(Clone, Debug, Serialize)]
 #[serde(rename_all = "camelCase")]
 pub struct PipelineResult {
@@ -867,6 +876,10 @@ struct State {
     download: Option<DownloadStatus>,
     transcription_operation: Option<String>,
     recent_learning: Option<RecentLearning>,
+    semantic_request: Option<transcribe_core::SemanticAnalysisRequest>,
+    semantic_cancelled: Option<Arc<AtomicBool>>,
+    semantic_earlier: Option<String>,
+    policy_cancelled: Option<Arc<AtomicBool>>,
 }
 
 struct RecentLearning {
@@ -878,9 +891,11 @@ struct RecentLearning {
 #[derive(Default)]
 pub struct Runtime {
     state: Mutex<State>,
+    policy_worker: policy::PolicyWorker,
     pub diagnostics: Arc<Diagnostics>,
     pub cancelled: Arc<AtomicBool>,
     pub closing: AtomicBool,
+    pub external_generation: std::sync::atomic::AtomicU64,
 }
 
 #[derive(Serialize)]
@@ -916,6 +931,8 @@ impl Runtime {
         if state.busy {
             return Err("Another operation is running. Stop or cancel it first.".into());
         }
+        state.cancel_semantic();
+        self.external_generation.fetch_add(1, Ordering::AcqRel);
         self.cancelled.store(false, Ordering::Relaxed);
         state.busy = true;
         state.stage = stage.into();
@@ -972,12 +989,13 @@ impl Runtime {
         }
     }
     pub fn prepare_exit(&self) -> Result<(), String> {
-        let state = self.state.lock().map_err(|error| error.to_string())?;
+        let mut state = self.state.lock().map_err(|error| error.to_string())?;
         if state.busy {
             return Err("Finish or cancel the current operation before quitting.".into());
         }
         // The state lock pairs with begin(), so no operation can start between
         // checking idle and marking shutdown. Hiding a window never calls this.
+        state.cancel_semantic();
         self.closing.store(true, Ordering::Relaxed);
         Ok(())
     }
@@ -1066,6 +1084,8 @@ impl Runtime {
     }
     pub fn clear_learning_context(&self) {
         if let Ok(mut state) = self.state.lock() {
+            state.cancel_semantic();
+            state.semantic_earlier = None;
             state.recent_learning = None;
         }
     }
@@ -1077,6 +1097,7 @@ impl Runtime {
         capture: bool,
     ) -> Option<transcribe_core::RetryRelation> {
         let mut state = self.state.lock().ok()?;
+        state.semantic_earlier = None;
         if !capture
             || !context.learning_enabled
             || raw.len() > transcribe_core::MAX_LEARNING_TEXT_BYTES
@@ -1097,6 +1118,18 @@ impl Runtime {
             }
             relation
         });
+        state.semantic_earlier = state
+            .recent_learning
+            .as_ref()
+            .filter(|prior| {
+                prior.at.elapsed() <= std::time::Duration::from_secs(120)
+                    && prior.context.project == context.project
+                    && prior.context.language == context.language
+                    && prior.context.learning_epoch == context.learning_epoch
+                    && prior.context.result_id != context.result_id
+                    && prior.raw.len() <= 1024
+            })
+            .map(|prior| prior.raw.clone());
         state.recent_learning = Some(RecentLearning {
             context: context.clone(),
             raw: raw.into(),
@@ -1120,6 +1153,7 @@ impl Runtime {
         if state.busy {
             return Err("Wait for the current recording to finish before editing.".into());
         }
+        let earlier = state.semantic_earlier.clone();
         let result = state
             .latest
             .as_mut()
@@ -1134,9 +1168,30 @@ impl Runtime {
         if before == text {
             return Ok(result.clone());
         }
+        let semantic_before = before.to_owned();
         let next_revision = revision.checked_add(1).ok_or("Draft revision exhausted.")?;
+        // Snapshot before this edit teaches any memory; failure never blocks the draft.
+        let policy_job = if result.learning_context.learning_enabled {
+            DatasetStore::open(root.clone()).ok().and_then(|store| {
+                store
+                    .prepare_policy_shadow(
+                        &result.learning_context,
+                        next_revision,
+                        result.session.as_ref().map(|s| s.id.clone()),
+                        result
+                            .cleaned_transcript
+                            .as_deref()
+                            .unwrap_or(&result.raw_transcript),
+                        &text,
+                    )
+                    .ok()
+                    .flatten()
+            })
+        } else {
+            None
+        };
         let outcome = if let Some(record) = &result.session {
-            let (saved, outcome) = DatasetStore::open(root)
+            let (saved, outcome) = DatasetStore::open(root.clone())
                 .and_then(|store| {
                     store.edit_session_draft(
                         &record.id,
@@ -1150,7 +1205,7 @@ impl Runtime {
             result.session = Some(saved);
             outcome
         } else if result.learning_context.learning_enabled {
-            DatasetStore::open(root)
+            DatasetStore::open(root.clone())
                 .and_then(|store| {
                     store.learn_from_edit(&result.learning_context, revision, before, &text)
                 })
@@ -1164,10 +1219,37 @@ impl Runtime {
         result.draft_transcript = Some(text);
         result.draft_revision = next_revision;
         result.learning_outcome = Some(outcome);
-        Ok(result.clone())
+        let result = result.clone();
+        state.cancel_semantic();
+        let request = transcribe_core::SemanticAnalysisRequest {
+            schema_version: transcribe_core::SEMANTIC_SCHEMA_VERSION,
+            origin: transcribe_core::SemanticOrigin::InAppDraftEdit,
+            session_id: result.session.as_ref().map(|s| s.id.clone()),
+            context: result.learning_context.clone(),
+            result_revision: next_revision,
+            before: semantic_before,
+            after: result.draft_transcript.clone().unwrap_or_default(),
+            earlier,
+            memories: vec![],
+        };
+        if request.validate().is_ok() {
+            state.semantic_request = Some(request);
+        }
+        if let Some(job) = policy_job {
+            if DatasetStore::open(root.clone())
+                .and_then(|store| store.reserve_policy_shadow(&job))
+                .unwrap_or(false)
+            {
+                let flag = Arc::new(AtomicBool::new(false));
+                state.policy_cancelled = Some(Arc::clone(&flag));
+                self.policy_worker.submit((root, job, flag));
+            }
+        }
+        Ok(result)
     }
     pub fn publish(&self, result: PipelineResult) {
         if let Ok(mut state) = self.state.lock() {
+            state.cancel_semantic();
             state.latest = Some(result);
         }
     }
@@ -1180,6 +1262,7 @@ impl Runtime {
             {
                 latest.personalized_transcript = None;
                 latest.session = Some(record.clone());
+                state.cancel_semantic();
             }
         }
     }
@@ -1217,7 +1300,9 @@ impl Runtime {
             status: "Learned spelling paused. Your draft is unchanged.".into(),
             ..Default::default()
         });
-        Ok(result.clone())
+        let result = result.clone();
+        state.cancel_semantic();
+        Ok(result)
     }
 
     pub fn undo_unsaved_with_learning(&self, result_id: &str, root: PathBuf) -> Result<(), String> {
@@ -1232,7 +1317,7 @@ impl Runtime {
             .ok_or("The unsaved result is no longer current.")?;
         if let Some(evidence) = &result.personalization_evidence {
             if root.join("sessions.sqlite3").exists() {
-                DatasetStore::open(root)
+                DatasetStore::open(root.clone())
                     .and_then(|s| {
                         s.suspend_automatic_memories(
                             &evidence
@@ -1245,7 +1330,13 @@ impl Runtime {
                     .map_err(|e| e.to_string())?;
             }
         }
+        if root.join("sessions.sqlite3").exists() {
+            DatasetStore::open(root)
+                .and_then(|s| s.invalidate_semantic_result(result_id))
+                .map_err(|e| e.to_string())?;
+        }
         result.personalized_transcript = None;
+        state.cancel_semantic();
         Ok(())
     }
     pub fn publish_partial(&self, partial: transcribe_inference::StreamingTranscript) -> bool {
