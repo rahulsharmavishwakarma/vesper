@@ -100,7 +100,10 @@ pub(super) fn run_pending(state: &WorkerState, queue: &Mutex<SemanticQueue>) {
     };
     let mut report = if job.cancelled.load(Ordering::Acquire) {
         SemanticAnalysisReport::empty(SemanticStatus::Cancelled)
-    } else if !job.config.cleanup_enabled || job.config.models.custom_rewriter.is_some() {
+    } else if !job.config.cleanup_enabled
+        || job.config.models.custom_rewriter.is_some()
+        || state.rewriter.is_none()
+    {
         SemanticAnalysisReport::empty(SemanticStatus::Unsupported)
     } else {
         match (qwen::key(&job.config, &job.root), &state.rewriter) {

@@ -4,6 +4,7 @@ use crate::{
 use llama_cpp_2::context::params::LlamaContextParams;
 use llama_cpp_2::llama_backend::LlamaBackend;
 use llama_cpp_2::llama_batch::LlamaBatch;
+#[cfg(test)]
 use llama_cpp_2::model::params::LlamaModelParams;
 use llama_cpp_2::model::{AddBos, LlamaChatMessage, LlamaModel};
 use llama_cpp_2::sampling::LlamaSampler;
@@ -79,55 +80,21 @@ const TECHNICAL_TAIL_WORDS: usize = 24;
 // The existing generation formula then permits at most 512 retry tokens.
 const FORMATTING_RETRY_INPUT_TOKENS: usize = 240;
 
-fn gpu_layers(config: &AppConfig) -> u32 {
-    match config.compute_backend {
-        ComputeBackend::Cpu => 0,
-        ComputeBackend::Auto | ComputeBackend::Metal
-            if cfg!(all(target_os = "macos", target_arch = "aarch64")) =>
-        {
-            u32::MAX
-        }
-        ComputeBackend::Auto
-            if cfg!(feature = "cuda") && transcribe_models::cuda_device_available() =>
-        {
-            u32::MAX
-        }
-        ComputeBackend::Cuda if cfg!(feature = "cuda") => u32::MAX,
-        ComputeBackend::Vulkan if cfg!(feature = "vulkan") => u32::MAX,
-        ComputeBackend::Rocm if cfg!(feature = "rocm") => u32::MAX,
-        _ => 0,
-    }
-}
-
 pub(crate) fn provider(config: &AppConfig) -> &'static str {
-    if gpu_layers(config) == 0 {
-        "cpu"
-    } else {
-        match config.compute_backend {
-            ComputeBackend::Auto if cfg!(all(target_os = "macos", target_arch = "aarch64")) => {
-                "metal"
-            }
-            ComputeBackend::Auto => "cuda",
-            ComputeBackend::Metal => "metal",
-            ComputeBackend::Cuda => "cuda",
-            ComputeBackend::Vulkan => "vulkan",
-            ComputeBackend::Rocm => "rocm",
-            ComputeBackend::Cpu => "cpu",
-        }
-    }
+    crate::backend::resolve(config.compute_backend).map_or("unavailable", |plan| plan.provider)
 }
 
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub(crate) struct RewriterKey {
     path: PathBuf,
-    gpu_layers: u32,
+    plan: crate::backend::Plan,
     requested_backend: ComputeBackend,
 }
 
 pub(crate) fn key(config: &AppConfig, model_root: &Path) -> Result<RewriterKey> {
     Ok(RewriterKey {
         path: rewrite_path(config, model_root)?,
-        gpu_layers: gpu_layers(config),
+        plan: crate::backend::resolve(config.compute_backend)?,
         requested_backend: config.compute_backend,
     })
 }
@@ -139,6 +106,7 @@ pub(crate) struct Rewriter {
     backend: &'static LlamaBackend,
     gpu_layers: u32,
     pub(crate) initialized_provider: &'static str,
+    pub(crate) fallback_reason: Option<String>,
     pub(crate) metrics: RefCell<RewriteMetrics>,
     // Host snapshots belong to this exact loaded model/runtime/backend. Never
     // snapshot request text. Fresh contexts still isolate every pass.
@@ -158,38 +126,21 @@ impl Rewriter {
         require_file(&key.path)?;
         let backend = crate::llama_runtime::backend()?;
         check_cancelled(cancelled)?;
-        let mut active_gpu_layers = key.gpu_layers;
-        let mut model = load_model(backend, &key.path, active_gpu_layers)?;
-        if let Err(accelerator_error) = probe_context(&model, backend, active_gpu_layers) {
-            if active_gpu_layers > 0 && config.compute_backend == ComputeBackend::Auto {
-                eprintln!(
-                    "automatic writing model GPU initialization failed; retrying on CPU: {accelerator_error}"
-                );
-                drop(model);
-                active_gpu_layers = 0;
-                model = load_model(backend, &key.path, active_gpu_layers)?;
-                probe_context(&model, backend, active_gpu_layers).map_err(|cpu_error| {
-                    native(
-                        "writing model context creation",
-                        format!(
-                            "automatic GPU attempt failed ({accelerator_error}); CPU fallback failed ({cpu_error})"
-                        ),
-                    )
-                })?;
-            } else {
-                return Err(native("writing model context creation", accelerator_error));
-            }
-        }
+        let (model, plan, fallback_reason) =
+            crate::backend::load(config.compute_backend, key.plan, cancelled, |plan| {
+                let model = load_model(backend, &key.path, plan)?;
+                check_cancelled(cancelled)?;
+                probe_context(&model, backend, plan.gpu_layers())
+                    .map_err(|error| native("writing model context creation", error))?;
+                Ok(model)
+            })?;
         check_cancelled(cancelled)?;
         Ok(Self {
             model,
             backend,
-            gpu_layers: active_gpu_layers,
-            initialized_provider: if active_gpu_layers == 0 {
-                "cpu"
-            } else {
-                provider(config)
-            },
+            gpu_layers: plan.gpu_layers(),
+            initialized_provider: plan.provider,
+            fallback_reason,
             metrics: RefCell::default(),
             prefix_states: RefCell::default(),
             prefix_cache_enabled: std::env::var("TRANSCRIBE_EXPERIMENTAL_PREFIX_CACHE").as_deref()
@@ -699,18 +650,12 @@ fn formatting_complete(raw: &str, output: &str) -> bool {
         && crate::fidelity::validate(raw, output, CleanupPreset::Minimal).is_ok()
 }
 
-fn load_model(backend: &LlamaBackend, path: &Path, gpu_layers: u32) -> Result<LlamaModel> {
-    let parameters = LlamaModelParams::default().with_n_gpu_layers(gpu_layers);
-    // A zero layer count alone still lets llama.cpp select the platform's
-    // default accelerator device. An explicit empty device list keeps a CPU
-    // fallback on CPU.
-    let parameters = if gpu_layers == 0 {
-        parameters
-            .with_devices(&[])
-            .map_err(|error| native("writing model CPU device selection", error))?
-    } else {
-        parameters
-    };
+fn load_model(
+    backend: &LlamaBackend,
+    path: &Path,
+    plan: crate::backend::Plan,
+) -> Result<LlamaModel> {
+    let parameters = plan.model_params()?;
     LlamaModel::load_from_file(backend, path, &parameters).map_err(|error| {
         native(
             "writing model load (architecture must be supported by bundled llama.cpp)",
@@ -1111,7 +1056,7 @@ mod tests {
         let mut config = AppConfig::default();
         config.models.asr = transcribe_core::AsrModel::Nemotron35AsrStreaming06b;
         let auto = key(&config, Path::new("models")).unwrap();
-        config.compute_backend = ComputeBackend::Metal;
+        config.compute_backend = ComputeBackend::Cpu;
         let explicit = key(&config, Path::new("models")).unwrap();
         assert_ne!(auto, explicit);
     }

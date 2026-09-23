@@ -8,7 +8,7 @@ use llama_cpp_2::{
     context::params::LlamaContextParams,
     llama_backend::LlamaBackend,
     llama_batch::LlamaBatch,
-    model::{params::LlamaModelParams, AddBos, LlamaModel},
+    model::{AddBos, LlamaModel},
     mtmd::{mtmd_default_marker, MtmdBitmap, MtmdContext, MtmdContextParams, MtmdInputText},
     sampling::LlamaSampler,
     token::LlamaToken,
@@ -87,6 +87,8 @@ pub(crate) struct Recognizer {
     end_turn: LlamaToken,
     pub(crate) load_us: u64,
     pub(crate) metrics: RefCell<Metrics>,
+    pub(crate) plan: crate::backend::Plan,
+    pub(crate) fallback_reason: Option<String>,
 }
 
 fn micros(start: Instant) -> u64 {
@@ -135,10 +137,23 @@ impl Recognizer {
         require_file(&key.projector)?;
         let started = Instant::now();
         let backend = llama_runtime::backend()?;
-        let parameters = LlamaModelParams::default()
-            .with_n_gpu_layers(0)
-            .with_devices(&[])
-            .map_err(|e| native("LFM CPU devices", e))?;
+        let requested = crate::backend::resolve(config.compute_backend)?;
+        let (mut recognizer, _, fallback_reason) =
+            crate::backend::load(config.compute_backend, requested, cancelled, |plan| {
+                Self::load_on(&key, backend, plan, cancelled)
+            })?;
+        recognizer.load_us = micros(started);
+        recognizer.fallback_reason = fallback_reason;
+        Ok(recognizer)
+    }
+
+    fn load_on(
+        key: &RecognizerKey,
+        backend: &'static LlamaBackend,
+        plan: crate::backend::Plan,
+        cancelled: &AtomicBool,
+    ) -> Result<Self> {
+        let parameters = plan.model_params()?;
         let model = LlamaModel::load_from_file(backend, &key.model, &parameters)
             .map_err(|e| native("LFM backbone load", e))?;
         if model.meta_val_str("general.architecture").ok().as_deref() != Some("lfm2") {
@@ -152,7 +167,7 @@ impl Recognizer {
             &path_string(&key.projector)?,
             &model,
             &MtmdContextParams {
-                use_gpu: false,
+                use_gpu: plan.device.is_some(),
                 n_threads: worker_threads(),
                 print_timings: false,
                 ..Default::default()
@@ -176,14 +191,36 @@ impl Recognizer {
             ));
         };
         check_cancelled(cancelled)?;
-        Ok(Self {
+        let recognizer = Self {
             projector,
             model,
             backend,
             end_turn: *end_turn,
-            load_us: micros(started),
+            load_us: 0,
             metrics: RefCell::default(),
-        })
+            plan,
+            fallback_reason: None,
+        };
+        // Include context allocation in the automatic fallback boundary. The
+        // actual audio graph is checked by native qualification, not this probe.
+        recognizer
+            .model
+            .new_context(backend, recognizer.context_parameters())
+            .map_err(|error| native("LFM context probe", error))?;
+        Ok(recognizer)
+    }
+
+    fn context_parameters(&self) -> LlamaContextParams {
+        LlamaContextParams::default()
+            .with_n_ctx(NonZeroU32::new(
+                CONTEXT_TOKENS.min(self.model.n_ctx_train()),
+            ))
+            .with_n_batch(BATCH_TOKENS)
+            .with_n_ubatch(128)
+            .with_offload_kqv(self.plan.device.is_some())
+            .with_op_offload(self.plan.device.is_some())
+            .with_n_threads(worker_threads())
+            .with_n_threads_batch(worker_threads())
     }
 
     pub(crate) fn transcribe(
@@ -232,14 +269,7 @@ impl Recognizer {
         validate_budget(positions, context_tokens, output_limit)?;
         self.metrics.borrow_mut().input_positions += positions as usize;
         let started = Instant::now();
-        let params = LlamaContextParams::default()
-            .with_n_ctx(NonZeroU32::new(context_tokens))
-            .with_n_batch(BATCH_TOKENS)
-            .with_n_ubatch(128)
-            .with_offload_kqv(false)
-            .with_op_offload(false)
-            .with_n_threads(worker_threads())
-            .with_n_threads_batch(worker_threads());
+        let params = self.context_parameters();
         let mut context = self
             .model
             .new_context(self.backend, params)
@@ -357,7 +387,11 @@ mod tests {
         };
         let a = read("TRANSCRIBE_SMOKE_AUDIO");
         let b = read("TRANSCRIBE_LFM_AUDIO_B");
-        let config = config();
+        let mut config = config();
+        if let Ok(backend) = std::env::var("TRANSCRIBE_LFM_TEST_BACKEND") {
+            config.compute_backend = serde_json::from_value(serde_json::Value::String(backend))
+                .expect("valid explicit test backend");
+        }
         let cancelled = AtomicBool::new(false);
         transcribe_models::verify_asr(&config, &root, &cancelled).unwrap();
         {
