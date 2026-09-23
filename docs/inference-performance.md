@@ -1,33 +1,468 @@
 # Inference performance across devices
 
-Whisper remains a candidate: the [18 September native screen](validation/whisper-2026-09-18.md) records quality gains on its English sample, Hindi/noise failures, and provisional CPU timings affected by other workloads. It does not establish a latency improvement or a production adapter.
+The separate whisper.cpp path remains a candidate: the [18 September native screen](validation/whisper-2026-09-18.md) records quality gains on its English sample, Hindi/noise failures, and provisional CPU timings affected by other workloads. It does not qualify that runtime for production. The existing shared Sherpa Whisper adapter is a different implementation.
 
-Updated 17 September 2026. The primary-paper basis and standardized streaming metrics are in [Research basis for streaming inference](research-streaming-inference-papers.md). Packaged accelerator selection and selected resident adapters are implemented; the default Cohere speech adapter now retains its recognizer in the existing worker with fresh segment streams (ADR-0017). Performance claims require measurements on each named device. Recommendations below are engineering proposals unless explicitly identified as observations.
+Updated 23 September 2026. The primary-paper basis and standardized streaming metrics are in [Research basis for streaming inference](research-streaming-inference-papers.md). Packaged accelerator selection and selected resident adapters are implemented; the default Cohere speech adapter now retains its recognizer in the existing worker with fresh segment streams (ADR-0017). Performance claims require measurements on each named device. Recommendations below are engineering proposals unless explicitly identified as observations.
 
-The per-job Nemotron CLI and per-request cleanup-model loading have been replaced. Qwen3-ASR and Parakeet still own their ONNX models per completed job; this is distinct from the resident Qwen cleanup model. The next priorities are to instrument the complete live path, run the lifecycle/corpus gates, tune CPU budgets, and benchmark each packaged accelerator. Speech and cleanup ultimately need independent device controls. A GPU being present, a backend compiling, and the exact model running efficiently are three separate checks.
+The per-job Nemotron CLI and per-request cleanup-model loading have been replaced. The CPU Qwen3-ASR and Parakeet paths still own their ONNX models per completed job; this is distinct from the resident Qwen cleanup model. The next priorities are to instrument the complete live path, run the lifecycle/corpus gates, tune CPU budgets, and benchmark each packaged accelerator. Speech and cleanup ultimately need independent device controls. A GPU being present, a backend compiling, and the exact model running efficiently are three separate checks.
 
 ## What this application does today
 
 The user-selected default is Cohere Transcribe INT8 through sherpa-onnx 1.13.8, with completed-recording CPU inference and Qwen writing cleanup. This preference is not a fastest-model claim. Selectable Nemotron 3.5 Q8 uses the official NeMo-Speech.cpp 0.1.0 C ABI and supports live partials. Parakeet v3 INT8 through `sherpa-onnx = 1.13.8` remains an offline CPU fallback. Cleanup uses Qwen3.5-0.8B Q4_0/Q8_0 through `llama-cpp-2 = 0.1.156`. Hugging Face profile selection changes compatible artifacts; it does not make an arbitrary architecture compatible with these runtimes.
 
-| Component | Current behavior | Consequence |
-| --- | --- | --- |
-| Speech runtime | Default Cohere uses pinned CPU sherpa-onnx; selectable Nemotron uses CPU/Metal/CUDA/Vulkan NeMo-Speech.cpp with 20 ms capture packets | Cohere processes completed audio; NeMo owns cache-aware RNNT state and native partials |
-| Cleanup runtime | Metal on Apple Silicon; CUDA/Vulkan/ROCm when compiled with the matching feature; otherwise CPU | All layers plus K/Q/V and operators are offloaded when usable; `Auto` retries CPU when accelerator initialization fails |
-| CPU budget | Qwen available parallelism clamped to 1–8, fallback 2; NeMo runtime controls its own threading | Portable baseline, not a measured optimum |
-| Object lifetime | One bounded worker retains at most one selected Cohere/Nemotron/LFM ASR and one Qwen writer; Qwen-ASR and Parakeet construct recognizers per job | Residency is adapter-specific; each recording/segment and Qwen pass starts isolated request state |
-| Cleanup limits | Up to 4096 context tokens, bounded output up to 2048 tokens; logical batch 512, physical microbatch 128 | Memory and latency depend on actual prompt/output lengths |
-| Integrity | Full role-specific verification on resident load; per-job speech adapters verify every request | Cohere verifies on native load and checks observed identity on reuse; Apple aarch64/macOS enables sha2's supported hardware dispatch while retaining all size/hash checks |
+| Component       | Current behavior                                                                                                                                         | Consequence                                                                                                                                                                                                                                            |
+| --------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| Speech runtime  | Default Cohere uses pinned CPU sherpa-onnx; selectable Nemotron uses CPU/Metal/CUDA/Vulkan NeMo-Speech.cpp with 20 ms capture packets                    | Cohere processes completed audio; NeMo owns cache-aware RNNT state and native partials                                                                                                                                                                 |
+| Cleanup runtime | Metal on Apple Silicon; CUDA/Vulkan/ROCm when compiled with the matching feature; otherwise CPU                                                          | Requests layer, K/Q/V and operator offload; `Auto` retries the complete initialization on CPU after GPU model-load or context-probe failure and records the reason. Explicit GPU selection fails if unavailable; operator placement remains unverified |
+| CPU budget      | Qwen available parallelism clamped to 1–8, fallback 2; NeMo runtime controls its own threading                                                           | Portable baseline, not a measured optimum                                                                                                                                                                                                              |
+| Object lifetime | One bounded worker retains at most one selected Cohere/Whisper/Nemotron/LFM ASR and one Qwen writer; CPU Qwen-ASR and Parakeet construct recognizers per job; optional MLX retains the selected Qwen/Parakeet/Whisper Small model | Residency is adapter-specific; each recording/segment and Qwen pass starts isolated request state                                                                                                                                                      |
+| Cleanup limits  | Up to 4096 context tokens, bounded output up to 2048 tokens; logical batch 512, physical microbatch 128                                                  | Memory and latency depend on actual prompt/output lengths                                                                                                                                                                                              |
+| Integrity       | Full role-specific verification on resident load; per-job speech adapters verify every request                                                           | Cohere verifies on native load and checks observed identity on reuse; Apple aarch64/macOS enables sha2's supported hardware dispatch while retaining all size/hash checks                                                                              |
 
 These observations come from [Nemotron inference](../crates/transcribe-inference/src/nemotron.rs), [cleanup inference](../crates/transcribe-inference/src/qwen.rs), [model/runtime selection](../crates/transcribe-models/src/lib.rs), and [desktop orchestration](../apps/desktop/src-tauri/src/runtime.rs).
 
 Qwen's complete-prefix state experiment is **off by default**. `TRANSCRIBE_EXPERIMENTAL_PREFIX_CACHE=1` enables it; normal cleanup retains weights and creates fresh contexts. Its hybrid recurrent state and full-attention KV state require the exact runtime's complete-state API. A capability flag is not evidence that prefix reuse executes on default requests.
 
-One build detail matters: `default-features = false` does **not** mean Metal is absent. The pinned `llama-cpp-2` manifest has an Apple ARM target dependency enabling `metal`. Application features forward `cuda`, `rocm`, and `vulkan`; there is no direct `sycl` feature in this release. Selecting a backend without compiling its feature falls back to CPU cleanup and reports CPU provenance. [Pinned Rust binding manifest](https://docs.rs/crate/llama-cpp-2/0.1.156/source/Cargo.toml).
+One build detail matters: `default-features = false` does **not** mean Metal is absent. The pinned `llama-cpp-2` manifest has an Apple ARM target dependency enabling `metal`. Application features forward `cuda`, `rocm`, and `vulkan`; there is no direct `sycl` feature in this release. Explicitly selecting an unavailable backend fails with a device-selection error. Automatic selection uses a detected native GPU or CPU; failed GPU initialization retries CPU and records its reason. [Pinned Rust binding manifest](https://docs.rs/crate/llama-cpp-2/0.1.156/source/Cargo.toml).
 
 NeMo-Speech.cpp 0.1.0 publishes CPU, CUDA, Vulkan, and Metal release packages. transcribe pins their bytes and hashes rather than treating a requested device string as evidence of availability. NVIDIA does not publish an MLX or ROCm Nemotron package: Apple uses Metal; the AMD profile uses Vulkan for speech and can use ROCm/HIP for Qwen cleanup.
 
 ## Existing measurements, with their limits
+
+### Native GPU implementation and screening — 23 September 2026
+
+The shared llama.cpp backend selector is now used by the writer and LFM. It
+selects a detected native GPU index at model load, requests layer/KQV/operator
+offload, and keeps model-specific decoding and cache state in the native runtime.
+LFM also requests GPU execution for its mtmd audio projector. Automatic mode may
+retry CPU after either model loading or context initialization fails; explicit GPU
+selection never silently changes to CPU. Cancellation does not trigger fallback.
+A background semantic request with no loaded writer returns before GPU discovery.
+
+This is a frozen-weight runtime integration using supported APIs. It adds no
+attention kernels, Flash Attention implementation, quantized format or training
+technique. CUDA/Vulkan/ROCm require the corresponding native build features; this
+Mac run does not qualify those devices. Native logs confirm Metal backbone and
+projector initialization; the mtmd public API does not expose exact operator
+placement, which remains `unknown` in execution evidence.
+
+**Local measurement.** On Apple M5 Pro (18 logical CPUs, 64 GiB), macOS 27.0
+(26A428), LFM2.5 Audio with the pinned Q4 backbone/projector and 8 native threads
+completed the 84 en-US cases in the existing
+`frontend-integration-2026-09-18/quality.json` manifest on both CPU and Metal.
+Audio preprocessing and writing cleanup were disabled in this comparison.
+First-request time includes integrity verification/loading; resident ASR time
+measures the completed-recording recognition call, not microphone, UI or
+stop-to-final latency.
+
+| Condition             | Cases per backend | CPU WER               | Metal WER             | Resident median CPU / Metal |
+| --------------------- | ----------------- | --------------------- | --------------------- | --------------------------- |
+| Clean speech          | 24                | 69/689 = 10.01%       | 70/689 = 10.16%       | 407.28 / 205.25 ms          |
+| Quiet speech (−30 dB) | 24                | 485/689 = 70.39%      | 485/689 = 70.39%      | 355.42 / 125.55 ms          |
+| Noise (0 dB)          | 24                | 142/689 = 20.61%      | 138/689 = 20.03%      | 384.02 / 193.67 ms          |
+| Controls              | 12                | Speech controls: 8/52 | Speech controls: 8/52 | 137.19 / 61.38 ms           |
+
+All 168 requests completed without runtime failure. Outputs matched exactly for
+79/84 paired cases. Both backends hallucinated one word on 4/8 non-speech controls;
+GPU execution does not fix that existing model behavior. Very quiet speech is
+poor on both paths. Clean speech gained one word error while noisy speech lost
+four errors; do not call these numerically identical or claim a quality gain.
+
+Across 83 resident requests, median ASR time was 344.25 ms CPU and 167.58 ms Metal.
+The earlier six-clean-clip screen had exact parity and resident medians of
+318.36/151.09 ms, but its first Metal request took 9.012 s versus CPU 1.003 s.
+After native shader caches were warm, the broader run first request took
+0.676 s Metal and 0.879 s CPU. The broader run used Metal then CPU; the initial
+screen used CPU then Metal. This was a shared, uncontrolled host, not randomized
+paired qualification. Power, thermal behavior, sustained VRAM and live speech
+latency are unmeasured. No SOTA or whole-pipeline speed claim follows.
+
+The separate real Metal lifecycle regression passed A→B→A isolation, token-limit
+rejection, cancellation and subsequent recovery, silence/wrong-rate admission,
+segment cancellation, writing cleanup, and unload/reload. The core/inference
+unit suites and shared backend fallback tests also passed. Raw outputs remain
+ignored under `.cache/benchmarks/results/gpu-adapters-2026-09-23/`; no benchmark
+result JSON is part of this change. The benchmark binary SHA-256 was
+`bd577902c2e62d8417d36894ab3937b6bc3539d041d7c63d483019cd29d27f09`, built before the integration commits from
+`c8358b4` plus the then-unstaged native GPU change. Runtime/model revisions and artifact
+hashes are recorded in those results and the canonical artifact registry.
+The original 84-case envelope inherited a six-clip note from the initial screen;
+its manifest hash and 84 recorded requests identify the actual corpus. This
+metadata defect is retained here rather than silently rewriting the raw result.
+Medians average the two middle values for even-sized groups.
+
+The existing Nemotron Metal streaming adapter also passed its three-recording
+resident-weight/reset regression. A separate six-clean-clip replay ran at real
+audio pace, with Silero VAD, DPDFNet4 denoising and the Qwen writer enabled. All
+six ASR requests completed; cleanup passed fidelity checks on four and preserved
+raw text on two rejected rewrites. Thus this is not six successful rewrites.
+Warm first-partial latency was 1.03–1.67 s; the cold request was 7.65 s.
+Stop-to-final ASR was 34.05–56.88 ms; cleanup added 137.69–848.38 ms.
+These definitions exclude cleanup from ASR stop-to-final. Partial updates were
+observed, but this replay does not measure microphone/UI latency, endpointing,
+word-level emission latency, queue-drop instrumentation, or sustained power and
+thermal behavior. Raw replay and partial-stability metrics are retained in
+`nemo-metal-streaming.json` in the ignored result directory.
+The same six clips also completed in the recorded-audio path with those stages
+enabled: warm ASR calls took 0.856–1.138 s and cleanup 0.132–0.811 s. Both stages
+reported Metal; the small audio frontend reported CPU and preserved sample
+coverage. Again four rewrites were accepted and two retained raw text. Raw ASR
+WER was 16/128 offline versus 15/128 in paced streaming, so these observations do
+not establish identical transcripts between modes. The streaming environment
+file's original descriptive note is shared by this offline screen; each run's
+recorded `mode`/`pace` fields identify the executed path.
+
+### MLX speech qualification boundary
+
+`native/mlx` and `transcribe-mlx` provide one native boundary with upstream loaders
+for Cohere, Whisper, Qwen3-ASR and Parakeet. MLX-Audio-Swift is pinned to
+`d302a5c6080d2bb97bae38c7418f82abb76013b6`, MLX Swift to 0.31.4
+(`dc43e62d7055353c7f99fa071a4e71d29dfddc44`) and MLX Swift LM to 3.31.4
+(`bd4b7434e6bdb588c7ef55706ff8904cb7fd4c57`), with the full transitive lockfile
+in `native/mlx/Package.resolved`.
+
+Build with `node scripts/mlx-runtime.mjs` using Xcode and its Metal compiler
+component. The script verifies the source revision, applies the narrow
+[runtime qualification patch](../patches/mlx-audio-swift/README.md), and packages
+the library with `mlx.metallib` and provenance under ignored `.tooling/mlx-runtime`.
+The isolated Rust `probe` example accepts the library, a verified local model
+directory, architecture, explicit language and public audio paths. It does not
+download models or alter application defaults.
+
+The qualification artifacts are pinned independently from the CPU exports:
+
+| Model                  | Converted repository and revision                                                                                                                                       | Weight SHA-256                                                     |
+| ---------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------ |
+| Whisper Small FP16     | [`mlx-community/whisper-small-fp16`](https://huggingface.co/mlx-community/whisper-small-fp16/tree/fa19eb05939653a9334d81bec7e053db81970170)                             | `7408174e70bffbff6a189cadc3621512be0d1d26bb8c9122d3eeace1652d1b54` |
+| Qwen3-ASR 0.6B 8-bit   | [`mlx-community/Qwen3-ASR-0.6B-8bit`](https://huggingface.co/mlx-community/Qwen3-ASR-0.6B-8bit/tree/89e96d92ba34aca20b3e29fb10cc284097d1219f)                           | `b5bfe4abc1b4c6e58b633096682ec2b6297298add1527119936107d211adf0e8` |
+| Parakeet TDT 0.6B v3   | [`mlx-community/parakeet-tdt-0.6b-v3`](https://huggingface.co/mlx-community/parakeet-tdt-0.6b-v3/tree/ed2b7e8c15f9aaa0b5772e2efb986255eaef7e15)                         | `05e01c7f396c298cf7d23f61da7b504adeab698f0aaeafd9c82d198625464592` |
+| Cohere Transcribe FP16 | [`beshkenadze/cohere-transcribe-03-2026-mlx-fp16`](https://huggingface.co/beshkenadze/cohere-transcribe-03-2026-mlx-fp16/tree/06bbe0d853a93cbbf7c1f40cffccd4c5481459ef) | `1ec6ba9ee27da02b21b3ffdb5183b77020351d3331d05a74ad8d58a09394a2b8` |
+| Whisper Turbo FP16     | [`mlx-community/whisper-large-v3-turbo`](https://huggingface.co/mlx-community/whisper-large-v3-turbo/tree/a4aaeec0636e6fef84abdcbe3544cb2bf7e9f6fb)                     | `951ed3fc1203e6a62467abb2144a96ce7eafca8fa77e3704fdb8635ff3e7f8a6` |
+
+These hashes identify candidate bytes, not application support. Whisper uses
+OpenAI tokenizer repositories at Small revision
+`973afd24965f72e36ca33b3055d56a652f456b4d` and Turbo revision
+`41f01f3fe87f28c78e2fbf8b568835947dd65ed9`. Configuration/tokenizer file hashes
+and the actual bridge/probe hashes accompany each ignored benchmark envelope.
+Parakeet stores float32 weights and the pinned loader defaults to bfloat16 compute;
+the original artifact and actual compute dtype must not be conflated. Conversion
+cards do not establish runtime compatibility or original-checkpoint equivalence.
+
+After downloading and verifying the pinned Qwen inputs, prepare its tokenizer
+explicitly (other loaders require their already prepared local tokenizer files):
+
+```sh
+swift run --package-path native/mlx --scratch-path .tooling/mlx-build \
+  --cache-path .tooling/swift-cache --force-resolved-versions \
+  -c release prepare-qwen-tokenizer VERIFIED_QWEN_DIRECTORY
+cargo run --release -p transcribe-mlx --example probe -- \
+  .tooling/mlx-runtime/libTranscribeMLX.dylib VERIFIED_QWEN_DIRECTORY \
+  qwen3_asr English PUBLIC_AUDIO.wav
+```
+
+The resulting Qwen tokenizer in this screen has SHA-256
+`1c98aeb375d2cb5b386bad460bc2a87bf39b9debbda44d49115377d1de8cb2ed`.
+Use the manifest's declared ordering and canonical `transcribe-eval` scorer for
+quality comparisons. Retain all failed requests and keep the model-load line
+from stderr; a single successful probe is only a smoke test.
+
+The bridge forces the MLX GPU device, joins native work before releasing audio or
+cancellation pointers, pads short inputs for safe STFT framing and discards
+non-EOS generative output. Parakeet uses bounded audio/frame decoding; it does not
+honor the generative token ceiling. Cancellation is cooperative between decoder
+steps, not inside an encoder/kernel call. Whisper/Cohere require explicit English
+or French on this path; automatic-language behavior is not equivalent to Sherpa.
+Tokenizers must be local, prepared and verified. No loader may download missing
+files or generate a tokenizer during inference. MLX peak memory is a process-life
+allocator peak including resident weights.
+
+Whisper exposes the native SOT-row no-speech probability and accumulated greedy
+token log probability. Both CPU and MLX reuse the existing combined OpenAI
+silence policy; missing/nonfinite scores and incomplete decodes fail closed.
+This reduced false transcripts from 7/8 to 2/8 non-speech controls in the isolated
+Small screen, without changing its speech WER. That is a local patch result,
+not a claim about unmodified MLX-Audio. The pinned reference is OpenAI Whisper
+[decoding.py](https://github.com/openai/whisper/blob/v20250625/whisper/decoding.py)
+and [transcribe.py](https://github.com/openai/whisper/blob/v20250625/whisper/transcribe.py).
+
+The probe uses shared complete-audio energy boundaries: 29 seconds for Whisper,
+10 seconds for Cohere/Qwen, and a qualification-only 30-second bound for Parakeet.
+The CPU Parakeet adapter accepts the whole recording, so geometry matches only
+for inputs within that bound. This English manifest's longest clip is 23.76 s.
+All samples remain covered, with fresh decoder state for each segment. Model
+loading is reported separately; probe ASR time includes the first native call's
+compilation if needed. CPU Qwen/Parakeet still load per job, so comparing their
+application timings with a resident MLX probe is not a GPU-only speedup.
+
+On the matched English screen, Whisper Small's 84 CPU and 84 MLX requests all
+completed. The final verified bridge produced the following results:
+
+| Condition       | Sherpa INT8 WER  | MLX FP16 WER     | Resident median CPU / MLX |
+| --------------- | ---------------- | ---------------- | ------------------------- |
+| Clean           | 54/689 = 7.84%   | 42/689 = 6.10%   | 730.23 / 219.06 ms        |
+| Quiet (−30 dB)  | 227/689 = 32.95% | 79/689 = 11.47%  | 650.03 / 217.24 ms        |
+| Noise (0 dB)    | 120/689 = 17.42% | 115/689 = 16.69% | 740.23 / 221.54 ms        |
+| Spoken controls | 9/52             | 8/52             | —                         |
+
+CPU had false transcripts on 5/8 non-speech controls; MLX had 2/8. The MLX process
+allocator peak reached 1.644 GB. Its first model load took 765 ms, separately from
+request timings. Both lanes use the same 29-second boundary policy and confidence
+thresholds, but different precision, converted weights and native implementations.
+These results support further integration qualification, not a backend-only
+quality gain or a production/default promotion. This is 24 distinct English
+utterances in three conditions plus 12 controls, not 84 independent speech
+recordings. Automatic language and Hindi are rejected by this bridge's current
+Whisper/Cohere language contract. French, code-switching, singing, long audio,
+bundled-library deployment and sustained thermals remain unqualified. The earlier
+CPU file carried an incorrect LFM precision label; the final CPU rerun uses the
+correct Whisper INT8 envelope and reproduces the same transcripts.
+
+Whisper Turbo also completed all 84 requests on each path. MLX clean/quiet/noisy
+WER was 33/689 (4.79%), 66/689 (9.58%) and 53/689 (7.69%), versus CPU INT8's
+35/689 (5.08%), 45/689 (6.53%) and 65/689 (9.43%). Both had 8/52 errors on
+spoken controls and false transcripts on 7/8 non-speech controls. Thus the GPU
+conversion's faster resident clean median (356.23 ms versus 1,315.30 ms) comes
+with a quiet-speech regression and unresolved silence behavior. Separate MLX load
+was 209.01 ms, first call 387.99 ms with previously used native shader caches,
+and process allocator peak 3.091 GB. This is not a cold-compilation result or a
+reason to promote Turbo over Small. The two Whisper variants share one bridge;
+their quality outcomes must still be qualified separately.
+
+The initial matched 84-case Qwen screen completed every request, but quiet WER worsened
+from 66/689 (9.58%) on Sherpa INT8 to 112/689 (16.26%) on MLX 8-bit, and noisy WER
+from 92/689 (13.35%) to 139/689 (20.17%). Clean WER was 57/689 versus 50/689;
+spoken controls were 0/52 on both. MLX hallucinated on 5/8 non-speech controls
+versus CPU 7/8. Its 213 ms resident clean median excludes model loading; the
+CPU's 1,808 ms includes per-job initialization. The quiet/noisy regression blocks
+promotion for that implementation, regardless of its timing difference. Earlier
+fixed-boundary trials remain separate from this matched-boundary result.
+
+Source comparison then found two Qwen-specific port errors: the generic frontend
+used HTK mel spacing, symmetric Hann and an extra centered frame; audio-token
+length calculation used MLX floating division for complete 100-frame groups.
+Official Qwen uses a Whisper frontend and integer floor division. The correction
+reuses the runtime's existing `WhisperAudio.logMelSpectrogram` without fixed-window
+padding and fixes only that length term. Primary references are the
+[Qwen processor at 7c6daf77](https://github.com/QwenLM/Qwen3-ASR/blob/7c6daf77a2421100f5fb066495372c00129d39ff/qwen_asr/core/transformers_backend/processing_qwen3_asr.py)
+and its pinned [Transformers 4.57.6 extractor](https://github.com/huggingface/transformers/blob/v4.57.6/src/transformers/models/whisper/feature_extraction_whisper.py).
+Native tests check fixed official token counts at chunk boundaries and
+160,000 samples → 1,000 frames → 130 audio tokens. They passed on Metal.
+
+The corrected 84-case rerun retained the same weights, tokenizer, language,
+segmentation and decoding policy, and completed every request. Clean/quiet/noisy
+WER became 47/689 (6.82%), 52/689 (7.55%) and 85/689 (12.34%), compared with
+CPU's 57/689, 66/689 and 92/689. Spoken controls remained 0/52; non-speech false
+transcripts fell to 4/8, still a limitation. Resident clean median was 204.66 ms,
+model loading separately took 1.185 s, and process allocator peak was 1.811 GB.
+The result supports the combined official-frontend correction; it does not isolate
+each change's contribution or establish general multilingual quality. No threshold
+was fitted to this holdout. The earlier failed screen and its native library/patch
+remain preserved under the ignored result directory. Subsecond inputs still use
+the bridge's one-second safety padding and were not part of the quality corpus.
+
+Cohere's MLX conversion completed all 84 cases, with clean/quiet/noisy WER of
+45/689 (6.53%), 60/689 (8.71%) and 47/689 (6.82%), versus CPU INT8's 39/689
+(5.66%), 460/689 (66.76%) and 65/689 (9.43%). Both had 8/52 errors on spoken
+controls and no false transcripts on the eight non-speech controls. The quiet/noisy
+improvement carries six additional clean-word errors. Resident clean median was
+502.76 ms MLX versus 610.14 ms CPU; MLX load was separately 270.54 ms, first call
+2.395 s and process allocator peak 5.368 GB. Conversion lineage and precision
+differ, so this does not isolate hardware effects or qualify a default change.
+
+Parakeet completed all 84 requests on both paths. MLX clean/quiet/noisy WER was
+29/689 (4.21%), 35/689 (5.08%) and 45/689 (6.53%); CPU INT8 was 55/689 (7.98%),
+472/689 (68.51%) and 105/689 (15.24%). Both had 8/52 word errors on spoken
+controls and no false transcripts on the eight non-speech controls. MLX resident
+clean median was 53.43 ms, versus 954.12 ms for CPU with per-job model loading.
+That is an ownership/precision/runtime comparison, not an 18× GPU acceleration
+claim. MLX model loading took 259.94 ms separately, its first recognition call
+took 1.991 s including cold native work, and its process allocator peak reached
+3.804 GB. The two lanes consumed the same complete clips without segmentation
+because all inputs fit below the isolated bridge's 30-second bound. This supports
+further qualification, with automatic-language behavior, multilingual requests,
+longer recordings and application ownership still outside the measured scope.
+
+All five variants passed the final native cancellation, A→B→A isolation, bounded
+completion and unload/reload regression. Strict Rust Clippy, core/inference/audio
+unit tests, frontend configuration tests and the two Swift geometry tests passed.
+The final integrity audit rechecked 34 downloaded model files, the prepared Qwen
+tokenizer, all 84 corpus hashes and both measured native-library/kernel pairs.
+Original benchmark envelopes are retained; `qualification-integrity-audit.json`
+also corrects generic downloader license labels against the pinned model cards.
+These research inventories are not production installation manifests.
+
+The measurements above used the isolated bridge. The approved optional application integration is now described in [ADR-0020](adrs/0020-optional-mlx-speech-runtime.md), with application validation recorded separately below. English Parakeet, Qwen and Whisper Small are the initial gated variants; CPU/Automatic defaults remain unchanged. Cohere and Whisper Turbo remain excluded from application Metal selection. The small
+audio frontends retain CPU execution; GPU dispatch overhead must be measured
+before moving their per-frame work.
+
+Application registration, optional cross-crate feature wiring, pinned model
+installation and packaging are a separate architectural integration. Automatic
+approval review rejected the attempted registration patch under the explicit
+approval rule in `AGENTS.md`; none of that patch was applied. The concrete scope
+was subsequently approved explicitly, as recorded in [issue #35](https://github.com/rahulsharmavishwakarma/transcribe/issues/35#issuecomment-5788299497). The historical rejection did not block the later approved implementation.
+No MLX model becomes selectable and no default changes merely because this
+isolated bridge compiles or produces promising measurements.
+
+### Historical Mac GPU audit — 22 September 2026
+
+Source audit of the pre-change application `c8358b4061876f1bb3bafed39a8694afb5bc9e6c`; the implementation above supersedes its LFM and writer-fallback findings.
+The practical target is the fastest **qualified model/runtime/device combination**
+for each stage. MLX is a framework; Metal and CUDA are execution backends.
+Current MLX also documents a Linux CUDA backend, so MLX and CUDA are not mutually
+exclusive choices. That upstream capability does not establish MLX-Audio model
+portability, Windows support, or application integration. [MLX installation](https://ml-explore.github.io/mlx/build/html/install.html).
+
+| Application component                | Current Apple path                                                                    | Available opportunity and boundary                                                                                                                           |
+| ------------------------------------ | ------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| Qwen writing                         | llama.cpp Metal in `Auto`; all offloadable layers, KQV and operator offload requested | Measure existing Metal first. The native defaults already request Flash Attention AUTO and F16 K/V; enabling a flag is not automatically a new optimization. |
+| Nemotron streaming/completed audio   | Packaged NeMo Metal in `Auto`; native cache-aware streams                             | Compare the same Q8 artifact and right context on CPU/Metal. RNNT control remains host-side and the scheduler retains CPU fallback.                          |
+| Cohere, Whisper, Qwen3-ASR, Parakeet | Sherpa ONNX CPU, including when `Auto` is selected                                    | MLX implementations are candidates. Current artifacts and loaders cannot become MLX by changing a provider string.                                           |
+| LFM2.5 Audio                         | llama.cpp backbone and mtmd audio projector explicitly on CPU                         | Existing native APIs allow separate backbone/projector GPU requests; exact model execution and quality remain unqualified.                                   |
+| Small audio frontends                | Current shared CPU path                                                               | Keep as the baseline until stage timings justify moving them; small per-frame GPU dispatches may lose latency. This is a hypothesis to test.                 |
+
+The first two rows are existing requests for acceleration, not evidence that every
+operator executes on the GPU. `qwen.rs` derives `initialized_provider` from the
+requested layer count and context probe. Its automatic CPU retry covers a failed
+context probe but not an earlier `load_model` error. Both execution attestation
+and the load-error boundary remain focused follow-ups under [#30](https://github.com/rahulsharmavishwakarma/transcribe/issues/30).
+An explicit backend should surface failure; an automatic fallback should report
+its reason and resulting backend. Neither should mislabel CPU work as GPU work.
+
+**Local observation, not a model benchmark.** The existing ignored
+`capabilities::tests::observe_native_accelerators` test passed on macOS 27.0
+(26A428), reporting Apple M5 Pro through Metal. Native logs reported unified
+memory, bfloat and tensor support, shared buffers and residency sets. CUDA,
+Vulkan and ROCm were not compiled in this test build. Running the same executable
+inside the restricted agent sandbox returned no Metal devices; outside that
+sandbox it found the GPU. Device absence in a restricted process must not be
+generalized to native application availability.
+
+The reused test executable SHA-256 was
+`a7880b747bf0521d390fa3a86e95b1796db2d8cfebf6d3eb702bfc82f78baa6b`.
+It was not rebuilt for this audit, so its build revision is not newly attested.
+No weights were loaded, no ASR/cleanup latency was measured, and no model placement
+or thermal qualification follows from this discovery test.
+
+There is earlier bounded performance evidence: the [19 September writer screen](personalization/evaluation.md#semantic-shadow-qualification)
+records mean resident foreground cleanup of **239.82 ms CPU versus 73.18 ms Metal**
+for its short authored fixture, with Qwen3.5-0.8B Q4_0 and 20 pairs per provider.
+Those pairs compare foreground cleanup with/without interrupted shadow work;
+they are not randomized CPU/Metal pairs. The shared host, power changes and absent
+thermal/memory qualification limit inference. This is not a new audit measurement,
+an ASR speedup, or whole-application latency. The separate semantic classifier
+failed its quality gate on both providers.
+
+#### Exact native boundaries
+
+The current pins are Sherpa 1.13.8/source
+`11afbd009a7f8c08f4bcf2fc1b265d0df4670fbf`, llama-cpp-2 0.1.156/native
+`e79e4bf660e19f2ad851e06c6913f7a8c5852621`, and NeMo-Speech.cpp 0.1.0/source
+`4f9676226f667d14608487df744f375db87127f8` (ggml
+`c03b4e2bcece5134827881af90242086daf75be5`). Model revisions and complete hashes
+remain owned by [the artifact registry](../models/artifacts.json).
+
+The local static Sherpa build has `SHERPA_ONNX_DISABLE_COREML` in its actual
+compiler definitions. Its pinned [Apple ARM static packaging](https://github.com/k2-fsa/sherpa-onnx/blob/11afbd009a7f8c08f4bcf2fc1b265d0df4670fbf/cmake/onnxruntime-osx-arm64-static.cmake)
+selects ONNX Runtime 1.28.2, archive SHA-256
+`bf6e35dc9440d2899c3d21f52b1045fb99176a6ae822281b7245c5418cc338ab`.
+Observed runtime build ID:
+`67ce39e3334e098b428e0e94284c3b6a0846e014a5c08000c02ae28f393ebc7b`.
+This is stronger evidence than interpreting `SHERPA_ONNX_ENABLE_GPU=OFF`, which
+does not by itself describe CoreML availability. The application also explicitly
+sets Sherpa's provider to CPU. CoreML would require a compatible runtime build,
+error-checked provider registration and exact-graph coverage measurements.
+
+Upstream Sherpa's CoreML branch uses the legacy registration API with zero flags
+and discards its returned status. Modern ORT supports MLProgram, compute-unit
+selection, model caching and compute-plan diagnostics. Those options are not
+automatically exposed by this branch. Dynamic shapes, graph partitions, CPU
+fallback and first-use compilation must be measured. CoreML/ANE and Metal GPU
+are separate execution claims. [ORT CoreML contract](https://onnxruntime.ai/docs/execution-providers/CoreML-ExecutionProvider.html),
+[pinned Sherpa session code](https://github.com/k2-fsa/sherpa-onnx/blob/11afbd009a7f8c08f4bcf2fc1b265d0df4670fbf/sherpa-onnx/csrc/session.cc).
+
+The bundled llama.cpp already has an eligible Metal tensor path and native
+quantized kernels. Verify shape/dtype dispatch before proposing new M5 kernels.
+LFM's Conformer projector explicitly constructs relative-position attention;
+generic Flash Attention configuration does not fuse that graph.
+[Metal implementation](https://github.com/ggml-org/llama.cpp/blob/e79e4bf660e19f2ad851e06c6913f7a8c5852621/ggml/src/ggml-metal/ggml-metal-device.m),
+[LFM Conformer implementation](https://github.com/ggml-org/llama.cpp/blob/e79e4bf660e19f2ad851e06c6913f7a8c5852621/tools/mtmd/models/conformer.cpp).
+
+On NVIDIA, Qwen needs the existing compiled `cuda` feature and a usable device;
+Nemotron needs its matching pinned CUDA package. NeMo's fused relative attention,
+depthwise convolution and FastConformer graph optimizations are CUDA-gated.
+Portable Metal execution does not inherit those kernels. CUDA-specific planar
+Q8 layouts must not replace portable artifacts indiscriminately.
+[Pinned CUDA gates](https://github.com/NVIDIA/NeMo-Speech.cpp/blob/v0.1.0/ggml-patches/README.md).
+No NVIDIA hardware was available for execution in this audit; CUDA remains a
+separate native-host validation lane.
+
+#### MLX candidates and integration proposal
+
+MLX-Audio Python [v0.5.5](https://github.com/Blaizzy/mlx-audio/releases/tag/v0.5.5)
+pins `cd605ecfcc266ccf6ea3077586c373101be982c6`; MLX-Audio-Swift
+[v0.1.3](https://github.com/Blaizzy/mlx-audio-swift/releases/tag/v0.1.3) pins
+`d302a5c6080d2bb97bae38c7418f82abb76013b6`. They contain implementations of
+the above speech families. These are community model ports built on Apple's MLX;
+they are not Apple/NVIDIA/Cohere qualification of this application.
+
+For Cohere, the Swift implementation documents
+[`beshkenadze/cohere-transcribe-03-2026-mlx-fp16`](https://huggingface.co/beshkenadze/cohere-transcribe-03-2026-mlx-fp16/tree/06bbe0d853a93cbbf7c1f40cffccd4c5481459ef)
+at `06bbe0d853a93cbbf7c1f40cffccd4c5481459ef`. Its conversion records original
+revision `494db8a1d34a3aeb28e9ecf61bae9e7cdef455b9`; match the CPU checkpoint
+lineage before attributing differences to hardware. An arbitrary “MLX 8-bit”
+repository is not interchangeable: the observed `mlx-community/cohere-transcribe-03-2026-mlx-8bit`
+card targets mlx-speech and did not supply the expected `config.json`.
+Start with a documented loader/artifact pair and inventory every required file
+and hash before downloading. FP16 versus INT8 is a deployment comparison, not a
+controlled backend-only comparison.
+
+The [Swift manifest](https://raw.githubusercontent.com/Blaizzy/mlx-audio-swift/d302a5c6080d2bb97bae38c7418f82abb76013b6/Package.swift)
+requires Swift **6.2** and macOS 14, despite older requirements in its README.
+Its ranged dependencies require a committed resolution for reproducible builds.
+Python is a useful isolated reference benchmark; shipping it adds an interpreter
+and dependency environment. A Swift bridge avoids that interpreter but adds a
+native packaging/FFI boundary. MLX C/Rust tensor bindings alone do not implement
+the speech architectures. Neither bridge was integrated at the 22 September audit; the later approved Swift integration is covered by ADR-0020.
+
+Historical proposed sequence from 22 September, before the subsequent isolated experiments and explicit MLX application approval:
+
+1. Qualify current Qwen and Nemotron Metal/CUDA routes through the existing
+   benchmark harness, with CPU controls and honest backend evidence. Fix focused
+   fallback/provenance defects under #30 without changing inference ownership.
+2. Test LFM's existing native APIs in an isolated four-way experiment:
+   CPU/CPU, GPU backbone/CPU projector, CPU backbone/GPU projector, GPU/GPU.
+   Keep prompts, segments, weights and output limits fixed; do not expose an
+   unqualified backend in the application menu.
+3. Add a development-only, locked MLX reference lane, starting with default
+   Cohere completed audio and a documented compatible checkpoint. Use the
+   existing held-out manifests/results contract. Qualify Qwen3-ASR and Whisper
+   subsequently; retain Nemotron's existing live runtime until a replacement
+   demonstrates a benefit.
+4. Only if that comparison passes, propose one shared native MLX bridge beneath
+   the existing adapter registry. Preserve the current Rust inference owner,
+   bounded work, cancellation, artifact verification and fresh recording state.
+   Reuse framework loaders with architecture-specific processors/decoders;
+   do not create a new service or adapter per model name. Independent speech and
+   writing placement needs a separate configuration proposal if it changes the
+   current global preference.
+
+At that audit, steps 3–4 added dependencies/runtime boundaries and were proposals, not approved
+implementation. The benefit hypothesis is reduced speech-stage compute time;
+costs include another artifact format, build toolchain, compatibility surface and
+shared-memory contention with the writer. Do not change defaults before paired
+quality and latency gates pass. Live input requires actual incremental state;
+streaming generated tokens from a complete waveform does not satisfy that gate.
+
+Use the existing [qualification protocol](../benchmarks/asr/README.md): freeze
+source/executable/runtime/artifact hashes; compare cold process, first compilation
+and resident requests separately; synchronize lazy/asynchronous GPU work; run
+configurations sequentially in alternating order. Report prefill/decode, total
+ASR+writer time, failure and fallback counts, WER/CER and meaning preservation.
+For live lanes record first partial, word emission, endpoint, stop-to-final,
+queue drops and reset/cancellation isolation. Record power/thermal state and
+unified-memory pressure; do not double-count shared RAM as separate VRAM.
+Device traces establish placement separately from timed runs. The hypothesis
+that GPU offload improves short requests remains subject to these measurements.
 
 ### Resident default Cohere
 
@@ -79,23 +514,23 @@ The [17 September paired application test](validation/application-sha-2026-09-17
 
 On 15 September 2026, the release runner exercised deterministic 4–20 second held-out samples through the application's actual adapters and the explicit pinned NeMo CPU package. Each row contains 16 successful samples and no failed samples. FLEURS supplies monolingual Hindi and US English; MUCS supplies Hindi-English code switching. Locale and configured-language variants are separate evidence groups.
 
-| Pack and configured language | Nemotron median WER / RTF | Qwen3-ASR median WER / RTF | Balanced result |
-| --- | ---: | ---: | --- |
-| Hindi `hi-IN`, explicit `hi` | 9.35% / 0.045 | 12.13% / 0.411 | Nemotron |
-| Hindi `hi-IN`, Auto | 9.35% / 0.047 | 11.44% / 0.420 | Nemotron |
-| US English `en-US`, explicit `en` | 7.18% / 0.046 | 5.42% / 0.361 | Nemotron; Qwen wins accuracy-only |
-| US English `en-US`, Auto | 7.18% / 0.045 | 7.50% / 0.358 | Nemotron |
-| Hinglish `hi+en`, Auto | 47.73% / 0.047 | 51.89% / 0.568 | No qualified model |
+| Pack and configured language      | Nemotron median WER / RTF | Qwen3-ASR median WER / RTF | Balanced result                   |
+| --------------------------------- | ------------------------: | -------------------------: | --------------------------------- |
+| Hindi `hi-IN`, explicit `hi`      |             9.35% / 0.045 |             12.13% / 0.411 | Nemotron                          |
+| Hindi `hi-IN`, Auto               |             9.35% / 0.047 |             11.44% / 0.420 | Nemotron                          |
+| US English `en-US`, explicit `en` |             7.18% / 0.046 |              5.42% / 0.361 | Nemotron; Qwen wins accuracy-only |
+| US English `en-US`, Auto          |             7.18% / 0.045 |              7.50% / 0.358 | Nemotron                          |
+| Hinglish `hi+en`, Auto            |            47.73% / 0.047 |             51.89% / 0.568 | No qualified model                |
 
 The example balanced policy requires median WER at most 20% for a monolingual pack, 30% for Hinglish, median RTF at most 1.0, and failure rate at most 2%. A comparable locally measured candidate that fails a requested ceiling is excluded; it is not downgraded to unmeasured official support. Nemotron also does not claim code-switching capability, while Qwen's measured Hinglish WER exceeds the ceiling. The safe answer for the current Hinglish pack is therefore “no qualified model,” not a forced recommendation. Exact mixed-script WER penalizes Latin reference words transliterated into Devanagari, so the raw hypotheses still need qualitative analysis.
 
 Four-sample wall-clock streaming subsets exercised continuous packet delivery and final drain. The wall-clock RTF is near 1.0 by construction because replay sleeps to audio time; stop-to-final and first-partial latency are the interactive measurements.
 
-| Pack | Median WER | Median wall RTF | p95 stop-to-final | Warm first nonempty partial |
-| --- | ---: | ---: | ---: | ---: |
-| Hindi `hi-IN`, explicit `hi` | 10.60% | 1.011 | 91.9 ms | 1.32–1.96 s |
-| US English `en-US`, explicit `en` | 9.01% | 1.010 | 89.0 ms | 1.32–1.64 s |
-| Hinglish `hi+en`, Auto | 56.06% | 1.014 | 90.9 ms | 0.68–1.65 s |
+| Pack                              | Median WER | Median wall RTF | p95 stop-to-final | Warm first nonempty partial |
+| --------------------------------- | ---------: | --------------: | ----------------: | --------------------------: |
+| Hindi `hi-IN`, explicit `hi`      |     10.60% |           1.011 |           91.9 ms |                 1.32–1.96 s |
+| US English `en-US`, explicit `en` |      9.01% |           1.010 |           89.0 ms |                 1.32–1.64 s |
+| Hinglish `hi+en`, Auto            |     56.06% |           1.014 |           90.9 ms |                 0.68–1.65 s |
 
 The first streaming sample in each process was cold and reached its first nonempty partial in 3.24–4.54 seconds. The sample count is deliberately small and does not support a production p95 claim. Indian English was later screened on 48 Svarah recordings in a separate personalization experiment: raw WER was 18.50% for Nemotron and 9.83% for Cohere, with 48/48 executions successful for each. Because that report belongs to a personalization profile envelope, it is retained as local evidence but excluded from automatic base-model recommendation aggregation. It is not an all-model `en-IN` qualification.
 
@@ -105,12 +540,12 @@ The runs used an Apple Silicon headless sandbox with the explicit NeMo CPU runti
 
 The recorded development-machine smoke used an **Apple M5 Pro with 64 GiB RAM**, CPU inference, Parakeet INT8 and Qwen Q4_0 on approximately 3.845 seconds of public English speech:
 
-| Operation | Observed elapsed time |
-| --- | ---: |
-| Parakeet loading plus recognition | 0.76 s |
-| Qwen loading plus cleanup | 0.70 s |
-| Both native stages | 1.46 s |
-| Desktop integration test, including hashes, archive, SQLite and export assertions | 3.63 s |
+| Operation                                                                         | Observed elapsed time |
+| --------------------------------------------------------------------------------- | --------------------: |
+| Parakeet loading plus recognition                                                 |                0.76 s |
+| Qwen loading plus cleanup                                                         |                0.70 s |
+| Both native stages                                                                |                1.46 s |
+| Desktop integration test, including hashes, archive, SQLite and export assertions |                3.63 s |
 
 These are single observations with potentially warm filesystem caches, not p50/p95 values, cold-start measurements, or release-build comparisons. Peak memory and GPU execution were not measured. The derived ASR real-time factor for this one load-inclusive sample is approximately `0.76 / 3.845 = 0.20`; it says nothing about sustained performance on other devices. The integration test includes export work that ordinary dictation need not perform. See the [recorded validation and reproduction commands](validation.md); the native debug result remains in `.cache/benchmarks/results/native-pipeline/debug-summary.json`.
 
@@ -120,14 +555,14 @@ The six synthetic cleanup cases also exposed repetition and meaning changes. An 
 
 The paths below are selectable and packaged where noted, but still require successful execution and comparison against CPU on the exact target. Existing observations are single-fixture development checks, not cross-device qualification.
 
-| Device family | Speech candidate | Cleanup candidate | Recommended order |
-| --- | --- | --- | --- |
-| Apple Silicon macOS | Packaged NeMo Metal | Built-in llama.cpp Metal | Current `Auto`; benchmark against explicit CPU |
-| Linux/Windows with NVIDIA GPU | Packaged NeMo CUDA, selected automatically after a successful `nvidia-smi` probe | llama.cpp CUDA build | Build with `--features cuda`; qualify driver/toolkit/device |
-| AMD GPU | Packaged NeMo Vulkan | llama.cpp Vulkan, or ROCm build | Vulkan works across more devices; ROCm profile combines Vulkan ASR with HIP cleanup |
-| Intel integrated/discrete GPU | Packaged NeMo Vulkan | llama.cpp Vulkan build | Build with `--features vulkan`; qualify driver and memory behavior |
-| Other ARM/x86 systems | Native CPU with suitable instruction support | Native CPU | Smaller compatible models and bounded workload; measure on actual hardware |
-| iOS/Android, future | Platform CPU first, then qualified native accelerator paths | Platform CPU/Metal or other supported native backend | Treat as a separate packaging, capture and lifecycle project |
+| Device family                 | Speech candidate                                                                 | Cleanup candidate                                    | Recommended order                                                                   |
+| ----------------------------- | -------------------------------------------------------------------------------- | ---------------------------------------------------- | ----------------------------------------------------------------------------------- |
+| Apple Silicon macOS           | Packaged NeMo Metal                                                              | Built-in llama.cpp Metal                             | Current `Auto`; benchmark against explicit CPU                                      |
+| Linux/Windows with NVIDIA GPU | Packaged NeMo CUDA, selected automatically after a successful `nvidia-smi` probe | llama.cpp CUDA build                                 | Build with `--features cuda`; qualify driver/toolkit/device                         |
+| AMD GPU                       | Packaged NeMo Vulkan                                                             | llama.cpp Vulkan, or ROCm build                      | Vulkan works across more devices; ROCm profile combines Vulkan ASR with HIP cleanup |
+| Intel integrated/discrete GPU | Packaged NeMo Vulkan                                                             | llama.cpp Vulkan build                               | Build with `--features vulkan`; qualify driver and memory behavior                  |
+| Other ARM/x86 systems         | Native CPU with suitable instruction support                                     | Native CPU                                           | Smaller compatible models and bounded workload; measure on actual hardware          |
+| iOS/Android, future           | Platform CPU first, then qualified native accelerator paths                      | Platform CPU/Metal or other supported native backend | Treat as a separate packaging, capture and lifecycle project                        |
 
 **Apple.** `Auto` selects the packaged NeMo Metal runtime and offloads Qwen through llama.cpp Metal on Apple Silicon. MLX is a separate array/model framework; the selected Nemotron GGUF and official runtime do not expose an MLX backend. Compare against explicit CPU because GPU dispatch can lose on a very short cleanup. [llama.cpp backend build guidance](https://github.com/ggml-org/llama.cpp/blob/master/docs/build.md).
 
@@ -174,19 +609,19 @@ Repeat a realistic dictation workload for 10–15 minutes, on mains and battery 
 
 Use release builds and a frozen corpus of human-referenced speech covering short commands, ordinary paragraphs, longer recordings, supported languages, accents, noise and silence. Do not use the six development cleanup cases as a held-out benchmark. Keep an additional review set for names, numbers, dates, negation, uncertainty, quotations and prompt-like dictated content. Record dataset version, consent scope and reference provenance.
 
-| Metric | Definition and reporting |
-| --- | --- |
-| Cold process start | New process with no resident model; report filesystem and compiled-backend cache state separately |
-| Cold artifact/compile start | First use with backend compilation cache absent; never label an ordinary restart as a cold disk-cache test |
-| Warm latency | Resident models, fresh utterance state; separate any warmup samples |
-| ASR RTF | Recognition elapsed seconds / audio seconds; report load-exclusive and load-inclusive forms explicitly |
-| Cleanup TTFT | Cleanup request to first generated token; report whether loading and prompt evaluation are included |
-| Cleanup generation rate | Generated tokens / decode time, with prompt/output token counts and tokenizer/model ID |
-| Final text latency | Recording stop or imported-file submission to accepted final text or explicit raw fallback |
-| Distribution | Per-device/per-workload p50 and p95, sample count and failures; do not pool different clip lengths into a misleading single number |
-| Resource use | Peak RSS, GPU/shared allocations, idle residency, CPU load, power mode and sustained thermal state |
-| ASR quality | WER `(substitutions + deletions + insertions) / reference words`, with declared normalization; CER where appropriate; punctuation/case assessed separately |
-| Meaning preservation | Human-reviewed changes to entities, numbers, negation and intent; guard rejection, truncation, repetition and raw-fallback rates |
+| Metric                      | Definition and reporting                                                                                                                                   |
+| --------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Cold process start          | New process with no resident model; report filesystem and compiled-backend cache state separately                                                          |
+| Cold artifact/compile start | First use with backend compilation cache absent; never label an ordinary restart as a cold disk-cache test                                                 |
+| Warm latency                | Resident models, fresh utterance state; separate any warmup samples                                                                                        |
+| ASR RTF                     | Recognition elapsed seconds / audio seconds; report load-exclusive and load-inclusive forms explicitly                                                     |
+| Cleanup TTFT                | Cleanup request to first generated token; report whether loading and prompt evaluation are included                                                        |
+| Cleanup generation rate     | Generated tokens / decode time, with prompt/output token counts and tokenizer/model ID                                                                     |
+| Final text latency          | Recording stop or imported-file submission to accepted final text or explicit raw fallback                                                                 |
+| Distribution                | Per-device/per-workload p50 and p95, sample count and failures; do not pool different clip lengths into a misleading single number                         |
+| Resource use                | Peak RSS, GPU/shared allocations, idle residency, CPU load, power mode and sustained thermal state                                                         |
+| ASR quality                 | WER `(substitutions + deletions + insertions) / reference words`, with declared normalization; CER where appropriate; punctuation/case assessed separately |
+| Meaning preservation        | Human-reviewed changes to entities, numbers, negation and intent; guard rejection, truncation, repetition and raw-fallback rates                           |
 
 As an initial screening protocol, use at least 30 timed warm requests per configuration and several independent process starts. For a publishable p95 claim, expand to a representative corpus with substantially more independent requests and report uncertainty; repeated copies of one fixture do not establish a population latency distribution. Alternate configuration order to reduce cache/thermal bias. Report failures in the denominator rather than timing only successful runs.
 
@@ -194,4 +629,78 @@ Use monotonic Rust timers for application spans. ONNX Runtime profiling can expo
 
 Store one JSONL record per run with hardware/OS, driver versions, application revision, runtime build/features, model revision and hashes, requested/actual device, thread/offload settings, input duration, token counts, stage timings, memory observations, outputs and errors. Publish aggregate results alongside this manifest. Preserve raw ASR independently from cleaned output, and keep machine predictions separate from human training labels.
 
-Promote a performance profile only after it passes existing tests, the held-out quality review, repeated latency/memory measurements, cancellation/recovery tests, and package validation on its named devices. There are no measured GPU speedups or universal hardware defaults to report yet.
+Promote a performance profile only after it passes existing tests, the held-out quality review, repeated latency/memory measurements, cancellation/recovery tests, and package validation on its named devices. The dated screens above provide local CPU/Metal observations; they do not establish universal hardware defaults or qualify untested backends.
+
+### Approved optional MLX application validation — 23 September 2026
+
+[ADR-0020](adrs/0020-optional-mlx-speech-runtime.md) records explicit approval and the implemented scope. The optional Tauri `.app` built successfully. Its library, `mlx.metallib` and tokenizer tool matched the Rust build's expected hashes. A qualification executable using the application `InferenceManager`, placed in a copy of the built bundle, ran against those resources. This validates native resource resolution and the shared recording/import inference path; it is not a microphone/UI end-to-end test. Missing kernels failed readiness, and same-size corrupted kernels failed integrity before native loading. Neither case fell back to developer files.
+
+All 252 completed-audio requests succeeded: the same 84 English clean/quiet/noise/control cases for each model below. Every transcript exactly matched its final isolated MLX baseline. Exact parity preserves the earlier quality limitations rather than erasing them.
+
+| MLX variant | Clean / quiet / noisy word errors, each /689 | False transcripts on eight non-speech controls | Warm clean median ASR | First ASR request |
+| --- | --- | --- | --- | --- |
+| Parakeet v3, BF16 compute | 29 / 35 / 45 | 0/8 | 55.20 ms | 4.762 s |
+| Qwen-ASR 0.6B, 8-bit | 47 / 52 / 85 | 4/8 | 234.45 ms | 3.380 s |
+| Whisper Small, FP16 | 42 / 79 / 115 | 2/8 | 232.50 ms | 1.736 s |
+
+Warm clean medians use 23 clean requests after excluding the first request. First requests include integrity verification, model load and initial native execution. Separate verification/load timings in microseconds were Parakeet 973147/797215, Qwen 394444/479056 and Whisper 210109/163760. The host remains M5 Pro/64 GiB/macOS27, fixed request order, uncontrolled power/thermal state and previously used shader caches. These are ASR request timings, excluding capture/frontends/writing/UI; they are neither live latency nor backend-only speedups against differently quantized CPU exports. MLX uses its runtime thread defaults. The existing evaluator's positive `threads=8` field describes the other native runtime worker setting; the environment notes explicitly distinguish it from an MLX graph-thread count.
+
+A further 148.68-second diagnostic concatenated the first 12 clean held-out clips without overlap or added silence, retaining all float32 samples and concatenating their references. All three models delivered all 2,378,880 samples. Parakeet, Qwen and Whisper Small had respectively 20, 28 and 24 word errors out of 383; their cold application ASR requests took 1.873, 3.724 and 3.349 seconds with already-used shader caches. This tests segmentation and long-file coverage; concatenated utterances are not a natural continuous-speech corpus.
+
+Eighteen completed-recording pipeline requests (six per variant) enabled advisory Silero, DPDFNet4 and the writer. All 18 ASR requests completed and all 18 rewrites passed the existing fidelity guard. Raw word errors per 128 reference words were Parakeet 5, Qwen 4 and Whisper 9. Both speech and writing reported Metal; the small frontends stayed CPU. This small clean set does not establish a denoising quality improvement or replace the broader frontend regressions.
+
+Real application lifecycle tests covered all three variants: twelve repeated A/B/A requests each, more-than-minute input, monotonic full sample coverage, native/progress cancellation, recovery, rejected live-stream requests, exact silence, unload/reload and model switches. The same selected speech weights remained resident until replacement or unload. Encoder/kernel work remains non-preemptible. Installer tests covered deterministic Qwen tokenizer repair, corrupt-source rejection and cancellation; an unlisted weight-shard test protects the upstream directory enumeration boundary. Hashes precede every native load and observed file identities govern reuse.
+
+Raw results remain ignored under `gpu-adapters-2026-09-23/application-mlx-*`, including before/after executable/manifest hashes, exact runtime/model artifacts, environment, errors and long-audio derivation. The 84-case manifests and original isolated reports remain unchanged. A first lifecycle attempt used an incorrect fixture path and stopped before inference; the corrected run passed. A local HTTP fixture initially hit sandbox restrictions and passed outside the sandbox. Automatic approval review timed out on one benchmark launch; the permitted retry succeeded.
+
+The production GPU catalog records Parakeet's CC-BY4.0 conversion attribution, Qwen's Apache2.0 card and the pinned Whisper conversion/tokenizer cards' Apache2.0 metadata. OpenAI's Whisper source repository separately uses MIT. Runtime build metadata does not assign a license to this project's bridge: the project license remains unselected and dependencies retain their upstream licenses. Earlier measured runtime inventories used a generic MIT label; that label is corrected in the implementation without altering measured binaries or results.
+
+Cohere/Whisper Turbo GPU variants, other languages/automatic language detection, code-switching, singing, natural long-form corpora, sustained thermal/power behavior, distribution signing/notarization and CUDA hardware execution remain unqualified here. CPU/Automatic speech defaults are unchanged; Whisper Small remains outside the desktop picker.
+
+Final validation after the directory-integrity test and runtime-license metadata correction: feature-on core 39, inference 61 and models 24 unit tests; feature-off core 39, inference 60 and models 22; 28 frontend tests; Svelte with zero warnings/errors; strict Rust Clippy, ESLint, formatting and diff checks. The final app bundle rebuilt, all native resource hashes matched again, and the three-variant real Metal lifecycle plus tokenizer preparation tests passed against the final Rust build. This validation preceded the local integration commits. The shared checkout's unrelated user edits were preserved; these measurements must not be relabeled as post-commit reruns.
+
+### Reading the CPU versus GPU comparison
+
+The same 23 warm clean English cases give the following ASR medians on the named
+M5 Pro. CPU values are the earlier pinned-runtime baselines; MLX values are the
+packaged application screen above. These are completed-audio ASR calls, excluding
+capture, denoising, writing and UI. The LFM row uses its paired 84-case native
+screen; all rows exclude their first request. Earlier Qwen/Parakeet CPU clean
+medians included all 24 cases; the table below recalculates both CPU paths over
+the same 23 cases as the packaged MLX medians.
+
+| Model | CPU median | Metal median | Comparison boundary |
+| --- | --- | --- | --- |
+| LFM2.5 Audio | 407.28 ms | 205.25 ms | Same Q4 native artifacts, resident weights on both paths |
+| Whisper Small | 730.23 ms | 232.50 ms | Resident Sherpa INT8 versus resident MLX FP16 |
+| Qwen-ASR 0.6B | 1816.46 ms | 234.45 ms | Sherpa INT8 with per-job load versus resident MLX 8-bit |
+| Parakeet v3 | 953.33 ms | 55.20 ms | Sherpa INT8 with per-job load versus resident MLX BF16 compute |
+
+Only LFM keeps the runtime/artifacts/ownership comparable, and even that screen
+has uncontrolled host state and small quality differences. The other rows compare
+whole application configurations: residency, runtime, export and precision also
+change. They cannot establish GPU-only speedup. Cold load and shader compilation
+can dominate a first request. The held-out WER and non-speech failures recorded
+above remain part of the verdict. CUDA performance was not measured because this
+host has no NVIDIA GPU. Local commit identifiers and merge state belong to #35;
+raw benchmark binary identities remain attached to their original measurements.
+
+### Cold exact-zero MLX recordings
+
+The existing worker shortcut for cold exact-zero Sherpa recordings now also covers the qualified MLX variants. It validates the configuration, sample rate, model-directory layout, model hashes and packaged runtime hashes, reports complete sample coverage, then returns empty text without constructing speech weights. Verification success is not cached on this path. An already-selected resident model stays resident. Every finite nonzero sample, including extremely small positive/negative values, follows normal transcription; no amplitude threshold or additional speech/noise classifier was introduced. Cancellation and missing/corrupted installation checks still apply.
+
+A real Metal regression failed before this change because all three variants reported resident weights after an all-zero request; it passes afterward with `residentWeights=false` and no initialized speech provider. The existing repeated-speech, >60s coverage, cancellation/recovery and model-switch lifecycle also passes. Unit cases cover tiny nonzero input, incorrect sample rate, cancellation and missing installation. This is frozen-weight application/runtime work (category 1), with no native kernel or training change. It reuses the previously established exact-zero segment policy instead of claiming a new paper technique.
+
+One unloaded, one-second digital-zero request per variant gave these observations on the same M5 Pro/macOS27 host. The test binary uses the Rust development profile with the unchanged release Swift runtime. These are single observations, not latency distributions:
+
+| Model | Before | After | Speech weights loaded afterward |
+| --- | --- | --- | --- |
+| Parakeet | 3970.22 ms | 855.04 ms | No |
+| Qwen-ASR | 732.79 ms | 373.55 ms | No |
+| Whisper Small | 391.13 ms | 195.84 ms | No |
+
+Timings include integrity verification. The first request can also include worker/driver startup, and processes ran sequentially with uncontrolled host state and existing shader caches. Therefore the Parakeet difference cannot be attributed solely to weight loading. Avoiding speech weight construction is directly observed; general speech latency, ordinary microphone silence, noise hallucinations and model accuracy are not changed or requalified by this diagnostic. Raw before/after logs, binary identities, generated-input description and environment are retained in the ignored `application-mlx-zero-*` results.
+
+A separate source audit found no kernel-resource precedence defect: pinned MLX `ce45c52505c8158ea48d2a54e8caae05efd86bfe` [loads colocated `mlx.metallib` before SwiftPM bundles](https://github.com/ml-explore/mlx/blob/ce45c52505c8158ea48d2a54e8caae05efd86bfe/mlx/backend/metal/device.cpp#L139). The application verifies that file before loading the native model; all existing kernel copies matched. This source fact does not attest individual operator placement.
+
+Follow-up verification: 62 feature-on inference tests and 60 feature-off inference tests passed, along with both real-Metal lifecycle tests, strict Clippy, Rust formatting and diff checks. The optional `.app` rebuilt successfully with the shortcut. The earlier 252-case speech-parity screen is retained as earlier evidence; this focused change was validated with exact-zero, tiny-nonzero and lifecycle regressions rather than presented as a new full quality benchmark.
