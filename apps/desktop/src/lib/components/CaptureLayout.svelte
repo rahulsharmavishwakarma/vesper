@@ -62,8 +62,8 @@
     type="button"
     class="capture-brand"
     onclick={onOpen}
-    aria-label="Open transcribe"
-    title="Open transcribe">transcribe</button
+    aria-label="Open Vesper"
+    title="Open Vesper">vesper</button
   >
 {/snippet}
 {#snippet state()}

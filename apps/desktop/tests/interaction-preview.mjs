@@ -110,7 +110,7 @@ if (states) {
           return { ...runtime };
         case 'get_app_status':
           return {
-            name: 'transcribe',
+            name: 'Vesper',
             version: 'visual fixture',
             inference_ready: true,
             asr_model: 'Cohere Transcribe',

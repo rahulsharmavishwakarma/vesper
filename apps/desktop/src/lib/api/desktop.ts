@@ -45,7 +45,7 @@ export interface AppInfo {
 export async function getAppInfo(): Promise<AppInfo> {
   if (isTauri()) return invoke<AppInfo>('get_app_info');
   return {
-    name: 'transcribe',
+    name: 'Vesper',
     version: desktopPackage.version,
     buildType: 'browser-preview',
     os: 'browser',
@@ -112,7 +112,7 @@ export async function getAppStatus(): Promise<AppStatusSnapshot> {
     return {
       environment: 'browser-preview',
       status: {
-        name: 'transcribe',
+        name: 'Vesper',
         version: desktopPackage.version,
         inference_ready: false,
         asr_model: settings.models.customAsr?.name ?? ASR_MODELS[settings.models.asr],

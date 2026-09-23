@@ -100,7 +100,7 @@
   <p id="dictation-output-help" class="note">
     {settings.dictationOutput === 'paste'
       ? 'Applies to shortcut and floating-bar recordings. If the text field changes, your transcript stays available to copy.'
-      : 'Your finished transcript stays in transcribe.'}
+      : 'Your finished transcript stays in Vesper.'}
   </p>
 </div>
 {#if desktop && settings.dictationOutput === 'paste'}
@@ -118,7 +118,7 @@
           ? 'Your original clipboard is restored when available.'
           : permissions?.accessibility && permissions?.eventPosting
             ? 'Allow clipboard access in macOS Privacy & Security so your original clipboard can be preserved.'
-            : 'Enable transcribe in macOS System Settings → Privacy & Security → Accessibility, then check access.'}
+            : 'Enable Vesper in macOS System Settings → Privacy & Security → Accessibility, then check access.'}
       </p>
     </div>
     <div class="permission-actions">
