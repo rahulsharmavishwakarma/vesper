@@ -460,7 +460,6 @@
         {/each}
       </nav>
       <div class="sidebar-foot">
-        <button type="button" class="ghost" onclick={() => aboutSheet?.open()}>About Vesper</button>
         {#if pipelineBusy}<button
             type="button"
             class="activity-link"
@@ -480,16 +479,6 @@
       onfocusincapture={finishEntranceAnimations}
       onpointerovercapture={finishEntranceAnimations}
     >
-      <div class="topline">
-        <span>Your workspace <span class="breadcrumb-separator">/</span> {page.label}</span><span
-          class="workspace-state"
-          >{environment === 'browser-preview'
-            ? 'Preview'
-            : pipelineBusy
-              ? 'Working'
-              : 'Local workspace'}</span
-        >
-      </div>
       {#key activeView}<header class="page-header">
           <h1>{page.title}</h1>
           <p class="intro">{page.description}</p>
@@ -1117,15 +1106,6 @@
           </div>
         </div>
       </form>
-      <section
-        class="settings-section"
-        hidden={activeView !== 'settings'}
-        aria-labelledby="about-settings-heading"
-      >
-        <h2 id="about-settings-heading">About</h2>
-        <p class="note">App version and information.</p>
-        <button type="button" onclick={() => aboutSheet?.open()}>About Vesper</button>
-      </section>
       {#if loaded}
         <PersonalizationPanel
           desktop={environment === 'desktop'}
@@ -1134,6 +1114,17 @@
           disabled={pending !== null || pipelineBusy || downloadRequest !== null}
         />
       {/if}
+      <section class="settings-about" hidden={activeView !== 'settings'} aria-label="About">
+        <button
+          type="button"
+          class="settings-section settings-about-row"
+          aria-haspopup="dialog"
+          onclick={() => aboutSheet?.open()}
+        >
+          <span>About Vesper</span>
+          <Icon name="chevron" />
+        </button>
+      </section>
       <TranscriptionPanel
         onRuntimeChange={(runtime) => {
           engineActivity = runtime;

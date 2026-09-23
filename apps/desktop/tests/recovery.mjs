@@ -2988,7 +2988,31 @@ await test('Selected Vesper identity keeps every letter still and limits motion 
 
 await test('About sheet uses native metadata, copies only app info and restores focus', async () => {
   const state = await setup({ main: true });
-  const opener = target.querySelector('.sidebar-foot button');
+  assert(
+    !/Your workspace|Local workspace/.test(target.textContent),
+    'The app shows misleading workspace navigation',
+  );
+  assert(
+    !target.querySelector('.sidebar').textContent.includes('About'),
+    'About leaked into the main sidebar',
+  );
+  assert(target.querySelector('.settings-about').hidden, 'About is visible outside Settings');
+  [...target.querySelectorAll('.sidebar nav button')]
+    .find((node) => node.textContent.trim() === 'Settings')
+    .click();
+  await until(() => target.querySelector('.personalization'), 'Personal preferences did not load');
+  const preference = target.querySelector('#collect-training');
+  const originalPreference = preference.checked;
+  preference.click();
+  await tick();
+  const opener = target.querySelector('.settings-about-row');
+  assert(!opener.closest('form'), 'About was placed inside the editable settings form');
+  assert(!target.querySelector('.settings-about').hidden, 'About is missing from Settings');
+  const personalization = target.querySelector('.personalization');
+  assert(
+    personalization?.compareDocumentPosition(opener) & Node.DOCUMENT_POSITION_FOLLOWING,
+    'About interrupts personal preferences',
+  );
   opener.focus();
   opener.click();
   await until(() => target.querySelector('.about-sheet .version'), 'About metadata not loaded');
@@ -3003,6 +3027,12 @@ await test('About sheet uses native metadata, copies only app info and restores 
     'Build type was mislabeled as a stable channel',
   );
   assert(sheet.textContent.includes('macOS · Apple silicon'), 'Native platform not shown');
+  const copyButton = sheet.querySelector('.copy');
+  assert(
+    copyButton.getAttribute('aria-label') === 'Copy app info' &&
+      copyButton.title === 'Copy app info',
+    'Copy icon is missing its accessible name or tooltip',
+  );
   assert(
     ![...sheet.querySelectorAll('button')].some((button) =>
       /update|restart/i.test(button.textContent),
@@ -3021,11 +3051,12 @@ await test('About sheet uses native metadata, copies only app info and restores 
         },
       },
     });
-    sheet.querySelector('.copy').click();
+    copyButton.click();
     await until(
       () => sheet.textContent.includes('App information copied.'),
       'Copy feedback missing',
     );
+    assert(copyButton.getAttribute('aria-label') === 'Copied', 'Copy success name missing');
     assert(
       copied === 'Vesper\nVersion: 9.8.7\nBuild: Release build\nPlatform: macOS · Apple silicon',
       'Copy included unrelated data or incorrect metadata',
@@ -3039,6 +3070,8 @@ await test('About sheet uses native metadata, copies only app info and restores 
     () => !sheet.open && document.activeElement === opener,
     'Focus did not return to About opener',
   );
+  assert(preference.checked !== originalPreference, 'About discarded the unsaved preference');
+  assert(!state.counts.save_settings, 'About saved preferences');
   opener.click();
   opener.style.display = 'none';
   sheet.querySelector('.close').click();
@@ -3057,7 +3090,11 @@ await test('About remains accessible when metadata fails and offers clipboard re
         ? Promise.reject(new Error('Metadata unavailable'))
         : undefined,
   });
-  target.querySelector('.sidebar-foot button').click();
+  [...target.querySelectorAll('.sidebar nav button')]
+    .find((node) => node.textContent.trim() === 'Settings')
+    .click();
+  await tick();
+  target.querySelector('.settings-about-row').click();
   const sheet = target.querySelector('.about-sheet');
   await until(() => sheet.querySelector('[role="alert"]'), 'About load failure not shown');
   fail = false;

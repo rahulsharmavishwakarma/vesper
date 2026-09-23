@@ -15,14 +15,15 @@ are unchanged by the display-name update.
 
 ### App information
 
-Open **Settings → About → About Vesper**, the sidebar's **About Vesper**
-button, or **About Vesper…** in the native menu to view the About sheet.
+Open **Settings** and choose **About Vesper** at the bottom of the page,
+or choose **About Vesper…** in the native menu, to view the About sheet.
 The selected custom Songbird logo spells all six letters in the sidebar and
 About sheet; the app icon uses the bird alone. Only opening About animates its
 two small call marks once. The bird and letters stay still, and Reduce Motion
 disables that decoration.
 It shows the compiled application version, development/release build type and
-platform. **Copy app info** copies only those details; it does not include
+platform. The copy icon beside those details (tooltip: **Copy app info**) copies
+them for sharing in a bug report; it does not include
 recordings, transcripts or local paths. If clipboard access fails, the sheet
 provides selected text for manual copying. Escape or Close returns you to the
 previous screen without changing your settings.

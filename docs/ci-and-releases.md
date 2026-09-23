@@ -491,9 +491,9 @@ approval to introduce it.
 target OS/architecture without reading settings or inspecting models. The
 browser preview reads the desktop npm manifest and identifies itself as a
 preview. Both currently report `0.1.0`. The selected A03 About sheet is available
-from Settings, the sidebar and native About menus. Build revision and release
+from the final row in Settings and native About menus. Build revision and release
 channel are not supplied by this metadata contract; a release build is not
-proof of stable-channel publication. Copy app info includes only displayed
+proof of stable-channel publication. The copy icon includes only displayed
 metadata. The updater section states that automatic updates are unavailable.
 
 The remaining About/update proposal builds on that sheet:

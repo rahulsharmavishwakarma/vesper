@@ -56,6 +56,11 @@ For a new or unfamiliar interaction, consult the relevant platform guidance and 
 
 Prefer a direct field or action over a builder, nested panel, extra confirmation, or advanced terminology. Add another step only when it helps the person make a necessary decision or recover from a real failure. Existing Save behavior should remain consistent across the screen; do not add a preliminary confirmation just to move a value into the same settings draft.
 
+Main views start with their page heading. Do not add a workspace breadcrumb or a
+Local workspace badge: the app has no workspace navigation for those labels to
+describe. The existing sidebar selection provides navigation context; operation
+feedback and the browser-preview notice retain their own meaningful states.
+
 ## Shortcut recording
 
 Settings → Quick capture has one shortcut field for each action. Click the field (or focus it and activate it with Enter/Space), press the desired combination, then use **Save changes**. The field displays the captured combination with platform-appropriate modifier names. A valid capture changes only the draft. Escape restores the values present when editing began; Tab, clicking away, or switching windows stops recording keys and keeps a valid draft available to save. Restore defaults remains the existing settings action.
@@ -79,12 +84,27 @@ proposed layouts: A01 Quiet settings, A02 Split view and A03 About sheet. See th
 [preview guide](design/about-updates/README.md) for the interactive states and
 selection export. These are local review artifacts in the ignored `docs/design/`
 directory, consistent with the repository's treatment of exploratory studies.
-The implemented direction is **A03 About sheet**. Settings, the sidebar and
-native About entries open the same modal with app identity/version, Copy app info
-and the update section. It preserves the shared graphite/sage controls, keyboard
+The implemented direction is **A03 About sheet**. A full-width
+**About Vesper** entry at the end of Settings uses the same panel surface,
+border, radius, padding and heading typography as the preference sections.
+It and the native About entries open the same modal with app identity/version,
+platform details, a copy icon and a compact update status. It preserves the shared graphite/sage controls, keyboard
 dismissal and focus recovery demonstrated in the sample. Metadata comes from
 `get_app_info`, independently of model/settings readiness. A release build is
 not labeled as a verified stable release channel.
+
+Group version, build type and platform together. Copy uses the shared icon-button
+control with a tooltip and accessible name, a check on success, and selected text
+for clipboard failure recovery. Keep normal-state action wording out of the
+visible layout. The unavailable-update notice is one sentence below Software
+updates, without a large warning headline or repeated explanation.
+
+Keep About outside the main sidebar and below all editable preferences. The row
+is independent of Save changes, preserves unsaved drafts, remains available if
+settings cannot load, and returns keyboard focus after closing the sheet.
+This follows [Raycast's About placement within Settings](https://manual.raycast.com/settings)
+and [VS Code's native About entry](https://code.visualstudio.com/docs/supporting/faq),
+adapted to transcribe's existing controls rather than adding a new navigation tab.
 
 The samples use illustrative release data and simulated operations. The real
 sheet reports that automatic updates are unavailable and provides no simulated

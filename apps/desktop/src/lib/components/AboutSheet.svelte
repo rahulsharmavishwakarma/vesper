@@ -129,7 +129,7 @@
 >
   <header>
     <h2 id="about-heading">About Vesper</h2>
-    <button type="button" class="ghost close" aria-label="Close About" onclick={close}
+    <button type="button" class="quiet icon-button close" aria-label="Close About" onclick={close}
       ><Icon name="close" /></button
     >
   </header>
@@ -146,15 +146,20 @@
     <button type="button" onclick={load}>Try again</button>
   {:else if info}
     <div class="app-info">
-      <span><span class="version">{info.version}</span> · {buildLabel}</span>
+      <div class="metadata">
+        <p><span class="version">Version {info.version}</span> · {buildLabel}</p>
+        <p class="platform">{platform}</p>
+      </div>
       <button
         type="button"
-        class="ghost copy"
+        class="quiet icon-button copy"
         onclick={copy}
         disabled={copying}
         aria-busy={copying}
+        aria-label={copying ? 'Copying app info' : copied ? 'Copied' : 'Copy app info'}
+        title={copying ? 'Copying…' : copied ? 'Copied' : 'Copy app info'}
       >
-        <CopyGlyph {copied} />{copying ? 'Copying…' : copied ? 'Copied' : 'Copy app info'}
+        <CopyGlyph {copied} />
       </button>
     </div>
     {#if copyError}
@@ -168,11 +173,9 @@
       <span class="visually-hidden" role="status">{copied ? 'App information copied.' : ''}</span>
     {/if}
     <section class="updates" aria-labelledby="about-updates-heading">
-      <span class="eyebrow">Software updates</span>
-      <h3 id="about-updates-heading">Automatic updates aren’t available yet.</h3>
-      <p>This build does not check for or install application updates.</p>
+      <h3 id="about-updates-heading">Software updates</h3>
+      <p>Automatic updates aren’t available in this build.</p>
     </section>
-    <p class="platform">{platform}</p>
   {/if}
 </dialog>
 
@@ -203,15 +206,8 @@
   }
   header h2 {
     margin: 0;
-    font-size: 14px;
-    font-weight: 400;
-    color: var(--color-muted);
-  }
-  .close {
-    width: 44px;
-    height: 44px;
-    min-height: 44px;
-    padding: var(--space-2);
+    font-size: 15px;
+    font-weight: 500;
   }
   .identity {
     display: flex;
@@ -226,26 +222,30 @@
   }
   .identity p {
     margin: var(--space-1) 0 0;
-    font-size: 12px;
+    font-size: 13px;
     color: var(--color-muted);
   }
   .app-info {
     display: flex;
     align-items: center;
     justify-content: space-between;
-    flex-wrap: wrap;
-    gap: var(--space-2);
+    gap: var(--space-4);
     margin: var(--space-6) 0;
     color: var(--color-muted);
-    font-size: 12px;
+    font-size: 13px;
+  }
+  .metadata {
+    min-width: 0;
+    overflow-wrap: anywhere;
+  }
+  .metadata p {
+    margin: 0;
+  }
+  .metadata .platform {
+    margin-top: var(--space-1);
   }
   .version {
     font-variant-numeric: tabular-nums;
-  }
-  .copy {
-    min-height: 44px;
-    padding-inline: 0;
-    font-size: 12px;
   }
   .metadata-loading {
     margin-top: var(--space-6);
@@ -257,20 +257,15 @@
     padding-top: var(--space-6);
   }
   .updates h3 {
-    font-size: 20px;
+    font-size: 14px;
     font-weight: 500;
     line-height: 1.35;
-    margin: var(--space-3) 0 var(--space-2);
+    margin: 0 0 var(--space-2);
   }
   .updates p {
     font-size: 13px;
     color: var(--color-muted);
     margin: 0;
-  }
-  .platform {
-    margin: var(--space-6) 0 0;
-    color: var(--color-muted);
-    font-size: 12px;
   }
   textarea {
     font-size: 12px;
