@@ -5,6 +5,7 @@ import {
   canonicalIcns,
   iconPalette,
   iconSource,
+  menuBarIconSource,
   nativeIconFiles,
 } from './generate-brand-icons.mjs';
 
@@ -62,6 +63,24 @@ test('all existing desktop icons have the expected format and dimensions', () =>
       assert.ok(data.readUInt16LE(4) > 0);
     }
   }
+});
+
+test('the macOS menu bar uses only the canonical still bird as a template', () => {
+  const source = read('apps/desktop/src-tauri/icons/menu-bar-template.svg');
+  assert.equal(source, menuBarIconSource(svg));
+  assert.ok(source.includes(svg.match(/<g class="vesper-mark"[\s\S]*?<\/g>/)[0]));
+  assert.match(source, /color="#000000"/);
+  assert.doesNotMatch(source, /<rect\b|data-letter=|<animate\b|<style\b/);
+  const png = bytes('apps/desktop/src-tauri/icons/menu-bar-template.png');
+  assert.equal(png.readUInt32BE(16), 36);
+  assert.equal(png.readUInt32BE(20), 36);
+  assert.equal(png[25], 6, 'template retains alpha');
+  const tray = read('apps/desktop/src-tauri/src/menu_bar.rs');
+  assert.match(tray, /include_image!\("icons\/menu-bar-template\.png"\)/);
+  assert.match(tray, /builder\.icon\(MENU_BAR_ICON\)\.icon_as_template\(true\)/);
+  assert.doesNotMatch(tray, /\.title\(|\.set_title\(/);
+  assert.match(tray, /\.tooltip\(format!\("Vesper —/);
+  assert.match(tray, /\.show_menu_on_left_click\(true\)/);
 });
 
 test('display-name integration preserves storage and package identities', () => {

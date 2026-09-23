@@ -12,6 +12,10 @@ use crate::AppStorage;
 
 const TRAY_ID: &str = "transcribe-menu-bar";
 
+// The locked macOS tray backend displays this 2x image at 18 logical points.
+#[cfg(target_os = "macos")]
+const MENU_BAR_ICON: tauri::image::Image<'_> = tauri::include_image!("icons/menu-bar-template.png");
+
 #[derive(Clone, Debug, PartialEq, Eq)]
 struct MenuStatus {
     label: &'static str,
@@ -187,9 +191,9 @@ pub fn setup(app: &tauri::AppHandle) -> tauri::Result<()> {
                 }
             }
         });
-    // The word is the brand on macOS. Other system trays require a bitmap icon.
+    // Let macOS tint the original bird for the menu bar's current appearance.
     #[cfg(target_os = "macos")]
-    let builder = builder.title("vesper");
+    let builder = builder.icon(MENU_BAR_ICON).icon_as_template(true);
     #[cfg(not(target_os = "macos"))]
     let builder = if let Some(icon) = app.default_window_icon() {
         builder.icon(icon.clone())
@@ -278,6 +282,33 @@ pub fn prevent_exit(app: &tauri::AppHandle) -> bool {
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    #[cfg(target_os = "macos")]
+    #[test]
+    fn menu_bar_template_is_retina_monochrome_with_transparent_padding() {
+        let icon = MENU_BAR_ICON;
+        assert_eq!((icon.width(), icon.height()), (36, 36));
+        let mut visible = 0;
+        let mut antialiased = 0;
+        for (index, pixel) in icon.rgba().chunks_exact(4).enumerate() {
+            assert_eq!(
+                &pixel[..3],
+                &[0, 0, 0],
+                "template must not include the app tile"
+            );
+            let (x, y) = (index % 36, index / 36);
+            if x == 0 || x == 35 || y == 0 || y == 35 {
+                assert_eq!(pixel[3], 0, "mark must not touch an image edge");
+            }
+            visible += usize::from(pixel[3] > 0);
+            antialiased += usize::from(pixel[3] > 0 && pixel[3] < 255);
+        }
+        assert!(
+            (180..650).contains(&visible),
+            "nonempty bird without an opaque tile"
+        );
+        assert!(antialiased > 30, "retain smooth edges at menu-bar scale");
+    }
 
     #[test]
     fn quitting_never_cancels_active_work_and_blocks_new_work_after_idle_exit() {

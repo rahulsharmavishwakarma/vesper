@@ -53,11 +53,26 @@ export function canonicalIcns(data) {
   return Buffer.concat([data.subarray(0, 8), ...chunks.sort(Buffer.compare)]);
 }
 
-export function iconSource(svg) {
+function canonicalMark(svg) {
   const mark = svg.match(/<g class="vesper-mark"[\s\S]*?<\/g>/)?.[0];
   if (!mark || /<(?:script|image|use|foreignObject|animate)\b|\b(?:href|style)=/i.test(mark)) {
     throw new Error('Expected the self-contained canonical Vesper mark.');
   }
+  return mark;
+}
+
+export function menuBarIconSource(svg) {
+  return `<svg xmlns="http://www.w3.org/2000/svg" width="36" height="36" viewBox="7 5 96 96">
+  <!-- Generated from src/assets/vesper.svg; transparent macOS template, no tile or lettering. -->
+  <g color="#000000">
+    ${canonicalMark(svg)}
+  </g>
+</svg>
+`;
+}
+
+export function iconSource(svg) {
+  const mark = canonicalMark(svg);
   return `<svg xmlns="http://www.w3.org/2000/svg" width="512" height="512" viewBox="0 0 512 512">
   <!-- Generated from src/assets/vesper.svg by scripts/generate-brand-icons.mjs. -->
   <rect x="16" y="16" width="480" height="480" rx="112" fill="${iconPalette.background}"/>
@@ -70,23 +85,38 @@ export function iconSource(svg) {
 
 export function generateIcons({ check = false } = {}) {
   const directory = join(root, 'apps/desktop/src-tauri/icons');
-  const source = iconSource(readFileSync(join(root, 'apps/desktop/src/assets/vesper.svg'), 'utf8'));
+  const svg = readFileSync(join(root, 'apps/desktop/src/assets/vesper.svg'), 'utf8');
+  const source = iconSource(svg);
+  const menuBarSource = menuBarIconSource(svg);
   const work = mkdtempSync(join(tmpdir(), 'vesper-icons-'));
   const input = join(work, 'source.svg');
   const output = join(work, 'rendered');
   writeFileSync(input, source);
+  const menuBarInput = join(work, 'menu-bar-template.svg');
+  const menuBarOutput = join(work, 'menu-bar');
+  writeFileSync(menuBarInput, menuBarSource);
   const cli = require.resolve('@tauri-apps/cli/tauri.js');
-  for (const sizes of [[], ['--png', '64', '--png', '256']]) {
-    const result = spawnSync(process.execPath, [cli, 'icon', input, '--output', output, ...sizes], {
-      cwd: root,
-      encoding: 'utf8',
-    });
+  for (const [image, destination, sizes] of [
+    [input, output, []],
+    [input, output, ['--png', '64', '--png', '256']],
+    [menuBarInput, menuBarOutput, ['--png', '36']],
+  ]) {
+    const result = spawnSync(
+      process.execPath,
+      [cli, 'icon', image, '--output', destination, ...sizes],
+      {
+        cwd: root,
+        encoding: 'utf8',
+      },
+    );
     if (result.error) throw result.error;
     if (result.status !== 0)
       throw new Error(result.stderr || result.stdout || 'Icon generation failed.');
   }
   const expected = [
     ['source.svg', Buffer.from(source)],
+    ['menu-bar-template.svg', Buffer.from(menuBarSource)],
+    ['menu-bar-template.png', readFileSync(join(menuBarOutput, '36x36.png'))],
     ...nativeIconFiles.map((name) => {
       const data = readFileSync(join(output, name));
       return [name, name === 'icon.icns' ? canonicalIcns(data) : data];
@@ -99,11 +129,13 @@ export function generateIcons({ check = false } = {}) {
         throw new Error(`${name} is stale. Run node scripts/generate-brand-icons.mjs.`);
       }
     }
-    console.log(`Canonical SVG and ${nativeIconFiles.length} desktop icon derivatives match.`);
+    console.log(
+      `Canonical SVG, ${nativeIconFiles.length} desktop icons and menu-bar template match.`,
+    );
   } else {
     for (const [name, data] of expected) writeFileSync(join(directory, name), data);
     console.log(
-      `Generated source.svg and ${nativeIconFiles.length} existing desktop icon derivatives.`,
+      `Generated source.svg, ${nativeIconFiles.length} desktop icons and menu-bar template.`,
     );
   }
   // Scratch output is retained in the OS temp directory for diagnosis; no mobile

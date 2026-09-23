@@ -17,9 +17,12 @@ license or establish that the Vesper name is legally available.
 in About, bounded by the available width. Existing sage/ink tokens provide its
 colours. The sidebar's existing button retains its accessible destination and
 keyboard behavior; About exposes the SVG as “Vesper.” The compact capture strip
-and macOS menu bar keep readable text instead of squeezing the full artwork
-into an icon-sized space. Native app icons use a still bird on the existing
-graphite rounded tile, generated from the same source rather than redrawn.
+keeps readable text. The macOS menu bar uses only the still bird and its two
+call strokes, with no wordmark or tile. Its transparent template lets macOS
+choose the monochrome tint; the tooltip retains the Vesper name and activity.
+Clicking continues to open the same native menu. Native app icons use a still
+bird on the existing graphite rounded tile, generated from the same source
+rather than redrawn.
 
 Only About opening triggers a finite, staggered reveal of the two call strokes.
 The sidebar, bird body and letters never animate. Motion changes only call

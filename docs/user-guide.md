@@ -136,8 +136,10 @@ Insertion depends on the target app and its focus state; if it is unavailable,
 use **Copy**. External-app compatibility is still being qualified.
 
 You can change the capture design, move the floating controls, or hide them
-while keeping shortcuts active. The menu-bar **vesper** item provides
-recording status and quick access to History, Models, Settings and Quit.
+while keeping shortcuts active. On macOS, click the **bird logo** in the menu
+bar for recording status and quick access to History, Models, Settings and Quit.
+It shows only the still logo, without the Vesper wordmark or a background tile;
+macOS adjusts its monochrome appearance. Hover for the Vesper name and status.
 Closing the main window keeps the app running. Finish or cancel active work
 before quitting.
 
