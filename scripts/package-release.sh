@@ -15,7 +15,8 @@ arm64) architecture=arm64 ;;
   ;;
 esac
 
-app=target/release/bundle/macos/transcribe.app
+product_name=$(node -p "require('./apps/desktop/src-tauri/tauri.conf.json').productName")
+app="target/release/bundle/macos/$product_name.app"
 test -d "$app" || {
   printf '%s\n' "missing $app" >&2
   exit 1
@@ -31,7 +32,7 @@ test -x "$app/Contents/MacOS/$executable" || {
   exit 1
 }
 
-dmg="target/release/bundle/dmg/transcribe_${version}_aarch64.dmg"
+dmg="target/release/bundle/dmg/${product_name}_${version}_aarch64.dmg"
 test -f "$dmg" || {
   printf '%s\n' "missing $dmg" >&2
   exit 1

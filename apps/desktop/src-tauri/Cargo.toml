@@ -1,6 +1,6 @@
 [package]
 name = "transcribe-desktop"
-description = "transcribe: local speech recognition and faithful text cleanup"
+description = "Vesper: local speech recognition and faithful text cleanup"
 version.workspace = true
 edition.workspace = true
 rust-version.workspace = true

@@ -207,11 +207,11 @@ To run the desktop shell:
 npm run desktop:dev
 ```
 
-The Tauri product name is `transcribe`, with application identifier `com.transcribe.desktop`. The Models screen pairs each supported ASR/cleanup dropdown with its own download action; the complete selected pipeline must be ready before recording or transcribing a file. Merely launching the app or listing input devices does not start capture; recording starts only when Record is requested.
+The Tauri product name is `Vesper`, with the unchanged application identifier `com.transcribe.desktop`. Package names, environment variables, browser storage keys, data directories and published-asset filenames retain their compatibility names; the display-name change does not migrate or delete data. The Models screen pairs each supported ASR/cleanup dropdown with its own download action; the complete selected pipeline must be ready before recording or transcribing a file. Merely launching the app or listing input devices does not start capture; recording starts only when Record is requested.
 
-The macOS menu bar displays the lowercase **transcribe** wordmark. Click it for current activity, Start/Stop recording, Open transcribe, History, Models, Settings and Quit. Menu recording uses the same quick-capture controller and default input as the global shortcut. The floating strip appears for menu preflight so missing models or microphones can be explained; after a successful start it respects the saved strip preference. Opening a screen never saves pending settings. Navigation requested before the main WebView is ready is retained until its listener mounts.
+The macOS menu bar displays the lowercase **vesper** text title. Click it for current activity, Start/Stop recording, Open Vesper, History, Models, Settings and Quit. Menu recording uses the same quick-capture controller and default input as the global shortcut. The floating strip appears for menu preflight so missing models or microphones can be explained; after a successful start it respects the saved strip preference. Opening a screen never saves pending settings. Navigation requested before the main WebView is ready is retained until its listener mounts.
 
-Closing a window hides it while keeping recording and unsaved drafts intact. Reopen the workspace from the menu or the macOS Dock. **Quit transcribe** is disabled during active work. Cmd-Q and Dock quit also refuse to exit during recording, inference or model operations and bring Dictate forward; finish or cancel the operation, then quit. An accepted idle quit blocks new operations atomically. Force termination is outside this protection.
+Closing a window hides it while keeping recording and unsaved drafts intact. Reopen the workspace from the menu or the macOS Dock. **Quit Vesper** is disabled during active work. Cmd-Q and Dock quit also refuse to exit during recording, inference or model operations and bring Dictate forward; finish or cancel the operation, then quit. An accepted idle quit blocks new operations atomically. Force termination is outside this protection.
 
 `src-tauri/src/menu_bar.rs` uses [Tauri's native tray API](https://v2.tauri.app/learn/system-tray/) with OS-rendered menus. A 500 ms timer reads only the existing runtime activity and updates native items when their state changes; it does not inspect model files, load weights or request microphone samples. Idle means no operation is running, not that models have been downloaded. Other desktop platforms use the existing application bitmap because their system trays do not provide the same macOS text-only entry; Linux and Windows tray behavior still needs platform qualification.
 
@@ -233,10 +233,31 @@ The macOS override `tauri.macos.conf.json` enables `.app` bundling and declares
 macOS 10.15 as the minimum because the bundled llama.cpp runtime uses C++
 filesystem APIs unavailable under Tauri's older default deployment target.
 `make build-debug` creates
-`target/debug/bundle/macos/transcribe.app`; verify its generated Info.plist and
+`target/debug/bundle/macos/Vesper.app`; verify its generated Info.plist and
 microphone permission flow on the intended macOS release. Signing, notarization,
 and sandbox entitlements for release distribution remain packaging work. CI does
 not grant microphone permission or record audio.
+
+### Brand assets
+
+Edit only `apps/desktop/src/assets/vesper.svg` for the selected bird/wordmark.
+The frontend embeds that trusted, bundled SVG without a runtime fetch or font.
+Regenerate desktop icons using the existing locked Tauri CLI after `npm ci`:
+
+```sh
+node scripts/generate-brand-icons.mjs
+node scripts/generate-brand-icons.mjs --check
+node --test scripts/brand-identity.test.mjs
+```
+
+The generator extracts the canonical bird, resolves the existing graphite/sage
+tokens to sRGB, and updates `icons/source.svg` plus the 18 existing PNG/ICO/ICNS
+derivatives. It normalizes ICNS entry ordering for reproducible bytes and does
+not copy mobile assets or declare new platform support. `--check` regenerates
+into an OS temporary directory and compares without changing tracked files.
+Temporary rendering output remains there for diagnosis. If colour tokens change,
+update the resolved palette and its test together. Browser checks do not qualify
+native Dock rendering, microphone permission or Windows/Linux packaging.
 
 ## Check changes
 

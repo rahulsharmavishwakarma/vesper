@@ -3,6 +3,6 @@
 <plist version="1.0">
 <dict>
   <key>NSMicrophoneUsageDescription</key>
-  <string>transcribe records speech when you press Record to transcribe it locally on your device.</string>
+  <string>Vesper records speech when you press Record to transcribe it locally on your device.</string>
 </dict>
 </plist>

@@ -1,6 +1,6 @@
 {
   "$schema": "https://schema.tauri.app/config/2",
-  "productName": "transcribe",
+  "productName": "Vesper",
   "version": "0.1.0",
   "identifier": "com.transcribe.desktop",
   "build": {
@@ -14,7 +14,7 @@
     "windows": [
       {
         "label": "main",
-        "title": "transcribe",
+        "title": "Vesper",
         "width": 1180,
         "height": 840,
         "minWidth": 360,
@@ -22,7 +22,7 @@
       },
       {
         "label": "quick-capture",
-        "title": "transcribe quick capture",
+        "title": "Vesper quick capture",
         "url": "index.html",
         "width": 396,
         "height": 192,
