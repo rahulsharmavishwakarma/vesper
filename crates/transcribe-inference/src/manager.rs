@@ -426,14 +426,25 @@ impl WorkerState {
                 self.sherpa_load_count += 1;
                 resident.load_ordinal = self.sherpa_load_count;
             }
+            #[cfg(feature = "mlx")]
+            if let adapters::SpeechModel::Mlx(resident) = &mut model {
+                if key != adapters::speech_key(config, model_root)? {
+                    return Err(native(
+                        "resident MLX identity",
+                        "files changed while loading",
+                    ));
+                }
+                self.sherpa_load_count += 1;
+                resident.load_ordinal = self.sherpa_load_count;
+            }
             self.speech = Some((key, model));
         }
         Ok(&self.speech.as_ref().expect("recognizer was initialized").1)
     }
 
-    /// Preserve the existing cold exact-zero path: verify, report completion,
-    /// and avoid constructing ONNX sessions or caching verification success.
-    fn sherpa_silence_without_model(
+    /// Verify cold exact-zero recordings and report coverage without loading
+    /// Sherpa or MLX weights. Verification success is never cached here.
+    fn completed_silence_without_model(
         &mut self,
         audio: &MonoPcm,
         config: &AppConfig,
@@ -441,13 +452,21 @@ impl WorkerState {
         cancelled: &AtomicBool,
         progress: &TranscriptionProgressSink,
     ) -> Result<bool> {
-        if !matches!(
-            config.speech_adapter().kind,
-            transcribe_core::AdapterKind::CohereAsr | transcribe_core::AdapterKind::Whisper
-        ) {
+        if !config.uses_mlx_speech()
+            && !matches!(
+                config.speech_adapter().kind,
+                transcribe_core::AdapterKind::CohereAsr | transcribe_core::AdapterKind::Whisper
+            )
+        {
             return Ok(false);
         }
-        crate::offline_asr::validate_audio(audio, config, cancelled)?;
+        if config.uses_mlx_speech() {
+            check_cancelled(cancelled)?;
+            config.validate()?;
+            audio.require_sample_rate(transcribe_audio::ASR_SAMPLE_RATE)?;
+        } else {
+            crate::offline_asr::validate_audio(audio, config, cancelled)?;
+        }
         if audio.samples().iter().any(|sample| *sample != 0.0) {
             return Ok(false);
         }
@@ -611,7 +630,7 @@ fn worker_loop(
                 );
                 let result = prepared.and_then(|processed| {
                 let audio = processed.as_ref().unwrap_or(&audio);
-                state.sherpa_silence_without_model(audio, &config, &model_root, &cancelled, &progress)
+                state.completed_silence_without_model(audio, &config, &model_root, &cancelled, &progress)
                     .and_then(|handled| {
                         if handled {
                             record_evidence(&evidence, &operation_id, "asr", serde_json::json!({
@@ -645,6 +664,8 @@ fn worker_loop(
                 {
                     state.speech = None;
                 }
+                #[cfg(feature = "mlx")]
+                if state.speech.as_ref().is_some_and(|(_, model)| matches!(model, adapters::SpeechModel::Mlx(resident) if !resident.healthy.get())) { state.speech = None; }
                 let _ = reply.send(result);
             }
             Command::Rewrite {
@@ -940,6 +961,69 @@ mod tests {
             Err(InferenceError::Cancelled)
         ));
         assert!(state.rewriter.is_none());
+    }
+
+    #[test]
+    #[cfg(feature = "mlx")]
+    fn mlx_zero_shortcut_never_treats_quiet_audio_as_silence() {
+        let root = tempfile::tempdir().unwrap();
+        let mut state = WorkerState::new();
+        let progress: TranscriptionProgressSink = Arc::new(|_| panic!("no completed input"));
+        let mut config = AppConfig {
+            compute_backend: transcribe_core::ComputeBackend::Metal,
+            ..AppConfig::default()
+        };
+        for model in [
+            transcribe_core::AsrModel::ParakeetTdt06bV3,
+            transcribe_core::AsrModel::Qwen3Asr06b,
+            transcribe_core::AsrModel::WhisperSmall,
+        ] {
+            config.models.asr = model;
+            for sample in [f32::MIN_POSITIVE, -f32::MIN_POSITIVE, 0.000_001, -0.000_001] {
+                let audio = MonoPcm::new(vec![sample; 160], 16000).unwrap();
+                assert!(!state
+                    .completed_silence_without_model(
+                        &audio,
+                        &config,
+                        root.path(),
+                        &AtomicBool::new(false),
+                        &progress
+                    )
+                    .unwrap());
+            }
+            let wrong_rate = MonoPcm::new(vec![0.0; 160], 48000).unwrap();
+            assert!(state
+                .completed_silence_without_model(
+                    &wrong_rate,
+                    &config,
+                    root.path(),
+                    &AtomicBool::new(false),
+                    &progress
+                )
+                .is_err());
+            let zeros = MonoPcm::new(vec![-0.0; 160], 16000).unwrap();
+            assert!(matches!(
+                state.completed_silence_without_model(
+                    &zeros,
+                    &config,
+                    root.path(),
+                    &AtomicBool::new(true),
+                    &progress
+                ),
+                Err(InferenceError::Cancelled)
+            ));
+            // A zero waveform must not hide an invalid model installation.
+            assert!(state
+                .completed_silence_without_model(
+                    &zeros,
+                    &config,
+                    root.path(),
+                    &AtomicBool::new(false),
+                    &progress
+                )
+                .is_err());
+            assert!(state.speech.is_none());
+        }
     }
 
     #[test]
@@ -1408,6 +1492,10 @@ mod tests {
         let mut config = AppConfig::default();
         config.models.asr = transcribe_core::AsrModel::Nemotron35AsrStreaming06b;
         config.compute_backend = transcribe_core::ComputeBackend::Cpu;
+        if let Ok(backend) = std::env::var("TRANSCRIBE_NEMO_TEST_BACKEND") {
+            config.compute_backend = serde_json::from_value(serde_json::Value::String(backend))
+                .expect("valid explicit test backend");
+        }
         let expected =
             "Ask not what your country can do for you. Ask what you can do for your country.";
 

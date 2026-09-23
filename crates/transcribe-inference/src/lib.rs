@@ -7,11 +7,14 @@
 mod adapters;
 mod artifact_identity;
 pub mod audio_frontend;
+mod backend;
 mod capabilities;
 mod fidelity;
 mod lfm;
 mod llama_runtime;
 mod manager;
+#[cfg(feature = "mlx")]
+mod mlx;
 mod nemotron;
 mod offline_asr;
 mod parakeet;
@@ -140,7 +143,9 @@ pub fn run(
 /// Selected runtime/artifact identifiers, not an installation attestation.
 /// The model installer records actual artifact hashes separately.
 pub fn model_versions(config: &AppConfig) -> Value {
-    let asr = if config.models.custom_asr.is_none() {
+    let asr = if config.uses_mlx_speech() {
+        json!({"modelId":config.models.asr.id(),"runtime":config.speech_adapter().runtime,"runtimeRevision":config.speech_adapter().runtime_revision,"provider":"metal","modelLifetime":"resident-in-manager-fresh-segment-decoder", "streamingMode":"completed-recordings", "language":config.language,"artifacts":transcribe_models::selected(config).unwrap_or_default().into_iter().filter(|a| a.role == "asr").collect::<Vec<_>>()})
+    } else if config.models.custom_asr.is_none() {
         match config.speech_adapter().kind {
             AdapterKind::Whisper => {
                 json!({"modelId":config.models.asr.id(), "revision":whisper::export(config.models.asr).1,
@@ -159,7 +164,7 @@ pub fn model_versions(config: &AppConfig) -> Value {
                 json!({"modelId":config.models.asr.id(), "revision":if config.speech_adapter().kind == AdapterKind::QwenAsr { offline_asr::QWEN_REVISION } else { offline_asr::COHERE_REVISION }, "runtime":"sherpa-onnx", "runtimeVersion":"1.13.8", "runtimeRevision":"11afbd009a7f8c08f4bcf2fc1b265d0df4670fbf", "runtimeBuildId":env!("TRANSCRIBE_SHERPA_BUILD_ID"), "runtimePatchSha256":env!("TRANSCRIBE_SHERPA_PATCH_SHA256"), "completionReportVersion":1, "provider":"cpu", "modelLifetime":if config.speech_adapter().kind == AdapterKind::CohereAsr { "resident-in-manager-fresh-stream-per-segment" } else { "per-job" }, "maxRecordingSeconds":0, "decoderBudget":if config.speech_adapter().kind == AdapterKind::QwenAsr { json!({"maxTotalTokens":offline_asr::QWEN_CONTEXT_TOKENS,"maxNewTokens":offline_asr::QWEN_CONTEXT_TOKENS}) } else { serde_json::Value::Null }, "segmentation":{"policy":"balanced-low-energy-v1", "maxSegmentSeconds":offline_asr::MAX_SEGMENT_SECONDS, "boundaryLookbackMs":1000, "energyWindowMs":100, "boundaryStepMs":10, "overlapSamples":0, "streamLifetime":"per-segment"}, "language":config.language, "artifacts":transcribe_models::selected(config).unwrap_or_default().into_iter().filter(|file| file.role == "asr").collect::<Vec<_>>()})
             }
             AdapterKind::LfmAudio => {
-                json!({"modelId":config.models.asr.id(), "revision":lfm::REVISION, "runtime":"llama-cpp-2/mtmd", "runtimeVersion":"0.1.156", "provider":"cpu", "modelLifetime":"resident-weights-fresh-context-per-segment", "contextTokens":lfm::CONTEXT_TOKENS, "maxOutputTokens":lfm::MAX_OUTPUT_TOKENS, "sampling":{"strategy":"greedy"}, "languageMode":"explicit-english", "streamingMode":"completed-recordings", "segmentation":{"policy":"balanced-low-energy-v1", "maxSegmentSeconds":lfm::MAX_SEGMENT_SECONDS, "boundaryLookbackMs":1000, "energyWindowMs":100, "boundaryStepMs":10, "overlapSamples":0}, "cancellation":"before-and-after-audio-evaluation-and-between-text-tokens", "artifacts":transcribe_models::selected(config).unwrap_or_default().into_iter().filter(|f| f.role == "asr").collect::<Vec<_>>()})
+                json!({"modelId":config.models.asr.id(), "revision":lfm::REVISION, "runtime":"llama-cpp-2/mtmd", "runtimeVersion":"0.1.156", "provider":qwen::provider(config), "modelLifetime":"resident-weights-fresh-context-per-segment", "contextTokens":lfm::CONTEXT_TOKENS, "maxOutputTokens":lfm::MAX_OUTPUT_TOKENS, "sampling":{"strategy":"greedy"}, "languageMode":"explicit-english", "streamingMode":"completed-recordings", "segmentation":{"policy":"balanced-low-energy-v1", "maxSegmentSeconds":lfm::MAX_SEGMENT_SECONDS, "boundaryLookbackMs":1000, "energyWindowMs":100, "boundaryStepMs":10, "overlapSamples":0}, "cancellation":"before-and-after-audio-evaluation-and-between-text-tokens", "artifacts":transcribe_models::selected(config).unwrap_or_default().into_iter().filter(|f| f.role == "asr").collect::<Vec<_>>()})
             }
             AdapterKind::NemoRnnt => {
                 let provider =

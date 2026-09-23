@@ -11,6 +11,8 @@ use transcribe_core::{AdapterKind, AppConfig, PersonalizationProfile};
 
 #[derive(PartialEq, Eq)]
 pub(crate) enum SpeechKey {
+    #[cfg(feature = "mlx")]
+    Mlx(crate::mlx::RecognizerKey),
     Nemo(nemotron::RecognizerKey),
     Lfm(lfm::RecognizerKey),
     Sherpa(resident_sherpa::RecognizerKey),
@@ -19,6 +21,11 @@ pub(crate) enum SpeechKey {
 
 pub(crate) fn speech_key(config: &AppConfig, root: &Path) -> Result<SpeechKey> {
     config.validate()?;
+    require_runtime(config)?;
+    #[cfg(feature = "mlx")]
+    if config.uses_mlx_speech() {
+        return Ok(SpeechKey::Mlx(crate::mlx::key(config, root)?));
+    }
     Ok(match config.speech_adapter().kind {
         AdapterKind::NemoRnnt => SpeechKey::Nemo(nemotron::key(config, root)?),
         AdapterKind::LfmAudio => SpeechKey::Lfm(lfm::key(config, root)?),
@@ -33,6 +40,8 @@ pub(crate) fn speech_key(config: &AppConfig, root: &Path) -> Result<SpeechKey> {
 /// Per-job adapters keep their established lifetimes; registration never claims
 /// residency or native streaming merely because a checkpoint supports it.
 pub(crate) enum SpeechModel {
+    #[cfg(feature = "mlx")]
+    Mlx(crate::mlx::Recognizer),
     Nemo(nemotron::Recognizer),
     Lfm(lfm::Recognizer),
     Sherpa(resident_sherpa::Recognizer),
@@ -41,6 +50,13 @@ pub(crate) enum SpeechModel {
 
 impl SpeechModel {
     pub(crate) fn load(config: &AppConfig, root: &Path, cancelled: &AtomicBool) -> Result<Self> {
+        #[cfg(feature = "mlx")]
+        if config.uses_mlx_speech() {
+            return Ok(Self::Mlx(crate::mlx::Recognizer::load(
+                config, root, cancelled,
+            )?));
+        }
+        require_runtime(config)?;
         match config.speech_adapter().kind {
             AdapterKind::CohereAsr | AdapterKind::Whisper => Ok(Self::Sherpa(
                 resident_sherpa::Recognizer::load(config, root, cancelled)?,
@@ -73,6 +89,8 @@ impl SpeechModel {
         profile: &PersonalizationProfile,
     ) -> Result<String> {
         match self {
+            #[cfg(feature = "mlx")]
+            Self::Mlx(model) => model.transcribe(audio, config, root, cancelled, &**progress),
             Self::Nemo(model) => model.transcribe_with_phrases(
                 audio,
                 config,
@@ -98,6 +116,8 @@ impl SpeechModel {
         profile: &PersonalizationProfile,
     ) -> Result<transcribe_nemo::Stream<'a>> {
         match self {
+            #[cfg(feature = "mlx")]
+            Self::Mlx(_) => Err(InferenceError::UnsupportedAsr(config.models.asr.id())),
             Self::Nemo(model) => model.stream_with_phrases(
                 config,
                 id,
@@ -115,6 +135,10 @@ impl SpeechModel {
         config: &AppConfig,
         profile: &PersonalizationProfile,
     ) -> serde_json::Value {
+        #[cfg(feature = "mlx")]
+        if let Self::Mlx(model) = self {
+            return model.evidence(config);
+        }
         if let Self::Sherpa(model) = self {
             return serde_json::json!({"requestedBackend":config.compute_backend,
                 "initializedProvider":"cpu", "operatorPlacement":"unknown",
@@ -125,9 +149,18 @@ impl SpeechModel {
                 "evidence":"verified-resident-sherpa-fresh-segment-streams"});
         }
         if let Self::Lfm(model) = self {
-            return serde_json::json!({"requestedBackend":config.compute_backend, "initializedProvider":"cpu", "projectorProvider":"cpu", "operatorPlacement":"explicit-cpu-only", "nativeGraphThreads":crate::worker_threads(), "modelLoadUs":model.load_us, "metrics":*model.metrics.borrow(), "contextualPhrasesSupported":false, "contextualPhraseCount":0, "evidence":"explicit-empty-lm-devices-and-cpu-projector"});
+            return serde_json::json!({"requestedBackend":config.compute_backend,
+                "initializedProvider":model.plan.provider, "deviceIndex":model.plan.device,
+                "fallbackReason":model.fallback_reason,
+                "projectorProvider":if model.plan.device.is_some() { "gpu-requested" } else { "cpu" },
+                "operatorPlacement":if model.plan.device.is_some() { "unknown" } else { "explicit-cpu-only" },
+                "nativeGraphThreads":crate::worker_threads(), "modelLoadUs":model.load_us,
+                "metrics":*model.metrics.borrow(), "contextualPhrasesSupported":false,
+                "contextualPhraseCount":0, "evidence":"detected-backbone-device-and-context-probe;mtmd-placement-not-exposed"});
         }
         let initialized = match self {
+            #[cfg(feature = "mlx")]
+            Self::Mlx(_) => Some("metal"),
             Self::Nemo(m) => Some(m.initialized_provider),
             Self::PerJob(
                 AdapterKind::SherpaTransducer | AdapterKind::QwenAsr | AdapterKind::CohereAsr,
@@ -146,6 +179,17 @@ pub(crate) fn transcribe_once(
     cancelled: &AtomicBool,
     progress: &TranscriptionProgressSink,
 ) -> Result<String> {
+    #[cfg(feature = "mlx")]
+    if config.uses_mlx_speech() {
+        return crate::mlx::Recognizer::load(config, root, cancelled)?.transcribe(
+            audio,
+            config,
+            root,
+            cancelled,
+            &**progress,
+        );
+    }
+    require_runtime(config)?;
     match kind {
         AdapterKind::NemoRnnt => nemotron::transcribe(audio, config, root, cancelled),
         AdapterKind::LfmAudio => {
@@ -196,8 +240,16 @@ impl TextModel {
     pub(crate) fn evidence(&self) -> serde_json::Value {
         match self {
             Self::Llama(model) => {
-                serde_json::json!({"initializedProvider":model.initialized_provider, "operatorPlacement":"unknown", "metrics":*model.metrics.borrow()})
+                serde_json::json!({"initializedProvider":model.initialized_provider, "fallbackReason":model.fallback_reason, "operatorPlacement":"unknown", "metrics":*model.metrics.borrow()})
             }
         }
     }
+}
+
+// Cargo may unify core capability features through another workspace consumer.
+fn require_runtime(config: &AppConfig) -> Result<()> {
+    if config.uses_mlx_speech() && !cfg!(feature = "mlx") {
+        return Err(InferenceError::UnsupportedAsr(config.models.asr.id()));
+    }
+    Ok(())
 }
