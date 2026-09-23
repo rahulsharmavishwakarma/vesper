@@ -9,6 +9,7 @@ members = [
     "crates/transcribe-data",
     "crates/transcribe-models",
     "crates/transcribe-nemo",
+    "crates/transcribe-mlx",
     "crates/transcribe-eval",
     "crates/transcribe-desktop-platform",
 ]
@@ -36,6 +37,7 @@ transcribe-inference = { path = "crates/transcribe-inference" }
 transcribe-data = { path = "crates/transcribe-data" }
 transcribe-models = { path = "crates/transcribe-models" }
 transcribe-nemo = { path = "crates/transcribe-nemo" }
+transcribe-mlx = { path = "crates/transcribe-mlx" }
 transcribe-eval = { path = "crates/transcribe-eval" }
 
 [workspace.lints.rust]

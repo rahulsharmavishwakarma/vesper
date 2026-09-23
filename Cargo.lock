@@ -5427,9 +5427,22 @@ dependencies = [
  "thiserror 2.0.20",
  "transcribe-audio",
  "transcribe-core",
+ "transcribe-mlx",
  "transcribe-models",
  "transcribe-nemo",
  "unicode-segmentation",
+]
+
+[[package]]
+name = "transcribe-mlx"
+version = "0.1.0"
+dependencies = [
+ "libloading 0.8.9",
+ "serde",
+ "serde_json",
+ "thiserror 2.0.20",
+ "transcribe-audio",
+ "transcribe-core",
 ]
 
 [[package]]
