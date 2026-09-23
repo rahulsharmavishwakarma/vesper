@@ -59,7 +59,7 @@ export function publishRelease({ repository, tag, directory = 'release', run }) 
       '--verify-tag',
       '--generate-notes',
       '--title',
-      `transcribe ${tag}`,
+      `Vesper ${tag}`,
       ...options,
     ]);
   }

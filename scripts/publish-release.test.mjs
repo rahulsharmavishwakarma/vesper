@@ -47,6 +47,7 @@ test('a new stable release stays draft until the DMG and checksums are uploaded'
   );
   assert.ok(f.calls[1].includes('--draft'));
   assert.ok(f.calls[1].includes('--verify-tag'));
+  assert.equal(f.calls[1][f.calls[1].indexOf('--title') + 1], 'Vesper v1.2.3');
   for (const name of ASSET_NAMES) assert.ok(f.calls[2].includes(path.join(f.directory, name)));
   assert.ok(f.calls[3].includes('--draft=false'));
   assert.ok(f.calls[3].includes('--latest=true'));

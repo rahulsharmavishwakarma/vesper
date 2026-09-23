@@ -121,6 +121,7 @@ jobs:
       - name: Build the macOS application bundle without loading models
         run: |
           make build-debug
-          app=target/debug/bundle/macos/transcribe.app
+          product_name=$(node -p "require('./apps/desktop/src-tauri/tauri.conf.json').productName")
+          app="target/debug/bundle/macos/$product_name.app"
           executable=$(/usr/libexec/PlistBuddy -c 'Print :CFBundleExecutable' "$app/Contents/Info.plist")
           test -x "$app/Contents/MacOS/$executable"

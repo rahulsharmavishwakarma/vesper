@@ -1,4 +1,11 @@
 <svg xmlns="http://www.w3.org/2000/svg" width="512" height="512" viewBox="0 0 512 512">
-  <rect x="16" y="16" width="480" height="480" rx="112" fill="#151c16"/>
-  <text x="256" y="276" fill="#e8eee8" font-family="Arial, Helvetica, sans-serif" font-size="60" font-weight="600" letter-spacing="-3" text-anchor="middle">transcribe</text>
+  <!-- Generated from src/assets/vesper.svg by scripts/generate-brand-icons.mjs. -->
+  <rect x="16" y="16" width="480" height="480" rx="112" fill="#111512"/>
+  <g transform="translate(48 48) scale(4)" color="#b1d3a3">
+    <g class="vesper-mark" fill="none" stroke="currentColor" stroke-width="7" stroke-linecap="round" stroke-linejoin="round">
+    <path fill="currentColor" fill-rule="evenodd" stroke="none" d="M12 74L32 51C28 34 39 22 52 24C62 25 67 33 68 41L79 47L65 52C60 71 42 81 23 73L12 81ZM32 53C40 48 49 46 56 49C48 59 40 61 32 53ZM57 35a2.5 2.5 0 1 0-5 0a2.5 2.5 0 1 0 5 0Z"/>
+    <path class="vesper-call-1" d="M80 34l7-6"/>
+    <path class="vesper-call-2" d="M85 47h9"/>
+  </g>
+  </g>
 </svg>
