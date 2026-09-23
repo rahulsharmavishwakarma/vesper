@@ -421,10 +421,14 @@ export function validateSettings(value: unknown): string[] {
     if (
       value.models.customAsr === null &&
       (value.models.asr === 'Qwen/Qwen3-ASR-0.6B' ||
-        value.models.asr === 'CohereLabs/cohere-transcribe-03-2026' ||
-        value.models.asr === 'LiquidAI/LFM2.5-Audio-1.5B') &&
+        value.models.asr === 'CohereLabs/cohere-transcribe-03-2026') &&
       value.computeBackend !== 'auto' &&
-      value.computeBackend !== 'cpu'
+      value.computeBackend !== 'cpu' &&
+      !(
+        value.models.asr === 'Qwen/Qwen3-ASR-0.6B' &&
+        value.computeBackend === 'metal' &&
+        value.language === 'en'
+      )
     ) {
       errors.push('The selected speech model supports Automatic and CPU only.');
     }

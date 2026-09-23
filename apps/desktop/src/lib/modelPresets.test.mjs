@@ -154,7 +154,10 @@ test('dedicated ASR choices preserve settings, enforce languages and ignore obso
       if (valid)
         assert.deepEqual(parseStoredSettings(JSON.parse(JSON.stringify(settings))), settings);
       settings.computeBackend = 'metal';
-      assert.ok(validateSettings(settings).length);
+      assert.equal(
+        validateSettings(settings).length === 0,
+        id.startsWith('Qwen/') && language === 'en',
+      );
       settings.maxRecordingSeconds = 5;
       assert.equal(effectiveRecordingSeconds(settings), 0);
     }

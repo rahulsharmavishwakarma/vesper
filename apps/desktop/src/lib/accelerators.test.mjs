@@ -58,13 +58,14 @@ test('model restrictions and cleanup off narrow GPU choices without changing sav
     'nvidia/parakeet-tdt-0.6b-v3',
     'Qwen/Qwen3-ASR-0.6B',
     'CohereLabs/cohere-transcribe-03-2026',
-    'LiquidAI/LFM2.5-Audio-1.5B',
   ]) {
     config.models.asr = model;
     assert.deepEqual(enabled(config, caps), ['auto', 'cpu']);
     assert.equal(config.computeBackend, 'metal');
     assert.equal(acceleratorOptions(config, caps).at(-1).disabled, true);
   }
+  config.models.asr = 'LiquidAI/LFM2.5-Audio-1.5B';
+  assert.deepEqual(enabled(config, caps), ['auto', 'cpu', 'metal']);
   config.models.customAsr = { id: 'synthetic' };
   config.cleanupEnabled = false;
   assert.deepEqual(enabled(config, caps), ['auto', 'cpu']);
@@ -82,4 +83,24 @@ test('unknown detection keeps safe choices and explains unavailable saved hardwa
     /operating system/,
   );
   assert.equal(config.computeBackend, 'cuda');
+});
+
+test('MLX is explicit, packaged, English-only and model-qualified', () => {
+  const caps = {
+    ...device('macos', 'aarch64', 'metal'),
+    speechMetalModels: ['nvidia/parakeet-tdt-0.6b-v3', 'Qwen/Qwen3-ASR-0.6B'],
+  };
+  const config = defaultSettings();
+  for (const model of caps.speechMetalModels) {
+    config.models.asr = model;
+    config.language = 'en';
+    assert.deepEqual(enabled(config, caps), ['auto', 'cpu', 'metal']);
+    for (const language of ['auto', 'fr', 'hi']) {
+      config.language = language;
+      assert.deepEqual(enabled(config, caps), ['auto', 'cpu']);
+    }
+  }
+  config.language = 'en';
+  config.models.asr = 'CohereLabs/cohere-transcribe-03-2026';
+  assert.deepEqual(enabled(config, caps), ['auto', 'cpu']);
 });

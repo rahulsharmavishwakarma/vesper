@@ -40,6 +40,20 @@ Model downloads need internet access and additional disk space. Files are
 verified before use. Manage installed models, the model folder and device
 acceleration in **Models**. See [model choices](model-presets.md) for details.
 
+**Automatic** uses a compatible detected accelerator where the selected runtime
+supports it. LFM Audio and the writing model share native GPU selection; on Apple
+Silicon this can use Metal. If GPU initialization fails in Automatic mode, the
+runtime retries on CPU and records the reason. An explicitly selected GPU fails
+when unavailable instead of silently switching devices. The first GPU request
+can take longer while native kernels initialize.
+
+GPU support is specific to the model and runtime. Cohere, Whisper, Qwen3-ASR and
+Parakeet use their CPU speech adapters in normal builds. The optional MLX build
+adds explicit English Metal execution for Parakeet and Qwen; see the instructions below. This does not stop the writing model from using
+Metal in Automatic mode. Whisper is not yet available in the desktop model picker.
+See [performance evidence](inference-performance.md)
+for tested combinations and remaining limits.
+
 New installations use Cohere Transcribe with optional Qwen writing cleanup and
 English selected. The current Cohere adapter supports English and French for
 completed recordings; it does not provide automatic language detection, Hindi
@@ -100,10 +114,10 @@ including quiet Whisper Turbo input. Leave it off when it reduces accuracy.
 
 The desktop app must be running for its global shortcuts to work.
 
-| Action | Default Mac shortcut | Behavior |
-| --- | --- | --- |
-| Hold to talk | `⌥ Shift D` | Hold while speaking; release to finish. |
-| Press to toggle | `⌘ Shift Space` | Press once to start and again to finish. |
+| Action          | Default Mac shortcut | Behavior                                 |
+| --------------- | -------------------- | ---------------------------------------- |
+| Hold to talk    | `⌥ Shift D`          | Hold while speaking; release to finish.  |
+| Press to toggle | `⌘ Shift Space`      | Press once to start and again to finish. |
 
 Both shortcuts can be changed in **Settings → Quick capture**. Existing
 installations keep their saved shortcuts. Wait for the floating controls to
@@ -178,15 +192,15 @@ do not include transcript text.
 
 ## Troubleshooting
 
-| Problem | First checks |
-| --- | --- |
-| Waveform does not match the microphone | Confirm the selected input device. After a native audio update, quit the running app and open the newly built version; a page reload does not update the audio code. Background sound can still register. |
-| Recording will not start | Confirm microphone permission, selected input device and model download status. Wait for Listening. |
-| A language or live captions are unavailable | Check the selected speech model's [supported languages and modes](language-support-and-recommendations.md). |
-| A model download fails | Check the connection, free disk space and model-folder access, then retry from Models. |
-| A shortcut is unavailable | Resolve the conflict shown beside the shortcut setting or choose another combination. |
-| Automatic paste fails | Check Accessibility permission and the intended text field; use Copy if insertion is unavailable. |
-| A recording is missing from History | Check whether Save recordings and transcripts was enabled for that session. |
+| Problem                                     | First checks                                                                                                                                                                                              |
+| ------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Waveform does not match the microphone      | Confirm the selected input device. After a native audio update, quit the running app and open the newly built version; a page reload does not update the audio code. Background sound can still register. |
+| Recording will not start                    | Confirm microphone permission, selected input device and model download status. Wait for Listening.                                                                                                       |
+| A language or live captions are unavailable | Check the selected speech model's [supported languages and modes](language-support-and-recommendations.md).                                                                                               |
+| A model download fails                      | Check the connection, free disk space and model-folder access, then retry from Models.                                                                                                                    |
+| A shortcut is unavailable                   | Resolve the conflict shown beside the shortcut setting or choose another combination.                                                                                                                     |
+| Automatic paste fails                       | Check Accessibility permission and the intended text field; use Copy if insertion is unavailable.                                                                                                         |
+| A recording is missing from History         | Check whether Save recordings and transcripts was enabled for that session.                                                                                                                               |
 
 If the problem persists, follow [Support](../SUPPORT.md). Include the application
 version, macOS version, selected model and a synthetic reproduction. Do not
@@ -201,3 +215,7 @@ The app may retain bounded before/after text and one recent attempt locally for 
 ### Optional TextEdit correction evaluation
 
 In **Settings → Storage and improvement**, **Evaluate corrections in TextEdit** enables a separate local evaluation after automatic paste. It is off by default. The first adapter requires plain-text TextEdit with English menus on Mac and a direct keyboard layout. It observes the inserted text and up to 32 adjacent UTF-16 units on each side for at most one minute; it may abstain when the field, selection or boundaries change. Only inserted/edited text is retained locally, at most 256 records for 30 days. These candidates do not teach your dictionary yet. Disabling stops observation; **Forget learned spellings** also deletes retained candidates. Ordinary in-app spelling learning remains automatic. See the [full scope and limitations](personalization/external-observer.md).
+
+Optional Apple Silicon builds can run **Parakeet** and **Qwen ASR** on the GPU. Choose **English** and **Metal**, save, then download the model files for that selection. These GPU files are separate from the CPU files and can use more disk space and memory. **Automatic** continues to select the existing CPU speech path for these models. Full recordings and imported files use the same pipeline; live partial transcription still requires Nemotron. Other languages, Cohere and Whisper Turbo are not enabled for this optional GPU path. Whisper Small is available for evaluation but has not been added to the desktop model picker. See [optional MLX builds](accelerators.md#building-the-optional-mlx-application).
+
+For these optional GPU models, a recording containing only exact digital zeros returns empty text after file verification without first loading the speech model. Quiet speech and ordinary microphone background noise still follow normal transcription.

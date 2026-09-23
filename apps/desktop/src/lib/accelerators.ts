@@ -3,6 +3,7 @@ import type { AppConfig, ComputeBackend } from './config';
 export interface AcceleratorCapabilities {
   os: string;
   arch: string;
+  speechMetalModels?: string[];
   backends: { backend: ComputeBackend; compiled: boolean; devices: string[] }[];
 }
 export interface AcceleratorOption {
@@ -49,10 +50,15 @@ export function acceleratorReason(
         'nvidia/parakeet-tdt-0.6b-v3',
         'Qwen/Qwen3-ASR-0.6B',
         'CohereLabs/cohere-transcribe-03-2026',
-        'LiquidAI/LFM2.5-Audio-1.5B',
+        'openai/whisper-small',
+        'openai/whisper-large-v3-turbo',
       ].includes(config.models.asr)
-    )
-      return 'The selected speech model supports Automatic and CPU in this app.';
+    ) {
+      if (backend !== 'metal' || !capabilities.speechMetalModels?.includes(config.models.asr))
+        return 'The selected speech model supports Automatic and CPU in this app build.';
+      if (config.language !== 'en')
+        return 'Metal speech recognition currently requires English for this model.';
+    }
     if (backend === 'rocm' && arch !== 'x86_64')
       return 'This speech runtime has no ROCm/Vulkan package for this architecture.';
     if (

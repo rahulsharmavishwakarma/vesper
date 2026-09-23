@@ -196,7 +196,7 @@ test('custom speech language metadata supersedes the built-in Parakeet restricti
   assert.deepEqual(validateSettings(settings), []);
 });
 
-test('LFM selection persists with English and CPU capabilities without changing defaults', () => {
+test('LFM selection persists with English and native GPU capabilities without changing defaults', () => {
   const settings = defaultSettings();
   settings.models.asr = 'LiquidAI/LFM2.5-Audio-1.5B';
   assert.deepEqual(
@@ -209,7 +209,7 @@ test('LFM selection persists with English and CPU capabilities without changing 
     assert.ok(validateSettings({ ...settings, language }).some((e) => e.includes('LFM')));
   }
   for (const computeBackend of ['metal', 'cuda', 'vulkan', 'rocm']) {
-    assert.ok(validateSettings({ ...settings, computeBackend }).some((e) => e.includes('CPU')));
+    assert.deepEqual(validateSettings({ ...settings, computeBackend }), []);
   }
   assert.equal(defaultSettings().models.asr, 'CohereLabs/cohere-transcribe-03-2026');
 });
