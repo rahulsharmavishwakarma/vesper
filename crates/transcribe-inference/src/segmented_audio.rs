@@ -8,9 +8,8 @@ use transcribe_audio::ASR_SAMPLE_RATE;
 // not recording or imported-file duration. Update provenance if this policy changes.
 pub(crate) const MAX_SEGMENT_SECONDS: usize = 10;
 pub(crate) const MAX_SEGMENT_SAMPLES: usize = MAX_SEGMENT_SECONDS * ASR_SAMPLE_RATE as usize;
-const BOUNDARY_LOOKBACK: usize = ASR_SAMPLE_RATE as usize;
+#[cfg(test)]
 pub(crate) const ENERGY_WINDOW: usize = ASR_SAMPLE_RATE as usize / 10;
-const BOUNDARY_STEP: usize = ASR_SAMPLE_RATE as usize / 100;
 
 /// Balance the remaining input before searching the final second for a quieter
 /// 100 ms window. This avoids a tiny tail for inputs such as 10 seconds + 1 sample.
@@ -21,26 +20,7 @@ pub(crate) fn segment_end(samples: &[f32], start: usize) -> usize {
 }
 
 fn segment_end_with_limit(samples: &[f32], start: usize, maximum: usize) -> usize {
-    let remaining = samples.len() - start;
-    if remaining <= maximum {
-        return samples.len();
-    }
-    let target = start + remaining.div_ceil(remaining.div_ceil(maximum));
-    let mut boundary = target;
-    let mut lowest_energy = f64::INFINITY;
-    for offset in (0..=BOUNDARY_LOOKBACK).step_by(BOUNDARY_STEP) {
-        let center = target - offset;
-        let energy: f64 = samples[center - ENERGY_WINDOW / 2..center + ENERGY_WINDOW / 2]
-            .iter()
-            .map(|sample| f64::from(*sample).powi(2))
-            .sum();
-        // Prefer the later boundary on ties, including completely silent windows.
-        if energy < lowest_energy {
-            lowest_energy = energy;
-            boundary = center;
-        }
-    }
-    boundary
+    transcribe_audio::completed_segment_end(samples, start, maximum)
 }
 
 pub(crate) fn decode_segments(

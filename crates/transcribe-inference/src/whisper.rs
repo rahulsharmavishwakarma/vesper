@@ -13,8 +13,10 @@ pub(crate) const TAIL_PADDING_FRAMES: i32 = 1000;
 // Guard below the runtime's 2,950-frame boundary. Preserve Whisper's context
 // rather than forcing another architecture's ten-second segmentation contract.
 pub(crate) const MAX_SEGMENT_SECONDS: usize = 29;
-pub(crate) const NO_SPEECH_THRESHOLD: f64 = 0.6;
-pub(crate) const LOG_PROBABILITY_THRESHOLD: f64 = -1.0;
+pub(crate) use transcribe_core::{
+    WHISPER_LOG_PROBABILITY_THRESHOLD as LOG_PROBABILITY_THRESHOLD,
+    WHISPER_NO_SPEECH_THRESHOLD as NO_SPEECH_THRESHOLD,
+};
 
 pub(crate) fn export(model: AsrModel) -> (&'static str, &'static str) {
     match model {
@@ -74,10 +76,11 @@ impl Scores {
         let scores: Self = serde_json::from_str(value)
             .map_err(|_| native("Whisper confidence", "missing or invalid native scores"))?;
         if scores.schema_version != 1
-            || !scores.no_speech_probability.is_finite()
-            || !(0.0..=1.0).contains(&scores.no_speech_probability)
-            || !scores.average_log_probability.is_finite()
-            || scores.average_log_probability > 0.0
+            || transcribe_core::whisper_no_speech(
+                scores.no_speech_probability,
+                scores.average_log_probability,
+            )
+            .is_none()
         {
             return Err(native("Whisper confidence", "invalid native score values"));
         }
@@ -87,8 +90,8 @@ impl Scores {
     pub(crate) fn no_speech(&self) -> bool {
         // OpenAI transcribe.py's combined silence heuristic. A confident decode
         // overrides high no-speech probability; low confidence alone drops nothing.
-        self.no_speech_probability > NO_SPEECH_THRESHOLD
-            && self.average_log_probability <= LOG_PROBABILITY_THRESHOLD
+        transcribe_core::whisper_no_speech(self.no_speech_probability, self.average_log_probability)
+            .expect("validated Whisper scores")
     }
 }
 

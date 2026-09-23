@@ -19,16 +19,43 @@ pub struct AcceleratorCapabilities {
     pub os: &'static str,
     pub arch: &'static str,
     pub backends: Vec<AcceleratorBackend>,
+    pub speech_metal_models: Vec<&'static str>,
 }
 
 static CAPABILITIES: OnceLock<AcceleratorCapabilities> = OnceLock::new();
+static DEVICES: OnceLock<Vec<LlamaBackendDevice>> = OnceLock::new();
+
+pub(crate) fn native_devices() -> &'static [LlamaBackendDevice] {
+    DEVICES.get_or_init(list_llama_ggml_backend_devices)
+}
 
 /// Call from a background thread. Native enumeration can initialize GPU driver
 /// contexts; results are cached for this process and are not model attestation.
 pub fn accelerator_capabilities() -> &'static AcceleratorCapabilities {
     CAPABILITIES.get_or_init(|| {
-        let devices = list_llama_ggml_backend_devices();
+        let devices = native_devices();
         AcceleratorCapabilities {
+            speech_metal_models: {
+                #[cfg(feature = "mlx")]
+                {
+                    [
+                        transcribe_core::AsrModel::ParakeetTdt06bV3,
+                        transcribe_core::AsrModel::Qwen3Asr06b,
+                        transcribe_core::AsrModel::WhisperSmall,
+                    ]
+                    .into_iter()
+                    .filter(|model| {
+                        transcribe_core::mlx_speech_supported(*model)
+                            && transcribe_models::mlx::runtime_ready()
+                    })
+                    .map(|model| model.id())
+                    .collect()
+                }
+                #[cfg(not(feature = "mlx"))]
+                {
+                    Vec::new()
+                }
+            },
             os: std::env::consts::OS,
             arch: std::env::consts::ARCH,
             backends: [
@@ -45,7 +72,7 @@ pub fn accelerator_capabilities() -> &'static AcceleratorCapabilities {
             .map(|(backend, name, compiled)| AcceleratorBackend {
                 backend,
                 compiled,
-                devices: detected_devices(&devices, name, compiled),
+                devices: detected_devices(devices, name, compiled),
             })
             .collect(),
         }
