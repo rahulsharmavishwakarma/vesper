@@ -47,6 +47,14 @@ Model downloads need internet access and additional disk space. Files are
 verified before use. Manage installed models, the model folder and device
 acceleration in **Models**. See [model choices](model-presets.md) for details.
 
+Each model card shows its selected model and download status. **Local engine**
+above it shows readiness, CPU, memory and operation timings. Models are checked
+automatically when loaded; the separate **Selected models** verification card is
+not needed. If model files are missing or damaged, use **Download** or **Verify
+files** on the affected model. Verification keeps valid files and downloads
+replacements for missing or damaged files. Repairs require internet access and
+are started by this action, not automatically during transcription.
+
 **Automatic** uses a compatible detected accelerator where the selected runtime
 supports it. LFM Audio and the writing model share native GPU selection; on Apple
 Silicon this can use Metal. If GPU initialization fails in Automatic mode, the

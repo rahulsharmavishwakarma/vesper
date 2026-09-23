@@ -3,10 +3,13 @@
 Screenshots mentioned below are local validation captures excluded from source
 control. The written results and reproducible test fixtures remain in the repository.
 
-Open **Models** to see the always-open **Local engine** panel with the saved model choices, installation state,
+Open **Models** to see the always-open **Local engine** panel with overall readiness,
 current activity, desktop-process resources, and the current or last operation's
-stage durations. Unsaved model selections do not change this panel. Use the model
-controls below it to check files or install a model. Cleanup can be switched off;
+stage durations. Selected model names and installation controls appear in the model
+cards below, without duplicate model rows in Local engine. Unsaved model selections
+do not change engine readiness or operation history. Use each model's **Download**
+or **Verify files** action for installation and repair; there is no separate
+Selected models card. Cleanup can be switched off;
 the Dictate result's **Copy text** button copies cleanup output when available,
 otherwise the raw transcript.
 

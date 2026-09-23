@@ -1528,7 +1528,7 @@ await test('Local engine reports measured values and pauses on navigation, visib
   await tick();
   await until(() => panel().textContent.includes('1.00'), 'RSS did not appear');
   assert(!panel().textContent.includes('25.0'), 'First CPU reading was invented');
-  assert(panel().textContent.includes('Raw transcript only'), 'Cleanup off state missing');
+  assert(!panel().querySelector('.engine-models'), 'Local engine repeats the model selectors');
   assert(panel().textContent.includes('Check model setup'), 'Missing model readiness was hidden');
   await until(() => panel().textContent.includes('25.0'), 'Second CPU reading did not appear');
   for (const [stage, label] of [
@@ -1617,7 +1617,7 @@ await test('Local engine reports measured values and pauses on navigation, visib
   assert(state.counts.get_engine_diagnostics === count, 'Disposed panel kept polling');
 });
 
-await test('Imported model and pipeline downloads show byte progress, verification, cancellation and retry', async () => {
+await test('Imported model downloads show byte progress, verification, cancellation and retry', async () => {
   let saved = defaultSettings();
   const preset = MODEL_PRESETS.find((entry) =>
     entry.profile.name.startsWith('SmolLM2 360M'),
@@ -1643,7 +1643,7 @@ await test('Imported model and pipeline downloads show byte progress, verificati
     intercept: (command, state, args) => {
       if (command === 'get_settings') return structuredClone(saved);
       if (command === 'list_model_installations') return [entry()];
-      if (command === 'install_model' || command === 'install_models') {
+      if (command === 'install_model') {
         gate = deferred();
         job++;
         state.runtime = {
@@ -1661,7 +1661,7 @@ await test('Imported model and pipeline downloads show byte progress, verificati
           state.runtime = { ...idle };
           if (outcome !== 'success') throw new Error(outcome);
           installed = true;
-          return command === 'install_models' ? installation : entry();
+          return entry();
         });
       }
       if (command === 'cancel_operation') {
@@ -1736,10 +1736,12 @@ await test('Imported model and pipeline downloads show byte progress, verificati
     target.textContent.includes(`${preset.name} is ready on this device.`),
     'Installed result missing',
   );
-  button('Verify selected models').click();
+  assert(!target.querySelector('.model-installation'), 'Redundant batch verification card remains');
+  assert(download().textContent.includes('Verify files'), 'Per-model repair action missing');
+  download().click();
   await until(
     () => target.querySelector('.download-progress [role="progressbar"]'),
-    'Selected-pipeline install has no progress bar',
+    'Per-model verification has no progress bar',
   );
   progress('downloading', 2 ** 19);
   await until(
@@ -1747,12 +1749,12 @@ await test('Imported model and pipeline downloads show byte progress, verificati
       target
         .querySelector('.download-progress [role="progressbar"]')
         ?.getAttribute('aria-valuenow') === '25',
-    'Selected-pipeline progress missing',
+    'Per-model verification progress missing',
   );
   gate.resolve('success');
   await until(
     () => !target.querySelector('.download-progress'),
-    'Completed pipeline retained progress',
+    'Completed verification retained progress',
   );
 });
 
@@ -1828,7 +1830,7 @@ await test('Device-aware menu preserves an unavailable saved backend and support
   await until(() => saved.computeBackend === 'auto', 'Recovered preference was not saved');
 });
 
-await test('All screens share saved model names, writing state and model-management navigation', async () => {
+await test('Saved model summaries stay synchronized and navigate to the model selectors', async () => {
   let saved = defaultSettings();
   const initialSpeech = ASR_MODELS[saved.models.asr];
   const speechPreset = MODEL_PRESETS.find(
@@ -1854,15 +1856,13 @@ await test('All screens share saved model names, writing state and model-managem
   const label = () => target.querySelector('.studio-recorder [aria-label="Configured models"]');
   async function checkEveryScreen(speech, writing, off) {
     const saves = state.counts.save_settings;
-    for (const view of ['Dictate', 'History', 'Settings', 'Models']) {
+    for (const view of ['Dictate', 'History', 'Settings']) {
       button(view).click();
       await tick();
       const summary = target.querySelector(
-        view === 'Models'
-          ? '.engine-models'
-          : view === 'Dictate'
-            ? '.studio-recorder .configured-models'
-            : '.page-model-summary .configured-models',
+        view === 'Dictate'
+          ? '.studio-recorder .configured-models'
+          : '.page-model-summary .configured-models',
       );
       assert(summary && !summary.closest('[hidden]'), `${view} model summary is hidden`);
       await until(
@@ -1874,19 +1874,14 @@ await test('All screens share saved model names, writing state and model-managem
           summary.textContent.includes('Writing model'),
         `${view} model wording differs`,
       );
-      const disabled =
-        view === 'Models'
-          ? summary.querySelector('.engine-model:last-child strong').textContent === 'Off'
-          : Boolean(summary.querySelector('.writing-off'));
+      const disabled = Boolean(summary.querySelector('.writing-off'));
       assert(disabled === off, `${view} writing state is out of sync`);
-      if (view !== 'Models') {
-        summary.querySelector('button').click();
-        await tick();
-        assert(
-          button('Models').getAttribute('aria-current') === 'page',
-          `${view} Manage models failed`,
-        );
-      }
+      summary.querySelector('button').click();
+      await tick();
+      assert(
+        button('Models').getAttribute('aria-current') === 'page',
+        `${view} Manage models failed`,
+      );
     }
     assert(state.counts.save_settings === saves, 'Screen navigation saved settings');
     button('Dictate').click();

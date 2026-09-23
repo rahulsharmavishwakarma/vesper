@@ -867,16 +867,6 @@ h3 {
   font-size: 11px;
   color: var(--color-muted);
 }
-.model-installation {
-  background: var(--color-panel);
-  border: 1px solid var(--color-line);
-  border-radius: var(--radius-md);
-  padding: var(--space-6);
-  margin-bottom: var(--space-8);
-}
-.model-installation > p {
-  font-size: 13px;
-}
 /* Each model's files follow its dropdown, including the chosen precision. */
 .model-download {
   border-top: 1px solid var(--color-line);
@@ -1931,7 +1921,6 @@ textarea:focus:enabled {
   .microphone-picker .select-trigger {
     max-width: none;
   }
-  .model-installation,
   .settings-section {
     padding: var(--space-5);
   }
@@ -2011,7 +2000,6 @@ textarea:focus:enabled {
    return to none, so floating menus keep their normal positioning context. */
 .dictate-capture:not([hidden]) > .studio-recorder,
 .settings-section:not([hidden]),
-.model-installation:not([hidden]),
 .dataset-panel[data-view='full'] > .history-stats {
   animation: section-arrive 280ms var(--ease) var(--section-delay, 0ms) backwards;
 }
@@ -2356,10 +2344,6 @@ button:is(
   .sidebar nav button[aria-current='page'] {
     background-image: none;
   }
-}
-/* Models verification follows the settings form, including hidden sibling panels. */
-.transcription-panel > .model-installation {
-  margin-top: var(--space-6);
 }
 /* About uses the shared Settings surface, outside editable preferences. */
 .settings-about {

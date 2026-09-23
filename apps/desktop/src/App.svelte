@@ -102,7 +102,6 @@
   let datasetRevision = $state(0);
   let removalDialog: ModelRemovalDialog | undefined = $state();
   let aboutSheet: AboutSheet | undefined = $state();
-  const savedCleanupEnabled = $derived(engineSettings?.cleanupEnabled ?? true);
   let savedRecordingLimit = $state(0);
   type View = 'dictate' | 'history' | 'models' | 'settings';
   let activeView = $state<View>('dictate');
@@ -1140,7 +1139,6 @@
         settingsDirty={dirty}
         settingsBusy={pending !== null}
         settingsRevision={savedJson}
-        cleanupEnabled={savedCleanupEnabled}
         modelSettings={engineSettings}
         maxRecordingSeconds={savedRecordingLimit}
         onBusyChange={(busy) => {

@@ -1,8 +1,7 @@
 <script lang="ts">
   import { onMount } from 'svelte';
   import Icon from './Icon.svelte';
-  import ModelStatus from './ModelStatus.svelte';
-  import { MODEL_ROLE_LABELS, type AppConfig } from '../config';
+  import type { AppConfig } from '../config';
   import { getEngineDiagnostics, type AppEnvironment } from '../api/desktop';
   import type { ModelCatalogInstallation } from '../api/runtime';
   import { downloadTarget, matchingDownload } from '../modelDownloads';
@@ -89,35 +88,6 @@
     { key: 'cleanup', label: 'Polish text', value: timings?.cleanupMs },
     { key: 'save', label: 'Save', value: timings?.saveMs },
   ]);
-  function modelState(model: ModelCatalogInstallation | undefined, role: 'asr' | 'cleanup') {
-    if (role === 'cleanup' && !settings?.cleanupEnabled) return 'Off';
-    if (!desktop) return 'Desktop only';
-    if (!model) return 'Not checked';
-    if (!model.supported) return 'Unavailable';
-    if (!model.artifactsInstalled) return 'Not installed';
-    if (!model.runtimeReady) return 'Setup incomplete';
-    if (
-      engineActivity?.busy &&
-      ((role === 'asr' && engineActivity.stage === 'transcribing') ||
-        (role === 'cleanup' && engineActivity.stage === 'rewriting'))
-    )
-      return 'Working';
-    return 'Installed';
-  }
-  function backendLabel() {
-    if (!settings) return '—';
-    if (
-      settings.models.customAsr ||
-      [
-        'nvidia/parakeet-tdt-0.6b-v3',
-        'Qwen/Qwen3-ASR-0.6B',
-        'CohereLabs/cohere-transcribe-03-2026',
-        'LiquidAI/LFM2.5-Audio-1.5B',
-      ].includes(settings.models.asr)
-    )
-      return 'CPU';
-    return `${settings.computeBackend === 'auto' ? 'Automatic' : settings.computeBackend.toUpperCase()} · preference`;
-  }
   async function refresh() {
     if (refreshBusy) return;
     requestedRefresh = enabled;
@@ -198,36 +168,6 @@
     >
   </header>
   <div class="engine-body">
-    <div class="engine-models">
-      <div class="engine-model">
-        <span class="engine-number">01</span>
-        <div>
-          <p>{MODEL_ROLE_LABELS.asr}</p>
-          <h3>{asr?.name ?? 'Loading preferences…'}</h3>
-        </div>
-        <div class="engine-model-state">
-          {@render installationState(asrInstall, 'asr')}<span>{backendLabel()}</span>
-        </div>
-      </div>
-      <div class="engine-model">
-        <span class="engine-number">02</span>
-        <div>
-          <p>{MODEL_ROLE_LABELS.rewriter}</p>
-          <h3>{cleanup?.name ?? 'Loading preferences…'}</h3>
-        </div>
-        <div class="engine-model-state">
-          {@render installationState(cleanupInstall, 'cleanup')}<span
-            >{settings?.cleanupEnabled
-              ? settings.models.customRewriter
-                ? 'Fixed precision'
-                : settings.rewriteQuantization === 'q4_0'
-                  ? 'Q4 · Compact'
-                  : 'Q8 · Higher precision'
-              : 'Raw transcript only'}</span
-          >
-        </div>
-      </div>
-    </div>
     <div class="engine-resources">
       {#each [{ key: 'cpuPercent' as const, name: 'CPU activity', value: currentReading?.cpuPercent?.toFixed(1) ?? '—', unit: '% capacity', scale: 100, scaleLabel: '100%' }, { key: 'memoryBytes' as const, name: 'Memory in use', value: currentReading?.memoryBytes != null ? (currentReading.memoryBytes / 2 ** 30).toFixed(2) : '—', unit: 'GiB', scale: ramScale, scaleLabel: `${(ramScale / 2 ** 30).toFixed(1)} GiB` }] as metric (metric.key)}
         <section class="engine-resource" aria-label={metric.name}>
@@ -329,19 +269,6 @@
   </div>
 </section>
 
-{#snippet installationState(model: ModelCatalogInstallation | undefined, role: 'asr' | 'cleanup')}
-  {@const state = modelState(model, role)}
-  {#if state === 'Installed' || state === 'Not installed'}
-    <ModelStatus
-      status={{
-        label: state === 'Installed' ? 'Downloaded · ready on this device' : 'Not downloaded',
-        kind: state === 'Installed' ? 'downloaded' : 'missing',
-        tone: state === 'Installed' ? 'ready' : 'muted',
-      }}
-    />
-  {:else}<strong>{state}</strong>{/if}
-{/snippet}
-
 <style>
   /* Hallmark · component: Local engine · existing Studio tokens · P4 H5 E4 S5 R5 V4 */
   .engine-status {
@@ -393,60 +320,15 @@
     justify-content: space-between;
     gap: var(--space-4);
   }
-  .engine-model p {
-    color: var(--color-muted);
-    font-size: 12px;
-    margin: 0;
-  }
   .engine-header button {
     font-size: 12px;
-  }
-  .engine-models {
-    border-top: 1px solid var(--color-line);
-  }
-  .engine-model {
-    display: grid;
-    grid-template-columns: 24px minmax(0, 1fr) auto;
-    align-items: center;
-    gap: var(--space-3);
-    padding: var(--space-5) 0;
-    border-bottom: 1px solid var(--color-line);
-  }
-  .engine-number {
-    font: 11px var(--font-mono);
-    color: var(--color-muted);
-    align-self: start;
-    padding-top: var(--space-1);
-  }
-  .engine-model h3 {
-    font-size: 15px;
-    font-weight: 500;
-    letter-spacing: -0.02em;
-    margin: var(--space-1) 0 0;
-    overflow-wrap: anywhere;
-    min-width: 0;
-  }
-  .engine-model-state {
-    display: flex;
-    align-items: center;
-    justify-content: flex-end;
-    gap: var(--space-2);
-    text-align: right;
-    font-size: 11px;
-    color: var(--color-muted);
-  }
-  .engine-model-state strong {
-    display: block;
-    color: var(--color-accent);
-    font-size: 12px;
-    font-weight: 400;
-    margin-bottom: var(--space-1);
   }
   .engine-resources {
     display: grid;
     grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
     gap: var(--space-6);
-    margin-top: var(--space-6);
+    border-top: 1px solid var(--color-line);
+    padding-top: var(--space-6);
   }
   .engine-resource + .engine-resource {
     border-left: 1px solid var(--color-line);
@@ -640,15 +522,6 @@
     }
     .engine-body {
       padding-inline: var(--space-4);
-    }
-    .engine-model {
-      grid-template-columns: 16px minmax(0, 1fr);
-      gap: var(--space-2);
-    }
-    .engine-model-state {
-      grid-column: 2;
-      justify-content: flex-start;
-      text-align: left;
     }
     .engine-resources {
       grid-template-columns: minmax(0, 1fr);

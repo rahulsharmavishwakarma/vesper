@@ -61,6 +61,12 @@ Local workspace badge: the app has no workspace navigation for those labels to
 describe. The existing sidebar selection provides navigation context; operation
 feedback and the browser-preview notice retain their own meaningful states.
 
+On Models, keep selected model names and file actions in their existing model
+cards. Local engine shows resources, readiness and operation details without
+repeating both selected models. Do not add a separate batch-verification card;
+automatic integrity checks and each model's Download/Verify files action own that
+flow. Keep these removals independent of changes to page width or card layout.
+
 ## Shortcut recording
 
 Settings → Quick capture has one shortcut field for each action. Click the field (or focus it and activate it with Enter/Space), press the desired combination, then use **Save changes**. The field displays the captured combination with platform-appropriate modifier names. A valid capture changes only the draft. Escape restores the values present when editing began; Tab, clicking away, or switching windows stops recording keys and keeps a valid draft available to save. Restore defaults remains the existing settings action.

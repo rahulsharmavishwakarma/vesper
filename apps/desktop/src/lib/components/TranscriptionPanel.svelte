@@ -29,7 +29,6 @@
     getModelInstallation,
     getRuntimeStatus,
     installModel,
-    installModels,
     listAudioDevices,
     listModelInstallations,
     removeModel,
@@ -52,7 +51,6 @@
     settingsDirty,
     settingsBusy,
     settingsRevision,
-    cleanupEnabled,
     modelSettings,
     maxRecordingSeconds,
     onBusyChange,
@@ -67,7 +65,6 @@
     settingsDirty: boolean;
     settingsBusy: boolean;
     settingsRevision: string;
-    cleanupEnabled: boolean;
     modelSettings: AppConfig | null;
     maxRecordingSeconds: number;
     onBusyChange: (busy: boolean) => void;
@@ -89,9 +86,9 @@
   let draftError = $state('');
   let recoveredDraft = $state('');
   let draftSave: Promise<boolean> | null = null;
-  let action = $state<
-    'installing' | 'starting' | 'stopping' | 'choosing' | 'transcribing' | 'removing' | null
-  >(null);
+  let action = $state<'starting' | 'stopping' | 'choosing' | 'transcribing' | 'removing' | null>(
+    null,
+  );
   let installingModelKey = $state<string | null>(null);
   let downloadError = $state<string | null>(null);
   let downloadFeedback = $state<string | null>(null);
@@ -474,25 +471,6 @@
     refreshing = false;
     startPolling();
   }
-  async function install() {
-    if (blocked || !installation?.supported) return;
-    action = 'installing';
-    error = null;
-    feedback = null;
-    startPolling();
-    try {
-      installation = await installModels();
-      feedback = installation.ready
-        ? 'Model files are ready on this device.'
-        : installation.message;
-    } catch (cause) {
-      error = `Could not install models. ${message(cause)}`;
-    } finally {
-      action = null;
-      await pollRuntime();
-      await refreshResources();
-    }
-  }
   export function clearDownloadFeedback() {
     downloadError = null;
     downloadFeedback = null;
@@ -627,9 +605,7 @@
       catalog: displayedCatalog,
       checking: refreshing,
       installingKey: installingModelKey,
-      installing: Boolean(
-        installingModelKey || action === 'installing' || (runtime?.busy && runtime.download),
-      ),
+      installing: Boolean(installingModelKey || (runtime?.busy && runtime.download)),
       cancelling: cancelling || runtime?.stage === 'cancelling',
       details:
         runtime?.busy && (runtime.stage === 'installing' || runtime.stage === 'cancelling')
@@ -669,47 +645,6 @@
   hidden={view !== 'dictate' && view !== 'models'}
   aria-label="Local transcription"
 >
-  <div hidden={view !== 'models'} class="model-installation">
-    <div class="section-heading">
-      <h2>Selected models</h2>
-      <button
-        class="quiet"
-        type="button"
-        onclick={refreshResources}
-        disabled={!desktop || busy || refreshing || settingsBusy || !settingsLoaded}
-        ><Icon name="refresh" />{refreshing ? 'Checking…' : 'Check files'}</button
-      >
-    </div>
-    {#if !desktop}<p class="note">
-        Use the download buttons under the model dropdowns in the desktop app.
-      </p>
-    {:else if installation}<p class="note">{installation.message}</p>
-      <p class="note model-path">{installation.modelDirectory}</p>{/if}
-    {#if desktop}
-      <div class="dataset-actions">
-        <button
-          class="primary"
-          type="button"
-          onclick={install}
-          disabled={blocked || installation?.supported !== true}
-          >{action === 'installing'
-            ? 'Checking model files…'
-            : installation?.files.every((file) => file.installed)
-              ? 'Verify selected models'
-              : 'Install selected models'}</button
-        >
-      </div>
-    {/if}
-    {#if settingsLoaded && !cleanupEnabled}<p class="note">
-        The writing model is off. Install the speech model and any enabled audio processing models.
-      </p>{/if}
-    {#if busy && action !== 'choosing'}<div class="dataset-actions">
-        <button type="button" onclick={cancel} disabled={cancelling}
-          >{cancelling ? 'Cancelling…' : 'Cancel operation'}</button
-        >
-      </div>{/if}
-  </div>
-
   <div class="dictate-capture" hidden={view !== 'dictate'}>
     <div class="studio-recorder" class:is-recording={recording} class:is-processing={processing}>
       <div class="recorder-toolbar">
@@ -839,6 +774,11 @@
         {stageName}
       </p>
       <p class="note">{runtime.message}</p>{/if}
+    {#if view === 'models' && busy && action !== 'choosing' && !runtime?.download && !installingModelKey}
+      <button type="button" onclick={cancel} disabled={cancelling}
+        >{cancelling ? 'Cancelling…' : 'Cancel operation'}</button
+      >
+    {/if}
     {#if modelError}<p class="error" role="alert">{modelError}</p>{/if}
     {#if deviceError}<p class="error" role="alert">{deviceError}</p>{/if}
     {#if statusError}<p class="error" role="alert">{statusError}</p>{/if}
