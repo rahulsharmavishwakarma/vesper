@@ -25,6 +25,7 @@ This directory records decisions that are expensive to rediscover or easy to acc
 | [0017](0017-resident-cohere-recognizer.md) | Accepted | Retain selected Cohere sessions with verified load, observed-file invalidation and fresh segment streams |
 | [0018](0018-shared-whisper-adapter.md) | Accepted | Share Whisper checkpoint configuration and selected Sherpa ownership; gate product selection on qualification |
 | [0019](0019-shared-audio-frontend.md) | Accepted | Share advisory Silero and opt-in DPDFNet processing across live and completed recordings |
+| [0020](0020-optional-mlx-speech-runtime.md) | Accepted | Package optional MLX speech execution with verified artifacts and bounded selected-model residency |
 
 ## Convention
 

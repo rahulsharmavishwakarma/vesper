@@ -648,3 +648,7 @@ reactive dependency reads, add list keys and complete synthetic preview types.
 The preview stays synthetic and no model/hardware validation is implied by these
 changes. Required assets and ignored local visuals remain preserved. Hosted CI
 still requires the owner's later commit/push; no files were staged or committed.
+
+## Optional MLX bundle qualification
+
+The feature-off CI/release path remains unchanged. The separately approved optional Apple Silicon build uses `scripts/mlx-runtime.mjs` and `apps/desktop/src-tauri/tauri.mlx.conf.json`; see [accelerators](accelerators.md#building-the-optional-mlx-application) and [ADR-0020](adrs/0020-optional-mlx-speech-runtime.md). The local bundle and its native-resource integrity checks passed, with application-manager corpus tests loading resources from a copy of that bundle. This is not a published, signed/notarized release or a successful optional-MLX CI run. A distribution signing workflow must bind the final signed native binary identities before shipping; no signing identity, release workflow or model default is changed by this integration.
