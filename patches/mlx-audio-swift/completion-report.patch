@@ -1,0 +1,399 @@
+--- a/Sources/MLXAudioSTT/Models/GLMASR/STTOutput.swift
++++ b/Sources/MLXAudioSTT/Models/GLMASR/STTOutput.swift
+@@ -78,6 +78,9 @@
+ 
+ /// Output from speech-to-text transcription.
+ public struct STTOutput: @unchecked Sendable {
++    /// Pinned Transcribe patch: actual termination; nil means unverified.
++    public let transcribeCompletionReason: String?
++    public let transcribeWhisperScores: [String: Double]?
+     /// The transcribed text.
+     public let text: String
+ 
+@@ -118,8 +121,12 @@
+         promptTps: Double = 0.0,
+         generationTps: Double = 0.0,
+         totalTime: Double = 0.0,
+-        peakMemoryUsage: Double = 0.0
++        peakMemoryUsage: Double = 0.0,
++        transcribeCompletionReason: String? = nil,
++        transcribeWhisperScores: [String: Double]? = nil
+     ) {
++        self.transcribeCompletionReason = transcribeCompletionReason
++        self.transcribeWhisperScores = transcribeWhisperScores
+         self.text = text
+         self.segments = segments
+         self.language = language
+--- a/Sources/MLXAudioSTT/Models/CohereTranscribe/CohereTranscribe.swift
++++ b/Sources/MLXAudioSTT/Models/CohereTranscribe/CohereTranscribe.swift
+@@ -424,6 +424,7 @@
+         )
+ 
+         for pos in context.promptLength..<(context.promptLength + maxGenerationTokens) {
++            if Task.isCancelled { break }
+             let token = sample(logits: context.logits, temperature: generationParameters.temperature)
+             generated.append(token)
+ 
+@@ -452,6 +453,9 @@
+             }
+         }
+ 
++        let completion = Task.isCancelled ? "cancelled" :
++            generated.last == eosTokenId ? "eos" :
++            maxGenerationTokens < generationParameters.maxTokens ? "context_limit" : "max_tokens"
+         if generated.last == eosTokenId {
+             _ = generated.popLast()
+         }
+@@ -473,7 +477,8 @@
+             promptTps: totalTime > 0 ? Double(context.promptLength) / totalTime : 0,
+             generationTps: decodeTime > 0 ? Double(generated.count) / decodeTime : 0,
+             totalTime: totalTime,
+-            peakMemoryUsage: Double(Memory.peakMemory) / 1e9
++            peakMemoryUsage: Double(Memory.peakMemory) / 1e9,
++            transcribeCompletionReason: completion
+         )
+     }
+ 
+--- a/Sources/MLXAudioSTT/Models/Whisper/WhisperModel.swift
++++ b/Sources/MLXAudioSTT/Models/Whisper/WhisperModel.swift
+@@ -46,16 +46,21 @@
+         var totalPromptTokens = 0
+         var totalGenerationTokens = 0
+         var detectedLanguage: String? = nil
++        var completionReason = "eos"
++        var whisperScores: [String: Double]? = nil
+ 
+         for (index, chunk) in chunks.enumerated() {
+             if generationParameters.verbose {
+                 let endSeconds = chunk.offsetSeconds + Float(chunk.audio.dim(0)) / Float(WhisperAudioConfig.sampleRate)
+                 print("[Whisper] chunk \(index + 1)/\(chunks.count) \(String(format: "%.1f", chunk.offsetSeconds))s..\(String(format: "%.1f", endSeconds))s")
+             }
+-            let (text, promptTokens, generationTokens, lang) = transcribeChunk(
++            let (text, promptTokens, generationTokens, lang, reason, scores) = transcribeChunk(
+                 audio: chunk.audio,
+                 generationParameters: generationParameters
+             )
++            if reason != "eos" { completionReason = reason }
++            // Scores are defined only for this bridge's one bounded native chunk.
++            whisperScores = chunks.count == 1 ? scores : nil
+             totalPromptTokens += promptTokens
+             totalGenerationTokens += generationTokens
+             if detectedLanguage == nil { detectedLanguage = lang }
+@@ -85,7 +90,9 @@
+             promptTps: elapsed > 0 ? Double(totalPromptTokens) / elapsed : 0,
+             generationTps: elapsed > 0 ? Double(totalGenerationTokens) / elapsed : 0,
+             totalTime: elapsed,
+-            peakMemoryUsage: Double(Memory.peakMemory) / 1e9
++            peakMemoryUsage: Double(Memory.peakMemory) / 1e9,
++            transcribeCompletionReason: completionReason,
++            transcribeWhisperScores: whisperScores
+         )
+     }
+ 
+@@ -103,6 +110,8 @@
+             var totalPromptTokens = 0
+             var totalGenerationTokens = 0
+             var detectedLanguage: String? = nil
++            var completionReason = "eos"
++        var whisperScores: [String: Double]? = nil
+ 
+             for (index, chunk) in chunks.enumerated() {
+                 if generationParameters.verbose {
+@@ -110,7 +119,7 @@
+                     print("[Whisper] chunk \(index + 1)/\(chunks.count) \(String(format: "%.1f", chunk.offsetSeconds))s..\(String(format: "%.1f", endSeconds))s")
+                 }
+ 
+-                let (text, promptTokens, generationTokens, lang) = transcribeChunk(
++                let (text, promptTokens, generationTokens, lang, reason, scores) = transcribeChunk(
+                     audio: chunk.audio,
+                     generationParameters: generationParameters,
+                     onTokenDelta: { delta in
+@@ -119,7 +128,10 @@
+                         }
+                     }
+                 )
+-                totalPromptTokens += promptTokens
++                if reason != "eos" { completionReason = reason }
++            // Scores are defined only for this bridge's one bounded native chunk.
++            whisperScores = chunks.count == 1 ? scores : nil
++            totalPromptTokens += promptTokens
+                 totalGenerationTokens += generationTokens
+                 if detectedLanguage == nil { detectedLanguage = lang }
+ 
+@@ -148,7 +160,9 @@
+                 promptTps: elapsed > 0 ? Double(totalPromptTokens) / elapsed : 0,
+                 generationTps: elapsed > 0 ? Double(totalGenerationTokens) / elapsed : 0,
+                 totalTime: elapsed,
+-                peakMemoryUsage: Double(Memory.peakMemory) / 1e9
++                peakMemoryUsage: Double(Memory.peakMemory) / 1e9,
++            transcribeCompletionReason: completionReason,
++            transcribeWhisperScores: whisperScores
+             )
+             continuation.yield(.result(output))
+             continuation.finish()
+@@ -187,7 +201,7 @@
+         audio: MLXArray,
+         generationParameters: STTGenerateParameters,
+         onTokenDelta: ((String) -> Void)? = nil
+-    ) -> (text: String, promptTokens: Int, generationTokens: Int, language: String?) {
++    ) -> (text: String, promptTokens: Int, generationTokens: Int, language: String?, completion: String, scores: [String: Double]) {
+         guard let tokenizer else {
+             fatalError("WhisperTokenizer not loaded — call fromPretrained / fromDirectory before generate.")
+         }
+@@ -207,6 +221,10 @@
+             encoderHidden: encoderHidden,
+             caches: &caches
+         )
++        // OpenAI decoding.py: no-speech probability at the SOT row, before filters.
++        let sotLogits = model.decoder.projectToVocab(hidden[0, 0]).asType(.float32)
++        let noSpeechProbability = softmax(sotLogits, axis: -1)[tokenizer.noSpeechId].item(Float.self)
++        var sumLogProbability: Float = 0
+         var logits = model.decoder.projectToVocab(hidden[0, -1])
+         eval(logits)
+ 
+@@ -225,7 +243,9 @@
+             )
+         )
+ 
++        var reachedEOS = false
+         for step in 0..<maxTokens {
++            if Task.isCancelled { break }
+             var stepLogits = logits
+             if step == 0, !beginSuppress.isEmpty {
+                 stepLogits = suppressLogits(stepLogits, ids: beginSuppress)
+@@ -236,7 +256,8 @@
+             stepLogits = suppressFromIndex(stepLogits, fromIndex: tokenizer.timestampBeginId)
+ 
+             let nextToken = sample(stepLogits, temperature: generationParameters.temperature)
+-            if nextToken == tokenizer.endOfTextId { break }
++            sumLogProbability += logSoftmax(stepLogits.asType(.float32), axis: -1)[nextToken].item(Float.self)
++            if nextToken == tokenizer.endOfTextId { reachedEOS = true; break }
+             generated.append(nextToken)
+ 
+             if let onTokenDelta {
+@@ -278,7 +299,12 @@
+                 break
+             }
+         }
+-        return (text, promptIds.count, generated.count, language)
++        let reason = Task.isCancelled ? "cancelled" : reachedEOS ? "eos" :
++            maxTokens < generationParameters.maxTokens ? "context_limit" : "max_tokens"
++        return (text, promptIds.count, generated.count, language, reason, [
++            "noSpeechProbability": Double(noSpeechProbability),
++            "averageLogProbability": Double(sumLogProbability) / Double(generated.count + 1),
++        ])
+     }
+ 
+     private func sample(_ logits: MLXArray, temperature: Float) -> Int {
+@@ -526,16 +552,7 @@
+         if FileManager.default.fileExists(atPath: localTokenizer.path) {
+             tokenizerDir = modelDirectory
+         } else {
+-            tokenizerDir = try await downloadTokenizerAssets(
+-                vocabSize: config.vocabSize,
+-                cache: cache
+-            )
+-            if generationConfig == nil {
+-                let fetched = tokenizerDir.appendingPathComponent("generation_config.json")
+-                if let data = try? Data(contentsOf: fetched) {
+-                    generationConfig = try? JSONDecoder().decode(WhisperGenerationConfig.self, from: data)
+-                }
+-            }
++            throw STTError.modelNotInitialized("Pinned local tokenizer.json is required; runtime downloads are disabled")
+         }
+ 
+         model.tokenizer = try await WhisperTokenizer(
+--- a/Sources/MLXAudioSTT/Models/Whisper/WhisperTokenizer.swift
++++ b/Sources/MLXAudioSTT/Models/Whisper/WhisperTokenizer.swift
+@@ -7,6 +7,7 @@
+ 
+     let startOfTranscriptId: Int
+     let endOfTextId: Int
++    let noSpeechId: Int
+     let noTimestampsId: Int
+     let prevSotId: Int?
+     let transcribeId: Int?
+@@ -26,6 +27,11 @@
+         self.inner = try await AutoTokenizer.from(modelFolder: tokenizerDir)
+ 
+         let addedTokens = Self.loadAddedTokensDecoder(modelDirectory: tokenizerDir)
++        guard let noSpeechId = Self.tokenId(in: addedTokens, name: "<|nospeech|>")
++            ?? Self.tokenId(in: addedTokens, name: "<|nocaptions|>") else {
++            throw NSError(domain: "WhisperTokenizer", code: 1, userInfo: [NSLocalizedDescriptionKey: "Verified no-speech token is required"])
++        }
++        self.noSpeechId = noSpeechId
+ 
+         if let id = generationConfig?.decoderStartTokenId {
+             self.startOfTranscriptId = id
+--- a/Sources/MLXAudioSTT/Models/Qwen3ASR/Qwen3ASR.swift
++++ b/Sources/MLXAudioSTT/Models/Qwen3ASR/Qwen3ASR.swift
+@@ -103,7 +103,7 @@
+     let outputLengths = (
+         floorDiv(floorDiv(featLengths - 1, 2) + 1 - 1, 2)
+         + 1
+-        + (inputLengths / 100) * 13
++        + floorDiv(inputLengths, 100) * 13
+     )
+     return outputLengths
+ }
+@@ -1034,14 +1034,12 @@
+     // MARK: - Audio Preprocessing
+ 
+     public func preprocessAudio(_ audio: MLXArray) -> (MLXArray, MLXArray, Int) {
+-        // Compute mel spectrogram
+-        let melSpec = MLXAudioCore.computeMelSpectrogram(
+-            audio: audio,
+-            sampleRate: 16000,
+-            nFft: 400,
+-            hopLength: 160,
+-            nMels: config.audioConfig.numMelBins
+-        )
++        // Official Qwen3-ASR uses WhisperFeatureExtractor: Slaney spacing,
++        // periodic Hann and the last centered STFT frame removed. Reuse the
++        // existing implementation without Whisper's 30-second pad/trim step.
++        let melSpec = WhisperAudio.logMelSpectrogram(
++            audio, nMels: config.audioConfig.numMelBins
++        ).transposed(1, 0)
+ 
+         // melSpec shape: [numFrames, nMels] -> need [1, nMels, numFrames]
+         let transposed = melSpec.transposed(1, 0)
+@@ -1202,7 +1200,7 @@
+         language: String?,
+         repetitionPenalty: Float = 1.0,
+         repetitionContextSize: Int = 32
+-    ) -> (text: String, language: String?, promptTokens: Int, generationTokens: Int) {
++    ) -> (text: String, language: String?, promptTokens: Int, generationTokens: Int, completion: String) {
+         guard let tokenizer = tokenizer else {
+             fatalError("Tokenizer not loaded")
+         }
+@@ -1264,14 +1262,17 @@
+         var prevTokenArr = firstLast.argMax(axis: -1)
+         asyncEval(prevTokenArr)
+ 
++        var completion = "max_tokens"
+         var generatedTokens: [Int] = []
+ 
+         // AR loop with asyncEval pipelining: while CPU is consuming token N
+         // (item() blocks briefly), GPU computes token N+1 in the background.
+         for tokenIndex in 0..<maxTokens {
++            if Task.isCancelled { completion = "cancelled"; break }
+             let prevTokenInt = prevTokenArr.item(Int.self)
+ 
+             if eosTokenIds.contains(prevTokenInt) {
++                completion = "eos"
+                 break
+             }
+             generatedTokens.append(prevTokenInt)
+@@ -1283,6 +1284,7 @@
+             if repetitionPenalty == 1.0 && generatedTokens.count >= 24 {
+                 let tail = generatedTokens.suffix(24)
+                 if Set(tail).count <= 3 {
++                    completion = "repetition_guard"
+                     break
+                 }
+             }
+@@ -1325,7 +1327,7 @@
+         let decodedText = tokenizer.decode(tokens: generatedTokens)
+         let parsed = parseGeneratedChunk(decodedText, forcedLanguage: language)
+ 
+-        return (parsed.text, parsed.language, promptTokenCount, generatedTokens.count)
++        return (parsed.text, parsed.language, promptTokenCount, generatedTokens.count, completion)
+     }
+ 
+     // MARK: - Generation
+@@ -1358,10 +1360,11 @@
+         var totalPromptTokens = 0
+         var totalGenerationTokens = 0
+         var remainingTokens = maxTokens
++        var completionReason = "eos"
+         var chunkLanguages: [String?] = []
+ 
+         for (chunkAudio, offsetSec) in chunks {
+-            if remainingTokens <= 0 { break }
++            if remainingTokens <= 0 { completionReason = "max_tokens"; break }
+ 
+             let actualChunkDuration = Float(chunkAudio.dim(0)) / Float(sampleRate)
+ 
+@@ -1375,6 +1378,7 @@
+                 repetitionContextSize: repetitionContextSize
+             )
+ 
++            if result.completion != "eos" { completionReason = result.completion }
+             allTexts.append(result.text)
+             chunkLanguages.append(result.language)
+             totalPromptTokens += result.promptTokens
+@@ -1409,7 +1413,8 @@
+             promptTps: totalTime > 0 ? Double(totalPromptTokens) / totalTime : 0,
+             generationTps: totalTime > 0 ? Double(totalGenerationTokens) / totalTime : 0,
+             totalTime: totalTime,
+-            peakMemoryUsage: Double(Memory.peakMemory) / 1e9
++            peakMemoryUsage: Double(Memory.peakMemory) / 1e9,
++            transcribeCompletionReason: completionReason
+         )
+     }
+ 
+@@ -1639,7 +1644,7 @@
+     // MARK: - Tokenizer JSON Generation
+ 
+     /// Generate `tokenizer.json` from `vocab.json` + `merges.txt` + `tokenizer_config.json`
+-    static func generateTokenizerJSONIfMissing(in modelDir: URL) throws {
++    public static func generateTokenizerJSONIfMissing(in modelDir: URL) throws {
+         let tokenizerJSONPath = modelDir.appendingPathComponent("tokenizer.json")
+         guard !FileManager.default.fileExists(atPath: tokenizerJSONPath.path) else { return }
+ 
+@@ -1691,7 +1696,7 @@
+                 }
+                 tokens.sort { $0.0 < $1.0 }
+                 let tokenData = try JSONSerialization.data(
+-                    withJSONObject: tokens.map { $0.1 }, options: [])
++                    withJSONObject: tokens.map { $0.1 }, options: [.sortedKeys])
+                 addedTokensJSON = String(data: tokenData, encoding: .utf8) ?? "[]"
+             }
+         }
+@@ -1796,7 +1801,9 @@
+         let model = Qwen3ASRModel(config)
+ 
+         // Generate tokenizer.json if missing (Qwen3 ASR models don't ship it)
+-        try generateTokenizerJSONIfMissing(in: modelDir)
++        guard FileManager.default.fileExists(atPath: modelDir.appendingPathComponent("tokenizer.json").path) else {
++            throw STTError.modelNotInitialized("Pinned prepared tokenizer.json is required")
++        }
+ 
+         // Load tokenizer
+         model.tokenizer = try await AutoTokenizer.from(modelFolder: modelDir)
+--- a/Sources/MLXAudioSTT/Models/Parakeet/ParakeetModel.swift
++++ b/Sources/MLXAudioSTT/Models/Parakeet/ParakeetModel.swift
+@@ -161,7 +161,8 @@
+         return STTOutput(
+             text: result.text,
+             segments: result.segments,
+-            language: generationParameters.language
++            language: generationParameters.language,
++            transcribeCompletionReason: Task.isCancelled ? "cancelled" : "audio_consumed"
+         )
+     }
+ 
+@@ -410,6 +411,7 @@
+             var currentToken = MLXArray(Int32(lastToken)).reshaped([1, 1]).asType(.int32)
+ 
+             while t < maxLength {
++                if Task.isCancelled { break }
+                 let frame = featureSeq[0..., t..<(t + 1), 0...]
+ 
+                 let stepOutputs = compiledTDTStep([
+@@ -504,6 +506,7 @@
+         var hypothesisByRow = Array(repeating: [ParakeetAlignedToken](), count: batchSize)
+ 
+         while true {
++            if Task.isCancelled { break }
+             let activeRows = (0..<batchSize).filter { row in
+                 let isActive = timeByRow[row] < maxLengthByRow[row]
+                 doneByRow[row] = !isActive
+@@ -699,6 +702,7 @@
+             var state: ParakeetLSTMState?
+ 
+             while t < maxLength {
++                if Task.isCancelled { break }
+                 let frame = featureSeq[0..., t..<(t + 1), 0...]
+                 let currentToken: MLXArray? = lastToken == blankToken ? nil : MLXArray(lastToken).reshaped([1, 1]).asType(.int32)
+ 
