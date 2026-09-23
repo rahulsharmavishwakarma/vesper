@@ -72,6 +72,40 @@ const SHERPA: &str = "11afbd009a7f8c08f4bcf2fc1b265d0df4670fbf";
 const LLAMA: &str = "e79e4bf660e19f2ad851e06c6913f7a8c5852621";
 const SPEECH: ModelRole = ModelRole::SpeechRecognition;
 const TEXT: ModelRole = ModelRole::TextReconstruction;
+pub const MLX_RUNTIME: &str = "MLX-Audio-Swift";
+pub const MLX_REVISION: &str = "d302a5c6080d2bb97bae38c7418f82abb76013b6";
+
+/// Qualified completed-audio English variants. Automatic deliberately stays on Sherpa.
+pub fn mlx_speech_supported(model: AsrModel) -> bool {
+    cfg!(all(
+        feature = "mlx",
+        target_os = "macos",
+        target_arch = "aarch64"
+    )) && matches!(
+        model,
+        AsrModel::ParakeetTdt06bV3 | AsrModel::Qwen3Asr06b | AsrModel::WhisperSmall
+    )
+}
+
+#[cfg(all(feature = "mlx", target_os = "macos", target_arch = "aarch64"))]
+const fn mlx_registration(
+    kind: AdapterKind,
+    architecture: &'static str,
+    state: CacheState,
+) -> AdapterRegistration {
+    AdapterRegistration {
+        kind,
+        task: SPEECH,
+        architecture,
+        runtime: MLX_RUNTIME,
+        runtime_revision: MLX_REVISION,
+        capabilities: AdapterCapabilities {
+            resident_weights: true,
+            completion_report: true,
+            ..caps(state, &[Language::English], &[ComputeBackend::Metal])
+        },
+    }
+}
 
 const fn caps(
     state: CacheState,
@@ -92,6 +126,7 @@ const fn caps(
 }
 
 pub const ADAPTERS: &[AdapterRegistration] = &[
+    // Keep the existing CPU registrations first: adapter(kind) is the default runtime.
     AdapterRegistration {
         kind: AdapterKind::NemoRnnt,
         task: SPEECH,
@@ -157,7 +192,11 @@ pub const ADAPTERS: &[AdapterRegistration] = &[
         capabilities: AdapterCapabilities {
             resident_weights: true,
             completion_report: true,
-            ..caps(CacheState::HybridRecurrentKv, &[Language::English], CPU)
+            ..caps(
+                CacheState::HybridRecurrentKv,
+                &[Language::English],
+                ALL_BACKENDS,
+            )
         },
     },
     AdapterRegistration {
@@ -184,6 +223,20 @@ pub const ADAPTERS: &[AdapterRegistration] = &[
             ..caps(CacheState::ModelDefined, ALL_LANGUAGES, ALL_BACKENDS)
         },
     },
+    #[cfg(all(feature = "mlx", target_os = "macos", target_arch = "aarch64"))]
+    mlx_registration(
+        AdapterKind::SherpaTransducer,
+        "sherpa_nemo_transducer",
+        CacheState::Rnnt,
+    ),
+    #[cfg(all(feature = "mlx", target_os = "macos", target_arch = "aarch64"))]
+    mlx_registration(
+        AdapterKind::QwenAsr,
+        "qwen3_asr",
+        CacheState::EncoderDecoder,
+    ),
+    #[cfg(all(feature = "mlx", target_os = "macos", target_arch = "aarch64"))]
+    mlx_registration(AdapterKind::Whisper, "whisper", CacheState::EncoderDecoder),
 ];
 
 pub fn resolve_adapter(
@@ -217,7 +270,20 @@ impl AsrModel {
 }
 
 impl AppConfig {
+    pub fn uses_mlx_speech(&self) -> bool {
+        self.models.custom_asr.is_none()
+            && self.compute_backend == ComputeBackend::Metal
+            && mlx_speech_supported(self.models.asr)
+    }
     pub fn speech_adapter(&self) -> &'static AdapterRegistration {
+        if self.uses_mlx_speech() {
+            return resolve_adapter(
+                SPEECH,
+                adapter(self.models.asr.adapter_kind()).architecture,
+                MLX_RUNTIME,
+            )
+            .expect("compiled MLX architecture registration");
+        }
         adapter(if self.models.custom_asr.is_some() {
             AdapterKind::SherpaTransducer
         } else {
@@ -254,13 +320,17 @@ mod tests {
             config.language = Language::English;
             for backend in ALL_BACKENDS {
                 config.compute_backend = *backend;
-                assert_eq!(config.validate().is_ok(), CPU.contains(backend));
+                assert_eq!(
+                    config.validate().is_ok(),
+                    CPU.contains(backend)
+                        || (mlx_speech_supported(model) && *backend == ComputeBackend::Metal)
+                );
             }
         }
         assert_eq!(AppConfig::default().models.asr, AsrModel::CohereTranscribe);
     }
     #[test]
-    fn lfm_is_resident_completed_audio_with_explicit_english_and_cpu_only() {
+    fn lfm_is_resident_completed_audio_with_explicit_english_and_native_backends() {
         let mut config = AppConfig::default();
         config.models.asr = AsrModel::Lfm25Audio15b;
         let capability = config.speech_adapter().capabilities;
@@ -277,7 +347,7 @@ mod tests {
         config.language = Language::English;
         for backend in ALL_BACKENDS {
             config.compute_backend = *backend;
-            assert_eq!(config.validate().is_ok(), CPU.contains(backend));
+            assert!(config.validate().is_ok());
         }
         config.compute_backend = ComputeBackend::Cpu;
         let restored: AppConfig =

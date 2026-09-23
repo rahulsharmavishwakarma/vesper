@@ -569,7 +569,10 @@ mod tests {
                 config.max_recording_seconds = 5;
                 assert_eq!(config.effective_recording_seconds(), 0);
                 config.compute_backend = ComputeBackend::Metal;
-                assert!(config.validate().is_err());
+                assert_eq!(
+                    config.validate().is_ok(),
+                    crate::mlx_speech_supported(model) && language == Language::English
+                );
             }
         }
     }
