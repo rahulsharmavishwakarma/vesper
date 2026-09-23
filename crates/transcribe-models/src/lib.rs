@@ -17,6 +17,8 @@ use transcribe_core::{
     RewriteQuantization,
 };
 
+#[cfg(feature = "mlx")]
+pub mod mlx;
 mod storage;
 pub use storage::{remove_model, ModelRemoval};
 
@@ -116,6 +118,11 @@ pub fn catalog() -> Vec<Artifact> {
     let mut artifacts: Vec<Artifact> =
         serde_json::from_str(include_str!("../../../models/artifacts.json"))
             .expect("checked-in model artifact manifest must be valid");
+    #[cfg(feature = "mlx")]
+    artifacts.extend(
+        serde_json::from_str::<Vec<Artifact>>(include_str!("../../../models/mlx-artifacts.json"))
+            .expect("pinned MLX artifacts"),
+    );
     for artifact in &mut artifacts {
         if artifact.role == "rewriter" && artifact.model_id.is_none() {
             artifact.model_id = Some(RewriteModel::Qwen35_08b.id().into());
@@ -258,7 +265,9 @@ pub fn selected(config: &AppConfig) -> Result<Vec<Artifact>> {
             std::env::consts::ARCH
         )));
     }
-    let backend = if config.models.custom_asr.is_none()
+    let backend = if config.uses_mlx_speech() {
+        Some("metal")
+    } else if config.models.custom_asr.is_none()
         && config.models.asr == AsrModel::Nemotron35AsrStreaming06b
     {
         Some(resolved_nemo_backend(config)?)
@@ -279,10 +288,13 @@ pub fn selected(config: &AppConfig) -> Result<Vec<Artifact>> {
                     .platform
                     .as_deref()
                     .is_none_or(|value| Some(value) == platform)
-                && file
-                    .backend
-                    .as_deref()
-                    .is_none_or(|value| Some(value) == backend))
+                && if config.uses_mlx_speech() {
+                    file.backend.as_deref() == Some("metal")
+                } else {
+                    file.backend
+                        .as_deref()
+                        .is_none_or(|value| Some(value) == backend)
+                })
                 || (file.role == "rewriter"
                     && config.cleanup_enabled
                     && config.models.custom_rewriter.is_none()
@@ -335,7 +347,14 @@ fn built_in_asr_spec(config: &AppConfig, model: AsrModel) -> ModelInstallSpec {
     // Catalog entries must remain independently installable even when the saved
     // backend is incompatible with a different selected model. Auto still uses
     // the current host/platform resolver to choose a real packaged runtime.
-    target.compute_backend = ComputeBackend::Auto;
+    target.compute_backend = if config.compute_backend == ComputeBackend::Metal
+        && transcribe_core::mlx_speech_supported(model)
+    {
+        target.language = Language::English;
+        ComputeBackend::Metal
+    } else {
+        ComputeBackend::Auto
+    };
     let (artifacts, support_error) = match selected(&target) {
         Ok(artifacts) if artifacts.is_empty() => (
             Vec::new(),
@@ -654,6 +673,17 @@ pub fn inspect(config: &AppConfig, root: &Path) -> Installation {
     let selection = selected(config);
     let selection_error = selection.as_ref().err().map(ToString::to_string);
     let supported = selection.is_ok();
+    #[cfg(feature = "mlx")]
+    let (supported, selection_error) = if config.uses_mlx_speech() && !mlx::runtime_ready() {
+        (
+            false,
+            Some(
+                "The packaged MLX runtime is missing. Rebuild the optional MLX application.".into(),
+            ),
+        )
+    } else {
+        (supported, selection_error)
+    };
     let artifacts = selection.unwrap_or_default();
     let files: Vec<_> = artifacts
         .iter()
@@ -704,7 +734,21 @@ fn inspect_model_spec(spec: &ModelInstallSpec, root: &Path) -> ModelInstallation
         })
         .collect::<Vec<_>>();
     let artifacts_installed = !files.is_empty() && files.iter().all(|file| file.installed);
-    let runtime_ready = spec.support_error.is_none()
+    let runtime_ready = (!spec
+        .artifacts
+        .iter()
+        .any(|a| a.relative_path.starts_with("mlx/"))
+        || {
+            #[cfg(feature = "mlx")]
+            {
+                mlx::runtime_ready()
+            }
+            #[cfg(not(feature = "mlx"))]
+            {
+                false
+            }
+        })
+        && spec.support_error.is_none()
         && if let Some(runtime) = spec
             .artifacts
             .iter()
@@ -814,6 +858,11 @@ fn verify_matching(
 
 /// Verify only the selected speech model and its native runtime.
 pub fn verify_asr(config: &AppConfig, root: &Path, cancelled: &AtomicBool) -> Result<()> {
+    #[cfg(feature = "mlx")]
+    if config.uses_mlx_speech() {
+        mlx::verify_runtime(cancelled)?;
+        mlx::verify_directory(config, root)?;
+    }
     verify_matching(config, root, cancelled, |artifact| {
         matches!(artifact.role.as_str(), "asr" | "asr_runtime")
     })
@@ -896,6 +945,13 @@ fn install_artifacts(
             }
         }
         check_cancel(cancelled)?;
+        #[cfg(feature = "mlx")]
+        if artifact.url == "builtin:qwen3-tokenizer-v1" {
+            mlx::prepare_tokenizer(root, artifact, cancelled)?;
+            report(InstallPhase::Installed, artifact.size_bytes);
+            completed_bytes += artifact.size_bytes;
+            continue;
+        }
         let parent = target.parent().expect("artifact has a parent");
         std::fs::create_dir_all(parent)?;
         let mut staging = tempfile::NamedTempFile::new_in(parent)?;
@@ -1001,7 +1057,9 @@ pub fn install_model(
 }
 
 pub fn provenance(config: &AppConfig) -> serde_json::Value {
-    let asr_runtime = if config.models.custom_asr.is_none()
+    let asr_runtime = if config.uses_mlx_speech() {
+        transcribe_core::MLX_RUNTIME
+    } else if config.models.custom_asr.is_none()
         && config.models.asr == AsrModel::Nemotron35AsrStreaming06b
     {
         "NeMo-Speech.cpp 0.1.0"

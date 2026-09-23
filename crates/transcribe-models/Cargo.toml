@@ -5,6 +5,14 @@ edition.workspace = true
 rust-version.workspace = true
 publish.workspace = true
 
+[features]
+default = []
+mlx = ["transcribe-core/mlx"]
+
+[build-dependencies]
+sha2.workspace = true
+serde_json.workspace = true
+
 [dependencies]
 transcribe-core.workspace = true
 serde.workspace = true
