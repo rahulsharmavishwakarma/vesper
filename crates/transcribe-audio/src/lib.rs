@@ -5,6 +5,7 @@ mod decode;
 mod meter;
 mod pcm;
 mod pitch;
+mod segmentation;
 
 pub use capture::{
     list_input_devices, AudioChunk, AudioChunkStream, AudioFeatures, AudioRecorder, InputDevice,
@@ -12,6 +13,7 @@ pub use capture::{
 };
 pub use decode::decode_file;
 pub use pcm::{CapturedAudio, StreamingResampler};
+pub use segmentation::completed_segment_end;
 
 use std::path::Path;
 use transcribe_core::{Error, Result};

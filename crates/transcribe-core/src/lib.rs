@@ -10,11 +10,12 @@ mod model;
 mod personalization;
 mod semantic;
 mod shortcuts;
+mod speech;
 mod transcript;
 
 pub use adapters::{
-    adapter, resolve_adapter, AdapterCapabilities, AdapterKind, AdapterRegistration, CacheState,
-    ADAPTERS,
+    adapter, mlx_speech_supported, resolve_adapter, AdapterCapabilities, AdapterKind,
+    AdapterRegistration, CacheState, ADAPTERS, MLX_REVISION, MLX_RUNTIME,
 };
 pub use config::{
     AppConfig, AudioFrontendConfig, CaptureDesign, CleanupPreset, ComputeBackend, DictationOutput,
@@ -36,4 +37,7 @@ pub use personalization::{
 };
 pub use semantic::*;
 pub use shortcuts::{recording_shortcut_identity, same_recording_shortcut};
+pub use speech::{
+    whisper_no_speech, WHISPER_LOG_PROBABILITY_THRESHOLD, WHISPER_NO_SPEECH_THRESHOLD,
+};
 pub use transcript::{PipelineStage, Transcript};
