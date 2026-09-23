@@ -1,8 +1,23 @@
-# transcribe motion and interaction audit
+# Vesper motion and interaction audit
 
 Updated 18 September 2026. Apple recommends purposeful, brief feedback that follows the interaction people performed. This supports a restrained Studio interface with clear responses to clicks, selections and recording state. [Apple HIG: Motion](https://developer.apple.com/design/human-interface-guidelines/motion)
 
-The timings below are **transcribe design choices**, not durations prescribed by Apple or accessibility standards.
+The timings below are **Vesper design choices**, not durations prescribed by Apple or accessibility standards.
+
+## Brand motion
+
+The selected Songbird identity is static in the sidebar and native app icon.
+Opening About explicitly activates two call-stroke entrances: each lasts 480 ms,
+with 120 ms and 360 ms delays and `cubic-bezier(.16,1,.3,1)` easing. Each moves at
+most three SVG units and fades from 0.18 to full opacity. The bird body and all
+six letters remain unchanged; this is not a pulse or recording indicator.
+Closing About clears activation, reopening starts a fresh entrance, and
+`prefers-reduced-motion: reduce` disables both animations with the complete logo
+visible. The sheet retains its existing independent entrance and focus behavior.
+Enabling Reduce Motion also cancels an active entrance; turning it off does not
+restart the decoration until About is opened again.
+The shared component consumes the canonical SVG described in
+[UI design](ui-design.md#selected-identity).
 
 **A / Instrument sidebar icons and 3 / Quiet creator labels are selected and integrated.**
 The exploratory comparisons under `docs/design/` remain local and are excluded

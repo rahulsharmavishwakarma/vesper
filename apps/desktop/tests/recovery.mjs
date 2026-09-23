@@ -211,7 +211,7 @@ async function setup({ recording = false, preview = false, main = false, interce
           };
         case 'get_app_status':
           return {
-            name: 'transcribe',
+            name: 'Vesper',
             version: 'test',
             inference_ready: true,
             asr_model: 'Synthetic ASR',
@@ -221,7 +221,7 @@ async function setup({ recording = false, preview = false, main = false, interce
           };
         case 'get_app_info':
           return {
-            name: 'transcribe',
+            name: 'Vesper',
             version: '9.8.7',
             buildType: 'release',
             os: 'macos',
@@ -2360,7 +2360,7 @@ for (const design of CAPTURE_DESIGNS) {
     state.runtime = {
       ...idle,
       stage: 'error',
-      message: 'Synthetic microphone problem. Open transcribe to choose another input.',
+      message: 'Synthetic microphone problem. Open Vesper to choose another input.',
     };
     state.dictation = {
       ...state.dictation,
@@ -2914,6 +2914,72 @@ await test('Shared disclosure arrows track native open state and retain keyboard
   );
 });
 
+await test('Selected Vesper identity keeps every letter still and limits motion to two calls', async () => {
+  const state = await setup({ main: true });
+  const sidebar = target.querySelector('.brand .brand-logo');
+  const sheet = target.querySelector('.about-sheet');
+  const logo = sheet.querySelector('.brand-logo');
+  const letters = (element) => [...element.querySelectorAll('[data-letter]')];
+  for (const element of [sidebar, logo]) {
+    assert(
+      letters(element)
+        .map((letter) => letter.dataset.letter)
+        .join('') === 'vesper',
+      'Incomplete wordmark',
+    );
+  }
+  assert(sidebar.getAnimations({ subtree: true }).length === 0, 'Sidebar logo animates');
+  const opener = target.querySelector('.sidebar-foot button');
+  opener.click();
+  await tick();
+  const animations = logo.getAnimations({ subtree: true });
+  if (matchMedia('(prefers-reduced-motion: reduce)').matches) {
+    assert(animations.length === 0, 'Reduced motion did not suppress logo motion');
+  } else {
+    assert(animations.length === 2, 'Expected exactly two call-stroke animations');
+    for (const animation of animations) {
+      assert(
+        /^vesper-call-[12]$/.test(animation.effect.target.getAttribute('class')),
+        'Animation targets the bird or letters',
+      );
+      assert(animation.effect.getTiming().iterations === 1, 'Logo loops');
+      animation.pause();
+    }
+    for (const time of [0, 120, 240, 360, 480, 600, 720, 840]) {
+      animations.forEach((animation) => {
+        animation.currentTime = time;
+      });
+      for (const letter of letters(logo)) {
+        const path = letter.querySelector('path');
+        assert(
+          getComputedStyle(path).opacity === '1' && getComputedStyle(path).transform === 'none',
+          'A letter fades or moves',
+        );
+        assert(path.getBBox().width > 0 && path.getBBox().height > 0, 'A letter is missing');
+      }
+    }
+    animations.forEach((animation) => animation.finish());
+  }
+  for (const call of logo.querySelectorAll('[class^="vesper-call-"]')) {
+    assert(getComputedStyle(call).opacity === '1', 'The final mark is incomplete');
+  }
+  sheet.querySelector('.close').click();
+  await until(() => !logo.classList.contains('animate'), 'Close did not clear motion activation');
+  opener.click();
+  await tick();
+  if (!matchMedia('(prefers-reduced-motion: reduce)').matches) {
+    const replay = logo.getAnimations({ subtree: true });
+    assert(
+      replay.length === 2 && replay.every((animation) => !animations.includes(animation)),
+      'Reopening did not start fresh motion',
+    );
+  }
+  assert(
+    !state.counts.start_recording && !state.counts.save_settings,
+    'Logo triggered native work',
+  );
+});
+
 await test('About sheet uses native metadata, copies only app info and restores focus', async () => {
   const state = await setup({ main: true });
   const opener = target.querySelector('.sidebar-foot button');
@@ -2955,8 +3021,7 @@ await test('About sheet uses native metadata, copies only app info and restores 
       'Copy feedback missing',
     );
     assert(
-      copied ===
-        'transcribe\nVersion: 9.8.7\nBuild: Release build\nPlatform: macOS · Apple silicon',
+      copied === 'Vesper\nVersion: 9.8.7\nBuild: Release build\nPlatform: macOS · Apple silicon',
       'Copy included unrelated data or incorrect metadata',
     );
   } finally {

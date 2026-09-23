@@ -1,6 +1,46 @@
 # UI interaction design
 
-Keep common actions familiar and direct. A control should let someone perform the task without assembling its implementation details. Preserve transcribe's shared typography, graphite/sage tokens, focus treatment, spacing, and approved motion; simplicity is an interaction requirement as well as a visual one.
+Keep common actions familiar and direct. A control should let someone perform the task without assembling its implementation details. Preserve Vesper's shared typography, graphite/sage tokens, focus treatment, spacing, and approved motion; simplicity is an interaction requirement as well as a visual one.
+
+## Selected identity
+
+**A — Songbird** is the owner-selected Vesper identity, approved in
+[issue #71](https://github.com/rahulsharmavishwakarma/transcribe/issues/71).
+The original bird, two call strokes and six individually drawn letter paths live
+in [the canonical SVG](../apps/desktop/src/assets/vesper.svg). No logo library,
+external font or downloaded artwork supplies this mark. The earlier web
+similarity screening was preliminary, not a claim of worldwide exclusivity or
+trademark clearance. Selecting the artwork does not select a distribution
+license or establish that the Vesper name is legally available.
+
+`BrandLogo.svelte` renders that same source at 160 px in the sidebar and 224 px
+in About, bounded by the available width. Existing sage/ink tokens provide its
+colours. The sidebar's existing button retains its accessible destination and
+keyboard behavior; About exposes the SVG as “Vesper.” The compact capture strip
+and macOS menu bar keep readable text instead of squeezing the full artwork
+into an icon-sized space. Native app icons use a still bird on the existing
+graphite rounded tile, generated from the same source rather than redrawn.
+
+Only About opening triggers a finite, staggered reveal of the two call strokes.
+The sidebar, bird body and letters never animate. Motion changes only call
+opacity and translation; no pulsing, scale, bouncing, looping or input delay is
+introduced. Closing clears the activation, reopening replays it, and OS Reduce
+Motion leaves the complete mark visible. See [motion design](motion-design.md#brand-motion)
+and [icon generation](development.md#brand-assets) for the implementation contract.
+
+Identity verification on 23 September 2026: 50 Chromium browser regressions and
+117 Node helper/tool tests passed, including full-name geometry and compatibility
+checks. The logo/About sheet fit at 320/375/414/768/1180/1440 px without horizontal
+overflow. Pointer and actual Enter/Escape focus recovery, eight sampled motion
+frames, reopen, initial/live Reduce Motion and no preference-toggle replay were
+checked. Computed static contrast against sidebar/About surfaces measured
+10.44:1 for the bird and 14.95:1 for the wordmark. Frontend lint, type check,
+formatting and production build passed.
+The macOS arm64 debug bundle built as `Vesper.app`; its plist retained
+`com.transcribe.desktop`, and its icon matched the reproducibly generated ICNS
+that macOS `iconutil` decoded successfully. These checks did not launch the app,
+qualify native Dock appearance, exercise a screen reader, or validate microphone,
+inference, release distribution or Windows/Linux behavior.
 
 ## Before changing a control
 

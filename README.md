@@ -1,8 +1,8 @@
-# transcribe
+# Vesper
 
 **Voice to text, on your Mac.**
 
-transcribe turns microphone recordings and audio files into text using local models.
+Vesper turns microphone recordings and audio files into text using local models.
 Dictate with a keyboard shortcut, review your words, and optionally clean up
 punctuation and formatting. No account or cloud API key is required.
 

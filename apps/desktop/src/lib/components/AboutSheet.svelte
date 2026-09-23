@@ -3,10 +3,12 @@
   import { getAppInfo, type AppInfo } from '../api/desktop';
   import CopyGlyph from './CopyGlyph.svelte';
   import Icon from './Icon.svelte';
+  import BrandLogo from './BrandLogo.svelte';
 
   let { fallbackFocus }: { fallbackFocus?: () => void } = $props();
 
   let dialog: HTMLDialogElement | undefined = $state();
+  let identityMotion = $state(false);
   let info = $state<AppInfo | null>(null);
   let loading = $state(false);
   let error = $state<string | null>(null);
@@ -59,8 +61,10 @@
     info = null;
     void load();
     dialog?.showModal();
+    identityMotion = true;
   }
   function close() {
+    identityMotion = false;
     generation += 1;
     clearTimeout(copyTimer);
     dialog?.close();
@@ -99,10 +103,12 @@
   class="about-sheet"
   aria-labelledby="about-heading"
   oncancel={() => {
+    identityMotion = false;
     generation += 1;
     clearTimeout(copyTimer);
   }}
   onclose={() => {
+    identityMotion = false;
     if (opener?.isConnected && opener !== document.body && opener.getClientRects().length) {
       opener.focus({ preventScroll: true });
       if (document.activeElement === opener) return;
@@ -122,17 +128,14 @@
   }}
 >
   <header>
-    <h2 id="about-heading">About transcribe</h2>
+    <h2 id="about-heading">About Vesper</h2>
     <button type="button" class="ghost close" aria-label="Close About" onclick={close}
       ><Icon name="close" /></button
     >
   </header>
   <div class="identity">
-    <div class="app-mark" aria-hidden="true">
-      <svg viewBox="0 0 24 24"><path d="M3 11v2m4-6v10m5-14v18m5-14v10m4-6v2" /></svg>
-    </div>
     <div>
-      <h3>transcribe</h3>
+      <h3><BrandLogo animate={identityMotion} large /></h3>
       <p>On-device voice to text</p>
     </div>
   </div>
@@ -225,25 +228,6 @@
     margin: var(--space-1) 0 0;
     font-size: 12px;
     color: var(--color-muted);
-  }
-  .app-mark {
-    display: grid;
-    place-items: center;
-    width: 48px;
-    height: 48px;
-    flex: none;
-    border: 1px solid var(--color-line);
-    border-radius: var(--radius-md);
-    background: var(--color-bg);
-    color: var(--color-accent);
-  }
-  .app-mark svg {
-    width: 28px;
-    height: 28px;
-    fill: none;
-    stroke: currentColor;
-    stroke-width: 2.5;
-    stroke-linecap: round;
   }
   .app-info {
     display: flex;

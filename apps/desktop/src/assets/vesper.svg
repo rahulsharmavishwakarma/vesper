@@ -1,0 +1,16 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 399 104" role="img" aria-label="Vesper">
+  <!-- Selected A / Songbird. Original symbol and custom, font-independent lettering. -->
+  <g class="vesper-mark" fill="none" stroke="currentColor" stroke-width="7" stroke-linecap="round" stroke-linejoin="round">
+    <path fill="currentColor" fill-rule="evenodd" stroke="none" d="M12 74L32 51C28 34 39 22 52 24C62 25 67 33 68 41L79 47L65 52C60 71 42 81 23 73L12 81ZM32 53C40 48 49 46 56 49C48 59 40 61 32 53ZM57 35a2.5 2.5 0 1 0-5 0a2.5 2.5 0 1 0 5 0Z"/>
+    <path class="vesper-call-1" d="M80 34l7-6"/>
+    <path class="vesper-call-2" d="M85 47h9"/>
+  </g>
+  <g class="vesper-wordmark" transform="translate(116 1)" fill="none" stroke="currentColor" stroke-width="7" stroke-linecap="round" stroke-linejoin="round">
+    <g data-letter="v" transform="translate(0 0)"><path d="M5 31L22 66L39 31"/></g>
+    <g data-letter="e" transform="translate(49 0)"><path d="M7 47H37C37 24 6 25 6 48C6 68 27 71 37 61"/></g>
+    <g data-letter="s" transform="translate(97 0)"><path d="M35 34C23 25 7 30 7 40C7 51 35 42 35 56C35 69 16 71 6 62"/></g>
+    <g data-letter="p" transform="translate(144 0)"><path d="M7 83V31M7 48C7 25 39 25 39 48C39 72 7 72 7 48Z"/></g>
+    <g data-letter="e" transform="translate(194 0)"><path d="M7 47H37C37 24 6 25 6 48C6 68 27 71 37 61"/></g>
+    <g data-letter="r" transform="translate(242 0)"><path d="M7 65V31M7 46C7 34 18 28 29 32"/></g>
+  </g>
+</svg>

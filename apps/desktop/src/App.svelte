@@ -54,6 +54,7 @@
   import DictationPreferences from './lib/components/DictationPreferences.svelte';
   import ApplicationStatus from './lib/components/ApplicationStatus.svelte';
   import AboutSheet from './lib/components/AboutSheet.svelte';
+  import BrandLogo from './lib/components/BrandLogo.svelte';
   import DownloadProgress from './lib/components/DownloadProgress.svelte';
   import {
     acceleratorOptions,
@@ -437,8 +438,8 @@
       <button
         type="button"
         class="brand"
-        aria-label="transcribe — dictate"
-        onclick={() => navigate('dictate')}><span>transcribe</span></button
+        aria-label="Vesper — dictate"
+        onclick={() => navigate('dictate')}><BrandLogo decorative /></button
       >
       <nav aria-label="Application">
         {#each views as view (view.id)}
@@ -459,9 +460,7 @@
         {/each}
       </nav>
       <div class="sidebar-foot">
-        <button type="button" class="ghost" onclick={() => aboutSheet?.open()}
-          >About transcribe</button
-        >
+        <button type="button" class="ghost" onclick={() => aboutSheet?.open()}>About Vesper</button>
         {#if pipelineBusy}<button
             type="button"
             class="activity-link"
@@ -1125,7 +1124,7 @@
       >
         <h2 id="about-settings-heading">About</h2>
         <p class="note">App version and information.</p>
-        <button type="button" onclick={() => aboutSheet?.open()}>About transcribe</button>
+        <button type="button" onclick={() => aboutSheet?.open()}>About Vesper</button>
       </section>
       {#if loaded}
         <PersonalizationPanel

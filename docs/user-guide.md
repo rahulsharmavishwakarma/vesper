@@ -1,20 +1,26 @@
-# Using transcribe
+# Using Vesper
 
-transcribe is a desktop dictation app for Apple-silicon Macs. It transcribes
+Vesper is a desktop dictation app for Apple-silicon Macs. It transcribes
 microphone recordings and audio files locally, with optional text cleanup,
 recording history and personal vocabulary.
 
 Start at the [product README](../README.md) for download status or follow the
 [development guide](development.md) to run from source. The public DMG and Apple
 Developer ID signing/notarization are not available yet. Once a release is
-available, open its DMG and drag `transcribe.app` to Applications.
+available, open its DMG and drag `Vesper.app` to Applications. The repository and
+download filename still use `transcribe`; existing settings and model locations
+are unchanged by the display-name update.
 
 ## First launch
 
 ### App information
 
-Open **Settings → About → About transcribe**, the sidebar's **About transcribe**
-button, or **About transcribe…** in the native menu to view the About sheet.
+Open **Settings → About → About Vesper**, the sidebar's **About Vesper**
+button, or **About Vesper…** in the native menu to view the About sheet.
+The selected custom Songbird logo spells all six letters in the sidebar and
+About sheet; the app icon uses the bird alone. Only opening About animates its
+two small call marks once. The bird and letters stay still, and Reduce Motion
+disables that decoration.
 It shows the compiled application version, development/release build type and
 platform. **Copy app info** copies only those details; it does not include
 recordings, transcripts or local paths. If clipboard access fails, the sheet
@@ -130,7 +136,7 @@ Insertion depends on the target app and its focus state; if it is unavailable,
 use **Copy**. External-app compatibility is still being qualified.
 
 You can change the capture design, move the floating controls, or hide them
-while keeping shortcuts active. The menu-bar **transcribe** item provides
+while keeping shortcuts active. The menu-bar **vesper** item provides
 recording status and quick access to History, Models, Settings and Quit.
 Closing the main window keeps the app running. Finish or cancel active work
 before quitting.
@@ -208,7 +214,7 @@ include private audio, transcripts or credentials.
 
 ## Background personalization analysis
 
-When you save a correction inside transcribe, the app also attempts a small local analysis while idle, using the writing model only if it is already loaded. Recording interrupts this work. This experimental analysis helps evaluate intent and context; its guesses do not yet change your words or preferences. Automatic spelling learning continues as before.
+When you save a correction inside Vesper, the app also attempts a small local analysis while idle, using the writing model only if it is already loaded. Recording interrupts this work. This experimental analysis helps evaluate intent and context; its guesses do not yet change your words or preferences. Automatic spelling learning continues as before.
 
 The app may retain bounded before/after text and one recent attempt locally for up to 30 days, even when saving audio for training is off. At most 256 results are retained, with expiry applied when the store is next accessed. Undo learning removes that result’s analysis; Forget learned words also removes all of this analysis. No audio or training labels are created by it. See [semantic personalization](personalization/semantic-shadow.md) for details and current evidence.
 
