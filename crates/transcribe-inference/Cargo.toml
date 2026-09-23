@@ -7,6 +7,7 @@ publish.workspace = true
 
 [features]
 default = []
+mlx = ["dep:transcribe-mlx", "transcribe-core/mlx", "transcribe-models/mlx"]
 cuda = ["llama-cpp-2/cuda"]
 vulkan = ["llama-cpp-2/vulkan"]
 rocm = ["llama-cpp-2/rocm"]
@@ -16,6 +17,7 @@ transcribe-core.workspace = true
 transcribe-audio.workspace = true
 transcribe-models.workspace = true
 transcribe-nemo.workspace = true
+transcribe-mlx = { workspace = true, optional = true }
 serde.workspace = true
 serde_json.workspace = true
 thiserror.workspace = true

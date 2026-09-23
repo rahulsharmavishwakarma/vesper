@@ -8,6 +8,7 @@ publish.workspace = true
 
 [features]
 default = []
+mlx = ["transcribe-inference/mlx"]
 cuda = ["transcribe-inference/cuda"]
 vulkan = ["transcribe-inference/vulkan"]
 rocm = ["transcribe-inference/rocm"]
