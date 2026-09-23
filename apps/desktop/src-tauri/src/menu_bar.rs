@@ -38,7 +38,7 @@ impl MenuStatus {
                     _ => "Working…",
                 }
             } else if stage == "error" {
-                "Needs attention — open transcribe"
+                "Needs attention — open Vesper"
             } else {
                 "Idle · on-device"
             },
@@ -61,7 +61,7 @@ impl MenuStatus {
                 storage.runtime.closing.load(Ordering::Relaxed),
             ),
             Err(_) => Self {
-                label: "Status unavailable — open transcribe",
+                label: "Status unavailable — open Vesper",
                 capture_label: "Start recording",
                 capture_enabled: false,
                 quit_enabled: false,
@@ -139,15 +139,15 @@ pub fn setup(app: &tauri::AppHandle) -> tauri::Result<()> {
         initial.capture_enabled,
         None::<&str>,
     )?;
-    let open = MenuItem::with_id(app, "tray-open", "Open transcribe", true, None::<&str>)?;
+    let open = MenuItem::with_id(app, "tray-open", "Open Vesper", true, None::<&str>)?;
     let history = MenuItem::with_id(app, "tray-history", "History", true, None::<&str>)?;
     let models = MenuItem::with_id(app, "tray-models", "Models…", true, None::<&str>)?;
     let settings = MenuItem::with_id(app, "tray-settings", "Settings…", true, Some("CmdOrCtrl+,"))?;
-    let about = MenuItem::with_id(app, "tray-about", "About transcribe…", true, None::<&str>)?;
+    let about = MenuItem::with_id(app, "tray-about", "About Vesper…", true, None::<&str>)?;
     let quit = MenuItem::with_id(
         app,
         "tray-quit",
-        "Quit transcribe",
+        "Quit Vesper",
         initial.quit_enabled,
         Some("CmdOrCtrl+Q"),
     )?;
@@ -168,7 +168,7 @@ pub fn setup(app: &tauri::AppHandle) -> tauri::Result<()> {
         ],
     )?;
     let builder = TrayIconBuilder::with_id(TRAY_ID)
-        .tooltip(format!("transcribe — {}", initial.label))
+        .tooltip(format!("Vesper — {}", initial.label))
         .menu(&menu)
         .show_menu_on_left_click(true)
         .on_menu_event(|app, event| {
@@ -189,7 +189,7 @@ pub fn setup(app: &tauri::AppHandle) -> tauri::Result<()> {
         });
     // The word is the brand on macOS. Other system trays require a bitmap icon.
     #[cfg(target_os = "macos")]
-    let builder = builder.title("transcribe");
+    let builder = builder.title("vesper");
     #[cfg(not(target_os = "macos"))]
     let builder = if let Some(icon) = app.default_window_icon() {
         builder.icon(icon.clone())
@@ -212,7 +212,7 @@ pub fn setup(app: &tauri::AppHandle) -> tauri::Result<()> {
             app_menu.prepend(&MenuItem::with_id(
                 app,
                 "app-about",
-                "About transcribe…",
+                "About Vesper…",
                 true,
                 None::<&str>,
             )?)?;
@@ -244,7 +244,7 @@ pub fn setup(app: &tauri::AppHandle) -> tauri::Result<()> {
                     capture.set_text(next.capture_label)?;
                     capture.set_enabled(next.capture_enabled)?;
                     quit.set_enabled(next.quit_enabled)?;
-                    tray.set_tooltip(Some(format!("transcribe — {}", next.label)))?;
+                    tray.set_tooltip(Some(format!("Vesper — {}", next.label)))?;
                     Ok(())
                 })();
                 if update.is_ok() {

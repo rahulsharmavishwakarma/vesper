@@ -23,11 +23,8 @@ fn notify_transcription(
         return;
     }
     let (title, body) = match result {
-        Ok(_) => ("transcription ready", "Your words are ready in transcribe."),
-        Err(_) => (
-            "transcription could not finish",
-            "Open transcribe for details.",
-        ),
+        Ok(_) => ("transcription ready", "Your words are ready in Vesper."),
+        Err(_) => ("transcription could not finish", "Open Vesper for details."),
     };
     let _ = app.notification().builder().title(title).body(body).show();
 }
@@ -46,7 +43,7 @@ pub struct AppInfo {
 #[tauri::command]
 pub fn get_app_info() -> AppInfo {
     AppInfo {
-        name: "transcribe",
+        name: "Vesper",
         version: env!("CARGO_PKG_VERSION"),
         build_type: if cfg!(debug_assertions) {
             "development"
@@ -73,7 +70,7 @@ pub struct AppStatus {
 pub fn get_app_status(storage: tauri::State<'_, AppStorage>) -> Result<AppStatus, String> {
     let config = storage.settings.load()?;
     Ok(AppStatus {
-        name: "transcribe",
+        name: "Vesper",
         version: env!("CARGO_PKG_VERSION"),
         inference_ready: transcribe_models::inspect(
             &config,

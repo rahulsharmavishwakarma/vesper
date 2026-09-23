@@ -483,6 +483,11 @@ h3 {
 .brand:hover:enabled {
   background: var(--color-transparent);
 }
+/* The selected SVG wordmark replaces the former text-only brand span. */
+.brand > .brand-logo {
+  width: 160px;
+  max-width: 100%;
+}
 .sidebar nav {
   display: grid;
   gap: var(--space-2);

@@ -281,7 +281,7 @@
               <span class="entry-count">{profile.vocabulary.length} / 128</span>
             </div>
             {#if !profile.vocabulary.length}<p class="note">
-                Add names or terms you want transcribe to get right.
+                Add names or terms you want Vesper to get right.
               </p>{/if}
             {#each profile.vocabulary as word, index (word.id)}
               <div class="word-entry">
