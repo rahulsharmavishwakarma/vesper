@@ -259,6 +259,12 @@ Temporary rendering output remains there for diagnosis. If colour tokens change,
 update the resolved palette and its test together. Browser checks do not qualify
 native Dock rendering, microphone permission or Windows/Linux packaging.
 
+Run the app from the checkout containing the integrated changes. A preview
+server in a different Git worktree serves that worktree's files, not the shared
+checkout. Rebuild with `make build-debug` and relaunch
+`target/debug/bundle/macos/Vesper.app` after native display-name or icon changes;
+frontend hot reload alone does not replace a running app's packaged icon.
+
 ## Check changes
 
 ```sh

@@ -2929,7 +2929,13 @@ await test('Selected Vesper identity keeps every letter still and limits motion 
     );
   }
   assert(sidebar.getAnimations({ subtree: true }).length === 0, 'Sidebar logo animates');
-  const opener = target.querySelector('.sidebar-foot button');
+  [...target.querySelectorAll('.sidebar nav button')]
+    .find((button) => button.textContent.includes('Settings'))
+    .click();
+  await tick();
+  const opener = [...target.querySelectorAll('button')].find(
+    (button) => button.textContent.trim() === 'About Vesper' && button.getClientRects().length,
+  );
   opener.click();
   await tick();
   const animations = logo.getAnimations({ subtree: true });

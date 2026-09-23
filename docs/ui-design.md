@@ -42,6 +42,11 @@ that macOS `iconutil` decoded successfully. These checks did not launch the app,
 qualify native Dock appearance, exercise a screen reader, or validate microphone,
 inference, release distribution or Windows/Linux behavior.
 
+The identity regression navigates to Settings and activates a visible About
+entry, rather than assuming where that entry is rendered. Brand checks therefore
+remain independent of sidebar/Settings presentation changes; native calls are
+still mocked.
+
 ## Before changing a control
 
 For a new or unfamiliar interaction, consult the relevant platform guidance and one or two established applications. Identify what users already know how to do, how many actions the flow needs, how it confirms success, and how it handles failure or cancellation. Record the sources and the chosen adaptation in the GitHub issue. A reference establishes a usable precedent, not this app's runtime capabilities. Use the existing component and service boundaries wherever possible.
