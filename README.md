@@ -22,6 +22,7 @@ their existing names for compatibility; see [product naming](docs/development.md
 - **Personal vocabulary.** Remember spellings and recurring corrections across recordings and model changes.
 - **Local history.** Search, review, copy and export saved recordings and text.
 - **Your choice of models.** Select speech and writing models independently. Language support and live captions depend on the speech model.
+- **Automatic acceleration.** Compatible models use the Mac GPU with matching model files chosen during download. See [supported combinations](docs/accelerators.md).
 
 See the [user guide](docs/user-guide.md) for daily use and the
 [language compatibility guide](docs/language-support-and-recommendations.md) for model-specific limits.

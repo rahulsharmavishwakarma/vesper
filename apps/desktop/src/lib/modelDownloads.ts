@@ -66,6 +66,11 @@ export function knownDownloadSelection(
   role: ModelProfileRole,
 ): boolean {
   if (!saved || config.modelDirectory !== saved.modelDirectory) return false;
+  if (
+    role === 'asr' &&
+    (config.computeBackend !== saved.computeBackend || config.language !== saved.language)
+  )
+    return false;
   const profile = role === 'asr' ? config.models.customAsr : config.models.customRewriter;
   if (!profile) return true;
   const savedProfile = role === 'asr' ? saved.models.customAsr : saved.models.customRewriter;
@@ -118,6 +123,8 @@ export function downloadOptionStatus(
       detail: precisions.length ? precisions.join(' / ') : undefined,
     };
   }
+  if (entries.some((entry) => entry.ready))
+    return { label: 'Ready · update available', tone: 'ready', kind: 'downloaded' };
   if (entries.some((entry) => entry.localFileCount > 0 || entry.removalError))
     return { label: 'Incomplete download', tone: 'warning', kind: 'warning' };
   return entries.every((entry) => !entry.supported)

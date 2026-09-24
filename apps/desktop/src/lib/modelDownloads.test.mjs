@@ -167,3 +167,30 @@ test('an edited imported profile or a shadowed preset cannot reuse another decla
   assert.equal(knownDownloadSelection(draft, saved, 'rewriter'), false);
   assert.equal(knownDownloadSelection(saved, null, 'rewriter'), false);
 });
+
+test('an existing CPU installation stays ready while an optimized update is available', () => {
+  const config = defaultSettings();
+  const entry = {
+    ...downloadTarget(config, 'asr'),
+    ready: true,
+    artifactsInstalled: false,
+    supported: true,
+    localFileCount: 6,
+  };
+  assert.deepEqual(downloadOptionStatus(config, config, 'asr', stateWith([entry]), true), {
+    label: 'Ready · update available',
+    tone: 'ready',
+    kind: 'downloaded',
+  });
+});
+
+test('backend and language edits cannot reuse saved speech artifact readiness', () => {
+  const saved = defaultSettings();
+  for (const draft of [
+    { ...saved, computeBackend: 'cpu' },
+    { ...saved, language: 'fr' },
+  ]) {
+    assert.equal(knownDownloadSelection(draft, saved, 'asr'), false);
+    assert.equal(knownDownloadSelection(draft, saved, 'rewriter'), true);
+  }
+});

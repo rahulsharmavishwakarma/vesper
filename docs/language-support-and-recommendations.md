@@ -25,8 +25,8 @@ Fresh settings select Cohere Transcribe, explicit English, and Qwen3.5 cleanup. 
 | --- | --- | --- | --- | --- |
 | Cohere Transcribe (default) | English or French, explicit only | Completed recording/file; bounded long-audio segments | Automatic or CPU | English completed-path evidence; 48-recording Indian-English screen inside a separate personalization envelope; French integration fixture, not a broad French benchmark |
 | NVIDIA Nemotron 3.5 ASR Streaming 0.6B | Automatic, English, French, Hindi | Native live partials and completed audio | CPU, Metal, CUDA, Vulkan; the AMD application profile routes speech through Vulkan | Local CPU Hindi, US-English, and Hinglish screens plus separate Indian-English evidence; Hinglish does not currently pass the quality gate |
-| Qwen3-ASR 0.6B | Automatic, English, French, Hindi | Completed recording/file; bounded long-audio segments | Automatic or CPU | Local phase-one Hindi, US-English, and Hinglish screening; no qualified Hinglish result |
-| NVIDIA Parakeet TDT 0.6B v3 | Automatic, English, French in the picker | Completed recording/file | Automatic or CPU | Compatibility/smoke evidence; no current comparable phase-one matrix; Hindi is unsupported |
+| Qwen3-ASR 0.6B | Automatic, English, French, Hindi | Completed recording/file; bounded long-audio segments | Automatic; CPU; Metal for English on Apple Silicon | Local phase-one Hindi, US-English, and Hinglish screening; no qualified Hinglish result |
+| NVIDIA Parakeet TDT 0.6B v3 | Automatic, English, French in the picker | Completed recording/file | Automatic; CPU; Metal for English on Apple Silicon | Compatibility/smoke evidence; no current comparable phase-one matrix; Hindi is unsupported |
 | Liquid LFM2.5 Audio 1.5B | English only, explicit | Completed recording/file; resident weights and bounded segments | Automatic or CPU | Small English application-path screen only; not broad English or edge-device qualification |
 
 “Automatic” in the backend column means the application may choose an available supported execution path and fall back according to that adapter's policy. It is not evidence that a GPU executed every operator. GPU, driver, precision, and runtime-package combinations require separate measurements.
@@ -114,3 +114,5 @@ Installation must remain explicit. A recommendation may explain the expected dow
 - Evaluate cleanup independently and end to end; a fast ASR result does not prove the cleaned transcript is faithful.
 
 See the [ASR benchmark contract](../benchmarks/asr/README.md), [latest sanitized application-path screen](../benchmarks/asr/2026-09-15-screen.md), [inference performance](inference-performance.md), [model presets](model-presets.md), and [ADR-0010](adrs/0010-evidence-gated-asr-recommendations.md).
+
+Automatic speech downloads now choose the qualified English MLX export for Parakeet/Qwen on compatible Apple Silicon builds; other languages and automatic language detection retain their supported CPU export. Existing CPU installations remain usable while an optimized update is available. This is a runtime/artifact preference, not a language or default-model change. See [automatic acceleration](accelerators.md#building-the-apple-silicon-application) and the dated Automatic qualification in [inference performance](inference-performance.md).

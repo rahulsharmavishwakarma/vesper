@@ -64,10 +64,7 @@ runtime retries on CPU and records the reason. An explicitly selected GPU fails
 when unavailable instead of silently switching devices. The first GPU request
 can take longer while native kernels initialize.
 
-GPU support is specific to the model and runtime. Cohere, Whisper, Qwen3-ASR and
-Parakeet use their CPU speech adapters in normal builds. The optional MLX build
-adds explicit English Metal execution for Parakeet and Qwen; see the instructions below. This does not stop the writing model from using
-Metal in Automatic mode. Whisper is not yet available in the desktop model picker.
+GPU support is specific to the model and runtime. On Apple Silicon, Automatic chooses the compatible GPU files for English Parakeet and Qwen ASR when this app includes the verified runtime and detects a usable GPU. Save your selection and use Download; no backend choice is required. Cohere and Whisper Turbo retain their CPU speech paths. The writing model makes its own accelerator selection. Whisper remains outside the desktop model picker.
 See [performance evidence](inference-performance.md)
 for tested combinations and remaining limits.
 
@@ -254,6 +251,6 @@ The app may retain bounded before/after text and one recent attempt locally for 
 
 In **Settings → Storage and improvement**, **Evaluate corrections in TextEdit** enables a separate local evaluation after automatic paste. It is off by default. The first adapter requires plain-text TextEdit with English menus on Mac and a direct keyboard layout. It observes the inserted text and up to 32 adjacent UTF-16 units on each side for at most one minute; it may abstain when the field, selection or boundaries change. Only inserted/edited text is retained locally, at most 256 records for 30 days. These candidates do not teach your dictionary yet. Disabling stops observation; **Forget learned spellings** also deletes retained candidates. Ordinary in-app spelling learning remains automatic. See the [full scope and limitations](personalization/external-observer.md).
 
-Optional Apple Silicon builds can run **Parakeet** and **Qwen ASR** on the GPU. Choose **English** and **Metal**, save, then download the model files for that selection. These GPU files are separate from the CPU files and can use more disk space and memory. **Automatic** continues to select the existing CPU speech path for these models. Full recordings and imported files use the same pipeline; live partial transcription still requires Nemotron. Other languages, Cohere and Whisper Turbo are not enabled for this optional GPU path. Whisper Small is available for evaluation but has not been added to the desktop model picker. See [optional MLX builds](accelerators.md#building-the-optional-mlx-application).
+Apple Silicon builds can run **Parakeet** and **Qwen ASR** on the GPU automatically for **English**. Keep **Automatic**, save your model selection, and choose **Download**. Compatible GPU files can use more disk space than CPU files. Existing CPU downloads stay usable until the update is prepared; **Ready · update available** means you can transcribe now or download the optimized package. Removing a model removes its CPU and GPU exports. Full recordings and imported files share this pipeline; live partial transcription still requires Nemotron. Other languages and automatic language detection use their supported paths and may need a separate download. CPU remains an advanced override. See [accelerator setup](accelerators.md#building-the-apple-silicon-application).
 
 For these optional GPU models, a recording containing only exact digital zeros returns empty text after file verification without first loading the speech model. Quiet speech and ordinary microphone background noise still follow normal transcription.

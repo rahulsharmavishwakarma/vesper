@@ -9,12 +9,26 @@ pub struct ModelRemoval {
     pub removed_files: usize,
 }
 
-fn weight_paths(spec: &ModelInstallSpec) -> BTreeSet<&str> {
-    spec.artifacts
+fn weight_paths(spec: &ModelInstallSpec) -> BTreeSet<String> {
+    let mut paths: BTreeSet<_> = spec
+        .artifacts
         .iter()
         .filter(|a| a.role != "asr_runtime")
-        .map(|a| a.relative_path.as_str())
-        .collect()
+        .map(|a| a.relative_path.clone())
+        .collect();
+    // CPU and accelerator exports belong to the same built-in model card.
+    // Inventory/removal must still find them after switching the preference.
+    if spec.role == ModelRole::SpeechRecognition {
+        paths.extend(
+            catalog()
+                .into_iter()
+                .filter(|a| {
+                    a.role == "asr" && a.model_id.as_deref() == Some(spec.model_id.as_str())
+                })
+                .map(|a| a.relative_path),
+        );
+    }
+    paths
 }
 
 fn local_weights(spec: &ModelInstallSpec, root: &Path) -> Result<Vec<(PathBuf, u64)>> {
@@ -22,7 +36,7 @@ fn local_weights(spec: &ModelInstallSpec, root: &Path) -> Result<Vec<(PathBuf, u
         .into_iter()
         .filter_map(|relative| {
             let result = (|| {
-                let path = artifact_path(root, relative)?;
+                let path = artifact_path(root, &relative)?;
                 match path.symlink_metadata() {
                     Ok(metadata) if metadata.is_file() => Ok(Some((path, metadata.len()))),
                     Ok(_) => Err(ModelError::UnsafePath(path)),
@@ -139,6 +153,34 @@ mod tests {
         std::fs::create_dir_all(path.parent().unwrap()).unwrap();
         std::fs::write(&path, bytes).unwrap();
         path
+    }
+
+    #[test]
+    fn removing_a_speech_model_finds_both_exports_after_backend_switch() {
+        let root = tempfile::tempdir().unwrap();
+        let mut config = AppConfig {
+            compute_backend: ComputeBackend::Cpu,
+            ..Default::default()
+        };
+        config.models.asr = AsrModel::ParakeetTdt06bV3;
+        let paths: Vec<_> = catalog()
+            .into_iter()
+            .filter(|a| a.role == "asr" && a.model_id.as_deref() == Some(config.models.asr.id()))
+            .map(|a| write_weight(root.path(), &a.relative_path, b"fixture"))
+            .collect();
+        assert!(paths.iter().any(|p| p.to_string_lossy().contains("mlx/")));
+        assert!(paths.iter().any(|p| !p.to_string_lossy().contains("mlx/")));
+        let result = remove_model(
+            &config,
+            root.path(),
+            root.path(),
+            config.models.asr.id(),
+            ModelRole::SpeechRecognition,
+            None,
+        )
+        .unwrap();
+        assert_eq!(result.removed_files, paths.len());
+        assert!(paths.iter().all(|p| !p.exists()));
     }
 
     #[test]
@@ -327,9 +369,9 @@ mod tests {
         let spec = built_in_asr_spec(&config, AsrModel::ParakeetTdt06bV3);
         let paths: Vec<_> = weight_paths(&spec).into_iter().collect();
         assert!(paths.len() >= 2);
-        let first = write_weight(root.path(), paths[0], b"keep first");
+        let first = write_weight(root.path(), &paths[0], b"keep first");
         let outside_file = write_weight(outside.path(), "private.txt", b"keep outside");
-        let last = root.path().join(paths[paths.len() - 1]);
+        let last = root.path().join(&paths[paths.len() - 1]);
         std::fs::create_dir_all(last.parent().unwrap()).unwrap();
         symlink(&outside_file, &last).unwrap();
         assert!(remove_model(

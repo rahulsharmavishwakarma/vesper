@@ -67,13 +67,15 @@
               ? entry?.runtimeReady
                 ? 'Ready on this device'
                 : 'Files downloaded · setup incomplete'
-              : entry?.localFileCount
-                ? 'Incomplete download'
-                : unsupported
-                  ? 'Unavailable on this device'
-                  : entry
-                    ? 'Not downloaded'
-                    : 'Status unavailable',
+              : entry?.ready
+                ? 'Ready · update available'
+                : entry?.localFileCount
+                  ? 'Incomplete download'
+                  : unsupported
+                    ? 'Unavailable on this device'
+                    : entry
+                      ? 'Not downloaded'
+                      : 'Status unavailable',
   );
   const statusKind = $derived<DownloadOptionStatus['kind']>(
     !desktop
@@ -88,13 +90,15 @@
               ? entry?.runtimeReady
                 ? 'downloaded'
                 : 'warning'
-              : entry?.localFileCount
-                ? 'warning'
-                : unsupported
-                  ? 'unavailable'
-                  : entry
-                    ? 'missing'
-                    : 'unknown',
+              : entry?.ready
+                ? 'downloaded'
+                : entry?.localFileCount
+                  ? 'warning'
+                  : unsupported
+                    ? 'unavailable'
+                    : entry
+                      ? 'missing'
+                      : 'unknown',
   );
   const label = $derived(
     installing
