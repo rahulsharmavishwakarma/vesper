@@ -494,7 +494,7 @@ mod probe {
                     "main",
                     tauri::WebviewUrl::App("tests/native-learning.html".into()),
                 )
-                .title("transcribe — public audio qualification (microphone off)")
+                .title("Vesper — public audio qualification (microphone off)")
                 .inner_size(1050.0, 1000.0)
                 .build()?;
                 Ok(())

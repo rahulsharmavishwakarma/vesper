@@ -274,8 +274,9 @@ frontend hot reload alone does not replace a running app's packaged icon.
 ### Product name and compatibility
 
 **Vesper** is the display name in the app, documentation, issue templates,
-GitHub issues and project title/readme. This is a branding change, not a storage,
-package or repository migration.
+GitHub issues and project title/readme. Native startup messages and developer
+qualification windows use the same name. This is a branding change, not a
+storage, package or repository migration.
 
 Keep these exact technical names until a separately scoped migration updates
 their producers, consumers and compatibility behavior together:

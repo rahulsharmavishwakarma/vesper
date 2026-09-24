@@ -1,7 +1,7 @@
 {
   "$schema": "../gen/schemas/desktop-schema.json",
   "identifier": "default",
-  "description": "Basic window permissions for the local transcribe application.",
+  "description": "Basic window permissions for the local Vesper application.",
   "windows": ["main", "quick-capture"],
   "permissions": [
     "core:default",

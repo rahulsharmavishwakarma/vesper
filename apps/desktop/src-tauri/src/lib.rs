@@ -206,7 +206,7 @@ pub fn run() {
             commands::transcribe_file,
         ])
         .build(tauri::generate_context!())
-        .expect("failed to build the transcribe desktop application")
+        .expect("failed to build the Vesper desktop application")
         .run(|app, event| match event {
             tauri::RunEvent::ExitRequested { api, .. } => {
                 if menu_bar::prevent_exit(app) {

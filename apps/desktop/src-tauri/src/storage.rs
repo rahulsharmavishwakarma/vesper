@@ -9,7 +9,7 @@ const TRANSCRIBE_IDENTIFIER: &str = "com.transcribe.desktop";
 const UKTI_IDENTIFIER: &str = "com.ukti.desktop";
 const STT_IDENTIFIER: &str = "com.stt.desktop";
 
-/// An existing transcribe store wins. Otherwise keep using the newest sibling
+/// Vesper's existing `com.transcribe.desktop` store wins. Otherwise use the newest sibling
 /// store with app state. Config and data share a root on macOS.
 pub fn compatible_app_root(current: PathBuf) -> io::Result<PathBuf> {
     if current
