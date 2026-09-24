@@ -1,4 +1,4 @@
-# transcribe Rust workspace; member paths are relative to this manifest.
+# Vesper Rust workspace; member paths are relative to this manifest.
 [workspace]
 exclude = ["vendor/glib", "tests/glib-backport"]
 members = [

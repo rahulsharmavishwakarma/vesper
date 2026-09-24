@@ -221,9 +221,9 @@ Quick capture uses a 440 × 96 logical-pixel window, with an 80-pixel bar inside
 
 The rounded macOS window enables Tauri's `macos-private-api` feature and `app.macOSPrivateApi`. Both the document root and body are transparent, and the native rectangular shadow is disabled. Tauri documents that this private API use prevents Mac App Store acceptance; the current configuration is for direct desktop distribution. An App Store build needs a separate opaque-window design and must disable that feature. Browser screenshots validate web content, not native compositor behavior.
 
-Existing installations retain access to their data after the rename. When the new `com.transcribe.desktop` directory has no actual settings, dataset, or model files, the application first checks the prior `com.ukti.desktop` directory and then `com.stt.desktop`, reusing the newest store with data in place. A populated transcribe directory always wins. Nothing is moved, merged, or deleted. Empty platform-created directories do not hide an earlier store, and read failures are reported.
+Existing Vesper installations retain access to their data after a display-name change. When the current `com.transcribe.desktop` directory has no actual settings, dataset, or model files, the application first checks the prior `com.ukti.desktop` directory and then `com.stt.desktop`, reusing the newest store with data in place. A populated `com.transcribe.desktop` directory always wins. Nothing is moved, merged, or deleted. Empty platform-created directories do not hide an earlier store, and read failures are reported.
 
-An explicit saved `modelDirectory` takes precedence. Otherwise `TRANSCRIBE_MODEL_DIR` is preferred, followed by the compatibility variables `UKTI_MODEL_DIR` and `STT_MODEL_DIR`. Debug builds also discover an existing repository `models/downloads` folder, including when the debug `.app` is opened from Finder. Release builds without an override use the selected data directory's `models` folder. Browser preview settings similarly read the previous Ukti and STT keys when no transcribe key exists, and write the transcribe key on the next explicit save. `TRANSCRIBE_NEMO_SPEECH_BIN` can override the NeMo executable while `UKTI_NEMO_SPEECH_BIN` remains supported.
+An explicit saved `modelDirectory` takes precedence. Otherwise `TRANSCRIBE_MODEL_DIR` is preferred, followed by the compatibility variables `UKTI_MODEL_DIR` and `STT_MODEL_DIR`. Debug builds also discover an existing repository `models/downloads` folder, including when the debug `.app` is opened from Finder. Release builds without an override use the selected data directory's `models` folder. Browser preview settings similarly read the legacy `ukti.browser-preview.settings.v1` and `stt.browser-preview.settings.v1` keys when `transcribe.browser-preview.settings.v1` is absent, and write only that current key on the next explicit save. `TRANSCRIBE_NEMO_SPEECH_BIN` can override the NeMo executable while `UKTI_NEMO_SPEECH_BIN` remains supported.
 
 ### macOS microphone permission and bundles
 
@@ -270,6 +270,30 @@ server in a different Git worktree serves that worktree's files, not the shared
 checkout. Rebuild with `make build-debug` and relaunch
 `target/debug/bundle/macos/Vesper.app` after native display-name or icon changes;
 frontend hot reload alone does not replace a running app's packaged icon.
+
+### Product name and compatibility
+
+**Vesper** is the display name in the app, documentation, issue templates,
+GitHub issues and project title/readme. This is a branding change, not a storage,
+package or repository migration.
+
+Keep these exact technical names until a separately scoped migration updates
+their producers, consumers and compatibility behavior together:
+
+- Repository slug/clone directory and working GitHub links: `transcribe`.
+- Rust/npm/Python package names, executable names and hook IDs: `transcribe-*`
+  and `@transcribe/desktop`. Hook display labels and package descriptions say Vesper.
+- App identifier `com.transcribe.desktop`, browser key
+  `transcribe.browser-preview.settings.v1`, `TRANSCRIBE_*` environment variables,
+  legacy aliases and export prefixes.
+- Existing release download filenames, including `transcribe-macos-arm64.dmg`.
+
+Do not rename the third-party **Cohere Transcribe** model, the `transcribe.cpp`
+runtime, transcription actions such as **Stop and transcribe**, or API methods.
+Preserve literal names, paths, hashes, measurements and citations in historical
+validation records and quoted naming discussions; clearly label pre-Vesper
+branding as historical and link to current behavior. Do not rewrite old
+measurements as if they tested the current identity.
 
 ## Check changes
 
