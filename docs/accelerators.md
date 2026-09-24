@@ -11,7 +11,7 @@ and platform rules permit it.
 
 | Choice   | Device/build evidence required                      | Existing model limits                                                                                                 |
 | -------- | --------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------- |
-| Metal    | Apple Silicon macOS build with a detected Metal GPU | Native LFM and Nemotron paths are available; optional MLX builds also support explicit English Parakeet/Qwen-ASR; Whisper Small remains evaluation-only |
+| Metal    | Apple Silicon macOS build with a detected Metal GPU | Native LFM and Nemotron paths are available; Apple Silicon builds also support English Parakeet/Qwen-ASR through MLX; Whisper Small remains evaluation-only |
 | CUDA     | Windows/Linux GPU build with a detected CUDA device | Model-specific restrictions still apply                                                                               |
 | Vulkan   | Windows/Linux Vulkan build with a detected GPU      | Model-specific restrictions still apply                                                                               |
 | AMD ROCm | Windows/Linux ROCm build with a detected GPU        | Nemotron's existing profile uses Vulkan for speech; its package requires x86-64                                       |
@@ -63,7 +63,7 @@ proof that every operator executes there; reports retain unknown placement.
 The [measured Metal screen](inference-performance.md#native-gpu-implementation-and-screening--23-september-2026)
 records exact models, runtime pins, accuracy, cold/resident timings and limits.
 
-The optional MLX application path is approved in [ADR-0020](adrs/0020-optional-mlx-speech-runtime.md). It shares the worker and architecture contracts, uses separately pinned GPU artifacts and supports explicit Metal with English Parakeet/Qwen-ASR. Whisper Small uses the same path in evaluation; its desktop picker remains gated. CPU/Automatic speech defaults are unchanged. Cohere and Whisper Turbo remain on CPU because their MLX screens included quality regressions. MLX is a runtime; Metal is its backend. CUDA support for the four Sherpa speech
+The MLX application path shares the existing worker and architecture contracts. [ADR-0021](adrs/0021-automatic-accelerator-artifacts.md) extends ADR-0020: Automatic prefers the qualified English Parakeet/Qwen-ASR MLX exports when the application runtime verifies and its Metal device probe succeeds. Whisper Small uses this policy in evaluation; its desktop picker remains gated. CPU remains an explicit override. This does not change the default model. Cohere and Whisper Turbo remain on CPU because their MLX screens included quality regressions. MLX is a runtime; Metal is its backend. CUDA support for the four Sherpa speech
 families is also not established by the llama.cpp Cargo feature; it needs a
 compatible Sherpa/ONNX Runtime build and model-specific operator evidence.
 
@@ -114,21 +114,21 @@ unsupported architectures, model restrictions, saved-choice preservation and
 detection failure/retry. The menu screenshot
 uses synthetic app settings with the native Mac observation as its device fixture.
 
-## Building the optional MLX application
+## Building the Apple Silicon application
 
-On Apple Silicon with full Xcode and the Metal compiler installed:
+Normal `npm run desktop:dev`, `npm run desktop:build` and `make build-debug` prepare the pinned MLX runtime and include it for native Apple Silicon builds targeting `aarch64-apple-darwin`. Full Xcode with the Metal compiler, Swift 6.2 or newer, and macOS 14 or newer are required. Debug packaging remains app-only; release packaging retains app and DMG. Intel, universal and other-platform builds keep MLX off. `TRANSCRIBE_MLX=0` explicitly builds the portable path. A missing native prerequisite fails the intended GPU build instead of silently removing acceleration.
+
+Pass a cross-compilation target through Tauri's `--target` before the Cargo `--` separator. The launcher forwards `CARGO_BUILD_TARGET` when no explicit target is supplied and requires an explicit target for custom Cargo target configuration. It never downloads speech model weights. Standalone evaluator builds still use:
 
 ```sh
 node scripts/mlx-runtime.mjs
-# With the normal Rust/Sherpa development environment configured:
 cargo build -p transcribe-eval --features mlx --release
-cargo run -p transcribe-models --features mlx --example install -- models/downloads --asr-model Qwen/Qwen3-ASR-0.6B --backend metal
-cd apps/desktop
-npx tauri build --config src-tauri/tauri.mlx.conf.json -- --locked
 ```
 
-The optional Tauri configuration includes the `mlx` Cargo feature, macOS 14 minimum and the native resources. The normal build stays feature-off. Select English and Metal for Parakeet or Qwen, save, then install the selected GPU files. Installation/removal follows the saved backend; CPU and Metal packages occupy separate directories. Changing back to Automatic selects the CPU export. This preserves the existing UI flow without introducing a second model identity or a runtime picker.
+Leave the device preference on Automatic, select English and Parakeet or Qwen ASR, save, and use Download. The installer prepares the pinned files for the preferred runtime. An existing CPU export remains ready until the optimized files are installed; the card reports **Ready · update available**. Download prepares the update. CPU and MLX occupy separate directories; Remove inventories and removes both declared exports for that model while preserving shared runtime files. Other languages and automatic language detection retain their supported CPU path and may require that export to be installed.
 
-The build refuses stale native source/provenance. Runtime verification checks the library, kernels and preparation tool before use. Resources belong in `Contents/Resources/mlx-runtime`; a packaged application does not search downloaded model directories for executable code. Native signatures change binary hashes, so distribution signing must be incorporated before binding final native identities; the local optional bundle is not a signed/notarized release claim.
+Inference does not download. If automatic MLX model initialization fails, the same model/language can run on an installed CPU export after verification. With no CPU export installed, the error explains how to prepare it. The worker remembers a failed initialization for the same artifact identity until selection changes or models unload, avoiding repeated failed GPU loads. Cancellation, corrupt files, incomplete decoding and quality failures do not trigger this retry. Explicit Metal never retries on CPU. The saved preference remains Automatic and the writer resolves its backend independently. Per-request evidence records requested/preferred/effective backend, artifact identities, actual initialized provider and fallback reason.
+
+The build refuses stale native source/provenance. The process verifies the library, kernels and preparation tool before probing the device and verifies them again before a model load. A corrupt/missing feature-on runtime is a broken package and fails; feature-off builds use the portable policy. Resources belong in `Contents/Resources/mlx-runtime`; a packaged app never falls back to developer files. Native signing changes binary hashes, so release signing must be incorporated before binding final native identities. Local bundle validation is not a signed/notarized release claim.
 
 Model-source attribution is pinned per artifact. Parakeet MLX derives from NVIDIA Parakeet TDT v3 under CC-BY4.0 ([conversion card](https://huggingface.co/mlx-community/parakeet-tdt-0.6b-v3/blob/ed2b7e8c15f9aaa0b5772e2efb986255eaef7e15/README.md)); Qwen's conversion declares Apache2.0 ([card](https://huggingface.co/mlx-community/Qwen3-ASR-0.6B-8bit/blob/89e96d92ba34aca20b3e29fb10cc284097d1219f/README.md)). Whisper Small's [conversion](https://huggingface.co/mlx-community/whisper-small-fp16/blob/fa19eb05939653a9334d81bec7e053db81970170/README.md) and [pinned tokenizer card](https://huggingface.co/openai/whisper-small/blob/973afd24965f72e36ca33b3055d56a652f456b4d/README.md) declare Apache2.0; OpenAI's [source repository](https://github.com/openai/whisper/blob/v20250625/LICENSE) separately uses MIT. These cards name original model families but do not prove exact checkpoint equivalence with CPU exports. The project does not gain a license from its dependencies.

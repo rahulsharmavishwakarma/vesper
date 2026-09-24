@@ -26,6 +26,22 @@ pub fn runtime_ready() -> bool {
         .all(|a| artifact_file_installed(&root, a))
 }
 
+/// The app runtime is immutable for a process. Cache the device probe, not model
+/// verification; every model load still checks current runtime and model hashes.
+pub(super) fn available() -> Result<bool> {
+    static DEVICE: OnceLock<std::result::Result<bool, String>> = OnceLock::new();
+    // Feature-off builds never enter here. A feature-on package missing or
+    // altering its own code is a broken installation, not a CPU fallback signal.
+    DEVICE
+        .get_or_init(|| {
+            verify_runtime(&AtomicBool::new(false)).map_err(|e| e.to_string())?;
+            transcribe_mlx::device_available(&runtime_directory().join("libTranscribeMLX.dylib"))
+                .map_err(|e| e.to_string())
+        })
+        .clone()
+        .map_err(ModelError::RuntimeUnavailable)
+}
+
 pub fn verify_runtime(cancelled: &AtomicBool) -> Result<()> {
     let root = runtime_directory();
     for a in runtime_artifacts() {
@@ -172,6 +188,14 @@ mod tests {
                     && a.backend.as_deref() == Some("metal")));
             assert_eq!(built_in_asr_spec(&config, model).artifacts.len(), gpu.len());
             config.compute_backend = ComputeBackend::Auto;
+            let automatic = selected(&config).unwrap();
+            assert_eq!(
+                automatic
+                    .iter()
+                    .any(|a| a.relative_path.starts_with("mlx/")),
+                available().unwrap()
+            );
+            config.compute_backend = ComputeBackend::Cpu;
             assert!(selected(&config)
                 .unwrap()
                 .iter()

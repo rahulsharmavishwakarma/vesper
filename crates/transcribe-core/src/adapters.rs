@@ -75,7 +75,8 @@ const TEXT: ModelRole = ModelRole::TextReconstruction;
 pub const MLX_RUNTIME: &str = "MLX-Audio-Swift";
 pub const MLX_REVISION: &str = "d302a5c6080d2bb97bae38c7418f82abb76013b6";
 
-/// Qualified completed-audio English variants. Automatic deliberately stays on Sherpa.
+/// Qualified completed-audio English variants. The models crate resolves saved
+/// Automatic preferences against runtime/device availability and installed files.
 pub fn mlx_speech_supported(model: AsrModel) -> bool {
     cfg!(all(
         feature = "mlx",

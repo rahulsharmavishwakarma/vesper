@@ -19,6 +19,8 @@ use transcribe_core::{
 
 #[cfg(feature = "mlx")]
 pub mod mlx;
+mod selection;
+pub use selection::{preferred_speech_config, resolve_speech, SpeechSelection};
 mod storage;
 pub use storage::{remove_model, ModelRemoval};
 
@@ -118,7 +120,8 @@ pub fn catalog() -> Vec<Artifact> {
     let mut artifacts: Vec<Artifact> =
         serde_json::from_str(include_str!("../../../models/artifacts.json"))
             .expect("checked-in model artifact manifest must be valid");
-    #[cfg(feature = "mlx")]
+    // Inventory must find previous accelerator downloads even in a portable
+    // build. Executable selection remains gated by AppConfig and backend below.
     artifacts.extend(
         serde_json::from_str::<Vec<Artifact>>(include_str!("../../../models/mlx-artifacts.json"))
             .expect("pinned MLX artifacts"),
@@ -253,6 +256,10 @@ pub fn resolved_nemo_backend(config: &AppConfig) -> Result<&'static str> {
 }
 
 pub fn selected(config: &AppConfig) -> Result<Vec<Artifact>> {
+    selected_exact(&preferred_speech_config(config)?)
+}
+
+fn selected_exact(config: &AppConfig) -> Result<Vec<Artifact>> {
     config.validate()?;
     let platform = target_platform();
     if config.models.custom_asr.is_none()
@@ -339,7 +346,9 @@ fn built_in_asr_spec(config: &AppConfig, model: AsrModel) -> ModelInstallSpec {
     target.cleanup_enabled = false;
     target.audio_frontend = Default::default();
     // Installation metadata must not inherit a recording's language restriction.
-    target.language = if matches!(model, AsrModel::CohereTranscribe | AsrModel::Lfm25Audio15b) {
+    target.language = if transcribe_core::mlx_speech_supported(model) {
+        config.language
+    } else if matches!(model, AsrModel::CohereTranscribe | AsrModel::Lfm25Audio15b) {
         Language::English
     } else {
         Language::Auto
@@ -352,6 +361,8 @@ fn built_in_asr_spec(config: &AppConfig, model: AsrModel) -> ModelInstallSpec {
     {
         target.language = Language::English;
         ComputeBackend::Metal
+    } else if config.compute_backend == ComputeBackend::Cpu {
+        ComputeBackend::Cpu
     } else {
         ComputeBackend::Auto
     };
@@ -670,6 +681,19 @@ pub fn model_directory(config: &AppConfig, default_root: &Path) -> PathBuf {
 
 /// A fast inventory for UI polling. The full hash is always checked before inference.
 pub fn inspect(config: &AppConfig, root: &Path) -> Installation {
+    let resolved = match resolve_speech(config, root) {
+        Ok(selection) => selection,
+        Err(error) => {
+            return Installation {
+                ready: false,
+                supported: false,
+                files: vec![],
+                model_directory: root.display().to_string(),
+                message: error.to_string(),
+            }
+        }
+    };
+    let config = &resolved.config;
     let selection = selected(config);
     let selection_error = selection.as_ref().err().map(ToString::to_string);
     let supported = selection.is_ok();
@@ -715,6 +739,8 @@ pub fn inspect(config: &AppConfig, root: &Path) -> Installation {
             })
         } else if ready && !files_ready {
             "Optional audio processing files are unavailable. Transcription will use the original audio.".into()
+        } else if ready && resolved.fallback_reason.is_some() {
+            "Ready using the installed model. Download the updated package for this device when convenient.".into()
         } else if ready {
             "Model files are installed. Integrity is checked before use.".into()
         } else {
@@ -797,6 +823,16 @@ pub fn list_model_installations(config: &AppConfig, root: &Path) -> Vec<ModelIns
         .iter()
         .map(|spec| {
             let mut status = inspect_model_spec(spec, root);
+            if spec.selected && spec.role == ModelRole::SpeechRecognition && !status.ready {
+                let mut speech = config.clone();
+                speech.cleanup_enabled = false;
+                speech.audio_frontend = Default::default();
+                let active = inspect(&speech, root);
+                if active.ready {
+                    status.ready = true;
+                    status.message = active.message;
+                }
+            }
             storage::inspect_storage(&mut status, spec, &specs, root);
             status
         })
@@ -858,6 +894,8 @@ fn verify_matching(
 
 /// Verify only the selected speech model and its native runtime.
 pub fn verify_asr(config: &AppConfig, root: &Path, cancelled: &AtomicBool) -> Result<()> {
+    let resolved = resolve_speech(config, root)?;
+    let config = &resolved.config;
     #[cfg(feature = "mlx")]
     if config.uses_mlx_speech() {
         mlx::verify_runtime(cancelled)?;
@@ -1057,7 +1095,9 @@ pub fn install_model(
 }
 
 pub fn provenance(config: &AppConfig) -> serde_json::Value {
-    let asr_runtime = if config.uses_mlx_speech() {
+    let preferred = preferred_speech_config(config);
+    let effective = preferred.as_ref().unwrap_or(config);
+    let asr_runtime = if effective.uses_mlx_speech() {
         transcribe_core::MLX_RUNTIME
     } else if config.models.custom_asr.is_none()
         && config.models.asr == AsrModel::Nemotron35AsrStreaming06b
@@ -1071,6 +1111,8 @@ pub fn provenance(config: &AppConfig) -> serde_json::Value {
         "customAsr": config.models.custom_asr,
         "customRewriter": if config.cleanup_enabled { config.models.custom_rewriter.as_ref() } else { None },
         "asrRuntime": asr_runtime,
+        "selectionError": preferred.as_ref().err().map(ToString::to_string),
+        "selectionKind": "preferred-download; actual execution is recorded per request",
         "rewriterRuntime": if config.cleanup_enabled { Some("llama-cpp-2 0.1.156") } else { None },
         "applicationVersion": env!("CARGO_PKG_VERSION")
     })
@@ -1089,7 +1131,10 @@ mod tests {
             (AsrModel::WhisperSmall, "whisper-small/", 3),
             (AsrModel::WhisperTurbo, "whisper-turbo/", 3),
         ] {
-            let mut config = AppConfig::default();
+            let mut config = AppConfig {
+                compute_backend: ComputeBackend::Cpu,
+                ..Default::default()
+            };
             config.models.asr = model;
             config.language = Language::English;
             config.rewrite_quantization = RewriteQuantization::Q8_0;
@@ -1101,7 +1146,7 @@ mod tests {
                 .iter()
                 .all(|a| a.model_id.as_deref() == Some(model.id())
                     && a.relative_path.starts_with(folder)));
-            let spec = built_in_asr_spec(&AppConfig::default(), model);
+            let spec = built_in_asr_spec(&config, model);
             assert!(spec.support_error.is_none());
             assert_eq!(spec.artifacts.len(), count);
             if model == AsrModel::CohereTranscribe {
@@ -1333,6 +1378,7 @@ mod tests {
             assert!(!artifact.relative_path.contains(".."));
         }
         config.models.asr = AsrModel::ParakeetTdt06bV3;
+        config.compute_backend = ComputeBackend::Cpu;
         assert_eq!(selected(&config).unwrap().len(), 4);
         assert!(inspect(&config, Path::new("/nonexistent")).supported);
     }
