@@ -28,6 +28,57 @@ static AXUIElementRef target;
 static pid_t targetPID;
 static CFRange targetSelection;
 static uint64_t targetToken;
+static id pasteAccessibilityObserver;
+static NSMutableArray<NSRunningApplication *> *preparedPasteApplications;
+
+// Electron exposes its editable tree asynchronously after this documented
+// request. Prepare on activation, before the user starts dictating. Sending
+// true again restarts Electron's debounce, so retain one success per live app.
+// Do not read field contents, poll, or disable another client's accessibility.
+static void preparePasteApplication(NSRunningApplication *application) {
+    if (![NSThread isMainThread] || !pasteAccessibilityObserver || !application || application.terminated ||
+        application.processIdentifier == getpid() || !AXIsProcessTrusted()) return;
+    NSIndexSet *terminated = [preparedPasteApplications indexesOfObjectsPassingTest:
+        ^BOOL(NSRunningApplication *candidate, NSUInteger index, BOOL *stop) {
+            (void)index; (void)stop;
+            return candidate.terminated;
+        }];
+    [preparedPasteApplications removeObjectsAtIndexes:terminated];
+    if ([preparedPasteApplications containsObject:application] ||
+        preparedPasteApplications.count >= 64) return;
+    AXUIElementRef app = AXUIElementCreateApplication(application.processIdentifier);
+    if (!app) return;
+    AXUIElementSetMessagingTimeout(app, 0.15f);
+    Boolean settable = false;
+    if (AXUIElementIsAttributeSettable(app, CFSTR("AXManualAccessibility"), &settable)
+            == kAXErrorSuccess && settable &&
+        AXUIElementSetAttributeValue(app, CFSTR("AXManualAccessibility"), kCFBooleanTrue)
+            == kAXErrorSuccess) {
+        [preparedPasteApplications addObject:application];
+    }
+    CFRelease(app);
+}
+
+void td_paste_access_enabled(bool enabled) {
+    if (![NSThread isMainThread]) return;
+    NSNotificationCenter *center = NSWorkspace.sharedWorkspace.notificationCenter;
+    if (!enabled) {
+        if (pasteAccessibilityObserver) [center removeObserver:pasteAccessibilityObserver];
+        pasteAccessibilityObserver = nil;
+        // Keep successful requests across preference toggles: enabling again
+        // must not restart an in-flight provider's readiness delay.
+        return;
+    }
+    if (!preparedPasteApplications) preparedPasteApplications = [NSMutableArray array];
+    if (!pasteAccessibilityObserver) {
+        pasteAccessibilityObserver = [center addObserverForName:NSWorkspaceDidActivateApplicationNotification
+            object:nil queue:NSOperationQueue.mainQueue usingBlock:^(NSNotification *notification) {
+                preparePasteApplication(notification.userInfo[NSWorkspaceApplicationKey]);
+            }];
+    }
+    preparePasteApplication(NSWorkspace.sharedWorkspace.frontmostApplication);
+}
+
 static NSArray<NSPasteboardItem *> *pendingClipboard;
 static NSInteger pendingOwnership;
 static bool restoreSnapshot(NSPasteboard *board, NSInteger ownership, NSArray<NSPasteboardItem *> *saved) {
@@ -150,6 +201,8 @@ void td_target_clear(uint64_t token) {
 }
 void td_panel_destroy(void) {
     if (![NSThread isMainThread]) return;
+    td_paste_access_enabled(false);
+    preparedPasteApplications = nil;
     td_target_clear(0);
     td_observation_cancel();
     restoreClipboard();
@@ -230,6 +283,10 @@ int td_target_capture(uint64_t token) {
     if (!front || front.processIdentifier == getpid() ||
         [@[@"com.apple.Terminal", @"com.googlecode.iterm2", @"dev.warp.Warp-Stable"]
             containsObject:front.bundleIdentifier ?: @""]) return -2;
+    // Recover a request skipped before Accessibility permission was granted.
+    // This never waits or adopts a field later in the recording: an unready
+    // destination still uses Copy fallback for this operation.
+    preparePasteApplication(front);
     AXUIElementRef element = focused(front.processIdentifier);
     CFRange selection;
     if (!element) return -2;

@@ -36,6 +36,42 @@ For an eligible target, preserve available pasteboard representations in bounded
 
 Restore the clipboard after one second only if its ownership counter still matches the app's temporary write. Preserve newer copies and restore pending owned content during orderly shutdown. A second paste waits for outstanding owned restoration. Deferred clipboard formats, access restrictions, slow paste consumers, and cross-process timing prevent a universal preservation/delivery guarantee; use Copy on preflight failure. Explicit Copy remains available in the panel and History even after paste dispatch.
 
+### Electron accessibility readiness (approved 24 September 2026)
+
+A VS Code integrated-terminal report exposed a separate failure from an earlier
+saved **Keep in app** setting: Electron did not expose a focused editable field
+when the shortcut began. TextEdit success did not qualify this destination.
+Electron documents `AXManualAccessibility` for assistive clients. The inspected
+Electron 42.10.0 implementation (VS Code 1.138.0, Chromium 148.0.7778.280) enables
+the complete tree after a two-second debounce; repeated true requests reset it.
+Writing the attribute successfully does not establish readiness, and its getter's
+exact mode comparison is not used as a readiness test.
+
+The approved extension registers an AppKit `NSWorkspace` activation observer
+only while the persisted output preference is `paste`. It also prepares the
+current app when enabled. After checking existing Accessibility permission,
+the native adapter requests the documented attribute only if it is settable,
+with bounded messaging timeouts. Successful requests are retained once per live
+process, including across preference toggles; terminated processes are pruned.
+The cache is capped at 64 live entries and skips additional requests while full.
+Failed requests can be retried on a later activation. No polling loop, sleep,
+new keyboard hook, field-text read or inference-lifetime change is introduced.
+
+Startup and successful settings save/reset apply the persisted preference on
+the main thread. Each queued callback reads the latest saved setting so stale
+callbacks cannot re-enable preparation. Disabling removes the observer;
+shutdown also clears its cache. Neither sends a false accessibility request to
+another app, since that could disrupt another assistive client.
+
+Capture makes one guarded preparation attempt if a previous activation happened
+before permission was granted. It still captures the original field and selection
+immediately, before showing the panel. An unready provider uses Copy fallback for
+that recording; the adapter never waits and adopts a later field. A shortcut
+pressed immediately after a fresh editor launch can therefore still fall back.
+Target identity, selection, secure-field, operation, cancellation and clipboard
+checks are unchanged. Live Nemotron preview remains in the recorder, followed by
+one final paste; live external-field insertion below is still a separate proposal.
+
 ## Consequences and validation
 
 - Hold, Toggle, and native presentation work through the existing inference path. Cold model startup and optional writing still contribute to latency; initial readiness is visible rather than implied.
@@ -44,13 +80,16 @@ Restore the clipboard after one second only if its ownership counter still match
 - Cross-application focus/paste is not an atomic OS transaction. App/provider behavior, fullscreen Spaces, multiple displays, and different keyboard layouts require native qualification. Windows/Linux retain recording and manual Copy; automatic insertion is unavailable there in this delivery.
 - Hybrid/bare-Fn shortcuts, wake phrases, automatic endpointing, live partial insertion, and auto-send remain separate scope.
 - Rust tests cover Hold/Toggle/repeat/startup release/cancellation/session isolation; browser fixtures cover revision ordering, permissions/preferences, real partial rendering, Cancel, Copy, and fallback. `sh scripts/test-dictation-native.sh` checks actual NSPanel/WebKit hosting and teardown, focus retention on show, and multi-format/ownership-safe restoration using a private pasteboard. It never opens a microphone, prompts for permission, or injects text into another application. The separate `dictation_overlay_smoke` desktop example verifies actual Tauri IPC after panel hosting and repeated native show/hide.
-- The native smoke is not evidence that external applications accepted a paste. Real TextEdit/browser/editor insertion and microphone-to-paste latency remain qualification gates in #4/#7 when Accessibility/event-posting access is available.
+- The native smoke also tests the opt-in accessibility listener using intercepted AX requests: grant recovery, unsupported and transient failures, repeated activation, preference toggles, process replacement, cache limits, main-thread guards and teardown. It does not modify real applications' accessibility state.
+- Separate native adapter checks on 20 September 2026 verified exact caret insertion and selected-text replacement in disposable TextEdit documents, including Hindi, emoji and multiline text. An isolated VS Code terminal with its accessibility provider already prepared received the exact payload inside bracketed-paste markers (LF normalized to CR), with no additional Return. Duplicate dispatch was rejected. Those checks did not use the microphone or physical shortcut; correction observation and end-to-end latency remain separate qualification gates in #4/#7/#61.
+- On 24 September 2026, an isolated VS Code profile with a non-executing raw-byte terminal receiver also exercised the implemented activation listener. Resetting that fixture's provider made initial capture fail; activating it with preparation enabled made capture succeed. Both cold-provider and already-ready runs received the exact Hindi/emoji/multiline payload with bracketed paste, LF-to-CR normalization and no extra submit. Cancelled targets, a switch to the test harness's own window, and duplicate dispatch were rejected; refusal left clipboard ownership unchanged. Listener removal was verified. This is actual native adapter delivery, not a physical-hotkey/microphone end-to-end test or qualification of every Electron field.
 
 ## Sources
 
 - [Tauri press/release shortcuts](https://v2.tauri.app/plugin/global-shortcut/)
 - [Apple NSPanel](https://developer.apple.com/documentation/appkit/nspanel), [nonactivating style](https://developer.apple.com/documentation/appkit/nswindow/stylemask-swift.struct/nonactivatingpanel), [content view hosting](https://developer.apple.com/documentation/appkit/nswindow/contentview)
 - [Accessibility trust](https://developer.apple.com/documentation/applicationservices/1459186-axisprocesstrustedwithoptions), [AXUIElement](https://developer.apple.com/documentation/applicationservices/axuielement)
+- [Electron accessibility integration](https://www.electronjs.org/docs/latest/tutorial/accessibility), [Electron 42.10.0 provider implementation](https://github.com/electron/electron/blob/v42.10.0/shell/browser/mac/electron_application.mm)
 - [Pasteboard ownership](https://developer.apple.com/documentation/appkit/nspasteboard/changecount), [pasteboard access policy](https://developer.apple.com/documentation/appkit/nspasteboard/accessbehavior)
 - [VoiceInk interaction modes](https://tryvoiceink.com/docs/shortcuts), [documented clipboard delivery limitations](https://tryvoiceink.com/docs/clipboard-issues)
 

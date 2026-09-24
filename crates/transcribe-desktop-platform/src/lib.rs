@@ -25,11 +25,26 @@ mod ffi {
         pub fn td_panel_hide();
         pub fn td_panel_destroy();
         pub fn td_permissions(request: bool) -> u32;
+        pub fn td_paste_access_enabled(enabled: bool);
         pub fn td_target_capture(token: u64) -> i32;
         pub fn td_target_clear(token: u64);
         pub fn td_paste(token: u64, text: *const c_char) -> i32;
         pub fn td_copy(text: *const c_char) -> bool;
     }
+}
+
+/// Prepare supported external accessibility providers only for automatic paste.
+/// Call on the main thread; disabling removes the activation listener without
+/// changing any destination application's accessibility setting.
+pub fn set_automatic_paste_enabled(enabled: bool) {
+    #[cfg(target_os = "macos")]
+    // SAFETY: Scalar preference only; native code checks thread affinity and
+    // owns the observer and bounded process cache through shutdown.
+    unsafe {
+        ffi::td_paste_access_enabled(enabled)
+    }
+    #[cfg(not(target_os = "macos"))]
+    let _ = enabled;
 }
 
 pub fn copy(text: &str) -> bool {
