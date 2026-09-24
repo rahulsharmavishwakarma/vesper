@@ -75,7 +75,7 @@
   help="Press once to start and again to finish."
 />
 <div class="field">
-  <label for="dictation-output">After dictation</label>
+  <label for="dictation-output">After shortcut dictation</label>
   <Select
     id="dictation-output"
     bind:value={settings.dictationOutput}
@@ -99,8 +99,8 @@
   />
   <p id="dictation-output-help" class="note">
     {settings.dictationOutput === 'paste'
-      ? 'Applies to shortcut and floating-bar recordings. If the text field changes, your transcript stays available to copy.'
-      : 'Your finished transcript stays in Vesper.'}
+      ? 'Release Hold, or stop Toggle, to paste the finished transcript automatically. Keep the original text field focused until it finishes.'
+      : 'Automatic paste is off. Choose Paste into the original text field to insert your words after releasing the shortcut.'}
   </p>
 </div>
 {#if desktop && settings.dictationOutput === 'paste'}

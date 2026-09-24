@@ -221,6 +221,21 @@ pub async fn start_capture_drag(
     }
 }
 
+/// Apply the persisted output preference to the native activation listener.
+pub(crate) fn apply_output(app: &tauri::AppHandle) {
+    let handle = app.clone();
+    let _ = app.run_on_main_thread(move || {
+        // Read the latest persisted value here so delayed settings callbacks
+        // cannot re-enable preparation after a newer save disabled it.
+        let enabled = handle
+            .state::<AppStorage>()
+            .settings
+            .load()
+            .is_ok_and(|config| config.dictation_output == DictationOutput::Paste);
+        transcribe_desktop_platform::set_automatic_paste_enabled(enabled);
+    });
+}
+
 /// Layout geometry only; recording and native focus ownership stay unchanged.
 pub(crate) fn apply_capture_design(app: &tauri::AppHandle, design: transcribe_core::CaptureDesign) {
     use transcribe_core::CaptureDesign;
@@ -585,7 +600,8 @@ pub async fn completed(
                         state.released.map(|t| t.elapsed().as_millis() as u64);
                     state.status.phase = if paste { Phase::Pasting } else { Phase::Ready };
                     if !paste && state.output == DictationOutput::App {
-                        state.status.message = "Your transcript is ready to copy.".into();
+                        state.status.message =
+                            "Kept in app. Check Quick capture settings for automatic paste.".into();
                     }
                     (state.status.id, paste, Some(text))
                 }

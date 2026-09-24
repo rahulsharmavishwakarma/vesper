@@ -390,6 +390,7 @@ pub fn save_settings(
         Ok(saved) => {
             crate::external_observation::cancel(&app);
             crate::dictation::apply_capture_design(&app, saved.capture_design);
+            crate::dictation::apply_output(&app);
             storage.runtime.clear_learning_context();
             let _ = storage.inference.unload();
             Ok(saved)
@@ -414,6 +415,7 @@ pub fn reset_settings(
     if let Ok(saved) = &reset {
         crate::external_observation::cancel(&app);
         crate::dictation::apply_capture_design(&app, saved.capture_design);
+        crate::dictation::apply_output(&app);
         storage.runtime.clear_learning_context();
         let _ = storage.inference.unload();
     }

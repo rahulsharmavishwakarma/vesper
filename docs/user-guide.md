@@ -141,8 +141,27 @@ show **Listening** before speaking.
 To insert a finished transcript into another app, select **Paste into the
 original text field** in Quick capture settings, enable the requested macOS
 Accessibility access and save. Focus the intended field before recording.
-Insertion depends on the target app and its focus state; if it is unavailable,
-use **Copy**. External-app compatibility is still being qualified.
+Hold release or Toggle Stop then inserts the finished transcript after
+transcription and writing complete. Keep the original field and caret selected
+until it finishes. **Keep in app** deliberately disables automatic paste;
+main-window Record and imported files also keep their result in the app.
+
+Check **Ready to paste** in Quick capture settings before recording. On macOS
+versions that request clipboard access, allow automatic clipboard access so
+Vesper can preserve your clipboard without opening a prompt during delivery.
+With automatic paste enabled, Vesper prepares supported Electron editors such
+as VS Code when you switch to them. A freshly opened editor can take a moment
+to expose its text field; if it is not ready when recording starts, that result
+remains available through **Copy**. Changing to **Keep in app** stops this
+preparation. Protected fields, Terminal, iTerm and Warp remain excluded.
+External-app compatibility is still being qualified.
+
+Live words in the floating recorder require a streaming speech model. The
+current **NVIDIA Parakeet TDT 0.6B v3** adapter produces text after Stop;
+**NVIDIA Nemotron 3.5 ASR Streaming 0.6B** supports live preview. Select your
+model on **Models** and wait for **Listening** before speaking, particularly
+after cold model startup. Live words stay in the recorder; the external field
+receives one final paste after release.
 
 You can change the capture design, move the floating controls, or hide them
 while keeping shortcuts active. On macOS, click the **bird logo** in the menu
@@ -216,7 +235,7 @@ do not include transcript text.
 | A language or live captions are unavailable | Check the selected speech model's [supported languages and modes](language-support-and-recommendations.md).                                                                                               |
 | A model download fails                      | Check the connection, free disk space and model-folder access, then retry from Models.                                                                                                                    |
 | A shortcut is unavailable                   | Resolve the conflict shown beside the shortcut setting or choose another combination.                                                                                                                     |
-| Automatic paste fails                       | Check Accessibility permission and the intended text field; use Copy if insertion is unavailable.                                                                                                         |
+| Automatic paste fails                       | Choose **Paste into the original text field**, save, and check **Ready to paste**. Keep the original field focused. A newly opened Electron editor may need a moment before the first recording; use Copy for an unavailable destination.                                                                                                         |
 | A recording is missing from History         | Check whether Save recordings and transcripts was enabled for that session.                                                                                                                               |
 
 If the problem persists, follow [Support](../SUPPORT.md). Include the application
