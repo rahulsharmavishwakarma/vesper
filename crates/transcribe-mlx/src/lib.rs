@@ -14,6 +14,8 @@ use std::{
 
 #[derive(Debug, thiserror::Error)]
 pub enum Error {
+    #[error("MLX model initialization: {0}")]
+    Initialization(String),
     #[error("MLX runtime: {0}")]
     Runtime(String),
     #[error("invalid MLX request: {0}")]
@@ -47,6 +49,19 @@ pub struct WhisperScores {
     pub average_log_probability: f64,
 }
 pub const RUNTIME_REVISION: &str = "d302a5c6080d2bb97bae38c7418f82abb76013b6";
+
+/// Probe only the verified application library, never downloaded model code.
+pub fn device_available(library: &Path) -> Result<bool> {
+    // SAFETY: caller verifies the application-built image; the symbol is the
+    // synchronous, pointer-free Metal availability probe in Bridge.swift.
+    unsafe {
+        let image = Library::new(library).map_err(runtime)?;
+        let probe = image
+            .get::<unsafe extern "C" fn() -> bool>(b"transcribe_mlx_device_available\0")
+            .map_err(runtime)?;
+        Ok(probe())
+    }
+}
 
 type Load = unsafe extern "C" fn(*const c_char, *const c_char, *mut *mut c_char) -> *mut c_void;
 type Unload = unsafe extern "C" fn(*mut c_void);
@@ -122,7 +137,7 @@ impl Model {
         let handle = unsafe { load(path.as_ptr(), architecture.as_ptr(), &mut error) };
         let message = take_string(error, free);
         let handle = NonNull::new(handle).ok_or_else(|| {
-            Error::Runtime(message.unwrap_or_else(|| "model initialization failed".into()))
+            Error::Initialization(message.unwrap_or_else(|| "model initialization failed".into()))
         })?;
         Ok(Self {
             handle,

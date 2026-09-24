@@ -1,6 +1,6 @@
 # ADR-0020: Optional MLX speech execution on Apple Silicon
 
-Status: Accepted
+Status: Superseded by [ADR-0021](0021-automatic-accelerator-artifacts.md); runtime/lifecycle decision retained
 Date: 2026-09-23
 Related: #35, #33, #45; ADR-0012, ADR-0017, ADR-0018
 

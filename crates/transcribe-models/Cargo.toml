@@ -7,7 +7,7 @@ publish.workspace = true
 
 [features]
 default = []
-mlx = ["transcribe-core/mlx"]
+mlx = ["transcribe-core/mlx", "dep:transcribe-mlx"]
 
 [build-dependencies]
 sha2.workspace = true
@@ -15,6 +15,7 @@ serde_json.workspace = true
 
 [dependencies]
 transcribe-core.workspace = true
+transcribe-mlx = { workspace = true, optional = true }
 serde.workspace = true
 serde_json.workspace = true
 sha2.workspace = true

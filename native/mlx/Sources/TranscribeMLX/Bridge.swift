@@ -8,6 +8,10 @@ import Metal
 @_cdecl("transcribe_mlx_abi_version")
 public func abiVersion() -> UInt32 { 1 }
 
+// Read-only availability probe; does not construct a speech model.
+@_cdecl("transcribe_mlx_device_available")
+public func deviceAvailable() -> Bool { MTLCreateSystemDefaultDevice() != nil }
+
 @_cdecl("transcribe_mlx_free_string")
 public func freeString(_ pointer: UnsafeMutablePointer<CChar>?) { free(pointer) }
 
