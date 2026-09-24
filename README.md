@@ -11,6 +11,9 @@ punctuation and formatting. No account or cloud API key is required.
 [Getting started](#getting-started) · [User guide](docs/user-guide.md) ·
 [Contributing](CONTRIBUTING.md) · [Report a bug](https://github.com/rahulsharmavishwakarma/transcribe/issues)
 
+The product is **Vesper**. The repository URL and technical identifiers retain
+their existing names for compatibility; see [product naming](docs/development.md#product-name-and-compatibility).
+
 ## Features
 
 - **Quick dictation.** Hold to talk or toggle recording with a global shortcut and floating controls.

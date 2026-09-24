@@ -9,7 +9,9 @@ Start at the [product README](../README.md) for download status or follow the
 Developer ID signing/notarization are not available yet. Once a release is
 available, open its DMG and drag `Vesper.app` to Applications. The repository and
 download filename still use `transcribe`; existing settings and model locations
-are unchanged by the display-name update.
+are unchanged by the display-name update. Use **Vesper** when referring to the
+app in documentation and issues; [technical compatibility names](development.md#product-name-and-compatibility)
+do not indicate a different application.
 
 ## First launch
 

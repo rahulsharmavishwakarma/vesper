@@ -1,6 +1,6 @@
 # Research basis for streaming inference
 
-Research updated **15 September 2026**. This document maps primary papers to engineering constraints for `transcribe`. It complements the model-specific [NVIDIA, historical Kyutai, and Moshi review](research-streaming-speech.md), the system-level [device performance plan](inference-performance.md), and the accepted resident-streaming decision in [ADR-0006](adrs/0006-resident-nemotron-streaming-worker.md). Kyutai research is retained as evidence, but [GitHub issue #48](https://github.com/rahulsharmavishwakarma/transcribe/issues/48) records its removal from current application support.
+Research updated **15 September 2026**. This document maps primary papers to engineering constraints for Vesper. It complements the model-specific [NVIDIA, historical Kyutai, and Moshi review](research-streaming-speech.md), the system-level [device performance plan](inference-performance.md), and the accepted resident-streaming decision in [ADR-0006](adrs/0006-resident-nemotron-streaming-worker.md). Kyutai research is retained as evidence, but [GitHub issue #48](https://github.com/rahulsharmavishwakarma/transcribe/issues/48) records its removal from current application support.
 
 ## Executive conclusion
 

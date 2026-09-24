@@ -12,7 +12,7 @@ Maintainers should acknowledge a report within seven days, keep the reporter inf
 
 ## Supported versions
 
-Until transcribe publishes stable releases, security fixes target the latest revision of the default branch. Older snapshots are not maintained.
+Until Vesper publishes stable releases, security fixes target the latest revision of the default branch. Older snapshots are not maintained.
 
 ## Security-sensitive areas
 

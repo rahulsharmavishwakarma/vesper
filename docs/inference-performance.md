@@ -25,7 +25,7 @@ Qwen's complete-prefix state experiment is **off by default**. `TRANSCRIBE_EXPER
 
 One build detail matters: `default-features = false` does **not** mean Metal is absent. The pinned `llama-cpp-2` manifest has an Apple ARM target dependency enabling `metal`. Application features forward `cuda`, `rocm`, and `vulkan`; there is no direct `sycl` feature in this release. Explicitly selecting an unavailable backend fails with a device-selection error. Automatic selection uses a detected native GPU or CPU; failed GPU initialization retries CPU and records its reason. [Pinned Rust binding manifest](https://docs.rs/crate/llama-cpp-2/0.1.156/source/Cargo.toml).
 
-NeMo-Speech.cpp 0.1.0 publishes CPU, CUDA, Vulkan, and Metal release packages. transcribe pins their bytes and hashes rather than treating a requested device string as evidence of availability. NVIDIA does not publish an MLX or ROCm Nemotron package: Apple uses Metal; the AMD profile uses Vulkan for speech and can use ROCm/HIP for Qwen cleanup.
+NeMo-Speech.cpp 0.1.0 publishes CPU, CUDA, Vulkan, and Metal release packages. Vesper pins their bytes and hashes rather than treating a requested device string as evidence of availability. NVIDIA does not publish an MLX or ROCm Nemotron package: Apple uses Metal; the AMD profile uses Vulkan for speech and can use ROCm/HIP for Qwen cleanup.
 
 ## Existing measurements, with their limits
 
@@ -568,7 +568,7 @@ The paths below are selectable and packaged where noted, but still require succe
 
 Core ML can target Apple CPU, GPU and Neural Engine. Its ONNX provider supports only eligible graph portions; dynamic shapes can affect performance, and newer MLProgram/compute-unit options differ from the legacy API. Profile coverage and compilation time for the exact Parakeet export. A CPU INT8 bundle is not proof of ANE compatibility or acceleration. [Core ML execution provider](https://onnxruntime.ai/docs/execution-providers/CoreML-ExecutionProvider.html), [ONNX provider graph assignment](https://onnxruntime.ai/docs/execution-providers/).
 
-**NVIDIA.** Select CUDA and compile transcribe with `--features cuda`. The installer chooses NVIDIA's matching NeMo release package, while the feature builds llama.cpp CUDA for Qwen. Device transfer, workspace, driver compatibility, and allocations remain part of the benchmark.
+**NVIDIA.** Select CUDA and compile Vesper with `--features cuda`. The installer chooses NVIDIA's matching NeMo release package, while the feature builds llama.cpp CUDA for Qwen. Device transfer, workspace, driver compatibility, and allocations remain part of the benchmark.
 
 **AMD.** Vulkan selects NeMo and llama.cpp Vulkan when built with `--features vulkan`. The ROCm profile selects NeMo Vulkan because no official ROCm speech package exists, and llama.cpp HIP when built with `--features rocm`. Match the supported GPU, OS, and driver combination. [llama.cpp HIP/Vulkan build guidance](https://github.com/ggml-org/llama.cpp/blob/master/docs/build.md), [AMD compatibility matrix](https://rocm.docs.amd.com/en/latest/compatibility/compatibility-matrix.html).
 

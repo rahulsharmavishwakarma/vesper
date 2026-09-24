@@ -4,6 +4,11 @@ Keep common actions familiar and direct. A control should let someone perform th
 
 ## Selected identity
 
+Use **Vesper** for the product name in UI copy, documentation, issue templates,
+GitHub issue text and project display metadata. Do not substitute it for the
+transcription verb, third-party model names, executable identifiers or recorded
+historical names. See [product naming and compatibility](development.md#product-name-and-compatibility).
+
 **A — Songbird** is the owner-selected Vesper identity, approved in
 [issue #71](https://github.com/rahulsharmavishwakarma/transcribe/issues/71).
 The original bird, two call strokes and six individually drawn letter paths live
@@ -78,10 +83,10 @@ The current binding contract is modifier + supported physical key, as described 
 ### Official interaction references
 
 - [Apple: customise keyboard shortcuts](https://support.apple.com/en-gb/guide/mac-help/mchlp2262/mac) edits the existing shortcut by activating its field and pressing the replacement combination. Its guidance also covers conflicts and restoring defaults.
-- [Raycast: Command Aliases & Hotkeys](https://manual.raycast.com/command-aliases-and-hotkeys) uses a shortcut recorder with immediate key display and conflict feedback. transcribe retains explicit Save changes rather than adopting Raycast's automatic saving.
+- [Raycast: Command Aliases & Hotkeys](https://manual.raycast.com/command-aliases-and-hotkeys) uses a shortcut recorder with immediate key display and conflict feedback. Vesper retains explicit Save changes rather than adopting Raycast's automatic saving.
 - [VS Code: keyboard shortcuts](https://code.visualstudio.com/docs/configure/keybindings) documents pressing the intended combination to define a binding and inspecting conflicting assignments.
 
-These are interaction precedents, not evidence that transcribe implements the products' native key-capture internals or their full key support.
+These are interaction precedents, not evidence that Vesper implements the products' native key-capture internals or their full key support.
 
 ## About and updates studies
 
@@ -110,7 +115,7 @@ is independent of Save changes, preserves unsaved drafts, remains available if
 settings cannot load, and returns keyboard focus after closing the sheet.
 This follows [Raycast's About placement within Settings](https://manual.raycast.com/settings)
 and [VS Code's native About entry](https://code.visualstudio.com/docs/supporting/faq),
-adapted to transcribe's existing controls rather than adding a new navigation tab.
+adapted to Vesper's existing controls rather than adding a new navigation tab.
 
 The samples use illustrative release data and simulated operations. The real
 sheet reports that automatic updates are unavailable and provides no simulated

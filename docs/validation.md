@@ -156,13 +156,19 @@ Frontend type/Svelte checks and Vite production build pass. Browser preview QA c
 
 macOS native linking and `.app` bundling were tested. The bundle must carry the microphone usage description. Linux CI is configured with ALSA/WebKit/native build prerequisites, but no remote CI run or Windows build was performed in this session. Microphone permissions, actual device disconnection, native window-close interactions, and capture quality still require deliberate on-device testing.
 
-## transcribe integration update
+<a id="transcribe-integration-update"></a>
 
-After adopting the Studio UI, custom controls, RMS meter and transcribe name, `make check` passed with 69 Rust tests,
+## Historical branding integration (before Vesper)
+
+This record predates the Vesper identity. The old display names and bundle paths
+below describe the tested build, not the current product; current branding is
+documented in [UI design](ui-design.md#selected-identity).
+
+After adopting the Studio UI, custom controls, RMS meter and then-current `transcribe` name, `make check` passed with 69 Rust tests,
 16 JavaScript tests, no Svelte/TypeScript errors or warnings, formatting and strict
 Clippy. `make build-debug` produced `target/debug/bundle/macos/transcribe.app`; its
-Info.plist identifies transcribe, `com.transcribe.desktop`, the ARM64 `transcribe-desktop` executable,
-the lowercase text-only app icon, and the transcribe microphone permission description.
+Info.plist identified `transcribe`, `com.transcribe.desktop`, the ARM64 `transcribe-desktop` executable,
+the lowercase text-only app icon, and the then-current microphone permission description.
 
 The explicit real-file pipeline test also passed after the rename, in 3.81 seconds
 for this one integration-test invocation. It checks ASR, cleanup, original audio,
@@ -197,7 +203,7 @@ state across view changes was reviewed in code: runtime panels remain mounted.
 
 ## Quick capture, notifications, and lowercase rename
 
-The product metadata, Rust/npm package names, window titles, export prefixes, app identifier, wordmark, native text-only icon, and macOS bundle now use lowercase `transcribe`. Existing `com.ukti.desktop` and `com.stt.desktop` data remain readable in place. Stale Ukti/STT bundles and brand-symbol references were removed.
+Historical record — 14 September 2026, before Vesper: the product metadata, Rust/npm package names, window titles, export prefixes, app identifier, wordmark, native text-only icon, and macOS bundle used lowercase `transcribe`. Existing `com.ukti.desktop` and `com.stt.desktop` data remained readable in place. Stale Ukti/STT bundles and brand-symbol references were removed. Vesper later replaced the display name and artwork while retaining compatibility identifiers; see [product naming](development.md#product-name-and-compatibility).
 
 The new quick-capture window was checked at its native 520 × 118 logical-pixel size in idle, recording, processing, and completion states. Its recording trace uses the same RMS value as the main recorder; the processing trace is explicitly indeterminate. A browser-only query preview was used for visual inspection and did not open the microphone. The native Tauri build includes the global-shortcut and notification plugins, a hidden always-on-top `quick-capture` window, permission-gated privacy-safe notifications, and three validated shortcut choices.
 
@@ -230,7 +236,7 @@ reads remain strict, including those used by inference. `make check` passed with
 82 Rust tests, 26 JavaScript tests, no Svelte/TypeScript diagnostics, formatting,
 and strict Clippy. The five browser results are captured in
 recovery-checks.png. `make build-debug` also
-rebuilt `target/debug/bundle/macos/transcribe.app` successfully. Live microphone and actual
+rebuilt the then-named `target/debug/bundle/macos/transcribe.app` successfully, before the Vesper identity. Live microphone and actual
 operating-system shortcut testing remain tracked in
 [GitHub issue #7](https://github.com/rahulsharmavishwakarma/transcribe/issues/7).
 
@@ -474,7 +480,7 @@ Download the linked fixture explicitly to `.cache/smoke/en.wav` and verify its h
 
 ## Native menu bar — 15 September 2026
 
-[Issue #29](https://github.com/rahulsharmavishwakarma/transcribe/issues/29) adds a native macOS menu bar entry titled **transcribe**, using the wordmark without an additional logo. The menu shows runtime activity, Start/Stop recording, Open transcribe, History, Models, Settings and Quit. It reuses the existing quick-capture controller. Status refresh reads runtime activity every 500 ms and only changes native items when needed; it does not inspect model files or load weights.
+Historical record: [issue #29](https://github.com/rahulsharmavishwakarma/transcribe/issues/29) added a native macOS menu bar entry with the then-current `transcribe` text title. Vesper now uses the selected Songbird logo alone, with **Open Vesper** and the Vesper status tooltip, as documented in [UI design](ui-design.md#selected-identity). The menu continues to show runtime activity, Start/Stop recording, History, Models, Settings and Quit through the same quick-capture controller. Status refresh reads runtime activity every 500 ms and only changes native items when needed; it does not inspect model files or load weights. The measurements below describe the original implementation, not a new qualification run for the logo.
 
 Closing either window now hides it. Main-window drafts and ongoing work stay alive, and the macOS Dock reopen event restores the main window. Explicit Quit is disabled during active work. Cmd-Q / Dock quit also require idle and bring Dictate forward while busy; they no longer cancel a recording as a side effect. An accepted exit marks shutdown while holding the runtime state lock, preventing a new recording/download from starting between the idle check and exit.
 

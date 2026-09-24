@@ -311,7 +311,7 @@
 {/if}
 
 <style>
-  /* Hallmark · component: select · genre: modern-minimal · theme: transcribe Studio
+  /* Hallmark · component: select · genre: modern-minimal · theme: Vesper Studio
    * pre-emit critique: P5 H4 E5 S5 R5 V4 */
   .select-trigger {
     display: flex;

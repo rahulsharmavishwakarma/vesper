@@ -1,6 +1,6 @@
-# Contributing to transcribe
+# Contributing to Vesper
 
-Thank you for improving transcribe. Contributions should keep speech processing local, preserve original user data, and make collection or destructive behavior explicit.
+Thank you for improving Vesper. Contributions should keep speech processing local, preserve original user data, and make collection or destructive behavior explicit.
 
 ## Before you start
 

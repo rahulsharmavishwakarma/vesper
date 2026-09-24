@@ -169,9 +169,9 @@
   <header class="personalization-heading">
     <h2 id="personalization-heading">Your vocabulary and writing</h2>
     <p class="note">
-      Transcribe automatically learns eligible spellings from your edits in Your text and uses
-      dictation usage to rank saved words. Learning stays on this device, even when audio collection
-      is off. Edits in other apps are not observed. You can remove or forget learned words below.
+      Vesper automatically learns eligible spellings from your edits in Your text and uses dictation
+      usage to rank saved words. Learning stays on this device, even when audio collection is off.
+      Edits in other apps are not observed. You can remove or forget learned words below.
     </p>
   </header>
   {#if !desktop}
@@ -543,7 +543,7 @@
 </section>
 
 <style>
-  /* Hallmark · component: personal preferences · existing transcribe Studio tokens
+  /* Hallmark · component: personal preferences · existing Vesper Studio tokens
    * pre-emit critique: P5 H4 E5 S5 R5 V4 */
   .personalization {
     margin-top: var(--space-6);
