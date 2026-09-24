@@ -104,7 +104,7 @@ build: ## Build the release desktop app
 	$(RUN) npm run desktop:build
 
 build-debug: ## Build the debug desktop app
-	$(RUN) npm exec --workspace @transcribe/desktop -- tauri build --debug --bundles app -- --locked
+	$(RUN) npm run desktop:build -- --debug --bundles app
 
 build-web: ## Build frontend assets
 	$(RUN) npm run build

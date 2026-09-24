@@ -2,7 +2,6 @@
   "build": { "features": ["mlx"] },
   "bundle": {
     "active": true,
-    "targets": ["app"],
     "macOS": { "minimumSystemVersion": "14.0" },
     "resources": {
       "../../../.tooling/mlx-runtime/": "mlx-runtime/"
