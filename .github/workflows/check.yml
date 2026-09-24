@@ -83,6 +83,7 @@ jobs:
     timeout-minutes: 60
     env:
       CMAKE_BUILD_PARALLEL_LEVEL: '2'
+      DEVELOPER_DIR: /Applications/Xcode_26.3.app/Contents/Developer
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
@@ -99,6 +100,15 @@ jobs:
           cmake --version
           xcrun --find clang
           xcrun --find clang++
+          if [ "$(uname -m)" = arm64 ]; then
+            test -d "$DEVELOPER_DIR"
+            xcodebuild -version
+            xcrun swift --version
+            if ! xcrun metal --version; then
+              xcodebuild -downloadComponent metalToolchain
+            fi
+            xcrun metal --version
+          fi
       - name: Cache pinned patched sherpa-onnx build
         uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
         with:
@@ -125,3 +135,8 @@ jobs:
           app="target/debug/bundle/macos/$product_name.app"
           executable=$(/usr/libexec/PlistBuddy -c 'Print :CFBundleExecutable' "$app/Contents/Info.plist")
           test -x "$app/Contents/MacOS/$executable"
+          if [ "$(uname -m)" = arm64 ]; then
+            test -s "$app/Contents/Resources/mlx-runtime/libTranscribeMLX.dylib"
+            test -s "$app/Contents/Resources/mlx-runtime/mlx.metallib"
+            test -x "$app/Contents/Resources/mlx-runtime/prepare-qwen-tokenizer"
+          fi
