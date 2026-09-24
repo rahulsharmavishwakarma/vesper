@@ -283,7 +283,16 @@ fn run(mut options: RunOptions) -> Result<(), Box<dyn std::error::Error>> {
             .language
             .unwrap_or_else(|| language_for_sample(&sample.language));
         config.language = configured_language;
-        let resident_run = index > 0 && config.speech_adapter().capabilities.resident_weights;
+        let resident_run = index > 0
+            && transcribe_models::resolve_speech(&config, &options.model_root).is_ok_and(
+                |selection| {
+                    selection
+                        .config
+                        .speech_adapter()
+                        .capabilities
+                        .resident_weights
+                },
+            );
         let result = run_sample(
             &manager,
             &config,
