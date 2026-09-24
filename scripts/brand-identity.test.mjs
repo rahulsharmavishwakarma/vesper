@@ -103,6 +103,48 @@ test('display-name integration preserves storage and package identities', () => 
   assert.match(read('.github/workflows/check.yml'), /productName/);
 });
 
+test('current product copy consistently names Vesper', () => {
+  const expected = [
+    ['README.md', '# Vesper'],
+    ['CONTRIBUTING.md', '# Contributing to Vesper'],
+    ['SECURITY.md', 'Until Vesper publishes stable releases'],
+    ['.github/ISSUE_TEMPLATE/bug_report.yml', 'Start Vesper with'],
+    ['.github/ISSUE_TEMPLATE/feature_request.yml', 'improvement to Vesper'],
+    ['apps/desktop/src/lib/components/PersonalizationPanel.svelte', 'Vesper automatically learns'],
+    ['apps/desktop/src-tauri/src/lib.rs', 'failed to build the Vesper desktop application'],
+    ['apps/desktop/src-tauri/examples/learning_webview.rs', 'Vesper — public audio qualification'],
+    ['apps/desktop/src-tauri/capabilities/default.json', 'local Vesper application'],
+    ['pyproject.toml', 'tooling for the native Vesper app'],
+    ['.pre-commit-config.yaml', 'name: Vesper Python locks'],
+    ['docs/research.md', 'The application is named **Vesper**'],
+    ['docs/validation/native-device-checklist.md', 'target/debug/bundle/macos/Vesper.app'],
+  ];
+  for (const [path, copy] of expected) assert.ok(read(path).includes(copy), path);
+  for (const path of [
+    'apps/desktop/src/app.css',
+    'apps/desktop/src/tokens.css',
+    'apps/desktop/src/lib/components/Select.svelte',
+    'apps/desktop/src/lib/components/PersonalizationPanel.svelte',
+  ]) {
+    assert.doesNotMatch(read(path), /transcribe Studio/i, path);
+    assert.match(read(path), /Vesper Studio/, path);
+  }
+});
+
+test('naming cleanup retains working technical names and historical evidence', () => {
+  assert.match(read('pyproject.toml'), /name = "transcribe-tooling"/);
+  assert.match(read('.pre-commit-config.yaml'), /id: transcribe-fast-check/);
+  assert.match(read('.pre-commit-config.yaml'), /id: transcribe-push-check/);
+  assert.match(read('README.md'), /github\.com\/rahulsharmavishwakarma\/transcribe\.git/);
+  assert.match(read('README.md'), /download\/transcribe-macos-arm64\.dmg/);
+  assert.match(read('apps/desktop/src/lib/config.ts'), /'Cohere Transcribe'/);
+  assert.match(read('apps/desktop/src/lib/components/QuickCapture.svelte'), /Stop and transcribe/);
+  assert.match(read('docs/development.md'), /### Product name and compatibility/);
+  assert.match(read('docs/validation.md'), /id="transcribe-integration-update"/);
+  assert.match(read('docs/validation.md'), /Historical branding integration \(before Vesper\)/);
+  assert.match(read('docs/validation.md'), /target\/debug\/bundle\/macos\/transcribe\.app/);
+});
+
 test('component motion targets calls only and supplies a still alternative', () => {
   const component = read('apps/desktop/src/lib/components/BrandLogo.svelte');
   assert.match(component, /prefers-reduced-motion: reduce/);

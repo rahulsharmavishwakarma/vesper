@@ -4,6 +4,13 @@ Every repository-related job is tracked in GitHub Issues through the GitHub CLI.
 
 GitHub Issues is the only task tracker. Project documentation records current behavior, decisions, procedures, evidence, and limitations; it does not mirror issue status or become a local backlog.
 
+Use **Vesper** in product-facing issue titles/bodies, templates and the linked
+project's display title/readme. Keep working repository links and technical
+identifiers unchanged. Naming-only edits do not alter issue approvals, status,
+test outcomes or completion criteria. Preserve quoted old names and dated
+evidence as historical, with a current-name note where needed; see
+[product naming and compatibility](development.md#product-name-and-compatibility).
+
 ## Required lifecycle
 
 1. Inspect the configured Git remote and search open and closed issues with explicit `--repo` arguments when repository identity could be ambiguous.

@@ -1,11 +1,11 @@
 name: Bug report
-description: Report a reproducible problem in transcribe
+description: Report a reproducible problem in Vesper
 title: "[Bug]: "
 labels: [bug]
 body:
   - type: markdown
     attributes:
-      value: Thanks for helping improve transcribe. Do not attach private recordings, transcripts, model tokens, or credentials.
+      value: Thanks for helping improve Vesper. Do not attach private recordings, transcripts, model tokens, or credentials.
   - type: textarea
     id: description
     attributes:
@@ -18,7 +18,7 @@ body:
     attributes:
       label: Steps to reproduce
       placeholder: |
-        1. Start transcribe with ...
+        1. Start Vesper with ...
         2. Select ...
         3. Observe ...
     validations:
