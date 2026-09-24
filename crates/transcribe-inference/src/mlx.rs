@@ -105,12 +105,11 @@ impl Recognizer {
                 .map_err(crate::resident_sherpa::verification_error)?,
         );
         let started = Instant::now();
-        let model = transcribe_mlx::Model::load(
+        let loaded = transcribe_mlx::Model::load(
             &transcribe_models::mlx::runtime_directory().join("libTranscribeMLX.dylib"),
             &directory,
             architecture,
-        )
-        .map_err(map_error)?;
+        );
         let load_us = micros(started);
         check_cancelled(cancelled)?;
         if identity != key(config, root)? {
@@ -119,6 +118,12 @@ impl Recognizer {
                 "files changed during model load",
             ));
         }
+        let model = loaded.map_err(|e| match e {
+            transcribe_mlx::Error::Initialization(message) => {
+                crate::InferenceError::AcceleratorInitialization(message)
+            }
+            other => map_error(other),
+        })?;
         Ok(Self {
             model: RefCell::new(model),
             identity,
@@ -205,6 +210,84 @@ mod tests {
     use super::*;
     use crate::{InferenceError, InferenceManager};
     use std::sync::{atomic::Ordering, Arc, Mutex};
+
+    #[test]
+    #[ignore = "requires pinned CPU/MLX Qwen models, a Metal device and public audio"]
+    fn automatic_migration_agrees_with_download_readiness_and_execution() {
+        use transcribe_core::ComputeBackend;
+        let source = PathBuf::from(std::env::var_os("TRANSCRIBE_SMOKE_MODELS").expect("models"));
+        let audio = transcribe_audio::decode_file(
+            PathBuf::from(std::env::var_os("TRANSCRIBE_SMOKE_AUDIO").expect("audio")),
+            0,
+        )
+        .unwrap();
+        let root = tempfile::tempdir().unwrap();
+        let mut config = AppConfig::default();
+        config.models.asr = AsrModel::Qwen3Asr06b;
+        config.cleanup_enabled = false;
+        let saved = config.clone();
+        let link_export = |backend| {
+            let mut explicit = config.clone();
+            explicit.compute_backend = backend;
+            for a in transcribe_models::selected(&explicit).unwrap() {
+                let target = root.path().join(&a.relative_path);
+                std::fs::create_dir_all(target.parent().unwrap()).unwrap();
+                std::fs::hard_link(source.join(a.relative_path).canonicalize().unwrap(), target)
+                    .unwrap();
+            }
+        };
+        assert!(!transcribe_models::inspect(&config, root.path()).ready);
+        link_export(ComputeBackend::Cpu);
+        assert!(transcribe_models::inspect(&config, root.path()).ready);
+        let card = transcribe_models::list_model_installations(&config, root.path())
+            .into_iter()
+            .find(|m| m.selected && m.role == transcribe_core::ModelRole::SpeechRecognition)
+            .unwrap();
+        assert!(card.ready);
+        assert!(!card.artifacts_installed);
+        let manager = InferenceManager::new().unwrap();
+        let run = |config: &AppConfig, id| {
+            manager
+                .transcribe(
+                    &audio,
+                    config,
+                    root.path(),
+                    id,
+                    Arc::new(AtomicBool::new(false)),
+                )
+                .unwrap()
+        };
+        let cpu = run(&config, "cpu-existing");
+        assert!(!cpu.is_empty());
+        assert_eq!(
+            manager.execution_evidence("cpu-existing")["asr"]["initializedProvider"],
+            "cpu"
+        );
+        let mut explicit = config.clone();
+        explicit.compute_backend = ComputeBackend::Cpu;
+        assert_eq!(run(&explicit, "cpu-reference"), cpu);
+        manager.unload().unwrap();
+        // Local verified cache supplies the ordinary installer without a download.
+        link_export(ComputeBackend::Metal);
+        assert!(
+            transcribe_models::install(&config, root.path(), &AtomicBool::new(false), |_| {})
+                .unwrap()
+                .ready
+        );
+        let gpu = run(&config, "automatic-gpu");
+        let observed = manager.execution_evidence("automatic-gpu");
+        assert_eq!(observed["asr"]["requestedBackend"], "auto");
+        assert_eq!(observed["asr"]["initializedProvider"], "metal");
+        assert_eq!(observed["asr"]["selection"]["preferredBackend"], "metal");
+        assert_eq!(observed["asr"]["selection"]["resolvedBackend"], "metal");
+        explicit.compute_backend = ComputeBackend::Metal;
+        assert_eq!(run(&explicit, "metal-reference"), gpu);
+        assert_eq!(
+            observed["asr"]["residentLoadOrdinal"],
+            manager.execution_evidence("metal-reference")["asr"]["residentLoadOrdinal"]
+        );
+        assert_eq!(config, saved);
+    }
 
     #[test]
     fn identity_distinguishes_artifacts_and_selection_not_writer() {

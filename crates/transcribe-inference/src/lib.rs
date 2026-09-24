@@ -7,6 +7,7 @@
 mod adapters;
 mod artifact_identity;
 pub mod audio_frontend;
+mod automatic;
 mod backend;
 mod capabilities;
 mod fidelity;
@@ -48,6 +49,8 @@ pub type TranscriptionProgressSink =
 
 #[derive(Debug, thiserror::Error)]
 pub enum InferenceError {
+    #[error("accelerator initialization failed: {0}")]
+    AcceleratorInitialization(String),
     #[error("inference was cancelled")]
     Cancelled,
     #[error(transparent)]
@@ -96,13 +99,40 @@ pub fn transcribe(
     } else {
         None
     };
-    adapters::transcribe_once(
-        config.speech_adapter().kind,
-        processed.as_ref().unwrap_or(audio),
-        config,
+    let mut selection = transcribe_models::resolve_speech(config, model_root)
+        .map_err(resident_sherpa::verification_error)?;
+    let model = automatic::InitializationFallback::default().load(
+        &mut selection,
         model_root,
         cancelled,
+        |effective| {
+            if effective.uses_mlx_speech() {
+                adapters::SpeechModel::load(effective, model_root, cancelled).map(Some)
+            } else {
+                // Retain each existing one-shot adapter's admission and exact-zero
+                // shortcuts. Only MLX needs a separately retryable initialization.
+                Ok(None)
+            }
+        },
+    )?;
+    let Some(model) = model else {
+        return adapters::transcribe_once(
+            selection.config.speech_adapter().kind,
+            processed.as_ref().unwrap_or(audio),
+            &selection.config,
+            model_root,
+            cancelled,
+            &progress,
+        );
+    };
+    model.transcribe(
+        processed.as_ref().unwrap_or(audio),
+        &selection.config,
+        model_root,
+        "standalone",
+        cancelled,
         &progress,
+        &Default::default(),
     )
 }
 
@@ -143,6 +173,9 @@ pub fn run(
 /// Selected runtime/artifact identifiers, not an installation attestation.
 /// The model installer records actual artifact hashes separately.
 pub fn model_versions(config: &AppConfig) -> Value {
+    let requested = config;
+    let preferred = transcribe_models::preferred_speech_config(config);
+    let config = preferred.as_ref().unwrap_or(config);
     let asr = if config.uses_mlx_speech() {
         json!({"modelId":config.models.asr.id(),"runtime":config.speech_adapter().runtime,"runtimeRevision":config.speech_adapter().runtime_revision,"provider":"metal","modelLifetime":"resident-in-manager-fresh-segment-decoder", "streamingMode":"completed-recordings", "language":config.language,"artifacts":transcribe_models::selected(config).unwrap_or_default().into_iter().filter(|a| a.role == "asr").collect::<Vec<_>>()})
     } else if config.models.custom_asr.is_none() {
@@ -179,7 +212,10 @@ pub fn model_versions(config: &AppConfig) -> Value {
     } else {
         json!({"modelId": config.models.asr.id(), "runtime":"sherpa-onnx", "runtimeVersion":"1.13.8", "provider":"cpu", "languageMode":"automatic", "artifactFiles":["encoder.int8.onnx","decoder.int8.onnx","joiner.int8.onnx","tokens.txt"]})
     };
+    let speech_registration = config.speech_adapter();
+    let config = requested;
     let mut versions = json!({
+        "selectionError": preferred.as_ref().err().map(ToString::to_string),
         "audioFrontend": {"settings":config.audio_frontend,"sampleRate":16000,"provider":"cpu","nativeGraphThreads":1,
             "runtimeBuildId":env!("TRANSCRIBE_SHERPA_BUILD_ID"), "runtimePatchSha256":env!("TRANSCRIBE_SHERPA_PATCH_SHA256"),
             "vadPolicy":audio_frontend::vad_policy(&config.audio_frontend), "denoiserApi":"online-in-both-modes",
@@ -210,7 +246,7 @@ pub fn model_versions(config: &AppConfig) -> Value {
         versions["rewriter"]["maxContextTokens"] = json!(qwen::CONTEXT_TOKENS);
     }
     for (role, registration) in [
-        ("asr", config.speech_adapter()),
+        ("asr", speech_registration),
         ("rewriter", config.text_adapter()),
     ] {
         if !versions[role].is_null() {

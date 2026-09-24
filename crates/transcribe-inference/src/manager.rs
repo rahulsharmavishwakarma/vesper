@@ -388,6 +388,7 @@ struct WorkerState {
     rewriter: Option<(qwen::RewriterKey, adapters::TextModel)>,
     sherpa_load_count: u64,
     frontend: crate::audio_frontend::FrontendCache,
+    automatic_fallback: crate::automatic::InitializationFallback,
 }
 
 impl WorkerState {
@@ -397,6 +398,7 @@ impl WorkerState {
             rewriter: None,
             sherpa_load_count: 0,
             frontend: Default::default(),
+            automatic_fallback: Default::default(),
         }
     }
 
@@ -514,6 +516,7 @@ impl WorkerState {
     }
 
     fn unload(&mut self) {
+        self.automatic_fallback = Default::default();
         self.frontend.unload();
         self.rewriter = None;
         self.speech = None;
@@ -629,34 +632,53 @@ fn worker_loop(
                     &evidence,
                 );
                 let result = prepared.and_then(|processed| {
-                let audio = processed.as_ref().unwrap_or(&audio);
-                state.completed_silence_without_model(audio, &config, &model_root, &cancelled, &progress)
-                    .and_then(|handled| {
-                        if handled {
-                            record_evidence(&evidence, &operation_id, "asr", serde_json::json!({
-                                "requestedBackend":config.compute_backend, "initializedProvider":null,
-                                "residentWeights":false,"evidence":"verified-exact-zero-without-native-load"}));
-                            return Ok(String::new());
-                        }
-                        state.ensure_speech(&config, &model_root, &cancelled)
-                    .and_then(|model| {
-                        let result = model.transcribe(
-                            audio,
-                            &config,
-                            &model_root,
-                            &operation_id,
-                            &cancelled,
-                            &progress,
-                            &profile,
-                        );
+                    let audio = processed.as_ref().unwrap_or(&audio);
+                    check_cancelled(&cancelled)?;
+                    let mut selection = transcribe_models::resolve_speech(&config, &model_root)
+                        .map_err(crate::resident_sherpa::verification_error)?;
+                    if state.completed_silence_without_model(
+                        audio,
+                        &selection.config,
+                        &model_root,
+                        &cancelled,
+                        &progress,
+                    )? {
                         record_evidence(
                             &evidence,
                             &operation_id,
                             "asr",
-                            model.evidence(&config, &profile),
+                            serde_json::json!({
+                            "requestedBackend":config.compute_backend, "initializedProvider":null,
+                            "selection":selection.evidence(), "residentWeights":false,
+                            "evidence":"verified-exact-zero-without-native-load"}),
                         );
-                        result
-                    })})});
+                        return Ok(String::new());
+                    }
+                    let mut fallback = std::mem::take(&mut state.automatic_fallback);
+                    let initialized =
+                        fallback.load(&mut selection, &model_root, &cancelled, |effective| {
+                            state
+                                .ensure_speech(effective, &model_root, &cancelled)
+                                .map(|_| ())
+                        });
+                    state.automatic_fallback = fallback;
+                    initialized?;
+                    let model = &state.speech.as_ref().expect("initialized recognizer").1;
+                    let result = model.transcribe(
+                        audio,
+                        &selection.config,
+                        &model_root,
+                        &operation_id,
+                        &cancelled,
+                        &progress,
+                        &profile,
+                    );
+                    let mut observed = model.evidence(&selection.config, &profile);
+                    observed["requestedBackend"] = serde_json::json!(config.compute_backend);
+                    observed["selection"] = selection.evidence();
+                    record_evidence(&evidence, &operation_id, "asr", observed);
+                    result
+                });
                 // A reported native/identity failure does not establish safe ORT
                 // reuse. Drop resident Sherpa sessions on the owner after the synchronous call.
                 if state.speech.as_ref().is_some_and(|(_, model)| matches!(model,
