@@ -18,26 +18,32 @@ evidence as historical, with a current-name note where needed; see
 3. Apply the relevant work-type label and any useful existing routing labels. Keep them accurate when scope changes.
 4. Record any architectural proposal and its approval status. Creating an issue does not itself authorize a major architectural change.
 5. Update the issue when scope, decisions, progress, blockers, or completion criteria change.
-6. Before the first repository edit, create and check out a new feature branch from the freshly fetched default branch. Preserve existing local work separately when needed. Implement or investigate there, then prepare small local commits under the owner's standing authorization and the rules below.
+6. Inspect the checkout and preserve existing work. By the owner's current preference, work and make small signed local commits on `main`; create a feature branch/PR only when explicitly requested, following the workflow below.
 7. Update canonical documentation alongside the implementation, in the same change. Prefer an existing owner page; otherwise add a focused page and link it from the nearest index or README. Include related docs in the implementation commit when practical.
 8. Run proportionate validation and publish the result, documentation location, limitations, and deferred work to the issue.
 9. Confirm labels still represent the completed scope, then close only when every completion criterion—including documentation—is complete. Leave incomplete work open with an explicit status.
 
 ## Feature branches and pull requests
 
-Use a new task-specific feature branch before editing code, documentation or
-repository rules. Do not develop or commit on `main`, and do not wait until PR
-creation to move the work to a branch. Inspect the current branch, working tree,
-local-only commits and worktrees before choosing the base.
+The owner's 26 September 2026 preference supersedes the earlier mandatory
+feature-first workflow: work and commit locally on `main` by default. Create a
+new task-specific feature branch and PR only when explicitly requested. Small
+signed commits, issue references, validation hooks and separate authorization for
+pushing/publication still apply. Inspect the current branch, working tree,
+local-only commits and worktrees before editing or switching.
 
-For a clean checkout with no local-only work, the normal start is:
+For a clean checkout with no local-only work, update the default branch with:
 
 ```sh
 git fetch origin main
 git switch main
 git merge --ff-only origin/main
-git switch -c feature/short-task-name
 ```
+
+When the owner requests a branch/PR, create the task-specific branch from freshly
+fetched `origin/main` before its first edit, for example
+`git switch -c feature/short-task-name origin/main`. Existing local work must be
+preserved and excluded from the requested PR.
 
 Branch names use `<type>/<short-kebab-description>`. Use `feature/` for user-facing
 capabilities, `fix/` for defects, `chore/` for maintenance, `docs/` for
@@ -46,9 +52,9 @@ documentation-only work, `test/` for test or benchmark infrastructure,
 `ci/` for automation, and `release/` for release preparation. Do not prefix
 branches with an agent or contributor name.
 
-Use the actual default branch if it is not `main`. When the checkout contains
-other work, preserve it on a dedicated branch and in a recoverable snapshot, then
-start a fresh feature branch or isolated worktree from the fetched base. Ordinary
+Use the actual default branch if it is not `main`. When existing work makes a
+switch or update unsafe, preserve it on a dedicated branch and in a recoverable
+snapshot; use an isolated worktree when necessary. Ordinary
 `git stash` saves tracked changes only; untracked files require explicit
 preservation, and ignored local state must also remain intact. Never delete a
 file merely because it blocks checkout or rebase.
@@ -70,8 +76,8 @@ Retain recovery references until restoration is verified, and continue unfinishe
 work on its own feature branch.
 
 The shared-checkout handoff state is `main`, provided switching preserves all
-existing work. Each incoming agent checks the state and creates/checks out its
-own feature branch before editing. Do not discard or silently stash another
+existing work. Each incoming agent checks the state and follows the current
+main-by-default preference above. Do not discard or silently stash another
 agent's changes to obtain a clean handoff. Use isolated worktrees for concurrent
 tasks when a shared branch switch would disrupt active work, and report a blocked
 handoff rather than forcing it.
