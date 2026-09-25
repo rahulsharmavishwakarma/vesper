@@ -83,6 +83,52 @@ fn timing(values: &[f64]) -> Value {
     json!({"count":sorted.len(),"meanMs":sorted.iter().sum::<f64>() / sorted.len() as f64,"p50Ms":percentile(0.5),"p95Ms":percentile(0.95)})
 }
 
+fn recurring_timing_gate(timings: &Value, expected_pairs: usize) -> Value {
+    let valid = expected_pairs > 0
+        && ["frozen", "learning"].into_iter().all(|arm| {
+            timings[arm]["count"].as_u64() == Some(expected_pairs as u64)
+                && ["meanMs", "p95Ms"].into_iter().all(|metric| {
+                    timings[arm][metric]
+                        .as_f64()
+                        .is_some_and(|v| v.is_finite() && v > 0.0)
+                })
+        });
+    let margins = if valid {
+        json!({
+            "meanPercent": (timings["learning"]["meanMs"].as_f64().unwrap()
+                / timings["frozen"]["meanMs"].as_f64().unwrap() - 1.0) * 100.0,
+            "p95Percent": (timings["learning"]["p95Ms"].as_f64().unwrap()
+                / timings["frozen"]["p95Ms"].as_f64().unwrap() - 1.0) * 100.0,
+        })
+    } else {
+        Value::Null
+    };
+    let passed = valid
+        && ["meanMs", "p95Ms"].into_iter().all(|metric| {
+            timings["learning"][metric].as_f64().unwrap()
+                <= timings["frozen"][metric].as_f64().unwrap() * 1.10
+        });
+    json!({"passed":passed,"expectedPairs":expected_pairs,"completeTiming":valid,
+        "maximumIncreasePercent":10,"margins":margins})
+}
+
+#[test]
+fn recurring_qualification_enforces_latency_and_complete_timing() {
+    let good = json!({"frozen":{"count":3,"meanMs":100.0,"p95Ms":200.0},
+        "learning":{"count":3,"meanMs":110.0,"p95Ms":220.0}});
+    assert_eq!(recurring_timing_gate(&good, 3)["passed"], true);
+    for metric in ["meanMs", "p95Ms"] {
+        let mut slow = good.clone();
+        slow["learning"][metric] = json!(good["learning"][metric].as_f64().unwrap() + 1.0);
+        assert_eq!(recurring_timing_gate(&slow, 3)["passed"], false);
+    }
+    assert_eq!(recurring_timing_gate(&good, 4)["passed"], false);
+    assert_eq!(recurring_timing_gate(&good, 0)["passed"], false);
+    let mut missing = good;
+    missing["learning"]["meanMs"] = Value::Null;
+    assert_eq!(recurring_timing_gate(&missing, 3)["passed"], false);
+}
+
 fn report(value: &Value) {
     if let Some(path) = std::env::var_os("TRANSCRIBE_LEARNING_REPORT") {
         let mut file = fs::OpenOptions::new()
@@ -1004,7 +1050,9 @@ fn native_recurring_spelling_learning_against_frozen_memory() {
                 .collect::<Vec<_>>(),
         );
     }
+    let timing_gate = recurring_timing_gate(&timings, rows.len().saturating_sub(1));
     let passed = failures.is_empty()
+        && timing_gate["passed"] == true
         && summary["harmed"] == 0
         && summary["improved"].as_u64().unwrap() > 0
         && summary["reuseOpportunities"].as_u64().unwrap() > 0;
@@ -1013,7 +1061,7 @@ fn native_recurring_spelling_learning_against_frozen_memory() {
         "evidenceClass":manifest["evidenceClass"],"manifestSha256":format!("{:x}",Sha256::digest(manifest_bytes)),
         "corpusProvenance":manifest["provenance"],"modelProvenance":transcribe_models::provenance(&AppConfig::default()),
         "modelVersions":transcribe_inference::model_versions(&AppConfig::default()),"totals":summary,"gatesPassed":passed,
-        "matchedResidentBackendCompletion":timings,"failures":failures,"rows":rows,
+        "matchedResidentBackendCompletion":timings,"exploratoryTimingGate":timing_gate,"failures":failures,"rows":rows,
         "stopToVisibleFinalMs":Value::Null,"humanEditingTimeMs":Value::Null,"limitations":manifest["limitations"]}),
     );
     assert!(

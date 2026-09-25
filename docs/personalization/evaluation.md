@@ -194,7 +194,7 @@ Actual providers are Cohere CPU and Qwen Metal, eight graph/worker threads, on t
 
 The separate four-request native identifier round trip also passes after integration: activation, later application after Runtime recreation, reversal, Forget and stale-evidence isolation. It uses authored edits on repeated public audio and cannot supply independent human support. The frozen native test executable is recorded at SHA-256 `b91ea1dfc78cc78e9b7d16c7902728a2311426664b6fcd3d0140184a7ee853ea`, with source/fixture hashes in `native-source-identity.json` beside complete native reports, stderr resource totals and `verified-native-summary.json`.
 
-**Current decision:** the scoped recovery is implemented and passes these automated gates. #58 remains open for the authored unflagged-intent harm, natural longitudinal feedback/correction effort, and actual microphone/UI/process-restart qualification. The [Phase B shadow proposal](https://github.com/rahulsharmavishwakarma/transcribe/issues/59#issuecomment-5740928523) is awaiting architecture approval; no semantic-analysis storage, idle analysis API, live policy controller or training has been added.
+**Decision at this historical checkpoint:** the scoped recovery passed these automated gates; #58 remained open for authored harm and natural/native qualification. The [Phase B shadow proposal](https://github.com/rahulsharmavishwakarma/transcribe/issues/59#issuecomment-5740928523) then awaited approval. The subsequently approved semantic and fixed-incumbent policy shadow implementations are included in `origin/main` at `8a2c27b`; their separate quality failures remain documented below. They do not enable live policy promotion or training.
 
 ## Chronological replay
 
@@ -725,3 +725,54 @@ The final report is `recurring-native-v4-final.json`; earlier reports are
 source/model/binary identities and process outcomes. Final native test
 executable SHA-256:
 `04e6216184c510ca643fc443cbeacdb869021414390e0bf628ee98cf40a54549`.
+
+### Requalification and timing-report correction — 25 September 2026
+
+The recurring synthetic manifest was replayed unchanged at `8a2c27b` with the
+same pinned Cohere CPU/Qwen Metal pipeline, after all compilation completed.
+The diagnostic now enforces the protocol's existing **10% mean and p95 latency
+margin** in its overall `gatesPassed` result, and missing/incomplete timings
+fail the check. Previously the timing statistics were present but this margin
+was omitted from that boolean. A focused regression covers the boundary,
+either metric exceeding it, absent timing and incomplete pair counts. This
+changes qualification reporting, not the learner or acceptance thresholds.
+
+All 144 requests remain in the report: **10 ASR failures and 32 cleanup
+fallbacks**, six improved scored audit pairs, zero harmed scored pairs, and
+four unscored audit pairs. Scored audit word edits remain 30 frozen versus 18
+learning; these totals exclude the four failed pairs explicitly. The separate
+historical authored harm is not cleared by this result.
+
+| Backend completion, 71 matched subsequent pairs | Frozen | Learning |
+| --- | ---: | ---: |
+| Mean | 426.37 ms | 492.92 ms |
+| p95 | 2975.96 ms | 3008.98 ms |
+
+The first pair is excluded together; failed/fallback requests remain in timing.
+Mean overhead is **15.61%**, p95 overhead 1.11%. The overall qualification and
+timing gate both fail, and the opt-in test exits nonzero after saving the complete
+report. Repeated authored speech still does not measure independent human
+corrections, editing time or microphone latency. No admission relaxation or
+live policy promotion follows from this diagnostic.
+
+The ignored `performance-qualification-2026-09-25/learning-recurring.json`, full
+test log and before/after source/binary identities retain the evidence. The
+manifest SHA-256 remains
+`5521ee2f074db6fdb36d93f6c9b4f24eee70bcaa1cb550d5d9d560b8a563151a8860`.
+
+The separate native WKWebView replay subsequently finished **76/76 backend
+requests**, emitted completion/exit markers and exited cleanly, with unchanged
+source/binary hashes. Its UI gate still **fails**: only 20 requests received a
+rendering opportunity; 56 report a hidden/unfocused window and no callback
+within the two-second rendering check. Only four of 18 scripted edits were
+acknowledged. Intermittently stalled progress resumed before an attempted stop;
+no termination signal was sent. All rows and failed acknowledgments are retained.
+
+The audit still has 46 word edits in both arms, zero improved/harmed pairs and
+no active memories. Missing rendering and teaching acknowledgments prevent a
+qualified visible-output latency or learning-benefit claim; successful backend
+completion and process exit do not override them. The complete failed diagnostic
+is retained in `performance-qualification-2026-09-25/native-webview/`. A controlled
+foreground native session and independent consenting-user correction sessions
+remain required. The browser preview merely verified fixture loading and did
+not execute inference.

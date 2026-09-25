@@ -98,6 +98,11 @@ voice/OS configuration and hashes every file. The test runs both arms through
 installed ASR and cleanup, checks duplicate support and collection-off storage,
 and records actual providers. A diagnostic pass requires no pipeline failures,
 no harmed audit rows, a realized reuse opportunity and at least one improvement.
+The report also enforces the predeclared 10% mean/p95 resident backend timing
+margin in `exploratoryTimingGate`; missing timing coverage fails that gate.
+Both arms of the first model-loading pair are excluded together. Earlier reports
+whose `gatesPassed` omitted this timing check must be read with their separate
+timings, not as evidence that the latency margin passed.
 Report all six scenarios individually; an aggregate pass alone cannot establish
 that every scenario activated or benefited. Backend timing excludes native UI
 and microphone latency. Generated audio, manifests and result JSON stay ignored.

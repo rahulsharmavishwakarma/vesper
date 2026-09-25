@@ -84,11 +84,11 @@ Version 4 adds five scoped tests: context-local updates and later rollback; unkn
 The [stress harness](../../scripts/stress-policy-learning.py) freezes 97 histories before scoring: eight scenarios with 12 seeds each plus a capacity history. They contain 23,809 text/feedback episodes. Scenarios cover stable teaching, context/support shifts, wrong supplied feedback, sparse feedback, correlated retries, language/project switching and silence without feedback. Each history runs the adaptive learner, its starting-policy baseline and all six fixed comparators in separate temporary stores. Held-out quality, failures, protected-text checks, exact capacity counters and component timings are retained. The capacity history crosses the 128 vocabulary, 384 candidate and 1,024 event limits; the unit storage tests separately exercise 30-day pruning with an explicit clock value. Manifest timestamps establish order only and do not advance the SQLite learner's real clock.
 
 ```sh
-python3 scripts/test-stress-policy-learning.py
-python3 scripts/stress-policy-learning.py prepare /tmp/policy-stress-manifests
-python3 scripts/stress-policy-learning.py run /tmp/policy-stress-manifests \
+uv run --locked python scripts/test-stress-policy-learning.py
+uv run --locked python scripts/stress-policy-learning.py prepare /tmp/policy-stress-manifests
+uv run --locked python scripts/stress-policy-learning.py run /tmp/policy-stress-manifests \
   --output /tmp/policy-stress-results
-python3 scripts/stress-policy-learning.py verify-isolation /tmp/policy-stress-manifests \
+uv run --locked python scripts/stress-policy-learning.py verify-isolation /tmp/policy-stress-manifests \
   --output /tmp/policy-stress-results
 ```
 
@@ -127,3 +127,12 @@ No production memory application reads these decisions. Live promotion and persi
 Reproduce isolated authored feedback overhead with `cargo run -p transcribe-data --example policy_shadow_replay --locked --offline`. It alternates 128 baseline/shadow corrections in separate temporary stores and reports foreground capture/reservation and background scoring/persistence separately. It excludes ASR, worker queue, microphone, UI and editor latency. Existing policy replay tests remain the regression oracle for grouping, gate failures, scope routing and rollback; the new storage tests cover pre-edit immutability, stale tokens, corruption, bounded retention and deletion.
 
 Current component measurements and remaining qualification gates are in the [September shadow validation](evaluation.md#policy-shadow-and-textedit-component-checks--19-september-2026). The desktop local diagnostic command `get_learning_shadow_diagnostics` exposes bounded policy decisions and external candidate counts; it has no promotion action.
+
+The 25 September serial rerun at `8a2c27b` preserves active outputs across all
+128 authored baseline/shadow pairs. Added foreground store latency is 7.07 ms
+mean / 11.94 ms p95; background scoring/persistence is 6.66 / 11.55 ms. The
+debug example ran after compilation, with binary/source identity and process
+observations retained alongside the [inference qualification](../inference-performance.md).
+These remain component measurements, excluding ASR, queue contention, UI and
+real correction effort. They do not qualify live promotion or substitute for
+independent natural feedback.
