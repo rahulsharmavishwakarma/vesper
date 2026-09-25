@@ -16,6 +16,15 @@ Detailed local summaries use `.cache/benchmarks/results/<run-id>/debug-summary.j
 
 [Audio frontend research](../../docs/research-audio-quality.md) covers candidates up to 200 MB and separates source capabilities from [local screening results](../../docs/validation/audio-frontends-2026-09-16.md). Empty references are supported only for noise scenarios; report false transcripts and inserted words/minute separately from speech WER. The development `audio_frontend` example tests native VAD, denoising and event classification; `scripts/benchmark-desert-ant.py` separately tests Ear language ID and Uhm fillers on CPU. Paced frontend replay is not live-ASR or microphone qualification.
 
+The [25 September Nemotron 3 diarization sample test](../../docs/validation/nemotron-diarization-2026-09-25.md)
+uses `scripts/probe-nemotron-diarization.py`, a pinned isolated native build and
+four local public/synthetic clips on CPU and Metal. It reports fresh-process
+time, speaker diagnostics and a repeated 10 ms end-boundary failure. This is
+standalone diarization feasibility. Its [application follow-up](../../docs/validation/nemotron-diarization-2026-09-25.md#application-integration-validation)
+checks the separate experimental post-ASR adapter, native coexistence,
+cancellation and persistence; it does not qualify ASR accuracy improvement or
+live latency. Generated audio, models and JSON remain ignored.
+
 The current frontend shortlist requires model releases from **2025-09-16 onward**; older checkpoints remain baselines. [Release evidence](../../docs/validation/audio-frontend-recency.json) distinguishes Silero v6.2's real November 2025 weight update from its newer package version, and Ear's recent export from its older Whisper checkpoint.
 
 [Hard regression protocol](audio-regression.md) and [measured conclusions](../../docs/validation/audio-regression-2026-09-16.md) extend this screen with 36 unused natural recordings, ten signal conditions, annotated AMI filler/backchannel excerpts, paired Cohere→Qwen comparisons, tiny/variable packet boundaries and three-minute frontend replay.

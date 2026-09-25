@@ -4,6 +4,125 @@ Research date: 16 September 2026. The user allows **up to 200 MB per candidate**
 
 The development benchmark executes **Silero v6.2**, DPDFNet-4/8 and isolated CPU Uhm/Ear probes, with old Silero v4 FP32/INT8, GTCRN and CED-mini/base as baselines. The [hard regression results](validation/audio-regression-2026-09-16.md) extend the [initial measurements](validation/audio-frontends-2026-09-16.md) with previously unused recordings, broader corruptions, AMI annotations and longer replay. See also the [candidate inventory](validation/audio-frontend-candidates.json), [release audit](validation/audio-frontend-recency.json) and [download hashes](../benchmarks/asr/audio-frontend-artifacts.json). The earlier [source audit](validation/audio-quality-research.json) remains historical evidence. Model payload size is not process RAM or latency. The approved [shared production frontend](adrs/0019-shared-audio-frontend.md) now integrates Silero and optional DPDFNet; both settings default off. Ear/Uhm remain benchmark-only.
 
+## Nemotron 3 Diarization general release — 25 September 2026
+
+The [general-release model](https://huggingface.co/nvidia/Nemotron-3-Diarization)
+is dated 23 September 2026. It supersedes the preview-only exclusion **for this
+new artifact**, not for the separately named preview weights. NVIDIA describes
+commercial/noncommercial use under [OpenMDW 1.1](https://openmdw.ai/license/1-1/);
+redistribution must retain that license and applicable origin notices. The
+release now has an experimental completed-recording integration under
+[ADR-0022](adrs/0022-local-speaker-timelines.md), default off. Its local execution
+does not qualify general speaker accuracy or improved ASR word accuracy.
+
+The official repository revision is
+`f667ed73aee57d40cc39428eb768b4fd87a0a29e`. Its Q8_0 GGUF is **107,012,128 bytes**
+(about 107 MB), within the existing 200 MB candidate limit. Publisher SHA-256:
+`08456d9e22cd9a323c0364d98375f3746d6e68507ebb705cd46438c534c7a3a1`.
+The NeMo archive is 198,676,480 bytes; the Transformers weights are 396,954,592
+bytes and exceed that limit. These are
+[published artifact metadata](https://huggingface.co/api/models/nvidia/Nemotron-3-Diarization?blobs=true).
+The subsequent [local sample test](validation/nemotron-diarization-2026-09-25.md)
+downloaded and verified the Q8_0 hash and measured process memory separately;
+the other formats were not downloaded.
+
+The approximately 100M-parameter model emits anonymous activity for up to eight
+speakers at 10 ms resolution. Recommended streaming input buffers are 0.32,
+0.64 and 1.04 seconds; 30.4 seconds is an offline-style chunk configuration.
+Those numbers exclude compute and are not stop-to-final or stable-speaker
+latency. Speaker order within a recording does not establish the owner's
+identity. The model card's GPU performance is not a Mac measurement.
+
+### Native feasibility and transcription-quality boundary
+
+[NeMo-Speech.cpp source revision](https://github.com/NVIDIA/NeMo-Speech.cpp/tree/97a15afa5caa9bce5baaa86c1184103877af4101)
+`97a15afa5caa9bce5baaa86c1184103877af4101` provides standalone diarization and
+word-level speaker tags, with CPU and Apple Metal build paths. The
+[CLI contract](https://github.com/NVIDIA/NeMo-Speech.cpp/blob/97a15afa5caa9bce5baaa86c1184103877af4101/docs/cli.md)
+accepts local GGUF paths without network use. Source availability is not proof
+that this application's pinned v0.1.0 archive supports the new checkpoint or
+that Metal inference has been qualified.
+
+The inspected [native defaults](https://github.com/NVIDIA/NeMo-Speech.cpp/blob/97a15afa5caa9bce5baaa86c1184103877af4101/docs/asr/models.md#sortformer-speaker-diarization)
+use 13 chunk frames plus one right-context frame: **1.12 seconds of buffering**
+before compute. Do not substitute the model card's 0.32-second configuration
+for that native default. The [build workflow](https://github.com/NVIDIA/NeMo-Speech.cpp/blob/97a15afa5caa9bce5baaa86c1184103877af4101/.github/workflows/build.yml)
+describes Metal compilation/linking with CPU inference coverage and a
+non-blocking Metal probe, not a qualified Metal performance result.
+
+Two different integration paths must remain separate:
+
+- The native ASR path supplies the same audio to recognition and diarization,
+  then attaches speaker tags to recognized words. Adding these tags does not
+  establish lower word error rates or recovery of overlapping words. See the
+  [recognizer](https://github.com/NVIDIA/NeMo-Speech.cpp/blob/97a15afa5caa9bce5baaa86c1184103877af4101/src/asr/recognizer.cpp)
+  and [word attribution](https://github.com/NVIDIA/NeMo-Speech.cpp/blob/97a15afa5caa9bce5baaa86c1184103877af4101/src/asr/diar/diar_pipeline.cpp).
+- NVIDIA's [NeMo ASR integration guide](https://huggingface.co/nvidia/Nemotron-3-Diarization/blob/f667ed73aee57d40cc39428eb768b4fd87a0a29e/ASR_INTEGRATION_GUIDE.md)
+  uses separate ASR streams per speaker: Multitalker Parakeet with speaker
+  conditioning, or Nemotron 3.5 with speaker-activity masking. This is a different
+  pipeline from native word tagging, with additional runtime/state requirements.
+  It does not provide an interchangeable mask for the current Cohere adapter.
+
+Historical code inspection at main `59c6d21` found the missing wiring:
+`transcribe-models` pins runtime 0.1.0; `transcribe-nemo` sets recognizer `diar`
+to null, never enables request diarization, and exposes text/finality/duration
+without speaker segments or word timestamps. The initial release review did
+not run weights; the follow-up below supplied standalone local evidence. The
+subsequently approved integration adds a separate namespaced standalone C ABI
+bundle, bounded worker request, validated overlapping timelines, session/export
+persistence and latest-result/History display. Existing ASR ownership and word
+output remain unchanged. See the [integration validation](validation/nemotron-diarization-2026-09-25.md#application-integration-validation).
+
+### Local sample evidence and the release article
+
+NVIDIA's [23 September release article](https://huggingface.co/blog/nvidia/nemotron-diarization)
+explicitly separates diarization from speaker-attributed ASR, input buffering
+from end-to-end latency, and anonymous channels from identity verification.
+Its NVIDIA GPU throughput and published DER do not describe this Mac build.
+On-device support in another vendor's SDK is not evidence of integration here.
+
+The [25 September smoke test](validation/nemotron-diarization-2026-09-25.md) ran
+two annotated meeting windows, an English single-speaker clip and silence on
+CPU and Metal, plus a meeting confirmation on each. All ten native processes
+completed. Both backends detected the expected 4/4/1/0 speakers. Metal took
+1.057 s for 45 s of audio and .594 s for 30 s, including per-process loading;
+four-sample mean .696 s. These are completed-file measurements, not live latency.
+
+The strict boundary check failed on the 45-second clip in both original and
+confirmation runs: the last segment ends 10 ms after the input. The 30-second
+window's coarse segment-reference DER was 18.44% CPU / 18.47% Metal; missed
+overlap/activity remains despite the correct speaker count. This establishes
+local execution feasibility and a native timestamp contract defect. The app
+adapter now clips only the measured 10 ms tail padding, records the adjustment
+and rejects larger violations; the raw CLI failures remain in the report.
+It does not establish lower WER, owner identification, accent robustness,
+production readiness or permission to promote a default.
+
+### Evidence and next evaluation
+
+The [Streaming Sortformer paper](https://arxiv.org/abs/2507.18446v1) supplies
+the speaker-cache technique, not the new checkpoint's application results.
+Official model/native support above establishes an experiment path. Better
+multi-speaker transcription, fewer background-speaker insertions and acceptable
+Mac latency remain unverified hypotheses.
+
+A bounded evaluation should pin the GGUF and native build independently, use
+local public/synthetic audio with reference speaker times, and retain all failed
+requests. Compare single-speaker controls, turn changes, overlapping voices,
+quiet/noisy speech and background television. Report diarization error and
+speaker-attributed WER separately from ordinary WER, plus first/stable speaker
+delay, stop-to-final overhead, CPU/Metal provider evidence, peak memory and
+reset/cancellation isolation. Existing ASR manifests remain the transcription
+regression controls; a speaker-labelled corpus is also required.
+
+Public-API frozen-weight work covers a standalone benchmark, fresh per-recording
+state and result alignment. Runtime upgrades/ABI adaptation or per-speaker
+decoding need separate implementation qualification. Personal speaker training
+and new checkpoints remain training work. Production ownership, transcript/UI
+data flow were subsequently approved only for the bounded timeline stage in
+ADR-0022. Automatic audio filtering, speaker-conditioned ASR and personal
+identity remain outside that approval under #42/#35.
+
 ## Production integration status — 18 September 2026
 
 Silero v6.2 and DPDFNet4/8 now have a shared production stage, installer entries and opt-in settings under Models → Audio processing. Speech activity is advisory and does not delete input; enhancement is experimental and off by default. `crates/transcribe-inference/src/audio_frontend.rs` is the shared native implementation. Ear/Uhm still use isolated evaluation probes and are not production stages. See [ADR-0019](adrs/0019-shared-audio-frontend.md) for the accepted design and exact native build boundary, and the [application-path qualification](validation/audio-frontend-integration-2026-09-18.md) for paired quality results and measurement limits.
@@ -138,7 +257,7 @@ WebRTC framing and state come from its [pinned C API implementation](https://web
 
 ### Supplied examples and their actual roles
 
-**Nemotron-3-Diarization-preview:** the public terms restrict it to internal evaluation on NVIDIA GPUs, prohibit production/redistribution, and restrict publication of evaluation results. Its listed checkpoint is 397,199,360 bytes, revision `9c9cb0cc3bee7c7839bb6e1cf4938e63fee539bc`. That is incompatible with this CPU/open-source deployment target. Gated weights and detailed configuration were not accessed. Do not assign preview-specific parameter counts, latency or speaker limits from another Sortformer checkpoint. [Official terms and inventory](https://huggingface.co/nvidia/Nemotron-3-Diarization-preview/tree/9c9cb0cc3bee7c7839bb6e1cf4938e63fee539bc). The [Streaming Sortformer paper](https://arxiv.org/html/2507.18446v1) concerns speaker activity/cache tracking, not noise filtering or persistent owner recognition.
+**Nemotron-3-Diarization-preview (historical, separate artifact):** the public terms restrict it to internal evaluation on NVIDIA GPUs, prohibit production/redistribution, and restrict publication of evaluation results. Its listed checkpoint is 397,199,360 bytes, revision `9c9cb0cc3bee7c7839bb6e1cf4938e63fee539bc`. That preview is incompatible with this CPU/open-source deployment target. These restrictions must not be assigned to the [23 September general release](#nemotron-3-diarization-general-release--25-september-2026). Gated preview weights and detailed configuration were not accessed. Do not assign preview-specific parameter counts, latency or speaker limits from another Sortformer checkpoint. [Official preview terms and inventory](https://huggingface.co/nvidia/Nemotron-3-Diarization-preview/tree/9c9cb0cc3bee7c7839bb6e1cf4938e63fee539bc). The [Streaming Sortformer paper](https://arxiv.org/html/2507.18446v1) concerns speaker activity/cache tracking, not noise filtering or persistent owner recognition.
 
 **Uhm:** this is a DistilHuBERT filler-span detector. The base is approximately 23.5M parameters, not an exact count of this fine-tune; the listed FP16 ONNX file is **47,047,128 bytes**. English training and unmeasured acoustic transfer do not qualify Hindi or code-switching. The [model card](https://huggingface.co/desert-ant-labs/uhm/blob/9b172658b2a20a21ad8ea44092f4d4b3ff2c69a4/README.md), [DistilHuBERT paper](https://arxiv.org/abs/2110.01900v4) and [inventory](https://huggingface.co/desert-ant-labs/uhm/tree/9b172658b2a20a21ad8ea44092f4d4b3ff2c69a4) provide different kinds of evidence; the base paper does not demonstrate Uhm's ASR benefit.
 

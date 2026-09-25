@@ -17,6 +17,20 @@ The papers also establish boundaries:
 
 ## Evidence rules
 
+The [25 September diarization release review](research-audio-quality.md#nemotron-3-diarization-general-release--25-september-2026)
+updates the earlier preview exclusion for the general-release Nemotron 3 model.
+It separates the Streaming Sortformer paper, pinned GGUF/native capabilities,
+the application's initial missing wiring and unmeasured quality hypotheses. Its
+[local CPU/Metal sample follow-up](validation/nemotron-diarization-2026-09-25.md)
+now records completed-file timing, speaker diagnostics and a reproducible
+10 ms end-boundary failure; it does not measure ASR or live app latency. Native
+word tagging and NeMo's per-speaker ASR conditioning are different pipelines;
+neither input-buffer latency nor published GPU DER qualifies our Mac path.
+The subsequently approved [ADR-0022](adrs/0022-local-speaker-timelines.md) adds
+local post-ASR speaker timelines through the standalone C ABI, with bounded tail
+validation. The [application validation](validation/nemotron-diarization-2026-09-25.md#application-integration-validation)
+separates native/desktop checks from the earlier standalone smoke measurements.
+
 The [16 September personal dictation review](research-personal-dictation.md) extends this map with contextual and phonetic retrieval, TurboBias 2.0, speech-repair understanding, speaker adaptation, active review and continual-learning research. It separates the current public-API personalization from native decoder work and trained checkpoints, and records the exact runtime/model boundaries without claiming new local quality results.
 
 The approved adapter and frozen-weight personalization implementation is described in [ADR-0012](adrs/0012-adapter-registry-and-reviewed-personalization.md). Its [CPU cleanup screening](../benchmarks/cleanup/README.md) separates Prompt Cache/LaMP/contextual-biasing research, pinned runtime capabilities, local measurements and remaining hypotheses. That result measures two-pass cleanup, not streaming algorithmic or user-visible latency.
