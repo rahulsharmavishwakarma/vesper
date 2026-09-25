@@ -343,6 +343,15 @@ The existing Rust dependency is `sherpa-onnx = 1.13.8`; its published upstream r
 
 ## Qualification protocol
 
+The 25 September qualification reran the installed frontend contract with
+Silero enabled and denoising off/DPDFNet4/DPDFNet8: all three configurations
+pass 100 recording resets, cancellation/drop isolation, irregular packetization,
+tail lengths and 44.1/48 kHz transitions. The
+[current inference report](inference-performance.md) retains the named runtime,
+resource observations and continuous-stream/completed-file soak separately.
+These checks establish processing continuity; they do not establish a noisy-speech
+WER improvement or clear the existing per-model default-enablement gates.
+
 Use the [ASR qualification guide](../benchmarks/asr/README.md). Pin artifacts and frontend settings independently of ASR/writing artifacts. Compare **the same** held-out audio and languages on each actually supported adapter. Include the default Cohere → Qwen and supported LFM English path; Hindi, automatic-language and code-switching evidence must not be inferred from English. Keep real microphone tests, paced file replay and accelerated file throughput distinct.
 
 The original research ablation included original audio, advisory VAD, padded VAD segmentation and the GTCRN baseline. The accepted integration qualifies original audio, advisory Silero v6.2, and Silero with DPDFNet4/8; segmentation/deletion and GTCRN are outside its scope. Compare FP32/INT8 VAD independently before preferring INT8. If full enhancement harms words, test a development-tuned mixture of original and enhanced samples only after verifying delay alignment. VAD-before-denoise versus VAD-after-denoise is an experimental choice, not an assumed correct order. Do not wait for an entire utterance merely to obtain its first live partial, and do not skip silence in a stateful ASR stream until its clock/state/endpoint contract supports that behavior.

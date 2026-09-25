@@ -21,6 +21,8 @@ mod nemotron;
 mod offline_asr;
 mod parakeet;
 mod personalization;
+#[cfg(test)]
+mod qualification;
 mod qwen;
 mod resident_sherpa;
 mod segmented_audio;

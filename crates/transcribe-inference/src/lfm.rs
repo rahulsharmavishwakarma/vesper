@@ -422,6 +422,19 @@ mod tests {
         assert!(!first.is_empty() && !other.is_empty());
         assert_ne!(first, other);
         assert_eq!(transcribe(&a, "lfm-a-repeat"), first);
+        let mut rss = Vec::new();
+        for index in 0..100 {
+            let (audio, expected) = if index % 3 == 1 {
+                (&b, &other)
+            } else {
+                (&a, &first)
+            };
+            assert_eq!(&transcribe(audio, "lfm-resident-repeat"), expected);
+            if index % 10 == 9 {
+                rss.push(crate::qualification::rss_kib());
+            }
+        }
+        crate::qualification::assert_bounded_growth(&rss);
         let silence = MonoPcm::new(vec![0.0; ASR_SAMPLE_RATE as usize], ASR_SAMPLE_RATE).unwrap();
         assert!(transcribe(&silence, "lfm-silence").is_empty());
         let wrong_rate = MonoPcm::new(vec![0.1; 8000], 8000).unwrap();

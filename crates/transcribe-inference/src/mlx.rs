@@ -414,7 +414,8 @@ mod tests {
                 .unwrap();
             assert!(!expected.is_empty());
             let ordinal = manager.execution_evidence("first")["asr"]["residentLoadOrdinal"].clone();
-            for index in 0..12 {
+            let mut rss = Vec::new();
+            for index in 0..100 {
                 let input = if index % 3 == 1 { &b } else { &a };
                 let actual = manager
                     .transcribe(input, &config, &root, "repeat", flag())
@@ -426,7 +427,11 @@ mod tests {
                     manager.execution_evidence("repeat")["asr"]["residentLoadOrdinal"],
                     ordinal
                 );
+                if index % 10 == 9 {
+                    rss.push(crate::qualification::rss_kib());
+                }
             }
+            crate::qualification::assert_bounded_growth(&rss);
             // > 60 seconds includes multiple architecture windows and a tiny source tail.
             let long = MonoPcm::new(
                 a.samples().repeat(1 + 61 * 16000 / a.samples().len()),
@@ -514,7 +519,7 @@ mod tests {
             );
             println!(
                 "{}",
-                serde_json::json!({"model":model.id(),"passed":true,"repeatRequests":12,"longSamples":long.samples().len(),"longEvidence":evidence["asr"]})
+                serde_json::json!({"model":model.id(),"passed":true,"repeatRequests":100,"longSamples":long.samples().len(),"longEvidence":evidence["asr"]})
             );
         }
     }

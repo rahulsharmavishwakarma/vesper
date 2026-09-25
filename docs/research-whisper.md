@@ -4,6 +4,16 @@ Research checked 18 September 2026. [Issue #45](https://github.com/rahulsharmavi
 
 The [local 213-case screen](validation/whisper-2026-09-18.md) found better natural-English WER for small/Turbo than Cohere on this sample, but failed Hindi/noise gates and could not establish an uncontended latency comparison. No preset is promoted by those results.
 
+The [25 September application holdout](inference-performance.md) adds 32 new
+English read-speech clips per configuration: Small CPU, Small MLX and Turbo CPU
+all complete, with WER 6.45%, 5.85% and 5.10% respectively. Subsequent ASR mean
+latencies are 647.7, 191.0 and 1154.6 ms on the named M5 Pro; runtime/precision
+and ownership differences are part of those configurations. Small MLX also
+passes 100 repeated requests with bounded sampled RSS and the existing
+cancellation/reset/long-coverage checks. This improves completed-speech and
+resource evidence; it does not clear the retained non-speech hallucination,
+French repetition, Hindi or live-streaming gates. Product selection remains gated.
+
 ## Checkpoints and published evidence
 
 Whisper remains a useful established baseline, explicitly requested despite the earlier preference for checkpoints released within the last year. Turbo was released in October 2024. A recent runtime or model-card edit does not make its weights new. The multilingual candidates fit the requested ceiling: tiny 39M, base 74M, small 244M, turbo 809M and large-v3 approximately 1.55B. `.en` checkpoints and Distil-Whisper need separate English-only capability metadata. [OpenAI model table](https://github.com/openai/whisper/blob/86098128c0b4f24f0e2aa2994de830614b474227/README.md)

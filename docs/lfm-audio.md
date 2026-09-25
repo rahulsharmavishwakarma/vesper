@@ -1,8 +1,8 @@
 # LFM2.5 Audio speech recognition
 
-Choose **Liquid LFM2.5 Audio 1.5B** in **Models → Speech model**, select **English**, and use **Save & download**. Use Automatic or CPU for compute. The installed Q4 backbone and audio projector total 915,262,016 bytes (about 915 MB); RAM use is higher. Cohere → Qwen remains the default.
+Choose **Liquid LFM2.5 Audio 1.5B** in **Models → Speech model**, select **English**, and use **Save & download**. Automatic uses an available supported accelerator; CPU remains an explicit override. The CPU and GPU paths use the same pinned Q4 backbone and audio projector, totaling 915,262,016 bytes (about 915 MB); RAM use is higher. Cohere → Qwen remains the default. See [accelerator support and evidence](accelerators.md) for build/device restrictions and the locally tested Metal path.
 
-LFM transcribes completed microphone recordings and imported audio files. The application processes long recordings in bounded 10-second segments with fresh state and keeps weights resident between requests. There is no whole-recording time quota. Live partial captions, automatic language detection, Hindi, French, Japanese, speech synthesis, and GPU execution are not enabled for this checkpoint. Select Nemotron for the existing native streaming path.
+LFM transcribes completed microphone recordings and imported audio files. The application processes long recordings in bounded 10-second segments with fresh state and keeps weights resident between requests. There is no whole-recording time quota. Live partial captions, automatic language detection, Hindi, French, Japanese and speech synthesis are not enabled for this checkpoint. Select Nemotron for the existing native streaming path.
 
 Writing cleanup uses the selected writing model and the existing fidelity guard. It can preserve recognition mistakes in names or numbers; it cannot infer what was actually spoken. The raw transcript remains available if cleanup fails. The [CPU screening report](../benchmarks/asr/2026-09-15-lfm.md) includes observed errors, latency variance, memory, and unsuccessful longer-segment trials.
 
@@ -28,6 +28,6 @@ cargo test --locked -p transcribe-inference \
   -- --ignored --nocapture --test-threads=1
 ```
 
-This exercises isolated requests, cancellation, silence, output limits, unload/reload, rejected streaming, and actual LFM → Qwen execution. Ordinary unit tests also cover missing artifacts and installation changes. The safe runtime cannot interrupt an audio-encoder call immediately; it discards the result when cancellation is observed afterward.
+This exercises 100 repeated isolated requests with process RSS checkpoints, cancellation, silence, output limits, unload/reload, rejected streaming, and actual LFM → Qwen execution. Set `TRANSCRIBE_LFM_TEST_BACKEND=metal` to repeat the same contract on an available Metal device; the default test lane is explicit CPU. Ordinary unit tests also cover missing artifacts and installation changes. The safe runtime cannot interrupt an audio-encoder call immediately; it discards the result when cancellation is observed afterward.
 
 The [accepted architecture](adrs/0013-lfm-audio-native-adapter.md) records the paper/API boundary and exact runtime revisions. The [official checkpoint documentation](https://docs.liquid.ai/lfm/models/lfm25-audio-1.5b) describes a broader audio model; this adapter implements ASR only. Preserve the checkpoint's LFM Open License and third-party notices when distributing its weights.
