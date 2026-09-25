@@ -36,6 +36,15 @@ comparable envelope. A new release or one favorable signal condition is
 insufficient evidence to replace the default. There is also no all-writer
 comparison establishing Qwen cleanup as a universal winner.
 
+The [25 September fresh public holdout](inference-performance.md) adds 448
+completed-audio evaluations on 32 English and 32 Hindi recordings. Qwen MLX has
+the lowest observed English WER (3.15%); Parakeet MLX is fastest (48.2 ms mean
+ASR for subsequent requests). Nemotron Metal has lower Hindi WER than Qwen CPU
+on that sample (14.42% versus 25.17%). Cohere retains one incomplete decode out
+of 32 English requests. These small read-speech results identify promising
+configurations; they do not replace the noise, meaning, language/mode or
+native-device gates. The default remains provisional and unchanged.
+
 Qualify optional gain and denoising separately for each model and artifact.
 One model's regression does not invalidate another model's measured improvement.
 The [automatic-level results](validation/denoising-followup-2026-09-19.md#automatic-level-implementation-and-qualification)

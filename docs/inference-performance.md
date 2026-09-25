@@ -738,3 +738,169 @@ All 252 Automatic ASR requests completed, reported Metal, and matched both the p
 Both 148.68-second imports again processed all 2,378,880 samples. All 12 Parakeet/Qwen Silero+DPDFNet4+writer cases passed with identical raw and cleaned outputs. Nemotron's six completed-file and six real-time-paced streaming cases all returned identical raw ASR; the same two cleanup fidelity failures in each mode preserved raw text. Streaming first partials were 1028.49–1712.22ms and explicit finish-to-final was 34.88–49.91ms. Microphone endpoint timing, word-emission alignment, queue-overflow injection and sustained thermal/power qualification remain outside this replay.
 
 Post-integration checks passed: 126 Node tests and the remaining fast checks; portable core/inference/models 39/60/24; MLX core/inference/models 39/65/27; three real-Metal migration/lifecycle/silence fixtures; and strict Clippy. Normal desktop packaging rebuilt `Vesper.app`; all three native resource hashes matched. A relocated evaluator completed six further cases using the bundled resources, while missing/corrupt copies failed readiness. No benchmark JSON, audio or weights were committed. This remains local verification, with hosted CI, release signing/notarization and CUDA hardware execution unverified.
+
+### Resident resource qualification procedure
+
+The installed LFM and MLX lifecycle tests now run 100 alternating public-audio
+requests before their existing cancellation, reset, full-coverage and unload
+checks. They observe process RSS every ten requests and enforce a predeclared
+128 MiB growth ceiling relative to the first ten-request checkpoint, matching
+the existing Sherpa lifecycle ceiling. Missing process observations fail rather
+than become zero usage. This is a bounded repeated-request memory test; process
+RSS is not total GPU memory, repeated recordings are not independent quality
+samples, and passing does not establish an hours-long thermal equilibrium.
+
+Run installed-model tests serially with explicit fixture/model paths after
+compilation. Record fresh-process versus resident state, actual backend, the
+native/model hashes and the fixed input identities. Sample power, thermal warning
+state and competing processes outside the model process; unavailable counters
+must remain unavailable. For actual native-panel timing, use the existing
+[public-PCM WebView replay](personalization/native-qualification.md#native-webview-replay)
+and retain its narrower stop-to-render-opportunity definition. Public replay
+cannot replace deliberate microphone or natural independent correction sessions.
+
+### Fresh public holdout qualification — 25 September 2026
+
+The release evaluator at `8a2c27b0765fea034fb0c0b8614e58f8e1f20f14`, plus
+qualification-only test/tool changes, ran **448 completed-audio evaluations**:
+11 English configurations and three Hindi configurations, each on 32 frozen
+FLEURS test recordings. These are new selections relative to the frozen scan of
+cached/versioned experiment history, with unique sentence IDs within each locale;
+they are not proof of exclusion from model training or unavailable history.
+The [preparer](../scripts/prepare-qualification-holdout.mjs) excludes previously
+used audio IDs, normalized references and matching sentence groups before inference.
+No accuracy threshold, model default, checkpoint or production decoder changed.
+
+The same M5 Pro/64 GiB/macOS 27.0 host ran jobs serially after all builds finished.
+Application threads were eight; MLX has no equivalent thread override. CPU Sherpa
+exports use INT8, MLX Parakeet stores float32 with the native BF16 default, MLX
+Qwen uses 8-bit weights, MLX Whisper Small uses float16, LFM uses Q4_0 and Nemotron
+uses Q8_0. Per-request artifacts and runtime revisions are retained. These are
+comparisons of complete runtime/artifact/ownership configurations, not isolated
+GPU kernel speedups. CPU Parakeet and Qwen retain per-job model loads.
+
+| English configuration / actual provider | Failures / 32 | WER, failure as empty | Subsequent ASR mean / p95 |
+| --- | ---: | ---: | ---: |
+| Cohere / CPU | 1 | 11.09% | 550.2 / 806.8 ms |
+| Parakeet / CPU | 0 | 9.15% | 911.3 / 1015.2 ms |
+| Parakeet Automatic / Metal MLX | 0 | 5.55% | 48.2 / 67.6 ms |
+| Qwen-ASR / CPU | 0 | 6.30% | 1724.3 / 1934.3 ms |
+| Qwen-ASR Automatic / Metal MLX | 0 | 3.15% | 182.0 / 288.3 ms |
+| LFM / CPU | 0 | 7.35% | 336.3 / 514.7 ms |
+| LFM Automatic / Metal | 0 | 6.90% | 168.1 / 267.4 ms |
+| Whisper Small / CPU | 0 | 6.45% | 647.7 / 999.4 ms |
+| Whisper Small Automatic / Metal MLX | 0 | 5.85% | 191.0 / 282.1 ms |
+| Whisper Turbo / CPU | 0 | 5.10% | 1154.6 / 1615.4 ms |
+| Nemotron / Metal | 0 | 12.29% | 92.7 / 154.2 ms |
+
+All English rows use the same 667 reference words. Cohere's `duration_token_limit`
+failure discarded an incomplete result; its 31 scored outputs have 42 edits / 635
+words (6.61%). The failure-as-empty diagnostic counts the missing 32-word output
+as deletions, giving 74/667. Both views and the execution failure are retained;
+the scoring convention does not turn a failed request into a qualified one.
+
+| Hindi configuration / actual provider | Failures / 32 | WER | Subsequent ASR mean / p95 |
+| --- | ---: | ---: | ---: |
+| Qwen-ASR / CPU | 0 | 25.17% | 2573.1 / 3653.4 ms |
+| Qwen-ASR Automatic / CPU | 0 | 25.17% | 2553.0 / 3613.6 ms |
+| Nemotron / Metal | 0 | 14.42% | 107.5 / 189.4 ms |
+
+Hindi has 735 reference words. Automatic Qwen selects the compatible CPU path;
+all 32 outputs match explicit CPU exactly. The original requested-lane environment
+description said MLX; actual execution and artifact records establish CPU INT8.
+The ignored metadata clarification preserves this distinction instead of editing
+the raw report. Neither language is pooled with the other.
+
+Latency is manager submission to returned raw ASR, excluding file decoding,
+writer, capture, persistence and UI. Means and nearest-rank p95 use requests 2–32,
+including failures, with the first request reported separately in the artifacts.
+The evaluator's `residentRun` ordinal does not itself prove resident weights.
+Fresh-process first calls still had previously exercised OS/shader caches.
+Frontend and cleanup were disabled in this comparison.
+
+Qwen MLX had the lowest observed English WER and Parakeet MLX the lowest latency
+in this small read-speech screen. Nemotron was stronger on the sampled Hindi.
+Exploratory 10,000-resample paired sentence bootstrap intervals, without multiple
+comparison correction, give Qwen MLX minus Cohere −18.19 to −1.37 WER percentage
+points and Nemotron minus Qwen CPU Hindi −14.45 to −7.24 points. These post-hoc
+descriptive comparisons do not establish natural speaker independence, noise,
+code-switching, singing, all language modes or a default-model promotion.
+Earlier noise hallucinations and long/French Whisper losses remain failed gates.
+
+Reproducibility records remain ignored under
+`.cache/benchmarks/results/performance-qualification-2026-09-25/`: reports,
+`runner.mjs`, `summarize.mjs`, per-job observations, source/binary identities and
+metadata clarifications. The frozen inputs are under
+`.cache/benchmarks/performance-qualification-2026-09-25-r1/`.
+
+- English manifest SHA-256: `bfec5f6ce5e38e3f64bcb9aabbf9c64736b7c9420f5482cc527295a61a21cc2f`.
+- Hindi manifest SHA-256: `340a80dcc23716c1a48212be4a7c07c7b5f5e69170b8396f7a00593ff26e9306`.
+- Frozen exclusion SHA-256: `8c392d7162bf71deaa11e71de712bbdb811fb9c4b2782bf7859ed4eca25a6441`.
+- Evaluator SHA-256: `a65cf85dbe0bad0219a66774d974eb5510d5efb17fda0594f2a6b40b42118538`.
+- Before/after source and binary identities match; the identity record SHA-256 is
+  `d494e75cd4b0c6351863d7efe0671d3d0371989e4298ce34d6dbbdc6bc11daf1`.
+
+The installed native checks also passed 100 requests each for MLX Parakeet,
+Qwen and Whisper Small, plus LFM CPU and Metal. Maximum sampled RSS growth after
+request ten was respectively 1840, 416, 400, 0 and 816 KiB, below the predeclared
+128 MiB limit. Existing cancellation/reset/unload and long-audio assertions pass;
+these were 100 completed repeats plus separate cancellation checks, not 100 mixed
+cancellation cycles. The frontend test passes 100 reset cycles per off/DPDFNet4/
+DPDFNet8 configuration, including packetization tails, rate changes and cancellation.
+The separate Nemotron stream reset/finalization fixture also passes.
+
+Power and Foundation thermal state were sampled every ten seconds. The host was
+on AC with Low Power Mode disabled and nominal state throughout these runs;
+ordinary desktop/Codex activity remained present. Apple's
+[thermal-state API](https://developer.apple.com/documentation/foundation/processinfo/thermalstate-swift.property)
+reports a coarse OS category. This is not a temperature, power-consumption or
+GPU-memory measurement, nor proof of no throttling or performance on another device.
+
+#### Continuous-stream and completed-file soak
+
+Nemotron Metal with Silero and DPDFNet4 completed the same **583.28-second**
+synthetic concatenation in both modes. It repeats the 32 English recordings
+twice, without claiming natural long-form or independent repeated accuracy.
+All 9,332,480 input samples reached the frontend output, finalization succeeded,
+and no intervals were omitted. Both transcripts match exactly: 193 edits / 1334
+reference words, or 14.47% WER. There was no writer in this pair.
+
+The 20 ms wall-clock-paced stream emitted its first nonempty partial at
+2371.83 ms from stream start, including initial setup, and finished **58.57 ms**
+after the explicit `finish` call. It produced 29,067 update events; cumulative
+successive-partial word edit distance was 1659, which includes text growth and
+is not a count of corrections to already committed words. Manager elapsed
+time including pacing was 587.87 seconds. The completed-file manager call took
+**81.39 seconds** (RTF 0.140), including 61.80 seconds of native frontend work.
+The frontend therefore remains a material cost even with accelerated ASR;
+these results do not measure microphone stop, acoustic endpoint latency or
+word-aligned emission delay.
+
+Whole-process maximum RSS was 1.24 GiB streaming / 1.37 GiB completed-file.
+All 60 streaming and ten completed-file thermal samples were nominal, with
+Low Power Mode off and AC attached. No push/finish error was observed; the
+evaluator does not independently count native queue drops or inject queue
+overflow. No watts, GPU-memory total or hours-long thermal equilibrium was
+measured. This single paired soak qualifies the observed finite replay, not
+unlimited recording or another device.
+
+The synthetic manifest SHA-256 is
+`9242ced4bb94dee9922277b0da85a25116641baad95b4f75d6935d4208d1e3f0`;
+`nemo-sustained-realtime` and `nemo-sustained-offline` reports retain the exact
+frontend metrics, source/artifact identities, logs and power/thermal samples.
+
+Final qualification-tool validation passes 131 Rust library tests (66 desktop,
+65 inference; 33 opt-in tests listed separately), 127 Node tests, eight Python
+harness tests, strict targeted Clippy, formatting, ESLint and diff checks.
+Installed-model runs are reported separately above. The native-panel diagnostic
+[retains its failed rendering gate](personalization/evaluation.md), and the
+recurring-learning diagnostic retains its quality and latency failures.
+These results apply to the frozen `8a2c27b` baseline plus the recorded test-only
+changes; later speaker-timeline integration in the shared checkout was not part
+of this run. The qualification tooling was subsequently integrated with local
+main at `0f1d762`, preserving the newer speaker-timeline implementation. Its
+combined core/models/inference/desktop regression passes 203 tests, with 36
+opt-in tests excluded; the localhost download fixture passes with socket access
+after the restricted sandbox denied its listener. Strict Clippy and
+`make check-fast` pass. These integration checks do not relabel the earlier
+timings as measurements of the newer complete application pipeline.

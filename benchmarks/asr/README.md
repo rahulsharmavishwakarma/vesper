@@ -168,6 +168,26 @@ The [18 September real-audio accent evaluation](2026-09-18-accent-personalizatio
 
 Exact WER deliberately scores Latin words against Devanagari transliterations as different. This is appropriate for exact transcript evaluation, but reports should also be read qualitatively for mixed-script text.
 
+### Unused cached FLEURS qualification samples
+
+`scripts/prepare-qualification-holdout.mjs REPOSITORY NEW_OUTPUT` freezes 32
+English-US and 32 Hindi-India read-speech samples before inference. It verifies
+the cached archive/metadata hashes against the existing source manifests, scans
+versioned and cached benchmark JSON/JSONL for prior audio IDs and references,
+excludes matching sentence groups, then selects unique 4–20-second sentences in
+a fixed hash order. Exclusions, scanned-file hashes, attribution and per-audio
+hashes remain in the new ignored output directory. Pass its `exclusions.json`
+as the third argument to reproduce the selection after more experiments exist.
+Existing outputs cannot be overwritten. This establishes exclusion from the
+scanned experiment history, not from model training or unavailable history;
+it does not establish independent speakers, microphone behavior or singing.
+
+Run the ordinary evaluator separately for each supported model/backend/language
+combination. Keep explicit-language and automatic-language lanes separate.
+Do not tune decoder/frontend thresholds on these results. Freeze source,
+executable and native artifact identities before launch and compare afterward;
+record failed processes and failed sample rows rather than dropping them.
+
 ## Phase-one language packs
 
 | Pack | Benchmark language | Primary held-out source | Purpose |
