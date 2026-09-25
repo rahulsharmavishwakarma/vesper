@@ -17,6 +17,7 @@ export const AUDIO_FRONTENDS = {
   'silero-v6.2': 'Silero v6.2',
   dpdfnet4: 'DPDFNet4',
   dpdfnet8: 'DPDFNet8',
+  'nvidia/Nemotron-3-Diarization': 'Nemotron 3 speaker timelines · 107 MB',
 } as const;
 export type AudioFrontendConfig = {
   vadEnabled: boolean;
@@ -107,6 +108,7 @@ export interface AppConfig {
     customRewriter: HuggingFaceProfile | null;
   };
   cleanupEnabled: boolean;
+  speakerDiarization: boolean;
   audioFrontend: AudioFrontendConfig;
   language: Language;
   modelDirectory: string | null;
@@ -168,6 +170,7 @@ export function defaultSettings(): AppConfig {
       customRewriter: null,
     },
     cleanupEnabled: true,
+    speakerDiarization: false,
     audioFrontend: { vadEnabled: false, autoLevelEnabled: false, noiseReduction: 'off' },
     language: 'en',
     modelDirectory: null,
@@ -451,6 +454,8 @@ export function validateSettings(value: unknown): string[] {
     )
   )
     errors.push('Choose valid audio processing settings.');
+  if (typeof value.speakerDiarization !== 'boolean')
+    errors.push('Speaker identification must be on or off.');
   if (typeof value.cleanupEnabled !== 'boolean')
     errors.push('Choose whether the writing model is enabled.');
   if (!isOneOf(value.language, ['auto', 'en', 'fr', 'hi']))

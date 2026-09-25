@@ -69,6 +69,7 @@ export interface ModelCatalogInstallation extends ModelInstallation {
 }
 
 export interface PipelineResult {
+  speakerTimeline?: import('./dataset').SpeakerTimeline | null;
   resultId: string;
   rawTranscript: string;
   cleanedTranscript: string | null;

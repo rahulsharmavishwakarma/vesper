@@ -4,6 +4,16 @@ import type { MemoryEvidence } from './personalization';
 
 export type TranscriptFeedback = 'like' | 'dislike' | null;
 
+export interface SpeakerTimeline {
+  durationMs: number;
+  segments: { startMs: number; endMs: number; speaker: number }[];
+  clippedSegments: number;
+  modelRevision: string;
+  runtimeRevision: string;
+  provider: string;
+  fallbackReason?: string | null;
+}
+
 export interface SessionRecord {
   id: string;
   createdAt: string;
@@ -12,6 +22,7 @@ export interface SessionRecord {
   audioSha256: string;
   audioBytes: number;
   rawTranscript: string | null;
+  speakerTimeline?: SpeakerTimeline | null;
   cleanedTranscript: string | null;
   personalizedTranscript?: string | null;
   draftTranscript?: string | null;

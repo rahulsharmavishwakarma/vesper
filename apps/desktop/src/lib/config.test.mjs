@@ -38,6 +38,7 @@ test('older settings gain nullable profiles without losing existing preferences'
   delete stored.floatingBarEnabled;
   delete stored.captureDesign;
   delete stored.notificationsEnabled;
+  delete stored.speakerDiarization;
   stored.maxRecordingSeconds = 300;
   stored.customCleanupInstruction = 'Preserve product names.';
   const restored = parseStoredSettings(stored);
@@ -57,7 +58,17 @@ test('older settings gain nullable profiles without losing existing preferences'
   assert.equal(restored.dictationOutput, 'app');
   assert.equal(restored.floatingBarEnabled, true);
   assert.equal(restored.notificationsEnabled, false);
+  assert.equal(restored.speakerDiarization, false);
   assert.throws(() => parseStoredSettings({ ...stored, models: null }));
+});
+
+test('speaker analysis requires an explicit boolean and survives settings roundtrip', () => {
+  const enabled = { ...defaultSettings(), speakerDiarization: true };
+  assert.deepEqual(validateSettings(enabled), []);
+  assert.equal(parseStoredSettings(JSON.parse(JSON.stringify(enabled))).speakerDiarization, true);
+  for (const value of ['true', 1, null]) {
+    assert.throws(() => parseStoredSettings({ ...enabled, speakerDiarization: value }));
+  }
 });
 
 test('new settings remain formatting-only and stored context correction is preserved', () => {
