@@ -38,7 +38,6 @@ test('older settings gain nullable profiles without losing existing preferences'
   delete stored.floatingBarEnabled;
   delete stored.captureDesign;
   delete stored.notificationsEnabled;
-  delete stored.speakerDiarization;
   stored.maxRecordingSeconds = 300;
   stored.customCleanupInstruction = 'Preserve product names.';
   const restored = parseStoredSettings(stored);
@@ -58,16 +57,19 @@ test('older settings gain nullable profiles without losing existing preferences'
   assert.equal(restored.dictationOutput, 'app');
   assert.equal(restored.floatingBarEnabled, true);
   assert.equal(restored.notificationsEnabled, false);
-  assert.equal(restored.speakerDiarization, false);
+  assert.equal(Object.hasOwn(restored, 'speakerDiarization'), false);
   assert.throws(() => parseStoredSettings({ ...stored, models: null }));
 });
 
-test('speaker analysis requires an explicit boolean and survives settings roundtrip', () => {
-  const enabled = { ...defaultSettings(), speakerDiarization: true };
-  assert.deepEqual(validateSettings(enabled), []);
-  assert.equal(parseStoredSettings(JSON.parse(JSON.stringify(enabled))).speakerDiarization, true);
-  for (const value of ['true', 1, null]) {
-    assert.throws(() => parseStoredSettings({ ...enabled, speakerDiarization: value }));
+test('automatic speaker analysis retires old settings without changing other preferences', () => {
+  assert.equal(Object.hasOwn(defaultSettings(), 'speakerDiarization'), false);
+  for (const value of [true, false, 'true', 1, null]) {
+    const stored = { ...defaultSettings(), speakerDiarization: value, cleanupEnabled: false };
+    const restored = parseStoredSettings(stored);
+    assert.equal(Object.hasOwn(restored, 'speakerDiarization'), false);
+    assert.equal(restored.cleanupEnabled, false);
+    assert.equal(stored.speakerDiarization, value, 'Migration must not mutate the input');
+    assert.deepEqual(parseStoredSettings(JSON.parse(JSON.stringify(restored))), restored);
   }
 });
 

@@ -913,22 +913,9 @@
               </div>
               <details class="advanced-settings">
                 <summary>Audio model downloads</summary>
-                <div class="setting-toggle">
-                  <label class="checkbox-field" for="models-speakers"
-                    ><input
-                      id="models-speakers"
-                      type="checkbox"
-                      bind:checked={draft.speakerDiarization}
-                      disabled={pending !== null || pipelineBusy}
-                      aria-describedby="models-speakers-help"
-                    /><span>Identify speakers after transcription</span></label
-                  >
-                  <p id="models-speakers-help" class="note checkbox-help">
-                    Adds an anonymous speaker timeline after recording. Experimental on Apple
-                    silicon; requires the local speaker runtime and the 107 MB model below. Your
-                    transcript remains available if speaker analysis fails.
-                  </p>
-                </div>
+                <p class="note">
+                  Speaker timelines are added automatically when available on this device.
+                </p>
                 {#each Object.entries(AUDIO_FRONTENDS) as [modelId, name] (modelId)}
                   <p>{name}</p>
                   <ModelDownload

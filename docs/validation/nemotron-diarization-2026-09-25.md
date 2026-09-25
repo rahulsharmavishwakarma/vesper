@@ -173,7 +173,8 @@ The user subsequently approved [ADR-0022](../adrs/0022-local-speaker-timelines.m
 Validation used `feature/local-speaker-timelines`, based on `8a2c27b`, with the
 implementation/test snapshot identified below. Local commits and integration
 are recorded in issue #42; these results do not imply a published release.
-The setting remains experimental and false by default. All inputs below
+That initial integration was experimental and false by default; the subsequent
+automatic-policy validation below supersedes its setting behavior. All inputs below
 are the same public/generated WAVs above; no microphone or private transcript was
 used. Inference used only local files, without an API or inference-time download.
 The ignored 28-file implementation/test source-hash manifest has SHA-256
@@ -337,3 +338,58 @@ tests, Svelte check/build, ESLint and the existing Playwright recovery suite.
 The probe's seven analytical scorer checks and Python lint/format checks are
 independent of application inference. Generated logs, binary manifests, models
 and audio remain ignored; this Markdown is the durable reviewed evidence.
+
+## Automatic-policy validation — 26 September 2026
+
+At the owner's request, the follow-up removes the speaker switch and retired
+preference. Both application entry points admit analysis automatically when local
+components and the backend are supported. Missing/partial components skip it;
+present but invalid components still undergo full verification and preserve raw
+text on failure. [ADR-0022](../adrs/0022-local-speaker-timelines.md) records the
+original stage design and opt-in decision; this follow-up and the
+[user guide](../user-guide.md#experimental-speaker-timelines) describe the current
+automatic behavior. The original ADR has not been amended.
+This policy change is based on `cb5e7a6`; its signed local commit series is recorded
+in issue #42. It does not change models, native libraries or their lifetimes.
+
+The following checks passed on the same Mac and pinned local artifacts/corpus
+described above:
+
+- 194 deterministic Rust tests: core 41, desktop 66, inference 61 and models 26.
+  The ordinary run skipped 32 environment-dependent tests; the real desktop
+  function was then invoked explicitly. New coverage includes retired true/false
+  settings, incomplete bundles, unsupported backends, corrupt installed files,
+  cancellation and raw-text preservation. ASR installation remains independent
+  of speaker components.
+- `make check-fast`: 127 Node tests plus lock consistency, formatting, language
+  lint, version checks and Svelte diagnostics (zero errors/warnings).
+- All 51 mocked-native browser scenarios passed in the normal Chromium runner
+  and an isolated headless agent-browser session. The speaker scenario loads an
+  old false setting, verifies automatic latest/History timelines and unchanged
+  editable text, and requires neither a toggle nor a settings save.
+- Workspace/all-target Clippy with warnings denied and the production web build
+  passed. No generated JSON, audio, model or build output is part of this change.
+
+The real `WorkContext::process_file` test passed with existing disabled settings
+retired. Four direct ASR-worker baselines and their four automatic desktop runs
+had identical raw text: Cohere/FLEURS and Nemotron/FLEURS, AMI 30 s and AMI 45 s.
+Speaker counts were 1, 1, 4 and 4; the last case recorded the existing one-frame
+tail adjustment. Timelines survived reopening and dataset export without becoming
+approved ASR labels. Two further desktop runs verified collection-off behavior
+and coexistence with Qwen cleanup. These are ten successful calls plus the two
+retained Cohere meeting failures, which again stopped at `duration_token_limit`
+before diarization for either retired preference value.
+
+The direct-worker baseline excludes desktop persistence; its
+`decodeAndAsrSeconds` must not be compared as equivalent to the earlier full
+desktop off/on timing column. This follow-up is a correctness rerun, not a new
+isolated latency, DER or WER qualification. Broader language, speaker, sustained
+resource and live-capture limits above remain open.
+
+Intermediate failures were preserved during validation: an invalid test fixture
+paired sherpa ASR with Vulkan before reaching speaker admission; it now uses a
+configuration-valid Nemotron/Vulkan control. A concurrent older-worktree build
+sharing the Cargo target directory left stale native-binding metadata; refreshing
+that dependency allowed compilation. The sandbox blocked the model test's local
+HTTP listener and Metal command-queue creation; reruns with the necessary local
+access passed. None of those incomplete attempts count as successful native runs.

@@ -126,9 +126,10 @@ including quiet Whisper Turbo input. Leave it off when it reduces accuracy.
 
 ### Experimental speaker timelines
 
-In **Models → Audio processing → Audio model downloads**, enable **Identify
-speakers after transcription**, download **Nemotron 3 speaker timelines**, and
-save settings. This first integration requires Apple silicon and the
+Speaker analysis runs automatically when its local model and runtime are
+available; there is no enable switch or settings-save step. **Nemotron 3 speaker
+timelines** is available under **Models → Audio processing → Audio model downloads**.
+This experimental integration requires Apple silicon and the
 [locally built speaker runtime](development.md#experimental-speaker-runtime);
 there is no newly published runtime installer. It runs entirely on device.
 
@@ -138,9 +139,11 @@ represent simultaneous speech. Speaker numbers apply only within that recording;
 they do not identify you, assign individual transcript words, or improve spelling.
 The view shows the first 200 ranges; dataset exports include all ranges.
 
-Raw text is saved before speaker analysis. If the model/runtime is missing or
-analysis fails, the transcript remains available with a warning. Analysis adds
-processing time and memory. It is off by default pending broader qualification.
+Raw text is saved before speaker analysis. Missing or incomplete local components
+and unsupported compute backends leave ordinary transcription unchanged. If
+installed components fail verification or analysis fails, the transcript remains
+available with a warning. Analysis adds processing time and memory; broader
+speaker and language accuracy qualification remains incomplete.
 With audio collection off, the latest timeline is available in memory without
 creating a saved audio session. Stored timelines are unverified machine output
 and never become approved training labels automatically.

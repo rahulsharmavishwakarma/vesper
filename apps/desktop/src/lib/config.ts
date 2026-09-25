@@ -108,7 +108,6 @@ export interface AppConfig {
     customRewriter: HuggingFaceProfile | null;
   };
   cleanupEnabled: boolean;
-  speakerDiarization: boolean;
   audioFrontend: AudioFrontendConfig;
   language: Language;
   modelDirectory: string | null;
@@ -170,7 +169,6 @@ export function defaultSettings(): AppConfig {
       customRewriter: null,
     },
     cleanupEnabled: true,
-    speakerDiarization: false,
     audioFrontend: { vadEnabled: false, autoLevelEnabled: false, noiseReduction: 'off' },
     language: 'en',
     modelDirectory: null,
@@ -454,8 +452,6 @@ export function validateSettings(value: unknown): string[] {
     )
   )
     errors.push('Choose valid audio processing settings.');
-  if (typeof value.speakerDiarization !== 'boolean')
-    errors.push('Speaker identification must be on or off.');
   if (typeof value.cleanupEnabled !== 'boolean')
     errors.push('Choose whether the writing model is enabled.');
   if (!isOneOf(value.language, ['auto', 'en', 'fr', 'hi']))
@@ -529,6 +525,9 @@ export function parseSettings(value: unknown): AppConfig {
 export function parseStoredSettings(value: unknown): AppConfig {
   if (!isRecord(value)) return parseSettings(value);
 
+  // Speaker analysis is automatic; discard the retired preference, including false.
+  const stored = { ...value };
+  delete stored.speakerDiarization;
   const defaults = defaultSettings();
   const models = isRecord(value.models)
     ? { ...defaults.models, ...value.models }
@@ -542,5 +541,5 @@ export function parseStoredSettings(value: unknown): AppConfig {
     : Object.hasOwn(value, 'audioFrontend')
       ? value.audioFrontend
       : defaults.audioFrontend;
-  return parseSettings({ ...defaults, ...value, models, audioFrontend });
+  return parseSettings({ ...defaults, ...stored, models, audioFrontend });
 }

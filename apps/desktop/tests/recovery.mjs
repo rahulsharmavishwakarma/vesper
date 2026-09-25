@@ -3133,10 +3133,10 @@ await test('Native About menu request opens the shared sheet after startup', asy
   await until(() => target.querySelector('.about-sheet .version'), 'Native About metadata missing');
 });
 
-await test('Speaker timelines preserve text, render overlapping ranges and save only explicitly', async () => {
+await test('Speaker timelines appear automatically without a toggle or settings save', async () => {
   const button = (label) =>
     [...target.querySelectorAll('button')].find((node) => node.textContent.trim() === label);
-  let saved = defaultSettings();
+  const saved = { ...defaultSettings(), speakerDiarization: false };
   const result = {
     resultId: 'speaker-fixture',
     rawTranscript: 'Original meeting words.',
@@ -3158,7 +3158,7 @@ await test('Speaker timelines preserve text, render overlapping ranges and save 
   };
   const state = await setup({
     main: true,
-    intercept: (command, _state, args) => {
+    intercept: (command) => {
       if (command === 'get_latest_result') return structuredClone(result);
       if (command === 'get_settings') return structuredClone(saved);
       if (command === 'list_sessions')
@@ -3182,10 +3182,6 @@ await test('Speaker timelines preserve text, render overlapping ranges and save 
             speakerTimeline: structuredClone(result.speakerTimeline),
           },
         ];
-      if (command === 'save_settings') {
-        saved = JSON.parse(JSON.stringify(args.settings));
-        return saved;
-      }
     },
   });
   await until(() => target.querySelector('#final-draft'), 'Latest transcript missing');
@@ -3211,16 +3207,12 @@ await test('Speaker timelines preserve text, render overlapping ranges and save 
     'Attribution limitation missing',
   );
   button('Models').click();
-  await until(() => target.querySelector('#models-speakers'), 'Speaker setting missing');
-  const setting = target.querySelector('#models-speakers');
-  setting.closest('details').open = true;
-  assert(!setting.checked && !saved.speakerDiarization, 'Speaker stage did not default off');
-  target.querySelector('label[for="models-speakers"]').click();
-  await tick();
-  assert(setting.checked && !saved.speakerDiarization, 'Setting saved before explicit action');
-  button('Save changes').click();
-  await until(() => saved.speakerDiarization, 'Speaker setting did not persist');
-  assert(state.counts.save_settings === 1, 'Unexpected repeated setting save');
+  await until(
+    () => target.textContent.includes('Speaker timelines are added automatically'),
+    'Automatic speaker description missing',
+  );
+  assert(!target.querySelector('#models-speakers'), 'Retired speaker toggle is still present');
+  assert((state.counts.save_settings ?? 0) === 0, 'Automatic timeline required a settings save');
   button('History').click();
   await until(() => target.querySelector('#recording-trigger-speaker-history'), 'History missing');
   target.querySelector('#recording-trigger-speaker-history').click();
