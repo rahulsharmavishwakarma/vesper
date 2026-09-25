@@ -64,18 +64,10 @@ fn preferred_with_availability(config: &AppConfig, available: bool) -> AppConfig
 /// Select pinned files for an explicit install/repair, independent of which
 /// export is already installed. Hardware discovery never loads model weights.
 pub fn preferred_speech_config(config: &AppConfig) -> Result<AppConfig> {
-    let available = if automatic_candidate(config) {
-        #[cfg(feature = "mlx")]
-        {
-            mlx::available()?
-        }
-        #[cfg(not(feature = "mlx"))]
-        {
-            false
-        }
-    } else {
-        false
-    };
+    #[cfg(feature = "mlx")]
+    let available = automatic_candidate(config) && mlx::available()?;
+    #[cfg(not(feature = "mlx"))]
+    let available = false;
     Ok(preferred_with_availability(config, available))
 }
 

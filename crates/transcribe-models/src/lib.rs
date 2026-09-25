@@ -21,6 +21,7 @@ use transcribe_core::{
 pub mod mlx;
 mod selection;
 pub use selection::{preferred_speech_config, resolve_speech, SpeechSelection};
+pub mod diarization;
 mod storage;
 pub use storage::{remove_model, ModelRemoval};
 
@@ -131,6 +132,7 @@ pub fn catalog() -> Vec<Artifact> {
             artifact.model_id = Some(RewriteModel::Qwen35_08b.id().into());
         }
     }
+    artifacts.push(diarization::artifact());
     artifacts
 }
 
@@ -311,6 +313,7 @@ fn selected_exact(config: &AppConfig) -> Result<Vec<Artifact>> {
                         .model_id
                         .as_deref()
                         .is_some_and(|id| config.audio_frontend.model_ids().contains(&id)))
+                || (file.role == "diarization" && config.speaker_diarization)
         })
         .collect();
     if let Some(profile) = &config.models.custom_asr {
@@ -454,6 +457,17 @@ fn model_install_specs(config: &AppConfig) -> Vec<ModelInstallSpec> {
         .into_iter()
         .map(|model| built_in_asr_spec(config, model))
         .collect::<Vec<_>>();
+    specs.push(ModelInstallSpec {
+        model_id: diarization::MODEL_ID.into(),
+        name: "Speaker timelines · Nemotron 3".into(),
+        role: ModelRole::AudioFrontend,
+        quantization: None,
+        selected: config.speaker_diarization,
+        artifacts: vec![diarization::artifact()],
+        support_error: (!diarization::supported()).then(|| {
+            "Experimental speaker timelines currently require Apple silicon macOS.".into()
+        }),
+    });
     for (id, name) in [
         ("silero-v6.2", "Speech activity · Silero v6.2"),
         ("dpdfnet4", "Noise reduction · DPDFNet4"),
@@ -719,10 +733,9 @@ pub fn inspect(config: &AppConfig, root: &Path) -> Installation {
         .collect();
     let files_ready = files.iter().all(|file| file.installed);
     let ready = supported
-        && artifacts
-            .iter()
-            .zip(&files)
-            .all(|(artifact, file)| artifact.role == "audio_frontend" || file.installed);
+        && artifacts.iter().zip(&files).all(|(artifact, file)| {
+            matches!(artifact.role.as_str(), "audio_frontend" | "diarization") || file.installed
+        });
     Installation {
         ready,
         model_directory: root.display().to_string(),
@@ -775,6 +788,7 @@ fn inspect_model_spec(spec: &ModelInstallSpec, root: &Path) -> ModelInstallation
             }
         })
         && spec.support_error.is_none()
+        && (spec.model_id != diarization::MODEL_ID || diarization::runtime_ready(root))
         && if let Some(runtime) = spec
             .artifacts
             .iter()
@@ -1301,6 +1315,7 @@ mod tests {
         config.models.custom_asr = Some(speech_profile());
         config.cleanup_enabled = false;
         config.audio_frontend.vad_enabled = true;
+        config.speaker_diarization = true;
         config.audio_frontend.noise_reduction = transcribe_core::NoiseReduction::Dpdfnet4;
         let root = tempfile::tempdir().unwrap();
         let artifacts = selected(&config).unwrap();
@@ -1311,7 +1326,7 @@ mod tests {
         }
         let status = inspect(&config, root.path());
         assert!(status.ready);
-        assert_eq!(status.files.iter().filter(|f| !f.installed).count(), 2);
+        assert_eq!(status.files.iter().filter(|f| !f.installed).count(), 3);
         assert!(status.message.contains("original audio"));
         verify_asr(&config, root.path(), &AtomicBool::new(false)).unwrap();
         assert!(verify_frontend(&config, root.path(), &AtomicBool::new(false)).is_err());
@@ -1402,7 +1417,10 @@ mod tests {
                 assert!(spec.artifacts.iter().all(|a| a.role != "audio_frontend"));
             } else if spec.role == ModelRole::AudioFrontend {
                 assert_eq!(spec.artifacts.len(), 1);
-                assert_eq!(spec.selected, spec.model_id != "dpdfnet8");
+                assert_eq!(
+                    spec.selected,
+                    matches!(spec.model_id.as_str(), "silero-v6.2" | "dpdfnet4")
+                );
             }
         }
     }
