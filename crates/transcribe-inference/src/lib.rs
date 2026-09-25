@@ -10,6 +10,7 @@ pub mod audio_frontend;
 mod automatic;
 mod backend;
 mod capabilities;
+pub mod diarization;
 mod fidelity;
 mod lfm;
 mod llama_runtime;
@@ -143,6 +144,8 @@ pub struct PipelineOutput {
     pub cleaned: Option<String>,
     pub cleanup_error: Option<String>,
     pub model_versions: Value,
+    pub speaker_timeline: Option<transcribe_core::SpeakerTimeline>,
+    pub speaker_error: Option<String>,
 }
 
 /// Convenience pipeline. Applications can call each stage directly to save the
@@ -162,11 +165,22 @@ pub fn run(
     } else {
         (None, None)
     };
+    let (speaker_timeline, speaker_error) = if config.speaker_diarization {
+        match diarization::analyze(audio, config, model_root, cancelled) {
+            Ok(timeline) => (Some(timeline), None),
+            Err(InferenceError::Cancelled) => return Err(InferenceError::Cancelled),
+            Err(error) => (None, Some(error.to_string())),
+        }
+    } else {
+        (None, None)
+    };
     Ok(PipelineOutput {
         raw,
         cleaned,
         cleanup_error,
         model_versions: model_versions(config),
+        speaker_timeline,
+        speaker_error,
     })
 }
 

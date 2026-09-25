@@ -38,6 +38,14 @@ pub struct StreamingTranscript {
 }
 
 enum Command {
+    Diarize {
+        audio: MonoPcm,
+        config: AppConfig,
+        model_root: PathBuf,
+        operation_id: String,
+        cancelled: Arc<AtomicBool>,
+        reply: mpsc::SyncSender<Result<transcribe_core::SpeakerTimeline>>,
+    },
     Transcribe {
         audio: MonoPcm,
         config: AppConfig,
@@ -89,6 +97,27 @@ pub struct InferenceManager {
 }
 
 impl InferenceManager {
+    /// Post-ASR activity on original PCM, serialized on the existing owner.
+    pub fn analyze_speakers(
+        &self,
+        audio: &MonoPcm,
+        config: &AppConfig,
+        model_root: &Path,
+        operation_id: &str,
+        cancelled: Arc<AtomicBool>,
+    ) -> Result<transcribe_core::SpeakerTimeline> {
+        check_cancelled(&cancelled)?;
+        let (reply, response) = mpsc::sync_channel(1);
+        self.send(Command::Diarize {
+            audio: audio.clone(),
+            config: config.clone(),
+            model_root: model_root.into(),
+            operation_id: operation_id.into(),
+            cancelled,
+            reply,
+        })?;
+        response.recv().map_err(worker_unavailable)?
+    }
     pub fn new() -> std::io::Result<Self> {
         let (sender, receiver) = mpsc::sync_channel(COMMAND_QUEUE);
         let evidence = Arc::new(Mutex::new(serde_json::json!({})));
@@ -612,6 +641,34 @@ fn worker_loop(
             }
         };
         match command {
+            Command::Diarize {
+                audio,
+                config,
+                model_root,
+                operation_id,
+                cancelled,
+                reply,
+            } => {
+                let start = std::time::Instant::now();
+                let result = crate::diarization::analyze(&audio, &config, &model_root, &cancelled);
+                record_evidence(
+                    &evidence,
+                    &operation_id,
+                    "diarization",
+                    serde_json::json!({
+                        "durationMs":start.elapsed().as_secs_f64()*1000.0,
+                        "includesVerificationAndLoad":true,
+                        "provider":result.as_ref().ok().map(|t|&t.provider),
+                        "fallbackReason":result.as_ref().ok().and_then(|t|t.fallback_reason.as_deref()),
+                        "clippedSegments":result.as_ref().ok().map(|t|t.clipped_segments),
+                        "error":result.as_ref().err().map(ToString::to_string),
+                        "operatorPlacement":"unprofiled", "audio":"original-completed-recording",
+                        "runtimeRevision":transcribe_models::diarization::RUNTIME_REVISION,
+                        "modelRevision":transcribe_models::diarization::MODEL_REVISION,
+                    }),
+                );
+                let _ = reply.send(result);
+            }
             Command::Transcribe {
                 audio,
                 config,

@@ -44,6 +44,8 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
         raw,
         cleaned,
         cleanup_error,
+        speaker_timeline: None,
+        speaker_error: None,
         model_versions: transcribe_inference::model_versions(&config),
     };
     println!("{}", serde_json::to_string_pretty(&result)?);
