@@ -168,6 +168,8 @@ pub struct AppConfig {
     pub models: ModelSelection,
     pub cleanup_enabled: bool,
     pub audio_frontend: AudioFrontendConfig,
+    /// Experimental anonymous activity after ASR; never identifies the owner.
+    pub speaker_diarization: bool,
     pub language: Language,
     pub model_directory: Option<String>,
     pub cleanup_preset: CleanupPreset,
@@ -198,6 +200,7 @@ impl Default for AppConfig {
             models: ModelSelection::default(),
             cleanup_enabled: true,
             audio_frontend: AudioFrontendConfig::default(),
+            speaker_diarization: false,
             // The default Cohere adapter requires an explicit supported language.
             language: Language::English,
             model_directory: None,

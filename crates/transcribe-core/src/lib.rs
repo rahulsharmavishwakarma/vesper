@@ -2,6 +2,7 @@
 
 mod adapters;
 mod config;
+mod diarization;
 mod error;
 mod huggingface;
 mod learning;
@@ -22,6 +23,7 @@ pub use config::{
     ImprovementMode, Language, ModelSelection, NoiseReduction, RecordingMode, RewriteQuantization,
     CONFIG_SCHEMA_VERSION,
 };
+pub use diarization::{SpeakerSegment, SpeakerTimeline};
 pub use error::{Error, Result};
 pub use huggingface::{HuggingFaceFile, HuggingFaceProfile, ModelFileRole, ModelRuntime};
 pub use learning::*;

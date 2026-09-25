@@ -118,6 +118,8 @@ pub struct SessionRecord {
     pub audio_sha256: String,
     pub audio_bytes: u64,
     pub raw_transcript: Option<String>,
+    #[serde(default)]
+    pub speaker_timeline: Option<transcribe_core::SpeakerTimeline>,
     pub cleaned_transcript: Option<String>,
     #[serde(default)]
     pub personalized_transcript: Option<String>,
@@ -278,6 +280,7 @@ impl DatasetStore {
                 audio_sha256,
                 audio_bytes,
                 raw_transcript: None,
+                speaker_timeline: None,
                 cleaned_transcript: None,
                 corrected_transcript: None,
                 verified_transcript: None,
@@ -360,6 +363,29 @@ impl DatasetStore {
             return Err(DatasetError::PredictionsAlreadyStored(id.into()));
         }
         record.cleaned_transcript = Some(cleaned);
+        write_record(&transaction, &record)?;
+        transaction.commit()?;
+        Ok(record)
+    }
+
+    /// Append anonymous machine activity without creating a reviewed label.
+    pub fn complete_speaker_timeline(
+        &self,
+        id: &str,
+        timeline: transcribe_core::SpeakerTimeline,
+    ) -> Result<SessionRecord> {
+        timeline
+            .validate()
+            .map_err(|_| DatasetError::InvalidModelVersions)?;
+        let transaction = self.connection.unchecked_transaction()?;
+        let mut record = read_record(&transaction, id)?;
+        if record.raw_transcript.is_none() {
+            return Err(DatasetError::MissingRawTranscript);
+        }
+        if record.speaker_timeline.is_some() {
+            return Err(DatasetError::PredictionsAlreadyStored(id.into()));
+        }
+        record.speaker_timeline = Some(timeline);
         write_record(&transaction, &record)?;
         transaction.commit()?;
         Ok(record)
@@ -704,6 +730,60 @@ fn sync_directory(_path: &Path) -> Result<()> {
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    #[test]
+    fn speaker_predictions_survive_reopen_and_export_without_becoming_training_labels() {
+        let dir = tempfile::tempdir().unwrap();
+        let root = dir.path().join("dataset");
+        let store = DatasetStore::open(root.clone()).unwrap();
+        let record = import(&store, dir.path(), "speakers.wav");
+        let timeline = transcribe_core::SpeakerTimeline::from_native(
+            3.0,
+            &[(0.0, 2.0, 1), (1.0, 3.0, 2)],
+            "model",
+            "runtime",
+            "cpu",
+        )
+        .unwrap();
+        assert!(matches!(
+            store.complete_speaker_timeline(&record.id, timeline.clone()),
+            Err(DatasetError::MissingRawTranscript)
+        ));
+        let raw = store
+            .set_transcripts(&record.id, "Meeting words".into(), None, empty_object())
+            .unwrap();
+        let mut legacy = serde_json::to_value(&raw).unwrap();
+        legacy.as_object_mut().unwrap().remove("speakerTimeline");
+        assert!(serde_json::from_value::<SessionRecord>(legacy)
+            .unwrap()
+            .speaker_timeline
+            .is_none());
+        let saved = store
+            .complete_speaker_timeline(&record.id, timeline.clone())
+            .unwrap();
+        assert_eq!(saved.raw_transcript, raw.raw_transcript);
+        assert_eq!(saved.review_status, ReviewStatus::Pending);
+        assert!(task_eligibility(&saved).is_empty());
+        assert!(store
+            .complete_speaker_timeline(&record.id, timeline.clone())
+            .is_err());
+        drop(store);
+        let store = DatasetStore::open(root).unwrap();
+        assert_eq!(
+            store.list_sessions().unwrap()[0].speaker_timeline,
+            Some(timeline)
+        );
+        let export = dir.path().join("export");
+        store.export_dataset(&export, false).unwrap();
+        let row: Value =
+            serde_json::from_str(&fs::read_to_string(export.join("manifest.jsonl")).unwrap())
+                .unwrap();
+        assert_eq!(
+            row["speakerTimeline"]["segments"].as_array().unwrap().len(),
+            2
+        );
+        assert!(row["asrTarget"].is_null());
+    }
 
     fn import(store: &DatasetStore, directory: &Path, name: &str) -> SessionRecord {
         let source = directory.join(name);
