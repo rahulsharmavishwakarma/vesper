@@ -100,7 +100,6 @@ mod tests {
         let mut config = AppConfig {
             compute_backend: ComputeBackend::Cpu,
             cleanup_enabled: false,
-            speaker_diarization: true,
             ..AppConfig::default()
         };
         config.models.asr = transcribe_core::AsrModel::Nemotron35AsrStreaming06b;

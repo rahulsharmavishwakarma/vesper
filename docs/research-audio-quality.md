@@ -12,8 +12,11 @@ new artifact**, not for the separately named preview weights. NVIDIA describes
 commercial/noncommercial use under [OpenMDW 1.1](https://openmdw.ai/license/1-1/);
 redistribution must retain that license and applicable origin notices. The
 release now has an experimental completed-recording integration under
-[ADR-0022](adrs/0022-local-speaker-timelines.md), default off. Its local execution
-does not qualify general speaker accuracy or improved ASR word accuracy.
+[ADR-0022](adrs/0022-local-speaker-timelines.md). The [26 September application
+follow-up](validation/nemotron-diarization-2026-09-25.md#automatic-policy-validation--26-september-2026)
+removes the original default-off switch: analysis now runs automatically when its
+local components and backend are available. This requested behavior change and local
+execution do not qualify general speaker accuracy or improved ASR word accuracy.
 
 The official repository revision is
 `f667ed73aee57d40cc39428eb768b4fd87a0a29e`. Its Q8_0 GGUF is **107,012,128 bytes**

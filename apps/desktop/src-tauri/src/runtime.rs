@@ -1766,8 +1766,8 @@ impl WorkContext {
         result.session = session.clone();
         // Publish the durable raw result before a potentially slow or failed cleanup.
         self.runtime.publish(result.clone());
-        // Freeze eligibility from the raw hypothesis. Cleanup cannot generate its own cues.
-        if self.config.speaker_diarization {
+        if transcribe_models::diarization::available(&self.model_root, self.config.compute_backend)
+        {
             self.runtime
                 .progress("identifying_speakers", "Identifying speakers locally…");
             match self.inference.analyze_speakers(
@@ -1810,6 +1810,7 @@ impl WorkContext {
             result.session = session.clone();
             self.runtime.publish(result.clone());
         }
+        // Freeze eligibility from the raw hypothesis. Cleanup cannot generate its own cues.
         let post_asr_profile = self
             .personalization_snapshot()?
             .post_asr_profile(&raw, self.config.language);

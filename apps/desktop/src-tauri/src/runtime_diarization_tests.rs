@@ -1,11 +1,10 @@
 use super::*;
 use std::time::Instant;
 
-fn context(root: &Path, model_root: PathBuf, speakers: bool) -> WorkContext {
+fn context(root: &Path, model_root: PathBuf) -> WorkContext {
     WorkContext {
         operation_id: uuid::Uuid::new_v4().to_string(),
         config: AppConfig {
-            speaker_diarization: speakers,
             cleanup_enabled: false,
             compute_backend: transcribe_core::ComputeBackend::Cpu,
             ..AppConfig::default()
@@ -28,33 +27,65 @@ fn assert_no_recordings(root: &Path) {
 }
 
 #[test]
-fn missing_diarizer_preserves_durable_raw_and_cancellation_does_not_erase_it() {
+fn automatic_speakers_preserve_raw_when_unavailable_corrupt_or_cancelled() {
     let dir = tempfile::tempdir().unwrap();
-    for cancel in [false, true] {
-        let ctx = context(dir.path(), dir.path().join("missing-models"), true);
-        let captured = transcribe_audio::CapturedAudio::new(vec![0.1; 16000], 16000, 1).unwrap();
-        let mut session = ctx.archive_capture(&captured).unwrap();
-        let audio = MonoPcm::new(vec![0.1; 16000], 16000).unwrap();
-        ctx.runtime.cancelled.store(cancel, Ordering::Relaxed);
-        let result = ctx.complete_raw(
-            &audio,
-            &mut session,
-            "Preserve these original words.".into(),
-        );
-        assert_eq!(
-            session.as_ref().unwrap().raw_transcript.as_deref(),
-            Some("Preserve these original words.")
-        );
-        if cancel {
-            assert!(result.is_err());
-        } else {
-            let result = result.unwrap();
-            assert!(result.speaker_timeline.is_none());
-            assert_eq!(result.raw_transcript, "Preserve these original words.");
-            assert!(result
-                .warnings
-                .iter()
-                .any(|s| s.contains("Speaker analysis did not finish")));
+    for state in ["missing", "corrupt", "unsupported"] {
+        let models = dir.path().join(state).join("models");
+        if state != "missing" {
+            use transcribe_models::diarization as diar;
+            let weights = models.join(diar::artifact().relative_path);
+            std::fs::create_dir_all(weights.parent().unwrap()).unwrap();
+            std::fs::write(weights, b"corrupt weights must never be loaded").unwrap();
+            let bundle = models.join(diar::runtime_relative());
+            std::fs::create_dir_all(&bundle).unwrap();
+            std::fs::write(bundle.join("manifest.json"), b"{}").unwrap();
+            for part in ["api", "asr", "ggml", "base", "cpu", "blas", "metal"] {
+                std::fs::write(
+                    bundle.join(format!("{}{part}.dylib", diar::LIBRARY_PREFIX)),
+                    b"fixture",
+                )
+                .unwrap();
+            }
+        }
+        for cancel in [false, true] {
+            let mut ctx = context(dir.path(), models.clone());
+            if state == "unsupported" {
+                ctx.config.models.asr = transcribe_core::AsrModel::Nemotron35AsrStreaming06b;
+                ctx.config.compute_backend = transcribe_core::ComputeBackend::Vulkan;
+            }
+            let captured =
+                transcribe_audio::CapturedAudio::new(vec![0.1; 16000], 16000, 1).unwrap();
+            let mut session = ctx.archive_capture(&captured).unwrap();
+            let audio = MonoPcm::new(vec![0.1; 16000], 16000).unwrap();
+            ctx.runtime.cancelled.store(cancel, Ordering::Relaxed);
+            let result = ctx.complete_raw(
+                &audio,
+                &mut session,
+                "Preserve these original words.".into(),
+            );
+            assert_eq!(
+                session.as_ref().unwrap().raw_transcript.as_deref(),
+                Some("Preserve these original words.")
+            );
+            if cancel {
+                assert!(result.is_err());
+            } else {
+                let result = result.unwrap();
+                assert!(result.speaker_timeline.is_none());
+                assert_eq!(result.raw_transcript, "Preserve these original words.");
+                let attempted = state == "corrupt" && transcribe_models::diarization::supported();
+                assert_eq!(
+                    result
+                        .warnings
+                        .iter()
+                        .any(|s| s.contains("Speaker analysis did not finish")),
+                    attempted
+                );
+                assert_eq!(
+                    ctx.inference.execution_evidence(&ctx.operation_id)["diarization"].is_null(),
+                    !attempted
+                );
+            }
         }
     }
 }
@@ -67,12 +98,14 @@ fn real_asr_speaker_pipeline_persists_and_exports_without_changing_words() {
     let corpus =
         PathBuf::from(std::env::var_os("TRANSCRIBE_DIAR_CORPUS").expect("TRANSCRIBE_DIAR_CORPUS"));
     let dir = tempfile::tempdir().unwrap();
-    let mut ctx = context(dir.path(), models, false);
+    let mut ctx = context(dir.path(), models);
     // Keep the observed Cohere meeting failure in the matrix. The incomplete
-    // ASR guard must fire equally with speakers off/on, before speaker analysis.
-    for enabled in [false, true] {
+    // ASR guard must fire before speaker analysis for either retired preference.
+    for legacy_setting in [false, true] {
         ctx.operation_id = uuid::Uuid::new_v4().to_string();
-        ctx.config.speaker_diarization = enabled;
+        let mut stored = serde_json::to_value(&ctx.config).unwrap();
+        stored["speakerDiarization"] = legacy_setting.into();
+        ctx.config = serde_json::from_value(stored).unwrap();
         ctx.runtime
             .begin("transcribing", "Cohere meeting control")
             .unwrap();
@@ -85,11 +118,15 @@ fn real_asr_speaker_pipeline_persists_and_exports_without_changing_words() {
         println!(
             "asr_control_failure={}",
             serde_json::json!({
-                "sample":"ami-675-705", "asr":"Cohere", "speakersEnabled":enabled,
+                "sample":"ami-675-705", "asr":"Cohere", "legacySpeakerSetting":legacy_setting,
                 "error":error, "diarizationStarted":false
             })
         );
     }
+    // Old false settings must not suppress automatic activity with installed files.
+    let mut stored = serde_json::to_value(&ctx.config).unwrap();
+    stored["speakerDiarization"] = false.into();
+    ctx.config = serde_json::from_value(stored).unwrap();
     use transcribe_core::{AsrModel, ComputeBackend};
     for (name, expected, asr) in [
         ("fleurs-single", 1, AsrModel::CohereTranscribe),
@@ -105,16 +142,26 @@ fn real_asr_speaker_pipeline_persists_and_exports_without_changing_words() {
         };
         let audio = corpus.join(format!("{name}.wav"));
         ctx.operation_id = uuid::Uuid::new_v4().to_string();
-        ctx.config.speaker_diarization = false;
         ctx.runtime
             .begin("transcribing", "paired baseline")
             .unwrap();
         let baseline_start = Instant::now();
-        let baseline = ctx.process_file(&audio).unwrap();
+        // Compare with the same ASR worker directly; there is no production
+        // disable switch. This baseline excludes desktop persistence/analysis.
+        let decoded = transcribe_audio::decode_file(&audio, 0).unwrap();
+        let baseline = ctx
+            .inference
+            .transcribe(
+                &decoded,
+                &ctx.config,
+                &ctx.model_root,
+                &ctx.operation_id,
+                Arc::clone(&ctx.runtime.cancelled),
+            )
+            .unwrap();
         let baseline_seconds = baseline_start.elapsed().as_secs_f64();
         ctx.runtime.finish(&Ok::<(), String>(()));
         ctx.operation_id = uuid::Uuid::new_v4().to_string();
-        ctx.config.speaker_diarization = true;
         ctx.runtime
             .begin("transcribing", "speaker pipeline")
             .unwrap();
@@ -125,7 +172,7 @@ fn real_asr_speaker_pipeline_persists_and_exports_without_changing_words() {
         let result = ctx.process_file(&audio).unwrap();
         let pipeline_seconds = start.elapsed().as_secs_f64();
         ctx.runtime.finish(&Ok::<(), String>(()));
-        assert_eq!(result.raw_transcript, baseline.raw_transcript);
+        assert_eq!(result.raw_transcript, baseline);
         assert!(result.warnings.is_empty(), "{:?}", result.warnings);
         let timeline = result.speaker_timeline.as_ref().unwrap();
         timeline.validate().unwrap();
@@ -162,14 +209,14 @@ fn real_asr_speaker_pipeline_persists_and_exports_without_changing_words() {
         println!(
             "wired_speaker_pipeline={}",
             serde_json::json!({"sample":name,"asr":asr.id(),
-            "seconds":pipeline_seconds,"baselineSeconds":baseline_seconds,"speakers":speakers.len(),
+            "seconds":pipeline_seconds,"decodeAndAsrSeconds":baseline_seconds,"speakers":speakers.len(),
             "rawAsrUnchanged":true,"clipped":timeline.clipped_segments,
             "execution":session.model_versions["execution"]})
         );
     }
     // Collection-off still returns local speaker analysis, without an archive.
     let private = dir.path().join("no-collection");
-    let mut unsaved = context(&private, ctx.model_root.clone(), true);
+    let mut unsaved = context(&private, ctx.model_root.clone());
     unsaved.config.collect_training_data = false;
     unsaved
         .runtime

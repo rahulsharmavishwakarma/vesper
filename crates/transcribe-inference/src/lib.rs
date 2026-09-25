@@ -165,15 +165,16 @@ pub fn run(
     } else {
         (None, None)
     };
-    let (speaker_timeline, speaker_error) = if config.speaker_diarization {
-        match diarization::analyze(audio, config, model_root, cancelled) {
-            Ok(timeline) => (Some(timeline), None),
-            Err(InferenceError::Cancelled) => return Err(InferenceError::Cancelled),
-            Err(error) => (None, Some(error.to_string())),
-        }
-    } else {
-        (None, None)
-    };
+    let (speaker_timeline, speaker_error) =
+        if transcribe_models::diarization::available(model_root, config.compute_backend) {
+            match diarization::analyze(audio, config, model_root, cancelled) {
+                Ok(timeline) => (Some(timeline), None),
+                Err(InferenceError::Cancelled) => return Err(InferenceError::Cancelled),
+                Err(error) => (None, Some(error.to_string())),
+            }
+        } else {
+            (None, None)
+        };
     Ok(PipelineOutput {
         raw,
         cleaned,

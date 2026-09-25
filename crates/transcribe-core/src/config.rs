@@ -168,8 +168,6 @@ pub struct AppConfig {
     pub models: ModelSelection,
     pub cleanup_enabled: bool,
     pub audio_frontend: AudioFrontendConfig,
-    /// Experimental anonymous activity after ASR; never identifies the owner.
-    pub speaker_diarization: bool,
     pub language: Language,
     pub model_directory: Option<String>,
     pub cleanup_preset: CleanupPreset,
@@ -200,7 +198,6 @@ impl Default for AppConfig {
             models: ModelSelection::default(),
             cleanup_enabled: true,
             audio_frontend: AudioFrontendConfig::default(),
-            speaker_diarization: false,
             // The default Cohere adapter requires an explicit supported language.
             language: Language::English,
             model_directory: None,
@@ -402,6 +399,22 @@ impl AppConfig {
 
 #[cfg(test)]
 mod tests {
+    #[test]
+    fn retired_speaker_preference_is_ignored_and_not_saved_again() {
+        use super::*;
+        for enabled in [false, true] {
+            let mut legacy = serde_json::to_value(AppConfig::default()).unwrap();
+            legacy["speakerDiarization"] = enabled.into();
+            legacy["cleanupEnabled"] = false.into();
+            let restored: AppConfig = serde_json::from_value(legacy).unwrap();
+            assert!(!restored.cleanup_enabled);
+            assert!(serde_json::to_value(restored)
+                .unwrap()
+                .get("speakerDiarization")
+                .is_none());
+        }
+    }
+
     #[test]
     fn frontend_settings_are_opt_in_and_reject_unknown_models() {
         use super::*;
