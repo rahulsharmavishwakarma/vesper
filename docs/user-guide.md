@@ -124,6 +124,27 @@ your own recordings before relying on this experimental option. Local testing
 found improvements on some quiet speech and regressions on other recordings,
 including quiet Whisper Turbo input. Leave it off when it reduces accuracy.
 
+### Experimental speaker timelines
+
+In **Models → Audio processing → Audio model downloads**, enable **Identify
+speakers after transcription**, download **Nemotron 3 speaker timelines**, and
+save settings. This first integration requires Apple silicon and the
+[locally built speaker runtime](development.md#experimental-speaker-runtime);
+there is no newly published runtime installer. It runs entirely on device.
+
+After ASR, **Speaker timeline** in the latest result and History shows estimated
+start/end ranges for up to eight anonymous speakers. Overlapping ranges can
+represent simultaneous speech. Speaker numbers apply only within that recording;
+they do not identify you, assign individual transcript words, or improve spelling.
+The view shows the first 200 ranges; dataset exports include all ranges.
+
+Raw text is saved before speaker analysis. If the model/runtime is missing or
+analysis fails, the transcript remains available with a warning. Analysis adds
+processing time and memory. It is off by default pending broader qualification.
+With audio collection off, the latest timeline is available in memory without
+creating a saved audio session. Stored timelines are unverified machine output
+and never become approved training labels automatically.
+
 ## Quick capture
 
 The desktop app must be running for its global shortcuts to work.

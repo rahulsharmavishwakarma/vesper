@@ -1,4 +1,5 @@
 <script lang="ts">
+  import SpeakerTimeline from './SpeakerTimeline.svelte';
   import CopyGlyph from './CopyGlyph.svelte';
   import TranscriptFeedbackControl from './TranscriptFeedback.svelte';
   import { selectionHighlight } from '../actions/selectionHighlight';
@@ -369,6 +370,7 @@
         >
       </div>
       <p class="transcript history-transcript">{transcriptPreview(record)}</p>
+      <SpeakerTimeline timeline={record.speakerTimeline} />
       <TranscriptFeedbackControl
         value={record.transcriptFeedback ?? null}
         disabled={!desktop || controlsBusy}

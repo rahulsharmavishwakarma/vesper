@@ -1,4 +1,5 @@
 <script lang="ts">
+  import SpeakerTimeline from './SpeakerTimeline.svelte';
   import CaptureGlyph from './CaptureGlyph.svelte';
   import CopyGlyph from './CopyGlyph.svelte';
   import {
@@ -816,6 +817,7 @@
         >
       </div>
       <div class="field">
+        <SpeakerTimeline timeline={result.speakerTimeline} />
         <label for="final-draft">Your text</label><textarea
           id="final-draft"
           rows="5"

@@ -2765,6 +2765,7 @@ await test('Model status icons distinguish downloaded files from selection and m
     quantization: null,
     selected: modelId === saved.models.asr,
     artifactsInstalled: index === 0,
+    ready: index === 0,
     runtimeReady: true,
     localFileCount: 0,
     downloadedBytes: 0,
@@ -3130,6 +3131,112 @@ await test('Native About menu request opens the shared sheet after startup', asy
     'Native About navigation was dropped',
   );
   await until(() => target.querySelector('.about-sheet .version'), 'Native About metadata missing');
+});
+
+await test('Speaker timelines preserve text, render overlapping ranges and save only explicitly', async () => {
+  const button = (label) =>
+    [...target.querySelectorAll('button')].find((node) => node.textContent.trim() === label);
+  let saved = defaultSettings();
+  const result = {
+    resultId: 'speaker-fixture',
+    rawTranscript: 'Original meeting words.',
+    cleanedTranscript: null,
+    session: null,
+    warnings: [],
+    durationSeconds: 3,
+    speakerTimeline: {
+      durationMs: 3000,
+      clippedSegments: 0,
+      modelRevision: 'fixture',
+      runtimeRevision: 'fixture',
+      provider: 'cpu',
+      segments: [
+        { startMs: 0, endMs: 2000, speaker: 1 },
+        { startMs: 1000, endMs: 3000, speaker: 2 },
+      ],
+    },
+  };
+  const state = await setup({
+    main: true,
+    intercept: (command, _state, args) => {
+      if (command === 'get_latest_result') return structuredClone(result);
+      if (command === 'get_settings') return structuredClone(saved);
+      if (command === 'list_sessions')
+        return [
+          {
+            id: 'speaker-history',
+            createdAt: new Date().toISOString(),
+            originalFilename: 'synthetic-speakers.wav',
+            audioRelativePath: 'audio/synthetic.wav',
+            audioSha256: 'fixture',
+            audioBytes: 1024,
+            rawTranscript: result.rawTranscript,
+            cleanedTranscript: null,
+            correctedTranscript: null,
+            verifiedTranscript: null,
+            reviewHistory: [],
+            reviewStatus: 'pending',
+            transcriptFeedback: null,
+            configSnapshot: structuredClone(saved),
+            modelVersions: {},
+            speakerTimeline: structuredClone(result.speakerTimeline),
+          },
+        ];
+      if (command === 'save_settings') {
+        saved = JSON.parse(JSON.stringify(args.settings));
+        return saved;
+      }
+    },
+  });
+  await until(() => target.querySelector('#final-draft'), 'Latest transcript missing');
+  assert(
+    target.querySelector('#final-draft').value === result.rawTranscript,
+    'Timeline changed words',
+  );
+  const summary = [...target.querySelectorAll('summary')].find(
+    (s) => s.textContent === 'Speaker timeline',
+  );
+  assert(summary, 'Speaker timeline missing');
+  summary.click();
+  await tick();
+  const rows = summary.parentElement.querySelectorAll('tbody tr');
+  assert(
+    rows.length === 2 &&
+      rows[0].textContent.includes('0:02.00') &&
+      rows[1].textContent.includes('0:01.00'),
+    'Overlap was flattened or timestamps misformatted',
+  );
+  assert(
+    summary.parentElement.textContent.includes('Words have not been assigned'),
+    'Attribution limitation missing',
+  );
+  button('Models').click();
+  await until(() => target.querySelector('#models-speakers'), 'Speaker setting missing');
+  const setting = target.querySelector('#models-speakers');
+  setting.closest('details').open = true;
+  assert(!setting.checked && !saved.speakerDiarization, 'Speaker stage did not default off');
+  target.querySelector('label[for="models-speakers"]').click();
+  await tick();
+  assert(setting.checked && !saved.speakerDiarization, 'Setting saved before explicit action');
+  button('Save changes').click();
+  await until(() => saved.speakerDiarization, 'Speaker setting did not persist');
+  assert(state.counts.save_settings === 1, 'Unexpected repeated setting save');
+  button('History').click();
+  await until(() => target.querySelector('#recording-trigger-speaker-history'), 'History missing');
+  target.querySelector('#recording-trigger-speaker-history').click();
+  await until(
+    () => [...target.querySelectorAll('summary')].some((s) => s.textContent === 'Speaker timeline'),
+    'Saved speaker timeline missing',
+  );
+  const history = [...target.querySelectorAll('summary')].find(
+    (s) => s.textContent === 'Speaker timeline',
+  );
+  history.click();
+  await tick();
+  assert(
+    history.parentElement.querySelectorAll('tbody tr').length === 2,
+    'History lost speaker ranges',
+  );
 });
 
 if (unexpected.length)
