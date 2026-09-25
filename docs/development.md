@@ -190,6 +190,51 @@ sudo apt-get install -y build-essential cmake clang libclang-dev pkg-config \
 - `llama-cpp-2` is pinned to `0.1.156`, with default features disabled. Its bundled llama.cpp builds from C/C++ source through CMake and links statically. Apple Silicon includes Metal; Linux/Windows accelerator builds use `cargo build -p transcribe-desktop --features cuda`, `--features vulkan`, or `--features rocm`. The selected backend falls back to CPU for cleanup if its matching feature was not compiled. `CMAKE_BUILD_PARALLEL_LEVEL=2` can reduce peak build memory. See the [pinned binding build script](https://docs.rs/crate/llama-cpp-sys-2/0.1.156/source/build.rs).
 - Keep `Cargo.lock` committed. `--locked` fixes Rust dependency resolution; native release downloads still require network access on an uncached build. Do not set `DOCS_RS` to bypass native linking: that upstream documentation option does not produce a working application. Switching to shared native libraries later requires packaging their runtime libraries and loader paths; the current manifests use static linking.
 
+## Experimental speaker runtime
+
+The local speaker stage uses GA Q8_0 weights independently of the chosen ASR.
+Its C ABI comes from NVIDIA/NeMo-Speech.cpp
+`97a15afa5caa9bce5baaa86c1184103877af4101`. Build that exact checkout's
+`metal-diar` preset following the [sample report](validation/nemotron-diarization-2026-09-25.md#reproducibility),
+including the pinned ggml patches and SentencePiece development files. The public
+v0.1.0 ASR archive predates this model and cannot supply this stage.
+
+Package the built dependency closure on Apple silicon with Xcode tools:
+
+```sh
+uv run --locked python scripts/package-nemotron-diarization.py \
+  --source /path/to/pinned/NeMo-Speech.cpp \
+  --model-root /path/to/selected/model-directory
+```
+
+Optionally pass `--model /path/to/Nemotron-3-Diarization.q8_0.gguf` to copy an
+already downloaded hash-verified GA artifact. Otherwise use the app's speaker
+model download. Use the **same model directory selected in the app**. The script
+refuses to replace an existing runtime package; qualify a fresh model root when
+rebuilding. It leaves the existing ASR installation intact. The separate bundle
+contains renamed, ad-hoc-signed dylibs and a local file-hash manifest. No native
+build, server, API call or model download runs during transcription.
+
+Run the ignored real-model checks with `TRANSCRIBE_DIAR_MODELS` pointing to an
+isolated model root containing the speaker bundle, Cohere, Qwen3.5 cleanup and
+Nemotron ASR with its macOS Metal release package, and
+`TRANSCRIBE_DIAR_CORPUS` pointing to the four prepared sample WAV files:
+
+```sh
+cargo test -p transcribe-inference real_worker_speaker_samples_and_native_asr_coexistence -- --ignored --nocapture
+TRANSCRIBE_DIAR_FIRST=1 cargo test -p transcribe-inference real_worker_speaker_samples_and_native_asr_coexistence -- --ignored --nocapture
+cargo test -p transcribe-desktop real_asr_speaker_pipeline_persists_and_exports_without_changing_words -- --ignored --nocapture
+```
+
+The first two commands verify the native load orders in independent processes,
+CPU/Metal, fresh recording state, packet cancellation and stable before/after
+ASR output. The desktop command exercises the
+desktop ASR → speaker stage → persistence/export path with paired unchanged ASR
+text, collection-off results and coexistence with text cleanup. They do not
+establish published DER parity or language generalization.
+See [ADR-0022](adrs/0022-local-speaker-timelines.md) for ownership, failure and
+privacy contracts.
+
 ## Run the application
 
 Run these commands from the repository root:

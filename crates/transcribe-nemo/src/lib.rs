@@ -12,6 +12,8 @@ use std::{
 
 use libloading::Library;
 
+pub mod diarization;
+
 const STATUS_OK: i32 = 0;
 
 #[derive(Debug, thiserror::Error)]
