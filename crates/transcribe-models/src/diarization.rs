@@ -10,6 +10,22 @@ const COMPONENTS: [&str; 7] = ["api", "asr", "ggml", "base", "cpu", "blas", "met
 pub fn supported() -> bool {
     cfg!(all(target_os = "macos", target_arch = "aarch64"))
 }
+
+pub fn supports_backend(backend: ComputeBackend) -> bool {
+    supported()
+        && matches!(
+            backend,
+            ComputeBackend::Auto | ComputeBackend::Cpu | ComputeBackend::Metal
+        )
+}
+
+/// Cheap admission for automatic analysis. Existing files are fully verified by
+/// `verify` before loading; presence is never an integrity attestation.
+pub fn available(root: &Path, backend: ComputeBackend) -> bool {
+    supports_backend(backend)
+        && root.join(artifact().relative_path).is_file()
+        && runtime_ready(root)
+}
 pub fn artifact() -> Artifact {
     Artifact {
         name: "Nemotron-3-Diarization.q8_0.gguf".into(),
@@ -122,6 +138,45 @@ fn verify_bundle(root: &Path, cancelled: &AtomicBool) -> Result<()> {
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    #[test]
+    fn automatic_admission_requires_model_complete_runtime_and_supported_backend() {
+        let root = tempfile::tempdir().unwrap();
+        assert!(!available(root.path(), ComputeBackend::Auto));
+        let model = root.path().join(artifact().relative_path);
+        std::fs::create_dir_all(model.parent().unwrap()).unwrap();
+        std::fs::write(&model, b"not verified weights").unwrap();
+        assert!(!available(root.path(), ComputeBackend::Auto));
+        let bundle = root.path().join(runtime_relative());
+        std::fs::create_dir_all(&bundle).unwrap();
+        std::fs::write(bundle.join("manifest.json"), b"{}").unwrap();
+        for component in COMPONENTS {
+            assert!(!available(root.path(), ComputeBackend::Auto));
+            std::fs::write(
+                bundle.join(format!("{LIBRARY_PREFIX}{component}.dylib")),
+                b"fixture",
+            )
+            .unwrap();
+        }
+        for backend in [
+            ComputeBackend::Auto,
+            ComputeBackend::Cpu,
+            ComputeBackend::Metal,
+        ] {
+            assert_eq!(available(root.path(), backend), supported());
+        }
+        for backend in [
+            ComputeBackend::Cuda,
+            ComputeBackend::Vulkan,
+            ComputeBackend::Rocm,
+        ] {
+            assert!(!available(root.path(), backend));
+        }
+        // Admission does not allow corrupt files through the verification gate.
+        assert!(verify(root.path(), &AtomicBool::new(false)).is_err());
+        std::fs::remove_file(model).unwrap();
+        assert!(!available(root.path(), ComputeBackend::Cpu));
+    }
 
     #[test]
     fn runtime_identity_and_every_byte_must_match_before_loading() {

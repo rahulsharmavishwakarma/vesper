@@ -215,6 +215,18 @@ rebuilding. It leaves the existing ASR installation intact. The separate bundle
 contains renamed, ad-hoc-signed dylibs and a local file-hash manifest. No native
 build, server, API call or model download runs during transcription.
 
+The stage runs automatically on Apple silicon with Automatic, CPU or Metal when
+the weight file, runtime manifest and all seven libraries are present. This cheap
+availability check is shared by the desktop and convenience pipeline; full hashes
+and path checks still run before native loading. Missing/partial components and
+unsupported backends skip the stage without blocking ASR. Present but corrupt
+components retain raw text and report the existing analysis warning.
+
+`speakerDiarization` is retired: Rust ignores it on load and omits it on save;
+the frontend migration removes it, including an old `false` value, while retaining
+other preferences. The model remains independently manageable in the catalog;
+ordinary ASR/cleanup installation does not require or install the speaker bundle.
+
 Run the ignored real-model checks with `TRANSCRIBE_DIAR_MODELS` pointing to an
 isolated model root containing the speaker bundle, Cohere, Qwen3.5 cleanup and
 Nemotron ASR with its macOS Metal release package, and
@@ -229,8 +241,10 @@ cargo test -p transcribe-desktop real_asr_speaker_pipeline_persists_and_exports_
 The first two commands verify the native load orders in independent processes,
 CPU/Metal, fresh recording state, packet cancellation and stable before/after
 ASR output. The desktop command exercises the
-desktop ASR → speaker stage → persistence/export path with paired unchanged ASR
-text, collection-off results and coexistence with text cleanup. They do not
+desktop ASR → automatic speaker stage → persistence/export path, including an old
+disabled preference, unchanged text against a direct ASR-worker baseline,
+collection-off results and coexistence with text cleanup. The baseline excludes
+desktop persistence and is not an equivalent end-to-end latency measurement. They do not
 establish published DER parity or language generalization.
 See [ADR-0022](adrs/0022-local-speaker-timelines.md) for ownership, failure and
 privacy contracts.

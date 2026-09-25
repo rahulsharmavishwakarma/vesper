@@ -313,7 +313,6 @@ fn selected_exact(config: &AppConfig) -> Result<Vec<Artifact>> {
                         .model_id
                         .as_deref()
                         .is_some_and(|id| config.audio_frontend.model_ids().contains(&id)))
-                || (file.role == "diarization" && config.speaker_diarization)
         })
         .collect();
     if let Some(profile) = &config.models.custom_asr {
@@ -462,7 +461,7 @@ fn model_install_specs(config: &AppConfig) -> Vec<ModelInstallSpec> {
         name: "Speaker timelines · Nemotron 3".into(),
         role: ModelRole::AudioFrontend,
         quantization: None,
-        selected: config.speaker_diarization,
+        selected: diarization::supports_backend(config.compute_backend),
         artifacts: vec![diarization::artifact()],
         support_error: (!diarization::supported()).then(|| {
             "Experimental speaker timelines currently require Apple silicon macOS.".into()
@@ -1315,7 +1314,6 @@ mod tests {
         config.models.custom_asr = Some(speech_profile());
         config.cleanup_enabled = false;
         config.audio_frontend.vad_enabled = true;
-        config.speaker_diarization = true;
         config.audio_frontend.noise_reduction = transcribe_core::NoiseReduction::Dpdfnet4;
         let root = tempfile::tempdir().unwrap();
         let artifacts = selected(&config).unwrap();
@@ -1326,7 +1324,8 @@ mod tests {
         }
         let status = inspect(&config, root.path());
         assert!(status.ready);
-        assert_eq!(status.files.iter().filter(|f| !f.installed).count(), 3);
+        assert_eq!(status.files.iter().filter(|f| !f.installed).count(), 2);
+        assert!(!diarization::available(root.path(), config.compute_backend));
         assert!(status.message.contains("original audio"));
         verify_asr(&config, root.path(), &AtomicBool::new(false)).unwrap();
         assert!(verify_frontend(&config, root.path(), &AtomicBool::new(false)).is_err());
@@ -1420,6 +1419,8 @@ mod tests {
                 assert_eq!(
                     spec.selected,
                     matches!(spec.model_id.as_str(), "silero-v6.2" | "dpdfnet4")
+                        || (spec.model_id == diarization::MODEL_ID
+                            && diarization::supports_backend(config.compute_backend))
                 );
             }
         }
