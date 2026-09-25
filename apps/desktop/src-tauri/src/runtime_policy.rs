@@ -84,6 +84,7 @@ mod tests {
             result_id: "worker".into(),
             raw_transcript: "read me".into(),
             cleaned_transcript: None,
+            speaker_timeline: None,
             personalized_transcript: None,
             personalization_evidence: None,
             draft_transcript: None,

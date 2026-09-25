@@ -25,11 +25,16 @@ mod policy;
 #[path = "runtime_semantic.rs"]
 mod semantic;
 
+#[cfg(test)]
+#[path = "runtime_diarization_tests.rs"]
+mod diarization_tests;
+
 #[derive(Clone, Debug, Serialize)]
 #[serde(rename_all = "camelCase")]
 pub struct PipelineResult {
     pub result_id: String,
     pub raw_transcript: String,
+    pub speaker_timeline: Option<transcribe_core::SpeakerTimeline>,
     pub cleaned_transcript: Option<String>,
     pub personalized_transcript: Option<String>,
     pub personalization_evidence: Option<transcribe_core::MemoryEvidence>,
@@ -54,6 +59,7 @@ mod tests {
             result_id: id.into(),
             raw_transcript: "Open read me in the repo".into(),
             cleaned_transcript: None,
+            speaker_timeline: None,
             personalized_transcript: None,
             personalization_evidence: None,
             draft_transcript: None,
@@ -177,6 +183,7 @@ mod tests {
             result_id: "current".into(),
             raw_transcript: "cube control".into(),
             cleaned_transcript: None,
+            speaker_timeline: None,
             personalized_transcript: Some("kubectl".into()),
             personalization_evidence: Some(Default::default()),
             draft_transcript: None,
@@ -1722,6 +1729,7 @@ impl WorkContext {
             result_id: uuid::Uuid::new_v4().to_string(),
             raw_transcript: raw.clone(),
             cleaned_transcript: None,
+            speaker_timeline: None,
             personalized_transcript: None,
             personalization_evidence: None,
             draft_transcript: None,
@@ -1759,6 +1767,49 @@ impl WorkContext {
         // Publish the durable raw result before a potentially slow or failed cleanup.
         self.runtime.publish(result.clone());
         // Freeze eligibility from the raw hypothesis. Cleanup cannot generate its own cues.
+        if self.config.speaker_diarization {
+            self.runtime
+                .progress("identifying_speakers", "Identifying speakers locally…");
+            match self.inference.analyze_speakers(
+                audio,
+                &self.config,
+                &self.model_root,
+                &self.operation_id,
+                Arc::clone(&self.runtime.cancelled),
+            ) {
+                Ok(timeline) => {
+                    if timeline.clipped_segments > 0 {
+                        self.event(
+                            session,
+                            "speaker_boundary_adjusted",
+                            "Speaker frame padding was clipped to the recording's exact duration.",
+                        );
+                    }
+                    if let Some(record) = session.as_ref() {
+                        match DatasetStore::open(self.dataset_root.clone()).and_then(|store| {
+                            store.complete_speaker_timeline(&record.id, timeline.clone())
+                        }) {
+                            Ok(updated) => *session = Some(updated),
+                            Err(error) => result
+                                .warnings
+                                .push(format!("Speaker timeline could not be saved: {error}")),
+                        }
+                    }
+                    result.speaker_timeline = Some(timeline);
+                }
+                Err(transcribe_inference::InferenceError::Cancelled) => {
+                    return Err("Transcription cancelled.".into())
+                }
+                Err(error) => {
+                    self.event(session, "speaker_analysis_failed", &error.to_string());
+                    result.warnings.push(format!(
+                        "Transcript retained. Speaker analysis did not finish: {error}"
+                    ));
+                }
+            }
+            result.session = session.clone();
+            self.runtime.publish(result.clone());
+        }
         let post_asr_profile = self
             .personalization_snapshot()?
             .post_asr_profile(&raw, self.config.language);
