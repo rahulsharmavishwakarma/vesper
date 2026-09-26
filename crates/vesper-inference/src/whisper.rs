@@ -120,7 +120,7 @@ mod tests {
     use serde_json::json;
 
     #[test]
-    fn whisper_streaming_is_rejected_before_loading_any_model() {
+    fn whisper_live_preview_requires_verified_model_files() {
         use std::sync::{atomic::AtomicBool, Arc};
         let manager = crate::InferenceManager::new().unwrap();
         for model in [AsrModel::WhisperSmall, AsrModel::WhisperTurbo] {
@@ -134,7 +134,8 @@ mod tests {
                     Arc::new(AtomicBool::new(false)),
                     Arc::new(|_| {})
                 ),
-                Err(crate::InferenceError::UnsupportedAsr(_))
+                Err(crate::InferenceError::Native { .. })
+                    | Err(crate::InferenceError::MissingModel(_))
             ));
         }
     }

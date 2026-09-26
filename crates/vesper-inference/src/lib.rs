@@ -13,6 +13,7 @@ mod capabilities;
 pub mod diarization;
 mod fidelity;
 mod lfm;
+mod live_preview;
 mod llama_runtime;
 mod manager;
 #[cfg(feature = "mlx")]
@@ -25,6 +26,7 @@ mod personalization;
 mod qualification;
 mod qwen;
 mod resident_sherpa;
+mod resources;
 mod segmented_audio;
 mod whisper;
 
@@ -36,7 +38,9 @@ use vesper_audio::MonoPcm;
 use vesper_core::{AdapterKind, AppConfig, RewriteQuantization};
 
 pub use capabilities::{accelerator_capabilities, AcceleratorCapabilities};
-pub use manager::{InferenceManager, StreamingSession, StreamingTranscript, StreamingUpdateSink};
+pub use manager::{
+    InferenceManager, StreamingFinal, StreamingSession, StreamingTranscript, StreamingUpdateSink,
+};
 pub use qwen::rewrite;
 pub type Result<T> = std::result::Result<T, InferenceError>;
 
@@ -319,7 +323,8 @@ fn native(stage: &'static str, error: impl std::fmt::Display) -> InferenceError 
 }
 
 fn worker_threads() -> i32 {
-    std::thread::available_parallelism().map_or(2, |count| count.get().clamp(1, 8) as i32)
+    std::thread::available_parallelism()
+        .map_or(2, |count| count.get().saturating_sub(2).clamp(1, 8) as i32)
 }
 
 #[cfg(test)]

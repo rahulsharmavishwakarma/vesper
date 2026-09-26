@@ -22,8 +22,31 @@ const STREAM_QUEUE: usize = 32;
 #[path = "manager_semantic.rs"]
 mod semantic;
 use semantic::SemanticQueue;
+#[path = "manager_preview.rs"]
+mod preview_worker;
+use preview_worker::run_buffered;
 
 pub type StreamingUpdateSink = Arc<dyn Fn(StreamingTranscript) + Send + Sync + 'static>;
+
+/// A buffered preview is never a successful final transcript. Its caller must
+/// run the ordinary completed-audio path over the recorder's original audio.
+#[derive(Debug, PartialEq, Eq)]
+pub enum StreamingFinal {
+    Transcript(String),
+    CompletedAudioRequired,
+}
+
+impl From<String> for StreamingFinal {
+    fn from(text: String) -> Self {
+        Self::Transcript(text)
+    }
+}
+
+impl From<&str> for StreamingFinal {
+    fn from(text: &str) -> Self {
+        Self::Transcript(text.to_owned())
+    }
+}
 
 #[derive(Clone, Debug, Serialize, PartialEq)]
 #[serde(rename_all = "camelCase")]
@@ -74,8 +97,9 @@ enum Command {
         stream_cancelled: Arc<AtomicBool>,
         updates: StreamingUpdateSink,
         input: mpsc::Receiver<StreamInput>,
-        started: mpsc::SyncSender<Result<()>>,
-        completed: mpsc::SyncSender<Result<String>>,
+        preview: Option<Arc<crate::live_preview::Mailbox>>,
+        started: mpsc::SyncSender<Result<bool>>,
+        completed: mpsc::SyncSender<Result<StreamingFinal>>,
     },
     Unload(mpsc::SyncSender<()>),
     WakeSemantic,
@@ -84,6 +108,7 @@ enum Command {
 
 enum StreamInput {
     Audio { samples: Vec<f32>, sample_rate: u32 },
+    Preview,
     Finish,
     Cancel,
 }
@@ -275,13 +300,13 @@ impl InferenceManager {
         updates: StreamingUpdateSink,
         profile: &PersonalizationProfile,
     ) -> Result<StreamingSession> {
+        let startup = std::time::Instant::now();
         check_cancelled(&cancelled)?;
         profile
             .validate()
             .map_err(|e| native("personalization", e))?;
-        if !config.speech_adapter().capabilities.native_streaming {
-            return Err(InferenceError::UnsupportedAsr(config.models.asr.id()));
-        }
+        config.validate()?;
+        let preview = Some(Arc::new(crate::live_preview::Mailbox::default()));
         let (input_sender, input) = mpsc::sync_channel(STREAM_QUEUE);
         let (started_sender, started) = mpsc::sync_channel(1);
         let (completed, completion) = mpsc::sync_channel(1);
@@ -295,15 +320,27 @@ impl InferenceManager {
             stream_cancelled: Arc::clone(&stream_cancelled),
             updates,
             input,
+            preview: preview.clone(),
             started: started_sender,
             completed,
         })?;
-        started.recv().map_err(worker_unavailable)??;
+        let buffered = started.recv().map_err(worker_unavailable)??;
+        record_evidence(
+            &self.evidence,
+            operation_id,
+            "liveStartup",
+            serde_json::json!({
+                "milliseconds":startup.elapsed().as_secs_f64()*1000.0,
+                "includesModelLoading":true,
+                "frontendInitialization":if buffered { "first-preview" } else { "startup" },
+            }),
+        );
         Ok(StreamingSession {
             sender: input_sender,
             completion: Some(completion),
             finished: false,
             cancelled: stream_cancelled,
+            preview: if buffered { preview } else { None },
         })
     }
 
@@ -354,7 +391,8 @@ impl Drop for InferenceManager {
 /// preserves stream state for the next utterance.
 pub struct StreamingSession {
     sender: mpsc::SyncSender<StreamInput>,
-    completion: Option<mpsc::Receiver<Result<String>>>,
+    completion: Option<mpsc::Receiver<Result<StreamingFinal>>>,
+    preview: Option<Arc<crate::live_preview::Mailbox>>,
     finished: bool,
     // Independent of application cancellation: cancelling partials must still
     // permit complete-audio fallback with the caller's original operation flag.
@@ -364,6 +402,17 @@ pub struct StreamingSession {
 impl StreamingSession {
     pub fn push(&self, samples: Vec<f32>, sample_rate: u32) -> Result<()> {
         check_cancelled(&self.cancelled)?;
+        if let Some(preview) = &self.preview {
+            preview.push(&samples, sample_rate)?;
+            // The bounded mailbox already owns the newest input. Wake tokens
+            // may coalesce; native work can never backpressure this producer.
+            return match self.sender.try_send(StreamInput::Preview) {
+                Ok(()) | Err(mpsc::TrySendError::Full(_)) => Ok(()),
+                Err(mpsc::TrySendError::Disconnected(_)) => {
+                    Err(worker_unavailable("preview worker closed"))
+                }
+            };
+        }
         self.sender
             .send(StreamInput::Audio {
                 samples,
@@ -372,10 +421,25 @@ impl StreamingSession {
             .map_err(worker_unavailable)
     }
 
-    pub fn finish(mut self) -> Result<String> {
-        self.sender
-            .send(StreamInput::Finish)
-            .map_err(worker_unavailable)?;
+    pub fn finish(self) -> Result<String> {
+        match self.finish_live()? {
+            StreamingFinal::Transcript(text) => Ok(text),
+            StreamingFinal::CompletedAudioRequired => Err(native(
+                "live finalization",
+                "buffered previews require completed-audio transcription",
+            )),
+        }
+    }
+
+    pub fn finish_live(mut self) -> Result<StreamingFinal> {
+        if let Some(preview) = &self.preview {
+            preview.finish();
+            let _ = self.sender.try_send(StreamInput::Finish);
+        } else {
+            self.sender
+                .send(StreamInput::Finish)
+                .map_err(worker_unavailable)?;
+        }
         self.finished = true;
         self.completion
             .take()
@@ -386,6 +450,9 @@ impl StreamingSession {
 
     pub fn cancel(mut self) -> Result<()> {
         self.cancelled.store(true, Ordering::Release);
+        if let Some(preview) = &self.preview {
+            preview.finish();
+        }
         // Wake an idle receiver; a full queue already wakes it. The independent
         // flag bypasses queued audio rather than waiting behind it.
         let _ = self.sender.try_send(StreamInput::Cancel);
@@ -407,6 +474,9 @@ impl Drop for StreamingSession {
     fn drop(&mut self) {
         if !self.finished {
             self.cancelled.store(true, Ordering::Release);
+            if let Some(preview) = &self.preview {
+                preview.finish();
+            }
             let _ = self.sender.try_send(StreamInput::Cancel);
         }
     }
@@ -442,7 +512,7 @@ impl WorkerState {
         if self
             .speech
             .as_ref()
-            .is_none_or(|(loaded, _)| loaded != &key)
+            .is_none_or(|(loaded, model)| loaded != &key || !model.healthy())
         {
             check_cancelled(cancelled)?;
             self.speech = None;
@@ -486,7 +556,9 @@ impl WorkerState {
         if !config.uses_mlx_speech()
             && !matches!(
                 config.speech_adapter().kind,
-                vesper_core::AdapterKind::CohereAsr | vesper_core::AdapterKind::Whisper
+                vesper_core::AdapterKind::CohereAsr
+                    | vesper_core::AdapterKind::Whisper
+                    | vesper_core::AdapterKind::QwenAsr
             )
         {
             return Ok(false);
@@ -774,10 +846,11 @@ fn worker_loop(
                 stream_cancelled,
                 updates,
                 input,
+                preview,
                 started,
                 completed,
             } => {
-                let result = run_stream(
+                let result = run_recording(
                     &mut state,
                     &config,
                     &model_root,
@@ -789,6 +862,7 @@ fn worker_loop(
                     &evidence,
                     input,
                     started,
+                    preview.expect("recording preview mailbox"),
                 );
                 if result.is_err() {
                     state.frontend.unload();
@@ -820,6 +894,82 @@ fn worker_loop(
 }
 
 #[allow(clippy::too_many_arguments)]
+fn run_recording(
+    state: &mut WorkerState,
+    config: &AppConfig,
+    root: &Path,
+    id: &str,
+    cancelled: &AtomicBool,
+    stream_cancelled: &AtomicBool,
+    updates: &StreamingUpdateSink,
+    profile: &PersonalizationProfile,
+    evidence: &Mutex<serde_json::Value>,
+    input: mpsc::Receiver<StreamInput>,
+    started: mpsc::SyncSender<Result<bool>>,
+    preview: Arc<crate::live_preview::Mailbox>,
+) -> Result<StreamingFinal> {
+    let initialized = (|| {
+        check_cancelled(cancelled)?;
+        if crate::resources::Memory::read().pressured() {
+            state.rewriter = None;
+        }
+        let mut selection = vesper_models::resolve_speech(config, root)
+            .map_err(crate::resident_sherpa::verification_error)?;
+        let mut fallback = std::mem::take(&mut state.automatic_fallback);
+        let result = fallback.load(&mut selection, root, cancelled, |effective| {
+            state.ensure_speech(effective, root, cancelled).map(|_| ())
+        });
+        state.automatic_fallback = fallback;
+        result?;
+        Ok(selection)
+    })();
+    let selection = match initialized {
+        Ok(selection) => selection,
+        Err(error) => {
+            let _ = started.send(Err(error));
+            return Err(InferenceError::Cancelled);
+        }
+    };
+    let result = if selection
+        .config
+        .speech_adapter()
+        .capabilities
+        .native_streaming
+    {
+        run_stream(
+            state,
+            &selection.config,
+            root,
+            id,
+            cancelled,
+            stream_cancelled,
+            updates,
+            profile,
+            evidence,
+            input,
+            started,
+        )
+    } else {
+        run_buffered(
+            state,
+            &selection.config,
+            root,
+            id,
+            cancelled,
+            stream_cancelled,
+            updates,
+            profile,
+            evidence,
+            input,
+            started,
+            preview,
+        )
+    };
+    record_evidence(evidence, id, "liveSelection", selection.evidence());
+    result
+}
+
+#[allow(clippy::too_many_arguments)]
 fn run_stream(
     state: &mut WorkerState,
     config: &AppConfig,
@@ -831,8 +981,8 @@ fn run_stream(
     profile: &PersonalizationProfile,
     evidence: &Mutex<serde_json::Value>,
     input: mpsc::Receiver<StreamInput>,
-    started: mpsc::SyncSender<Result<()>>,
-) -> Result<String> {
+    started: mpsc::SyncSender<Result<bool>>,
+) -> Result<StreamingFinal> {
     if let Err(error) = state.ensure_speech(config, model_root, cancelled) {
         let _ = started.send(Err(error));
         return Err(InferenceError::Cancelled);
@@ -878,18 +1028,40 @@ fn run_stream(
         Err(error) => {
             let message = error.to_string();
             let _ = started.send(Err(error));
-            return Err(native("NeMo-Speech.cpp streaming start", message));
+            return Err(native("native live start", message));
         }
     };
-    if started.send(Ok(())).is_err() {
+    if started.send(Ok(false)).is_err() {
         return Err(InferenceError::Cancelled);
     }
     let mut sequence = 0_u64;
-    let mut final_text = String::new();
+    let mut final_text = None;
+    record_evidence(
+        evidence,
+        operation_id,
+        "live",
+        serde_json::json!({
+            "strategy": if config.uses_mlx_speech() { "native-mlx-preview" } else { "native" },
+            "authoritativeFinal": if stream.needs_completed_audio() { "completed-audio" } else { "native-final" },
+            "inputQueueCapacity":STREAM_QUEUE,
+        }),
+    );
     let result = (|| loop {
         check_cancelled(cancelled)?;
         check_cancelled(stream_cancelled)?;
-        match input.recv() {
+        match input.recv_timeout(std::time::Duration::from_millis(20)) {
+            Err(mpsc::RecvTimeoutError::Timeout) => {
+                drain_results(
+                    &mut stream,
+                    operation_id,
+                    updates,
+                    &mut sequence,
+                    &mut final_text,
+                    cancelled,
+                    stream_cancelled,
+                )?;
+                continue;
+            }
             Ok(StreamInput::Audio {
                 samples,
                 sample_rate,
@@ -905,7 +1077,7 @@ fn run_stream(
                     .map_or((samples.as_slice(), sample_rate), |p| (p.as_slice(), 16000));
                 stream
                     .push(samples, sample_rate)
-                    .map_err(|error| native("NeMo-Speech.cpp streaming audio", error))?;
+                    .map_err(|error| native("native live audio", error))?;
                 check_cancelled(cancelled)?;
                 check_cancelled(stream_cancelled)?;
                 drain_results(
@@ -932,7 +1104,7 @@ fn run_stream(
                 }
                 stream
                     .finish()
-                    .map_err(|error| native("NeMo-Speech.cpp streaming finish", error))?;
+                    .map_err(|error| native("native live finish", error))?;
                 check_cancelled(cancelled)?;
                 check_cancelled(stream_cancelled)?;
                 drain_results(
@@ -946,7 +1118,23 @@ fn run_stream(
                 )?;
                 check_cancelled(cancelled)?;
                 check_cancelled(stream_cancelled)?;
-                return Ok(final_text.trim().to_owned());
+                if stream.needs_completed_audio() {
+                    return Ok(StreamingFinal::CompletedAudioRequired);
+                }
+                return final_text
+                    .map(|text: String| StreamingFinal::Transcript(text.trim().to_owned()))
+                    .ok_or_else(|| {
+                        native(
+                            "live finalization",
+                            "native stream ended without a final result",
+                        )
+                    });
+            }
+            Ok(StreamInput::Preview) => {
+                return Err(native(
+                    "live audio",
+                    "unexpected preview input for native session",
+                ))
             }
             Ok(StreamInput::Cancel) | Err(_) => return Err(InferenceError::Cancelled),
         }
@@ -963,11 +1151,11 @@ fn run_stream(
 }
 
 fn drain_results(
-    stream: &mut vesper_nemo::Stream<'_>,
+    stream: &mut adapters::NativeStream<'_>,
     operation_id: &str,
     updates: &StreamingUpdateSink,
     sequence: &mut u64,
-    final_text: &mut String,
+    final_text: &mut Option<String>,
     cancelled: &AtomicBool,
     stream_cancelled: &AtomicBool,
 ) -> Result<()> {
@@ -976,13 +1164,13 @@ fn drain_results(
         check_cancelled(stream_cancelled)?;
         let result = stream
             .poll_result()
-            .map_err(|error| native("NeMo-Speech.cpp streaming decode", error))?;
+            .map_err(|error| native("native live decode", error))?;
         check_cancelled(cancelled)?;
         check_cancelled(stream_cancelled)?;
         let Some(result) = result else { break };
         *sequence += 1;
         if result.is_final {
-            *final_text = result.text.clone();
+            *final_text = Some(result.text.clone());
         }
         updates(StreamingTranscript {
             operation_id: operation_id.to_owned(),
@@ -1013,6 +1201,10 @@ fn drain_results(
 fn worker_unavailable(error: impl std::fmt::Display) -> InferenceError {
     native("inference worker", error)
 }
+
+#[cfg(test)]
+#[path = "manager_live_tests.rs"]
+mod live_tests;
 
 #[cfg(test)]
 mod tests {
@@ -1144,6 +1336,7 @@ mod tests {
             let cancelled = Arc::new(AtomicBool::new(false));
             let session = StreamingSession {
                 sender,
+                preview: None,
                 completion: Some(completion),
                 finished: false,
                 cancelled: Arc::clone(&cancelled),
@@ -1157,6 +1350,31 @@ mod tests {
             // Cancellation needs no free queue slot and does not first consume audio.
             assert_eq!(queued.into_iter().count(), STREAM_QUEUE);
         }
+    }
+
+    #[test]
+    fn buffered_stop_bypasses_full_wakeup_queue_and_requires_authoritative_audio() {
+        let (sender, _input) = mpsc::sync_channel(STREAM_QUEUE);
+        for _ in 0..STREAM_QUEUE {
+            sender.send(StreamInput::Preview).unwrap();
+        }
+        let preview = Arc::new(crate::live_preview::Mailbox::default());
+        let (completed, completion) = mpsc::sync_channel(1);
+        completed
+            .send(Ok(StreamingFinal::CompletedAudioRequired))
+            .unwrap();
+        let session = StreamingSession {
+            sender,
+            completion: Some(completion),
+            preview: Some(Arc::clone(&preview)),
+            finished: false,
+            cancelled: Arc::new(AtomicBool::new(false)),
+        };
+        assert_eq!(
+            session.finish_live().unwrap(),
+            StreamingFinal::CompletedAudioRequired
+        );
+        assert!(preview.cancelled.load(Ordering::Acquire));
     }
 
     #[test]
@@ -1256,6 +1474,7 @@ mod tests {
             });
             let session = StreamingSession {
                 sender,
+                preview: None,
                 completion: Some(completion),
                 finished: false,
                 cancelled,
@@ -1300,6 +1519,7 @@ mod tests {
         });
         let session = StreamingSession {
             sender,
+            preview: None,
             completion: Some(completion),
             finished: false,
             cancelled: Arc::clone(&cancelled),
