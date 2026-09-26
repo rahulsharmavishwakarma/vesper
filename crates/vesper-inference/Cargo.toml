@@ -26,6 +26,7 @@ llama-cpp-2 = { version = "=0.1.156", default-features = false, features = ["mtm
 encoding_rs = "0.8"
 unicode-segmentation = "1.13"
 tempfile.workspace = true
+sysinfo = { version = "=0.36.1", default-features = false, features = ["system"] }
 
 [build-dependencies]
 serde_json.workspace = true

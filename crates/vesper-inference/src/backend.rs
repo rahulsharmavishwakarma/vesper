@@ -37,7 +37,8 @@ pub(crate) fn resolve(requested: ComputeBackend) -> Result<Plan> {
     if requested == ComputeBackend::Cpu {
         return Ok(Plan::CPU);
     }
-    select(requested, crate::capabilities::native_devices())
+    // Refresh free memory at model admission; discovery is cached separately.
+    select(requested, &llama_cpp_2::list_llama_ggml_backend_devices())
 }
 
 fn select(requested: ComputeBackend, devices: &[LlamaBackendDevice]) -> Result<Plan> {
@@ -53,15 +54,19 @@ fn select(requested: ComputeBackend, devices: &[LlamaBackendDevice]) -> Result<P
         if requested != ComputeBackend::Auto && requested != backend {
             continue;
         }
-        if let Some(device) = devices.iter().find(|device| {
-            device.backend == registry
-                && device.memory_total > 0
-                && !device.description.trim().is_empty()
-                && matches!(
-                    device.device_type,
-                    LlamaBackendDeviceType::Gpu | LlamaBackendDeviceType::IntegratedGpu
-                )
-        }) {
+        if let Some(device) = devices
+            .iter()
+            .filter(|device| {
+                device.backend == registry
+                    && device.memory_total > 0
+                    && !device.description.trim().is_empty()
+                    && matches!(
+                        device.device_type,
+                        LlamaBackendDeviceType::Gpu | LlamaBackendDeviceType::IntegratedGpu
+                    )
+            })
+            .max_by_key(|device| device.memory_free)
+        {
             return Ok(Plan {
                 provider,
                 device: Some(device.index),
@@ -149,6 +154,19 @@ mod tests {
         let mut empty = gpu(0, "MTL");
         empty.memory_total = 0;
         assert_eq!(select(ComputeBackend::Auto, &[empty]).unwrap(), Plan::CPU);
+    }
+
+    #[test]
+    fn device_admission_prefers_more_current_headroom_within_requested_backend() {
+        let first = gpu(1, "CUDA");
+        let mut second = gpu(2, "CUDA");
+        second.memory_free = first.memory_free * 2;
+        assert_eq!(
+            select(ComputeBackend::Cuda, &[first, second])
+                .unwrap()
+                .device,
+            Some(2)
+        );
     }
 
     #[test]

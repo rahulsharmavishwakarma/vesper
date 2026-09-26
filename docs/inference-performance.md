@@ -2,9 +2,49 @@
 
 The separate whisper.cpp path remains a candidate: the [18 September native screen](validation/whisper-2026-09-18.md) records quality gains on its English sample, Hindi/noise failures, and provisional CPU timings affected by other workloads. It does not qualify that runtime for production. The existing shared Sherpa Whisper adapter is a different implementation.
 
-Updated 23 September 2026. The primary-paper basis and standardized streaming metrics are in [Research basis for streaming inference](research-streaming-inference-papers.md). Packaged accelerator selection and selected resident adapters are implemented; the default Cohere speech adapter now retains its recognizer in the existing worker with fresh segment streams (ADR-0017). Performance claims require measurements on each named device. Recommendations below are engineering proposals unless explicitly identified as observations.
+Updated 26 September 2026. The primary-paper basis and standardized streaming metrics are in [Research basis for streaming inference](research-streaming-inference-papers.md). Packaged accelerator selection and selected resident adapters are implemented; the default Cohere speech adapter now retains its recognizer in the existing worker with fresh segment streams (ADR-0017). Performance claims require measurements on each named device. Recommendations below are engineering proposals unless explicitly identified as observations.
 
-The per-job Nemotron CLI and per-request cleanup-model loading have been replaced. The CPU Qwen3-ASR and Parakeet paths still own their ONNX models per completed job; this is distinct from the resident Qwen cleanup model. The next priorities are to instrument the complete live path, run the lifecycle/corpus gates, tune CPU budgets, and benchmark each packaged accelerator. Speech and cleanup ultimately need independent device controls. A GPU being present, a backend compiling, and the exact model running efficiently are three separate checks.
+The per-job Nemotron CLI and per-request cleanup-model loading have been replaced. CPU Qwen3-ASR and Parakeet now retain their verified ONNX recognizers on the existing owner, with fresh request streams, alongside the previously resident adapters. The next priorities are to instrument the complete live path, run the lifecycle/corpus gates, tune CPU budgets, and benchmark each packaged accelerator. Speech and cleanup ultimately need independent device controls. A GPU being present, a backend compiling, and the exact model running efficiently are three separate checks.
+
+## Resources for live adapters
+
+The current accelerator scope is Apple Silicon MLX/Metal, retaining CPU paths.
+NVIDIA CUDA and AMD/Intel Vulkan/ROCm expansion and hardware qualification are
+deferred to [issue #76](https://github.com/rahulsharmavishwakarma/transcribe/issues/76)
+in the GitHub Project backlog. Existing backend code is not hardware qualification;
+non-Apple GPU work is not a completion gate for the current Apple live-adapter
+scope. See [the current routing table](live-transcription.md#device-and-memory-behavior)
+for supported model/language combinations and remaining Apple validation limits.
+
+The approved [live adapter implementation](live-transcription.md) reuses the
+existing inference worker and qualified backend selection. It adds bounded
+preview audio, coalesced scheduling, refreshed llama.cpp device memory readings,
+CPU execution headroom and MLX allocator/cache limits. Only supported runtime and
+artifact combinations can use acceleration; CPU Sherpa does not acquire CUDA
+support from GPU detection alone.
+
+CPU worker counts reserve two logical slots where possible, with a 1–8 clamp and
+fallback of two. The selected model remains resident; preview passes use fresh
+request state. Buffered sessions sample system memory and process RSS through
+sysinfo, defer previews under pressure, and can release idle writer ownership
+before speech admission. Capture and the authoritative final audio are retained.
+These heuristics reduce contention; they are not an optimal-device benchmark or a
+hard global memory admission guarantee.
+
+The [pinned MLX allocator API](https://github.com/ml-explore/mlx-swift/blob/0.31.4/Source/MLX/Memory.swift)
+sets a recycled-cache cap and an allocation limit based on Metal's recommended
+working set. Active/cache/peak memory and configured limits are reported. These
+do not bound the whole process or other runtimes sharing unified memory. Apple
+CPU/GPU memory is one pool. NeMo's current C ABI provides no application-wide
+CPU-thread or memory-budget control. No wired-memory setting changes.
+
+Automatic initialization fallback and explicit-backend errors remain intact.
+Selected device free memory is refreshed at load; within a selected llama.cpp
+backend the device with the most free memory wins. No per-packet device migration,
+new kernels or quantization change is introduced. CUDA/Vulkan/ROCm execution,
+sustained thermals and power qualification require matching hardware; unavailable
+telemetry remains unknown. See [verification and evidence](live-transcription.md#verification-and-evidence)
+for current measurements and their scope.
 
 ## What this application does today
 
@@ -12,10 +52,10 @@ The user-selected default is Cohere Transcribe INT8 through sherpa-onnx 1.13.8, 
 
 | Component       | Current behavior                                                                                                                                         | Consequence                                                                                                                                                                                                                                            |
 | --------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
-| Speech runtime  | Default Cohere uses pinned CPU sherpa-onnx; selectable Nemotron uses CPU/Metal/CUDA/Vulkan NeMo-Speech.cpp with 20 ms capture packets                    | Cohere processes completed audio; NeMo owns cache-aware RNNT state and native partials                                                                                                                                                                 |
+| Speech runtime  | Default Cohere uses pinned CPU sherpa-onnx; selectable Nemotron uses CPU/Metal/CUDA/Vulkan NeMo-Speech.cpp with 20 ms capture packets                    | Cohere uses buffered live drafts plus a completed-audio final; NeMo owns cache-aware RNNT state and native partials                                                                                                                                                                 |
 | Cleanup runtime | Metal on Apple Silicon; CUDA/Vulkan/ROCm when compiled with the matching feature; otherwise CPU                                                          | Requests layer, K/Q/V and operator offload; `Auto` retries the complete initialization on CPU after GPU model-load or context-probe failure and records the reason. Explicit GPU selection fails if unavailable; operator placement remains unverified |
-| CPU budget      | Qwen available parallelism clamped to 1–8, fallback 2; NeMo runtime controls its own threading                                                           | Portable baseline, not a measured optimum                                                                                                                                                                                                              |
-| Object lifetime | One bounded worker retains at most one selected Cohere/Whisper/Nemotron/LFM ASR and one Qwen writer; CPU Qwen-ASR and Parakeet construct recognizers per job; MLX retains the selected Qwen/Parakeet/Whisper Small model in compatible Apple Silicon builds | Residency is adapter-specific; each recording/segment and Qwen pass starts isolated request state                                                                                                                                                      |
+| CPU budget      | Available parallelism minus two, clamped to 1–8, fallback 2; NeMo runtime controls its own threading                                                           | Portable baseline, not a measured optimum                                                                                                                                                                                                              |
+| Object lifetime | One bounded worker retains at most one selected Cohere/Whisper/Nemotron/LFM ASR and one Qwen writer; CPU Qwen-ASR and Parakeet also retain verified recognizers; MLX retains the selected Qwen/Parakeet/Whisper Small model in compatible Apple Silicon builds | Residency is adapter-specific; each recording/segment and Qwen pass starts isolated request state                                                                                                                                                      |
 | Cleanup limits  | Up to 4096 context tokens, bounded output up to 2048 tokens; logical batch 512, physical microbatch 128                                                  | Memory and latency depend on actual prompt/output lengths                                                                                                                                                                                              |
 | Integrity       | Full role-specific verification on resident load; per-job speech adapters verify every request                                                           | Cohere verifies on native load and checks observed identity on reuse; Apple aarch64/macOS enables sha2's supported hardware dispatch while retaining all size/hash checks                                                                              |
 
@@ -593,6 +633,9 @@ The six synthetic cleanup cases also exposed repetition and meaning changes. An 
 
 ## Device and backend strategy
 
+The non-Apple GPU rows below describe deferred qualification targets tracked in
+[issue #76](https://github.com/rahulsharmavishwakarma/transcribe/issues/76).
+
 The paths below are selectable and packaged where noted, but still require successful execution and comparison against CPU on the exact target. Existing observations are single-fixture development checks, not cross-device qualification.
 
 | Device family                 | Speech candidate                                                                 | Cleanup candidate                                    | Recommended order                                                                   |
@@ -817,7 +860,7 @@ exports use INT8, MLX Parakeet stores float32 with the native BF16 default, MLX
 Qwen uses 8-bit weights, MLX Whisper Small uses float16, LFM uses Q4_0 and Nemotron
 uses Q8_0. Per-request artifacts and runtime revisions are retained. These are
 comparisons of complete runtime/artifact/ownership configurations, not isolated
-GPU kernel speedups. CPU Parakeet and Qwen retain per-job model loads.
+GPU kernel speedups. CPU Parakeet and Qwen retained per-job model loads in this historical run; the later live-adapter implementation changes that ownership.
 
 | English configuration / actual provider | Failures / 32 | WER, failure as empty | Subsequent ASR mean / p95 |
 | --- | ---: | ---: | ---: |
