@@ -46,7 +46,7 @@ For now, [run from source](#development). Packaging details are in the
 
 After launching the desktop app:
 
-1. Open **Models**, choose your speech and writing models, and download their files.
+1. Open **Models**, choose your speech and writing models, and download their files. Supporting audio models are set up automatically; see [audio setup](docs/user-guide.md#experimental-audio-processing).
 2. Open **Dictate**, select your microphone and language, and allow microphone access when macOS asks.
 3. Press **Record**, speak, then **Stop and transcribe**. You can also import an audio file.
 4. Review the result and copy the text. Saved recordings appear in **History**.

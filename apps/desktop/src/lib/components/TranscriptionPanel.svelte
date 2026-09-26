@@ -8,7 +8,8 @@
     undoPersonalization,
     undoUnsavedPersonalization,
   } from '../api/personalization';
-  import { onMount, tick } from 'svelte';
+  import { onMount, tick, untrack } from 'svelte';
+  import { SvelteSet } from 'svelte/reactivity';
   import { listen } from '@tauri-apps/api/event';
   import Icon from './Icon.svelte';
   import AudioIndicator from './AudioIndicator.svelte';
@@ -18,6 +19,8 @@
   import {
     downloadBytes,
     downloadKey,
+    automaticAudioDownloads,
+    audioSetupRetryDelay,
     type DownloadTarget,
     type ModelDownloadState,
   } from '../modelDownloads';
@@ -52,6 +55,7 @@
     settingsDirty,
     settingsBusy,
     settingsRevision,
+    downloadRequested = false,
     modelSettings,
     maxRecordingSeconds,
     onBusyChange,
@@ -66,6 +70,7 @@
     settingsDirty: boolean;
     settingsBusy: boolean;
     settingsRevision: string;
+    downloadRequested?: boolean;
     modelSettings: AppConfig | null;
     maxRecordingSeconds: number;
     onBusyChange: (busy: boolean) => void;
@@ -112,6 +117,14 @@
   let polling = false;
   let disposed = false;
   let refreshVersion = 0;
+  let resourceSettingsRevision = $state<string | null>(null);
+  let audioSetupPaused = $state(false);
+  let audioSetupRetry = $state(0);
+  let audioSetupDirectory: string | null = null;
+  let audioRetryTimer: ReturnType<typeof setTimeout> | undefined;
+  let audioFailures = 0;
+  let audioFailedTarget = $state<string | null>(null);
+  const audioSetupAttempts = new SvelteSet<string>();
   let activeOperationId = $state<string | null>(null);
   let liveTranscript = $state<StreamingTranscript | null>(null);
   let unlistenPartial: (() => void) | undefined;
@@ -440,6 +453,7 @@
   export async function refreshResources() {
     if (!desktop || !settingsLoaded || busy) return;
     const version = ++refreshVersion;
+    const revision = settingsRevision;
     refreshing = true;
     const [models, catalog, inputs] = await Promise.allSettled([
       getModelInstallation(),
@@ -447,6 +461,7 @@
       listAudioDevices(),
     ]);
     if (disposed || version !== refreshVersion) return;
+    resourceSettingsRevision = revision;
     if (models.status === 'fulfilled') {
       installation = models.value;
       modelError = null;
@@ -476,10 +491,11 @@
     downloadError = null;
     downloadFeedback = null;
   }
-  export async function downloadModel(target: DownloadTarget) {
+  export async function downloadModel(target: DownloadTarget, automatic = false) {
     // Catalog refresh may still be running after Save & download. Installation
     // uses the newly persisted config; the backend validates the exact target.
-    if (!desktop || !settingsLoaded || settingsBusy || settingsDirty || busy) return;
+    if (!desktop || !settingsLoaded || settingsBusy || settingsDirty || busy || disposed)
+      return false;
     const key = downloadKey(target);
     installingModelKey = key;
     error = null;
@@ -490,18 +506,49 @@
     try {
       const updated = await installModel(target.modelId, target.quantization);
       modelCatalog = [...modelCatalog.filter((item) => downloadKey(item) !== key), updated];
-      downloadFeedback = updated.ready
-        ? `${updated.name} is ready on this device.`
-        : updated.message;
+      downloadFeedback = automatic
+        ? null
+        : updated.ready
+          ? `${updated.name} is ready on this device.`
+          : updated.message;
+      return updated.ready;
     } catch (cause) {
       if (message(cause).toLowerCase().includes('cancel'))
-        downloadFeedback = `${target.name} download cancelled. You can try again.`;
+        downloadFeedback = `${target.name} download cancelled. ${automatic ? 'Setup will resume automatically.' : 'You can try again.'}`;
       else downloadError = `Could not download ${target.name}. ${message(cause)}`;
+      return false;
     } finally {
       installingModelKey = null;
       await pollRuntime();
       await refreshResources();
     }
+  }
+  function resumeAutomaticAudio() {
+    if (disposed || !audioFailedTarget) return;
+    if (audioRetryTimer) clearTimeout(audioRetryTimer);
+    audioRetryTimer = undefined;
+    audioSetupAttempts.delete(audioFailedTarget);
+    audioFailedTarget = null;
+    audioSetupPaused = false;
+    audioSetupRetry += 1;
+    void refreshResources();
+  }
+
+  async function downloadAutomaticAudio(target: DownloadTarget) {
+    // Keep the queue serialized through the final catalog refresh, then retry
+    // failed transfers with backoff. The existing installer verifies cached files.
+    audioSetupPaused = true;
+    const ready = await downloadModel(target, true);
+    if (disposed) return;
+    audioSetupPaused = !ready;
+    if (ready) {
+      audioFailures = 0;
+    } else {
+      audioFailedTarget = downloadKey(target);
+      audioFailures += 1;
+      audioRetryTimer = setTimeout(resumeAutomaticAudio, audioSetupRetryDelay(audioFailures));
+    }
+    audioSetupRetry += 1;
   }
   export async function removeDownloadedModel(model: ModelCatalogInstallation) {
     if (!desktop || !settingsLoaded || settingsBusy || busy || refreshing) {
@@ -596,6 +643,43 @@
   }
 
   $effect(() => {
+    void audioSetupRetry;
+    if (
+      !desktop ||
+      !settingsLoaded ||
+      settingsBusy ||
+      settingsDirty ||
+      busy ||
+      refreshing ||
+      !ready ||
+      resourceSettingsRevision !== settingsRevision ||
+      downloadRequested ||
+      !installation
+    )
+      return;
+    const directory = installation.modelDirectory;
+    const catalog = modelCatalog;
+    untrack(() => {
+      if (audioSetupDirectory !== directory) {
+        audioSetupDirectory = directory;
+        audioSetupAttempts.clear();
+        audioSetupPaused = false;
+        if (audioRetryTimer) clearTimeout(audioRetryTimer);
+        audioRetryTimer = undefined;
+        audioFailedTarget = null;
+        audioFailures = 0;
+      }
+      if (audioSetupPaused || disposed) return;
+      const target = automaticAudioDownloads(catalog).find(
+        (target) => !audioSetupAttempts.has(downloadKey(target)),
+      );
+      if (target) {
+        audioSetupAttempts.add(downloadKey(target));
+        void downloadAutomaticAudio(target);
+      }
+    });
+  });
+  $effect(() => {
     onBusyChange(busy);
   });
   $effect(() => {
@@ -615,6 +699,8 @@
       progress: runtime?.stage === 'installing' ? runtime.message : '',
       error: downloadError ?? modelError,
       feedback: downloadFeedback,
+      audioSetupPaused,
+      audioSetupFailedKey: audioFailedTarget,
     });
   });
   $effect(() => {
@@ -623,6 +709,7 @@
     if (desktop && settingsLoaded && !settingsBusy) void refreshResources();
   });
   onMount(() => {
+    window.addEventListener('online', resumeAutomaticAudio);
     startPolling();
     if (desktop) {
       void listen<StreamingTranscript>('transcription-partial', (event) =>
@@ -634,6 +721,8 @@
     }
     return () => {
       disposed = true;
+      window.removeEventListener('online', resumeAutomaticAudio);
+      if (audioRetryTimer) clearTimeout(audioRetryTimer);
       unlistenPartial?.();
       if (pollTimer) clearTimeout(pollTimer);
       if (copyTimer) clearTimeout(copyTimer);

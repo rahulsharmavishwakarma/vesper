@@ -27,6 +27,8 @@
       return { label: 'Unavailable on this device', kind: 'unavailable', tone: 'muted' };
     if (!entry.runtimeReady)
       return { label: 'Awaiting device support', kind: 'unavailable', tone: 'muted' };
+    if (state.audioSetupFailedKey === downloadKey(target))
+      return { label: 'Will retry automatically', kind: 'warning', tone: 'warning' };
     if (entry.artifactsInstalled)
       return { label: 'Ready on this device', kind: 'downloaded', tone: 'ready' };
     return state.audioSetupPaused && !state.installing

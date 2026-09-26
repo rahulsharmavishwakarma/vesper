@@ -190,7 +190,7 @@ For every included record it copies and verifies the original audio, serializes 
 
 ## Privacy, security, and recovery boundaries
 
-Speech inference and cleanup run locally. Normal operation makes network requests only when the user explicitly installs model artifacts; there is no transcript, audio, review, or telemetry upload path. Imported custom profiles describe downloadable data files and cannot introduce executable repository code.
+Speech inference and cleanup run locally. Normal operation makes network requests for user-requested speech/writer installation and automatic supporting-audio setup; there is no transcript, audio, review, or telemetry upload path. Imported custom profiles describe downloadable data files and cannot introduce executable repository code.
 
 Settings, SQLite rows, transcripts, exported JSON, audio, and model files are not encrypted by the application. They rely on operating-system file permissions and any device/full-disk encryption the user has enabled. Anyone with access to the application data directories or an export can read their contents. Secrets and credentials are not intentionally stored in the session schema.
 
@@ -222,13 +222,28 @@ There is no cloud recovery, automatic backup, database repair UI, session deleti
 
 These limits are enforced in code and should be changed there first; documentation must follow the implementation.
 
-## Optional audio processing
+## Managed desktop audio processing
 
-[ADR-0019](adrs/0019-shared-audio-frontend.md) adds one shared frontend to the existing inference worker. Models → Audio processing enables advisory Silero speech intervals and optional DPDFNet4/8 noise reduction; both default off. Install the selected audio models through the existing download controls. Full recordings and live-capable ASR use the same stateful resampling/enhancement contract. Completed-only ASR processes the frontend at Stop.
+[ADR-0019](adrs/0019-shared-audio-frontend.md) adds one shared frontend to the existing inference worker. Desktop settings now normalize the audio profile to advisory Silero speech intervals and DPDFNet8 noise reduction, with automatic gain disabled. The settings store validates old input before normalization, preserves other settings, and writes the managed profile only on an explicit save. Browser preview applies the same normalization. Core/evaluator defaults remain raw so benchmark baselines do not silently change. Models → Audio processing reports setup status without model selectors. Full recordings and live-capable ASR use the same stateful resampling/enhancement contract. Completed-only ASR processes the frontend at Stop.
 
 Original recordings remain intact. Missing optional audio models do not block recording when the required speech/writer files are installed. Frontend startup failures use original audio with a warning; mid-stream failures invalidate live drafts in both views and use original audio for completed fallback. The UI reconciles drafts with the active operation even when failure and completion occur between polls. Cancellation is propagated. Execution evidence includes frontend artifact/runtime identities, load costs, resampling/native/finalization times, a bounded dispatch histogram, sample counts and capped advisory intervals. VAD never rejects audio; enhancement remains experimental because clearer audio can produce worse words. Ear/Uhm are not production stages.
 
-The independent `audioFrontend.autoLevelEnabled` option automatically selects
+The main-window download coordinator waits for fresh saved-setting catalog state,
+ready speech/writer assets, no dirty draft and an idle pipeline. It uses the existing
+serialized installer for DPDFNet8, Silero and supported speaker weights; it never
+starts ASR/writer downloads. Native selected/supported/runtime-ready checks gate each
+package, including the separately built speaker runtime. Explicit user downloads
+have priority. Each eligible package is verified once per model directory and session;
+valid cached bytes are reused and missing/corrupt files are repaired by the installer.
+Failure/cancellation pauses the queue for 30 seconds, then 2 minutes, then 10 minutes
+between subsequent attempts. Reconnection can resume it sooner. Retries retain idle
+and saved-settings guards; timers and network listeners are cleared on unmount, and
+a folder change resets the attempt history. There are no manual audio setup actions. Download state and
+cancellation remain visible outside Models. There is no additional download service,
+runtime hot-swap or training. Setup can continue in a hidden main window while the
+app is open; a closed app does not download.
+
+The evaluator-only `audioFrontend.autoLevelEnabled` option automatically selects
 the existing Silero package for bounded level adjustment, even when timing
 annotations are disabled. Its analysis-only conditioned input does not replace
 the archived recording. The shared session buffers deterministic 512-sample

@@ -3208,7 +3208,7 @@ await test('Speaker timelines appear automatically without a toggle or settings 
   );
   button('Models').click();
   await until(
-    () => target.textContent.includes('Speaker timelines are added automatically'),
+    () => target.textContent.includes('Speaker timelines are added on supported devices'),
     'Automatic speaker description missing',
   );
   assert(!target.querySelector('#models-speakers'), 'Retired speaker toggle is still present');
@@ -3229,6 +3229,310 @@ await test('Speaker timelines appear automatically without a toggle or settings 
     history.parentElement.querySelectorAll('tbody tr').length === 2,
     'History lost speaker ranges',
   );
+});
+
+function audioPackage(modelId, changes = {}) {
+  return {
+    modelId,
+    name: modelId,
+    role: 'audio_frontend',
+    quantization: null,
+    selected: true,
+    ready: false,
+    artifactsInstalled: false,
+    runtimeReady: true,
+    supported: true,
+    modelDirectory: 'synthetic-models',
+    files: [],
+    localFileCount: 0,
+    downloadedBytes: 0,
+    removableBytes: 0,
+    removalError: null,
+    message: 'Synthetic package',
+    ...changes,
+  };
+}
+const audioButton = (label) =>
+  [...target.querySelectorAll('button')].find((b) => b.textContent.trim() === label);
+
+await test('Automatic audio setup downloads only managed models serially and reuses installed files', async () => {
+  const catalog = [
+    audioPackage('dpdfnet4'),
+    audioPackage('silero-v6.2'),
+    audioPackage('dpdfnet8'),
+    audioPackage('nvidia/Nemotron-3-Diarization'),
+  ];
+  const jobs = [];
+  let active = 0;
+  const state = await setup({
+    main: true,
+    intercept(command, state, args) {
+      if (command === 'list_model_installations') return structuredClone(catalog);
+      if (command === 'install_model') {
+        assert(++active === 1, 'Supporting downloads overlap');
+        const job = { ...deferred(), modelId: args.modelId };
+        jobs.push(job);
+        return job.promise.then(() => {
+          active -= 1;
+          const entry = catalog.find((e) => e.modelId === args.modelId);
+          entry.ready = entry.artifactsInstalled = true;
+          return structuredClone(entry);
+        });
+      }
+    },
+  });
+  await until(() => jobs.length === 1, 'Noise reduction did not download automatically');
+  assert(jobs[0].modelId === 'dpdfnet8', 'Wrong automatic denoiser');
+  assert(audioButton('Cancel download'), 'Automatic download cannot be cancelled from Dictate');
+  audioButton('Models').click();
+  await tick();
+  assert(
+    !target.querySelector('#models-noise-reduction, #models-auto-level, #models-vad'),
+    'Retired audio choices still visible',
+  );
+  assert(
+    !target.querySelector('[aria-label="Audio processing model download"]'),
+    'Manual audio model chooser remains',
+  );
+  assert(
+    target.querySelector('#models-asr-model') && target.querySelector('#models-cleanup-model'),
+    'Speech/writing selectors lost',
+  );
+  jobs[0].resolve();
+  await until(() => jobs.length === 2, 'Speech detection did not follow noise download');
+  assert(jobs[1].modelId === 'silero-v6.2', 'Wrong second package');
+  jobs[1].resolve();
+  await until(() => jobs.length === 3, 'Supported speaker package not downloaded');
+  jobs[2].resolve();
+  await until(
+    () =>
+      !audioButton('Cancel download') &&
+      target.querySelectorAll('[aria-label="Automatic audio setup"] [data-status="downloaded"]')
+        .length === 3,
+    'Setup did not finish',
+  );
+  assert((state.counts.save_settings ?? 0) === 0, 'Automatic setup saved settings without an edit');
+  assert(
+    target.querySelectorAll('[aria-label="Automatic audio setup"] [data-status="downloaded"]')
+      .length === 3,
+    'Ready states missing',
+  );
+  const before = state.counts.list_model_installations;
+  audioButton('Dictate').click();
+  target.querySelector('[aria-label="Rescan microphones"]').click();
+  await until(() => state.counts.list_model_installations > before, 'Catalog not refreshed');
+  await tick();
+  assert(jobs.length === 3, 'Installed files downloaded again');
+});
+
+for (const failure of ['cancelled', 'network failure']) {
+  await test(`Automatic audio setup recovers from ${failure} without setup buttons`, async () => {
+    const catalog = [
+      audioPackage('dpdfnet8', { ready: true, artifactsInstalled: true }),
+      audioPackage('silero-v6.2', { ready: true, artifactsInstalled: true }),
+      audioPackage('nvidia/Nemotron-3-Diarization', { runtimeReady: false }),
+    ];
+    const pending = deferred();
+    const originalTimeout = window.setTimeout;
+    const retries = [];
+    window.setTimeout = (callback, delay, ...args) => {
+      if (delay === 30_000) {
+        retries.push(() => callback(...args));
+        return originalTimeout(() => {}, 1_000_000);
+      }
+      return originalTimeout(callback, delay, ...args);
+    };
+    let calls = 0;
+    let cachedChecks = 0;
+    try {
+      const state = await setup({
+        main: true,
+        intercept(command, state, args) {
+          if (command === 'list_model_installations') return structuredClone(catalog);
+          if (command === 'install_model') {
+            if (args.modelId === 'silero-v6.2') {
+              cachedChecks += 1;
+              return structuredClone(catalog[1]);
+            }
+            assert(args.modelId === 'dpdfnet8', 'Tried to download an unsupported package');
+            calls += 1;
+            if (calls === 1)
+              return pending.promise.then(() => {
+                throw Error(failure);
+              });
+            catalog[0].ready = catalog[0].artifactsInstalled = true;
+            return structuredClone(catalog[0]);
+          }
+          if (command === 'cancel_operation') {
+            pending.resolve();
+            return null;
+          }
+        },
+      });
+      await until(() => calls === 1, 'Automatic setup never started');
+      if (failure === 'cancelled') audioButton('Cancel download').click();
+      else pending.resolve();
+      await until(
+        () =>
+          retries.length === 1 &&
+          target.textContent.includes('Audio setup will retry automatically'),
+        'Automatic retry not scheduled',
+      );
+      assert(
+        !audioButton('Retry audio setup') && !audioButton('Verify audio files'),
+        'Audio setup still requires an option',
+      );
+      const before = state.counts.list_model_installations;
+      target.querySelector('[aria-label="Rescan microphones"]').click();
+      await until(() => state.counts.list_model_installations > before, 'Recovery refresh failed');
+      assert(calls === 1, 'Failure caused an immediate retry loop');
+      await until(
+        () => target.querySelector('[aria-label="Automatic audio setup"] [data-status="warning"]'),
+        'Failed cached-file verification falsely appears ready',
+      );
+      if (failure === 'cancelled') retries[0]();
+      else window.dispatchEvent(new Event('online'));
+      await until(
+        () => calls === 2 && cachedChecks === 1 && !audioButton('Cancel download'),
+        'Automatic recovery or stored-file verification failed',
+      );
+      audioButton('Models').click();
+      await tick();
+      assert(
+        target.textContent.includes('Awaiting device support'),
+        'Missing speaker runtime falsely ready',
+      );
+      assert(
+        !target.querySelector('[aria-labelledby="audio-processing-heading"] button'),
+        'Audio setup offers manual actions',
+      );
+    } finally {
+      window.setTimeout = originalTimeout;
+    }
+  });
+}
+
+await test('Automatic audio setup waits for saved settings and handles a changed model folder', async () => {
+  let saved = defaultSettings();
+  let folder = 'synthetic-models';
+  const firstCatalog = deferred();
+  const installs = [];
+  let listed = 0;
+  const state = await setup({
+    main: true,
+    intercept(command, state, args) {
+      if (command === 'get_settings') return structuredClone(saved);
+      if (command === 'get_model_installation') return { ...installation, modelDirectory: folder };
+      if (command === 'list_model_installations') {
+        listed += 1;
+        if (listed === 1) return firstCatalog.promise;
+        return [
+          audioPackage('dpdfnet8', {
+            modelDirectory: folder,
+            artifactsInstalled: installs.includes(folder),
+          }),
+        ];
+      }
+      if (command === 'save_settings') {
+        saved = JSON.parse(JSON.stringify(args.settings));
+        folder = saved.modelDirectory;
+        return saved;
+      }
+      if (command === 'install_model') {
+        installs.push(folder);
+        return audioPackage(args.modelId, {
+          modelDirectory: folder,
+          ready: true,
+          artifactsInstalled: true,
+        });
+      }
+    },
+  });
+  await until(
+    () =>
+      target.querySelector('#model-directory') &&
+      !target.querySelector('#model-directory').disabled,
+    'Settings missing',
+  );
+  audioButton('Models').click();
+  const field = target.querySelector('#model-directory');
+  field.value = 'new-synthetic-models';
+  field.dispatchEvent(new Event('input', { bubbles: true }));
+  await tick();
+  firstCatalog.resolve([audioPackage('dpdfnet8')]);
+  await until(() => target.querySelector('[aria-label="Rescan microphones"]'), 'Resources missing');
+  await tick();
+  assert(installs.length === 0, 'Dirty settings triggered supporting downloads');
+  audioButton('Save changes').click();
+  await until(() => installs.length === 1, 'Saving settings did not resume automatic setup');
+  assert(installs[0] === 'new-synthetic-models', 'Used stale model folder');
+  assert(state.counts.save_settings === 1, 'Setup unexpectedly saved settings again');
+});
+
+await test('Automatic audio setup waits for required models and prioritizes explicit speech download', async () => {
+  let primaryReady = false;
+  let audioInstalled = false;
+  const jobs = [];
+  const speech = { ...audioPackage(defaultSettings().models.asr), role: 'speech_recognition' };
+  await setup({
+    main: true,
+    intercept(command, state, args) {
+      if (command === 'get_runtime_status') return { ...idle, modelsReady: primaryReady };
+      if (command === 'get_model_installation') return { ...installation, ready: primaryReady };
+      if (command === 'list_model_installations')
+        return [speech, audioPackage('dpdfnet8', { artifactsInstalled: audioInstalled })];
+      if (command === 'install_model') {
+        jobs.push(args.modelId);
+        if (args.modelId === speech.modelId) {
+          primaryReady = true;
+          return { ...speech, ready: true, artifactsInstalled: true };
+        }
+        audioInstalled = true;
+        return audioPackage(args.modelId, { ready: true, artifactsInstalled: true });
+      }
+    },
+  });
+  audioButton('Models').click();
+  await until(
+    () =>
+      target.querySelector('[aria-label="Speech model download"] button') &&
+      !target.querySelector('[aria-label="Speech model download"] button').disabled,
+    'Speech download unavailable',
+  );
+  assert(jobs.length === 0, 'Downloaded supporting files before required models');
+  target.querySelector('[aria-label="Speech model download"] button').click();
+  await until(() => jobs.length === 2, 'Supporting files not downloaded after required model');
+  assert(
+    jobs[0] === speech.modelId && jobs[1] === 'dpdfnet8',
+    'Automatic setup preempted explicit download',
+  );
+});
+
+await test('Automatic audio setup waits for an active recording to finish', async () => {
+  let installed = false;
+  let calls = 0;
+  const state = await setup({
+    main: true,
+    recording: true,
+    intercept(command, state, args) {
+      if (command === 'list_model_installations')
+        return [audioPackage('dpdfnet8', { artifactsInstalled: installed })];
+      if (command === 'install_model') {
+        assert(!state.runtime.busy, 'Audio setup interrupted the active recording');
+        calls += 1;
+        installed = true;
+        return audioPackage(args.modelId, { ready: true, artifactsInstalled: true });
+      }
+    },
+  });
+  await until(() => target.querySelector('.is-recording'), 'Recording state missing');
+  assert(calls === 0, 'Downloaded during recording');
+  audioButton('Stop and transcribe').click();
+  await until(
+    () => !state.runtime.busy && !target.querySelector('.is-recording'),
+    'Recording did not finish',
+  );
+  await until(() => calls === 1, 'Audio setup did not resume after recording');
 });
 
 if (unexpected.length)

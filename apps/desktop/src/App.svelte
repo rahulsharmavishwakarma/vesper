@@ -14,7 +14,6 @@
     type AppStatusSnapshot,
   } from './lib/api/desktop';
   import {
-    AUDIO_FRONTENDS,
     MODEL_ROLE_LABELS,
     CLEANUP_QUANTIZATION_OPTIONS,
     defaultSettings,
@@ -56,6 +55,7 @@
   import AboutSheet from './lib/components/AboutSheet.svelte';
   import BrandLogo from './lib/components/BrandLogo.svelte';
   import DownloadProgress from './lib/components/DownloadProgress.svelte';
+  import AutomaticAudioSetup from './lib/components/AutomaticAudioSetup.svelte';
   import {
     acceleratorOptions,
     acceleratorReason,
@@ -520,7 +520,7 @@
           await Promise.all([refreshStatus(), transcriptionPanel?.refreshResources()]);
         }}
       />
-      {#if activeView === 'models'}
+      {#if activeView === 'models' || downloads.installing || downloads.audioSetupPaused}
         <div class="model-download-feedback" aria-live="polite">
           {#if downloads.installing}<div class="download-progress">
               <DownloadProgress
@@ -537,6 +537,9 @@
           {#if error}<p class="error" role="alert">{error}</p>{/if}
           {#if downloads.error}<p class="error" role="alert">{downloads.error}</p>{/if}
           {#if downloads.feedback}<p class="success">{downloads.feedback}</p>{/if}
+          {#if downloads.audioSetupPaused && !downloads.installing}
+            <p class="note">Audio setup will retry automatically when the app is idle.</p>
+          {/if}
         </div>
       {/if}
       <form
@@ -864,82 +867,7 @@
               <h2 id="audio-processing-heading">
                 Audio processing <span class="note">Experimental</span>
               </h2>
-              <div class="setting-toggle">
-                <label class="checkbox-field" for="models-auto-level"
-                  ><input
-                    id="models-auto-level"
-                    type="checkbox"
-                    bind:checked={draft.audioFrontend.autoLevelEnabled}
-                    disabled={pending !== null || pipelineBusy}
-                    aria-describedby="models-auto-level-help"
-                  /><span>Automatically adjust quiet speech</span></label
-                >
-                <p id="models-auto-level-help" class="note checkbox-help">
-                  Adjusts quiet speech with noise and volume limits, for live and completed
-                  recordings. Uses the speech detection model. Very quiet words may still be missed.
-                </p>
-              </div>
-              <div class="setting-toggle">
-                <label class="checkbox-field" for="models-vad"
-                  ><input
-                    id="models-vad"
-                    type="checkbox"
-                    bind:checked={draft.audioFrontend.vadEnabled}
-                    disabled={pending !== null || pipelineBusy}
-                    aria-describedby="models-vad-help"
-                  /><span>Detect speech activity</span></label
-                >
-                <p id="models-vad-help" class="note checkbox-help">
-                  Adds speech timing annotations. All recorded audio is retained for transcription.
-                </p>
-              </div>
-              <div class="field">
-                <label for="models-noise-reduction">Noise reduction</label>
-                <Select
-                  id="models-noise-reduction"
-                  bind:value={draft.audioFrontend.noiseReduction}
-                  options={[
-                    { value: 'off', label: 'Off' },
-                    { value: 'dpdfnet4', label: 'DPDFNet4 · 12 MB' },
-                    { value: 'dpdfnet8', label: 'DPDFNet8 · 15 MB' },
-                  ]}
-                  disabled={pending !== null || pipelineBusy}
-                  describedBy="models-noise-help"
-                />
-                <p id="models-noise-help" class="note">
-                  Applies to live transcription and completed recordings. Noise reduction can reduce
-                  transcription accuracy, especially for quiet speech.
-                </p>
-              </div>
-              <details class="advanced-settings">
-                <summary>Audio model downloads</summary>
-                <p class="note">
-                  Speaker timelines are added automatically when available on this device.
-                </p>
-                {#each Object.entries(AUDIO_FRONTENDS) as [modelId, name] (modelId)}
-                  <p>{name}</p>
-                  <ModelDownload
-                    target={{ modelId, name, role: 'audio_frontend', quantization: null }}
-                    knownSelection={draft.modelDirectory === engineSettings?.modelDirectory}
-                    onRemove={(model) => {
-                      void removalDialog?.confirmRemoval(model);
-                    }}
-                    state={downloads}
-                    desktop={environment === 'desktop'}
-                    {dirty}
-                    disabled={pending !== null || pipelineBusy || downloadRequest !== null}
-                    downloadDisabled={validationErrors.length > 0}
-                    onDownload={() => {
-                      void downloadPackage({
-                        modelId,
-                        name,
-                        role: 'audio_frontend',
-                        quantization: null,
-                      });
-                    }}
-                  />
-                {/each}
-              </details>
+              <AutomaticAudioSetup state={downloads} desktop={environment === 'desktop'} />
             </section>
             <section
               class="settings-section"
@@ -1142,6 +1070,7 @@
         settingsDirty={dirty}
         settingsBusy={pending !== null}
         settingsRevision={savedJson}
+        downloadRequested={downloadRequest !== null}
         modelSettings={engineSettings}
         maxRecordingSeconds={savedRecordingLimit}
         onBusyChange={(busy) => {

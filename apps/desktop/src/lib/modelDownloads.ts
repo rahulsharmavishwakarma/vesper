@@ -19,6 +19,7 @@ export interface ModelDownloadState {
   error: string | null;
   feedback: string | null;
   audioSetupPaused?: boolean;
+  audioSetupFailedKey?: string | null;
 }
 
 export const AUTOMATIC_AUDIO_MODELS = [

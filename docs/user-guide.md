@@ -39,7 +39,8 @@ to be managed separately in **Models**.
 1. Open **Models** and select speech and writing models. The writing model is
    used only when text cleanup is enabled.
 2. Download the selected files. **Save & download** saves a pending selection
-   before downloading it; **Save changes** alone does not download anything.
+   before downloading it; **Save changes** alone does not download speech or writing
+   weights. Supporting audio packages download automatically when those models are ready.
 3. Open **Dictate**, select your microphone and choose a language supported by
    the speech model. Allow microphone access when macOS asks.
 4. Wait until the app is ready before recording. The first recording may take
@@ -109,26 +110,45 @@ transcript remains available. This recovery needs no setting or per-word setup.
 
 ### Experimental audio processing
 
-In **Models → Audio processing**, **Automatically adjust quiet speech** enables
-bounded automatic volume adjustment for both live transcription and completed
-recordings. It uses the existing speech detection model; install that model from
-**Audio model downloads** and save the setting. It starts off, independently of
-**Detect speech activity** (timing annotations) and **Noise reduction**.
+In **Models → Audio processing**, supporting audio models are managed by the app.
+Only the speech (ASR) and writing models have model selectors. Noise reduction
+uses **DPDFNet8**, and **Silero v6.2** adds speech timing annotations without
+removing recorded audio. Automatic volume adjustment is disabled. Older audio
+preferences use this managed setup when loaded; your speech, writing, language
+and storage choices are preserved. Existing DPDFNet4 files remain on disk but
+are no longer selected by the desktop app.
 
-The adjustment combines speech detection with volume, estimated background noise
-and peak limits. It preserves all recorded samples and does not automatically
-switch denoisers or stop a recording. Very quiet or short words can still be
-missed, and noise may be mistaken for speech. The original recording remains
-available; processing failures use the existing original-audio fallback. Compare
-your own recordings before relying on this experimental option. Local testing
-found improvements on some quiet speech and regressions on other recordings,
-including quiet Whisper Turbo input. Leave it off when it reduces accuracy.
+Once your selected speech and enabled writing models are ready, the desktop app
+downloads missing, supported audio packages automatically, one at a time. It waits
+while you are recording, transcribing, downloading another model or editing settings.
+Download progress and **Cancel download** are visible even outside Models. Setup
+uses the existing installation operation, so recording waits during an active
+download; cancellation lets you continue with original-audio fallback. Files are
+verified against pinned hashes. Downloads require internet access; transcription
+and audio processing run entirely on device after setup.
+
+Supporting files are checked automatically once per app session and model folder.
+Valid stored files are reused; missing or corrupt files are downloaded and repaired.
+No audio-model selection, download, verification or retry action is needed.
+After a failed or cancelled transfer, setup retries after 30 seconds, then
+2 minutes, with later retries spaced 10 minutes apart; reconnecting to the internet
+also resumes setup. It always waits for recording and settings edits to finish.
+Changing and saving the model folder checks the new location. ASR and writing
+weights still use **Save & download**.
+
+Noise reduction applies to live transcription and completed recordings. It can
+reduce transcription accuracy, especially for quiet speech; the existing
+[denoising comparisons](validation/denoising-followup-2026-09-19.md) remain mixed.
+This fixed product choice is not a claim of improved accuracy for every ASR model
+or accent. Original recordings remain intact. Missing models or processing
+failures use the original-audio fallback; failures are reported with a warning.
 
 ### Experimental speaker timelines
 
 Speaker analysis runs automatically when its local model and runtime are
-available; there is no enable switch or settings-save step. **Nemotron 3 speaker
-timelines** is available under **Models → Audio processing → Audio model downloads**.
+available; there is no enable switch or settings-save step. Its model downloads
+automatically once the selected speech/writing models and local speaker runtime
+are ready. **Models → Audio processing** shows its setup status.
 This experimental integration requires Apple silicon and the
 [locally built speaker runtime](development.md#experimental-speaker-runtime);
 there is no newly published runtime installer. It runs entirely on device.
@@ -256,7 +276,7 @@ do not include transcript text.
 | Waveform does not match the microphone      | Confirm the selected input device. After a native audio update, quit the running app and open the newly built version; a page reload does not update the audio code. Background sound can still register. |
 | Recording will not start                    | Confirm microphone permission, selected input device and model download status. Wait for Listening.                                                                                                       |
 | A language or live captions are unavailable | Check the selected speech model's [supported languages and modes](language-support-and-recommendations.md).                                                                                               |
-| A model download fails                      | Check the connection, free disk space and model-folder access, then retry from Models.                                                                                                                    |
+| A model download fails                      | Check the connection, free disk space and model-folder access, then retry ASR/writing downloads from Models. Supporting audio setup retries automatically.                                                                                                                    |
 | A shortcut is unavailable                   | Resolve the conflict shown beside the shortcut setting or choose another combination.                                                                                                                     |
 | Automatic paste fails                       | Choose **Paste into the original text field**, save, and check **Ready to paste**. Keep the original field focused. A newly opened Electron editor may need a moment before the first recording; use Copy for an unavailable destination.                                                                                                         |
 | A recording is missing from History         | Check whether Save recordings and transcripts was enabled for that session.                                                                                                                               |
