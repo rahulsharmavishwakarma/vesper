@@ -56,7 +56,7 @@ to be managed separately in **Models**.
    before downloading it; **Save changes** alone does not download speech or writing
    weights. Supporting audio packages download automatically when those models are ready.
 3. Open **Dictate**, select your microphone and choose a language supported by
-   the speech model. Allow microphone access when macOS asks.
+   the speech model and the enabled writing model. Allow microphone access when macOS asks.
 4. Wait until the app is ready before recording. The first recording may take
    longer while a model loads.
 

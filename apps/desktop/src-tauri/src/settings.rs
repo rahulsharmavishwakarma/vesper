@@ -49,6 +49,9 @@ impl SettingsStore {
 
     pub fn save(&self, settings: &AppConfig) -> Result<AppConfig, String> {
         settings.validate().map_err(|e| e.to_string())?;
+        settings
+            .validate_writer_language()
+            .map_err(|e| e.to_string())?;
         let settings = managed_audio(settings.clone());
         let _guard = self.access.lock().map_err(|e| e.to_string())?;
         let parent = self.path.parent().ok_or("Settings path has no parent")?;
@@ -84,6 +87,39 @@ mod tests {
         settings.models.asr = AsrModel::ParakeetTdt06bV3;
         assert!(store.save(&settings).is_err());
         assert_eq!(fs::read(&store.path).unwrap(), before);
+    }
+
+    #[test]
+    fn legacy_writer_languages_are_readable_but_invalid_saves_preserve_the_file() {
+        let temp = tempfile::tempdir().unwrap();
+        let path = temp.path().join("settings.json");
+        let store = SettingsStore::new(path.clone());
+        let presets: serde_json::Value =
+            serde_json::from_str(include_str!("../../../../models/presets.json")).unwrap();
+        let preset = presets
+            .as_array()
+            .unwrap()
+            .iter()
+            .find(|entry| entry["profile"]["runtime"] == "llama_cpp")
+            .unwrap();
+        let profile = serde_json::from_value(preset["profile"].clone()).unwrap();
+        let mut config = AppConfig::default();
+        config.models.custom_rewriter = Some(profile);
+        for languages in [vec![], vec!["hi".into()]] {
+            config.models.custom_rewriter.as_mut().unwrap().languages = languages;
+            let bytes = serde_json::to_vec(&config).unwrap();
+            fs::write(&path, &bytes).unwrap();
+            assert_eq!(store.load().unwrap().models, config.models);
+            assert!(store.save(&config).is_err());
+            assert_eq!(fs::read(&path).unwrap(), bytes);
+        }
+        config.cleanup_enabled = false;
+        store.save(&config).unwrap();
+        assert!(!store.load().unwrap().cleanup_enabled);
+        config.cleanup_enabled = true;
+        config.models.custom_rewriter.as_mut().unwrap().languages = vec!["en-US".into()];
+        store.save(&config).unwrap();
+        assert_eq!(store.load().unwrap().models, config.models);
     }
 
     #[test]

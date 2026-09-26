@@ -71,6 +71,15 @@ fn lowercase_hex(value: &str, length: usize) -> bool {
 }
 
 impl HuggingFaceProfile {
+    /// Match the app's base language modes against declared BCP-47-style tags.
+    pub fn supports_language_code(&self, code: &str) -> bool {
+        self.languages.iter().any(|tag| {
+            tag.split('-')
+                .next()
+                .is_some_and(|base| base.eq_ignore_ascii_case(code))
+        })
+    }
+
     pub fn validate(&self) -> Result<()> {
         if self.id.len() > 80 || !safe_component(&self.id) {
             return Err(invalid(
@@ -232,6 +241,36 @@ mod tests {
             languages: vec![],
         }
     }
+    #[test]
+    fn writer_language_is_checked_separately_from_legacy_profile_loading() {
+        use crate::{AppConfig, AsrModel, Language};
+        let mut config = AppConfig::default();
+        config.models.asr = AsrModel::Qwen3Asr06b;
+        config.models.custom_rewriter = Some(fixture());
+        config.validate().unwrap();
+        assert!(config
+            .validate_writer_language()
+            .unwrap_err()
+            .to_string()
+            .contains("no declared languages"));
+        config.models.custom_rewriter.as_mut().unwrap().languages =
+            vec!["EN-us".into(), "fr-FR".into()];
+        for (language, compatible) in [
+            (Language::English, true),
+            (Language::French, true),
+            (Language::Hindi, false),
+            (Language::Auto, false),
+        ] {
+            config.language = language;
+            assert_eq!(config.validate_writer_language().is_ok(), compatible);
+            config.cleanup_enabled = false;
+            config.validate_writer_language().unwrap();
+            config.cleanup_enabled = true;
+        }
+        config.models.custom_rewriter = None;
+        config.validate_writer_language().unwrap();
+    }
+
     #[test]
     fn rejects_traversal_urls_escapes_and_mutable_revisions() {
         fixture().validate().unwrap();

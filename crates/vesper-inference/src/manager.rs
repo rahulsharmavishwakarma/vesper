@@ -260,6 +260,9 @@ impl InferenceManager {
         if !config.cleanup_enabled || raw.trim().is_empty() {
             return Ok(raw.to_owned());
         }
+        config
+            .validate_writer_language()
+            .map_err(|error| native("writing language", error))?;
         let (reply, response) = mpsc::sync_channel(1);
         self.send(Command::Rewrite {
             operation_id: operation_id.to_owned(),
@@ -1209,6 +1212,48 @@ mod live_tests;
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    #[test]
+    fn incompatible_writer_is_rejected_before_loading_weights() {
+        let manager = InferenceManager::new().unwrap();
+        let presets: serde_json::Value =
+            serde_json::from_str(include_str!("../../../models/presets.json")).unwrap();
+        let preset = presets
+            .as_array()
+            .unwrap()
+            .iter()
+            .find(|entry| entry["profile"]["runtime"] == "llama_cpp")
+            .unwrap();
+        let mut config = AppConfig::default();
+        config.models.custom_rewriter =
+            Some(serde_json::from_value(preset["profile"].clone()).unwrap());
+        let root = Path::new("missing-models");
+        for languages in [vec![], vec!["hi".into()]] {
+            config.models.custom_rewriter.as_mut().unwrap().languages = languages;
+            let error = manager
+                .rewrite(
+                    "Keep this transcript.",
+                    &config,
+                    root,
+                    Arc::new(AtomicBool::new(false)),
+                )
+                .unwrap_err();
+            assert!(error.to_string().contains("writing language"), "{error}");
+            assert_eq!(manager.latest_execution_evidence(), serde_json::json!({}));
+        }
+        config.cleanup_enabled = false;
+        assert_eq!(
+            manager
+                .rewrite(
+                    "Keep this transcript.",
+                    &config,
+                    root,
+                    Arc::new(AtomicBool::new(false))
+                )
+                .unwrap(),
+            "Keep this transcript."
+        );
+    }
 
     #[test]
     fn cancelled_work_cannot_evict_a_selected_speech_model_or_load_a_writer() {
