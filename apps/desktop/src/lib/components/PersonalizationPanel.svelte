@@ -169,9 +169,9 @@
   <header class="personalization-heading">
     <h2 id="personalization-heading">Your vocabulary and writing</h2>
     <p class="note">
-      Vesper automatically learns eligible spellings from your edits in Your text and uses dictation
-      usage to rank saved words. Learning stays on this device, even when audio collection is off.
-      Edits in other apps are not observed. You can remove or forget learned words below.
+      Vesper automatically learns eligible spellings from edits to Your text. Manage your saved
+      words and reviewed examples here. Learning stays on this device; edits in other apps are not
+      observed.
     </p>
   </header>
   {#if !desktop}
@@ -547,7 +547,7 @@
     margin-top: var(--space-6);
   }
   .personalization-heading {
-    margin-bottom: var(--space-6);
+    margin-bottom: var(--space-4);
   }
   .personalization-heading h2 {
     margin-bottom: var(--space-2);

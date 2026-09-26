@@ -1,11 +1,26 @@
 <script lang="ts">
-  import { onDestroy, tick } from 'svelte';
+  import { onDestroy, tick, untrack } from 'svelte';
   import { getAppInfo, type AppInfo } from '../api/desktop';
   import CopyGlyph from './CopyGlyph.svelte';
   import Icon from './Icon.svelte';
   import BrandLogo from './BrandLogo.svelte';
 
-  let { fallbackFocus }: { fallbackFocus?: () => void } = $props();
+  let {
+    fallbackFocus,
+    inline = false,
+    visible = false,
+  }: { fallbackFocus?: () => void; inline?: boolean; visible?: boolean } = $props();
+  const headingId = $derived(inline ? 'inline-about-heading' : 'about-heading');
+  const updatesId = $derived(inline ? 'inline-about-updates-heading' : 'about-updates-heading');
+  const copyFieldId = $derived(inline ? 'inline-about-copy-fallback' : 'about-copy-fallback');
+  $effect(() => {
+    if (!inline) return;
+    identityMotion = visible;
+    if (visible)
+      untrack(() => {
+        if (!info && !loading) void load();
+      });
+  });
 
   let dialog: HTMLDialogElement | undefined = $state();
   let identityMotion = $state(false);
@@ -53,7 +68,7 @@
     }
   }
   export function open() {
-    if (dialog?.open) return;
+    if (inline || dialog?.open) return;
     opener = document.activeElement instanceof HTMLElement ? document.activeElement : null;
     copied = false;
     copyError = false;
@@ -98,40 +113,16 @@
   });
 </script>
 
-<dialog
-  bind:this={dialog}
-  class="about-sheet"
-  aria-labelledby="about-heading"
-  oncancel={() => {
-    identityMotion = false;
-    generation += 1;
-    clearTimeout(copyTimer);
-  }}
-  onclose={() => {
-    identityMotion = false;
-    if (opener?.isConnected && opener !== document.body && opener.getClientRects().length) {
-      opener.focus({ preventScroll: true });
-      if (document.activeElement === opener) return;
-    }
-    fallbackFocus?.();
-  }}
-  onpointerdown={(event) => {
-    if (event.target !== dialog || !dialog) return;
-    const bounds = dialog.getBoundingClientRect();
-    if (
-      event.clientX < bounds.left ||
-      event.clientX > bounds.right ||
-      event.clientY < bounds.top ||
-      event.clientY > bounds.bottom
-    )
-      close();
-  }}
->
+{#snippet aboutContent()}
   <header>
-    <h2 id="about-heading">About Vesper</h2>
-    <button type="button" class="quiet icon-button close" aria-label="Close About" onclick={close}
-      ><Icon name="close" /></button
-    >
+    <h2 id={headingId}>About Vesper</h2>
+    {#if !inline}<button
+        type="button"
+        class="quiet icon-button close"
+        aria-label="Close About"
+        onclick={close}><Icon name="close" /></button
+      >
+    {/if}
   </header>
   <div class="identity">
     <div>
@@ -166,20 +157,72 @@
       <p class="note" role="status">
         Copy is unavailable. Select the app information below to copy it.
       </p>
-      <label class="visually-hidden" for="about-copy-fallback">App information</label>
-      <textarea bind:this={fallback} id="about-copy-fallback" readonly value={copyText} rows="4"
-      ></textarea>
+      <label class="visually-hidden" for={copyFieldId}>App information</label>
+      <textarea bind:this={fallback} id={copyFieldId} readonly value={copyText} rows="4"></textarea>
     {:else}
       <span class="visually-hidden" role="status">{copied ? 'App information copied.' : ''}</span>
     {/if}
-    <section class="updates" aria-labelledby="about-updates-heading">
-      <h3 id="about-updates-heading">Software updates</h3>
+    <section class="updates" aria-labelledby={updatesId}>
+      <h3 id={updatesId}>Software updates</h3>
       <p>Automatic updates aren’t available in this build.</p>
     </section>
   {/if}
-</dialog>
+{/snippet}
+{#if inline}
+  <section class="about-inline" aria-labelledby={headingId}>{@render aboutContent()}</section>
+{:else}
+  <dialog
+    bind:this={dialog}
+    class="about-sheet"
+    aria-labelledby={headingId}
+    oncancel={() => {
+      identityMotion = false;
+      generation += 1;
+      clearTimeout(copyTimer);
+    }}
+    onclose={() => {
+      identityMotion = false;
+      if (opener?.isConnected && opener !== document.body && opener.getClientRects().length) {
+        opener.focus({ preventScroll: true });
+        if (document.activeElement === opener) return;
+      }
+      fallbackFocus?.();
+    }}
+    onpointerdown={(event) => {
+      if (event.target !== dialog || !dialog) return;
+      const bounds = dialog.getBoundingClientRect();
+      if (
+        event.clientX < bounds.left ||
+        event.clientX > bounds.right ||
+        event.clientY < bounds.top ||
+        event.clientY > bounds.bottom
+      )
+        close();
+    }}
+  >
+    {@render aboutContent()}
+  </dialog>
+{/if}
 
 <style>
+  .about-inline {
+    min-width: 0;
+  }
+  .about-inline header {
+    margin-bottom: var(--space-8);
+  }
+  .about-inline header h2 {
+    font-size: 20px;
+    line-height: 1.4;
+    letter-spacing: normal;
+  }
+  .about-inline .identity {
+    margin-bottom: var(--space-8);
+  }
+  .about-inline .app-info {
+    border-top: 1px solid var(--color-line);
+    padding-top: var(--space-5);
+  }
   .about-sheet {
     width: min(520px, calc(100% - 32px));
     max-height: calc(100dvh - 32px);

@@ -156,6 +156,11 @@ passed initially. This qualifies storage and installation, not model inference o
 transcription quality. Cross-filesystem fallback is forced in the fixture;
 Windows and network filesystems require their own platform qualification.
 
+The local-main integration on 2026-09-27 also passed the 44-test MLX model
+suite and all six browser suites, including the existing appearance preferences,
+Settings drafts and narrow layouts in both themes. Cache installation and
+removal retain their existing model controls within that layout.
+
 ## Cleanup and training data
 
 Built-in Qwen retains its existing tested prompt with thinking disabled. Custom

@@ -101,6 +101,42 @@ Local workspace badge: the app has no workspace navigation for those labels to
 describe. The existing sidebar selection provides navigation context; operation
 feedback and the browser-preview notice retain their own meaningful states.
 
+## Settings section navigation
+
+The selected HTML Settings study is integrated into the application: an interior
+sidebar for **Recording**, **Writing**, **Shortcuts**, **Appearance** and **About**,
+with one shared content surface. Selected sections have a tonal background and
+no underline. The native application sidebar keeps its existing treatment.
+Sections use 20 px medium Geist headings with natural tracking, a 1.4 line height
+and shared description spacing; the main page title stays visually distinct.
+At narrow widths the interior navigation becomes a wrapping row of 44 px targets.
+
+Keep the real settings controls and their data ownership. Section changes hide
+panels without recreating the application draft or dirty personal preferences.
+Recording owns language, notifications, saved recordings and advanced storage
+options. Writing owns cleanup and the independent vocabulary/preferences form.
+Shortcuts keeps direct key capture and paste permissions. Application **Save
+changes** saves its shared draft across sections; **Discard changes** restores
+the last saved snapshot. Vocabulary retains its own Save/Discard actions. Restore
+defaults is under Recording's advanced options and still explicitly saves defaults.
+
+Appearance offers Light, Dark and System using the shared semantic tokens.
+Selection applies immediately, defaults to the existing Dark appearance and is
+stored under `vesper-appearance-v1` in the browser/webview's local storage,
+separately from native inference settings. Other windows on the same origin sync
+through storage events; System follows subsequent OS theme changes. A failed
+storage write shows an error without changing the current choice. Clearing local
+storage restores Dark. Reduce Motion follows the OS; this screen reports its
+state rather than pretending to add a separate override. Floating capture options
+remain normal application preferences and require Save changes.
+
+About renders actual app metadata inline and shares its content and clipboard
+recovery with the native About sheet. Neither surface exposes simulated updates.
+The HTML study remains a review artifact for the other screens; their layouts
+have not been integrated by this Settings change. `settings-layout.spec.mjs`
+covers section drafts, separate saves, appearance persistence/system/error states
+and all five sections in both themes at desktop and narrow widths.
+
 On Models, keep selected model names and file actions in their existing model
 cards. Local engine shows resources, readiness and operation details without
 repeating both selected models. Do not add a separate batch-verification card;
@@ -113,12 +149,12 @@ The main window supports 360 × 480 logical pixels. At widths up to 700 px,
 navigation becomes a compact header: reduce its surrounding space and wordmark
 size while retaining 44 px button targets. Keep the same page order and cards.
 Use tighter heading/card spacing and put the saved model labels beside their
-full names in Settings and History. Names wrap within the available width;
+full names in Settings → Recording and History. Names wrap within the available width;
 do not hide either model or truncate it to make the window fit.
 
 At the minimum window size, the first Settings control should be fully visible
-without scrolling past the header and model summary. The rest of each page uses
-normal vertical scrolling, including Save and About. Resizing must preserve
+without scrolling past a model summary. The Settings model summary follows its controls. The rest of each page uses
+normal vertical scrolling, including Save. About is reached from its Settings section. Resizing must preserve
 unsaved values; open dropdowns close on resize and can reopen within the new
 viewport. Dialogs remain height-constrained and scroll internally as needed.
 
@@ -129,7 +165,7 @@ save reachability, dropdowns, dialog bounds and draft preservation on resize.
 
 ## Shortcut recording
 
-Settings → Quick capture has one shortcut field for each action. Click the field (or focus it and activate it with Enter/Space), press the desired combination, then use **Save changes**. The field displays the captured combination with platform-appropriate modifier names. A valid capture changes only the draft. Escape restores the values present when editing began; Tab, clicking away, or switching windows stops recording keys and keeps a valid draft available to save. Restore defaults remains the existing settings action.
+Settings → Shortcuts has one shortcut field for each action. Click the field (or focus it and activate it with Enter/Space), press the desired combination, then use **Save changes**. The field displays the captured combination with platform-appropriate modifier names. A valid capture changes only the draft. Escape restores the values present when editing began; Tab, clicking away, or switching windows stops recording keys and keeps a valid draft available to save. Restore defaults remains the existing settings action.
 
 The recorder provides a preparing state before native capture is ready, inline unsupported/duplicate feedback, visible keyboard focus, and disabled behavior during an operation. Modifier selection buttons, key dropdowns, the Customize panel, and the extra Use shortcut step are not part of this flow. A shortcut recorder must not start the action it is configuring: the existing native callback routes already-registered combinations to the active main-window editor, while browser key events capture other supported combinations. Editing is session-scoped and stops on blur/close; late callbacks cannot change another field. No additional global keyboard hook is introduced.
 
@@ -150,14 +186,11 @@ proposed layouts: A01 Quiet settings, A02 Split view and A03 About sheet. See th
 [preview guide](design/about-updates/README.md) for the interactive states and
 selection export. These are local review artifacts in the ignored `docs/design/`
 directory, consistent with the repository's treatment of exploratory studies.
-The implemented direction is **A03 About sheet**. A full-width
-**About Vesper** entry at the end of Settings uses the same panel surface,
-border, radius, padding and heading typography as the preference sections.
-It and the native About entries open the same modal with app identity/version,
-platform details, a copy icon and a compact update status. It preserves the shared graphite/sage controls, keyboard
-dismissal and focus recovery demonstrated in the sample. Metadata comes from
-`get_app_info`, independently of model/settings readiness. A release build is
-not labeled as a verified stable release channel.
+Settings → About shows app identity/version, platform details, a copy icon and a
+compact update status in the content panel. Native About menu entries open the
+**A03 About sheet**, reusing the same content. Both preserve shared controls and
+error recovery. Metadata comes from `get_app_info` independently of model/settings
+readiness. A release build is not labeled as a verified stable release channel.
 
 Group version, build type and platform together. Copy uses the shared icon-button
 control with a tooltip and accessible name, a check on success, and selected text
@@ -165,12 +198,11 @@ for clipboard failure recovery. Keep normal-state action wording out of the
 visible layout. The unavailable-update notice is one sentence below Software
 updates, without a large warning headline or repeated explanation.
 
-Keep About outside the main sidebar and below all editable preferences. The row
-is independent of Save changes, preserves unsaved drafts, remains available if
-settings cannot load, and returns keyboard focus after closing the sheet.
-This follows [Raycast's About placement within Settings](https://manual.raycast.com/settings)
-and [VS Code's native About entry](https://code.visualstudio.com/docs/supporting/faq),
-adapted to Vesper's existing controls rather than adding a new navigation tab.
+Keep About outside the main application sidebar and editable forms. Its Settings
+section preserves unsaved drafts; native About remains available when settings
+cannot load and restores keyboard focus when closed. This follows
+[Raycast's About placement within Settings](https://manual.raycast.com/settings)
+and [VS Code's native About entry](https://code.visualstudio.com/docs/supporting/faq).
 
 The samples use illustrative release data and simulated operations. The real
 sheet reports that automatic updates are unavailable and provides no simulated

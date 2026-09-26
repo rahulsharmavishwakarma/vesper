@@ -83,8 +83,11 @@ async function setup({ recording = false, preview = false, main = false, interce
       const handled = intercept?.(command, state, args);
       if (handled !== undefined) return handled;
       switch (command) {
-        case 'take_menu_navigation':
-          return null;
+        case 'take_menu_navigation': {
+          const destination = state.menuNavigation ?? null;
+          state.menuNavigation = null;
+          return destination;
+        }
         case 'begin_shortcut_recording':
           return null;
         case 'end_shortcut_recording':
@@ -245,6 +248,18 @@ async function setup({ recording = false, preview = false, main = false, interce
   return state;
 }
 
+async function settingsSection(name) {
+  [...target.querySelectorAll('.settings-nav button')]
+    .find((button) => button.textContent.trim() === name)
+    .click();
+  await tick();
+}
+async function openNativeAbout(state) {
+  await until(() => state.counts.take_menu_navigation, 'Menu listener not ready');
+  state.menuNavigation = 'about';
+  await emit('menu-navigate');
+  await until(() => target.querySelector('.about-sheet')?.open, 'Native About did not open');
+}
 async function test(name, run) {
   const filter = new URLSearchParams(location.search).get('test');
   if (filter && !name.includes(filter)) return;
@@ -432,6 +447,7 @@ await test('Shortcut and output preferences save together and permission reads d
     .find((button) => button.textContent.trim() === 'Settings')
     .click();
   await tick();
+  await settingsSection('Shortcuts');
   assert(grants === 0, 'Reading settings prompted for access');
   const field = target.querySelector('#hold-shortcut');
   field.click();
@@ -501,6 +517,7 @@ await test('Shortcut recorder captures keys, rejects duplicates, cancels, and re
     .find((button) => button.textContent.trim() === 'Settings')
     .click();
   await tick();
+  await settingsSection('Shortcuts');
   const begin = async (id) => {
     const field = target.querySelector(`#${id}`);
     field.click();
@@ -586,6 +603,7 @@ await test('Shortcut recorder captures keys, rejects duplicates, cancels, and re
     .find((button) => button.textContent.trim() === 'Settings')
     .click();
   await tick();
+  await settingsSection('Shortcuts');
   assert(
     hold.textContent.includes('Ctrl + Shift + K') && toggle.textContent.includes('F8'),
     'Bindings disappeared after navigation',
@@ -618,6 +636,7 @@ await test('Shortcut recorder abandons delayed setup and handles native register
     .find((button) => button.textContent.trim() === 'Settings')
     .click();
   await tick();
+  await settingsSection('Shortcuts');
   const field = target.querySelector('#hold-shortcut');
   field.click();
   await until(() => nativeSession, 'Begin not requested');
@@ -685,6 +704,7 @@ await test('Personal preference drafts survive navigation and save independently
   };
   await until(() => target.querySelector('#settings-language'), 'Settings did not load');
   await navigate('Settings');
+  await settingsSection('Writing');
   await until(() => target.querySelector('#personal-project'), 'Preferences did not load');
   const panel = () => target.querySelector('.personalization');
   const project = () => target.querySelector('#personal-project');
@@ -703,12 +723,13 @@ await test('Personal preference drafts survive navigation and save independently
   await tick();
   assert(!save().disabled, 'Editing did not enable saving');
   assert(
-    target.querySelector('.settings-form button[type="submit"]').disabled,
+    target.querySelector('button[form="application-settings"][type="submit"]').disabled,
     'Personal edits marked application settings dirty',
   );
   await navigate('Models');
   supportsHints = true;
   await navigate('Settings');
+  await settingsSection('Writing');
   assert(project().value === 'Synthetic project', 'Navigation lost the unsaved draft');
   await until(
     () => !target.querySelector('#personal-speech-hints').disabled,
@@ -756,6 +777,7 @@ await test('Personal preference drafts survive navigation and save independently
   saved.activeProject = 'Updated from History';
   await navigate('History');
   await navigate('Settings');
+  await settingsSection('Writing');
   await until(
     () => project().value === 'Updated from History',
     'Clean preferences did not refresh changes made elsewhere',
@@ -984,6 +1006,7 @@ await test('Learning forget preserves manual words, rejects dirty preferences, a
   [...target.querySelectorAll('nav button')]
     .find((b) => b.textContent.trim() === 'Settings')
     .click();
+  await settingsSection('Writing');
   await until(() => target.querySelector('#personal-project'), 'Personal preferences did not load');
   const panel = () => target.querySelector('.personalization');
   const forget = () =>
@@ -1066,6 +1089,7 @@ await test('Vocabulary and example dropdowns preserve edits through shared keybo
     .find((button) => button.textContent.trim() === 'Settings')
     .click();
   await tick();
+  await settingsSection('Writing');
   await until(() => target.querySelector('#personal-project'), 'Preferences did not load');
   target.querySelector('#add-vocabulary').click();
   await until(() => target.querySelector('.word-entry input'), 'Word not added');
@@ -2000,10 +2024,13 @@ await test('Saved model summaries stay synchronized and navigate to the model se
     for (const view of ['Dictate', 'History', 'Settings']) {
       button(view).click();
       await tick();
+      if (view === 'Settings') await settingsSection('Recording');
       const summary = target.querySelector(
         view === 'Dictate'
           ? '.studio-recorder .configured-models'
-          : '.page-model-summary .configured-models',
+          : view === 'Settings'
+            ? '.settings-model-summary .configured-models'
+            : '.page-model-summary .configured-models',
       );
       assert(summary && !summary.closest('[hidden]'), `${view} model summary is hidden`);
       await until(
@@ -2409,6 +2436,7 @@ await test('Shared selection keeps its backing during rapid changes and dropdown
   await until(() => target.querySelector('#cleanup-preset'), 'Settings did not finish loading');
   button('Settings').click();
   await tick();
+  await settingsSection('Writing');
   const trigger = target.querySelector('#cleanup-preset');
   trigger.scrollIntoView({ block: 'center', behavior: 'instant' });
   await new Promise(requestAnimationFrame);
@@ -2624,6 +2652,7 @@ await test('TextEdit evaluation is opt-in, saves through existing settings, and 
   await until(() => target.querySelector('#text-edit-observation'), 'Observer setting missing');
   button('Settings').click();
   await tick();
+  target.querySelector('.settings-advanced').open = true;
   const input = target.querySelector('#text-edit-observation');
   assert(!input.checked, 'External observation silently opted in');
   assert(
@@ -2673,6 +2702,7 @@ await test('Capture settings preview all six designs, save explicitly and restor
   await until(() => target.querySelector('#capture-design'), 'Design setting missing');
   button('Settings').click();
   await tick();
+  await settingsSection('Appearance');
   assert(
     target.querySelector('#capture-design').textContent.includes('Split'),
     'Split is not the default',
@@ -2723,6 +2753,7 @@ await test('Capture preview animates locally, pauses when hidden, and finishes w
   assert(path() === initial, 'Preview animated on another screen');
   navigate('Settings');
   await tick();
+  await settingsSection('Appearance');
   preview().scrollIntoView({ block: 'center' });
   if (!matchMedia('(prefers-reduced-motion: reduce)').matches) {
     await until(() => path() !== initial, 'Visible Settings preview did not animate');
@@ -2748,6 +2779,7 @@ await test('Capture preview animates locally, pauses when hidden, and finishes w
     assert(path() === hidden, 'Changing screens left the preview rendering');
     navigate('Settings');
     await tick();
+    await settingsSection('Appearance');
     preview().scrollIntoView({ block: 'center' });
     await until(() => path() !== hidden, 'Returning to preview did not resume');
     const deadline = performance.now() + 10_500;
@@ -2976,6 +3008,7 @@ await test('Checkbox labels preserve native toggling and focus with visible fiel
     .find((b) => b.textContent.trim() === 'Settings')
     .click();
   await tick();
+  await settingsSection('Writing');
   const checkbox = target.querySelector('#cleanup-enabled');
   const initial = checkbox.checked;
   target.querySelector('label[for="cleanup-enabled"]').click();
@@ -3070,11 +3103,9 @@ await test('Selected Vesper identity keeps every letter still and limits motion 
     .find((button) => button.textContent.includes('Settings'))
     .click();
   await tick();
-  const opener = [...target.querySelectorAll('button')].find(
-    (button) => button.textContent.trim() === 'About Vesper' && button.getClientRects().length,
-  );
-  opener.click();
-  await tick();
+  const opener = target.querySelector('.settings-nav button[aria-controls="settings-about-panel"]');
+  opener.focus();
+  await openNativeAbout(state);
   const animations = logo.getAnimations({ subtree: true });
   if (matchMedia('(prefers-reduced-motion: reduce)').matches) {
     assert(animations.length === 0, 'Reduced motion did not suppress logo motion');
@@ -3108,7 +3139,7 @@ await test('Selected Vesper identity keeps every letter still and limits motion 
   }
   sheet.querySelector('.close').click();
   await until(() => !logo.classList.contains('animate'), 'Close did not clear motion activation');
-  opener.click();
+  await openNativeAbout(state);
   await tick();
   if (!matchMedia('(prefers-reduced-motion: reduce)').matches) {
     const replay = logo.getAnimations({ subtree: true });
@@ -3133,7 +3164,7 @@ await test('About sheet uses native metadata, copies only app info and restores 
     !target.querySelector('.sidebar').textContent.includes('About'),
     'About leaked into the main sidebar',
   );
-  assert(target.querySelector('.settings-about').hidden, 'About is visible outside Settings');
+  assert(target.querySelector('#settings-about-panel').hidden, 'About is visible outside Settings');
   [...target.querySelectorAll('.sidebar nav button')]
     .find((node) => node.textContent.trim() === 'Settings')
     .click();
@@ -3142,16 +3173,12 @@ await test('About sheet uses native metadata, copies only app info and restores 
   const originalPreference = preference.checked;
   preference.click();
   await tick();
-  const opener = target.querySelector('.settings-about-row');
+  const opener = target.querySelector('.settings-nav button[aria-controls="settings-about-panel"]');
+  await settingsSection('About');
   assert(!opener.closest('form'), 'About was placed inside the editable settings form');
-  assert(!target.querySelector('.settings-about').hidden, 'About is missing from Settings');
-  const personalization = target.querySelector('.personalization');
-  assert(
-    personalization?.compareDocumentPosition(opener) & Node.DOCUMENT_POSITION_FOLLOWING,
-    'About interrupts personal preferences',
-  );
+  assert(!target.querySelector('#settings-about-panel').hidden, 'About is missing from Settings');
   opener.focus();
-  opener.click();
+  await openNativeAbout(state);
   await until(() => target.querySelector('.about-sheet .version'), 'About metadata not loaded');
   const sheet = target.querySelector('.about-sheet');
   assert(sheet.open, 'About dialog did not open');
@@ -3209,7 +3236,7 @@ await test('About sheet uses native metadata, copies only app info and restores 
   );
   assert(preference.checked !== originalPreference, 'About discarded the unsaved preference');
   assert(!state.counts.save_settings, 'About saved preferences');
-  opener.click();
+  await openNativeAbout(state);
   opener.style.display = 'none';
   sheet.querySelector('.close').click();
   await until(
@@ -3231,8 +3258,8 @@ await test('About remains accessible when metadata fails and offers clipboard re
     .find((node) => node.textContent.trim() === 'Settings')
     .click();
   await tick();
-  target.querySelector('.settings-about-row').click();
-  const sheet = target.querySelector('.about-sheet');
+  await settingsSection('About');
+  const sheet = target.querySelector('.about-inline');
   await until(() => sheet.querySelector('[role="alert"]'), 'About load failure not shown');
   fail = false;
   [...sheet.querySelectorAll('button')]

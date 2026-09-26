@@ -24,25 +24,45 @@ remain valid and are never renamed automatically; their data format is unchanged
 ### Small windows
 
 When the window is narrow, navigation moves to the top and spacing becomes
-more compact. Both configured model names remain visible in Settings and
-History. Scroll vertically to reach the remaining controls, Save actions and
-About. Resizing preserves unsaved preferences; an open dropdown closes and can
+more compact. Both configured model names remain visible in Settings → Recording and
+History. Settings section navigation moves above its content when space is tight.
+Scroll vertically to reach the remaining controls and Save actions. Resizing preserves unsaved preferences; an open dropdown closes and can
 be reopened in its new position.
+
+### Settings
+
+Use the interior sidebar to switch between Recording, Writing, Shortcuts,
+Appearance and About. Changing sections keeps unsaved preferences intact.
+**Save changes** saves application preferences across sections; **Discard changes**
+restores the last saved values. Personal vocabulary in Writing has its own Save
+preferences and Discard changes actions.
+
+Recording contains language, notifications, saved recordings and model names.
+Less-used storage options and Restore defaults are under **Advanced storage and
+improvement**. Restore defaults saves the default application preferences; it
+does not remove recordings or vocabulary.
+
+In **Appearance**, choose Light, Dark or System. The color theme applies immediately
+throughout the app and is remembered locally; System follows device appearance.
+Dark is the default. Clearing browser/webview storage resets this visual preference.
+Reduce Motion follows your system setting. Floating capture options on this page
+still require Save changes. Themes in a browser preview and the installed app are
+stored separately.
 
 ### App information
 
-Open **Settings** and choose **About Vesper** at the bottom of the page,
-or choose **About Vesper…** in the native menu, to view the About sheet.
+Open **Settings → About** to see app information in the content panel.
+Choose **About Vesper…** in the native menu to open the same information in a sheet.
 The selected custom Songbird logo spells all six letters in the sidebar and
-About sheet; the app icon uses the bird alone. Only opening About animates its
+About sheet; the app icon uses the bird alone. Opening either About view animates its
 two small call marks once. The bird and letters stay still, and Reduce Motion
 disables that decoration.
 It shows the compiled application version, development/release build type and
 platform. The copy icon beside those details (tooltip: **Copy app info**) copies
 them for sharing in a bug report; it does not include
 recordings, transcripts or local paths. If clipboard access fails, the sheet
-provides selected text for manual copying. Escape or Close returns you to the
-previous screen without changing your settings.
+provides selected text for manual copying. Escape or Close dismisses the native About sheet without changing settings.
+In Settings, choose another section to leave About.
 
 Automatic application updates are not connected yet. The sheet reports this
 instead of offering a check/download/restart action. Model downloads continue
@@ -234,19 +254,19 @@ The desktop app must be running for its global shortcuts to work.
 | Hold to talk    | `⌥ Shift D`          | Hold while speaking; release to finish.  |
 | Press to toggle | `⌘ Shift Space`      | Press once to start and again to finish. |
 
-Both shortcuts can be changed in **Settings → Quick capture**. Existing
+Both shortcuts can be changed in **Settings → Shortcuts**. Existing
 installations keep their saved shortcuts. Wait for the floating controls to
 show **Listening** before speaking.
 
 To insert a finished transcript into another app, select **Paste into the
-original text field** in Quick capture settings, enable the requested macOS
+original text field** in Settings → Shortcuts, enable the requested macOS
 Accessibility access and save. Focus the intended field before recording.
 Hold release or Toggle Stop then inserts the finished transcript after
 transcription and writing complete. Keep the original field and caret selected
 until it finishes. **Keep in app** deliberately disables automatic paste;
 main-window Record and imported files also keep their result in the app.
 
-Check **Ready to paste** in Quick capture settings before recording. On macOS
+Check **Ready to paste** in Settings → Shortcuts before recording. On macOS
 versions that request clipboard access, allow automatic clipboard access so
 Vesper can preserve your clipboard without opening a prompt during delivery.
 With automatic paste enabled, Vesper prepares supported Electron editors such
@@ -278,7 +298,7 @@ copy its text. Export options distinguish a complete archive from reviewed
 training examples; search filters do not limit an export.
 
 Manage spellings, recurring corrections and writing preferences in
-**Settings → Your vocabulary and writing**. Eligible edits to **Your text** can
+**Settings → Writing → Your vocabulary and writing**. Eligible edits to **Your text** can
 contribute to local spelling memory for later recordings. Raw predictions remain
 available, and remembered changes can be inspected, undone or forgotten.
 
@@ -354,7 +374,7 @@ The app may retain bounded before/after text and one recent attempt locally for 
 
 ### Optional TextEdit correction evaluation
 
-In **Settings → Storage and improvement**, **Evaluate corrections in TextEdit** enables a separate local evaluation after automatic paste. It is off by default. The first adapter requires plain-text TextEdit with English menus on Mac and a direct keyboard layout. It observes the inserted text and up to 32 adjacent UTF-16 units on each side for at most one minute; it may abstain when the field, selection or boundaries change. Only inserted/edited text is retained locally, at most 256 records for 30 days. These candidates do not teach your dictionary yet. Disabling stops observation; **Forget learned spellings** also deletes retained candidates. Ordinary in-app spelling learning remains automatic. See the [full scope and limitations](personalization/external-observer.md).
+In **Settings → Recording → Advanced storage and improvement**, **Evaluate corrections in TextEdit** enables a separate local evaluation after automatic paste. It is off by default. The first adapter requires plain-text TextEdit with English menus on Mac and a direct keyboard layout. It observes the inserted text and up to 32 adjacent UTF-16 units on each side for at most one minute; it may abstain when the field, selection or boundaries change. Only inserted/edited text is retained locally, at most 256 records for 30 days. These candidates do not teach your dictionary yet. Disabling stops observation; **Forget learned spellings** also deletes retained candidates. Ordinary in-app spelling learning remains automatic. See the [full scope and limitations](personalization/external-observer.md).
 
 Apple Silicon builds can run **Parakeet** and **Qwen ASR** on the GPU automatically for **English**. Keep **Automatic**, save your model selection, and choose **Download**. Compatible GPU files can use more disk space than CPU files. Existing CPU downloads stay usable until the update is prepared; **Ready · update available** means you can transcribe now or download the optimized package. Removing a model removes its CPU and GPU exports. Full recordings and imported files share this pipeline; live partial transcription still requires Nemotron. Other languages and automatic language detection use their supported paths and may need a separate download. CPU remains an advanced override. See [accelerator setup](accelerators.md#building-the-apple-silicon-application).
 
