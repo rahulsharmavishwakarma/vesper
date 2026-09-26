@@ -5,11 +5,11 @@ import {
   CLEANUP_MODELS,
   defaultSettings,
   parseSettings,
-  parseStoredSettings,
   type AppConfig,
 } from '../config';
 import type { EngineDiagnostics } from '../engineStatus';
 import type { AcceleratorCapabilities } from '../accelerators';
+import { readPreviewSettings, writePreviewSettings } from '../browserSettings';
 
 export function getAcceleratorCapabilities(): Promise<AcceleratorCapabilities> {
   if (!isTauri())
@@ -23,11 +23,6 @@ export function getEngineDiagnostics(): Promise<EngineDiagnostics> {
   return invoke<EngineDiagnostics>('get_engine_diagnostics');
 }
 
-const PREVIEW_SETTINGS_KEY = 'transcribe.browser-preview.settings.v1';
-const LEGACY_PREVIEW_SETTINGS_KEYS = [
-  'ukti.browser-preview.settings.v1',
-  'stt.browser-preview.settings.v1',
-];
 export type AppEnvironment = 'desktop' | 'browser-preview';
 
 export function getEnvironment(): AppEnvironment {
@@ -73,26 +68,14 @@ export async function getSettings({
   browserPreview = false,
 }: { browserPreview?: boolean } = {}): Promise<AppConfig> {
   if (!browserPreview && isTauri()) return parseSettings(await invoke<unknown>('get_settings'));
-  const stored =
-    localStorage.getItem(PREVIEW_SETTINGS_KEY) ??
-    LEGACY_PREVIEW_SETTINGS_KEYS.map((key) => localStorage.getItem(key)).find(
-      (value) => value !== null,
-    ) ??
-    null;
-  if (stored === null) return defaultSettings();
-  try {
-    return parseStoredSettings(JSON.parse(stored));
-  } catch (cause) {
-    const message = cause instanceof Error ? cause.message : String(cause);
-    throw new Error(`Browser preview settings could not be loaded. ${message}`, { cause });
-  }
+  return readPreviewSettings(localStorage);
 }
 
 export async function saveSettings(settings: AppConfig): Promise<AppConfig> {
   const validated = parseSettings(settings);
   if (isTauri())
     return parseSettings(await invoke<unknown>('save_settings', { settings: validated }));
-  localStorage.setItem(PREVIEW_SETTINGS_KEY, JSON.stringify(validated));
+  writePreviewSettings(localStorage, validated);
   return validated;
 }
 

@@ -5,21 +5,22 @@ use std::{
     path::{Path, PathBuf},
 };
 
+const VESPER_IDENTIFIER: &str = "com.vesper.desktop";
 const TRANSCRIBE_IDENTIFIER: &str = "com.transcribe.desktop";
 const UKTI_IDENTIFIER: &str = "com.ukti.desktop";
 const STT_IDENTIFIER: &str = "com.stt.desktop";
 
-/// Vesper's existing `com.transcribe.desktop` store wins. Otherwise use the newest sibling
+/// Vesper's existing `com.vesper.desktop` store wins. Otherwise use the newest sibling
 /// store with app state. Config and data share a root on macOS.
 pub fn compatible_app_root(current: PathBuf) -> io::Result<PathBuf> {
     if current
         .file_name()
-        .is_none_or(|name| name != TRANSCRIBE_IDENTIFIER)
+        .is_none_or(|name| name != VESPER_IDENTIFIER)
         || contains_app_state(&current)?
     {
         return Ok(current);
     }
-    for identifier in [UKTI_IDENTIFIER, STT_IDENTIFIER] {
+    for identifier in [TRANSCRIBE_IDENTIFIER, UKTI_IDENTIFIER, STT_IDENTIFIER] {
         let legacy = current.with_file_name(identifier);
         if contains_app_state(&legacy)? {
             return Ok(legacy);
@@ -91,9 +92,9 @@ mod tests {
     use super::*;
 
     #[test]
-    fn fresh_install_uses_transcribe_without_creating_directories() {
+    fn fresh_install_uses_vesper_without_creating_directories() {
         let temp = tempfile::tempdir().unwrap();
-        let current = temp.path().join(TRANSCRIBE_IDENTIFIER);
+        let current = temp.path().join(VESPER_IDENTIFIER);
         assert_eq!(compatible_app_root(current.clone()).unwrap(), current);
         assert!(!current.exists());
         assert_eq!(fs::read_dir(temp.path()).unwrap().count(), 0);
@@ -102,7 +103,7 @@ mod tests {
     #[test]
     fn legacy_settings_dataset_and_models_remain_in_place() {
         let temp = tempfile::tempdir().unwrap();
-        let current = temp.path().join(TRANSCRIBE_IDENTIFIER);
+        let current = temp.path().join(VESPER_IDENTIFIER);
         let legacy = temp.path().join(UKTI_IDENTIFIER);
         let settings = crate::settings::SettingsStore::new(legacy.join("settings.json"));
         let config = vesper_core::AppConfig {
@@ -136,7 +137,7 @@ mod tests {
     #[test]
     fn empty_new_scaffolding_does_not_hide_legacy_data() {
         let temp = tempfile::tempdir().unwrap();
-        let current = temp.path().join(TRANSCRIBE_IDENTIFIER);
+        let current = temp.path().join(VESPER_IDENTIFIER);
         let legacy = temp.path().join(UKTI_IDENTIFIER);
         fs::create_dir_all(&legacy).unwrap();
         fs::write(legacy.join("settings.json"), b"legacy settings").unwrap();
@@ -160,7 +161,7 @@ mod tests {
     fn explicit_new_settings_or_database_win_without_merging_or_overwriting() {
         for entry in ["settings.json", "dataset/sessions.sqlite3"] {
             let temp = tempfile::tempdir().unwrap();
-            let current = temp.path().join(TRANSCRIBE_IDENTIFIER);
+            let current = temp.path().join(VESPER_IDENTIFIER);
             let legacy = temp.path().join(UKTI_IDENTIFIER);
             fs::create_dir_all(current.join("dataset")).unwrap();
             fs::create_dir_all(&legacy).unwrap();
@@ -178,7 +179,7 @@ mod tests {
     #[test]
     fn new_symlink_state_is_not_followed_or_replaced_by_legacy() {
         let temp = tempfile::tempdir().unwrap();
-        let current = temp.path().join(TRANSCRIBE_IDENTIFIER);
+        let current = temp.path().join(VESPER_IDENTIFIER);
         fs::create_dir_all(current.join("models")).unwrap();
         fs::create_dir_all(temp.path().join(UKTI_IDENTIFIER)).unwrap();
         std::os::unix::fs::symlink(current.join("models"), current.join("models/cycle")).unwrap();
@@ -224,7 +225,7 @@ mod tests {
     #[test]
     fn ukti_state_wins_over_the_older_stt_store() {
         let temp = tempfile::tempdir().unwrap();
-        let current = temp.path().join(TRANSCRIBE_IDENTIFIER);
+        let current = temp.path().join(VESPER_IDENTIFIER);
         let ukti = temp.path().join(UKTI_IDENTIFIER);
         let stt = temp.path().join(STT_IDENTIFIER);
         fs::create_dir_all(&ukti).unwrap();
@@ -232,5 +233,41 @@ mod tests {
         fs::write(ukti.join("settings.json"), b"ukti").unwrap();
         fs::write(stt.join("settings.json"), b"stt").unwrap();
         assert_eq!(compatible_app_root(current).unwrap(), ukti);
+    }
+
+    #[test]
+    fn every_legacy_store_is_read_in_order_without_moving_data() {
+        let identifiers = [TRANSCRIBE_IDENTIFIER, UKTI_IDENTIFIER, STT_IDENTIFIER];
+        for start in 0..identifiers.len() {
+            let temp = tempfile::tempdir().unwrap();
+            let current = temp.path().join(VESPER_IDENTIFIER);
+            for identifier in &identifiers[start..] {
+                let legacy = temp.path().join(identifier);
+                fs::create_dir_all(&legacy).unwrap();
+                fs::write(legacy.join("settings.json"), identifier.as_bytes()).unwrap();
+            }
+            assert_eq!(
+                compatible_app_root(current.clone()).unwrap(),
+                temp.path().join(identifiers[start])
+            );
+            assert!(!current.exists());
+            for identifier in &identifiers[start..] {
+                assert_eq!(
+                    fs::read(temp.path().join(identifier).join("settings.json")).unwrap(),
+                    identifier.as_bytes()
+                );
+            }
+        }
+    }
+
+    #[test]
+    fn an_unrelated_app_root_is_never_redirected() {
+        let temp = tempfile::tempdir().unwrap();
+        let unrelated = temp.path().join("another-app");
+        let legacy = temp.path().join(TRANSCRIBE_IDENTIFIER);
+        fs::create_dir_all(&legacy).unwrap();
+        fs::write(legacy.join("settings.json"), b"existing").unwrap();
+        assert_eq!(compatible_app_root(unrelated.clone()).unwrap(), unrelated);
+        assert!(!unrelated.exists());
     }
 }

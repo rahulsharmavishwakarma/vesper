@@ -266,7 +266,7 @@ To run the desktop shell:
 npm run desktop:dev
 ```
 
-The Tauri product name is `Vesper`, with the unchanged application identifier `com.transcribe.desktop`. Package names, environment variables, browser storage keys, data directories and published-asset filenames retain their compatibility names; the display-name change does not migrate or delete data. The Models screen pairs each supported ASR/cleanup dropdown with its own download action; the complete selected pipeline must be ready before recording or transcribing a file. Merely launching the app or listing input devices does not start capture; recording starts only when Record is requested.
+The Tauri product name is `Vesper`, with application identifier `com.vesper.desktop`. Earlier settings and data remain accessible through the compatibility lookup below; the identity change does not move or delete data. macOS may request microphone, Accessibility or notification permission again for the new identity. The Models screen pairs each supported ASR/cleanup dropdown with its own download action; the complete selected pipeline must be ready before recording or transcribing a file. Merely launching the app or listing input devices does not start capture; recording starts only when Record is requested.
 
 The macOS menu bar displays only the static **Songbird logo**, without text or a background tile. Its tooltip retains the Vesper name and current activity. Click it for current activity, Start/Stop recording, Open Vesper, History, Models, Settings and Quit. Menu recording uses the same quick-capture controller and default input as the global shortcut. The floating strip appears for menu preflight so missing models or microphones can be explained; after a successful start it respects the saved strip preference. Opening a screen never saves pending settings. Navigation requested before the main WebView is ready is retained until its listener mounts.
 
@@ -280,9 +280,9 @@ Quick capture uses a 440 × 96 logical-pixel window, with an 80-pixel bar inside
 
 The rounded macOS window enables Tauri's `macos-private-api` feature and `app.macOSPrivateApi`. Both the document root and body are transparent, and the native rectangular shadow is disabled. Tauri documents that this private API use prevents Mac App Store acceptance; the current configuration is for direct desktop distribution. An App Store build needs a separate opaque-window design and must disable that feature. Browser screenshots validate web content, not native compositor behavior.
 
-Existing Vesper installations retain access to their data after a display-name change. When the current `com.transcribe.desktop` directory has no actual settings, dataset, or model files, the application first checks the prior `com.ukti.desktop` directory and then `com.stt.desktop`, reusing the newest store with data in place. A populated `com.transcribe.desktop` directory always wins. Nothing is moved, merged, or deleted. Empty platform-created directories do not hide an earlier store, and read failures are reported.
+When the current `com.vesper.desktop` directory has no actual settings, dataset, or model files, the application checks prior sibling directories in this order: `com.transcribe.desktop`, `com.ukti.desktop`, `com.stt.desktop`, reusing the newest store with data in place. A populated `com.vesper.desktop` directory always wins. Nothing is moved, merged, or deleted. Empty platform-created directories do not hide an earlier store, and read failures are reported.
 
-An explicit saved `modelDirectory` takes precedence. Otherwise `TRANSCRIBE_MODEL_DIR` is preferred, followed by the compatibility variables `UKTI_MODEL_DIR` and `STT_MODEL_DIR`. Debug builds also discover an existing repository `models/downloads` folder, including when the debug `.app` is opened from Finder. Release builds without an override use the selected data directory's `models` folder. Browser preview settings similarly read the legacy `ukti.browser-preview.settings.v1` and `stt.browser-preview.settings.v1` keys when `transcribe.browser-preview.settings.v1` is absent, and write only that current key on the next explicit save. `TRANSCRIBE_NEMO_SPEECH_BIN` can override the NeMo executable while `UKTI_NEMO_SPEECH_BIN` remains supported.
+An explicit saved `modelDirectory` takes precedence. Otherwise `TRANSCRIBE_MODEL_DIR` is preferred, followed by the compatibility variables `UKTI_MODEL_DIR` and `STT_MODEL_DIR`. Debug builds also discover an existing repository `models/downloads` folder, including when the debug `.app` is opened from Finder. Release builds without an override use the selected data directory's `models` folder. Browser preview settings read `vesper.browser-preview.settings.v1` first, then the legacy `transcribe.browser-preview.settings.v1`, `ukti.browser-preview.settings.v1` and `stt.browser-preview.settings.v1` keys. Reads never write. Only an explicit Save/Reset writes the Vesper key, leaving legacy bytes untouched. Invalid current settings are reported instead of silently falling back. `TRANSCRIBE_NEMO_SPEECH_BIN` can override the NeMo executable while `UKTI_NEMO_SPEECH_BIN` remains supported.
 
 ### macOS microphone permission and bundles
 
@@ -334,8 +334,8 @@ frontend hot reload alone does not replace a running app's packaged icon.
 
 **Vesper** is the display name in the app, documentation, issue templates,
 GitHub issues and project title/readme. Native startup messages and developer
-qualification windows use the same name. This is a branding change, not a
-storage or repository migration. Internal Rust packages and their directories
+qualification windows use the same name. The application identity is `com.vesper.desktop`; legacy state is reused in place,
+not moved or merged. Repository renaming remains owner-controlled. Internal Rust packages and their directories
 use `vesper-*`; the native executable is `vesper-desktop` and the library is
 `vesper_desktop_lib`. Current commands and source links use those names.
 
@@ -345,9 +345,11 @@ their producers, consumers and compatibility behavior together:
 - Repository slug/clone directory and working GitHub links: `transcribe`.
 - The remaining npm/Python package names and hook IDs retain their existing
   names until their producers and consumers are updated together.
-- App identifier `com.transcribe.desktop`, browser key
-  `transcribe.browser-preview.settings.v1`, `TRANSCRIBE_*` environment variables,
-  legacy aliases and export prefixes.
+- `TRANSCRIBE_*` environment variables and export prefixes.
+
+The app/browser identifiers use Vesper now. Old Transcribe/Ukti/STT identifiers
+are read-only lookup aliases, not competing current names; subsequent native
+saves stay in the selected existing store and browser saves use the Vesper key.
 - Existing release download filenames, including `transcribe-macos-arm64.dmg`.
 
 Do not rename the third-party **Cohere Transcribe** model, the `transcribe.cpp`

@@ -83,10 +83,10 @@ test('the macOS menu bar uses only the canonical still bird as a template', () =
   assert.match(tray, /\.show_menu_on_left_click\(true\)/);
 });
 
-test('display-name integration preserves storage and package identities', () => {
+test('Vesper identity retains explicit compatibility for earlier storage', () => {
   const config = JSON.parse(read('apps/desktop/src-tauri/tauri.conf.json'));
   assert.equal(config.productName, 'Vesper');
-  assert.equal(config.identifier, 'com.transcribe.desktop');
+  assert.equal(config.identifier, 'com.vesper.desktop');
   assert.deepEqual(
     config.app.windows.map((window) => window.label),
     ['main', 'quick-capture'],
@@ -94,8 +94,8 @@ test('display-name integration preserves storage and package identities', () => 
   assert.ok(config.app.windows.every((window) => window.title.startsWith('Vesper')));
   assert.equal(JSON.parse(read('apps/desktop/package.json')).name, '@transcribe/desktop');
   assert.match(
-    read('apps/desktop/src/lib/api/desktop.ts'),
-    /transcribe\.browser-preview\.settings\.v1/,
+    read('apps/desktop/src/lib/browserSettings.ts'),
+    /vesper\.browser-preview\.settings\.v1/,
   );
   assert.match(read('apps/desktop/src-tauri/src/storage.rs'), /com\.transcribe\.desktop/);
   assert.match(read('scripts/package-release.sh'), /productName/);

@@ -13,10 +13,10 @@ The application deliberately does not put every kind of state in one database.
 | Original imported/captured audio | Ordinary files | Tauri `app_data_dir/dataset/audio/` | Same as its session record |
 | Model weights and native sidecars | Ordinary files | Selected model directory | Until manually removed or repaired |
 | Current operation, progress, microphone level, live partial, cancellation flag, resident models, and latest result | Process memory | None | Lost when the process exits |
-| Browser-preview settings | Web storage | `localStorage` key `transcribe.browser-preview.settings.v1` | Browser-profile lifetime |
+| Browser-preview settings | Web storage | `localStorage` key `vesper.browser-preview.settings.v1` | Browser-profile lifetime |
 | Portable dataset output | JSON, JSONL, and audio files | User-selected export parent | Independent of application state |
 
-Tauri resolves platform-specific configuration and data directories; application code does not hard-code an operating-system home path. The current application identifier is `com.transcribe.desktop`. If that root has no explicit state, the app can continue using an existing sibling root from `com.ukti.desktop` and then `com.stt.desktop`. It does not move, merge, or delete legacy data. A settings entry, nonempty dataset/model tree, or symlink counts as explicit state; empty directories and `.DS_Store` do not.
+Tauri resolves platform-specific configuration and data directories; application code does not hard-code an operating-system home path. The current application identifier is `com.vesper.desktop`. If that root has no explicit state, the app can continue using an existing sibling root from `com.transcribe.desktop`, then `com.ukti.desktop`, then `com.stt.desktop`. It does not move, merge, or delete legacy data. A settings entry, nonempty dataset/model tree, or symlink counts as explicit state; empty directories and `.DS_Store` do not.
 
 The config and data roots are resolved independently. Therefore `settings.json`, `dataset/`, and `models/` must be discussed as logical locations rather than assumed to share one physical parent on every platform.
 
