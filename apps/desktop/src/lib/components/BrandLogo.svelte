@@ -37,9 +37,7 @@
 </span>
 
 <style>
-  /* Hallmark · component: selected identity · theme: existing graphite/sage
-   * Non-interactive SVG; the host retains its existing button states.
-   * pre-emit critique: P5 H4 E4 S5 R5 V4 */
+  /* Non-interactive SVG; the host retains its existing button states. */
   .brand-logo {
     --duration-logo-call: 480ms;
     --ease-logo-call: cubic-bezier(0.16, 1, 0.3, 1);

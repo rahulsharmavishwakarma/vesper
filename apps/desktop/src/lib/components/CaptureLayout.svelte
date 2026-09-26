@@ -152,8 +152,6 @@
 </div>
 
 <style>
-  /* Hallmark · component: capture layouts · graphite/sage · modern-minimal
-   * P5 H5 E4 S5 R5 V5. Shared eight-state controls; inherited type and tokens. */
   .layout-wrap {
     --capture-shadow: color-mix(in srgb, var(--color-bg) 60%, var(--color-transparent));
     width: min(var(--capture-width), 100%);

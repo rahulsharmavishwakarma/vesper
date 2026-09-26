@@ -198,7 +198,6 @@
 </div>
 
 <style>
-  /* W02 Reed · Hallmark: P5 H5 E5 S5 R5 V4. Measured volume and pitch. */
   .voice-indicator {
     display: grid;
     place-items: center;

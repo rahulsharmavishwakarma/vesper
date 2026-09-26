@@ -204,8 +204,7 @@ details[open] summary {
   padding-left: var(--space-5);
 }
 
-/* Hallmark · Vesper Studio · pre-emit critique: P5 H4 E5 S5 R5 V4
- * Approved workbench design, graphite/sage, Geist. Motion follows real state.
+/* Vesper Studio: token-driven visual styles. Motion follows application state.
  * Structural resets stay separate from this token-driven visual layer.
  */
 :root {
@@ -613,8 +612,6 @@ h3 {
 .transcription-language-control > .error {
   margin-top: var(--space-2);
 }
-/* Hallmark · component: recorder · existing graphite/sage tokens
- * pre-emit critique: P5 H4 E4 S5 R5 V4; existing control states preserved. */
 .studio-recorder {
   position: relative;
   background: var(--color-panel);
@@ -2146,9 +2143,7 @@ textarea:focus:enabled {
   }
 }
 
-/* Hallmark · component: shared interaction finish · graphite/sage
- * P5 H5 E5 S5 R5 V4 · hover/focus/press/selected/disabled/busy/error/success.
- * State owns motion. Controls keep their measured anchors and 44 px targets. */
+/* State owns motion. Controls keep their measured anchors and 44 px targets. */
 button {
   transition:
     transform var(--duration-press) var(--ease-out),

@@ -2,6 +2,11 @@
 
 Keep common actions familiar and direct. A control should let someone perform the task without assembling its implementation details. Preserve Vesper's shared typography, graphite/sage tokens, focus treatment, spacing, and approved motion; simplicity is an interaction requirement as well as a visual one.
 
+Source comments explain behavior, constraints and asset ownership. Do not embed
+design-tool names, self-review scores or generation-session stamps in production
+components or styles. Keep useful notes about motion, focus and trusted artwork;
+removing tool metadata must not change styles, markup, events or animation.
+
 ## Selected identity
 
 Use **Vesper** for the product name in UI copy, documentation, issue templates,
