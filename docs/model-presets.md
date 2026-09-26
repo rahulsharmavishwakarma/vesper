@@ -1,5 +1,10 @@
 # Model presets
 
+For a development model directory, use `VESPER_MODEL_DIR`; a saved
+`modelDirectory` still takes precedence. Earlier environment names remain
+[compatibility fallbacks](development.md#product-name-and-compatibility), without
+renaming model IDs or moving downloaded artifacts.
+
 The Models menus include eight ASR choices and six cleanup choices. Qwen3-ASR and Cohere use dedicated adapters described in [offline ASR](offline-asr.md).
 [LFM2.5 Audio 1.5B](lfm-audio.md) adds English-only completed-audio recognition on CPU with a pinned Q4 backbone/projector pair (915,262,016 bytes).
 The exact application-language choices, delivery modes, and benchmark status for every ASR option are summarized in [Language support and model recommendations](language-support-and-recommendations.md).
