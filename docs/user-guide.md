@@ -113,6 +113,28 @@ produces smaller strokes; unvoiced sounds still register without forcing the
 spacing to jump. It is a recording indicator, not a speech/noise detector: fans,
 music and other audible sounds can also move it.
 
+### Live words while speaking
+
+Current speech models can display draft words while you speak in Dictate and the
+floating recorder. Wait for **Listening** before speaking. Loading a cold model
+can delay readiness; speech before Listening is not captured.
+
+Drafts can change as more speech arrives. Some models update more frequently
+than others, especially on slower devices or under memory pressure. Very short
+recordings may finish before the first draft. After **Stop**, most models perform
+a final pass over the full recording, so the finished text can differ from the
+live draft. A moving waveform indicates microphone activity, not completed
+recognition. See the [per-model behavior](model-presets.md#live-transcription-support).
+
+Writing cleanup and the final paste into another application happen after the
+recording finishes. Live drafts stay inside Vesper and are not used as learning
+labels. If live updates cannot keep up, Vesper retains the recording for final
+transcription. If a saved model produces no drafts on a longer recording, check
+that Listening appeared and the microphone shows an input signal, and report any
+runtime warning with the selected model, language and processing device.
+
+### Recording length and cleanup
+
 There is no general application recording-time quota. Available memory, model
 limits and recognition quality still affect longer recordings. Supported
 long-audio adapters process recordings in internal segments; this does not
@@ -221,10 +243,9 @@ remains available through **Copy**. Changing to **Keep in app** stops this
 preparation. Protected fields, Terminal, iTerm and Warp remain excluded.
 External-app compatibility is still being qualified.
 
-Live words in the floating recorder require a streaming speech model. The
-current **NVIDIA Parakeet TDT 0.6B v3** adapter produces text after Stop;
-**NVIDIA Nemotron 3.5 ASR Streaming 0.6B** supports live preview. Select your
-model on **Models** and wait for **Listening** before speaking, particularly
+All current speech adapters can show drafts in the floating recorder. Update
+speed depends on the model and device; some models revise buffered speech in
+batches. Select your model on **Models** and wait for **Listening** before speaking, particularly
 after cold model startup. Live words stay in the recorder; the external field
 receives one final paste after release.
 

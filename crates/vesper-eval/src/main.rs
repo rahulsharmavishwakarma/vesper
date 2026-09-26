@@ -262,9 +262,9 @@ fn run(mut options: RunOptions) -> Result<(), Box<dyn std::error::Error>> {
     });
     config.validate()?;
     if matches!(options.mode, RunMode::Streaming)
-        && !config.speech_adapter().capabilities.native_streaming
+        && config.speech_adapter().live_mode() == vesper_core::LiveMode::Unavailable
     {
-        return Err("the selected adapter does not expose native streaming".into());
+        return Err("the selected adapter does not expose live transcription".into());
     }
     let installation = vesper_models::inspect(&config, &options.model_root);
     if !installation.ready {
@@ -570,7 +570,22 @@ fn run_streaming(
         }
     }
     let stop = Instant::now();
-    let result = session.finish().map_err(|error| error.to_string());
+    let result = session
+        .finish_live()
+        .and_then(|outcome| match outcome {
+            vesper_inference::StreamingFinal::Transcript(text) => Ok(text),
+            vesper_inference::StreamingFinal::CompletedAudioRequired => manager
+                .transcribe_personalized(
+                    audio,
+                    config,
+                    &options.model_root,
+                    &format!("benchmark-stream-{}", sample.id),
+                    Arc::new(AtomicBool::new(false)),
+                    Arc::new(|_| {}),
+                    &options.profile,
+                ),
+        })
+        .map_err(|error| error.to_string());
     StreamingOutcome {
         result,
         first_partial_ms: first_partial(&updates),

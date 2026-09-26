@@ -370,8 +370,29 @@ failures; successful execution does not justify enabling this policy by default.
 
 The [application-path report](../../docs/validation/audio-frontend-integration-2026-09-18.md) separates completed-audio quality, paced replay, native contracts, preserved failures and remaining qualification gaps.
 
-The application evaluator accepts `--vad` and `--denoiser off|dpdfnet4|dpdfnet8`; these invoke the same manager frontend as the desktop, including warnings/fallback evidence. They work with completed recordings and the existing `--streaming --realtime --chunk-ms 20` Nemotron mode. They do not add streaming decoder support to other models.
+The application evaluator accepts `--vad` and `--denoiser off|dpdfnet4|dpdfnet8`; these invoke the same manager frontend as the desktop, including warnings/fallback evidence. They work with completed recordings and `--streaming --realtime --chunk-ms 20` for every current ASR adapter. Native streams and buffered previews are distinguished in execution evidence; buffered paths and Qwen MLX previews run an authoritative full-recording pass at Stop.
 
 Use `scripts/prepare-frontend-integration.py` with the root uv environment and cached public FLEURS/MS-SNSD/regression assets to freeze a new selection before inference. Build `cargo build --release -p vesper-eval`, then run `uv run --locked python scripts/qualify-frontend-integration.py streaming`, followed by the `quality` and `soak` phases sequentially. The runner freezes the binary/source hashes, preserves failed processes, records competing work and sampled RSS, and never changes settings based on results. The soak is 30 minutes of paced synthetic repetition and is excluded from accuracy. Frozen attributed public references and recipes are in [the dated manifests](manifests/frontend-integration-2026-09-18/quality.json). Once those manifests exist, preparation rebuilds that exact selection and checks every generated audio hash; it refuses an existing output directory. Original waveforms remain local. The initial run is under `.cache/benchmarks/results/frontend-integration-2026-09-18`; it includes a retained metadata-only split-schema preflight failure. Do not overwrite completed evidence to restart a run.
 
 Installed contracts can be run using `VESPER_SMOKE_MODELS` and `VESPER_SMOKE_AUDIO` with the ignored tests `installed_frontends_packetization_tails_and_100_recording_resets`, `live_frontend_cancel_fallback_and_reset_isolation`, `live_frontend_load_failure_uses_original_audio_and_retains_asr_errors`, and `live_frontend_device_rates_match_completed_processing`. The live tests need the pinned CPU Nemotron runtime/model plus the same frontend artifact layout. They use public speech fixtures. Full hashes are checked before native model construction. Device-rate tests compare irregular 44.1/48 kHz delivery against completed processing of the same synthetic-rate waveform; they do not substitute for microphone quality qualification.
+
+## Common live-adapter qualification
+
+Use the same manifest, language, backend, pinned artifacts and frontend options
+for paired completed and `--streaming --realtime --chunk-ms 20` runs. Check
+nonempty output **before** input ends, not just process success. A successful
+completed fallback with zero drafts fails the live-output gate. Keep per-model
+errors, empty drafts, cancelled runs and timeouts in the aggregate.
+
+`firstPartialMs` starts before loading. Subtract the separately reported
+`execution.liveStartup.milliseconds` to estimate the first draft after readiness.
+`stopToFinalMs` includes full-audio final decoding for buffered and native Qwen
+preview paths. Report cold startup separately from resident inference. Draft
+events and edit distance do not establish correct-word emission time or physical
+microphone-to-pixel latency. Adapters using a completed-audio final must match their paired completed path.
+Native Nemotron can differ between streaming and offline decoding: retain those
+differences and compare WER/CER and meaning, without claiming exact parity.
+
+See [live adapters](../../docs/live-transcription.md) for the bounded scheduling,
+resource heuristics, installed-model lifecycle test and measured qualification.
+Raw audio, model files and detailed JSON remain local ignored evidence.

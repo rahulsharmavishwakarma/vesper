@@ -24,7 +24,7 @@ punctuation and formatting. No account or cloud API key is required.
 - **Optional text cleanup.** Improve punctuation and formatting while keeping the original transcript available.
 - **Personal vocabulary.** Remember spellings and recurring corrections across recordings and model changes.
 - **Local history.** Search, review, copy and export saved recordings and text.
-- **Your choice of models.** Select speech and writing models independently. Language support and live captions depend on the speech model.
+- **Your choice of models.** Select speech and writing models independently. Current speech adapters show live drafts, with update speed and language support depending on the model and device.
 - **Automatic acceleration.** Compatible models use the Mac GPU with matching model files chosen during download. See [supported combinations](docs/accelerators.md).
 
 See the [user guide](docs/user-guide.md) for daily use and the

@@ -308,8 +308,8 @@ mod tests {
     }
 
     #[test]
-    fn failed_stream_invalidates_visible_partial_even_if_completed_fallback_fails() {
-        for explicit_failure in [true, false] {
+    fn live_handoff_invalidates_draft_even_if_completed_pass_fails() {
+        for handoff in 0..3 {
             let directory = tempfile::tempdir().unwrap();
             let runtime = Arc::new(Runtime::default());
             let context = WorkContext {
@@ -343,9 +343,13 @@ mod tests {
             assert!(runtime.state.lock().unwrap().partial.is_some());
             let (sender, receiver) = mpsc::sync_channel(1);
             context.set_streaming_result(receiver);
-            if explicit_failure {
+            if handoff == 0 {
                 sender
                     .send(Err("injected frontend failure".into()))
+                    .unwrap();
+            } else if handoff == 2 {
+                sender
+                    .send(Ok(vesper_inference::StreamingFinal::CompletedAudioRequired))
                     .unwrap();
             }
             drop(sender);
@@ -763,6 +767,9 @@ mod tests {
             let mut config = AppConfig::default();
             config.models.asr = model;
             config.language = Language::English;
+            // This fixture attests the pinned ONNX artifact/provenance contract.
+            // Automatic can legitimately resolve Qwen to a different MLX package.
+            config.compute_backend = vesper_core::ComputeBackend::Cpu;
             config.cleanup_enabled = false;
             let context = WorkContext {
                 operation_id: "public-offline-asr-qualification".into(),
@@ -775,6 +782,7 @@ mod tests {
                 personalization: Arc::default(),
             };
             context.runtime.begin("transcribing", "test").unwrap();
+            context.runtime.set_operation_id(&context.operation_id);
             let started = Instant::now();
             let result = context.process_file(&audio).unwrap();
             let file_seconds = started.elapsed().as_secs_f64();
@@ -814,10 +822,39 @@ mod tests {
                 vesper_audio::CapturedAudio::new(mono.samples().to_vec(), 16000, 1).unwrap();
             // Calls the same post-stop path using public PCM, without microphone/UI time.
             let stopped = Instant::now();
+            context.runtime.set_recording(context.clone());
+            assert!(context
+                .runtime
+                .publish_partial(vesper_inference::StreamingTranscript {
+                    operation_id: context.operation_id.clone(),
+                    sequence: 1,
+                    committed_text: String::new(),
+                    provisional_text: "incomplete preview".into(),
+                    audio_processed_seconds: 2.0,
+                    emitted_at_unix_ms: 1,
+                    is_final: false,
+                }));
+            let (sender, receiver) = mpsc::sync_channel(1);
+            sender
+                .send(Ok(vesper_inference::StreamingFinal::CompletedAudioRequired))
+                .unwrap();
+            context.set_streaming_result(receiver);
             let capture_result = context.process_capture(captured).unwrap();
             let stop_seconds = stopped.elapsed().as_secs_f64();
             assert_eq!(capture_result.raw_transcript, result.raw_transcript);
             assert!(capture_result.warnings.is_empty());
+            {
+                let state = context.runtime.state.lock().unwrap();
+                assert!(state.partial.is_none());
+                assert_eq!(
+                    state.partial_invalidated_for.as_deref(),
+                    Some(context.operation_id.as_str())
+                );
+                assert_eq!(
+                    state.transcript_preview.as_ref().unwrap().raw_transcript,
+                    capture_result.raw_transcript
+                );
+            }
             let captured_archive = context
                 .dataset_root
                 .join(&capture_result.session.as_ref().unwrap().audio_relative_path);
@@ -1558,7 +1595,7 @@ pub struct WorkContext {
         Arc<std::sync::OnceLock<Result<vesper_data::DictationPersonalizationSnapshot, String>>>,
 }
 
-type StreamingResultReceiver = mpsc::Receiver<Result<String, String>>;
+type StreamingResultReceiver = mpsc::Receiver<Result<vesper_inference::StreamingFinal, String>>;
 
 impl WorkContext {
     pub(crate) fn personalization(&self) -> Result<&vesper_core::PersonalizationProfile, String> {
@@ -1664,7 +1701,13 @@ impl WorkContext {
                         .unwrap_or_else(|error| Err(error.to_string()));
                     drop(timer);
                     match finalized {
-                        Ok(raw) => self.process_raw(&mono, session, raw)?,
+                        Ok(vesper_inference::StreamingFinal::Transcript(raw)) => {
+                            self.process_raw(&mono, session, raw)?
+                        }
+                        Ok(vesper_inference::StreamingFinal::CompletedAudioRequired) => {
+                            self.runtime.invalidate_partial(&self.operation_id);
+                            self.process(&mono, session)?
+                        }
                         Err(error) if self.runtime.cancelled.load(Ordering::Relaxed) => {
                             return Err(error)
                         }

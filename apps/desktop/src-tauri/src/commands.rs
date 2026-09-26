@@ -843,11 +843,7 @@ pub(crate) async fn start_recording_inner(
     let setup_context = context.clone();
     let setup_app = app.clone();
     let started = tauri::async_runtime::spawn_blocking(move || {
-        let live = setup_context
-            .config
-            .speech_adapter()
-            .capabilities
-            .native_streaming;
+        let live = setup_context.config.speech_adapter().live_mode() != vesper_core::LiveMode::Unavailable;
         if !live {
             if dictation_id.is_some_and(|id| !crate::dictation::start_allowed(&setup_app.state(), id)) {
                 return Err("Shortcut released before the microphone was ready. Hold again and wait for Listening.".into());
@@ -860,7 +856,7 @@ pub(crate) async fn start_recording_inner(
         }
         setup_context
             .runtime
-            .progress("starting", "Loading the resident streaming recognizer…");
+                .progress("starting", "Loading the speech model…");
         let callback_runtime = Arc::clone(&setup_context.runtime);
         let callback_app = setup_app.clone();
         let updates: vesper_inference::StreamingUpdateSink = Arc::new(move |update| {
@@ -1008,7 +1004,7 @@ fn forward_live_audio(
     chunks: vesper_audio::AudioChunkStream,
     stream: vesper_inference::StreamingSession,
     cancelled: Arc<std::sync::atomic::AtomicBool>,
-) -> Result<String, String> {
+) -> Result<vesper_inference::StreamingFinal, String> {
     let (chunks, interrupted) = chunks.into_parts();
     for chunk in chunks {
         if cancelled.load(Ordering::Relaxed) {
@@ -1028,7 +1024,7 @@ fn forward_live_audio(
             .cancel()
             .and(Err(vesper_inference::InferenceError::Cancelled))
     } else {
-        stream.finish()
+        stream.finish_live()
     }
     .map_err(|error| error.to_string())
 }
