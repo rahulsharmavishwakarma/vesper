@@ -1857,7 +1857,7 @@ textarea:focus:enabled {
     position: static;
     min-height: 0;
     height: auto;
-    padding: var(--space-4);
+    padding: var(--space-2) var(--space-4);
     border: 0;
     border-bottom: 1px solid var(--color-line);
   }
@@ -1867,9 +1867,12 @@ textarea:focus:enabled {
   .brand span {
     font-size: 26px;
   }
+  .brand > .brand-logo {
+    width: 120px;
+  }
   .sidebar nav {
     display: flex;
-    margin-top: var(--space-3);
+    margin-top: var(--space-1);
     gap: var(--space-1);
   }
   .sidebar nav button {
@@ -1891,10 +1894,34 @@ textarea:focus:enabled {
     right: 7px;
   }
   .studio-main {
-    padding: var(--space-6) var(--space-4) var(--space-8);
+    padding: var(--space-4) var(--space-4) var(--space-8);
   }
   .page-header {
-    margin-bottom: var(--space-6);
+    margin-bottom: var(--space-4);
+  }
+  .page-header h1 {
+    font-size: 24px;
+    margin-bottom: var(--space-2);
+  }
+  .page-model-summary {
+    margin-bottom: var(--space-4);
+  }
+  .page-model-summary .configured-models {
+    gap: 0;
+    padding-block: var(--space-2);
+  }
+  .page-model-summary .configured-models dl {
+    grid-template-columns: minmax(0, 1fr);
+    gap: var(--space-2);
+  }
+  .page-model-summary .configured-models dl > div {
+    display: grid;
+    grid-template-columns: 78px minmax(0, 1fr);
+    align-items: baseline;
+    gap: var(--space-2);
+  }
+  .page-model-summary .configured-models dt {
+    margin: 0;
   }
   .intro {
     font-size: 12px;
@@ -1922,7 +1949,10 @@ textarea:focus:enabled {
     max-width: none;
   }
   .settings-section {
-    padding: var(--space-5);
+    padding: var(--space-4);
+  }
+  .settings-section > h2 {
+    margin-bottom: var(--space-4);
   }
   .model-files li {
     flex-direction: column;

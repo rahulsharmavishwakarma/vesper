@@ -15,6 +15,14 @@ do not indicate a different application.
 
 ## First launch
 
+### Small windows
+
+When the window is narrow, navigation moves to the top and spacing becomes
+more compact. Both configured model names remain visible in Settings and
+History. Scroll vertically to reach the remaining controls, Save actions and
+About. Resizing preserves unsaved preferences; an open dropdown closes and can
+be reopened in its new position.
+
 ### App information
 
 Open **Settings** and choose **About Vesper** at the bottom of the page,

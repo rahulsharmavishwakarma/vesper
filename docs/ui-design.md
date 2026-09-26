@@ -18,10 +18,11 @@ similarity screening was preliminary, not a claim of worldwide exclusivity or
 trademark clearance. Selecting the artwork does not select a distribution
 license or establish that the Vesper name is legally available.
 
-`BrandLogo.svelte` renders that same source at 160 px in the sidebar and 224 px
-in About, bounded by the available width. Existing sage/ink tokens provide its
-colours. The sidebar's existing button retains its accessible destination and
-keyboard behavior; About exposes the SVG as “Vesper.” The compact capture strip
+`BrandLogo.svelte` renders that same source at 160 px in the sidebar, 120 px in
+the narrow-window header and 224 px in About, bounded by the available width.
+Existing sage/ink tokens provide its colours. The sidebar's existing button
+retains its accessible destination and keyboard behavior; About exposes the SVG
+as “Vesper.” The compact capture strip
 keeps readable text. The macOS menu bar uses only the still bird and its two
 call strokes, with no wordmark or tile. Its transparent template lets macOS
 choose the monochrome tint; the tooltip retains the Vesper name and activity.
@@ -71,6 +72,26 @@ cards. Local engine shows resources, readiness and operation details without
 repeating both selected models. Do not add a separate batch-verification card;
 automatic integrity checks and each model's Download/Verify files action own that
 flow. Keep these removals independent of changes to page width or card layout.
+
+## Small windows
+
+The main window supports 360 × 480 logical pixels. At widths up to 700 px,
+navigation becomes a compact header: reduce its surrounding space and wordmark
+size while retaining 44 px button targets. Keep the same page order and cards.
+Use tighter heading/card spacing and put the saved model labels beside their
+full names in Settings and History. Names wrap within the available width;
+do not hide either model or truncate it to make the window fit.
+
+At the minimum window size, the first Settings control should be fully visible
+without scrolling past the header and model summary. The rest of each page uses
+normal vertical scrolling, including Save and About. Resizing must preserve
+unsaved values; open dropdowns close on resize and can reopen within the new
+viewport. Dialogs remain height-constrained and scroll internally as needed.
+
+Check short heights as well as narrow widths, including both sides of the
+700 px sidebar breakpoint. `tests/responsive.spec.mjs` uses synthetic data to
+exercise the minimum window, long model names, navigation, expanded History,
+save reachability, dropdowns, dialog bounds and draft preservation on resize.
 
 ## Shortcut recording
 

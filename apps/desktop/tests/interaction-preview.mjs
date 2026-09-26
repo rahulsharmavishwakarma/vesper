@@ -118,6 +118,14 @@ if (states) {
             message: '',
             shortcut_error: null,
           };
+        case 'get_app_info':
+          return {
+            name: 'Vesper',
+            version: '0.1.0',
+            buildType: 'development',
+            os: 'macos',
+            arch: 'aarch64',
+          };
         case 'get_engine_diagnostics':
           return {
             resources: {
