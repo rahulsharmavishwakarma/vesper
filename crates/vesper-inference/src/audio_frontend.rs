@@ -257,7 +257,7 @@ pub struct FrontendMetrics {
 impl FrontendMetrics {
     pub fn evidence(&self) -> serde_json::Value {
         serde_json::json!({"runtime":"sherpa-onnx", "runtimeVersion":"1.13.8",
-            "runtimeBuildId":env!("TRANSCRIBE_SHERPA_BUILD_ID"), "runtimePatchSha256":env!("TRANSCRIBE_SHERPA_PATCH_SHA256"),
+            "runtimeBuildId":env!("VESPER_SHERPA_BUILD_ID"), "runtimePatchSha256":env!("VESPER_SHERPA_PATCH_SHA256"),
             "initializedProvider":"cpu", "nativeGraphThreads":1, "vadPolicy":vad_policy(&self.settings),
             "automaticLevelPolicy":if self.settings.auto_level_enabled {Some("bounded-level-v1")} else {None},
             "automaticLevelFrameSamples":level::FRAME,
@@ -613,9 +613,12 @@ mod tests {
     #[test]
     #[ignore = "requires pinned frontend models and a public speech fixture"]
     fn automatic_level_native_packet_prefix_tail_and_reset_contracts() {
-        let root = PathBuf::from(std::env::var_os("TRANSCRIBE_SMOKE_MODELS").expect("models"));
+        let root =
+            PathBuf::from(vesper_core::environment::var_os("VESPER_SMOKE_MODELS").expect("models"));
         let audio = vesper_audio::decode_file(
-            Path::new(&std::env::var_os("TRANSCRIBE_SMOKE_AUDIO").expect("public fixture")),
+            Path::new(
+                &vesper_core::environment::var_os("VESPER_SMOKE_AUDIO").expect("public fixture"),
+            ),
             60,
         )
         .unwrap();
@@ -722,9 +725,12 @@ mod tests {
     #[test]
     #[ignore = "requires pinned frontend models and a public speech fixture"]
     fn installed_frontends_packetization_tails_and_100_recording_resets() {
-        let root = PathBuf::from(std::env::var_os("TRANSCRIBE_SMOKE_MODELS").expect("models"));
+        let root =
+            PathBuf::from(vesper_core::environment::var_os("VESPER_SMOKE_MODELS").expect("models"));
         let audio = vesper_audio::decode_file(
-            Path::new(&std::env::var_os("TRANSCRIBE_SMOKE_AUDIO").expect("public fixture")),
+            Path::new(
+                &vesper_core::environment::var_os("VESPER_SMOKE_AUDIO").expect("public fixture"),
+            ),
             60,
         )
         .unwrap();

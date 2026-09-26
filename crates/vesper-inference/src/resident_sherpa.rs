@@ -56,8 +56,8 @@ pub(crate) fn key(config: &AppConfig, root: &Path) -> Result<RecognizerKey> {
         model: config.models.asr,
         artifacts,
         runtime_revision: config.speech_adapter().runtime_revision,
-        runtime_build: env!("TRANSCRIBE_SHERPA_BUILD_ID"),
-        runtime_patch: env!("TRANSCRIBE_SHERPA_PATCH_SHA256"),
+        runtime_build: env!("VESPER_SHERPA_BUILD_ID"),
+        runtime_patch: env!("VESPER_SHERPA_PATCH_SHA256"),
         binding_version: "1.13.8",
         requested_backend: config.compute_backend,
         provider: "cpu",
@@ -317,13 +317,13 @@ mod tests {
     }
 
     fn qualify_residency(asr: AsrModel) {
-        let path = |name| PathBuf::from(std::env::var_os(name).expect(name));
-        let root = path("TRANSCRIBE_SMOKE_MODELS");
+        let path = |name| PathBuf::from(vesper_core::environment::var_os(name).expect(name));
+        let root = path("VESPER_SMOKE_MODELS");
         let read = |name| vesper_audio::decode_file(path(name), 0).unwrap();
-        let a = read("TRANSCRIBE_SMOKE_AUDIO");
-        let b = read("TRANSCRIBE_COHERE_AUDIO_B");
-        let long = read("TRANSCRIBE_COHERE_LONG_AUDIO");
-        let french = read("TRANSCRIBE_COHERE_FRENCH_AUDIO");
+        let a = read("VESPER_SMOKE_AUDIO");
+        let b = read("VESPER_COHERE_AUDIO_B");
+        let long = read("VESPER_COHERE_LONG_AUDIO");
+        let french = read("VESPER_COHERE_FRENCH_AUDIO");
         assert!(long.duration_seconds() > 10.0);
         let mut config = config();
         config.models.asr = asr;

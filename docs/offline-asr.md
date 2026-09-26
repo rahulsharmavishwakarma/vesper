@@ -19,6 +19,10 @@ The project-owned patch headers, option keys and `vesper-runtime.json` build
 manifest use the Vesper namespace. This requires a genuine rebuild: source,
 patch and library hashes must agree; renaming a cached manifest or binary is
 not sufficient. Upstream `cohere-transcribe` architecture names are unchanged.
+Whisper confidence/language options use `vesper.whisper_scores.v1` and
+`vesper.whisper_language.v1`. Rust embeds verified provenance as
+`VESPER_SHERPA_BUILD_ID` and `VESPER_SHERPA_PATCH_SHA256`; these are build-script
+outputs, not operator overrides. Runtime reports keep the same JSON schema.
 
 Completion is **not an accuracy guarantee**. A model can reach EOS while misrecognizing words. The Qwen export generated a sentence from an all-zero one-second WAV during qualification. The app therefore returns empty text for exact digital silence before model loading, after validating the sample rate and configuration. Exact-zero segments inside longer audio are skipped too. This is an exact-zero check, not a volume threshold, VAD, or segmentation algorithm; nonzero quiet/noisy audio still needs model-quality review.
 

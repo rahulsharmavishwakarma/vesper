@@ -45,8 +45,8 @@ fn main() {
         );
     }
     for (key, name) in [
-        ("buildId", "TRANSCRIBE_SHERPA_BUILD_ID"),
-        ("patchSha256", "TRANSCRIBE_SHERPA_PATCH_SHA256"),
+        ("buildId", "VESPER_SHERPA_BUILD_ID"),
+        ("patchSha256", "VESPER_SHERPA_PATCH_SHA256"),
     ] {
         let value = manifest[key]
             .as_str()

@@ -200,7 +200,7 @@ pub fn model_versions(config: &AppConfig) -> Value {
             AdapterKind::Whisper => {
                 json!({"modelId":config.models.asr.id(), "revision":whisper::export(config.models.asr).1,
                     "runtime":"sherpa-onnx", "runtimeVersion":"1.13.8",
-                    "runtimeBuildId":env!("TRANSCRIBE_SHERPA_BUILD_ID"), "runtimePatchSha256":env!("TRANSCRIBE_SHERPA_PATCH_SHA256"),
+                    "runtimeBuildId":env!("VESPER_SHERPA_BUILD_ID"), "runtimePatchSha256":env!("VESPER_SHERPA_PATCH_SHA256"),
                     "completionReportVersion":1, "provider":"cpu", "modelLifetime":"resident-in-manager-fresh-stream-per-segment",
                     "streamingMode":"completed-recordings", "maxRecordingSeconds":0,
                     "decoderBudget":{"policy":"half-text-context-with-kv-bound", "maxNewTokens":224},
@@ -211,7 +211,7 @@ pub fn model_versions(config: &AppConfig) -> Value {
                     "artifacts":vesper_models::selected(config).unwrap_or_default().into_iter().filter(|file| file.role == "asr").collect::<Vec<_>>()})
             }
             AdapterKind::QwenAsr | AdapterKind::CohereAsr => {
-                json!({"modelId":config.models.asr.id(), "revision":if config.speech_adapter().kind == AdapterKind::QwenAsr { offline_asr::QWEN_REVISION } else { offline_asr::COHERE_REVISION }, "runtime":"sherpa-onnx", "runtimeVersion":"1.13.8", "runtimeRevision":"11afbd009a7f8c08f4bcf2fc1b265d0df4670fbf", "runtimeBuildId":env!("TRANSCRIBE_SHERPA_BUILD_ID"), "runtimePatchSha256":env!("TRANSCRIBE_SHERPA_PATCH_SHA256"), "completionReportVersion":1, "provider":"cpu", "modelLifetime":if config.speech_adapter().kind == AdapterKind::CohereAsr { "resident-in-manager-fresh-stream-per-segment" } else { "per-job" }, "maxRecordingSeconds":0, "decoderBudget":if config.speech_adapter().kind == AdapterKind::QwenAsr { json!({"maxTotalTokens":offline_asr::QWEN_CONTEXT_TOKENS,"maxNewTokens":offline_asr::QWEN_CONTEXT_TOKENS}) } else { serde_json::Value::Null }, "segmentation":{"policy":"balanced-low-energy-v1", "maxSegmentSeconds":offline_asr::MAX_SEGMENT_SECONDS, "boundaryLookbackMs":1000, "energyWindowMs":100, "boundaryStepMs":10, "overlapSamples":0, "streamLifetime":"per-segment"}, "language":config.language, "artifacts":vesper_models::selected(config).unwrap_or_default().into_iter().filter(|file| file.role == "asr").collect::<Vec<_>>()})
+                json!({"modelId":config.models.asr.id(), "revision":if config.speech_adapter().kind == AdapterKind::QwenAsr { offline_asr::QWEN_REVISION } else { offline_asr::COHERE_REVISION }, "runtime":"sherpa-onnx", "runtimeVersion":"1.13.8", "runtimeRevision":"11afbd009a7f8c08f4bcf2fc1b265d0df4670fbf", "runtimeBuildId":env!("VESPER_SHERPA_BUILD_ID"), "runtimePatchSha256":env!("VESPER_SHERPA_PATCH_SHA256"), "completionReportVersion":1, "provider":"cpu", "modelLifetime":if config.speech_adapter().kind == AdapterKind::CohereAsr { "resident-in-manager-fresh-stream-per-segment" } else { "per-job" }, "maxRecordingSeconds":0, "decoderBudget":if config.speech_adapter().kind == AdapterKind::QwenAsr { json!({"maxTotalTokens":offline_asr::QWEN_CONTEXT_TOKENS,"maxNewTokens":offline_asr::QWEN_CONTEXT_TOKENS}) } else { serde_json::Value::Null }, "segmentation":{"policy":"balanced-low-energy-v1", "maxSegmentSeconds":offline_asr::MAX_SEGMENT_SECONDS, "boundaryLookbackMs":1000, "energyWindowMs":100, "boundaryStepMs":10, "overlapSamples":0, "streamLifetime":"per-segment"}, "language":config.language, "artifacts":vesper_models::selected(config).unwrap_or_default().into_iter().filter(|file| file.role == "asr").collect::<Vec<_>>()})
             }
             AdapterKind::LfmAudio => {
                 json!({"modelId":config.models.asr.id(), "revision":lfm::REVISION, "runtime":"llama-cpp-2/mtmd", "runtimeVersion":"0.1.156", "provider":qwen::provider(config), "modelLifetime":"resident-weights-fresh-context-per-segment", "contextTokens":lfm::CONTEXT_TOKENS, "maxOutputTokens":lfm::MAX_OUTPUT_TOKENS, "sampling":{"strategy":"greedy"}, "languageMode":"explicit-english", "streamingMode":"completed-recordings", "segmentation":{"policy":"balanced-low-energy-v1", "maxSegmentSeconds":lfm::MAX_SEGMENT_SECONDS, "boundaryLookbackMs":1000, "energyWindowMs":100, "boundaryStepMs":10, "overlapSamples":0}, "cancellation":"before-and-after-audio-evaluation-and-between-text-tokens", "artifacts":vesper_models::selected(config).unwrap_or_default().into_iter().filter(|f| f.role == "asr").collect::<Vec<_>>()})
@@ -234,7 +234,7 @@ pub fn model_versions(config: &AppConfig) -> Value {
     let mut versions = json!({
         "selectionError": preferred.as_ref().err().map(ToString::to_string),
         "audioFrontend": {"settings":config.audio_frontend,"sampleRate":16000,"provider":"cpu","nativeGraphThreads":1,
-            "runtimeBuildId":env!("TRANSCRIBE_SHERPA_BUILD_ID"), "runtimePatchSha256":env!("TRANSCRIBE_SHERPA_PATCH_SHA256"),
+            "runtimeBuildId":env!("VESPER_SHERPA_BUILD_ID"), "runtimePatchSha256":env!("VESPER_SHERPA_PATCH_SHA256"),
             "vadPolicy":audio_frontend::vad_policy(&config.audio_frontend), "denoiserApi":"online-in-both-modes",
             "artifacts":vesper_models::selected(config).unwrap_or_default().into_iter().filter(|a| a.role == "audio_frontend").collect::<Vec<_>>()},
         "asr": asr,
