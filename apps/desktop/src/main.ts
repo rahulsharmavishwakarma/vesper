@@ -1,6 +1,10 @@
 import { mount } from 'svelte';
 import App from './App.svelte';
 import './app.css';
+import { initializeAppearance } from './lib/appearance';
+
+const disposeAppearance = initializeAppearance();
+if (import.meta.hot) import.meta.hot.dispose(disposeAppearance);
 
 const target = document.getElementById('app');
 

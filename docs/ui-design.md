@@ -184,3 +184,18 @@ interaction and implementation limits are tracked in issues
 ## Verification
 
 Exercise the whole task with pointer and keyboard input: initial value, entering edit mode, valid and invalid input, cancellation, focus movement, saving, failure/retry, and reloading. Include slow asynchronous setup and navigation while work is pending. Check narrow and desktop layouts using the rendered component; do not rely solely on a screenshot or a synthetic event pass. Reduced motion must preserve the same state and feedback. Keep real OS shortcut and permission qualification separate from browser mocks.
+
+## Appearance infrastructure
+
+The renderer initializes the shared semantic color tokens from the local
+`vesper-appearance-v1` preference before mounting the app. Supported values are
+Light, Dark and System; absent or invalid preferences retain Dark. System listens
+for OS appearance changes, and same-origin windows react to storage changes.
+A storage write must succeed before applying a newly selected appearance.
+
+`lib/appearance.ts` owns that behavior and `AppearanceSettings.svelte` provides
+the theme selector for Settings integration. Theme preferences remain separate
+from native recording/model settings. Reduced motion continues to follow the OS.
+The appearance helper and renderer startup are checked by Svelte/TypeScript and
+production frontend builds; the integrated Settings browser checks exercise
+persistence, OS changes and storage-write failure recovery.
