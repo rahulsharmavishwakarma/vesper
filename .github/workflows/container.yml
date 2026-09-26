@@ -32,13 +32,13 @@ jobs:
           context: .
           load: true
           push: false
-          tags: transcribe-browser-preview:ci
+          tags: vesper-browser-preview:ci
           build-args: APP_VERSION=${{ steps.version.outputs.value }}
           cache-from: type=gha
           cache-to: type=gha,mode=max
       - name: Smoke-test health endpoint
         run: |
-          container_id=$(docker run --detach transcribe-browser-preview:ci)
+          container_id=$(docker run --detach vesper-browser-preview:ci)
           trap 'docker rm --force "$container_id" >/dev/null 2>&1 || true' EXIT
           for _attempt in $(seq 1 30); do
             status=$(docker inspect --format '{{.State.Health.Status}}' "$container_id")
@@ -51,7 +51,7 @@ jobs:
       - name: Block high-severity image vulnerabilities
         uses: aquasecurity/trivy-action@ed142fd0673e97e23eac54620cfb913e5ce36c25 # v0.36.0
         with:
-          image-ref: transcribe-browser-preview:ci
+          image-ref: vesper-browser-preview:ci
           version: v0.74.0
           format: table
           scanners: vuln

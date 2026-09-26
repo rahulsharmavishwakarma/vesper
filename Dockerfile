@@ -12,7 +12,7 @@ RUN npm run build --workspace @vesper/desktop
 
 FROM nginxinc/nginx-unprivileged:1.30.4-alpine@sha256:adf5042a17f4ecdd200c595fa9ffd1be37efb18f89a830bd1a00e4ab4d59d42c
 ARG APP_VERSION=dev
-LABEL org.opencontainers.image.title="transcribe browser preview" \
+LABEL org.opencontainers.image.title="Vesper browser preview" \
       org.opencontainers.image.description="Static UI preview; microphone capture and local inference require the native desktop app" \
       org.opencontainers.image.version="${APP_VERSION}" \
       org.opencontainers.image.source="https://github.com/rahulsharmavishwakarma/transcribe"

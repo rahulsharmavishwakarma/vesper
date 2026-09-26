@@ -360,8 +360,11 @@ merge-queue, main-branch or release check. Optional local use:
 
 ```sh
 make container-smoke
-docker run --rm -p 8080:8080 transcribe-browser-preview:local
+docker run --rm -p 8080:8080 vesper-browser-preview:local
 ```
+
+Local and CI preview images use `vesper-browser-preview`; their source label
+continues to use the live repository URL until the owner renames the repository.
 
 The container's pinned dependencies remain in Dependabot because the optional
 files still exist. There is no automatic GHCR publication, container attestation

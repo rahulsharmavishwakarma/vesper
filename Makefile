@@ -136,10 +136,10 @@ version-set: ## Set every application version declaration: make version-set VERS
 	node scripts/version.mjs set "$(VERSION)"
 
 container-build: ## Build the optional browser-preview OCI image (not the Mac app)
-	docker build --build-arg APP_VERSION="$$(node scripts/version.mjs show)" --tag transcribe-browser-preview:local .
+	docker build --build-arg APP_VERSION="$$(node scripts/version.mjs show)" --tag vesper-browser-preview:local .
 
 container-smoke: container-build ## Manually health-check the optional browser-preview image
-	@container_id=$$(docker run --detach transcribe-browser-preview:local); \
+	@container_id=$$(docker run --detach vesper-browser-preview:local); \
 	trap 'docker rm --force "$$container_id" >/dev/null 2>&1 || true' EXIT; \
 	attempt=0; \
 	while [ "$$attempt" -lt 30 ]; do \
