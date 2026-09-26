@@ -66,6 +66,26 @@ test('switching a stage preserves the other stage and never mutates the catalog'
   assert.throws(() => selectModel(models, 'asr', `preset:${cleanup.id}`));
 });
 
+test('reselecting a legacy writer adds declared languages without changing artifact identity', () => {
+  for (const { profile } of MODEL_PRESETS.filter(
+    (entry) => entry.profile.runtime === 'llama_cpp',
+  )) {
+    const config = defaultSettings();
+    config.models.customRewriter = { ...structuredClone(profile), languages: [] };
+    const loaded = parseStoredSettings(JSON.parse(JSON.stringify(config)));
+    assert.equal(selectedModelValue(loaded.models, 'rewriter'), 'custom');
+    assert.ok(validateSettings(loaded).some((error) => error.includes('no declared languages')));
+    const repaired = {
+      ...loaded,
+      models: selectModel(loaded.models, 'rewriter', `preset:${profile.id}`),
+    };
+    assert.deepEqual(validateSettings(repaired), []);
+    assert.deepEqual(repaired.models.customRewriter.files, loaded.models.customRewriter.files);
+    assert.equal(repaired.models.customRewriter.revision, loaded.models.customRewriter.revision);
+    assert.equal(repaired.models.customRewriter.id, loaded.models.customRewriter.id);
+  }
+});
+
 test('an edited imported profile cannot masquerade as a preset with the same ID', () => {
   const preset = MODEL_PRESETS.find((entry) => entry.profile.runtime === 'llama_cpp');
   const profile = structuredClone(preset.profile);

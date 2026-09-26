@@ -12,6 +12,8 @@ import {
   parseModelProfileJson,
   parseStoredSettings,
   transcriptionLanguageOptions,
+  pipelineLanguageOptions,
+  writingLanguageError,
   validateSettings,
 } from './config.ts';
 
@@ -120,6 +122,47 @@ test('quick capture preferences accept only supported shortcuts', () => {
   assert.deepEqual(validateSettings(settings), []);
   settings.globalShortcut = 'Shift+Q';
   assert.ok(validateSettings(settings).some((error) => error.includes('shortcut')));
+});
+
+test('language choices respect the ASR backend and enabled writer without mutating settings', () => {
+  const settings = defaultSettings();
+  const values = () => pipelineLanguageOptions(settings).map((option) => option.value);
+  for (const asr of ['Qwen/Qwen3-ASR-0.6B', 'nvidia/parakeet-tdt-0.6b-v3']) {
+    settings.models.asr = asr;
+    settings.computeBackend = 'metal';
+    assert.deepEqual(values(), ['en']);
+    settings.language = 'fr';
+    assert.ok(validateSettings(settings).some((error) => error.includes('processing device')));
+    settings.computeBackend = 'auto';
+    assert.ok(values().includes('fr'), 'Automatic can retain a compatible CPU path');
+  }
+  settings.models.asr = 'Qwen/Qwen3-ASR-0.6B';
+  settings.models.customRewriter = { ...cleanupProfile(), languages: ['EN-us'] };
+  assert.deepEqual(values(), ['en']);
+  assert.equal(settings.language, 'fr', 'Filtering must not silently change a selection');
+  assert.match(writingLanguageError(settings), /writing model/);
+  settings.language = 'en';
+  assert.deepEqual(validateSettings(settings), []);
+  settings.models.customRewriter.languages = ['en', 'fr-FR'];
+  assert.deepEqual(values(), ['en', 'fr']);
+  settings.language = 'auto';
+  assert.match(writingLanguageError(settings), /explicit language/);
+  settings.cleanupEnabled = false;
+  assert.deepEqual(values(), ['auto', 'en', 'fr', 'hi']);
+  assert.deepEqual(validateSettings(settings), []);
+});
+
+test('legacy unknown writer languages load for repair but cannot be saved enabled', () => {
+  const settings = defaultSettings();
+  settings.models.customRewriter = cleanupProfile();
+  for (const languages of [undefined, []]) {
+    settings.models.customRewriter.languages = languages;
+    const stored = JSON.parse(JSON.stringify(settings));
+    assert.deepEqual(parseStoredSettings(stored), stored);
+    assert.ok(validateSettings(stored).some((error) => error.includes('no declared languages')));
+    assert.deepEqual(pipelineLanguageOptions(stored), []);
+    assert.deepEqual(validateSettings({ ...stored, cleanupEnabled: false }), []);
+  }
 });
 
 test('a pinned cleanup profile round trips through persisted settings', () => {

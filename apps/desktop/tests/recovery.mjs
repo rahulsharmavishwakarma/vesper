@@ -1365,6 +1365,81 @@ await test('Model presets save before explicit download and survive reopening', 
   );
 });
 
+await test('language menus follow the writer and preserve incompatible selections for repair', async () => {
+  let saved = defaultSettings();
+  saved.models.asr = 'Qwen/Qwen3-ASR-0.6B';
+  saved.language = 'hi';
+  const english = MODEL_PRESETS.find((entry) => entry.profile.name.startsWith('SmolLM2 360M'));
+  const state = await setup({
+    main: true,
+    intercept: (command, state, args) => {
+      if (command === 'get_settings') return structuredClone(saved);
+      if (command === 'save_settings') {
+        saved = JSON.parse(JSON.stringify(args.settings));
+        return structuredClone(saved);
+      }
+    },
+  });
+  const button = (text) =>
+    [...target.querySelectorAll('button')].find((element) => element.textContent.trim() === text);
+  const navigate = async (text) => {
+    button(text).click();
+    await tick();
+  };
+  const openOptions = async (id) => {
+    target.querySelector(`#${id}`).click();
+    await tick();
+    return [...document.querySelectorAll('[role="option"]')];
+  };
+  await until(() => button('Save changes'), 'Settings did not load');
+  await navigate('Models');
+  (await openOptions('models-cleanup-model'))
+    .find((option) => option.textContent.includes(english.profile.name))
+    .click();
+  await tick();
+  assert(button('Save changes').disabled, 'English writer accepted Hindi');
+  assert(
+    target
+      .querySelector('#models-writer-language-error')
+      ?.textContent.includes('does not declare support'),
+    'Writer language error is missing',
+  );
+  assert(
+    saved.language === 'hi' && !state.counts.save_settings,
+    'Changing writer silently saved a language',
+  );
+  await navigate('Settings');
+  let options = await openOptions('settings-language');
+  assert(
+    options.length === 1 && options[0].textContent.includes('English'),
+    'Writer did not narrow language choices',
+  );
+  target
+    .querySelector('#settings-language')
+    .dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape', bubbles: true }));
+  await tick();
+  target.querySelector('#cleanup-enabled').click();
+  await tick();
+  options = await openOptions('settings-language');
+  assert(
+    options.length === 4 && options.some((option) => option.textContent.includes('Hindi')),
+    'Disabling writer did not restore ASR languages',
+  );
+  options.find((option) => option.textContent.includes('French')).click();
+  await tick();
+  target.querySelector('#cleanup-enabled').click();
+  await tick();
+  assert(button('Save changes').disabled, 'Re-enabling incompatible writer allowed saving');
+  (await openOptions('settings-language'))[0].click();
+  await tick();
+  assert(!button('Save changes').disabled, 'Compatible English choice could not save');
+  button('Save changes').click();
+  await until(
+    () => saved.language === 'en' && saved.models.customRewriter?.id === english.profile.id,
+    'Compatible writer/language not saved',
+  );
+});
+
 await test('Qwen and Cohere retain language choices without a recording duration cutoff', async () => {
   let saved = defaultSettings();
   saved.models.asr = 'Qwen/Qwen3-ASR-0.6B';
@@ -1414,7 +1489,9 @@ await test('Qwen and Cohere retain language choices without a recording duration
   await choose('models-asr-model', 'Cohere Transcribe');
   assert(button('Save changes').disabled, 'Cohere accepted automatic language');
   assert(
-    target.textContent.includes('Cohere requires an explicit language'),
+    target.textContent.includes(
+      'Cohere Transcribe and the selected processing device support these languages: English, French',
+    ),
     'Cohere language guidance missing',
   );
   assert(

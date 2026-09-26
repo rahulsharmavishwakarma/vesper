@@ -1,6 +1,6 @@
 # Language support and model recommendations
 
-Updated 26 September 2026. This is the canonical product-facing map for transcription languages, model compatibility, benchmark coverage, and future recommendation behavior. Runtime contracts remain authoritative in `vesper-core`; this document explains them without turning an upstream language claim into a local quality claim.
+Updated 27 September 2026. This is the canonical product-facing map for transcription languages, model compatibility, benchmark coverage, and future recommendation behavior. Runtime contracts remain authoritative in `vesper-core`; this document explains them without turning an upstream language claim into a local quality claim.
 
 ## What “supported language” means
 
@@ -46,6 +46,59 @@ The Models menu also contains three pinned sherpa-onnx transducer profiles, givi
 The development `vesper-eval --model` command accepts seven built-in ASR enum values, including two Whisper evaluation variants that are withheld from product selection. Its validated `--asr-profile` option evaluates the three pinned menu profiles through the production custom-profile adapter.
 
 Cleanup models are a separate role. Qwen3.5-0.8B and the optional cleanup presets cannot be compared as speech recognizers. Cleanup needs its own fidelity, meaning-preservation, latency, and memory benchmark.
+
+## Writing language compatibility
+
+Dictate and Settings use the same compatibility policy. Their language menu
+starts with the selected ASR's current application choices and selected backend.
+Explicit Metal on Parakeet or Qwen ASR exposes English only; Automatic retains
+the other compatible choices because the runtime can choose CPU. With polishing
+enabled, the menu intersects those choices with the writer's declared languages.
+Changing a model never silently changes the saved language. An inline error
+blocks saving an incompatible combination; disabling polishing restores the
+speech model's choices.
+
+| Writing selection | Explicit product languages | Evidence and boundary |
+| --- | --- | --- |
+| Built-in Qwen3.5 0.8B | English, French, Hindi | Official multilingual coverage; existing Automatic behavior retained |
+| Qwen2.5 0.5B / 1.5B Q4_K_M presets | English, French | Both are named by the pinned model cards; Hindi is conservatively withheld without exact checkpoint evidence/qualification |
+| SmolLM2 360M Q8_0 / 1.7B Q4_K_M presets | English | Official cards describe primarily English behavior |
+| Gemma 3 1B Q4_K_M preset | English | Exact-size release guidance distinguishes the 1B model from larger multilingual variants; family-wide claims are insufficient |
+| Other saved profiles | Declared language tags within English/French/Hindi | Base tags match case-insensitively, e.g. `fr-FR` maps to French; undeclared support is not inferred |
+
+Custom writers require an explicit language. Automatic detection is not a
+language declaration, and the current completion contract has no reliable
+detected-language field with which to establish custom-writer compatibility.
+This conservative restriction does not claim that a custom model cannot process
+other languages. It also does not establish code-switch fidelity for the built-in
+writer. The existing writing instructions preserve the source language; they
+cannot add multilingual capability to a checkpoint.
+
+Legacy profiles with empty language metadata still load without rewriting the
+preferences file. Reselect the preset in Models, select the built-in writer, or
+disable polishing to repair the combination. Native settings saves reject an
+incompatible enabled writer. The shared rewriting entry point also checks before
+queuing work, so an unrepaired legacy configuration preserves the raw transcript
+through the existing warning/fallback path. Application memory remains available
+after recognition, independently of these model compatibility checks.
+
+Official evidence reviewed 27 September 2026:
+
+- [Qwen3.5 pinned source card](https://huggingface.co/Qwen/Qwen3.5-0.8B/blob/2fc06364715b967f1860aea9cf38778875588b17/README.md) and [official multilingual release](https://qwen.ai/blog?id=qwen3.5). The application's GGUF revision remains `8fea620810c4afa23dd6443f999a48574c1611a3`.
+- [Qwen2.5 0.5B pinned GGUF card](https://huggingface.co/Qwen/Qwen2.5-0.5B-Instruct-GGUF/blob/9217f5db79a29953eb74d5343926648285ec7e67/README.md) and [1.5B pinned card](https://huggingface.co/Qwen/Qwen2.5-1.5B-Instruct-GGUF/blob/91cad51170dc346986eccefdc2dd33a9da36ead9/README.md).
+- [SmolLM2 360M limitations](https://huggingface.co/HuggingFaceTB/SmolLM2-360M-Instruct#limitations), [360M pinned GGUF card](https://huggingface.co/HuggingFaceTB/SmolLM2-360M-Instruct-GGUF/blob/593b5a2e04c8f3e4ee880263f93e0bd2901ad47f/README.md), and [1.7B pinned card](https://huggingface.co/HuggingFaceTB/SmolLM2-1.7B-Instruct-GGUF/blob/2d4a76a30b4af41ecd395c35725ac11688d4cfe4/README.md).
+- [Gemma 3 integration release, exact-size table](https://huggingface.co/blog/gemma3) versus the family-wide wording in the [pinned 1B GGUF card](https://huggingface.co/ggml-org/gemma-3-1b-it-GGUF/blob/f9c28bcd85737ffc5aef028638d3341d49869c27/README.md). English is a conservative product boundary, not proof of inability to produce other languages.
+
+This is a frozen-weight application configuration change, not a decoder/kernel
+or training technique. Runtime pins remain sherpa-onnx
+`11afbd009a7f8c08f4bcf2fc1b265d0df4670fbf` with the existing completion patch,
+MLX-Audio-Swift `d302a5c6080d2bb97bae38c7418f82abb76013b6`, and llama.cpp
+`e79e4bf660e19f2ad851e06c6913f7a8c5852621`; model hashes are unchanged.
+Contract tests cover language menus, backend boundaries, legacy recovery and
+pre-load rejection. These are local software checks, not multilingual inference
+measurements. Official coverage, paper results, local quality measurements and
+untested hypotheses must remain separate; no quality ranking or default change
+follows from this metadata update.
 
 ## Whisper evaluation gate
 

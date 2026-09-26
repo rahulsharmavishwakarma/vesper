@@ -17,7 +17,12 @@ writing weights. Supporting audio packages are managed automatically once those
 required models are ready; see [automatic audio setup](user-guide.md#experimental-audio-processing).
 
 The menus are the user-facing catalog; there is no JSON profile import section.
-Previously saved custom profiles remain usable in their respective menus.
+Previously saved custom profiles remain visible in their respective menus.
+Writing presets declare their supported languages; the language menu checks both
+speech and enabled writing models. Older writing profiles without that metadata
+need their preset reselected or polishing disabled before saving. They remain
+readable, and runtime writing falls back to the transcript with a warning until
+repaired. See [writing compatibility and primary sources](language-support-and-recommendations.md#writing-language-compatibility).
 Additional supported models should be added through the catalog process below.
 
 ## Live transcription support

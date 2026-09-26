@@ -64,6 +64,17 @@ Model downloads need internet access and additional disk space. Files are
 verified before use. Manage installed models, the model folder and device
 acceleration in **Models**. See [model choices](model-presets.md) for details.
 
+The language menu follows the selected speech model and processing device. With
+polishing enabled, it also limits choices to the writer's declared languages.
+Changing models does not silently change your language: resolve the inline
+compatibility message before saving, or turn polishing off to use the speech
+model's choices. **Detect automatically** identifies speech language; it does not
+guarantee mixed-language accuracy. Custom writing presets require an explicit
+language. An older writing profile with no language information remains readable;
+reselect its preset in **Models**, choose the built-in writer, or turn polishing
+off. Until repaired, writing is skipped with a warning and the transcript remains
+available. See the [speech and writing language table](language-support-and-recommendations.md#writing-language-compatibility).
+
 Each model card shows its selected model and download status. **Local engine**
 above it shows readiness, CPU, memory and operation timings. Models are checked
 automatically when loaded; the separate **Selected models** verification card is
