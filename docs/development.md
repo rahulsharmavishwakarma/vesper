@@ -359,6 +359,8 @@ The isolated audio-frontend Python project is `vesper-audio-frontend-probe`.
 Its generated requirements export continues to omit the local package while
 retaining accurate dependency provenance comments; `make python-lock-check`
 verifies each manifest, lockfile and export together.
+The VibeVoice reference environment likewise uses `vesper-vibevoice-probe`;
+its isolation, platform markers and pinned third-party packages are unchanged.
 
 Keep these exact technical names until a separately scoped migration updates
 their producers, consumers and compatibility behavior together:
