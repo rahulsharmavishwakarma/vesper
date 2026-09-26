@@ -1,6 +1,6 @@
 # Editable drafts and ordinary feedback
 
-Implementation: [TranscriptionPanel](../../apps/desktop/src/lib/components/TranscriptionPanel.svelte), [runtime](../../apps/desktop/src-tauri/src/runtime.rs), [commands](../../apps/desktop/src-tauri/src/commands.rs), and [draft transaction](../../crates/transcribe-data/src/learning.rs).
+Implementation: [TranscriptionPanel](../../apps/desktop/src/lib/components/TranscriptionPanel.svelte), [runtime](../../apps/desktop/src-tauri/src/runtime.rs), [commands](../../apps/desktop/src-tauri/src/commands.rs), and [draft transaction](../../crates/vesper-data/src/learning.rs).
 
 ## Text ownership
 

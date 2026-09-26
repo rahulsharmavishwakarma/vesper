@@ -29,7 +29,7 @@ Dictate and Quick Capture show completed-audio progress. A running native call r
 
 Run `make sherpa-runtime`, then `source scripts/dev-env.sh` before direct Cargo commands. `make setup` also builds the runtime. The helper downloads a SHA-256-pinned source archive, applies [the reporting patch](../patches/sherpa-onnx/decode-report.patch), and runs the pinned upstream CMake dependency recipes. No model weights are downloaded by build or unit-test commands.
 
-The helper uses separate build directories derived from source/patch/compiler/platform/flags. Its manifest hashes the 13 required static libraries. `transcribe-inference/build.rs` checks those hashes and the current patch before compiling; the executable records build and patch IDs in inference provenance. `SHERPA_ONNX_LIB_DIR` selects this build through the existing binding hook. Cargo registry sources and the upstream prebuilt cache are not modified. Generated sources, libraries, and weights remain ignored.
+The helper uses separate build directories derived from source/patch/compiler/platform/flags. Its manifest hashes the 13 required static libraries. `vesper-inference/build.rs` checks those hashes and the current patch before compiling; the executable records build and patch IDs in inference provenance. `SHERPA_ONNX_LIB_DIR` selects this build through the existing binding hook. Cargo registry sources and the upstream prebuilt cache are not modified. Generated sources, libraries, and weights remain ignored.
 
 The source-build helper targets macOS/Linux arm64/x64; local model qualification is on macOS arm64. CI builds macOS and Linux and tests the report without weights. Other targets, including Windows, need a corresponding patched-runtime build and qualification before these adapters can be offered there. Published benchmark numbers do not establish performance on those machines.
 
@@ -54,13 +54,13 @@ Full model tests are opt-in and never download files:
 source scripts/dev-env.sh
 # TRANSCRIBE_MODEL_DIR defaults to models/downloads; point it at installed artifacts.
 TRANSCRIBE_ASR_FIXTURES=/path/to/verified-fixtures cargo test --locked \
-  -p transcribe-inference qualify_qwen3_asr_public_fixtures -- --ignored --nocapture
+  -p vesper-inference qualify_qwen3_asr_public_fixtures -- --ignored --nocapture
 TRANSCRIBE_ASR_FIXTURES=/path/to/verified-fixtures cargo test --locked \
-  -p transcribe-inference qualify_cohere_public_fixtures -- --ignored --nocapture
+  -p vesper-inference qualify_cohere_public_fixtures -- --ignored --nocapture
 TRANSCRIBE_ASR_FIXTURES=/path/to/verified-fixtures cargo test --locked \
-  -p transcribe-inference qualify_qwen_long_audio -- --ignored --nocapture
+  -p vesper-inference qualify_qwen_long_audio -- --ignored --nocapture
 TRANSCRIBE_ASR_FIXTURES=/path/to/verified-fixtures cargo test --locked \
-  -p transcribe-inference qualify_cohere_long_audio -- --ignored --nocapture
+  -p vesper-inference qualify_cohere_long_audio -- --ignored --nocapture
 ```
 
 The public fixtures are original Google FLEURS test audio, revision `70bb2e84b976b7e960aa89f1c648e09c59f894dd`, **CC-BY-4.0**, attributed to Google and Conneau et al., [FLEURS (2022)](https://arxiv.org/abs/2205.12446). References come from each language's `test.tsv`, not model output. See the [pinned dataset](https://huggingface.co/datasets/google/fleurs/tree/70bb2e84b976b7e960aa89f1c648e09c59f894dd).
@@ -77,7 +77,7 @@ To qualify archival/provenance and the post-stop backend path using the same pub
 
 ```sh
 TRANSCRIBE_ASR_FIXTURES=/path/to/verified-fixtures cargo test --locked \
-  -p transcribe-desktop new_offline_asr_pipeline_preserves_audio_and_provenance \
+  -p vesper-desktop new_offline_asr_pipeline_preserves_audio_and_provenance \
   -- --ignored --nocapture
 ```
 
@@ -103,4 +103,4 @@ The shared offline engine and resident Sherpa wrapper also implement the Small/T
 
 The native patch additionally reports Whisper confidence and detected language using separate stream options, rejects oversized native input, and replaces the six-tokens-per-second heuristic with the half-context text-token allowance and fixed KV bounds. Actual EOS is required before applying the joint no-speech/log-probability policy. These Whisper changes do not alter Cohere's decoder policy or add attention/KV kernels.
 
-The installed adapter can be exercised through `transcribe-eval --model openai/whisper-small` or `openai/whisper-large-v3-turbo` with CPU completed audio. Product selection stays disabled: noise and repetition quality gates have failed, and Hindi/code-switching/singing/live streaming are unqualified. See the [dated adapter validation](validation/whisper-adapter-2026-09-18.md), which keeps source capability, actual execution, and release qualification separate.
+The installed adapter can be exercised through `vesper-eval --model openai/whisper-small` or `openai/whisper-large-v3-turbo` with CPU completed audio. Product selection stays disabled: noise and repetition quality gates have failed, and Hindi/code-switching/singing/live streaming are unqualified. See the [dated adapter validation](validation/whisper-adapter-2026-09-18.md), which keeps source capability, actual execution, and release qualification separate.

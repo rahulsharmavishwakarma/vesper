@@ -217,10 +217,10 @@ def prepare():
 def run(phase):
     root = ROOT / phase
     root.mkdir(exist_ok=True)
-    binary = root / "transcribe-eval"
+    binary = root / "vesper-eval"
     if not binary.exists():
-        shutil.copy2("target/release/transcribe-eval", binary)
-    elif digest(binary) != digest(Path("target/release/transcribe-eval")):
+        shutil.copy2("target/release/vesper-eval", binary)
+    elif digest(binary) != digest(Path("target/release/vesper-eval")):
         raise ValueError("Preserve prior attempts: release binary differs")
     inventory = [Path("Cargo.lock"), Path("models/artifacts.json")]
     inventory += [

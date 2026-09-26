@@ -8,10 +8,10 @@ set -eu
 probe_dir=$(mktemp -d "${TMPDIR:-/tmp}/transcribe-dictation.XXXXXX")
 trap 'rm -rf "$probe_dir"' EXIT HUP INT TERM
 xcrun clang -fobjc-arc -fblocks -framework AppKit -framework ApplicationServices \
-  -framework Carbon crates/transcribe-desktop-platform/tests/paste_accessibility.m \
+  -framework Carbon crates/vesper-desktop-platform/tests/paste_accessibility.m \
   -o "$probe_dir/paste-accessibility"
 "$probe_dir/paste-accessibility"
 xcrun clang -fobjc-arc -fblocks -framework AppKit -framework ApplicationServices \
-  -framework Carbon -framework WebKit crates/transcribe-desktop-platform/tests/macos_native.m \
+  -framework Carbon -framework WebKit crates/vesper-desktop-platform/tests/macos_native.m \
   -o "$probe_dir/native-smoke"
 "$probe_dir/native-smoke"

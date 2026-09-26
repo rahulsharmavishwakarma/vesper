@@ -6,7 +6,7 @@ use std::sync::{atomic::Ordering, Mutex};
 use std::time::{Duration, Instant};
 use tauri::{Emitter, Manager};
 use tauri_plugin_global_shortcut::{GlobalShortcutExt, Shortcut, ShortcutState};
-use transcribe_core::{DictationOutput, RecordingMode};
+use vesper_core::{DictationOutput, RecordingMode};
 
 #[derive(Clone, Copy, Debug, Default, PartialEq, Eq, Serialize)]
 #[serde(rename_all = "snake_case")]
@@ -200,12 +200,12 @@ pub async fn start_capture_drag(
     }
     #[cfg(target_os = "macos")]
     {
-        if !on_main(&app, transcribe_desktop_platform::start_drag).await? {
+        if !on_main(&app, vesper_desktop_platform::start_drag).await? {
             return Ok(()); // A quick click may have released before IPC arrived.
         }
         // AppKit hands off to Window Server immediately; mouse-up may never
         // reach the WebView. Wait for release without blocking UI or audio.
-        while on_main(&app, transcribe_desktop_platform::is_dragging).await? {
+        while on_main(&app, vesper_desktop_platform::is_dragging).await? {
             tauri::async_runtime::spawn_blocking(|| {
                 std::thread::sleep(Duration::from_millis(50));
             })
@@ -232,13 +232,13 @@ pub(crate) fn apply_output(app: &tauri::AppHandle) {
             .settings
             .load()
             .is_ok_and(|config| config.dictation_output == DictationOutput::Paste);
-        transcribe_desktop_platform::set_automatic_paste_enabled(enabled);
+        vesper_desktop_platform::set_automatic_paste_enabled(enabled);
     });
 }
 
 /// Layout geometry only; recording and native focus ownership stay unchanged.
-pub(crate) fn apply_capture_design(app: &tauri::AppHandle, design: transcribe_core::CaptureDesign) {
-    use transcribe_core::CaptureDesign;
+pub(crate) fn apply_capture_design(app: &tauri::AppHandle, design: vesper_core::CaptureDesign) {
+    use vesper_core::CaptureDesign;
     let (width, height) = match design {
         CaptureDesign::Split => (396.0, 192.0),
         CaptureDesign::Ribbon => (388.0, 148.0),
@@ -250,7 +250,7 @@ pub(crate) fn apply_capture_design(app: &tauri::AppHandle, design: transcribe_co
     let handle = app.clone();
     let _ = app.run_on_main_thread(move || {
         #[cfg(target_os = "macos")]
-        transcribe_desktop_platform::resize(width, height);
+        vesper_desktop_platform::resize(width, height);
         #[cfg(not(target_os = "macos"))]
         if let Some(window) = handle.get_webview_window("quick-capture") {
             let _ = window.set_size(tauri::LogicalSize::new(width, height));
@@ -262,7 +262,7 @@ pub(crate) fn apply_capture_design(app: &tauri::AppHandle, design: transcribe_co
 fn show(app: &tauri::AppHandle) {
     #[cfg(target_os = "macos")]
     {
-        let _ = app.run_on_main_thread(transcribe_desktop_platform::show);
+        let _ = app.run_on_main_thread(vesper_desktop_platform::show);
     }
     #[cfg(not(target_os = "macos"))]
     if let Some(window) = app.get_webview_window("quick-capture") {
@@ -273,7 +273,7 @@ fn show(app: &tauri::AppHandle) {
 pub fn hide_dictation(app: tauri::AppHandle) {
     #[cfg(target_os = "macos")]
     {
-        let _ = app.run_on_main_thread(transcribe_desktop_platform::hide);
+        let _ = app.run_on_main_thread(vesper_desktop_platform::hide);
     }
     #[cfg(not(target_os = "macos"))]
     if let Some(window) = app.get_webview_window("quick-capture") {
@@ -303,10 +303,7 @@ pub async fn dictation_permissions(
     request: bool,
     app: tauri::AppHandle,
 ) -> Result<Permissions, String> {
-    let bits = on_main(&app, move || {
-        transcribe_desktop_platform::permissions(request)
-    })
-    .await?;
+    let bits = on_main(&app, move || vesper_desktop_platform::permissions(request)).await?;
     Ok(Permissions {
         supported: bits & 1 != 0,
         accessibility: bits & 2 != 0,
@@ -450,7 +447,7 @@ async fn start(app: tauri::AppHandle, id: u64) {
             return;
         }
         if state.output == DictationOutput::Paste {
-            match transcribe_desktop_platform::capture_target(id) {
+            match vesper_desktop_platform::capture_target(id) {
                 Ok(()) => state.target_ready = true,
                 Err(message) => state.status.message = message,
             }
@@ -520,7 +517,7 @@ fn fail(app: &tauri::AppHandle, id: u64, error: &str) {
         state.status.message = error.into();
     }
     let _ = app.global_shortcut().unregister("Escape");
-    let _ = app.run_on_main_thread(move || transcribe_desktop_platform::clear_target(id));
+    let _ = app.run_on_main_thread(move || vesper_desktop_platform::clear_target(id));
     show(app);
     emit(app);
 }
@@ -630,23 +627,23 @@ pub async fn completed(
                 // Serialize cancellation vs the actual dispatch, not just a
                 // preflight in another thread. The lock is held only for this call.
                 let Ok(state) = storage.dictation.state.lock() else {
-                    return transcribe_desktop_platform::PasteResult::Unavailable;
+                    return vesper_desktop_platform::PasteResult::Unavailable;
                 };
                 if state.cancelled
                     || state.status.id != id
                     || state.status.phase != Phase::Pasting
                     || storage.runtime.cancelled.load(Ordering::Relaxed)
                 {
-                    return transcribe_desktop_platform::PasteResult::Unavailable;
+                    return vesper_desktop_platform::PasteResult::Unavailable;
                 }
                 if let Some(receipt) = external {
                     crate::external_observation::arm(&desktop, id, receipt);
                 }
-                transcribe_desktop_platform::paste(id, &text)
+                vesper_desktop_platform::paste(id, &text)
             })
             .await
-            .unwrap_or(transcribe_desktop_platform::PasteResult::Unavailable);
-            if outcome != transcribe_desktop_platform::PasteResult::ModifiersHeld
+            .unwrap_or(vesper_desktop_platform::PasteResult::Unavailable);
+            if outcome != vesper_desktop_platform::PasteResult::ModifiersHeld
                 || began.elapsed() > Duration::from_secs(3)
             {
                 break outcome;
@@ -657,7 +654,7 @@ pub async fn completed(
         };
         if let Ok(mut state) = storage.dictation.state.lock() {
             if state.status.id == id {
-                use transcribe_desktop_platform::PasteResult;
+                use vesper_desktop_platform::PasteResult;
                 state.status.phase = if state.cancelled {
                     Phase::Cancelled
                 } else if outcome == PasteResult::Sent {
@@ -687,7 +684,7 @@ pub async fn completed(
         }
     }
     let _ = app.global_shortcut().unregister("Escape");
-    let _ = on_main(app, move || transcribe_desktop_platform::clear_target(id)).await;
+    let _ = on_main(app, move || vesper_desktop_platform::clear_target(id)).await;
     emit(app);
 }
 
@@ -705,7 +702,7 @@ pub async fn copy_dictation(id: u64, app: tauri::AppHandle) -> Result<(), String
             .text
             .as_deref()
             .ok_or("No transcript is available.")?;
-        if transcribe_desktop_platform::copy(text) {
+        if vesper_desktop_platform::copy(text) {
             Ok(())
         } else {
             Err("Clipboard access is unavailable. Open the app to copy your transcript.".into())

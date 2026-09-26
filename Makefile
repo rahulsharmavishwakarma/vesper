@@ -126,7 +126,7 @@ test-browser: ## Run the existing mocked-native UI regressions in Chromium
 
 benchmark-contract: ## Test benchmark preparation, scoring, manifests, and recommendation rules
 	node --test scripts/prepare-fleurs-benchmark.test.mjs scripts/prepare-mucs-benchmark.test.mjs scripts/summarize-asr-benchmarks.test.mjs scripts/summarize-personalization-benchmark.test.mjs
-	$(RUN) cargo test -p transcribe-eval --locked
+	$(RUN) cargo test -p vesper-eval --locked
 
 version-check: ## Verify Cargo, npm, lockfile, Tauri, and optional TAG versions agree
 	node scripts/version.mjs check $(if $(strip $(TAG)),--tag=$(TAG),)
@@ -220,4 +220,4 @@ smoke-native: build-web ## Run three explicit installed-model tests with the pin
 	sh scripts/smoke-native.sh
 
 models: ## Download or verify pinned Nemotron + Qwen weights (about 1.31 GB plus runtime)
-	$(RUN) cargo run --locked -p transcribe-models --example install -- "$$MODEL_DIR"
+	$(RUN) cargo run --locked -p vesper-models --example install -- "$$MODEL_DIR"

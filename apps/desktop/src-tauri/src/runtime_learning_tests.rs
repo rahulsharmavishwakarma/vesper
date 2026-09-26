@@ -1,7 +1,7 @@
 //! Desktop completion/edit lifecycle with constructed ASR output and real SQLite.
 //! No microphone, model execution, user profile, or inferred acceptance labels.
 use super::*;
-use transcribe_core::AsrModel;
+use vesper_core::AsrModel;
 
 const HEARD: &str = "Deploy kubernets to the cluster";
 const EDITED: &str = "Deploy kubernetes to the cluster";
@@ -26,7 +26,7 @@ fn automatic_app_context_guard_applies_to_later_raw_context_and_freezes_per_oper
         model_root: root.join("no-models"),
         dataset_root: root.clone(),
         runtime: Arc::clone(&runtime),
-        inference: Arc::new(transcribe_inference::InferenceManager::new().unwrap()),
+        inference: Arc::new(vesper_inference::InferenceManager::new().unwrap()),
         streaming_result: Arc::default(),
         personalization: Arc::default(),
     };
@@ -167,7 +167,7 @@ fn complete(
         model_root: root.join("no-models"),
         dataset_root: root.to_owned(),
         runtime: Arc::clone(runtime),
-        inference: Arc::new(transcribe_inference::InferenceManager::new().unwrap()),
+        inference: Arc::new(vesper_inference::InferenceManager::new().unwrap()),
         streaming_result: Arc::default(),
         personalization: Arc::default(),
     };

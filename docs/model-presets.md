@@ -165,6 +165,6 @@ No downloaded weights, recordings or generated reports are versioned.
 ```sh
 . scripts/dev-env.sh
 TRANSCRIBE_SMOKE_AUDIO=/path/to/public.wav cargo test --locked \
-  -p transcribe-desktop --lib managed_audio_downloads_verify_and_reuse_pinned_packages \
+  -p vesper-desktop --lib managed_audio_downloads_verify_and_reuse_pinned_packages \
   -- --ignored --nocapture
 ```

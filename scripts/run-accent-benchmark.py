@@ -23,20 +23,20 @@ def write(path, value):
 def freeze(root):
     root.mkdir(parents=True, exist_ok=True)
     (root / "bin").mkdir(exist_ok=False)
-    shutil.copy2("target/release/transcribe-eval", root / "bin/transcribe-eval")
+    shutil.copy2("target/release/vesper-eval", root / "bin/vesper-eval")
     paths = [Path("Cargo.lock"), Path("Cargo.toml")]
     for crate in (
-        "transcribe-eval",
-        "transcribe-core",
-        "transcribe-inference",
-        "transcribe-models",
-        "transcribe-audio",
+        "vesper-eval",
+        "vesper-core",
+        "vesper-inference",
+        "vesper-models",
+        "vesper-audio",
     ):
         directory = Path("crates", crate)
         paths.extend(directory.rglob("*.rs"))
         paths.append(directory / "Cargo.toml")
     write(root / "source-hashes.json", {str(p): digest(p) for p in sorted(set(paths))})
-    print("Frozen evaluator:", digest(root / "bin/transcribe-eval"))
+    print("Frozen evaluator:", digest(root / "bin/vesper-eval"))
 
 
 def run(root):
@@ -48,7 +48,7 @@ def run(root):
     results, logs = root / "results", root / "logs"
     results.mkdir(exist_ok=False)
     logs.mkdir(exist_ok=True)
-    binary = root / "bin/transcribe-eval"
+    binary = root / "bin/vesper-eval"
     memory = root / "memory.json"
     shutil.copyfile(".cache/benchmarks/personalization-2026-09-16/memory.json", memory)
     source_hashes = json.loads((root / "source-hashes.json").read_text())

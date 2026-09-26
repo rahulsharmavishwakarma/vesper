@@ -304,11 +304,10 @@ mod tests {
         );
         for key in keys {
             let chord = format!("Control+Alt+{key}");
-            assert!(transcribe_core::recording_shortcut_identity(
-                &chord,
-                cfg!(target_os = "macos")
-            )
-            .is_some());
+            assert!(
+                vesper_core::recording_shortcut_identity(&chord, cfg!(target_os = "macos"))
+                    .is_some()
+            );
             chord
                 .parse::<tauri_plugin_global_shortcut::Shortcut>()
                 .unwrap();

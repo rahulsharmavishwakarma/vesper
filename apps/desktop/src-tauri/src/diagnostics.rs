@@ -4,7 +4,7 @@ use std::{
     sync::{Arc, Mutex},
     time::Instant,
 };
-use transcribe_core::{AppConfig, AsrModel};
+use vesper_core::{AppConfig, AsrModel};
 
 #[derive(Clone, Copy, Debug, PartialEq, Serialize)]
 #[serde(rename_all = "camelCase")]
@@ -165,7 +165,7 @@ mod tests {
     fn old_timer_and_finished_work_cannot_overwrite_a_new_operation() {
         let diagnostics = Arc::new(Diagnostics::default());
         let mut config = AppConfig::default();
-        config.models.asr = transcribe_core::AsrModel::Nemotron35AsrStreaming06b;
+        config.models.asr = vesper_core::AsrModel::Nemotron35AsrStreaming06b;
         diagnostics.begin("old", &config, false);
         let old = diagnostics.measure("old", Stage::Transcribe);
         diagnostics.begin("new", &config, true);

@@ -10,7 +10,7 @@ The application supports several architecture-specific ASR adapters and tracks a
 
 ## Decision
 
-Use the development-only `transcribe-eval` crate to run the same audio decoder, `InferenceManager`, native adapters, and optional cleanup path as the desktop backend. Every benchmark manifest pins held-out source metadata, revision, license/attribution, sample SHA-256, reference, language, duration, scenario, and whether the recording is natural or a synthetic soak.
+Use the development-only `vesper-eval` crate to run the same audio decoder, `InferenceManager`, native adapters, and optional cleanup path as the desktop backend. Every benchmark manifest pins held-out source metadata, revision, license/attribution, sample SHA-256, reference, language, duration, scenario, and whether the recording is natural or a synthetic soak.
 
 Record the full model/runtime provenance and execution envelope. Score normalized exact WER plus Unicode grapheme error rate. Keep the reference language and configured recognition language separate so automatic-language and explicitly prompted results cannot be pooled. Streaming reports distinguish accelerated replay from wall-clock pacing and record first partial, stop-to-final latency, partial count/stability, cold versus genuinely resident state, failures, and stage timings. Missing resource telemetry remains explicitly null.
 

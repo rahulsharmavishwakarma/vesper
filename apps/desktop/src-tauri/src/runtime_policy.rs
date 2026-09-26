@@ -1,7 +1,7 @@
 //! One lazy worker and one replaceable pending policy job. No model ownership.
 use super::*;
 use std::sync::mpsc::{sync_channel, SyncSender};
-use transcribe_data::PolicyShadowJob;
+use vesper_data::PolicyShadowJob;
 type Job = (PathBuf, PolicyShadowJob, Arc<AtomicBool>);
 #[derive(Default)]
 pub(super) struct PolicyWorker(Mutex<Option<Worker>>);
@@ -90,7 +90,7 @@ mod tests {
             draft_transcript: None,
             draft_revision: 0,
             learning_outcome: None,
-            learning_context: transcribe_core::LearningContext {
+            learning_context: vesper_core::LearningContext {
                 result_id: "worker".into(),
                 source_key: "authored".into(),
                 episode_id: "worker".into(),

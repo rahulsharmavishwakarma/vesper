@@ -1,6 +1,6 @@
 //! Automatic analysis of explicit in-app edits. No external-editor observation.
 use super::*;
-use transcribe_core::{SemanticMemory, SemanticStatus};
+use vesper_core::{SemanticMemory, SemanticStatus};
 
 impl State {
     pub(super) fn cancel_semantic(&mut self) {
@@ -22,7 +22,7 @@ impl Runtime {
         root: PathBuf,
         config: AppConfig,
         model_root: PathBuf,
-        inference: &transcribe_inference::InferenceManager,
+        inference: &vesper_inference::InferenceManager,
     ) {
         let Ok(mut state) = self.state.lock() else {
             return;
@@ -51,8 +51,8 @@ impl Runtime {
             .iter()
             .filter(|v| {
                 v.enabled
-                    && transcribe_core::project_matches(&v.project, &request.context.project)
-                    && transcribe_core::language_matches(v.language, request.context.language)
+                    && vesper_core::project_matches(&v.project, &request.context.project)
+                    && vesper_core::language_matches(v.language, request.context.language)
                     && v.id.len() <= 64
                     && v.phrase.len() <= 128
             })
@@ -133,7 +133,7 @@ mod tests {
         let store = DatasetStore::open(root.clone()).unwrap();
         let profile = store.dictation_personalization().unwrap();
         let runtime = Arc::new(Runtime::default());
-        let manager = transcribe_inference::InferenceManager::new().unwrap();
+        let manager = vesper_inference::InferenceManager::new().unwrap();
         let config = AppConfig {
             collect_training_data: false,
             ..Default::default()
@@ -156,7 +156,7 @@ mod tests {
             draft_transcript: None,
             draft_revision: 0,
             learning_outcome: None,
-            learning_context: transcribe_core::LearningContext {
+            learning_context: vesper_core::LearningContext {
                 result_id: "native-shadow".into(),
                 source_key: "authored-native".into(),
                 episode_id: "native-shadow".into(),
@@ -256,7 +256,7 @@ mod tests {
             draft_transcript: None,
             draft_revision: 0,
             learning_outcome: None,
-            learning_context: transcribe_core::LearningContext {
+            learning_context: vesper_core::LearningContext {
                 result_id: "r".into(),
                 source_key: "source".into(),
                 episode_id: "r".into(),
@@ -272,7 +272,7 @@ mod tests {
         let edited = runtime
             .edit_latest_draft(dir.path().into(), "r", 0, "README".into())
             .unwrap();
-        let manager = transcribe_inference::InferenceManager::new().unwrap();
+        let manager = vesper_inference::InferenceManager::new().unwrap();
         runtime.schedule_semantic_shadow(
             dir.path().into(),
             AppConfig::default(),

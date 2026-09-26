@@ -33,12 +33,12 @@ Collection is configurable. With it disabled, recording and inference run withou
 
 | Module | Responsibility |
 | --- | --- |
-| `transcribe-core` | Validated configuration and shared model/transcript types |
-| `transcribe-audio` | CPAL capture on an owning thread; bounded callback ring; native-rate/channel float WAV; Symphonia decoding and filtered resampling |
-| `transcribe-models` | Per-model and selected-pipeline inventories, explicit allow-listed downloads, atomic publication, size/SHA-256 verification, provenance |
-| `transcribe-nemo` | Safe recognizer/stream/result ownership over the pinned NeMo-Speech.cpp versioned C ABI; the only crate allowed to contain this FFI unsafe code |
-| `transcribe-inference` | Bounded inference worker; Nemotron, Parakeet/Qwen3-ASR/Cohere through sherpa-onnx, LFM2.5 Audio through llama.cpp/mtmd, and Qwen cleanup; per-request state isolation, cancellation and output guards |
-| `transcribe-data` | Original audio, SQLite metadata, immutable predictions, append-only human reviews, portable exports |
+| `vesper-core` | Validated configuration and shared model/transcript types |
+| `vesper-audio` | CPAL capture on an owning thread; bounded callback ring; native-rate/channel float WAV; Symphonia decoding and filtered resampling |
+| `vesper-models` | Per-model and selected-pipeline inventories, explicit allow-listed downloads, atomic publication, size/SHA-256 verification, provenance |
+| `vesper-nemo` | Safe recognizer/stream/result ownership over the pinned NeMo-Speech.cpp versioned C ABI; the only crate allowed to contain this FFI unsafe code |
+| `vesper-inference` | Bounded inference worker; Nemotron, Parakeet/Qwen3-ASR/Cohere through sherpa-onnx, LFM2.5 Audio through llama.cpp/mtmd, and Qwen cleanup; per-request state isolation, cancellation and output guards |
+| `vesper-data` | Original audio, SQLite metadata, immutable predictions, append-only human reviews, portable exports |
 | `src-tauri/runtime.rs` | One active job, progress, config snapshot, durable raw output before cleanup, failure handling |
 | Svelte frontend | Main workspace plus the compact quick-capture window; model installation, record/stop/cancel, file transcription, results, settings, review/export |
 
@@ -59,7 +59,7 @@ flowchart LR
     F --> G[Pre-inference verification]
 ```
 
-`transcribe-core` enumerates runnable built-ins; `models/artifacts.json` is the authoritative executable file manifest. `transcribe-models` combines them with up to one selected custom profile per role. `list_model_installations` reports every installable entry, while `install_model` accepts only an entry from that catalog and never changes settings. Qwen Q4 and Q8 are separate downloads. `install_models` remains the convenience operation for the complete selected pipeline.
+`vesper-core` enumerates runnable built-ins; `models/artifacts.json` is the authoritative executable file manifest. `vesper-models` combines them with up to one selected custom profile per role. `list_model_installations` reports every installable entry, while `install_model` accepts only an entry from that catalog and never changes settings. Qwen Q4 and Q8 are separate downloads. `install_models` remains the convenience operation for the complete selected pipeline.
 
 Fast UI status distinguishes artifact presence from runtime readiness. Full hashes are checked during installation and immediately before inference. Browser preview renders catalog metadata but cannot inspect the filesystem or download files; those actions require Tauri.
 
@@ -87,7 +87,7 @@ Whisper Small and Turbo share one architecture adapter and the same resident She
 
 Qwen3.5-0.8B uses text-only GGUF through llama-cpp-2 0.1.156. The text chat template explicitly closes thinking before generation. The worker retains immutable model weights but creates a fresh context for every final transcript, with deterministic greedy decoding and bounded context/output. Apple Silicon offloads through Metal; CUDA, Vulkan, and ROCm cleanup require their matching compile-time feature. In `Auto`, failed accelerator initialization is retried on CPU; an explicitly requested accelerator remains an error.
 
-Formatting-only cleanup is the default: normalized word sequences must match. Context correction receives the complete final raw transcript after Stop. For built-in Qwen transcripts longer than 24 words whose tail contains file/repository editing context, it first gives only the final 24 words to a fresh technical-correction context. Only one nearby technically formatted candidate is extracted from that response and applied to the untouched raw tail; every other generated change is ignored. A conservative built-in `README.txt` spelling fallback uses the same two-character-distance and context guards when the small model omits the candidate. The accepted tail is joined to the untouched raw prefix before a second fresh context cleans the complete transcript. If full cleanup undoes that token, the exact guarded correction is reapplied; the final output is checked against both the prepared input and original raw ASR. Context correction can also remove fillers or adjust phrasing. These checks do not prove semantic equivalence, so raw output stays visible and context-corrected output needs review. Custom cleanup models keep the single full-transcript pass because this technical prompt is qualified only for the built-in Qwen model. Custom instructions replace the full-pass preset instruction but do not disable baseline checks. The exact implementation and examples are versioned in `transcribe-inference`.
+Formatting-only cleanup is the default: normalized word sequences must match. Context correction receives the complete final raw transcript after Stop. For built-in Qwen transcripts longer than 24 words whose tail contains file/repository editing context, it first gives only the final 24 words to a fresh technical-correction context. Only one nearby technically formatted candidate is extracted from that response and applied to the untouched raw tail; every other generated change is ignored. A conservative built-in `README.txt` spelling fallback uses the same two-character-distance and context guards when the small model omits the candidate. The accepted tail is joined to the untouched raw prefix before a second fresh context cleans the complete transcript. If full cleanup undoes that token, the exact guarded correction is reapplied; the final output is checked against both the prepared input and original raw ASR. Context correction can also remove fillers or adjust phrasing. These checks do not prove semantic equivalence, so raw output stays visible and context-corrected output needs review. Custom cleanup models keep the single full-transcript pass because this technical prompt is qualified only for the built-in Qwen model. Custom instructions replace the full-pass preset instruction but do not disable baseline checks. The exact implementation and examples are versioned in `vesper-inference`.
 
 `models/artifacts.json` pins revisions, artifact names, byte sizes, hashes, sources, and license descriptions. UI inventory checks existence/size quickly; installation and inference check complete hashes. **Verify files** can repair a damaged file even when its size matches. Valid files are retained. Model files live outside the bundle, in app data by default, or a configured directory; `TRANSCRIBE_MODEL_DIR` supplies a development default.
 
@@ -105,7 +105,7 @@ Continuous model improvement remains a separate train/evaluate/promote milestone
 
 ## Evaluation and model recommendations
 
-`transcribe-eval` is a development-only workspace crate. It calls the same audio decoder, `InferenceManager`, native model adapters, and cleanup path as the desktop backend, but writes immutable JSON evidence instead of application sessions. A versioned manifest binds each held-out sample to its source/revision/license, audio SHA-256, transcript, language, duration, scenario, and natural-versus-synthetic status.
+`vesper-eval` is a development-only workspace crate. It calls the same audio decoder, `InferenceManager`, native model adapters, and cleanup path as the desktop backend, but writes immutable JSON evidence instead of application sessions. A versioned manifest binds each held-out sample to its source/revision/license, audio SHA-256, transcript, language, duration, scenario, and natural-versus-synthetic status.
 
 The evaluation path is `pinned corpus → deterministic preparation → manifest validation → native adapter → Unicode WER/grapheme scoring → comparable evidence groups → compatibility filter and ranking`. Corpus files, machine-specific environments, and raw reports stay in the gitignored benchmark cache. Capability metadata is checked in, but candidates whose architecture is not executable remain ineligible for recommendation.
 

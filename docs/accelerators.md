@@ -104,7 +104,7 @@ snapshot on repeat access and loaded no model. Reproduce with:
 
 ```sh
 source scripts/dev-env.sh
-cargo test --locked -p transcribe-inference capabilities::tests::observe_native_accelerators -- --ignored --exact --nocapture
+cargo test --locked -p vesper-inference capabilities::tests::observe_native_accelerators -- --ignored --exact --nocapture
 ```
 
 The observation archived at `.cache/benchmarks/results/accelerator-capabilities/debug-summary.json` is local hardware
@@ -122,7 +122,7 @@ Pass a cross-compilation target through Tauri's `--target` before the Cargo `--`
 
 ```sh
 node scripts/mlx-runtime.mjs
-cargo build -p transcribe-eval --features mlx --release
+cargo build -p vesper-eval --features mlx --release
 ```
 
 Leave the device preference on Automatic, select English and Parakeet or Qwen ASR, save, and use Download. The installer prepares the pinned files for the preferred runtime. An existing CPU export remains ready until the optimized files are installed; the card reports **Ready · update available**. Download prepares the update. CPU and MLX occupy separate directories; Remove inventories and removes both declared exports for that model while preserving shared runtime files. Other languages and automatic language detection retain their supported CPU path and may require that export to be installed.

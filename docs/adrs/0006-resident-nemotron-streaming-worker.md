@@ -13,7 +13,7 @@ The approved proposal is recorded in GitHub issues #2 and #3. Its scope is the f
 
 Use one bounded Rust inference worker as the sole owner of at most one Nemotron recognizer and one Qwen model. Cache identity includes the selected artifact path and relevant device option. Unload both handles before saved model/backend changes or installed artifact replacement, and destroy them at application exit.
 
-Call NeMo-Speech.cpp through its versioned C ABI. Isolate dynamic loading, opaque handles, result copying, and all unsafe code in `transcribe-nemo`; keep model-specific C++ CPU/Metal/CUDA/Vulkan kernels and RNNT caches inside the upstream runtime. Every recording creates a fresh native stream, sends bounded non-overlapping mono chunks, polls native results, signals finish, drains the tail, and closes the stream. Imported files use the resident recognizer's offline call.
+Call NeMo-Speech.cpp through its versioned C ABI. Isolate dynamic loading, opaque handles, result copying, and all unsafe code in `vesper-nemo`; keep model-specific C++ CPU/Metal/CUDA/Vulkan kernels and RNNT caches inside the upstream runtime. Every recording creates a fresh native stream, sends bounded non-overlapping mono chunks, polls native results, signals finish, drains the tail, and closes the stream. Imported files use the resident recognizer's offline call.
 
 The UI event contains an operation ID, monotonic sequence, committed/provisional text, processed-audio time, emission time, and final flag. Only the active operation and newer sequence may update visible partial text. Partials are transient; only the final raw transcript is persisted and passed to cleanup.
 

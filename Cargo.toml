@@ -3,17 +3,17 @@
 exclude = ["vendor/glib", "tests/glib-backport"]
 members = [
     "apps/desktop/src-tauri",
-    "crates/transcribe-core",
-    "crates/transcribe-audio",
-    "crates/transcribe-inference",
-    "crates/transcribe-data",
-    "crates/transcribe-models",
-    "crates/transcribe-nemo",
-    "crates/transcribe-mlx",
-    "crates/transcribe-eval",
-    "crates/transcribe-desktop-platform",
+    "crates/vesper-core",
+    "crates/vesper-audio",
+    "crates/vesper-inference",
+    "crates/vesper-data",
+    "crates/vesper-models",
+    "crates/vesper-nemo",
+    "crates/vesper-mlx",
+    "crates/vesper-eval",
+    "crates/vesper-desktop-platform",
 ]
-default-members = ["crates/transcribe-core", "crates/transcribe-audio", "crates/transcribe-inference", "crates/transcribe-data", "crates/transcribe-models"]
+default-members = ["crates/vesper-core", "crates/vesper-audio", "crates/vesper-inference", "crates/vesper-data", "crates/vesper-models"]
 resolver = "2"
 
 [workspace.package]
@@ -31,14 +31,14 @@ uuid = { version = "1", features = ["v4", "serde"] }
 chrono = { version = "0.4", features = ["serde"] }
 sha2 = "0.10"
 rusqlite = { version = "0.37", features = ["bundled"] }
-transcribe-core = { path = "crates/transcribe-core" }
-transcribe-audio = { path = "crates/transcribe-audio" }
-transcribe-inference = { path = "crates/transcribe-inference" }
-transcribe-data = { path = "crates/transcribe-data" }
-transcribe-models = { path = "crates/transcribe-models" }
-transcribe-nemo = { path = "crates/transcribe-nemo" }
-transcribe-mlx = { path = "crates/transcribe-mlx" }
-transcribe-eval = { path = "crates/transcribe-eval" }
+vesper-core = { path = "crates/vesper-core" }
+vesper-audio = { path = "crates/vesper-audio" }
+vesper-inference = { path = "crates/vesper-inference" }
+vesper-data = { path = "crates/vesper-data" }
+vesper-models = { path = "crates/vesper-models" }
+vesper-nemo = { path = "crates/vesper-nemo" }
+vesper-mlx = { path = "crates/vesper-mlx" }
+vesper-eval = { path = "crates/vesper-eval" }
 
 [workspace.lints.rust]
 unsafe_code = "forbid"
@@ -52,7 +52,7 @@ strip = true
 [profile.dev.package.sha2]
 opt-level = 3
 
-[profile.dev.package.transcribe-models]
+[profile.dev.package.vesper-models]
 opt-level = 2
 
 # GTK3 requires GLib 0.18. This source contains the upstream VariantStrIter fix.

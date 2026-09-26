@@ -43,12 +43,12 @@ if [ "${TRANSCRIBE_FIXTURE_DIGEST%% *}" != '148b936b43ce7c546a866e64da059f0458ae
 fi
 
 # The desktop pipeline checks all selected model hashes before native loading.
-cargo test --locked -p transcribe-desktop \
+cargo test --locked -p vesper-desktop \
   runtime::tests::real_file_pipeline_preserves_audio_predictions_and_export_provenance \
   -- --ignored --exact --nocapture
-cargo test --locked -p transcribe-inference \
+cargo test --locked -p vesper-inference \
   manager::tests::real_nemotron_stream_reuses_weights_and_resets_utterance_state \
   -- --ignored --exact --nocapture
-cargo test --locked -p transcribe-inference \
+cargo test --locked -p vesper-inference \
   qwen::tests::existing_gguf_embedded_template_formats_messages_and_rejects_role_tokens \
   -- --ignored --exact --nocapture

@@ -67,7 +67,7 @@ Two different integration paths must remain separate:
   It does not provide an interchangeable mask for the current Cohere adapter.
 
 Historical code inspection at main `59c6d21` found the missing wiring:
-`transcribe-models` pins runtime 0.1.0; `transcribe-nemo` sets recognizer `diar`
+`vesper-models` pins runtime 0.1.0; `vesper-nemo` sets recognizer `diar`
 to null, never enables request diarization, and exposes text/finality/duration
 without speaker segments or word timestamps. The initial release review did
 not run weights; the follow-up below supplied standalone local evidence. The
@@ -128,7 +128,7 @@ identity remain outside that approval under #42/#35.
 
 ## Production integration status — updated 26 September 2026
 
-Silero v6.2 and DPDFNet4/8 share a production stage and installer entries. The desktop now fixes its audio selection to Silero and DPDFNet8 and downloads supported missing packages automatically after the required speech/writer models are ready. Speech activity remains advisory and does not delete input; enhancement remains experimental, with mixed ASR results. DPDFNet4 remains an evaluation comparator but is no longer a desktop choice. `crates/transcribe-inference/src/audio_frontend.rs` is the shared native implementation. Ear/Uhm still use isolated evaluation probes and are not production stages. See [ADR-0019](adrs/0019-shared-audio-frontend.md) for the accepted design and exact native build boundary, and the [application-path qualification](validation/audio-frontend-integration-2026-09-18.md) for paired quality results and measurement limits.
+Silero v6.2 and DPDFNet4/8 share a production stage and installer entries. The desktop now fixes its audio selection to Silero and DPDFNet8 and downloads supported missing packages automatically after the required speech/writer models are ready. Speech activity remains advisory and does not delete input; enhancement remains experimental, with mixed ASR results. DPDFNet4 remains an evaluation comparator but is no longer a desktop choice. `crates/vesper-inference/src/audio_frontend.rs` is the shared native implementation. Ear/Uhm still use isolated evaluation probes and are not production stages. See [ADR-0019](adrs/0019-shared-audio-frontend.md) for the accepted design and exact native build boundary, and the [application-path qualification](validation/audio-frontend-integration-2026-09-18.md) for paired quality results and measurement limits.
 
 The 19 September automatic-level extension added an independent, default-off setting
 using the same frontend and Silero handle. The current managed desktop profile
@@ -190,7 +190,7 @@ True ASR partials remain available only for adapters that already implement live
 
 ### Affected components and tradeoffs
 
-Change `transcribe-audio` for the shared resampler; `transcribe-inference` for frontend state, worker sequencing and content-free stage evidence; `transcribe-core` and the existing model installer for opt-in settings and a frontend artifact role; and the desktop runtime/settings for configuration and recoverable fallback messages. Reuse the current installer, integrity checks, cancellation and settings controls. Add the exact tested artifacts to `models/artifacts.json` only behind their explicit experimental capability. Extend `transcribe-eval` to exercise the application path rather than importing the benchmark example into production. Record the accepted design in an ADR when approved.
+Change `vesper-audio` for the shared resampler; `vesper-inference` for frontend state, worker sequencing and content-free stage evidence; `vesper-core` and the existing model installer for opt-in settings and a frontend artifact role; and the desktop runtime/settings for configuration and recoverable fallback messages. Reuse the current installer, integrity checks, cancellation and settings controls. Add the exact tested artifacts to `models/artifacts.json` only behind their explicit experimental capability. Extend `vesper-eval` to exercise the application path rather than importing the benchmark example into production. Record the accepted design in an ADR when approved.
 
 The useful outcomes are consistent processing across modes, optional noise reduction, and measurements that can support future segmentation decisions. Advisory VAD does not itself save decoder work. Enhancement adds CPU work and buffering, and can remove speech information. Keeping original audio enables retry but retains the existing recording-memory cost. Resident frontend sessions trade memory for avoiding repeated loads. None of these changes establishes lower end-to-end latency, improved WER, or a state-of-the-art result before paired application measurements.
 
@@ -321,10 +321,10 @@ Consequently, perceptual scores such as PESQ/STOI/DNSMOS are useful secondary di
 
 The audited application Git revision is recorded with individual source hashes because the workspace contains uncommitted changes. Existing behavior was inspected, not modified:
 
-- [Capture](../crates/transcribe-audio/src/capture.rs) preserves original finite PCM, with no inference in the device callback. Its worker sends approximately 20 ms mono chunks at the device sample rate; queue saturation requests completed-audio fallback. Any frontend belongs outside the callback, and its delays must not block original audio retention.
-- [PCM conversion](../crates/transcribe-audio/src/pcm.rs) mixes channels and resamples completed audio to 16 kHz, flushing the resampler tail. Repeatedly calling this completed-file resampler on individual live packets would reset its filter and is not a streaming frontend.
-- [Completed-audio segmentation](../crates/transcribe-inference/src/segmented_audio.rs) chooses low-energy boundaries but retains quiet audio. Its exact-zero skip is not a VAD. [Desktop no-speech messaging](../apps/desktop/src-tauri/src/runtime.rs) uses amplitude only for diagnostic copy, not recognition gating.
-- [Manifest validation](../crates/transcribe-eval/src/manifest.rs) now permits empty references only for `Scenario::Noise`. The benchmark reports false transcripts and inserted words/minute separately for raw, cleaned and personalized output; conventional WER is omitted on empty-reference cases. The legacy score helper's sentinel remains for compatibility, but is not used as noise WER. Regression tests cover this distinction.
+- [Capture](../crates/vesper-audio/src/capture.rs) preserves original finite PCM, with no inference in the device callback. Its worker sends approximately 20 ms mono chunks at the device sample rate; queue saturation requests completed-audio fallback. Any frontend belongs outside the callback, and its delays must not block original audio retention.
+- [PCM conversion](../crates/vesper-audio/src/pcm.rs) mixes channels and resamples completed audio to 16 kHz, flushing the resampler tail. Repeatedly calling this completed-file resampler on individual live packets would reset its filter and is not a streaming frontend.
+- [Completed-audio segmentation](../crates/vesper-inference/src/segmented_audio.rs) chooses low-energy boundaries but retains quiet audio. Its exact-zero skip is not a VAD. [Desktop no-speech messaging](../apps/desktop/src-tauri/src/runtime.rs) uses amplitude only for diagnostic copy, not recognition gating.
+- [Manifest validation](../crates/vesper-eval/src/manifest.rs) now permits empty references only for `Scenario::Noise`. The benchmark reports false transcripts and inserted words/minute separately for raw, cleaned and personalized output; conventional WER is omitted on empty-reference cases. The legacy score helper's sentinel remains for compatibility, but is not used as noise WER. Regression tests cover this distinction.
 
 ### Native details worth profiling before adoption
 

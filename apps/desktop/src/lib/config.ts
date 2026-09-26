@@ -40,7 +40,7 @@ export type CaptureDesign = (typeof CAPTURE_DESIGNS)[number];
 export type ModelProfileRole = 'asr' | 'rewriter';
 export const MODEL_ROLE_LABELS = { asr: 'Speech model', rewriter: 'Writing model' } as const;
 
-/** Built-in cleanup models with pinned artifacts understood by transcribe-models. */
+/** Built-in cleanup models with pinned artifacts understood by vesper-models. */
 export const CLEANUP_MODELS = {
   'Qwen/Qwen3.5-0.8B': {
     name: 'Qwen3.5 0.8B',

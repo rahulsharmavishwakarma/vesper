@@ -1,6 +1,6 @@
 use std::{fs, io::Write, path::PathBuf, sync::Mutex};
 
-use transcribe_core::{AppConfig, AudioFrontendConfig, NoiseReduction};
+use vesper_core::{AppConfig, AudioFrontendConfig, NoiseReduction};
 
 /// Desktop-owned audio selection; evaluator profiles remain independently configurable.
 pub(crate) fn managed_audio(mut settings: AppConfig) -> AppConfig {
@@ -68,7 +68,7 @@ impl SettingsStore {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use transcribe_core::{AsrModel, Language};
+    use vesper_core::{AsrModel, Language};
 
     #[test]
     fn preferences_survive_reopening_and_invalid_changes_preserve_saved_data() {
@@ -175,7 +175,7 @@ mod tests {
     #[ignore = "downloads pinned audio models; requires TRANSCRIBE_SMOKE_AUDIO public fixture"]
     fn managed_audio_downloads_verify_and_reuse_pinned_packages() {
         use std::{cell::Cell, sync::atomic::AtomicBool};
-        use transcribe_models::{install_model, list_model_installations, InstallPhase};
+        use vesper_models::{install_model, list_model_installations, InstallPhase};
         let temp = tempfile::tempdir().unwrap();
         let store = SettingsStore::new(temp.path().join("settings.json"));
         let config = store.load().unwrap();
@@ -233,9 +233,9 @@ mod tests {
             "automatic setup must not write settings"
         );
         let fixture = std::env::var_os("TRANSCRIBE_SMOKE_AUDIO").expect("public audio fixture");
-        let audio = transcribe_audio::decode_file(std::path::Path::new(&fixture), 60).unwrap();
-        let mut cache = transcribe_inference::audio_frontend::FrontendCache::default();
-        let (output, metrics) = transcribe_inference::audio_frontend::process_completed(
+        let audio = vesper_audio::decode_file(std::path::Path::new(&fixture), 60).unwrap();
+        let mut cache = vesper_inference::audio_frontend::FrontendCache::default();
+        let (output, metrics) = vesper_inference::audio_frontend::process_completed(
             &mut cache, &audio, &config, &root, &cancelled,
         )
         .unwrap();

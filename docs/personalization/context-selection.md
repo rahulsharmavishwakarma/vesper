@@ -1,6 +1,6 @@
 # Context selection and in-context learning
 
-Implementation: [profile phrase selection](../../crates/transcribe-core/src/personalization.rs), [memory application](../../crates/transcribe-core/src/memory.rs), and [cleanup prompt construction](../../crates/transcribe-inference/src/personalization.rs).
+Implementation: [profile phrase selection](../../crates/vesper-core/src/personalization.rs), [memory application](../../crates/vesper-core/src/memory.rs), and [cleanup prompt construction](../../crates/vesper-inference/src/personalization.rs).
 
 One operation freezes one profile and its compact automatic-learning evidence in one SQLite read transaction, after the existing desktop enable migration. A correction learned while another operation is already running applies only to later operations. Context is currently the user-selected project, requested language, available transcript and explicit output settings. The application does not read the receiving editor's document, clipboard history or screen to infer a project.
 

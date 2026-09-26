@@ -30,8 +30,8 @@ pub struct AppStorage {
     dataset_dir: PathBuf,
     model_dir: PathBuf,
     runtime: Arc<runtime::Runtime>,
-    recorder: Arc<transcribe_audio::AudioRecorder>,
-    inference: Arc<transcribe_inference::InferenceManager>,
+    recorder: Arc<vesper_audio::AudioRecorder>,
+    inference: Arc<vesper_inference::InferenceManager>,
     resources: Arc<std::sync::Mutex<resources::ResourceSampler>>,
     operation_gate: std::sync::Mutex<()>,
     shortcut_status: std::sync::Mutex<shortcuts::ShortcutStatus>,
@@ -41,8 +41,8 @@ pub struct AppStorage {
 
 pub fn replace_global_shortcut(
     app: &tauri::AppHandle,
-    previous: Option<&transcribe_core::AppConfig>,
-    next: &transcribe_core::AppConfig,
+    previous: Option<&vesper_core::AppConfig>,
+    next: &vesper_core::AppConfig,
 ) -> Result<(), String> {
     let previous = previous
         .map(|config| shortcuts::canonical_bindings(config.recording_shortcuts()))
@@ -103,8 +103,8 @@ pub fn run() {
                 dataset_dir: data_root.join("dataset"),
                 model_dir,
                 runtime: Arc::new(runtime::Runtime::default()),
-                recorder: Arc::new(transcribe_audio::AudioRecorder::new()?),
-                inference: Arc::new(transcribe_inference::InferenceManager::new()?),
+                recorder: Arc::new(vesper_audio::AudioRecorder::new()?),
+                inference: Arc::new(vesper_inference::InferenceManager::new()?),
                 resources: Arc::new(std::sync::Mutex::new(resources::ResourceSampler::default())),
                 operation_gate: std::sync::Mutex::new(()),
                 shortcut_status: std::sync::Mutex::new(shortcuts::ShortcutStatus::default()),
@@ -112,7 +112,7 @@ pub fn run() {
                 dictation: dictation::Dictation::default(),
             });
             if let Some(window) = app.get_webview_window("quick-capture") {
-                transcribe_desktop_platform::initialize(&window).map_err(std::io::Error::other)?;
+                vesper_desktop_platform::initialize(&window).map_err(std::io::Error::other)?;
             }
             let capture_design = app
                 .state::<AppStorage>()
@@ -218,7 +218,7 @@ pub fn run() {
                 let _ = menu_bar::show_main(app, None);
             }
             tauri::RunEvent::Exit => {
-                transcribe_desktop_platform::shutdown();
+                vesper_desktop_platform::shutdown();
                 menu_bar::stop(app);
             }
             _ => {}

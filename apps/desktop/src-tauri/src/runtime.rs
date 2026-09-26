@@ -8,9 +8,9 @@ use std::{
 
 use crate::diagnostics::{Diagnostics, Stage};
 use serde::Serialize;
-use transcribe_audio::MonoPcm;
-use transcribe_core::{AppConfig, Language};
-use transcribe_data::{DatasetStore, SessionRecord};
+use vesper_audio::MonoPcm;
+use vesper_core::{AppConfig, Language};
+use vesper_data::{DatasetStore, SessionRecord};
 
 #[cfg(test)]
 #[path = "runtime_learning_tests.rs"]
@@ -34,15 +34,15 @@ mod diarization_tests;
 pub struct PipelineResult {
     pub result_id: String,
     pub raw_transcript: String,
-    pub speaker_timeline: Option<transcribe_core::SpeakerTimeline>,
+    pub speaker_timeline: Option<vesper_core::SpeakerTimeline>,
     pub cleaned_transcript: Option<String>,
     pub personalized_transcript: Option<String>,
-    pub personalization_evidence: Option<transcribe_core::MemoryEvidence>,
+    pub personalization_evidence: Option<vesper_core::MemoryEvidence>,
     pub draft_transcript: Option<String>,
     pub draft_revision: u64,
-    pub learning_outcome: Option<transcribe_core::LearningOutcome>,
+    pub learning_outcome: Option<vesper_core::LearningOutcome>,
     #[serde(skip)]
-    pub learning_context: transcribe_core::LearningContext,
+    pub learning_context: vesper_core::LearningContext,
     pub session: Option<SessionRecord>,
     pub warnings: Vec<String>,
     pub duration_seconds: f64,
@@ -51,10 +51,7 @@ pub struct PipelineResult {
 #[cfg(test)]
 mod tests {
     use super::*;
-    fn editable_result(
-        profile: &transcribe_core::PersonalizationProfile,
-        id: &str,
-    ) -> PipelineResult {
+    fn editable_result(profile: &vesper_core::PersonalizationProfile, id: &str) -> PipelineResult {
         PipelineResult {
             result_id: id.into(),
             raw_transcript: "Open read me in the repo".into(),
@@ -65,7 +62,7 @@ mod tests {
             draft_transcript: None,
             draft_revision: 0,
             learning_outcome: None,
-            learning_context: transcribe_core::LearningContext {
+            learning_context: vesper_core::LearningContext {
                 result_id: id.into(),
                 source_key: format!("audio-{id}"),
                 episode_id: id.into(),
@@ -86,7 +83,7 @@ mod tests {
         let root = dir.path().join("data");
         let store = DatasetStore::open(root.clone()).unwrap();
         let profile = store
-            .save_personalization(transcribe_core::PersonalizationProfile {
+            .save_personalization(vesper_core::PersonalizationProfile {
                 automatic_learning: true,
                 active_project: "repo".into(),
                 ..Default::default()
@@ -151,7 +148,7 @@ mod tests {
     #[test]
     fn automatic_retry_grouping_is_ephemeral_scoped_and_does_not_classify_repetition_as_repair() {
         let runtime = Runtime::default();
-        let profile = transcribe_core::PersonalizationProfile {
+        let profile = vesper_core::PersonalizationProfile {
             automatic_learning: true,
             ..Default::default()
         };
@@ -164,7 +161,7 @@ mod tests {
         );
         assert_eq!(
             runtime.connect_learning_attempt(&mut second, raw, true),
-            Some(transcribe_core::RetryRelation::Uncertain)
+            Some(vesper_core::RetryRelation::Uncertain)
         );
         assert_eq!(second.episode_id, first.episode_id);
         let mut third = editable_result(&profile, "third").learning_context;
@@ -208,7 +205,7 @@ mod tests {
     }
     #[test]
     fn segmented_progress_is_scoped_and_cannot_overwrite_cancellation_or_completion() {
-        use transcribe_inference::TranscriptionProgress;
+        use vesper_inference::TranscriptionProgress;
         let runtime = Runtime::default();
         let sample = TranscriptionProgress {
             processed_samples: 40,
@@ -256,14 +253,14 @@ mod tests {
                 model_root: directory.path().join("missing-models"),
                 dataset_root: directory.path().join("data"),
                 runtime: Arc::clone(&runtime),
-                inference: Arc::new(transcribe_inference::InferenceManager::new().unwrap()),
+                inference: Arc::new(vesper_inference::InferenceManager::new().unwrap()),
                 streaming_result: Arc::default(),
                 personalization: Arc::default(),
             };
             runtime.begin("recording", "Listening").unwrap();
             runtime.set_operation_id(&context.operation_id);
             runtime.set_recording(context.clone());
-            let mut partial = transcribe_inference::StreamingTranscript {
+            let mut partial = vesper_inference::StreamingTranscript {
                 operation_id: context.operation_id.clone(),
                 sequence: 1,
                 committed_text: "invalid draft".into(),
@@ -284,7 +281,7 @@ mod tests {
             }
             drop(sender);
             // Exercise the real fallback. Missing ASR files must not restore the draft.
-            let audio = transcribe_audio::CapturedAudio::new(vec![0.0; 1600], 16000, 1).unwrap();
+            let audio = vesper_audio::CapturedAudio::new(vec![0.0; 1600], 16000, 1).unwrap();
             assert!(context.process_capture(audio).is_err());
             {
                 let state = runtime.state.lock().unwrap();
@@ -329,8 +326,8 @@ mod tests {
     #[test]
     fn download_progress_is_scoped_to_the_operation_and_cancellation_is_sticky() {
         let runtime = Runtime::default();
-        let sample = transcribe_models::InstallProgress {
-            phase: transcribe_models::InstallPhase::Downloading,
+        let sample = vesper_models::InstallProgress {
+            phase: vesper_models::InstallPhase::Downloading,
             file_name: "synthetic.gguf".into(),
             file_index: 1,
             file_count: 1,
@@ -391,7 +388,7 @@ mod tests {
     #[test]
     fn microphone_level_is_only_reported_while_recording_and_is_finite() {
         let runtime = Runtime::default();
-        let installation = || transcribe_models::Installation {
+        let installation = || vesper_models::Installation {
             ready: true,
             model_directory: "models".into(),
             files: vec![],
@@ -466,7 +463,7 @@ mod tests {
         let directory = tempfile::tempdir().unwrap();
         let root = directory.path().join("dataset");
         let runtime = Arc::new(Runtime::default());
-        let inference = Arc::new(transcribe_inference::InferenceManager::new().unwrap());
+        let inference = Arc::new(vesper_inference::InferenceManager::new().unwrap());
         let before = "Deploy kubernets to the cluster";
         let after = "Deploy kubernetes to the cluster";
         for attempt in 0..3 {
@@ -478,9 +475,9 @@ mod tests {
             };
             // Third recording uses the other recognizer, without changing memory ownership.
             config.models.asr = if attempt == 2 {
-                transcribe_core::AsrModel::Nemotron35AsrStreaming06b
+                vesper_core::AsrModel::Nemotron35AsrStreaming06b
             } else {
-                transcribe_core::AsrModel::CohereTranscribe
+                vesper_core::AsrModel::CohereTranscribe
             };
             let context = WorkContext {
                 operation_id: format!("attempt-{attempt}"),
@@ -516,7 +513,7 @@ mod tests {
 
     #[test]
     fn final_memory_survives_model_selection_without_cleanup_or_installed_weights() {
-        use transcribe_core::{AsrModel, PersonalizationProfile, VocabularyEntry};
+        use vesper_core::{AsrModel, PersonalizationProfile, VocabularyEntry};
         let directory = tempfile::tempdir().unwrap();
         let store = DatasetStore::open(directory.path().join("dataset")).unwrap();
         let profile = store
@@ -548,7 +545,7 @@ mod tests {
                 model_root: directory.path().join("missing-models"),
                 dataset_root: directory.path().join("dataset"),
                 runtime: Arc::new(Runtime::default()),
-                inference: Arc::new(transcribe_inference::InferenceManager::new().unwrap()),
+                inference: Arc::new(vesper_inference::InferenceManager::new().unwrap()),
                 streaming_result: Arc::new(Mutex::new(None)),
                 personalization: Arc::default(),
             };
@@ -579,12 +576,11 @@ mod tests {
             model_root: directory.path().join("missing-models"),
             dataset_root: directory.path().join("dataset"),
             runtime: Arc::new(Runtime::default()),
-            inference: Arc::new(transcribe_inference::InferenceManager::new().unwrap()),
+            inference: Arc::new(vesper_inference::InferenceManager::new().unwrap()),
             streaming_result: Arc::new(Mutex::new(None)),
             personalization: Arc::default(),
         };
-        let make_audio =
-            || transcribe_audio::CapturedAudio::new(vec![0.25; 1600], 16000, 1).unwrap();
+        let make_audio = || vesper_audio::CapturedAudio::new(vec![0.25; 1600], 16000, 1).unwrap();
         context.preserve_on_close(make_audio()).unwrap();
         let records = DatasetStore::open(context.dataset_root.clone())
             .unwrap()
@@ -608,7 +604,7 @@ mod tests {
             model_root: PathBuf::new(),
             dataset_root: PathBuf::new(),
             runtime: Arc::clone(&runtime),
-            inference: Arc::new(transcribe_inference::InferenceManager::new().unwrap()),
+            inference: Arc::new(vesper_inference::InferenceManager::new().unwrap()),
             streaming_result: Arc::new(Mutex::new(None)),
             personalization: Arc::default(),
         };
@@ -640,11 +636,11 @@ mod tests {
             model_root: PathBuf::new(),
             dataset_root: blocked_root,
             runtime: Arc::new(Runtime::default()),
-            inference: Arc::new(transcribe_inference::InferenceManager::new().unwrap()),
+            inference: Arc::new(vesper_inference::InferenceManager::new().unwrap()),
             streaming_result: Arc::new(Mutex::new(None)),
             personalization: Arc::default(),
         };
-        let audio = transcribe_audio::CapturedAudio::new(vec![0.25; 1600], 16000, 1).unwrap();
+        let audio = vesper_audio::CapturedAudio::new(vec![0.25; 1600], 16000, 1).unwrap();
         let error = context.archive_capture(&audio).unwrap_err();
         let path = PathBuf::from(
             error
@@ -654,10 +650,7 @@ mod tests {
         );
         assert!(path.is_file());
         assert_eq!(
-            transcribe_audio::decode_file(&path, 1)
-                .unwrap()
-                .samples()
-                .len(),
+            vesper_audio::decode_file(&path, 1).unwrap().samples().len(),
             1600
         );
         std::fs::remove_dir_all(path.parent().unwrap()).unwrap();
@@ -667,14 +660,14 @@ mod tests {
     #[ignore = "installed Qwen/Cohere weights and verified FLEURS fixture; no recording/downloads"]
     fn new_offline_asr_pipeline_preserves_audio_and_provenance() {
         use std::time::Instant;
-        use transcribe_core::{AsrModel, Language};
+        use vesper_core::{AsrModel, Language};
         let models = PathBuf::from(std::env::var_os("TRANSCRIBE_MODEL_DIR").unwrap());
         let source = PathBuf::from(std::env::var_os("TRANSCRIBE_ASR_FIXTURES").unwrap())
             .join("fleurs-en_us.wav");
-        let source = transcribe_audio::decode_file(source, 0).unwrap();
+        let source = vesper_audio::decode_file(source, 0).unwrap();
         let fixture = tempfile::tempdir().unwrap();
         let audio = fixture.path().join("fleurs-en_us-repeated-3.wav");
-        transcribe_audio::CapturedAudio::new(source.samples().repeat(3), 16000, 1)
+        vesper_audio::CapturedAudio::new(source.samples().repeat(3), 16000, 1)
             .unwrap()
             .write_wav(&audio)
             .unwrap();
@@ -691,7 +684,7 @@ mod tests {
                 model_root: models.clone(),
                 dataset_root: directory.path().join("dataset"),
                 runtime: Arc::new(Runtime::default()),
-                inference: Arc::new(transcribe_inference::InferenceManager::new().unwrap()),
+                inference: Arc::new(vesper_inference::InferenceManager::new().unwrap()),
                 streaming_result: Arc::new(Mutex::new(None)),
                 personalization: Arc::default(),
             };
@@ -730,9 +723,9 @@ mod tests {
                 .to_string()
                 .contains("11afbd009a7f8c08f4bcf2fc1b265d0df4670fbf"));
             assert!(session.verified_transcript.is_none());
-            let mono = transcribe_audio::decode_file(&audio, 0).unwrap();
+            let mono = vesper_audio::decode_file(&audio, 0).unwrap();
             let captured =
-                transcribe_audio::CapturedAudio::new(mono.samples().to_vec(), 16000, 1).unwrap();
+                vesper_audio::CapturedAudio::new(mono.samples().to_vec(), 16000, 1).unwrap();
             // Calls the same post-stop path using public PCM, without microphone/UI time.
             let stopped = Instant::now();
             let capture_result = context.process_capture(captured).unwrap();
@@ -743,7 +736,7 @@ mod tests {
                 .dataset_root
                 .join(&capture_result.session.as_ref().unwrap().audio_relative_path);
             assert_eq!(
-                transcribe_audio::decode_file(captured_archive, 0)
+                vesper_audio::decode_file(captured_archive, 0)
                     .unwrap()
                     .samples(),
                 mono.samples()
@@ -789,7 +782,7 @@ mod tests {
             model_root,
             dataset_root: directory.path().join("dataset"),
             runtime: Arc::new(Runtime::default()),
-            inference: Arc::new(transcribe_inference::InferenceManager::new().unwrap()),
+            inference: Arc::new(vesper_inference::InferenceManager::new().unwrap()),
             streaming_result: Arc::new(Mutex::new(None)),
             personalization: Arc::default(),
         };
@@ -866,8 +859,8 @@ mod tests {
 pub struct DownloadStatus {
     pub operation_id: String,
     pub model_id: Option<String>,
-    pub quantization: Option<transcribe_core::RewriteQuantization>,
-    pub progress: Option<transcribe_models::InstallProgress>,
+    pub quantization: Option<vesper_core::RewriteQuantization>,
+    pub progress: Option<vesper_models::InstallProgress>,
 }
 
 #[derive(Default)]
@@ -878,19 +871,19 @@ struct State {
     message: String,
     latest: Option<PipelineResult>,
     recording: Option<WorkContext>,
-    partial: Option<transcribe_inference::StreamingTranscript>,
+    partial: Option<vesper_inference::StreamingTranscript>,
     partial_invalidated_for: Option<String>,
     download: Option<DownloadStatus>,
     transcription_operation: Option<String>,
     recent_learning: Option<RecentLearning>,
-    semantic_request: Option<transcribe_core::SemanticAnalysisRequest>,
+    semantic_request: Option<vesper_core::SemanticAnalysisRequest>,
     semantic_cancelled: Option<Arc<AtomicBool>>,
     semantic_earlier: Option<String>,
     policy_cancelled: Option<Arc<AtomicBool>>,
 }
 
 struct RecentLearning {
-    context: transcribe_core::LearningContext,
+    context: vesper_core::LearningContext,
     raw: String,
     at: std::time::Instant,
 }
@@ -916,7 +909,7 @@ pub struct RuntimeStatus {
     pub models_ready: bool,
     pub max_recording_seconds: u32,
     pub audio_level: f32,
-    pub partial: Option<transcribe_inference::StreamingTranscript>,
+    pub partial: Option<vesper_inference::StreamingTranscript>,
     pub partial_invalidated_for: Option<String>,
     pub download: Option<DownloadStatus>,
 }
@@ -954,7 +947,7 @@ impl Runtime {
         &self,
         operation_id: &str,
         model_id: Option<String>,
-        quantization: Option<transcribe_core::RewriteQuantization>,
+        quantization: Option<vesper_core::RewriteQuantization>,
     ) {
         if let Ok(mut state) = self.state.lock() {
             state.download = Some(DownloadStatus {
@@ -965,11 +958,7 @@ impl Runtime {
             });
         }
     }
-    pub fn download_progress(
-        &self,
-        operation_id: &str,
-        progress: &transcribe_models::InstallProgress,
-    ) {
+    pub fn download_progress(&self, operation_id: &str, progress: &vesper_models::InstallProgress) {
         if let Ok(mut state) = self.state.lock() {
             if !state.busy || self.cancelled.load(Ordering::Relaxed) {
                 return;
@@ -1034,7 +1023,7 @@ impl Runtime {
     fn transcription_progress(
         &self,
         operation_id: &str,
-        progress: transcribe_inference::TranscriptionProgress,
+        progress: vesper_inference::TranscriptionProgress,
     ) {
         if let Ok(mut state) = self.state.lock() {
             if !state.busy
@@ -1099,15 +1088,13 @@ impl Runtime {
 
     fn connect_learning_attempt(
         &self,
-        context: &mut transcribe_core::LearningContext,
+        context: &mut vesper_core::LearningContext,
         raw: &str,
         capture: bool,
-    ) -> Option<transcribe_core::RetryRelation> {
+    ) -> Option<vesper_core::RetryRelation> {
         let mut state = self.state.lock().ok()?;
         state.semantic_earlier = None;
-        if !capture
-            || !context.learning_enabled
-            || raw.len() > transcribe_core::MAX_LEARNING_TEXT_BYTES
+        if !capture || !context.learning_enabled || raw.len() > vesper_core::MAX_LEARNING_TEXT_BYTES
         {
             state.recent_learning = None;
             return None;
@@ -1117,9 +1104,9 @@ impl Runtime {
             let same = prior.context.project == context.project
                 && prior.context.language == context.language
                 && prior.context.learning_epoch == context.learning_epoch;
-            let relation = transcribe_core::retry_relation(&prior.raw, raw, elapsed, same);
-            if relation == transcribe_core::RetryRelation::PossibleRepair
-                || transcribe_core::correlated_attempts(&prior.raw, raw, elapsed, same)
+            let relation = vesper_core::retry_relation(&prior.raw, raw, elapsed, same);
+            if relation == vesper_core::RetryRelation::PossibleRepair
+                || vesper_core::correlated_attempts(&prior.raw, raw, elapsed, same)
             {
                 context.episode_id = prior.context.episode_id.clone();
             }
@@ -1153,7 +1140,7 @@ impl Runtime {
         revision: u64,
         text: String,
     ) -> Result<PipelineResult, String> {
-        if text.chars().count() > transcribe_data::MAX_TRANSCRIPT_CHARS {
+        if text.chars().count() > vesper_data::MAX_TRANSCRIPT_CHARS {
             return Err("Draft is too long.".into());
         }
         let mut state = self.state.lock().map_err(|e| e.to_string())?;
@@ -1218,7 +1205,7 @@ impl Runtime {
                 })
                 .map_err(|e| e.to_string())?
         } else {
-            transcribe_core::LearningOutcome {
+            vesper_core::LearningOutcome {
                 status: "Draft updated for this session. Learning is off.".into(),
                 ..Default::default()
             }
@@ -1228,9 +1215,9 @@ impl Runtime {
         result.learning_outcome = Some(outcome);
         let result = result.clone();
         state.cancel_semantic();
-        let request = transcribe_core::SemanticAnalysisRequest {
-            schema_version: transcribe_core::SEMANTIC_SCHEMA_VERSION,
-            origin: transcribe_core::SemanticOrigin::InAppDraftEdit,
+        let request = vesper_core::SemanticAnalysisRequest {
+            schema_version: vesper_core::SEMANTIC_SCHEMA_VERSION,
+            origin: vesper_core::SemanticOrigin::InAppDraftEdit,
             session_id: result.session.as_ref().map(|s| s.id.clone()),
             context: result.learning_context.clone(),
             result_revision: next_revision,
@@ -1302,7 +1289,7 @@ impl Runtime {
         let count = DatasetStore::open(root)
             .and_then(|s| s.undo_learning_for_result(result_id))
             .map_err(|e| e.to_string())?;
-        result.learning_outcome = Some(transcribe_core::LearningOutcome {
+        result.learning_outcome = Some(vesper_core::LearningOutcome {
             suspended: count,
             status: "Learned spelling paused. Your draft is unchanged.".into(),
             ..Default::default()
@@ -1346,7 +1333,7 @@ impl Runtime {
         state.cancel_semantic();
         Ok(())
     }
-    pub fn publish_partial(&self, partial: transcribe_inference::StreamingTranscript) -> bool {
+    pub fn publish_partial(&self, partial: vesper_inference::StreamingTranscript) -> bool {
         if let Ok(mut state) = self.state.lock() {
             let active = state
                 .recording
@@ -1415,7 +1402,7 @@ impl Runtime {
     }
     pub fn status(
         &self,
-        installation: transcribe_models::Installation,
+        installation: vesper_models::Installation,
         audio_level: f32,
         max_recording_seconds: u32,
     ) -> Result<RuntimeStatus, String> {
@@ -1451,25 +1438,23 @@ pub struct WorkContext {
     pub model_root: PathBuf,
     pub dataset_root: PathBuf,
     pub runtime: Arc<Runtime>,
-    pub inference: Arc<transcribe_inference::InferenceManager>,
+    pub inference: Arc<vesper_inference::InferenceManager>,
     pub(crate) streaming_result: Arc<Mutex<Option<StreamingResultReceiver>>>,
     pub(crate) personalization:
-        Arc<std::sync::OnceLock<Result<transcribe_data::DictationPersonalizationSnapshot, String>>>,
+        Arc<std::sync::OnceLock<Result<vesper_data::DictationPersonalizationSnapshot, String>>>,
 }
 
 type StreamingResultReceiver = mpsc::Receiver<Result<String, String>>;
 
 impl WorkContext {
-    pub(crate) fn personalization(
-        &self,
-    ) -> Result<&transcribe_core::PersonalizationProfile, String> {
+    pub(crate) fn personalization(&self) -> Result<&vesper_core::PersonalizationProfile, String> {
         self.personalization_snapshot()
             .map(|snapshot| &snapshot.profile)
     }
 
     fn personalization_snapshot(
         &self,
-    ) -> Result<&transcribe_data::DictationPersonalizationSnapshot, String> {
+    ) -> Result<&vesper_data::DictationPersonalizationSnapshot, String> {
         self.personalization
             .get_or_init(|| {
                 DatasetStore::open(self.dataset_root.clone())
@@ -1525,7 +1510,7 @@ impl WorkContext {
         let stored_path = session
             .as_ref()
             .map(|s| self.dataset_root.join(&s.audio_relative_path));
-        let decoded = transcribe_audio::decode_file(
+        let decoded = vesper_audio::decode_file(
             stored_path.as_deref().unwrap_or(path),
             self.config.effective_recording_seconds(),
         )
@@ -1546,7 +1531,7 @@ impl WorkContext {
 
     pub fn process_capture(
         &self,
-        audio: transcribe_audio::CapturedAudio,
+        audio: vesper_audio::CapturedAudio,
     ) -> Result<PipelineResult, String> {
         let warning = audio.capture_warning().map(str::to_owned);
         let mut session = self.archive_capture(&audio)?;
@@ -1604,7 +1589,7 @@ impl WorkContext {
 
     fn archive_capture(
         &self,
-        audio: &transcribe_audio::CapturedAudio,
+        audio: &vesper_audio::CapturedAudio,
     ) -> Result<Option<SessionRecord>, String> {
         if self.config.collect_training_data {
             let _timer = self
@@ -1631,7 +1616,7 @@ impl WorkContext {
         }
     }
 
-    pub fn preserve_on_close(&self, audio: transcribe_audio::CapturedAudio) -> Result<(), String> {
+    pub fn preserve_on_close(&self, audio: vesper_audio::CapturedAudio) -> Result<(), String> {
         let mut session = self.archive_capture(&audio)?;
         self.event(
             &mut session,
@@ -1751,8 +1736,8 @@ impl WorkContext {
                 .runtime
                 .diagnostics
                 .measure(&self.operation_id, Stage::Save);
-            let mut provenance = transcribe_models::provenance(&self.config);
-            provenance["inference"] = transcribe_inference::model_versions(&self.config);
+            let mut provenance = vesper_models::provenance(&self.config);
+            provenance["inference"] = vesper_inference::model_versions(&self.config);
             provenance["execution"] = self.inference.execution_evidence(&self.operation_id);
             match DatasetStore::open(self.dataset_root.clone())
                 .and_then(|store| store.set_transcripts(&record.id, raw.clone(), None, provenance))
@@ -1766,8 +1751,7 @@ impl WorkContext {
         result.session = session.clone();
         // Publish the durable raw result before a potentially slow or failed cleanup.
         self.runtime.publish(result.clone());
-        if transcribe_models::diarization::available(&self.model_root, self.config.compute_backend)
-        {
+        if vesper_models::diarization::available(&self.model_root, self.config.compute_backend) {
             self.runtime
                 .progress("identifying_speakers", "Identifying speakers locally…");
             match self.inference.analyze_speakers(
@@ -1797,7 +1781,7 @@ impl WorkContext {
                     }
                     result.speaker_timeline = Some(timeline);
                 }
-                Err(transcribe_inference::InferenceError::Cancelled) => {
+                Err(vesper_inference::InferenceError::Cancelled) => {
                     return Err("Transcription cancelled.".into())
                 }
                 Err(error) => {
@@ -1866,10 +1850,10 @@ impl WorkContext {
             return Err("Transcription cancelled.".into());
         }
         let profile = self.personalization()?;
-        result.learning_context = transcribe_core::LearningContext {
+        result.learning_context = vesper_core::LearningContext {
             result_id: result.result_id.clone(),
             source_key: if profile.automatic_learning {
-                transcribe_data::learning_audio_key(audio.samples())
+                vesper_data::learning_audio_key(audio.samples())
             } else {
                 "disabled".into()
             },

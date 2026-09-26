@@ -336,10 +336,10 @@ def compare(root, binary, destination, repeats=0):
         Path("scripts/stress-policy-learning.py"),
         Path("scripts/compare-policy-failure-bank.py"),
         Path("scripts/prepare-policy-learning-replay.py"),
-        Path("crates/transcribe-data/examples/policy_learning_replay.rs"),
-        *sorted(Path("crates/transcribe-data/examples/policy_learning").rglob("*.rs")),
-        *sorted(Path("crates/transcribe-core/src").rglob("*.rs")),
-        *sorted(Path("crates/transcribe-data/src").rglob("*.rs")),
+        Path("crates/vesper-data/examples/policy_learning_replay.rs"),
+        *sorted(Path("crates/vesper-data/examples/policy_learning").rglob("*.rs")),
+        *sorted(Path("crates/vesper-core/src").rglob("*.rs")),
+        *sorted(Path("crates/vesper-data/src").rglob("*.rs")),
     ]
     source_root = root / "frozen-source"
     recorded_sources = read(root / "frozen-source-manifest.json")

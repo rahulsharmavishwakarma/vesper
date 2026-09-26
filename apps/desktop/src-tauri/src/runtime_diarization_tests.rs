@@ -6,13 +6,13 @@ fn context(root: &Path, model_root: PathBuf) -> WorkContext {
         operation_id: uuid::Uuid::new_v4().to_string(),
         config: AppConfig {
             cleanup_enabled: false,
-            compute_backend: transcribe_core::ComputeBackend::Cpu,
+            compute_backend: vesper_core::ComputeBackend::Cpu,
             ..AppConfig::default()
         },
         model_root,
         dataset_root: root.join("dataset"),
         runtime: Arc::new(Runtime::default()),
-        inference: Arc::new(transcribe_inference::InferenceManager::new().unwrap()),
+        inference: Arc::new(vesper_inference::InferenceManager::new().unwrap()),
         streaming_result: Arc::new(Mutex::new(None)),
         personalization: Arc::default(),
     }
@@ -32,7 +32,7 @@ fn automatic_speakers_preserve_raw_when_unavailable_corrupt_or_cancelled() {
     for state in ["missing", "corrupt", "unsupported"] {
         let models = dir.path().join(state).join("models");
         if state != "missing" {
-            use transcribe_models::diarization as diar;
+            use vesper_models::diarization as diar;
             let weights = models.join(diar::artifact().relative_path);
             std::fs::create_dir_all(weights.parent().unwrap()).unwrap();
             std::fs::write(weights, b"corrupt weights must never be loaded").unwrap();
@@ -50,11 +50,10 @@ fn automatic_speakers_preserve_raw_when_unavailable_corrupt_or_cancelled() {
         for cancel in [false, true] {
             let mut ctx = context(dir.path(), models.clone());
             if state == "unsupported" {
-                ctx.config.models.asr = transcribe_core::AsrModel::Nemotron35AsrStreaming06b;
-                ctx.config.compute_backend = transcribe_core::ComputeBackend::Vulkan;
+                ctx.config.models.asr = vesper_core::AsrModel::Nemotron35AsrStreaming06b;
+                ctx.config.compute_backend = vesper_core::ComputeBackend::Vulkan;
             }
-            let captured =
-                transcribe_audio::CapturedAudio::new(vec![0.1; 16000], 16000, 1).unwrap();
+            let captured = vesper_audio::CapturedAudio::new(vec![0.1; 16000], 16000, 1).unwrap();
             let mut session = ctx.archive_capture(&captured).unwrap();
             let audio = MonoPcm::new(vec![0.1; 16000], 16000).unwrap();
             ctx.runtime.cancelled.store(cancel, Ordering::Relaxed);
@@ -73,7 +72,7 @@ fn automatic_speakers_preserve_raw_when_unavailable_corrupt_or_cancelled() {
                 let result = result.unwrap();
                 assert!(result.speaker_timeline.is_none());
                 assert_eq!(result.raw_transcript, "Preserve these original words.");
-                let attempted = state == "corrupt" && transcribe_models::diarization::supported();
+                let attempted = state == "corrupt" && vesper_models::diarization::supported();
                 assert_eq!(
                     result
                         .warnings
@@ -127,7 +126,7 @@ fn real_asr_speaker_pipeline_persists_and_exports_without_changing_words() {
     let mut stored = serde_json::to_value(&ctx.config).unwrap();
     stored["speakerDiarization"] = false.into();
     ctx.config = serde_json::from_value(stored).unwrap();
-    use transcribe_core::{AsrModel, ComputeBackend};
+    use vesper_core::{AsrModel, ComputeBackend};
     for (name, expected, asr) in [
         ("fleurs-single", 1, AsrModel::CohereTranscribe),
         ("fleurs-single", 1, AsrModel::Nemotron35AsrStreaming06b),
@@ -148,7 +147,7 @@ fn real_asr_speaker_pipeline_persists_and_exports_without_changing_words() {
         let baseline_start = Instant::now();
         // Compare with the same ASR worker directly; there is no production
         // disable switch. This baseline excludes desktop persistence/analysis.
-        let decoded = transcribe_audio::decode_file(&audio, 0).unwrap();
+        let decoded = vesper_audio::decode_file(&audio, 0).unwrap();
         let baseline = ctx
             .inference
             .transcribe(

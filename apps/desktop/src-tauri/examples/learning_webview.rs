@@ -22,8 +22,8 @@ mod probe {
         sync::{atomic::AtomicBool, Arc, Mutex},
         time::Instant,
     };
-    use transcribe_core::{AppConfig, Language};
-    use transcribe_data::DatasetStore;
+    use vesper_core::{AppConfig, Language};
+    use vesper_data::DatasetStore;
 
     const MANIFEST: &str =
         include_str!("../../../../benchmarks/asr/manifests/native-learning-2026-09-19.json");
@@ -60,7 +60,7 @@ mod probe {
         pcm: Vec<Vec<f32>>,
         config: AppConfig,
         models: PathBuf,
-        inference: Arc<transcribe_inference::InferenceManager>,
+        inference: Arc<vesper_inference::InferenceManager>,
         sequence: Mutex<Sequence>,
         log: Mutex<File>,
     }
@@ -170,7 +170,7 @@ mod probe {
             .progress("transcribing", "Processing public recording…");
         tauri::async_runtime::spawn_blocking(move || {
             let capture =
-                transcribe_audio::CapturedAudio::new(pcm, 16000, 1).map_err(|e| e.to_string())?;
+                vesper_audio::CapturedAudio::new(pcm, 16000, 1).map_err(|e| e.to_string())?;
             let start = Instant::now();
             let result = work.process_capture(capture);
             let elapsed = start.elapsed().as_secs_f64() * 1000.0;
@@ -188,7 +188,7 @@ mod probe {
                     case.row["resultId"] = json!(output.result_id);
                     case.row["output"] = json!(final_text(output));
                     case.row["raw"] = json!(output.raw_transcript);
-                    case.row["wordEdits"] = json!(transcribe_core::word_edits(
+                    case.row["wordEdits"] = json!(vesper_core::word_edits(
                         &probe.samples[case.sample].reference,
                         final_text(output)
                     ));
@@ -207,7 +207,7 @@ mod probe {
     ) -> Result<super::runtime::RuntimeStatus, String> {
         let work = state.current()?.work;
         work.runtime.status(
-            transcribe_models::inspect(&work.config, &work.model_root),
+            vesper_models::inspect(&work.config, &work.model_root),
             0.0,
             0,
         )
@@ -219,10 +219,8 @@ mod probe {
         state.current()?.work.runtime.latest()
     }
     #[tauri::command]
-    fn get_model_installation(
-        state: tauri::State<'_, Arc<Probe>>,
-    ) -> transcribe_models::Installation {
-        transcribe_models::inspect(&state.config, &state.models)
+    fn get_model_installation(state: tauri::State<'_, Arc<Probe>>) -> vesper_models::Installation {
+        vesper_models::inspect(&state.config, &state.models)
     }
     #[tauri::command]
     fn list_model_installations() -> Value {
@@ -403,7 +401,7 @@ mod probe {
             collect_training_data: false,
             ..Default::default()
         };
-        transcribe_models::verify(&config, &models, &AtomicBool::new(false))?;
+        vesper_models::verify(&config, &models, &AtomicBool::new(false))?;
         let mut pcm = vec![];
         let mut hashes = std::collections::BTreeSet::new();
         for (index, sample) in samples.iter().enumerate() {
@@ -419,7 +417,7 @@ mod probe {
             {
                 return Err("Duplicate or mismatched public audio".into());
             }
-            let decoded = transcribe_audio::decode_file(path, 0)?;
+            let decoded = vesper_audio::decode_file(path, 0)?;
             if (decoded.duration_seconds() - sample.duration_seconds).abs() >= 0.01 {
                 return Err("Audio duration mismatch".into());
             }
@@ -447,7 +445,7 @@ mod probe {
             pcm,
             config,
             models,
-            inference: Arc::new(transcribe_inference::InferenceManager::new()?),
+            inference: Arc::new(vesper_inference::InferenceManager::new()?),
             sequence: Mutex::new(Sequence {
                 next: 0,
                 current: None,
@@ -460,9 +458,9 @@ mod probe {
             ),
         });
         state.write(&json!({"kind":"header","schemaVersion":1,"expectedRequests":76,
-            "learningPolicyVersion":transcribe_core::LEARNING_POLICY_VERSION,
+            "learningPolicyVersion":vesper_core::LEARNING_POLICY_VERSION,
             "manifestSha256":format!("{:x}",Sha256::digest(MANIFEST)),"config":state.config,
-            "modelProvenance":transcribe_models::provenance(&state.config),"modelVersions":transcribe_inference::model_versions(&state.config),
+            "modelProvenance":vesper_models::provenance(&state.config),"modelVersions":vesper_inference::model_versions(&state.config),
             "evidenceClass":"native WKWebView and production panel/runtime; prerecorded public PCM and scripted edits",
             "microphoneStopToVisibleMs":null,"humanEditingTimeMs":null}))?;
         let mut context = tauri::generate_context!();

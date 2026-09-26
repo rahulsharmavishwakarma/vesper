@@ -5,13 +5,13 @@ import { fileURLToPath } from 'node:url';
 
 const SEMVER = /^(0|[1-9]\d*)\.(0|[1-9]\d*)\.(0|[1-9]\d*)(?:-[0-9A-Za-z-]+(?:\.[0-9A-Za-z-]+)*)?$/;
 const WORKSPACE_PACKAGES = [
-  'transcribe-audio',
-  'transcribe-core',
-  'transcribe-data',
-  'transcribe-desktop',
-  'transcribe-inference',
-  'transcribe-models',
-  'transcribe-nemo',
+  'vesper-audio',
+  'vesper-core',
+  'vesper-data',
+  'vesper-desktop',
+  'vesper-inference',
+  'vesper-models',
+  'vesper-nemo',
 ];
 
 function readJson(root, relative) {

@@ -2,7 +2,7 @@
 # Run sequentially after preparation and a release build. Public corpus only; no downloads.
 set -eu
 PERSONAL_BENCH_ROOT=${1:-.cache/benchmarks/personalization-2026-09-16}
-PERSONAL_BENCH_BINARY=./target/release/transcribe-eval
+PERSONAL_BENCH_BINARY=./target/release/vesper-eval
 PERSONAL_NEMO_ROOT=.cache/benchmarks/model-roots/nemotron-cpu
 mkdir -p "$PERSONAL_BENCH_ROOT/results" "$PERSONAL_BENCH_ROOT/logs"
 # Calibration is intentionally explicit and separate; preserve an already completed run.

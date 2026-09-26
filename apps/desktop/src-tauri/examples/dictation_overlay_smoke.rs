@@ -6,8 +6,8 @@ static SUCCESS: std::sync::atomic::AtomicBool = std::sync::atomic::AtomicBool::n
 #[tauri::command]
 fn native_probe(round: u32, app: tauri::AppHandle) -> &'static str {
     app.run_on_main_thread(move || {
-        transcribe_desktop_platform::hide();
-        transcribe_desktop_platform::show();
+        vesper_desktop_platform::hide();
+        vesper_desktop_platform::show();
     })
     .expect("native presentation dispatch");
     if round == 3 {
@@ -39,8 +39,8 @@ fn main() {
             app.set_activation_policy(tauri::ActivationPolicy::Accessory);
             let window = tauri::WebviewWindowBuilder::new(app, "quick-capture", tauri::WebviewUrl::CustomProtocol("dictation-test://localhost".parse()?))
                 .visible(false).inner_size(440.0, 96.0).decorations(false).transparent(true).accept_first_mouse(true).build()?;
-            transcribe_desktop_platform::initialize(&window).map_err(std::io::Error::other)?;
-            transcribe_desktop_platform::show();
+            vesper_desktop_platform::initialize(&window).map_err(std::io::Error::other)?;
+            vesper_desktop_platform::show();
             let handle = app.handle().clone();
             std::thread::spawn(move || {
                 std::thread::sleep(std::time::Duration::from_secs(10));
@@ -51,7 +51,7 @@ fn main() {
         })
         .build(context).expect("build native overlay smoke")
         .run(|_, event| {
-            if matches!(event, tauri::RunEvent::Exit) { transcribe_desktop_platform::shutdown(); }
+            if matches!(event, tauri::RunEvent::Exit) { vesper_desktop_platform::shutdown(); }
         });
     if !SUCCESS.load(std::sync::atomic::Ordering::Relaxed) {
         std::process::exit(1);

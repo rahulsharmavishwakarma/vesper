@@ -1,5 +1,5 @@
 [package]
-name = "transcribe-glib-backport-test"
+name = "vesper-glib-backport-test"
 version = "0.0.0"
 edition = "2021"
 publish = false

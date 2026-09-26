@@ -30,7 +30,7 @@ Analysis is separate from active profile reads, spelling admission, cleanup exam
 
 ## Qualification and research boundaries
 
-Core/data/runtime tests cover malformed evidence, Unicode spans, forged memory IDs, exact scope, repeated completion, coalescing, capture cancellation, persistence bounds, restart, Undo, Forget and old-connection callbacks. The installed-model screen is [semantic_shadow.rs](../../crates/transcribe-inference/examples/semantic_shadow.rs), using separate [development](../../benchmarks/cleanup/semantic-shadow.json) and [holdout](../../benchmarks/cleanup/semantic-shadow-holdout.json) fixtures. These are authored labels, not natural longitudinal feedback or an accent-recognition benchmark.
+Core/data/runtime tests cover malformed evidence, Unicode spans, forged memory IDs, exact scope, repeated completion, coalescing, capture cancellation, persistence bounds, restart, Undo, Forget and old-connection callbacks. The installed-model screen is [semantic_shadow.rs](../../crates/vesper-inference/examples/semantic_shadow.rs), using separate [development](../../benchmarks/cleanup/semantic-shadow.json) and [holdout](../../benchmarks/cleanup/semantic-shadow-holdout.json) fixtures. These are authored labels, not natural longitudinal feedback or an accent-recognition benchmark.
 
 The first prompt produced **0/24 valid responses** on Metal. A diagnostic found unquoted enum values copied from its schema instructions; that prompt remains a failed result. Prompt version 2 supplies valid JSON examples and explicit spans. A five-class example variant increased valid formatting but reduced relation accuracy and was rejected. Measurements and the final decision are recorded in [evaluation](evaluation.md#semantic-shadow-qualification).
 
@@ -38,7 +38,7 @@ Reproduce with installed artifacts, separately for CPU and Metal:
 
 ```sh
 . ./scripts/dev-env.sh
-cargo run --locked -p transcribe-inference --example semantic_shadow -- \
+cargo run --locked -p vesper-inference --example semantic_shadow -- \
   models/downloads benchmarks/cleanup/semantic-shadow-holdout.json \
   /tmp/semantic-shadow-metal.json metal
 ```

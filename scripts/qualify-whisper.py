@@ -36,7 +36,7 @@ def competing_work(own_group=None):
         "cc1plus",
         "ld",
         "cargo",
-        "transcribe-eval",
+        "vesper-eval",
         "whisper-probe",
         "whisper_probe",
         "audio_frontend",
@@ -161,7 +161,7 @@ def main():
         name = f"{lane}-{model}"
         output = runs / f"{name}.json"
         if model == "cohere" or args.application:
-            binary = root / "binaries" / "transcribe-eval"
+            binary = root / "binaries" / "vesper-eval"
             command = [
                 str(binary),
                 "run",

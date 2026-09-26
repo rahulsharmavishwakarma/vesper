@@ -47,7 +47,7 @@ def processes(own_group=None):
                 "clang",
                 "clang++",
                 "ld",
-                "transcribe-eval",
+                "vesper-eval",
                 "policy_learning_replay",
             }
             and float(cpu) > 10
@@ -62,10 +62,10 @@ def main():
     args = parser.parse_args()
     runs = ROOT / "runs"
     runs.mkdir(exist_ok=True)
-    binary = ROOT / "transcribe-eval"
+    binary = ROOT / "vesper-eval"
     if not binary.exists():
-        shutil.copy2("target/release/transcribe-eval", binary)
-    elif digest(binary) != digest(Path("target/release/transcribe-eval")):
+        shutil.copy2("target/release/vesper-eval", binary)
+    elif digest(binary) != digest(Path("target/release/vesper-eval")):
         raise SystemExit("Frozen binary differs from current build; do not mix revisions")
     runtime = json.loads(Path(".tooling/sherpa-runtime/current.json").read_text())
     environment_path = ROOT / "environment.json"
@@ -91,11 +91,11 @@ def main():
             "patches/sherpa-onnx/decode-report.patch",
         ]
         for folder in [
-            "crates/transcribe-audio/src",
-            "crates/transcribe-core/src",
-            "crates/transcribe-inference/src",
-            "crates/transcribe-eval/src",
-            "crates/transcribe-models/src",
+            "crates/vesper-audio/src",
+            "crates/vesper-core/src",
+            "crates/vesper-inference/src",
+            "crates/vesper-eval/src",
+            "crates/vesper-models/src",
         ]:
             paths += [str(p) for p in Path(folder).rglob("*.rs")]
         write(ROOT / "sources.json", {p: digest(Path(p)) for p in sorted(paths)})

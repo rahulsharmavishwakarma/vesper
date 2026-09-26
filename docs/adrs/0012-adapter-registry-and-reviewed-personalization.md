@@ -12,7 +12,7 @@ Checkpoint-specific dispatch repeated capability assumptions. Qwen evaluated inv
 
 ## Decision
 
-`transcribe-core::ADAPTERS` registers compiled task/architecture/runtime contracts. Built-in identity resolves to a registration; imported checkpoints still require validated, pinned artifact layouts. New compatible sherpa-transducer or llama.cpp GGUF profiles remain declarative. New native architectures require compiled adapter code. Remote repositories cannot execute code.
+`vesper-core::ADAPTERS` registers compiled task/architecture/runtime contracts. Built-in identity resolves to a registration; imported checkpoints still require validated, pinned artifact layouts. New compatible sherpa-transducer or llama.cpp GGUF profiles remain declarative. New native architectures require compiled adapter code. Remote repositories cannot execute code.
 
 Speech and text dispatch use separate adapter enums at request boundaries. Native NeMo, sherpa, Candle and llama.cpp retain ownership of kernels, frontend/tokenizer behavior, decoding, and state. Existing NeMo/Qwen weights remain resident; other adapters retain their truthful per-job/process lifetimes. No lookup or generic tensor layer enters a native frame/token loop. Registrations distinguish actual application streaming from a checkpoint's theoretical streaming capability.
 

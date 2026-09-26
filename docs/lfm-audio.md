@@ -10,7 +10,7 @@ Writing cleanup uses the selected writing model and the existing fidelity guard.
 
 ```sh
 . ./scripts/dev-env.sh
-cargo run --locked -p transcribe-models --example install -- \
+cargo run --locked -p vesper-models --example install -- \
   models/downloads --asr-model LiquidAI/LFM2.5-Audio-1.5B --backend cpu
 ```
 
@@ -23,7 +23,7 @@ Use the public FLEURS data prepared by the [ASR benchmark instructions](../bench
 The explicit installed-model contract test performs no recording or download. Set `TRANSCRIBE_SMOKE_MODELS` to the installed model directory, `TRANSCRIBE_SMOKE_AUDIO` to the public English baseline, and `TRANSCRIBE_LFM_AUDIO_B` to a different public English clip. Use absolute paths because Cargo tests run from the crate directory. Install the default Qwen Q4 writing model as well.
 
 ```sh
-cargo test --locked -p transcribe-inference \
+cargo test --locked -p vesper-inference \
   installed_lfm_reset_cancel_limits_and_two_stage_pipeline \
   -- --ignored --nocapture --test-threads=1
 ```

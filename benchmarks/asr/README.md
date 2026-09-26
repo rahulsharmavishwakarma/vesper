@@ -107,7 +107,7 @@ uv run --locked python scripts/prepare-audio-frontend-assets.py \
   --generate-controls --download-models
 
 source scripts/dev-env.sh
-cargo build --release -p transcribe-eval --example audio_frontend --locked
+cargo build --release -p vesper-eval --example audio_frontend --locked
 ```
 
 Fill in an environment JSON using the existing template. Run from the repository root: the native example's frontend artifact directory is `.cache/benchmarks/models/audio-frontends`. Its ten required arguments are artifact manifest, frontend ID, corpus manifest, corpus directory, existing ASR model directory, environment JSON, output JSON, ASR mode, delivery mode and signal condition.
@@ -282,10 +282,10 @@ Run optimized inference, changing paths and model IDs as needed:
 
 ```sh
 . ./scripts/dev-env.sh
-cargo run --release --locked -p transcribe-eval -- validate \
+cargo run --release --locked -p vesper-eval -- validate \
   .cache/benchmarks/datasets/mucs-hi-en/manifest.json
 
-cargo run --release --locked -p transcribe-eval -- run \
+cargo run --release --locked -p vesper-eval -- run \
   .cache/benchmarks/datasets/mucs-hi-en/manifest.json \
   .cache/benchmarks/datasets/mucs-hi-en \
   models/downloads \
@@ -306,7 +306,7 @@ node scripts/summarize-asr-benchmarks.mjs \
   --out .cache/benchmarks/results/evidence.json \
   .cache/benchmarks/results/*.json
 
-cargo run --locked -p transcribe-eval -- recommend \
+cargo run --locked -p vesper-eval -- recommend \
   benchmarks/asr/request.hi-offline-cpu.example.json \
   benchmarks/asr/capabilities.json \
   .cache/benchmarks/results/evidence.json
@@ -326,14 +326,14 @@ Do not tune on these held-out clips. Training and threshold selection need separ
 
 ## Shared Whisper adapter qualification
 
-Use `scripts/qualify-whisper.py ... --application` to run Small, Turbo and Cohere through the same frozen `transcribe-eval` binary. The default without `--application` remains the historical native-probe protocol. Build once before timing; record source, binary, native-library and artifact hashes, and keep competing work out of the measurement window. `--english-only` creates a separate repeated English pass; preserve the initial pass rather than overwriting it.
+Use `scripts/qualify-whisper.py ... --application` to run Small, Turbo and Cohere through the same frozen `vesper-eval` binary. The default without `--application` remains the historical native-probe protocol. Build once before timing; record source, binary, native-library and artifact hashes, and keep competing work out of the measurement window. `--english-only` creates a separate repeated English pass; preserve the initial pass rather than overwriting it.
 
 ```sh
 uv run --locked python scripts/qualify-whisper.py RESULT_DIR WHISPER_ARTIFACT_DIR AUDIO_REGRESSION_DIR FLEURS_LANGUAGE_DIR --application
 uv run --locked python scripts/summarize-whisper.py RESULT_DIR PUBLICATION.json --repeat-root ENGLISH_REPEAT_DIR
 ```
 
-`RESULT_DIR` must contain `binaries/transcribe-eval`, `environment.json`, `native-provenance.json`, `source.json` and `post-freeze-changes.json`; the runner creates manifests, process logs and a failure ledger. The historical artifact-directory argument is unused in application mode because the real installer owns artifact selection. The summarizer separates cleanup failures from ASR failures and excludes bogus non-speech scores for the historical unreferenced stitched-speech soak. Keep its original report hash and execution evidence.
+`RESULT_DIR` must contain `binaries/vesper-eval`, `environment.json`, `native-provenance.json`, `source.json` and `post-freeze-changes.json`; the runner creates manifests, process logs and a failure ledger. The historical artifact-directory argument is unused in application mode because the real installer owns artifact selection. The summarizer separates cleanup failures from ASR failures and excludes bogus non-speech scores for the historical unreferenced stitched-speech soak. Keep its original report hash and execution evidence.
 
 Run the installed-model lifecycle tests sequentially with the same pinned fixtures:
 
@@ -343,16 +343,16 @@ export TRANSCRIBE_SMOKE_AUDIO=PUBLIC_ENGLISH_A.wav
 export TRANSCRIBE_COHERE_AUDIO_B=PUBLIC_ENGLISH_B.wav
 export TRANSCRIBE_COHERE_LONG_AUDIO=PUBLIC_MEETING_OVER_29_SECONDS.wav
 export TRANSCRIBE_COHERE_FRENCH_AUDIO=PUBLIC_FRENCH.wav
-cargo test --release --locked -p transcribe-inference installed_whisper_small_residency_isolation_and_invalidation -- --ignored --nocapture --test-threads=1
-cargo test --release --locked -p transcribe-inference installed_whisper_turbo_residency_isolation_and_invalidation -- --ignored --nocapture --test-threads=1
-cargo test --release --locked -p transcribe-inference installed_cohere_residency_isolation_and_invalidation -- --ignored --nocapture --test-threads=1
+cargo test --release --locked -p vesper-inference installed_whisper_small_residency_isolation_and_invalidation -- --ignored --nocapture --test-threads=1
+cargo test --release --locked -p vesper-inference installed_whisper_turbo_residency_isolation_and_invalidation -- --ignored --nocapture --test-threads=1
+cargo test --release --locked -p vesper-inference installed_cohere_residency_isolation_and_invalidation -- --ignored --nocapture --test-threads=1
 ```
 
 The shared test performs 100 mixed cycles, cold-versus-resident text comparisons, fresh-state resets, model/language changes, cancellation and copied-artifact invalidation. The legacy Cohere fixture variable names are reused for all three models. For timing, prebuild and run the frozen test executable instead of compiling alongside another benchmark. The [dated adapter report](../../docs/validation/whisper-adapter-2026-09-18.md) defines the observed envelope, quality failures and remaining release gates.
 
 ### Shared audio frontend qualification
 
-The opt-in automatic-level policy uses `transcribe-eval run ... --auto-level`,
+The opt-in automatic-level policy uses `vesper-eval run ... --auto-level`,
 independently of `--vad` annotations and `--denoiser`. Its application-path
 qualification helper is `uv run --locked python scripts/qualify-automatic-level.py`:
 run `prepare` once, then `development`, `quality`, `streaming`, `soak`, and
@@ -372,6 +372,6 @@ The [application-path report](../../docs/validation/audio-frontend-integration-2
 
 The application evaluator accepts `--vad` and `--denoiser off|dpdfnet4|dpdfnet8`; these invoke the same manager frontend as the desktop, including warnings/fallback evidence. They work with completed recordings and the existing `--streaming --realtime --chunk-ms 20` Nemotron mode. They do not add streaming decoder support to other models.
 
-Use `scripts/prepare-frontend-integration.py` with the root uv environment and cached public FLEURS/MS-SNSD/regression assets to freeze a new selection before inference. Build `cargo build --release -p transcribe-eval`, then run `uv run --locked python scripts/qualify-frontend-integration.py streaming`, followed by the `quality` and `soak` phases sequentially. The runner freezes the binary/source hashes, preserves failed processes, records competing work and sampled RSS, and never changes settings based on results. The soak is 30 minutes of paced synthetic repetition and is excluded from accuracy. Frozen attributed public references and recipes are in [the dated manifests](manifests/frontend-integration-2026-09-18/quality.json). Once those manifests exist, preparation rebuilds that exact selection and checks every generated audio hash; it refuses an existing output directory. Original waveforms remain local. The initial run is under `.cache/benchmarks/results/frontend-integration-2026-09-18`; it includes a retained metadata-only split-schema preflight failure. Do not overwrite completed evidence to restart a run.
+Use `scripts/prepare-frontend-integration.py` with the root uv environment and cached public FLEURS/MS-SNSD/regression assets to freeze a new selection before inference. Build `cargo build --release -p vesper-eval`, then run `uv run --locked python scripts/qualify-frontend-integration.py streaming`, followed by the `quality` and `soak` phases sequentially. The runner freezes the binary/source hashes, preserves failed processes, records competing work and sampled RSS, and never changes settings based on results. The soak is 30 minutes of paced synthetic repetition and is excluded from accuracy. Frozen attributed public references and recipes are in [the dated manifests](manifests/frontend-integration-2026-09-18/quality.json). Once those manifests exist, preparation rebuilds that exact selection and checks every generated audio hash; it refuses an existing output directory. Original waveforms remain local. The initial run is under `.cache/benchmarks/results/frontend-integration-2026-09-18`; it includes a retained metadata-only split-schema preflight failure. Do not overwrite completed evidence to restart a run.
 
 Installed contracts can be run using `TRANSCRIBE_SMOKE_MODELS` and `TRANSCRIBE_SMOKE_AUDIO` with the ignored tests `installed_frontends_packetization_tails_and_100_recording_resets`, `live_frontend_cancel_fallback_and_reset_isolation`, `live_frontend_load_failure_uses_original_audio_and_retains_asr_errors`, and `live_frontend_device_rates_match_completed_processing`. The live tests need the pinned CPU Nemotron runtime/model plus the same frontend artifact layout. They use public speech fixtures. Full hashes are checked before native model construction. Device-rate tests compare irregular 44.1/48 kHz delivery against completed processing of the same synthetic-rate waveform; they do not substitute for microphone quality qualification.

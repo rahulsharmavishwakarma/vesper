@@ -149,9 +149,9 @@ def prepare():
         },
     )
     old_pins = read(PRIOR / "execution-pins-quality.json")
-    binary = PRIOR / "transcribe-eval"
+    binary = PRIOR / "vesper-eval"
     assert digest(binary) == old_pins[str(binary)]
-    shutil.copy2(binary, ROOT / "transcribe-eval")
+    shutil.copy2(binary, ROOT / "vesper-eval")
     for name in ["source-hashes.json", "source-revision.txt", "runtime-env.json"]:
         shutil.copy2(PRIOR / name, ROOT / name)
     environment = read(PRIOR / "environment.json")
@@ -214,7 +214,7 @@ def run():
             name = f"quality-{model}-{profile}"
             manifest = ROOT / "manifests" / (profile + ".json")
             command = [
-                str(ROOT / "transcribe-eval"),
+                str(ROOT / "vesper-eval"),
                 "run",
                 str(manifest),
                 str(ROOT / "corpus"),
@@ -228,7 +228,7 @@ def run():
                 "--cleanup",
             ]
             jobs.append((name, model, profile, command, manifest))
-    pinned = {ROOT / "transcribe-eval", ROOT / "environment.json", ROOT / "protocol.json"}
+    pinned = {ROOT / "vesper-eval", ROOT / "environment.json", ROOT / "protocol.json"}
     pinned.update(Path(p) for p in harness)
     pinned.update(ROOT.glob("manifests/*.json"))
     pinned.update(ROOT.glob("corpus/*.wav"))

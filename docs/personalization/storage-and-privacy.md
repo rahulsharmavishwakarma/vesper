@@ -1,6 +1,6 @@
 # Learning storage, lifecycle and privacy
 
-Implementation: [data-store schema](../../crates/transcribe-data/src/lib.rs), [automatic store](../../crates/transcribe-data/src/learning.rs), [profile validation](../../crates/transcribe-data/src/personalization.rs), and [core profile](../../crates/transcribe-core/src/personalization.rs).
+Implementation: [data-store schema](../../crates/vesper-data/src/lib.rs), [automatic store](../../crates/vesper-data/src/learning.rs), [profile validation](../../crates/vesper-data/src/personalization.rs), and [core profile](../../crates/vesper-core/src/personalization.rs).
 
 ## Schemas and provenance
 

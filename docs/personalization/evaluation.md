@@ -23,10 +23,10 @@ The [real-audio accent evaluation](../../benchmarks/asr/2026-09-18-accent-person
 Focused checks:
 
 ```sh
-cargo test -p transcribe-core learning --locked
-cargo test -p transcribe-data learning --locked
-cargo test -p transcribe-desktop automatic_ --lib --locked
-cargo test -p transcribe-data desktop_ --lib --locked
+cargo test -p vesper-core learning --locked
+cargo test -p vesper-data learning --locked
+cargo test -p vesper-desktop automatic_ --lib --locked
+cargo test -p vesper-data desktop_ --lib --locked
 ```
 
 These cover guarded edits, Unicode combining marks, source/episode deduplication, scoped and cross-model memory, permission epochs, stale results, disabled collection, review/export separation, undo, deletion, quota/expiry and injected database failure. The transaction failure test verifies that an attempted admission leaves neither its profile change nor its evidence behind.
@@ -55,7 +55,7 @@ The user approved the fixed-context integration in [issue #34](https://github.co
 
 Frozen-source verification passes **127 core/data/desktop tests** (35/35/57), **28 offline-controller tests**, strict Clippy, frontend checks/build and **45 actual-component browser scenarios**. Four existing opt-in tests are excluded from the deterministic library total. New checks cover schema migration without invented context, unknown/oversized evidence, duplicate source/episode handling, bounded legacy-context backfill, transactional rollback, cue deletion on undo/forget, raw-only selection, snapshot isolation and later context learning after an ordinary correction. The desktop test verifies the latter across a model switch. Browser IPC remains mocked; real SQLite and native inference are separate checks.
 
-The new [application context replay](../../crates/transcribe-data/examples/application_context_replay.rs) calls the production selector and real SQLite snapshot API on **64 authored text controls across eight topics**. The comparator uses the same learned profile with the new filter bypassed. Total word edits are **48 without the added filter and 16 with it**: **24 improved, eight regressed, 32 tied**. All eight regressions are deliberately retained unseen-paraphrase cases where lexical context does not match. These are mechanism controls with authored desired outputs, not an independent real-user accuracy benchmark or a rerun of the earlier 7,300-episode adaptive study. No thresholds were tuned to remove these failures.
+The new [application context replay](../../crates/vesper-data/examples/application_context_replay.rs) calls the production selector and real SQLite snapshot API on **64 authored text controls across eight topics**. The comparator uses the same learned profile with the new filter bypassed. Total word edits are **48 without the added filter and 16 with it**: **24 improved, eight regressed, 32 tied**. All eight regressions are deliberately retained unseen-paraphrase cases where lexical context does not match. These are mechanism controls with authored desired outputs, not an independent real-user accuracy benchmark or a rerun of the earlier 7,300-episode adaptive study. No thresholds were tuned to remove these failures.
 
 The release replay repeats each output comparison five times and requires exact agreement. Mean component measurements with one to eight active entries are:
 
@@ -74,7 +74,7 @@ The local report at `.cache/benchmarks/results/2026-09-19-context-guard/debug-su
 
 ```sh
 . ./scripts/dev-env.sh
-cargo run --release --locked -p transcribe-data --example application_context_replay -- \
+cargo run --release --locked -p vesper-data --example application_context_replay -- \
   /tmp/application-context-replay.json
 ```
 
@@ -152,7 +152,7 @@ The candidate retained the existing preset instruction and official nonthinking 
 
 The candidate resolves one rejection but introduces **eight new rejections** and leaves two of the original three failures unresolved. **Reject the candidate.** It remains inside an ignored experiment and is never selected by the application. Acceptance means passing lexical/number/negation checks, not independent semantic certification. The CPU result must remain separate from the earlier Metal cleanup run; even the existing prompt has one additional public rejection on CPU.
 
-The [reproduction test](../../crates/transcribe-inference/src/qwen_qualification_tests.rs) writes all rows before checking the qualification gate and intentionally fails when the candidate regresses or misses a known failure. A completed comparison is not a passing candidate. Local logs, the frozen fixture identity, original diagnostic source and full comparison are retained under `.cache/benchmarks/results/native-learning-followup-2026-09-19/`. At this initial stage production prompts, guards, model ownership and learning rules were unchanged. This result rejects that particular workaround; the subsequent bounded recovery below is a separate candidate.
+The [reproduction test](../../crates/vesper-inference/src/qwen_qualification_tests.rs) writes all rows before checking the qualification gate and intentionally fails when the candidate regresses or misses a known failure. A completed comparison is not a passing candidate. Local logs, the frozen fixture identity, original diagnostic source and full comparison are retained under `.cache/benchmarks/results/native-learning-followup-2026-09-19/`. At this initial stage production prompts, guards, model ownership and learning rules were unchanged. This result rejects that particular workaround; the subsequent bounded recovery below is a separate candidate.
 
 The initial core/data/desktop/inference library checks passed **172 tests** with **25 opt-in tests omitted**. Strict Clippy for desktop and inference tests passed. Installed-model experiments remain separate from that fast suite, including the deliberately failing prompt-candidate gate. At that stage the only shipped Rust-source edits were `cfg(test)` module declarations; SHA-256 additions are development dependencies on the existing workspace crate.
 
@@ -198,10 +198,10 @@ The separate four-request native identifier round trip also passes after integra
 
 ## Chronological replay
 
-The [replay executable](../../crates/transcribe-data/examples/automatic_learning_replay.rs) consumes an ordered manifest of interactions. At each step it snapshots current memory, generates the output, scores against withheld references, and only then exposes the ordinary edit to memory. Source fingerprints and inferred correlated episodes prevent artificial independent support. No actual time sleeps or ASR inference occur.
+The [replay executable](../../crates/vesper-data/examples/automatic_learning_replay.rs) consumes an ordered manifest of interactions. At each step it snapshots current memory, generates the output, scores against withheld references, and only then exposes the ordinary edit to memory. Source fingerprints and inferred correlated episodes prevent artificial independent support. No actual time sleeps or ASR inference occur.
 
 ```sh
-cargo run --release --locked -p transcribe-data --example automatic_learning_replay -- \
+cargo run --release --locked -p vesper-data --example automatic_learning_replay -- \
   benchmarks/asr/fixtures/automatic-learning-episodes.json /tmp/automatic-learning-results.json
 ```
 

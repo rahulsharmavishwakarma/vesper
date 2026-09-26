@@ -87,7 +87,7 @@ To reproduce the explicit sampler observation, run:
 
 ```sh
 source scripts/dev-env.sh
-cargo test --locked -p transcribe-desktop resources::tests::measure_process_resources -- --ignored --exact --nocapture
+cargo test --locked -p vesper-desktop resources::tests::measure_process_resources -- --ignored --exact --nocapture
 ```
 
 During the six-second run, compare the printed PID with

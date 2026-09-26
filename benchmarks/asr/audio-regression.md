@@ -57,7 +57,7 @@ Use the pinned environment/artifacts in [the benchmark README](README.md). Obtai
 .cache/audio-eval-venv/bin/python scripts/prepare-ami-regression.py \
   .cache/benchmarks/downloads/ami .cache/benchmarks/results/audio-regression-2026-09-16
 source scripts/dev-env.sh
-cargo build --release -p transcribe-eval --example audio_frontend --locked
+cargo build --release -p vesper-eval --example audio_frontend --locked
 ```
 
 Place the official pinned Ear frontend golden JSON at `<result-root>/ear-golden.json`. Fill the environment JSON with the actual host details; do not inherit another host's attestation. Run `scripts/run-audio-regression.py <result-root> PHASE` sequentially for `asr`, `frontend`, `contracts`, `desert`, `paced`. The runner refuses to overwrite prior completed or partial runs; use a new result root for independent repetition. It freezes a native executable, records process exit codes and captures macOS `/usr/bin/time -l` RSS. On other operating systems replace the process measurement wrapper and report a different hardware envelope.
@@ -70,7 +70,7 @@ Place the official pinned Ear frontend golden JSON at `<result-root>/ear-golden.
 
 No threshold or model is tuned after viewing this validation set. Always-on promotion requires demonstrated paired benefit without clean/meaning regressions, valid runtime contracts and a suitable local latency/RAM envelope; otherwise preserve original audio and state the narrower conclusion.
 
-To reproduce the separate amplitude/timing diagnostic, copy `manifests/audio-regression-2026-09-16/cohere-diagnostic.json` into the result root. Read its second sample as float32 with SoundFile, divide by `numpy.float32(0.03)`, and write the third sample's path as a 16 kHz `FLOAT` WAV. Verify the manifest's recorded SHA-256 before using it. Build `cargo build --release -p transcribe-eval --example cohere_stage_probe --locked`; run that example with the five arguments `MANIFEST CORPUS MODELS ENV OUTPUT`, capturing `/usr/bin/time -l` into the output's `.log` sibling. Use `<result-root>/cohere-stage-probe.json` for automatic inclusion in the summary.
+To reproduce the separate amplitude/timing diagnostic, copy `manifests/audio-regression-2026-09-16/cohere-diagnostic.json` into the result root. Read its second sample as float32 with SoundFile, divide by `numpy.float32(0.03)`, and write the third sample's path as a 16 kHz `FLOAT` WAV. Verify the manifest's recorded SHA-256 before using it. Build `cargo build --release -p vesper-eval --example cohere_stage_probe --locked`; run that example with the five arguments `MANIFEST CORPUS MODELS ENV OUTPUT`, capturing `/usr/bin/time -l` into the output's `.log` sibling. Use `<result-root>/cohere-stage-probe.json` for automatic inclusion in the summary.
 
 The isolated SHA-256 follow-up compares `sha2 = 0.10.9` with and without its `asm` feature. Its [official ARM dispatch](https://docs.rs/sha2/0.10.9/src/sha2/sha256.rs.html) requires that feature for hardware SHA support. After all timed model runs, execute `scripts/run-integrity-probe.py <result-root>` with the repository Rust environment active. It builds a separate nested Cargo workspace, rotates software/hardware order across three passes over the four Cohere artifacts, and checks padding/block boundaries plus mutation/truncation rejection. It does not change application dependencies, cache verified results or alter model lifetimes. File-read/hash timings are not whole-application latency.
 

@@ -4,8 +4,8 @@ use serde::Deserialize;
 use serde_json::{json, Value};
 use sha2::{Digest, Sha256};
 use std::{collections::BTreeSet, fs, io::Write, time::Instant};
-use transcribe_core::{word_edits, AsrModel};
-use transcribe_data::DictationPersonalizationSnapshot;
+use vesper_core::{word_edits, AsrModel};
+use vesper_data::DictationPersonalizationSnapshot;
 
 const AUTHORED: &str =
     include_str!("../../../../benchmarks/asr/fixtures/native-learning-sessions.json");
@@ -44,7 +44,7 @@ fn final_text(result: &PipelineResult) -> &str {
 fn context(
     root: &Path,
     runtime: &Arc<Runtime>,
-    inference: &Arc<transcribe_inference::InferenceManager>,
+    inference: &Arc<vesper_inference::InferenceManager>,
     operation: &str,
 ) -> WorkContext {
     WorkContext {
@@ -191,7 +191,7 @@ fn chronological_desktop_learning_against_frozen_memory() {
         .unwrap()
         .dictation_personalization_snapshot()
         .unwrap();
-    let inference = Arc::new(transcribe_inference::InferenceManager::new().unwrap());
+    let inference = Arc::new(vesper_inference::InferenceManager::new().unwrap());
     let mut runtimes = [Arc::new(Runtime::default()), Arc::new(Runtime::default())];
     let mut session = 0;
     let mut rows = vec![];
@@ -315,7 +315,7 @@ fn chronological_desktop_learning_against_frozen_memory() {
 #[test]
 fn ordinary_correction_learning_reuses_names_acronyms_and_formatted_edits() {
     let directory = tempfile::tempdir().unwrap();
-    let inference = Arc::new(transcribe_inference::InferenceManager::new().unwrap());
+    let inference = Arc::new(vesper_inference::InferenceManager::new().unwrap());
     let mut rows = vec![];
     for (alias, canonical, cue) in [
         ("BrooksidePark", "Brookside Park", "station"),
@@ -411,7 +411,7 @@ fn ordinary_correction_learning_reuses_names_acronyms_and_formatted_edits() {
         }
     }
     report(
-        &json!({"schemaVersion":1,"policyVersion":transcribe_core::LEARNING_POLICY_VERSION,
+        &json!({"schemaVersion":1,"policyVersion":vesper_core::LEARNING_POLICY_VERSION,
         "evidenceClass":"authored desktop/SQLite lifecycle controls; raw text and PCM identities are simulated, no ASR or natural feedback",
         "totals":{"families":3,"lifecycles":rows.len()},"rows":rows}),
     );
@@ -427,7 +427,7 @@ fn public_correction_admission_diagnostic() {
     let hypotheses: Value = serde_json::from_str(HYPOTHESES).unwrap();
     let samples: Vec<PublicSample> = serde_json::from_value(manifest["samples"].clone()).unwrap();
     let directory = tempfile::tempdir().unwrap();
-    let inference = Arc::new(transcribe_inference::InferenceManager::new().unwrap());
+    let inference = Arc::new(vesper_inference::InferenceManager::new().unwrap());
     let mut rows = vec![];
     let mut reasons = std::collections::BTreeMap::new();
     let mut persisted_edits = 0;
@@ -441,8 +441,8 @@ fn public_correction_admission_diagnostic() {
             .unwrap();
         let before = hypothesis["raw"].as_str().unwrap();
         let after = &sample.reference;
-        let pair = transcribe_core::automatic_spelling_pair(before, after);
-        let proposed = transcribe_core::correction_suggestions(before, after).pop();
+        let pair = vesper_core::automatic_spelling_pair(before, after);
+        let proposed = vesper_core::correction_suggestions(before, after).pop();
         let reason = if before == after {
             "unchanged"
         } else if pair.is_some() {
@@ -454,9 +454,7 @@ fn public_correction_admission_diagnostic() {
                 || span.intended.split_whitespace().count() != 1
             {
                 "span-token-limit"
-            } else if transcribe_core::automatic_spelling_pair(&span.heard, &span.intended)
-                .is_none()
-            {
+            } else if vesper_core::automatic_spelling_pair(&span.heard, &span.intended).is_none() {
                 "isolated-pair-rejected"
             } else {
                 "whole-edit-replay-rejected"
@@ -488,7 +486,7 @@ fn public_correction_admission_diagnostic() {
         let events: Vec<_> = state
             .events
             .iter()
-            .filter(|event| matches!(event.kind, transcribe_data::LearningEventKind::UserEdit))
+            .filter(|event| matches!(event.kind, vesper_data::LearningEventKind::UserEdit))
             .collect();
         assert_eq!(events.len(), usize::from(before != after));
         for event in &events {
@@ -504,7 +502,7 @@ fn public_correction_admission_diagnostic() {
             "persistedEdits":events.len(),"learningOutcome":outcome}));
     }
     report(
-        &json!({"schemaVersion":1,"policyVersion":transcribe_core::LEARNING_POLICY_VERSION,
+        &json!({"schemaVersion":1,"policyVersion":vesper_core::LEARNING_POLICY_VERSION,
         "evidenceClass":"post-hoc recorded-public-text admission diagnostic; no new audio inference or natural feedback",
         "manifestSha256":format!("{:x}",Sha256::digest(PUBLIC)),
         "hypothesesSha256":format!("{:x}",Sha256::digest(HYPOTHESES)),
@@ -555,7 +553,7 @@ fn native_public_capture_learning_against_frozen_memory() {
             sample.sha256
         );
     }
-    let inference = Arc::new(transcribe_inference::InferenceManager::new().unwrap());
+    let inference = Arc::new(vesper_inference::InferenceManager::new().unwrap());
     let dir = tempfile::tempdir().unwrap();
     let mut rows = vec![];
     let mut failures = vec![];
@@ -574,8 +572,7 @@ fn native_public_capture_learning_against_frozen_memory() {
             .unwrap();
         let runtimes = [Arc::new(Runtime::default()), Arc::new(Runtime::default())];
         for (sample_index, sample) in pair.iter().enumerate() {
-            let pcm =
-                transcribe_audio::decode_file(audio_root.join(&sample.audio_path), 0).unwrap();
+            let pcm = vesper_audio::decode_file(audio_root.join(&sample.audio_path), 0).unwrap();
             assert!((pcm.duration_seconds() - sample.duration_seconds).abs() < 0.01);
             let mut row = json!({"id":sample.id,"cohort":sample.cohort,"phase":sample.phase,"reference":sample.reference,"audioSha256":sample.sha256,"audioSeconds":pcm.duration_seconds()});
             let order = if (cohort_index + sample_index) % 2 == 0 {
@@ -600,7 +597,7 @@ fn native_public_capture_learning_against_frozen_memory() {
                     .diagnostics
                     .begin(&operation, &work.config, false);
                 let capture =
-                    transcribe_audio::CapturedAudio::new(pcm.samples().to_vec(), 16000, 1).unwrap();
+                    vesper_audio::CapturedAudio::new(pcm.samples().to_vec(), 16000, 1).unwrap();
                 let start = Instant::now();
                 let result = work.process_capture(capture);
                 let elapsed = start.elapsed().as_secs_f64() * 1000.0;
@@ -681,7 +678,7 @@ fn native_public_capture_learning_against_frozen_memory() {
     }
     let mut summary = totals(&rows);
     summary["failures"] = json!(failures.len());
-    let value = json!({"schemaVersion":1,"evidenceClass":"native post-capture public-audio diagnostic; simulated reference feedback, no natural user sessions","manifestSha256":format!("{:x}",Sha256::digest(PUBLIC)),"modelProvenance":transcribe_models::provenance(&AppConfig::default()),"modelVersions":transcribe_inference::model_versions(&AppConfig::default()),"totals":summary,"matchedResidentBackendCompletion":times,"failures":failures,"rows":rows,"stopToVisibleFinalMs":Value::Null,"humanEditingTimeMs":Value::Null,"limitations":["Reuses previously screened public corpus; two different recordings per language-background cohort cannot establish speaker identity or longitudinal benefit.","Backend time starts at process_capture entry and ends after runtime publication; excludes microphone stop, IPC, WebView rendering and insertion.","Cold first request retained separately; exact execution evidence records loads, providers and request ordinals.","Collection is disabled; no audio, session or reviewed training target is archived."]});
+    let value = json!({"schemaVersion":1,"evidenceClass":"native post-capture public-audio diagnostic; simulated reference feedback, no natural user sessions","manifestSha256":format!("{:x}",Sha256::digest(PUBLIC)),"modelProvenance":vesper_models::provenance(&AppConfig::default()),"modelVersions":vesper_inference::model_versions(&AppConfig::default()),"totals":summary,"matchedResidentBackendCompletion":times,"failures":failures,"rows":rows,"stopToVisibleFinalMs":Value::Null,"humanEditingTimeMs":Value::Null,"limitations":["Reuses previously screened public corpus; two different recordings per language-background cohort cannot establish speaker identity or longitudinal benefit.","Backend time starts at process_capture entry and ends after runtime publication; excludes microphone stop, IPC, WebView rendering and insertion.","Cold first request retained separately; exact execution evidence records loads, providers and request ordinals.","Collection is disabled; no audio, session or reviewed training target is archived."]});
     report(&value);
     assert!(failures.is_empty(), "{failures:?}");
 }
@@ -689,7 +686,7 @@ fn native_public_capture_learning_against_frozen_memory() {
 #[test]
 fn revised_learning_lifecycles_use_ordinary_drafts_with_and_without_history() {
     let directory = tempfile::tempdir().unwrap();
-    let inference = Arc::new(transcribe_inference::InferenceManager::new().unwrap());
+    let inference = Arc::new(vesper_inference::InferenceManager::new().unwrap());
     for collect in [false, true] {
         let root = directory.path().join(format!("revised-{collect}"));
         let complete = |source: u16, raw: &str| {
@@ -698,7 +695,7 @@ fn revised_learning_lifecycles_use_ordinary_drafts_with_and_without_history() {
             work.config.collect_training_data = collect;
             let pcm = MonoPcm::new(vec![f32::from(source) / 100.0; 1600], 16000).unwrap();
             let capture =
-                transcribe_audio::CapturedAudio::new(pcm.samples().to_vec(), 16000, 1).unwrap();
+                vesper_audio::CapturedAudio::new(pcm.samples().to_vec(), 16000, 1).unwrap();
             let mut session = work.archive_capture(&capture).unwrap();
             let mut result = work.complete_raw(&pcm, &mut session, raw.into()).unwrap();
             work.observe_result(&mut result, true);
@@ -855,7 +852,7 @@ fn native_recurring_spelling_learning_against_frozen_memory() {
         }
     }
     let directory = tempfile::tempdir().unwrap();
-    let inference = Arc::new(transcribe_inference::InferenceManager::new().unwrap());
+    let inference = Arc::new(vesper_inference::InferenceManager::new().unwrap());
     let mut rows = vec![];
     let mut failures = vec![];
     let mut request = 0;
@@ -870,8 +867,7 @@ fn native_recurring_spelling_learning_against_frozen_memory() {
             .unwrap();
         let mut duplicate_support = None;
         for (index, sample) in cohort.iter().enumerate() {
-            let pcm =
-                transcribe_audio::decode_file(audio_root.join(&sample.audio_path), 0).unwrap();
+            let pcm = vesper_audio::decode_file(audio_root.join(&sample.audio_path), 0).unwrap();
             let mut row = json!({"id":sample.id,"cohort":sample.cohort,"kind":sample.kind,"phase":sample.phase,
                 "reference":sample.reference,"audioSha256":sample.sha256,"audioSeconds":pcm.duration_seconds()});
             let order = if (cohort_index + index) % 2 == 0 {
@@ -902,7 +898,7 @@ fn native_recurring_spelling_learning_against_frozen_memory() {
                     .unwrap();
                 runtime.diagnostics.begin(&operation, &work.config, false);
                 let capture =
-                    transcribe_audio::CapturedAudio::new(pcm.samples().to_vec(), 16000, 1).unwrap();
+                    vesper_audio::CapturedAudio::new(pcm.samples().to_vec(), 16000, 1).unwrap();
                 let start = Instant::now();
                 let result = work.process_capture(capture);
                 let elapsed = start.elapsed().as_secs_f64() * 1000.0;
@@ -941,7 +937,7 @@ fn native_recurring_spelling_learning_against_frozen_memory() {
                         if arm == 0 && sample.phase == "audit" && sample.kind.starts_with("reuse-")
                         {
                             row["reuseOpportunity"] = json!(
-                                transcribe_core::memory_phrase_occurs(
+                                vesper_core::memory_phrase_occurs(
                                     &result.raw_transcript,
                                     &sample.spoken
                                 ) && word_edits(&sample.reference, final_text(&result))
@@ -950,7 +946,7 @@ fn native_recurring_spelling_learning_against_frozen_memory() {
                         }
                         if arm == 1 && sample.phase == "feedback" {
                             row["eligibleDisplayedPair"] =
-                                json!(transcribe_core::automatic_spelling_pair(
+                                json!(vesper_core::automatic_spelling_pair(
                                     final_text(&result),
                                     &sample.reference
                                 ));
@@ -1057,10 +1053,10 @@ fn native_recurring_spelling_learning_against_frozen_memory() {
         && summary["improved"].as_u64().unwrap() > 0
         && summary["reuseOpportunities"].as_u64().unwrap() > 0;
     report(
-        &json!({"schemaVersion":1,"policyVersion":transcribe_core::LEARNING_POLICY_VERSION,
+        &json!({"schemaVersion":1,"policyVersion":vesper_core::LEARNING_POLICY_VERSION,
         "evidenceClass":manifest["evidenceClass"],"manifestSha256":format!("{:x}",Sha256::digest(manifest_bytes)),
-        "corpusProvenance":manifest["provenance"],"modelProvenance":transcribe_models::provenance(&AppConfig::default()),
-        "modelVersions":transcribe_inference::model_versions(&AppConfig::default()),"totals":summary,"gatesPassed":passed,
+        "corpusProvenance":manifest["provenance"],"modelProvenance":vesper_models::provenance(&AppConfig::default()),
+        "modelVersions":vesper_inference::model_versions(&AppConfig::default()),"totals":summary,"gatesPassed":passed,
         "matchedResidentBackendCompletion":timings,"exploratoryTimingGate":timing_gate,"failures":failures,"rows":rows,
         "stopToVisibleFinalMs":Value::Null,"humanEditingTimeMs":Value::Null,"limitations":manifest["limitations"]}),
     );
@@ -1088,14 +1084,14 @@ fn native_public_identifier_memory_roundtrip() {
         format!("{:x}", Sha256::digest(fs::read(&path).unwrap())),
         sample.sha256
     );
-    let pcm = transcribe_audio::decode_file(path, 0).unwrap();
+    let pcm = vesper_audio::decode_file(path, 0).unwrap();
     let dir = tempfile::tempdir().unwrap();
     let root = dir.path().join("dataset");
     let store = DatasetStore::open(root.clone()).unwrap();
     let mut profile = store.dictation_personalization().unwrap();
     profile.active_project = "identifier-mechanism".into();
     store.save_dictation_personalization(profile).unwrap();
-    let inference = Arc::new(transcribe_inference::InferenceManager::new().unwrap());
+    let inference = Arc::new(vesper_inference::InferenceManager::new().unwrap());
     let mut rows = vec![];
     let mut violations = vec![];
     for step in 0..4 {
@@ -1109,8 +1105,7 @@ fn native_public_identifier_memory_roundtrip() {
             .begin("transcribing", "public identifier mechanism")
             .unwrap();
         runtime.diagnostics.begin(&operation, &work.config, false);
-        let capture =
-            transcribe_audio::CapturedAudio::new(pcm.samples().to_vec(), 16000, 1).unwrap();
+        let capture = vesper_audio::CapturedAudio::new(pcm.samples().to_vec(), 16000, 1).unwrap();
         let started = Instant::now();
         let result = work.process_capture(capture);
         let elapsed = started.elapsed().as_secs_f64() * 1000.0;

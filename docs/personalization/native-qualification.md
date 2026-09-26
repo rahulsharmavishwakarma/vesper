@@ -87,7 +87,7 @@ node scripts/prepare-recurring-learning.mjs .cache/benchmarks/recurring-learning
 TRANSCRIBE_MODEL_DIR="$PWD/models/downloads" \
 TRANSCRIBE_LEARNING_AUDIO_ROOT="$PWD/.cache/benchmarks/recurring-learning-new" \
 TRANSCRIBE_LEARNING_REPORT="$PWD/.cache/benchmarks/results/recurring-learning-new.json" \
-cargo test --locked -p transcribe-desktop \
+cargo test --locked -p vesper-desktop \
   runtime::learning_qualification_tests::native_recurring_spelling_learning_against_frozen_memory \
   -- --exact --ignored --nocapture --test-threads=1
 ```
@@ -112,14 +112,14 @@ Use the repository's configured Rust/native toolchain and installed model artifa
 ```sh
 . ./scripts/dev-env.sh
 TRANSCRIBE_LEARNING_REPORT=/tmp/learning-authored.json \
-  cargo test --locked --offline -p transcribe-desktop \
+  cargo test --locked --offline -p vesper-desktop \
   runtime::learning_qualification_tests::chronological_desktop_learning_against_frozen_memory \
   -- --exact --nocapture
 
 TRANSCRIBE_MODEL_DIR="$PWD/models/downloads" \
 TRANSCRIBE_LEARNING_AUDIO_ROOT="$PWD/.cache/benchmarks/accent-2026-09-18/corpus" \
 TRANSCRIBE_LEARNING_REPORT=/tmp/learning-native.json \
-  cargo test --locked --offline -p transcribe-desktop \
+  cargo test --locked --offline -p vesper-desktop \
   runtime::learning_qualification_tests::native_public_capture_learning_against_frozen_memory \
   -- --exact --ignored --nocapture --test-threads=1
 ```
@@ -135,7 +135,7 @@ The cleanup follow-up compares a rejected, test-only shorter prompt with the pro
 ```sh
 TRANSCRIBE_SMOKE_MODELS="$PWD/models/downloads" \
 TRANSCRIBE_CLEANUP_REPORT=/tmp/cleanup-candidate.json \
-  cargo test --locked --offline -p transcribe-inference \
+  cargo test --locked --offline -p vesper-inference \
   qwen::qualification_tests::minimal_prompt_candidate_against_frozen_cases \
   -- --exact --ignored --nocapture --test-threads=1
 ```
@@ -195,7 +195,7 @@ Then run the explicit native example with a new output path:
 
 ```sh
 . ./scripts/dev-env.sh
-cargo build --locked -p transcribe-desktop --example learning_webview
+cargo build --locked -p vesper-desktop --example learning_webview
 mkdir -p .cache/benchmarks/results
 node scripts/run-native-learning.mjs \
   "${CARGO_TARGET_DIR:-target}/debug/examples/learning_webview" \
@@ -250,7 +250,7 @@ transaction check without models or a window:
 ```sh
 . ./scripts/dev-env.sh
 TRANSCRIBE_LEARNING_REPORT=/tmp/public-admission-diagnostic.json \
-  cargo test --locked -p transcribe-desktop \
+  cargo test --locked -p vesper-desktop \
   runtime::learning_qualification_tests::public_correction_admission_diagnostic \
   -- --exact --nocapture
 ```

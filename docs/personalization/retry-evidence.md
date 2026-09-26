@@ -1,6 +1,6 @@
 # Retry evidence and correlated attempts
 
-Implementation: [core cue rules](../../crates/transcribe-core/src/learning.rs), [runtime recent context](../../apps/desktop/src-tauri/src/runtime.rs), and [event storage](../../crates/transcribe-data/src/learning.rs).
+Implementation: [core cue rules](../../crates/vesper-core/src/learning.rs), [runtime recent context](../../apps/desktop/src-tauri/src/runtime.rs), and [event storage](../../crates/vesper-data/src/learning.rs).
 
 ## What is observable
 

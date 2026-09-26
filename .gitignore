@@ -97,10 +97,10 @@ transcribe-export-*/
 *.opus
 *.webm
 *.mp4
-!/crates/transcribe-audio/tests/fixtures/tone.flac
-!/crates/transcribe-audio/tests/fixtures/tone.mp3
-!/crates/transcribe-audio/tests/fixtures/tone.m4a
-!/crates/transcribe-audio/tests/fixtures/tone.ogg
+!/crates/vesper-audio/tests/fixtures/tone.flac
+!/crates/vesper-audio/tests/fixtures/tone.mp3
+!/crates/vesper-audio/tests/fixtures/tone.m4a
+!/crates/vesper-audio/tests/fixtures/tone.ogg
 
 # Downloaded model weights belong outside source control
 *.gguf

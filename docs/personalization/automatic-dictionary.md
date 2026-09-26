@@ -1,6 +1,6 @@
 # Automatic dictionary admission
 
-Implementation: [core learning policy](../../crates/transcribe-core/src/learning.rs), [existing memory guards](../../crates/transcribe-core/src/memory.rs), and [evidence/admission transactions](../../crates/transcribe-data/src/learning.rs). Policy version: **4**. These deterministic rules are not calibrated probabilities or acoustic confidence.
+Implementation: [core learning policy](../../crates/vesper-core/src/learning.rs), [existing memory guards](../../crates/vesper-core/src/memory.rs), and [evidence/admission transactions](../../crates/vesper-data/src/learning.rs). Policy version: **4**. These deterministic rules are not calibrated probabilities or acoustic confidence.
 
 Learning is automatic desktop behavior: no enable switch or separate Remember action is needed. Completed edits and result observations use the existing background workers. This changes when the existing policy is available, not its admission thresholds or evidence requirements.
 

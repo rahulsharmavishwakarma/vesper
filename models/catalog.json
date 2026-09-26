@@ -1,7 +1,7 @@
 {
   "schema_version": 1,
   "status": "reference_only",
-  "description": "Informational model catalog. Executable installation and runtime selection are implemented in transcribe-models and transcribe-inference.",
+  "description": "Informational model catalog. Executable installation and runtime selection are implemented in vesper-models and vesper-inference.",
   "defaults": {
     "asr": "CohereLabs/cohere-transcribe-03-2026",
     "rewriter": "Qwen/Qwen3.5-0.8B"

@@ -22,7 +22,7 @@ Each recording action accepts a custom modifier/key combination through a direct
 
 ### Native presentation and isolation
 
-`transcribe-desktop-platform` is the narrow unsafe boundary, following the existing native-runtime boundary pattern. It uses a small Objective-C implementation compiled with the existing `cc` build dependency and Apple's public AppKit, Accessibility, CoreGraphics, and Carbon APIs. The remaining Rust workspace retains its unsafe-code prohibition.
+`vesper-desktop-platform` is the narrow unsafe boundary, following the existing native-runtime boundary pattern. It uses a small Objective-C implementation compiled with the existing `cc` build dependency and Apple's public AppKit, Accessibility, CoreGraphics, and Carbon APIs. The remaining Rust workspace retains its unsafe-code prohibition.
 
 Allocate a real nonactivating NSPanel on the main thread. Retain the hidden original Tao NSWindow and its complete WebView content view; install a non-null placeholder on the original window and host the retained content in the panel. Keep the original window/delegate allocation and class unchanged. Native panel functions own show/hide/position, while the retained WebView keeps Tauri IPC. Panel teardown restores the content before releasing the native host. The UI does not call the old window's show/hide/geometry/drag APIs. This uses public view-hosting APIs but is not an upstream Tauri arbitrary-window reparenting contract; native lifecycle validation must accompany upgrades to Tao/Wry/Tauri.
 
@@ -109,7 +109,7 @@ Problem: the approved ADR-0014 path shows Nemotron partials in the recorder and 
 
 ### Affected components and tradeoffs
 
-Extend dictation.rs, the existing streaming update callback, transcribe-desktop-platform, output settings/recorder state, and focused tests/docs. No new service, input source, inference owner, runtime, or model download is proposed. macOS first; other platforms keep existing behavior.
+Extend dictation.rs, the existing streaming update callback, vesper-desktop-platform, output settings/recorder state, and focused tests/docs. No new service, input source, inference owner, runtime, or model download is proposed. macOS first; other platforms keep existing behavior.
 
 Accessibility calls are separate cross-process operations, with no atomic compare-and-replace or universal undo/composition guarantee. Per-provider capability checks and verification reduce risk but cannot promise every editor. Initial qualification: synthetic AppKit fields, TextEdit, Safari/Chrome ordinary input/textarea, then additional editors explicitly. Unqualified or incompatible destinations use final delivery when no inline write occurred.
 

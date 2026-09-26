@@ -32,7 +32,7 @@ Build the opt-in fixture runner on macOS:
 
 ```sh
 clang -fobjc-arc -fblocks -framework AppKit -framework ApplicationServices \
-  -framework Carbon crates/transcribe-desktop-platform/examples/textedit_probe.m \
+  -framework Carbon crates/vesper-desktop-platform/examples/textedit_probe.m \
   -o /tmp/transcribe-textedit-probe
 /tmp/transcribe-textedit-probe --fixture
 ```

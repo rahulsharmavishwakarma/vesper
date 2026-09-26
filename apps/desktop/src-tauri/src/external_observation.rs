@@ -2,14 +2,14 @@
 use crate::{runtime::PipelineResult, AppStorage};
 use std::sync::atomic::Ordering;
 use tauri::Manager;
-use transcribe_data::{DatasetStore, ExternalShadowRecord};
+use vesper_data::{DatasetStore, ExternalShadowRecord};
 
 pub fn cancel(app: &tauri::AppHandle) {
     app.state::<AppStorage>()
         .runtime
         .external_generation
         .fetch_add(1, Ordering::AcqRel);
-    let _ = app.run_on_main_thread(transcribe_desktop_platform::cancel_observation);
+    let _ = app.run_on_main_thread(vesper_desktop_platform::cancel_observation);
 }
 pub async fn reserve(
     app: &tauri::AppHandle,
@@ -47,7 +47,7 @@ pub fn arm(app: &tauri::AppHandle, id: u64, reservation: ExternalShadowRecord) {
     }
     let generation = storage.runtime.external_generation.load(Ordering::Acquire);
     let desktop = app.clone();
-    transcribe_desktop_platform::observe_next_paste(id, move |edit| {
+    vesper_desktop_platform::observe_next_paste(id, move |edit| {
         tauri::async_runtime::spawn_blocking(move || {
             let storage = desktop.state::<AppStorage>();
             if storage.runtime.external_generation.load(Ordering::Acquire) != generation

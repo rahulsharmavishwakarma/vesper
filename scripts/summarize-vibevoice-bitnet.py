@@ -221,7 +221,7 @@ def main():
             "runtimeProvenance": json.loads(
                 (args.root / "cohere-native-provenance.json").read_text()
             ),
-            "evaluatorSha256": digest(args.root / "binaries/transcribe-eval"),
+            "evaluatorSha256": digest(args.root / "binaries/vesper-eval"),
             "residentAsrMs": distribution([x["asrMs"] for x in baseline if x["residentRun"]]),
         }
     for filename, key in (

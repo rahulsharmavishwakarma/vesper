@@ -1,4 +1,4 @@
-// Keep this contract aligned with transcribe-core/src/shortcuts.rs. The native
+// Keep this contract aligned with vesper-core/src/shortcuts.rs. The native
 // registration layer also parses bindings with the installed global-hotkey API.
 export const SHORTCUT_MODIFIERS = ['Control', 'Super', 'Alt', 'Shift'] as const;
 export const SHORTCUT_KEYS = [

@@ -234,7 +234,7 @@ def summarize(root, output):
             "16 recordings per primary-language group; no verified speaker-disjoint or longitudinal split",
             "English recognition by language background; no acoustic accent detector or trained accent adaptation",
             "No generalization to other devices/backends/noise/long speech or global English accents",
-            "WER uses existing transcribe-eval normalization; not the word_edits metric in the policy replay",
+            "WER uses existing vesper-eval normalization; not the word_edits metric in the policy replay",
             "First-partial includes cold setup, stop-to-final follows last paced packet; excludes UI/writing/insertion",
             "Word emission, endpoint, queue drops, continuous thermal/power telemetry not captured",
             "Historical generic environment.threads=8 denotes app worker cap; measured native evidence is authoritative (Nemotron4, Cohere8). Supply snapshots supersede the preparation-time AC note.",
@@ -304,9 +304,9 @@ def summarize(root, output):
                 }
             )
         replay_sources = [
-            *Path("crates/transcribe-core/src").rglob("*.rs"),
-            *Path("crates/transcribe-data/src").rglob("*.rs"),
-            Path("crates/transcribe-data/examples/automatic_learning_replay.rs"),
+            *Path("crates/vesper-core/src").rglob("*.rs"),
+            *Path("crates/vesper-data/src").rglob("*.rs"),
+            Path("crates/vesper-data/examples/automatic_learning_replay.rs"),
             Path("scripts/prepare-automatic-learning-replay.mjs"),
             Path("Cargo.lock"),
         ]

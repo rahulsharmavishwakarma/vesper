@@ -37,7 +37,7 @@ The resulting `EvaluationMemory` file contains the portable profile, calibration
 
 ```sh
 . ./scripts/dev-env.sh
-cargo build --release --locked -p transcribe-eval
+cargo build --release --locked -p vesper-eval
 sh scripts/run-personalization-benchmark.sh
 ```
 

@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """Select cached Svarah primary-language cohorts without using ASR predictions.
 
-PyArrow only decodes the existing Parquet corpus; inference uses transcribe-eval.
+PyArrow only decodes the existing Parquet corpus; inference uses vesper-eval.
 No downloads, training, live profiles or private audio are accessed.
 """
 

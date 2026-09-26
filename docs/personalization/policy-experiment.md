@@ -1,6 +1,6 @@
 # Bounded policy-improvement experiment
 
-This is an **offline prototype of the second learning loop**, authorized by the user's request to try and test policy improvement. It is implemented in the [Rust replay example](../../crates/transcribe-data/examples/policy_learning_replay.rs), not connected to live dictation. [Issue #34](https://github.com/rahulsharmavishwakarma/transcribe/issues/34#issuecomment-5717283286) records the experiment scope. The [initial measurement report](../../benchmarks/asr/2026-09-17-policy-learning.md) and [expanded stress report](../../benchmarks/asr/2026-09-18-policy-learning-stress.md) preserve results and limitations.
+This is an **offline prototype of the second learning loop**, authorized by the user's request to try and test policy improvement. It is implemented in the [Rust replay example](../../crates/vesper-data/examples/policy_learning_replay.rs), not connected to live dictation. [Issue #34](https://github.com/rahulsharmavishwakarma/transcribe/issues/34#issuecomment-5717283286) records the experiment scope. The [initial measurement report](../../benchmarks/asr/2026-09-17-policy-learning.md) and [expanded stress report](../../benchmarks/asr/2026-09-18-policy-learning-stress.md) preserve results and limitations.
 
 The prototype can change which learned memories are eligible for use, test a proposed change on subsequent feedback and return to the preceding policy. Its candidate family, scoring rules and controller are human-written and fixed. This is **bounded policy selection**, not open-ended discovery of better learning algorithms or a demonstration of unrestricted recursive self-improvement.
 
@@ -68,8 +68,8 @@ This is category-1 application experimentation using frozen model outputs. There
 
 ```sh
 . ./scripts/dev-env.sh
-cargo test --locked -p transcribe-data --example policy_learning_replay
-cargo run --release --locked -p transcribe-data --example policy_learning_replay -- \
+cargo test --locked -p vesper-data --example policy_learning_replay
+cargo run --release --locked -p vesper-data --example policy_learning_replay -- \
   benchmarks/asr/fixtures/policy-learning-episodes.json /tmp/policy-learning-results.json
 ```
 
@@ -112,7 +112,7 @@ Before proposing live integration, qualify representative longitudinal feedback,
 
 ## Persistent application shadow evaluation
 
-The September 19 [approved design](https://github.com/rahulsharmavishwakarma/transcribe/issues/60#issuecomment-5742682689) is implemented separately from live memory. Ordinary non-noop in-app edits capture an immutable pre-learning snapshot. One lazy application worker holds one running job and one replaceable pending job; foreground work cancels its token. The six-policy predictor, independent-component scorer and gates are shared with this replay executable in `transcribe_data::policy`.
+The September 19 [approved design](https://github.com/rahulsharmavishwakarma/transcribe/issues/60#issuecomment-5742682689) is implemented separately from live memory. Ordinary non-noop in-app edits capture an immutable pre-learning snapshot. One lazy application worker holds one running job and one replaceable pending job; foreground work cancels its token. The six-policy predictor, independent-component scorer and gates are shared with this replay executable in `vesper_data::policy`.
 
 The worker freezes six word-edit scores against the explicit edited wording, not a model-generated label. It persists compact scores and source/repair identities instead of whole profiles or transcripts. Such wording is an observable correction target, not an independently reviewed verbatim audio label. Raw text equal to the target is still valid negative feedback when personalization changed it incorrectly.
 
@@ -124,7 +124,7 @@ One exact persisted job reservation and the existing learning epoch guard comple
 
 No production memory application reads these decisions. Live promotion and persisted rollback still require a separate proposal and representative independently labelled longitudinal feedback from #58. Failed semantic proposals from #59 cannot fill this gap. The approved addition provides evidence and diagnostics without claiming a new accuracy benefit.
 
-Reproduce isolated authored feedback overhead with `cargo run -p transcribe-data --example policy_shadow_replay --locked --offline`. It alternates 128 baseline/shadow corrections in separate temporary stores and reports foreground capture/reservation and background scoring/persistence separately. It excludes ASR, worker queue, microphone, UI and editor latency. Existing policy replay tests remain the regression oracle for grouping, gate failures, scope routing and rollback; the new storage tests cover pre-edit immutability, stale tokens, corruption, bounded retention and deletion.
+Reproduce isolated authored feedback overhead with `cargo run -p vesper-data --example policy_shadow_replay --locked --offline`. It alternates 128 baseline/shadow corrections in separate temporary stores and reports foreground capture/reservation and background scoring/persistence separately. It excludes ASR, worker queue, microphone, UI and editor latency. Existing policy replay tests remain the regression oracle for grouping, gate failures, scope routing and rollback; the new storage tests cover pre-edit immutability, stale tokens, corruption, bounded retention and deletion.
 
 Current component measurements and remaining qualification gates are in the [September shadow validation](evaluation.md#policy-shadow-and-textedit-component-checks--19-september-2026). The desktop local diagnostic command `get_learning_shadow_diagnostics` exposes bounded policy decisions and external candidate counts; it has no promotion action.
 

@@ -42,7 +42,7 @@ The Models screen lists each ASR model and both Qwen quantizations with independ
 
 ```sh
 source scripts/dev-env.sh
-cargo run -p transcribe-models --example install -- models/downloads
+cargo run -p vesper-models --example install -- models/downloads
 ```
 
 Downloads are staged and hash-checked before replacement. Cancelled/failed staged files are removed. Subsequent installs verify existing files and fetch only missing or damaged ones. Full integrity checks also run before inference. The installer does not upload audio or transcripts. `modelDirectory` overrides the app-data default; `TRANSCRIBE_MODEL_DIR` supplies an optional development default. The development helper selects existing `models/downloads` automatically.
@@ -51,4 +51,4 @@ No Python or model server is required. Nemotron runs through the local C ABI; ca
 
 ## Whisper evaluation support
 
-Small and Turbo share one native CPU adapter and pinned INT8 installation entries in `artifacts.json` (375,485,327 and 1,036,613,791 bytes respectively). They can run through `transcribe-eval` and the existing installer, but are not selectable product presets while noise/repetition qualification fails. This does not change the eight selectable ASR choices or the Cohere/Qwen default. English/French completed audio is the current evaluation contract; Hindi, code-switching, singing and live Whisper streaming are unqualified. See [the adapter design](../docs/adrs/0018-shared-whisper-adapter.md) and [validation](../docs/validation/whisper-adapter-2026-09-18.md).
+Small and Turbo share one native CPU adapter and pinned INT8 installation entries in `artifacts.json` (375,485,327 and 1,036,613,791 bytes respectively). They can run through `vesper-eval` and the existing installer, but are not selectable product presets while noise/repetition qualification fails. This does not change the eight selectable ASR choices or the Cohere/Qwen default. English/French completed audio is the current evaluation contract; Hindi, code-switching, singing and live Whisper streaming are unqualified. See [the adapter design](../docs/adrs/0018-shared-whisper-adapter.md) and [validation](../docs/validation/whisper-adapter-2026-09-18.md).

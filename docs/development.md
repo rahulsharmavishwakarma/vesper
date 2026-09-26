@@ -1,6 +1,6 @@
 # Development
 
-The repository directory may be named `transcribe` or any other name: Cargo member paths and development scripts resolve relative to the repository. The root `Cargo.toml` is a virtual workspace manifest; the unpublished internal packages use `transcribe-core`, `transcribe-audio`, `transcribe-inference`, `transcribe-data`, and `transcribe-models`.
+The repository directory may be named `transcribe` or any other name: Cargo member paths and development scripts resolve relative to the repository. The root `Cargo.toml` is a virtual workspace manifest; the unpublished internal packages use `vesper-core`, `vesper-audio`, `vesper-inference`, `vesper-data`, and `vesper-models`.
 
 The current supported desktop target is macOS on Apple silicon. Linux/Windows
 code paths and prerequisites below are retained for future portability work;
@@ -187,7 +187,7 @@ sudo apt-get install -y build-essential cmake clang libclang-dev pkg-config \
 
 - `sherpa-onnx` is pinned to `1.13.8` and built with the approved completion-reporting patch. Run `make sherpa-runtime` (also included in `make setup`) and `source scripts/dev-env.sh` before direct Cargo commands. The build validates the patch and 13 static-library hashes; ordinary upstream prebuilt libraries do not contain this report and cannot satisfy the build contract. See [offline ASR build/provenance](offline-asr.md).
 - Nemotron uses the official NeMo-Speech.cpp 0.1.0 executable downloaded by the model installer. Platform archives are pinned for CPU, Apple Metal, NVIDIA CUDA, and Vulkan. The executable is a local, cancellable sidecar; no server or network request is involved during transcription.
-- `llama-cpp-2` is pinned to `0.1.156`, with default features disabled. Its bundled llama.cpp builds from C/C++ source through CMake and links statically. Apple Silicon includes Metal; Linux/Windows accelerator builds use `cargo build -p transcribe-desktop --features cuda`, `--features vulkan`, or `--features rocm`. The selected backend falls back to CPU for cleanup if its matching feature was not compiled. `CMAKE_BUILD_PARALLEL_LEVEL=2` can reduce peak build memory. See the [pinned binding build script](https://docs.rs/crate/llama-cpp-sys-2/0.1.156/source/build.rs).
+- `llama-cpp-2` is pinned to `0.1.156`, with default features disabled. Its bundled llama.cpp builds from C/C++ source through CMake and links statically. Apple Silicon includes Metal; Linux/Windows accelerator builds use `cargo build -p vesper-desktop --features cuda`, `--features vulkan`, or `--features rocm`. The selected backend falls back to CPU for cleanup if its matching feature was not compiled. `CMAKE_BUILD_PARALLEL_LEVEL=2` can reduce peak build memory. See the [pinned binding build script](https://docs.rs/crate/llama-cpp-sys-2/0.1.156/source/build.rs).
 - Keep `Cargo.lock` committed. `--locked` fixes Rust dependency resolution; native release downloads still require network access on an uncached build. Do not set `DOCS_RS` to bypass native linking: that upstream documentation option does not produce a working application. Switching to shared native libraries later requires packaging their runtime libraries and loader paths; the current manifests use static linking.
 
 ## Experimental speaker runtime
@@ -233,9 +233,9 @@ Nemotron ASR with its macOS Metal release package, and
 `TRANSCRIBE_DIAR_CORPUS` pointing to the four prepared sample WAV files:
 
 ```sh
-cargo test -p transcribe-inference real_worker_speaker_samples_and_native_asr_coexistence -- --ignored --nocapture
-TRANSCRIBE_DIAR_FIRST=1 cargo test -p transcribe-inference real_worker_speaker_samples_and_native_asr_coexistence -- --ignored --nocapture
-cargo test -p transcribe-desktop real_asr_speaker_pipeline_persists_and_exports_without_changing_words -- --ignored --nocapture
+cargo test -p vesper-inference real_worker_speaker_samples_and_native_asr_coexistence -- --ignored --nocapture
+TRANSCRIBE_DIAR_FIRST=1 cargo test -p vesper-inference real_worker_speaker_samples_and_native_asr_coexistence -- --ignored --nocapture
+cargo test -p vesper-desktop real_asr_speaker_pipeline_persists_and_exports_without_changing_words -- --ignored --nocapture
 ```
 
 The first two commands verify the native load orders in independent processes,
@@ -335,14 +335,16 @@ frontend hot reload alone does not replace a running app's packaged icon.
 **Vesper** is the display name in the app, documentation, issue templates,
 GitHub issues and project title/readme. Native startup messages and developer
 qualification windows use the same name. This is a branding change, not a
-storage, package or repository migration.
+storage or repository migration. Internal Rust packages and their directories
+use `vesper-*`; the native executable is `vesper-desktop` and the library is
+`vesper_desktop_lib`. Current commands and source links use those names.
 
 Keep these exact technical names until a separately scoped migration updates
 their producers, consumers and compatibility behavior together:
 
 - Repository slug/clone directory and working GitHub links: `transcribe`.
-- Rust/npm/Python package names, executable names and hook IDs: `transcribe-*`
-  and `@transcribe/desktop`. Hook display labels and package descriptions say Vesper.
+- The remaining npm/Python package names and hook IDs retain their existing
+  names until their producers and consumers are updated together.
 - App identifier `com.transcribe.desktop`, browser key
   `transcribe.browser-preview.settings.v1`, `TRANSCRIBE_*` environment variables,
   legacy aliases and export prefixes.
@@ -432,7 +434,7 @@ asr = "CohereLabs/cohere-transcribe-03-2026"
 rewriter = "Qwen/Qwen3.5-0.8B"
 ```
 
-Cohere Transcribe is the default completed-recording ASR, paired with Qwen3.5 cleanup and explicit English for new settings. The current Cohere adapter also supports French; Auto/Hindi remain unavailable. Select Nemotron 3.5 for Hindi, automatic language selection and live partials through NeMo-Speech.cpp. Parakeet remains an offline fallback and does not support Hindi. [models/catalog.json](../models/catalog.json) is informational; `transcribe-models` contains the executable manifest with pinned revisions, byte sizes, and SHA-256 hashes. Model storage defaults to `models/` under Tauri's `app_data_dir`, or the configured override. Do not commit downloaded model weights.
+Cohere Transcribe is the default completed-recording ASR, paired with Qwen3.5 cleanup and explicit English for new settings. The current Cohere adapter also supports French; Auto/Hindi remain unavailable. Select Nemotron 3.5 for Hindi, automatic language selection and live partials through NeMo-Speech.cpp. Parakeet remains an offline fallback and does not support Hindi. [models/catalog.json](../models/catalog.json) is informational; `vesper-models` contains the executable manifest with pinned revisions, byte sizes, and SHA-256 hashes. Model storage defaults to `models/` under Tauri's `app_data_dir`, or the configured override. Do not commit downloaded model weights.
 
 [prompts/cleanup.txt](../prompts/cleanup.txt) documents the faithful-cleanup policy. The core configuration supplies the actual preset/custom instruction; the Qwen adapter applies its chat template with thinking disabled. Raw transcription is published and saved before cleanup so that a cleanup failure does not erase it.
 
@@ -454,7 +456,7 @@ Archival imports copy original bytes without transcoding, with a 512 MiB per-fil
 
 Capture uses a bounded lock-free callback buffer and preserves native-rate/channel PCM as a 32-bit float WAV before mono mixing and filtered 16 kHz resampling. Device sample formats are normalized to f32 during capture; inputs with more than 24 significant bits may lose that extra precision. A capture error retains usable complete frames with an early-end warning; downstream code must show and archive that warning. The capture worker itself does no inference. Recording limits apply both to captured sample count and elapsed time. Stopping processes the recording; cancelling explicitly discards the current capture.
 
-The `transcribe-data` API separates these operations:
+The `vesper-data` API separates these operations:
 
 - `set_transcripts` stores original raw/cleaned predictions and model-version metadata once, rejecting later overwrites.
 - `approve_transcription` stores a human-verified **verbatim** transcript for ASR supervision.

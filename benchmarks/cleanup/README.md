@@ -28,10 +28,10 @@ From the repository root, after sourcing the existing toolchain environment:
 ```sh
 source scripts/dev-env.sh
 export TRANSCRIBE_SMOKE_MODELS="$PWD/models/downloads"
-cargo test --locked --offline -p transcribe-inference \
+cargo test --locked --offline -p vesper-inference \
   qwen::tests::hybrid_prefix_cache_matches_fresh_requests_and_profile_reset \
   -- --ignored --exact --nocapture
-cargo test --locked --offline -p transcribe-inference \
+cargo test --locked --offline -p vesper-inference \
   qwen::tests::measure_two_pass_prefix_reuse \
   -- --ignored --exact --nocapture
 ```

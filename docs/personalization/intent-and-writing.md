@@ -1,6 +1,6 @@
 # Intent and writing preferences
 
-This page distinguishes the current implementation from the semantic-learning research. Source: [intent retrieval](../../crates/transcribe-core/src/memory.rs) and [cleanup prompt](../../crates/transcribe-inference/src/personalization.rs).
+This page distinguishes the current implementation from the semantic-learning research. Source: [intent retrieval](../../crates/vesper-core/src/memory.rs) and [cleanup prompt](../../crates/vesper-inference/src/personalization.rs).
 
 ## Implemented output forms
 

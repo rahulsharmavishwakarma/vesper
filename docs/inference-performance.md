@@ -19,7 +19,7 @@ The user-selected default is Cohere Transcribe INT8 through sherpa-onnx 1.13.8, 
 | Cleanup limits  | Up to 4096 context tokens, bounded output up to 2048 tokens; logical batch 512, physical microbatch 128                                                  | Memory and latency depend on actual prompt/output lengths                                                                                                                                                                                              |
 | Integrity       | Full role-specific verification on resident load; per-job speech adapters verify every request                                                           | Cohere verifies on native load and checks observed identity on reuse; Apple aarch64/macOS enables sha2's supported hardware dispatch while retaining all size/hash checks                                                                              |
 
-These observations come from [Nemotron inference](../crates/transcribe-inference/src/nemotron.rs), [cleanup inference](../crates/transcribe-inference/src/qwen.rs), [model/runtime selection](../crates/transcribe-models/src/lib.rs), and [desktop orchestration](../apps/desktop/src-tauri/src/runtime.rs).
+These observations come from [Nemotron inference](../crates/vesper-inference/src/nemotron.rs), [cleanup inference](../crates/vesper-inference/src/qwen.rs), [model/runtime selection](../crates/vesper-models/src/lib.rs), and [desktop orchestration](../apps/desktop/src-tauri/src/runtime.rs).
 
 Qwen's complete-prefix state experiment is **off by default**. `TRANSCRIBE_EXPERIMENTAL_PREFIX_CACHE=1` enables it; normal cleanup retains weights and creates fresh contexts. Its hybrid recurrent state and full-attention KV state require the exact runtime's complete-state API. A capability flag is not evidence that prefix reuse executes on default requests.
 
@@ -114,7 +114,7 @@ recorded `mode`/`pace` fields identify the executed path.
 
 ### MLX speech qualification boundary
 
-`native/mlx` and `transcribe-mlx` provide one native boundary with upstream loaders
+`native/mlx` and `vesper-mlx` provide one native boundary with upstream loaders
 for Cohere, Whisper, Qwen3-ASR and Parakeet. MLX-Audio-Swift is pinned to
 `d302a5c6080d2bb97bae38c7418f82abb76013b6`, MLX Swift to 0.31.4
 (`dc43e62d7055353c7f99fa071a4e71d29dfddc44`) and MLX Swift LM to 3.31.4
@@ -155,14 +155,14 @@ explicitly (other loaders require their already prepared local tokenizer files):
 swift run --package-path native/mlx --scratch-path .tooling/mlx-build \
   --cache-path .tooling/swift-cache --force-resolved-versions \
   -c release prepare-qwen-tokenizer VERIFIED_QWEN_DIRECTORY
-cargo run --release -p transcribe-mlx --example probe -- \
+cargo run --release -p vesper-mlx --example probe -- \
   .tooling/mlx-runtime/libTranscribeMLX.dylib VERIFIED_QWEN_DIRECTORY \
   qwen3_asr English PUBLIC_AUDIO.wav
 ```
 
 The resulting Qwen tokenizer in this screen has SHA-256
 `1c98aeb375d2cb5b386bad460bc2a87bf39b9debbda44d49115377d1de8cb2ed`.
-Use the manifest's declared ordering and canonical `transcribe-eval` scorer for
+Use the manifest's declared ordering and canonical `vesper-eval` scorer for
 quality comparisons. Retain all failed requests and keep the model-load line
 from stderr; a single successful probe is only a smoke test.
 

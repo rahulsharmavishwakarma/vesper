@@ -387,7 +387,7 @@ make version-check TAG=v0.2.0
 Review its diff and run `make check` in the version pull request.
 
 The current synchronizer has a coverage gap: its explicit package list omits
-`transcribe-desktop-platform` and `transcribe-eval`. At revision `7a596c1`, a
+`vesper-desktop-platform` and `vesper-eval`. At revision `7a596c1`, a
 temporary-copy bump from `0.1.0` to `0.1.1` left those two `Cargo.lock` entries at
 `0.1.0`, while `checkVersions` reported success. Its version expression also
 accepts `0.1.1-01`, although [SemVer](https://semver.org/#spec-item-9) disallows

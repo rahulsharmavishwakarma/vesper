@@ -1,6 +1,6 @@
 # Language support and model recommendations
 
-Updated 18 September 2026. This is the canonical product-facing map for transcription languages, model compatibility, benchmark coverage, and future recommendation behavior. Runtime contracts remain authoritative in `transcribe-core`; this document explains them without turning an upstream language claim into a local quality claim.
+Updated 18 September 2026. This is the canonical product-facing map for transcription languages, model compatibility, benchmark coverage, and future recommendation behavior. Runtime contracts remain authoritative in `vesper-core`; this document explains them without turning an upstream language claim into a local quality claim.
 
 ## What “supported language” means
 
@@ -43,7 +43,7 @@ The Models menu also contains three pinned sherpa-onnx transducer profiles, givi
 | NVIDIA Parakeet Unified English 0.6B INT8 | English | Automatic, English | Completed audio, CPU | 16-recording US-English CPU screen: 5.86% micro-WER and 0.115 median RTF; broader English qualification remains |
 | NVIDIA FastConformer European 114M FP32 | English, German, Spanish, French | Automatic, English, French | Completed audio, CPU | 16-recording US-English CPU screen: 9.26% micro-WER and 0.069 median RTF; German/Spanish are not explicit product selections and French remains unmeasured |
 
-The development `transcribe-eval --model` command accepts seven built-in ASR enum values, including two Whisper evaluation variants that are withheld from product selection. Its validated `--asr-profile` option evaluates the three pinned menu profiles through the production custom-profile adapter.
+The development `vesper-eval --model` command accepts seven built-in ASR enum values, including two Whisper evaluation variants that are withheld from product selection. Its validated `--asr-profile` option evaluates the three pinned menu profiles through the production custom-profile adapter.
 
 Cleanup models are a separate role. Qwen3.5-0.8B and the optional cleanup presets cannot be compared as speech recognizers. Cleanup needs its own fidelity, meaning-preservation, latency, and memory benchmark.
 

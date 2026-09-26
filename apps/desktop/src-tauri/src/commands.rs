@@ -1,8 +1,6 @@
 use serde::Serialize;
-use transcribe_core::{
-    AppConfig, HuggingFaceProfile, ModelRuntime, ModelSpec, RewriteQuantization,
-};
-use transcribe_data::{DatasetStore, ExportSummary, SessionRecord, TranscriptFeedback};
+use vesper_core::{AppConfig, HuggingFaceProfile, ModelRuntime, ModelSpec, RewriteQuantization};
+use vesper_data::{DatasetStore, ExportSummary, SessionRecord, TranscriptFeedback};
 
 use crate::runtime::{PipelineResult, RuntimeStatus, WorkContext};
 use crate::{replace_global_shortcut, AppStorage};
@@ -72,9 +70,9 @@ pub fn get_app_status(storage: tauri::State<'_, AppStorage>) -> Result<AppStatus
     Ok(AppStatus {
         name: "Vesper",
         version: env!("CARGO_PKG_VERSION"),
-        inference_ready: transcribe_models::inspect(
+        inference_ready: vesper_models::inspect(
             &config,
-            &transcribe_models::model_directory(&config, &storage.model_dir),
+            &vesper_models::model_directory(&config, &storage.model_dir),
         )
         .ready,
         asr_model: config.asr_name().into(),
@@ -92,12 +90,12 @@ pub fn get_app_status(storage: tauri::State<'_, AppStorage>) -> Result<AppStatus
 
 #[tauri::command]
 pub fn get_model_catalog() -> Vec<ModelSpec> {
-    transcribe_core::default_model_catalog()
+    vesper_core::default_model_catalog()
 }
 
 #[tauri::command]
-pub fn get_adapter_registry() -> &'static [transcribe_core::AdapterRegistration] {
-    transcribe_core::ADAPTERS
+pub fn get_adapter_registry() -> &'static [vesper_core::AdapterRegistration] {
+    vesper_core::ADAPTERS
 }
 
 #[tauri::command]
@@ -111,7 +109,7 @@ pub fn get_selected_adapters(
 #[tauri::command]
 pub async fn get_personalization(
     storage: tauri::State<'_, AppStorage>,
-) -> Result<transcribe_core::PersonalizationProfile, String> {
+) -> Result<vesper_core::PersonalizationProfile, String> {
     let root = storage.dataset_dir.clone();
     tauri::async_runtime::spawn_blocking(move || {
         DatasetStore::open(root)
@@ -124,10 +122,10 @@ pub async fn get_personalization(
 
 #[tauri::command]
 pub async fn save_personalization(
-    profile: transcribe_core::PersonalizationProfile,
+    profile: vesper_core::PersonalizationProfile,
     app: tauri::AppHandle,
     storage: tauri::State<'_, AppStorage>,
-) -> Result<transcribe_core::PersonalizationProfile, String> {
+) -> Result<vesper_core::PersonalizationProfile, String> {
     crate::external_observation::cancel(&app);
     let root = storage.dataset_dir.clone();
     let saved = tauri::async_runtime::spawn_blocking(move || {
@@ -144,7 +142,7 @@ pub async fn save_personalization(
 #[tauri::command]
 pub async fn get_automatic_learning(
     storage: tauri::State<'_, AppStorage>,
-) -> Result<transcribe_data::AutomaticLearningState, String> {
+) -> Result<vesper_data::AutomaticLearningState, String> {
     let root = storage.dataset_dir.clone();
     tauri::async_runtime::spawn_blocking(move || {
         DatasetStore::open(root)
@@ -174,7 +172,7 @@ pub async fn forget_automatic_learning(
     revision: u64,
     app: tauri::AppHandle,
     storage: tauri::State<'_, AppStorage>,
-) -> Result<transcribe_core::PersonalizationProfile, String> {
+) -> Result<vesper_core::PersonalizationProfile, String> {
     crate::external_observation::cancel(&app);
     let root = storage.dataset_dir.clone();
     let profile = tauri::async_runtime::spawn_blocking(move || {
@@ -203,7 +201,7 @@ pub async fn edit_latest_draft(
     tauri::async_runtime::spawn_blocking(move || {
         let result = runtime.edit_latest_draft(root.clone(), &result_id, revision, text)?;
         if let Some(config) = config {
-            let model_root = transcribe_models::model_directory(&config, &model_root);
+            let model_root = vesper_models::model_directory(&config, &model_root);
             runtime.schedule_semantic_shadow(root, config, model_root, &inference);
         }
         Ok(result)
@@ -228,7 +226,7 @@ pub async fn undo_latest_learning(
 pub async fn remember_cleanup(
     id: String,
     storage: tauri::State<'_, AppStorage>,
-) -> Result<transcribe_core::PersonalizationProfile, String> {
+) -> Result<vesper_core::PersonalizationProfile, String> {
     let root = storage.dataset_dir.clone();
     tauri::async_runtime::spawn_blocking(move || {
         DatasetStore::open(root)
@@ -246,7 +244,7 @@ pub async fn remember_cleanup(
 pub async fn get_correction_suggestions(
     id: String,
     storage: tauri::State<'_, AppStorage>,
-) -> Result<Vec<transcribe_data::CorrectionSuggestion>, String> {
+) -> Result<Vec<vesper_data::CorrectionSuggestion>, String> {
     let root = storage.dataset_dir.clone();
     tauri::async_runtime::spawn_blocking(move || {
         DatasetStore::open(root)
@@ -259,9 +257,9 @@ pub async fn get_correction_suggestions(
 
 #[tauri::command]
 pub async fn remember_correction(
-    request: transcribe_data::RememberCorrection,
+    request: vesper_data::RememberCorrection,
     storage: tauri::State<'_, AppStorage>,
-) -> Result<transcribe_core::PersonalizationProfile, String> {
+) -> Result<vesper_core::PersonalizationProfile, String> {
     let root = storage.dataset_dir.clone();
     tauri::async_runtime::spawn_blocking(move || {
         DatasetStore::open(root)
@@ -275,7 +273,7 @@ pub async fn remember_correction(
 #[tauri::command]
 pub async fn get_learning_dashboard(
     storage: tauri::State<'_, AppStorage>,
-) -> Result<transcribe_data::LearningDashboard, String> {
+) -> Result<vesper_data::LearningDashboard, String> {
     let root = storage.dataset_dir.clone();
     tauri::async_runtime::spawn_blocking(move || {
         DatasetStore::open(root)
@@ -290,7 +288,7 @@ pub async fn get_learning_dashboard(
 pub async fn undo_personalization(
     id: String,
     storage: tauri::State<'_, AppStorage>,
-) -> Result<transcribe_data::SessionRecord, String> {
+) -> Result<vesper_data::SessionRecord, String> {
     let root = storage.dataset_dir.clone();
     let record = tauri::async_runtime::spawn_blocking(move || {
         DatasetStore::open(root)
@@ -319,12 +317,10 @@ pub async fn undo_unsaved_personalization(
 
 #[tauri::command]
 pub async fn get_accelerator_capabilities(
-) -> Result<transcribe_inference::AcceleratorCapabilities, String> {
-    tauri::async_runtime::spawn_blocking(|| {
-        transcribe_inference::accelerator_capabilities().clone()
-    })
-    .await
-    .map_err(|error| error.to_string())
+) -> Result<vesper_inference::AcceleratorCapabilities, String> {
+    tauri::async_runtime::spawn_blocking(|| vesper_inference::accelerator_capabilities().clone())
+        .await
+        .map_err(|error| error.to_string())
 }
 
 #[derive(Serialize)]
@@ -600,7 +596,7 @@ fn work_context(storage: &AppStorage) -> Result<WorkContext, String> {
     config.validate().map_err(|e| e.to_string())?;
     Ok(WorkContext {
         operation_id: uuid::Uuid::new_v4().to_string(),
-        model_root: transcribe_models::model_directory(&config, &storage.model_dir),
+        model_root: vesper_models::model_directory(&config, &storage.model_dir),
         config,
         dataset_root: storage.dataset_dir.clone(),
         runtime: Arc::clone(&storage.runtime),
@@ -634,9 +630,7 @@ fn begin_context(
 }
 
 #[tauri::command]
-pub fn get_audio_features(
-    storage: tauri::State<'_, AppStorage>,
-) -> transcribe_audio::AudioFeatures {
+pub fn get_audio_features(storage: tauri::State<'_, AppStorage>) -> vesper_audio::AudioFeatures {
     // Meter-only reads must not inspect model files or wait on inference/status locks.
     storage.recorder.current_features()
 }
@@ -645,7 +639,7 @@ pub fn get_audio_features(
 pub fn get_runtime_status(storage: tauri::State<'_, AppStorage>) -> Result<RuntimeStatus, String> {
     let context = work_context(&storage)?;
     storage.runtime.status(
-        transcribe_models::inspect(&context.config, &context.model_root),
+        vesper_models::inspect(&context.config, &context.model_root),
         storage.recorder.current_level(),
         context.config.effective_recording_seconds(),
     )
@@ -659,9 +653,9 @@ pub fn get_latest_result(
 }
 
 #[tauri::command]
-pub async fn list_audio_devices() -> Result<Vec<transcribe_audio::InputDevice>, String> {
+pub async fn list_audio_devices() -> Result<Vec<vesper_audio::InputDevice>, String> {
     tauri::async_runtime::spawn_blocking(|| {
-        transcribe_audio::list_input_devices().map_err(|e| e.to_string())
+        vesper_audio::list_input_devices().map_err(|e| e.to_string())
     })
     .await
     .map_err(|e| e.to_string())?
@@ -670,27 +664,24 @@ pub async fn list_audio_devices() -> Result<Vec<transcribe_audio::InputDevice>, 
 #[tauri::command]
 pub fn get_model_installation(
     storage: tauri::State<'_, AppStorage>,
-) -> Result<transcribe_models::Installation, String> {
+) -> Result<vesper_models::Installation, String> {
     let context = work_context(&storage)?;
-    Ok(transcribe_models::inspect(
-        &context.config,
-        &context.model_root,
-    ))
+    Ok(vesper_models::inspect(&context.config, &context.model_root))
 }
 
 #[tauri::command]
 pub fn list_model_installations(
     storage: tauri::State<'_, AppStorage>,
-) -> Result<Vec<transcribe_models::ModelInstallation>, String> {
+) -> Result<Vec<vesper_models::ModelInstallation>, String> {
     let config = storage.settings.load()?;
-    let root = transcribe_models::model_directory(&config, &storage.model_dir);
-    Ok(transcribe_models::list_model_installations(&config, &root))
+    let root = vesper_models::model_directory(&config, &storage.model_dir);
+    Ok(vesper_models::list_model_installations(&config, &root))
 }
 
 #[tauri::command]
 pub async fn install_models(
     storage: tauri::State<'_, AppStorage>,
-) -> Result<transcribe_models::Installation, String> {
+) -> Result<vesper_models::Installation, String> {
     let context = begin_context(&storage, "installing", "Preparing model download…", false)?;
     if let Err(error) = context.inference.unload() {
         let result: Result<(), String> = Err(error.to_string());
@@ -702,7 +693,7 @@ pub async fn install_models(
         .begin_download(&context.operation_id, None, None);
     let runtime = Arc::clone(&context.runtime);
     let result = tauri::async_runtime::spawn_blocking(move || {
-        transcribe_models::install(
+        vesper_models::install(
             &context.config,
             &context.model_root,
             &context.runtime.cancelled,
@@ -726,7 +717,7 @@ pub async fn install_model(
     model_id: String,
     quantization: Option<RewriteQuantization>,
     storage: tauri::State<'_, AppStorage>,
-) -> Result<transcribe_models::ModelInstallation, String> {
+) -> Result<vesper_models::ModelInstallation, String> {
     let context = begin_context(&storage, "installing", "Preparing model download…", false)?;
     if let Err(error) = context.inference.unload() {
         let result: Result<(), String> = Err(error.to_string());
@@ -738,7 +729,7 @@ pub async fn install_model(
         .begin_download(&context.operation_id, Some(model_id.clone()), quantization);
     let runtime = Arc::clone(&context.runtime);
     let result = tauri::async_runtime::spawn_blocking(move || {
-        transcribe_models::install_model(
+        vesper_models::install_model(
             &context.config,
             &context.model_root,
             &model_id,
@@ -762,11 +753,11 @@ pub async fn install_model(
 #[tauri::command]
 pub async fn remove_model(
     model_id: String,
-    role: transcribe_core::ModelRole,
+    role: vesper_core::ModelRole,
     quantization: Option<RewriteQuantization>,
     model_directory: String,
     storage: tauri::State<'_, AppStorage>,
-) -> Result<transcribe_models::ModelRemoval, String> {
+) -> Result<vesper_models::ModelRemoval, String> {
     let context = begin_context(&storage, "removing", "Removing model files…", false)?;
     // Reuse the install boundary: no file changes while recording/inference is
     // active, and resident handles are released before changing model weights.
@@ -777,7 +768,7 @@ pub async fn remove_model(
     }
     let runtime = Arc::clone(&context.runtime);
     let result = tauri::async_runtime::spawn_blocking(move || {
-        transcribe_models::remove_model(
+        vesper_models::remove_model(
             &context.config,
             &context.model_root,
             std::path::Path::new(&model_directory),
@@ -795,7 +786,7 @@ pub async fn remove_model(
 }
 
 fn require_models(context: &WorkContext) -> Result<(), String> {
-    let installation = transcribe_models::inspect(&context.config, &context.model_root);
+    let installation = vesper_models::inspect(&context.config, &context.model_root);
     if !installation.ready {
         Err(installation.message)
     } else {
@@ -872,7 +863,7 @@ pub(crate) async fn start_recording_inner(
             .progress("starting", "Loading the resident streaming recognizer…");
         let callback_runtime = Arc::clone(&setup_context.runtime);
         let callback_app = setup_app.clone();
-        let updates: transcribe_inference::StreamingUpdateSink = Arc::new(move |update| {
+        let updates: vesper_inference::StreamingUpdateSink = Arc::new(move |update| {
             if callback_runtime.publish_partial(update.clone()) {
                 let _ = callback_app.emit("transcription-partial", update);
             }
@@ -1014,8 +1005,8 @@ pub(crate) async fn start_recording_inner(
 }
 
 fn forward_live_audio(
-    chunks: transcribe_audio::AudioChunkStream,
-    stream: transcribe_inference::StreamingSession,
+    chunks: vesper_audio::AudioChunkStream,
+    stream: vesper_inference::StreamingSession,
     cancelled: Arc<std::sync::atomic::AtomicBool>,
 ) -> Result<String, String> {
     let (chunks, interrupted) = chunks.into_parts();
@@ -1035,7 +1026,7 @@ fn forward_live_audio(
     if cancelled.load(Ordering::Relaxed) {
         stream
             .cancel()
-            .and(Err(transcribe_inference::InferenceError::Cancelled))
+            .and(Err(vesper_inference::InferenceError::Cancelled))
     } else {
         stream.finish()
     }

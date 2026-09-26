@@ -83,7 +83,7 @@ def main():
     common.write(ROOT / "runtime-env.json", overrides)
     env = {**os.environ, **overrides}
     exe = ROOT / "denoising_followup"
-    eval_exe = ROOT / "transcribe-eval"
+    eval_exe = ROOT / "vesper-eval"
     cpu_models = ".cache/benchmarks/model-roots/nemotron-cpu"
     jobs = []
     if phase in ["prepare", "contracts"]:

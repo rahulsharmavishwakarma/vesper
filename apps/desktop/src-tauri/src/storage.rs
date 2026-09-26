@@ -105,7 +105,7 @@ mod tests {
         let current = temp.path().join(TRANSCRIBE_IDENTIFIER);
         let legacy = temp.path().join(UKTI_IDENTIFIER);
         let settings = crate::settings::SettingsStore::new(legacy.join("settings.json"));
-        let config = transcribe_core::AppConfig {
+        let config = vesper_core::AppConfig {
             max_recording_seconds: 42,
             ..Default::default()
         };
