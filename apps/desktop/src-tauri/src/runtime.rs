@@ -204,6 +204,75 @@ mod tests {
         assert_eq!(latest.raw_transcript, "cube control");
     }
     #[test]
+    fn raw_preview_is_read_only_and_scoped_to_the_active_operation() {
+        let runtime = Runtime::default();
+        let result = editable_result(&Default::default(), "raw-result");
+        let preview = || {
+            serde_json::to_value(
+                runtime
+                    .status(
+                        vesper_models::Installation {
+                            ready: true,
+                            model_directory: "models".into(),
+                            files: vec![],
+                            supported: true,
+                            message: String::new(),
+                        },
+                        0.0,
+                        0,
+                    )
+                    .unwrap(),
+            )
+            .unwrap()["transcriptPreview"]
+                .clone()
+        };
+        runtime.publish_transcript_preview("first", &result);
+        assert!(preview().is_null());
+        runtime.begin("transcribing", "Working").unwrap();
+        runtime.set_operation_id("first");
+        runtime.publish(result.clone());
+        // A failed native stream does not invalidate a completed fallback result.
+        runtime.invalidate_partial("first");
+        runtime.publish_transcript_preview("first", &result);
+        assert_eq!(preview()["operationId"], "first");
+        assert_eq!(preview()["resultId"], result.result_id);
+        assert_eq!(preview()["rawTranscript"], result.raw_transcript);
+        let root = tempfile::tempdir().unwrap();
+        assert!(runtime
+            .edit_latest_draft(
+                root.path().into(),
+                &result.result_id,
+                0,
+                "early edit".into()
+            )
+            .is_err());
+        runtime.progress("rewriting", "Polishing");
+        let mut cleaned = result.clone();
+        cleaned.cleaned_transcript = Some("Open README in the repo.".into());
+        runtime.publish(cleaned);
+        assert_eq!(preview()["rawTranscript"], result.raw_transcript);
+        runtime.cancel_and_take_recording().unwrap();
+        assert!(preview().is_null());
+        runtime.publish_transcript_preview("first", &result);
+        assert!(preview().is_null());
+        runtime.finish(&Err::<(), _>("cancelled".into()));
+        assert_eq!(
+            runtime.latest().unwrap().unwrap().raw_transcript,
+            result.raw_transcript
+        );
+        runtime.begin("transcribing", "New file").unwrap();
+        runtime.set_operation_id("second");
+        runtime.publish_transcript_preview("first", &result);
+        assert!(preview().is_null());
+        runtime.publish_transcript_preview("second", &result);
+        assert_eq!(preview()["operationId"], "second");
+        runtime.finish(&Ok::<(), String>(()));
+        assert!(preview().is_null());
+        runtime.publish_transcript_preview("second", &result);
+        assert!(preview().is_null());
+    }
+
+    #[test]
     fn segmented_progress_is_scoped_and_cannot_overwrite_cancellation_or_completion() {
         use vesper_inference::TranscriptionProgress;
         let runtime = Runtime::default();
@@ -549,9 +618,25 @@ mod tests {
                 streaming_result: Arc::new(Mutex::new(None)),
                 personalization: Arc::default(),
             };
+            context.runtime.begin("transcribing", "Working").unwrap();
+            context.runtime.set_operation_id(&context.operation_id);
             let result = context
                 .complete_raw(&audio, &mut None, "run cube control".into())
                 .unwrap();
+            // The common completion path previews raw text before personalization,
+            // for both completed-only and native-streaming model selections.
+            let preview = context
+                .runtime
+                .state
+                .lock()
+                .unwrap()
+                .transcript_preview
+                .clone()
+                .unwrap();
+            assert_eq!(preview.raw_transcript, "run cube control");
+            assert_eq!(preview.operation_id, context.operation_id);
+            assert_eq!(preview.result_id, result.result_id);
+            context.runtime.finish(&Ok::<(), String>(()));
             assert_eq!(result.raw_transcript, "run cube control");
             assert!(result.cleaned_transcript.is_none());
             assert_eq!(
@@ -864,6 +949,14 @@ pub struct DownloadStatus {
     pub progress: Option<vesper_models::InstallProgress>,
 }
 
+#[derive(Clone, Serialize)]
+#[serde(rename_all = "camelCase")]
+pub struct TranscriptPreview {
+    pub operation_id: String,
+    pub result_id: String,
+    pub raw_transcript: String,
+}
+
 #[derive(Default)]
 struct State {
     operation_id: Option<String>,
@@ -874,6 +967,7 @@ struct State {
     recording: Option<WorkContext>,
     partial: Option<vesper_inference::StreamingTranscript>,
     partial_invalidated_for: Option<String>,
+    transcript_preview: Option<TranscriptPreview>,
     download: Option<DownloadStatus>,
     transcription_operation: Option<String>,
     recent_learning: Option<RecentLearning>,
@@ -912,6 +1006,7 @@ pub struct RuntimeStatus {
     pub audio_level: f32,
     pub partial: Option<vesper_inference::StreamingTranscript>,
     pub partial_invalidated_for: Option<String>,
+    pub transcript_preview: Option<TranscriptPreview>,
     pub download: Option<DownloadStatus>,
 }
 
@@ -940,6 +1035,7 @@ impl Runtime {
         state.message = message.into();
         state.partial = None;
         state.partial_invalidated_for = None;
+        state.transcript_preview = None;
         state.download = None;
         state.transcription_operation = None;
         Ok(())
@@ -1002,6 +1098,7 @@ impl Runtime {
             return Ok((false, None));
         }
         self.cancelled.store(true, Ordering::Relaxed);
+        state.transcript_preview = None;
         state.stage = "cancelling".into();
         state.message = "Cancelling after the current native operation finishes…".into();
         Ok((true, state.recording.take()))
@@ -1056,6 +1153,7 @@ impl Runtime {
             state.recording = None;
             state.partial = None;
             state.partial_invalidated_for = None;
+            state.transcript_preview = None;
             state.download = None;
             state.transcription_operation = None;
             if self.cancelled.load(Ordering::Relaxed) {
@@ -1248,6 +1346,20 @@ impl Runtime {
             state.latest = Some(result);
         }
     }
+    fn publish_transcript_preview(&self, operation_id: &str, result: &PipelineResult) {
+        if let Ok(mut state) = self.state.lock() {
+            if state.busy
+                && state.operation_id.as_deref() == Some(operation_id)
+                && !self.cancelled.load(Ordering::Relaxed)
+            {
+                state.transcript_preview = Some(TranscriptPreview {
+                    operation_id: operation_id.into(),
+                    result_id: result.result_id.clone(),
+                    raw_transcript: result.raw_transcript.clone(),
+                });
+            }
+        }
+    }
     pub fn undo_personalization(&self, record: &SessionRecord) {
         if let Ok(mut state) = self.state.lock() {
             if let Some(latest) = state
@@ -1427,6 +1539,7 @@ impl Runtime {
             },
             partial: state.partial.clone(),
             partial_invalidated_for: state.partial_invalidated_for.clone(),
+            transcript_preview: state.transcript_preview.clone(),
             download: state.download.clone(),
         })
     }
@@ -1752,6 +1865,8 @@ impl WorkContext {
         result.session = session.clone();
         // Publish the durable raw result before a potentially slow or failed cleanup.
         self.runtime.publish(result.clone());
+        self.runtime
+            .publish_transcript_preview(&self.operation_id, &result);
         if vesper_models::diarization::available(&self.model_root, self.config.compute_backend) {
             self.runtime
                 .progress("identifying_speakers", "Identifying speakers locally…");

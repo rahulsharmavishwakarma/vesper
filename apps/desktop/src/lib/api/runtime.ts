@@ -12,7 +12,14 @@ export interface RuntimeStatus {
   audioLevel: number;
   partial: StreamingTranscript | null;
   partialInvalidatedFor: string | null;
+  transcriptPreview: TranscriptPreview | null;
   download: DownloadStatus | null;
+}
+
+export interface TranscriptPreview {
+  operationId: string;
+  resultId: string;
+  rawTranscript: string;
 }
 
 export interface DownloadStatus {

@@ -1492,6 +1492,147 @@ await test('Long-audio progress appears in Dictate and Quick Capture without a p
   );
 });
 
+for (const mode of ['file', 'microphone', 'cancelled file']) {
+  await test(`Recognized text previews ${mode} completion without accepting an unfinished result`, async () => {
+    const pending = deferred();
+    const delayedStatus = deferred();
+    let holdStatus = false;
+    let statusHeld = false;
+    const operationId = `preview-${mode}`;
+    const raw = {
+      resultId: operationId,
+      rawTranscript: 'Original recognized words.',
+      cleanedTranscript: null,
+      session: null,
+      warnings: [],
+      durationSeconds: 8,
+    };
+    let latest = { ...raw, resultId: 'earlier', draftTranscript: 'Prior saved edit.' };
+    const state = await setup({
+      main: true,
+      intercept: (command, state) => {
+        if (command === 'get_latest_result') return structuredClone(latest);
+        if (command === 'get_runtime_status' && holdStatus) {
+          holdStatus = false;
+          statusHeld = true;
+          return delayedStatus.promise;
+        }
+        if (command === 'plugin:dialog|open') return 'synthetic-preview.wav';
+        if (command === 'start_recording') {
+          state.runtime = { ...idle, busy: true, operationId, stage: 'recording' };
+          return operationId;
+        }
+        if (command === 'transcribe_file' || command === 'stop_recording') {
+          state.runtime = {
+            ...idle,
+            busy: true,
+            operationId,
+            stage: 'identifying_speakers',
+            message: 'Identifying speakers locally…',
+            // Deliberately stale payload must not appear under this operation.
+            transcriptPreview: {
+              operationId: 'earlier',
+              resultId: raw.resultId,
+              rawTranscript: raw.rawTranscript,
+            },
+          };
+          return pending.promise.then(() => {
+            state.runtime = { ...idle, stage: mode === 'cancelled file' ? 'cancelled' : 'idle' };
+            latest =
+              mode === 'cancelled file' ? raw : { ...raw, cleanedTranscript: 'Polished words.' };
+            if (mode === 'cancelled file') throw new Error('Transcription cancelled.');
+            return structuredClone(latest);
+          });
+        }
+        if (command === 'cancel_operation') {
+          state.runtime = { ...state.runtime, stage: 'cancelling', transcriptPreview: null };
+          return null;
+        }
+      },
+    });
+    const button = (text) =>
+      [...target.querySelectorAll('button')].find((b) => b.textContent.trim() === text);
+    await until(() => button('Record') && !button('Record').disabled, 'Recorder not ready');
+    await until(() => target.querySelector('#final-draft'), 'Prior draft not loaded');
+    if (mode === 'microphone') {
+      button('Record').click();
+      await until(() => button('Stop and transcribe'), 'Recording did not start');
+      button('Stop and transcribe').click();
+    } else button('Transcribe audio file').click();
+    await until(
+      () => target.querySelector('.recorder-label')?.textContent.includes('Identifying speakers'),
+      'Postprocessing did not start',
+    );
+    assert(!target.querySelector('.transcript-preview'), 'Stale operation preview appeared');
+    const callbacksBefore = state.counts.get_app_status;
+    state.runtime.transcriptPreview.operationId = operationId;
+    await until(() => target.querySelector('.transcript-preview'), 'Raw preview did not appear');
+    assert(
+      target.querySelector('.transcript-preview').textContent.includes(raw.rawTranscript),
+      'Raw words missing',
+    );
+    assert(
+      target.querySelector('.transcript-preview').textContent.includes('Finishing…'),
+      'Finishing state missing',
+    );
+    assert(
+      target.querySelector('#final-draft').value === 'Prior saved edit.',
+      'Preview replaced the final draft',
+    );
+    assert(target.querySelector('#final-draft').disabled, 'Editing enabled before completion');
+    assert(button('Copy text').disabled, 'Copy enabled before completion');
+    assert(
+      state.counts.get_app_status === callbacksBefore,
+      'Preview invoked the final-result callback',
+    );
+    state.runtime = { ...state.runtime, stage: 'rewriting', message: 'Polishing the transcript…' };
+    await until(
+      () => target.querySelector('.transcript-preview')?.textContent.includes('Polishing…'),
+      'Polishing state missing',
+    );
+    const stale = structuredClone(state.runtime);
+    holdStatus = true;
+    await until(() => statusHeld, 'Delayed status was not requested');
+    if (mode === 'cancelled file') {
+      button('Cancel operation').click();
+      await until(
+        () => target.textContent.includes('Cancellation requested.'),
+        'Cancel not acknowledged',
+      );
+      assert(!target.querySelector('.transcript-preview'), 'Cancelled preview remained visible');
+      const readsBefore = state.counts.get_runtime_status;
+      delayedStatus.resolve(stale);
+      await until(
+        () =>
+          state.counts.get_runtime_status > readsBefore &&
+          target.querySelector('.recorder-label')?.textContent.includes('Cancelling…'),
+        'Cancellation status did not settle',
+      );
+      assert(
+        !target.querySelector('.transcript-preview'),
+        'Delayed status restored cancelled preview',
+      );
+    }
+    pending.resolve();
+    const expected = mode === 'cancelled file' ? raw.rawTranscript : 'Polished words.';
+    await until(
+      () => target.querySelector('#final-draft')?.value === expected,
+      'Final/raw fallback result missing',
+    );
+    delayedStatus.resolve(stale);
+    await until(() => !button('Copy text').disabled, 'Final controls did not become ready');
+    assert(
+      !target.querySelector('.transcript-preview'),
+      'Delayed status restored completed preview',
+    );
+    assert(
+      state.counts.get_app_status === callbacksBefore + 1,
+      'Final result callback did not run exactly once',
+    );
+    assert(!state.counts.edit_latest_draft, 'Preview created an editing/learning request');
+  });
+}
+
 await test('Local engine reports measured values and pauses on navigation, visibility and disposal', async () => {
   const saved = defaultSettings();
   saved.cleanupEnabled = false;

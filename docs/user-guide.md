@@ -100,6 +100,14 @@ In **Dictate**, choose **Record**, wait for **Listening**, and speak. Choose
 **Stop and transcribe** when finished. To transcribe an existing recording, use
 the audio-file action instead. Review the result before using it.
 
+After recognition finishes, **Recognized text** can appear while the app is
+still polishing or finishing the recording. This read-only preview is the
+original recognized text, before writing cleanup. It works for microphone
+recordings and imported files; short jobs may finish before it appears.
+Wait for **Your text** to edit or use **Copy text**. Cancellation hides the
+preview while the current operation stops; any completed raw result remains
+available afterward. Automatic insertion still waits for the finished result.
+
 The waveform follows microphone level and estimated voice pitch. Quiet input
 produces smaller strokes; unvoiced sounds still register without forcing the
 spacing to jump. It is a recording indicator, not a speech/noise detector: fans,
