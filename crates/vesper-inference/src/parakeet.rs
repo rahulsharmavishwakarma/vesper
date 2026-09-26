@@ -27,12 +27,27 @@ pub fn transcribe(
     if audio.samples().is_empty() {
         return Ok(String::new());
     }
+    let recognizer_config = recognizer_config(config, model_root)?;
+    check_cancelled(cancelled)?;
+    let recognizer = OfflineRecognizer::create(&recognizer_config).ok_or_else(|| {
+        native(
+            "speech model load",
+            "sherpa-onnx could not create the transducer recognizer",
+        )
+    })?;
+    decode_with_recognizer(&recognizer, audio, cancelled)
+}
+
+pub(crate) fn recognizer_config(
+    config: &AppConfig,
+    model_root: &Path,
+) -> Result<OfflineRecognizerConfig> {
     let [encoder, decoder, joiner, tokens] = speech_paths(config, model_root)?;
     for path in [&encoder, &decoder, &joiner, &tokens] {
         require_file(path)?;
     }
     // Matches the official sherpa-onnx 1.13.8 Parakeet-v3 Rust example.
-    let recognizer_config = OfflineRecognizerConfig {
+    Ok(OfflineRecognizerConfig {
         model_config: OfflineModelConfig {
             transducer: OfflineTransducerModelConfig {
                 encoder: Some(path_string(&encoder)?),
@@ -48,15 +63,19 @@ pub fn transcribe(
         },
         decoding_method: Some("greedy_search".into()),
         ..Default::default()
-    };
+    })
+}
+
+pub(crate) fn decode_with_recognizer(
+    recognizer: &OfflineRecognizer,
+    audio: &MonoPcm,
+    cancelled: &AtomicBool,
+) -> Result<String> {
+    audio.require_sample_rate(ASR_SAMPLE_RATE)?;
     check_cancelled(cancelled)?;
-    let recognizer = OfflineRecognizer::create(&recognizer_config).ok_or_else(|| {
-        native(
-            "speech model load",
-            "sherpa-onnx could not create the recognizer; verify the installed ONNX export",
-        )
-    })?;
-    check_cancelled(cancelled)?;
+    if audio.samples().is_empty() {
+        return Ok(String::new());
+    }
     let stream = recognizer.create_stream();
     stream.accept_waveform(ASR_SAMPLE_RATE as i32, audio.samples());
     check_cancelled(cancelled)?;

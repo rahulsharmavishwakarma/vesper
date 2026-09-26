@@ -44,7 +44,18 @@ struct CompletionReport {
     input_context_truncated: bool,
 }
 
+#[derive(Clone, Copy, PartialEq, Eq)]
+pub(crate) enum DecodePurpose {
+    Completed,
+    Preview,
+}
+
+#[cfg(test)]
 fn completed_text(report: &str, text: &str) -> Result<String> {
+    accepted_text(report, text, DecodePurpose::Completed)
+}
+
+fn accepted_text(report: &str, text: &str, purpose: DecodePurpose) -> Result<String> {
     let report: CompletionReport = serde_json::from_str(report).map_err(|_| {
         native(
         "speech completion check",
@@ -66,6 +77,9 @@ fn completed_text(report: &str, text: &str) -> Result<String> {
     match report.stop_reason.as_str() {
         "eos" => Ok(text.trim().to_owned()),
         "silence_detected" | "no_input" if text.trim().is_empty() => Ok(String::new()),
+        // An unfinished speech window can legitimately exhaust its duration
+        // budget. Such text is a replaceable draft, never a completed result.
+        "duration_token_limit" if purpose == DecodePurpose::Preview => Ok(text.trim().to_owned()),
         "max_new_tokens"
         | "context_limit"
         | "duration_token_limit"
@@ -181,16 +195,26 @@ pub(crate) fn validate_audio(
     Ok(())
 }
 
+#[cfg(test)]
 fn result_text(
     stream: &OfflineStream,
     config: &AppConfig,
     cancelled: &AtomicBool,
 ) -> Result<String> {
+    result_text_for(stream, config, cancelled, DecodePurpose::Completed)
+}
+
+fn result_text_for(
+    stream: &OfflineStream,
+    config: &AppConfig,
+    cancelled: &AtomicBool,
+    purpose: DecodePurpose,
+) -> Result<String> {
     check_cancelled(cancelled)?;
     let result = stream
         .get_result()
         .ok_or_else(|| native("speech decode", "no recognition result returned"))?;
-    let text = completed_text(&stream.get_option(REPORT_OPTION), &result.text)?;
+    let text = accepted_text(&stream.get_option(REPORT_OPTION), &result.text, purpose)?;
     if config.models.asr.is_whisper() {
         crate::whisper::completed_text(
             &stream.get_option(crate::whisper::SCORE_OPTION),
@@ -257,6 +281,29 @@ pub(crate) fn decode_with_recognizer(
     healthy: Option<&std::cell::Cell<bool>>,
     observe: &dyn Fn(SegmentObservation),
 ) -> Result<String> {
+    decode_for_purpose(
+        recognizer,
+        audio,
+        config,
+        cancelled,
+        progress,
+        healthy,
+        observe,
+        DecodePurpose::Completed,
+    )
+}
+
+#[allow(clippy::too_many_arguments)]
+pub(crate) fn decode_for_purpose(
+    recognizer: &OfflineRecognizer,
+    audio: &MonoPcm,
+    config: &AppConfig,
+    cancelled: &AtomicBool,
+    progress: &dyn Fn(TranscriptionProgress),
+    healthy: Option<&std::cell::Cell<bool>>,
+    observe: &dyn Fn(SegmentObservation),
+    purpose: DecodePurpose,
+) -> Result<String> {
     validate_audio(audio, config, cancelled)?;
     if audio.samples().iter().all(|sample| *sample == 0.0) {
         progress(TranscriptionProgress {
@@ -308,10 +355,10 @@ pub(crate) fn decode_with_recognizer(
             if let Some(healthy) = healthy {
                 // Inspect native completion health even when cancellation discards
                 // its text, so an unknown fault cannot leave a cached session.
-                let result = result_text(&stream, config, &AtomicBool::new(false));
+                let result = result_text_for(&stream, config, &AtomicBool::new(false), purpose);
                 retain_native_health(result, healthy, cancelled)
             } else {
-                result_text(&stream, config, cancelled)
+                result_text_for(&stream, config, cancelled, purpose)
             }
         },
         progress,
@@ -333,6 +380,29 @@ fn retain_native_health(
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    #[test]
+    fn duration_limited_drafts_cannot_pass_completed_validation() {
+        let report = r#"{"schemaVersion":1,"stopReason":"duration_token_limit","inputContextTruncated":false}"#;
+        assert_eq!(
+            accepted_text(report, "draft", DecodePurpose::Preview).unwrap(),
+            "draft"
+        );
+        assert!(completed_text(report, "draft").is_err());
+        for reason in [
+            "context_limit",
+            "repetition",
+            "error",
+            "unknown",
+            "max_new_tokens",
+        ] {
+            let report = serde_json::json!({"schemaVersion":1,"stopReason":reason,"inputContextTruncated":false}).to_string();
+            assert!(accepted_text(&report, "draft", DecodePurpose::Preview).is_err());
+        }
+        let truncated = report.replace("false", "true");
+        assert!(accepted_text(&truncated, "draft", DecodePurpose::Preview).is_err());
+        assert!(accepted_text("{}", "draft", DecodePurpose::Preview).is_err());
+    }
     use serde_json::json;
 
     #[test]

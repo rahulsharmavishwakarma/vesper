@@ -13,7 +13,12 @@ Cohere has no automatic language detection or Hindi support in this adapter. Bro
 
 Sherpa 1.13.8 exposes both native model configurations, but its ordinary result omits the reason decoding stopped. The application maintains a small reporting patch against upstream commit `11afbd009a7f8c08f4bcf2fc1b265d0df4670fbf`; approval and scope are recorded in [issue #14](https://github.com/rahulsharmavishwakarma/transcribe/issues/14).
 
-The native patch publishes `vesper.decode_report.v1` using the existing per-stream option API. It reports `schemaVersion`, `stopReason`, and `inputContextTruncated`. The app accepts ordinary text only after actual EOS with no discarded input context. Output/context caps, repetition termination, numerical/token errors, unknown versions, and missing reports reject the result. A native silence/no-input result is accepted only with empty text. Every decode clears the previous report/result. Qwen-ASR owns one recognizer per job. The application worker retains Cohere sessions under [ADR-0017](adrs/0017-resident-cohere-recognizer.md), verifying artifacts on load and invalidating on observed file/options changes. Every segment still gets a fresh stream; cancellation is checked before/after native calls, which cannot be interrupted mid-decode.
+The native patch publishes `vesper.decode_report.v1` using the existing per-stream option API. It reports `schemaVersion`, `stopReason`, and `inputContextTruncated`. The completed-audio path accepts text only after actual EOS with no discarded input context. Output/context caps, repetition termination, numerical/token errors, unknown versions, and missing reports reject the result. A native silence/no-input result is accepted only with empty text. Every decode clears the previous report/result. Qwen-ASR and Cohere now retain verified recognizers in the application worker. [Live previews](live-transcription.md) reuse those weights with fresh decode state; the final completed-audio pass remains authoritative. Cohere residency was introduced under [ADR-0017](adrs/0017-resident-cohere-recognizer.md), verifying artifacts on load and invalidating on observed file/options changes. Every segment still gets a fresh stream; cancellation is checked before/after native calls, which cannot be interrupted mid-decode.
+
+A live preview has a separate provisional contract: a valid duration-token-limit
+report may expose a replaceable draft, but cannot satisfy completed-result
+validation. Context loss, missing/unknown reports and repetition/error termination
+remain failures. The final pass still uses the strict contract above.
 
 The project-owned patch headers, option keys and `vesper-runtime.json` build
 manifest use the Vesper namespace. This requires a genuine rebuild: source,

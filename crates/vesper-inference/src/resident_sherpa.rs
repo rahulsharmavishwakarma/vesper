@@ -10,12 +10,13 @@ use std::{
     time::Instant,
 };
 use vesper_audio::MonoPcm;
-use vesper_core::{AppConfig, AsrModel, ComputeBackend, Language};
+use vesper_core::{AdapterKind, AppConfig, AsrModel, ComputeBackend, HuggingFaceProfile, Language};
 
 #[derive(Debug, PartialEq, Eq)]
 pub(crate) struct RecognizerKey {
     root: PathBuf,
     model: AsrModel,
+    profile: Option<Box<HuggingFaceProfile>>,
     artifacts: Vec<ArtifactIdentity>,
     runtime_revision: &'static str,
     runtime_build: &'static str,
@@ -37,9 +38,13 @@ pub(crate) struct RecognizerKey {
 
 pub(crate) fn key(config: &AppConfig, root: &Path) -> Result<RecognizerKey> {
     config.validate()?;
-    if (config.models.asr != AsrModel::CohereTranscribe && !config.models.asr.is_whisper())
-        || config.models.custom_asr.is_some()
-    {
+    if !matches!(
+        config.speech_adapter().kind,
+        AdapterKind::CohereAsr
+            | AdapterKind::Whisper
+            | AdapterKind::QwenAsr
+            | AdapterKind::SherpaTransducer
+    ) {
         return Err(crate::InferenceError::UnsupportedAsr(
             config.models.asr.id(),
         ));
@@ -54,6 +59,7 @@ pub(crate) fn key(config: &AppConfig, root: &Path) -> Result<RecognizerKey> {
     Ok(RecognizerKey {
         root,
         model: config.models.asr,
+        profile: config.models.custom_asr.clone().map(Box::new),
         artifacts,
         runtime_revision: config.speech_adapter().runtime_revision,
         runtime_build: env!("VESPER_SHERPA_BUILD_ID"),
@@ -110,7 +116,11 @@ impl Recognizer {
         vesper_models::verify_asr(config, root, cancelled).map_err(verification_error)?;
         let verification_us = micros(started);
         check_cancelled(cancelled)?;
-        let native_config = offline_asr::recognizer_config(config, root)?;
+        let native_config = if config.speech_adapter().kind == AdapterKind::SherpaTransducer {
+            crate::parakeet::recognizer_config(config, root)?
+        } else {
+            offline_asr::recognizer_config(config, root)?
+        };
         let started = Instant::now();
         let model = OfflineRecognizer::create(&native_config)
             .ok_or_else(|| native("speech model load", "could not load the pinned ONNX export"))?;
@@ -142,19 +152,70 @@ impl Recognizer {
         cancelled: &AtomicBool,
         progress: &dyn Fn(TranscriptionProgress),
     ) -> Result<String> {
+        self.decode(
+            audio,
+            config,
+            root,
+            cancelled,
+            progress,
+            offline_asr::DecodePurpose::Completed,
+        )
+    }
+
+    pub(crate) fn preview(
+        &self,
+        audio: &MonoPcm,
+        config: &AppConfig,
+        root: &Path,
+        cancelled: &AtomicBool,
+    ) -> Result<String> {
+        self.decode(
+            audio,
+            config,
+            root,
+            cancelled,
+            &|_| {},
+            offline_asr::DecodePurpose::Preview,
+        )
+    }
+
+    #[allow(clippy::too_many_arguments)]
+    fn decode(
+        &self,
+        audio: &MonoPcm,
+        config: &AppConfig,
+        root: &Path,
+        cancelled: &AtomicBool,
+        progress: &dyn Fn(TranscriptionProgress),
+        purpose: offline_asr::DecodePurpose,
+    ) -> Result<String> {
         *self.metrics.borrow_mut() = Metrics::default();
         check_cancelled(cancelled)?;
         let started = Instant::now();
         self.requests.set(self.requests.get() + 1);
-        let result = offline_asr::decode_with_recognizer(
-            &self.model,
-            audio,
-            config,
-            cancelled,
-            progress,
-            Some(&self.healthy),
-            &|observation| self.metrics.borrow_mut().segments.push(observation),
-        );
+        let result = if config.speech_adapter().kind == AdapterKind::SherpaTransducer {
+            let result = crate::parakeet::decode_with_recognizer(&self.model, audio, cancelled);
+            if result.is_ok() {
+                progress(TranscriptionProgress {
+                    processed_samples: audio.samples().len(),
+                    total_samples: audio.samples().len(),
+                });
+            } else if !matches!(result, Err(crate::InferenceError::Cancelled)) {
+                self.healthy.set(false);
+            }
+            result
+        } else {
+            offline_asr::decode_for_purpose(
+                &self.model,
+                audio,
+                config,
+                cancelled,
+                progress,
+                Some(&self.healthy),
+                &|observation| self.metrics.borrow_mut().segments.push(observation),
+                purpose,
+            )
+        };
         {
             let mut metrics = self.metrics.borrow_mut();
             metrics.request_ordinal = self.requests.get();
@@ -283,7 +344,7 @@ mod tests {
         incompatible.language = Language::Auto;
         assert!(key(&incompatible, root.path()).is_err());
         incompatible = config();
-        incompatible.models.asr = AsrModel::Qwen3Asr06b;
+        incompatible.models.asr = AsrModel::Lfm25Audio15b;
         assert!(key(&incompatible, root.path()).is_err());
     }
 
