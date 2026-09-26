@@ -1,5 +1,5 @@
 {
-  "name": "transcribe-workspace",
+  "name": "vesper-workspace",
   "version": "0.1.0",
   "private": true,
   "workspaces": [
@@ -10,10 +10,10 @@
     "npm": ">=10"
   },
   "scripts": {
-    "dev": "npm run dev --workspace @transcribe/desktop",
-    "build": "npm run build --workspace @transcribe/desktop",
-    "check": "npm run check --workspace @transcribe/desktop",
-    "preview": "npm run preview --workspace @transcribe/desktop",
+    "dev": "npm run dev --workspace @vesper/desktop",
+    "build": "npm run build --workspace @vesper/desktop",
+    "check": "npm run check --workspace @vesper/desktop",
+    "preview": "npm run preview --workspace @vesper/desktop",
     "desktop:dev": "node scripts/desktop.mjs dev",
     "desktop:build": "node scripts/desktop.mjs build",
     "rust:check": "make check-rust",

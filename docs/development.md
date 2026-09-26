@@ -349,6 +349,9 @@ qualification windows use the same name. The application identity is `com.vesper
 not moved or merged. Repository renaming remains owner-controlled. Internal Rust packages and their directories
 use `vesper-*`; the native executable is `vesper-desktop` and the library is
 `vesper_desktop_lib`. Current commands and source links use those names.
+The npm workspace is `vesper-workspace`, with frontend package
+`@vesper/desktop`; root npm scripts, browser tests and container builds resolve
+that same workspace. These packages remain private, with unchanged versions.
 
 Keep these exact technical names until a separately scoped migration updates
 their producers, consumers and compatibility behavior together:

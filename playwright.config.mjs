@@ -16,7 +16,7 @@ export default defineConfig({
     screenshot: 'only-on-failure',
   },
   webServer: {
-    command: 'npm run dev --workspace @transcribe/desktop -- --host 127.0.0.1',
+    command: 'npm run dev --workspace @vesper/desktop -- --host 127.0.0.1',
     url: 'http://127.0.0.1:1420',
     reuseExistingServer: false,
     timeout: 30_000,

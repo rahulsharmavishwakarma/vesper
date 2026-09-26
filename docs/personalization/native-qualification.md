@@ -188,7 +188,7 @@ Build first, then run inference without competing compilation. From the reposito
 root, start the test-only frontend server in a separate terminal:
 
 ```sh
-npm run dev --workspace @transcribe/desktop -- --host 127.0.0.1 --port 5198
+npm run dev --workspace @vesper/desktop -- --host 127.0.0.1 --port 5198
 ```
 
 Then run the explicit native example with a new output path:

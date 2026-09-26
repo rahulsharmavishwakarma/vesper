@@ -92,7 +92,7 @@ test('Vesper identity retains explicit compatibility for earlier storage', () =>
     ['main', 'quick-capture'],
   );
   assert.ok(config.app.windows.every((window) => window.title.startsWith('Vesper')));
-  assert.equal(JSON.parse(read('apps/desktop/package.json')).name, '@transcribe/desktop');
+  assert.equal(JSON.parse(read('apps/desktop/package.json')).name, '@vesper/desktop');
   assert.match(
     read('apps/desktop/src/lib/browserSettings.ts'),
     /vesper\.browser-preview\.settings\.v1/,
