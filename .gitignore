@@ -70,6 +70,9 @@ Desktop.ini
 /recordings/
 /exports/
 /settings.json
+# Current exports plus pre-Vesper folders that may still contain private data.
+vesper-export-*/
+.vesper-export-*/
 transcribe-export-*/
 .transcribe-export-*/
 *.sqlite

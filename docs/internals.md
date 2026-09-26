@@ -167,6 +167,10 @@ Benchmark data is deliberately separate from application persistence. Public arc
 
 ## Export format and durability
 
+Both current `vesper-export-*`/`.vesper-export-*` folders and their legacy
+Transcribe equivalents are ignored by Git, including nested export directories.
+Renaming new exports does not make old private data eligible for source control.
+
 The export command creates a unique `vesper-export-<uuid>` child in a user-selected existing directory. The storage layer itself requires a new or empty destination outside the live dataset. It builds a sibling hidden staging directory containing:
 
 ```text

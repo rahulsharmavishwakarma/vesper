@@ -52,3 +52,19 @@ test('persisted learning identities deliberately retain their original hash doma
   assert.match(source, /b"transcribe-learning-pcm16k-v1"/);
   assert.doesNotMatch(source, /b"vesper-learning-pcm16k-v1"/);
 });
+
+test('current and legacy private export folders remain excluded from source control', () => {
+  for (const prefix of [
+    'vesper-export-',
+    '.vesper-export-',
+    'transcribe-export-',
+    '.transcribe-export-',
+  ]) {
+    const path = `${prefix}synthetic/session.json`;
+    const ignored = execFileSync('git', ['check-ignore', '--no-index', path], {
+      cwd: root,
+      encoding: 'utf8',
+    }).trim();
+    assert.equal(ignored, path);
+  }
+});
