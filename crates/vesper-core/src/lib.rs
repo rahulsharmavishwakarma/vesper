@@ -3,6 +3,7 @@
 mod adapters;
 mod config;
 mod diarization;
+pub mod environment;
 mod error;
 mod huggingface;
 mod learning;

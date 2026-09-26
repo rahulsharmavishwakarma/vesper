@@ -188,7 +188,7 @@ pub fn nemo_speech_executable(root: &Path) -> PathBuf {
 
 /// Versioned NeMo-Speech.cpp C ABI library installed beside the CLI.
 pub fn nemo_speech_library(root: &Path) -> PathBuf {
-    if let Some(path) = std::env::var_os("TRANSCRIBE_NEMO_SPEECH_LIB") {
+    if let Some(path) = vesper_core::environment::var_os("VESPER_NEMO_SPEECH_LIB") {
         return PathBuf::from(path);
     }
     nemo_speech_library_in_runtime(

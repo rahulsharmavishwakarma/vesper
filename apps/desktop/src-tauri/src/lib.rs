@@ -92,7 +92,7 @@ pub fn run() {
             let data_root = storage::compatible_app_root(app.path().app_data_dir()?)?;
             let model_dir = storage::model_root(
                 &data_root,
-                std::env::var_os("TRANSCRIBE_MODEL_DIR"),
+                vesper_core::environment::nonempty_var_os("VESPER_MODEL_DIR"),
                 std::env::var_os("UKTI_MODEL_DIR"),
                 std::env::var_os("STT_MODEL_DIR").or_else(development_model_root),
             );
