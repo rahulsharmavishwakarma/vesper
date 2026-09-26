@@ -156,7 +156,7 @@ swift run --package-path native/mlx --scratch-path .tooling/mlx-build \
   --cache-path .tooling/swift-cache --force-resolved-versions \
   -c release prepare-qwen-tokenizer VERIFIED_QWEN_DIRECTORY
 cargo run --release -p vesper-mlx --example probe -- \
-  .tooling/mlx-runtime/libTranscribeMLX.dylib VERIFIED_QWEN_DIRECTORY \
+  .tooling/mlx-runtime/libVesperMLX.dylib VERIFIED_QWEN_DIRECTORY \
   qwen3_asr English PUBLIC_AUDIO.wav
 ```
 

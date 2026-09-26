@@ -29,10 +29,7 @@ fn main() {
             "patches/mlx-audio-swift/completion-report.patch",
             "patchSha256",
         ),
-        (
-            "native/mlx/Sources/TranscribeMLX/Bridge.swift",
-            "bridgeSha256",
-        ),
+        ("native/mlx/Sources/VesperMLX/Bridge.swift", "bridgeSha256"),
         (
             "native/mlx/Sources/PrepareTokenizer/main.swift",
             "tokenizerSourceSha256",
@@ -48,7 +45,7 @@ fn main() {
     }
     let mut artifacts = Vec::new();
     for (name, field) in [
-        ("libTranscribeMLX.dylib", "librarySha256"),
+        ("libVesperMLX.dylib", "librarySha256"),
         ("mlx.metallib", "metalSha256"),
         ("prepare-qwen-tokenizer", "tokenizerToolSha256"),
     ] {
@@ -64,7 +61,7 @@ fn main() {
         artifacts.push(serde_json::json!({"name":name,"relativePath":name,"url":"builtin:mlx-runtime","revision":metadata["runtimeRevision"],"sha256":hash,"sizeBytes":bytes.len(),"role":"asr_runtime","license":"Application license unselected; dependencies retain upstream licenses"}));
     }
     println!(
-        "cargo:rustc-env=TRANSCRIBE_MLX_BUILD_DIRECTORY={}",
+        "cargo:rustc-env=VESPER_MLX_BUILD_DIRECTORY={}",
         runtime.canonicalize().unwrap().display()
     );
     let out = PathBuf::from(env::var_os("OUT_DIR").unwrap());

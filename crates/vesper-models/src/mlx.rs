@@ -11,7 +11,7 @@ pub fn runtime_directory() -> PathBuf {
             return parent.join("../Resources/mlx-runtime");
         }
     }
-    PathBuf::from(env!("TRANSCRIBE_MLX_BUILD_DIRECTORY"))
+    PathBuf::from(env!("VESPER_MLX_BUILD_DIRECTORY"))
 }
 
 pub fn runtime_artifacts() -> Vec<Artifact> {
@@ -35,7 +35,7 @@ pub(super) fn available() -> Result<bool> {
     DEVICE
         .get_or_init(|| {
             verify_runtime(&AtomicBool::new(false)).map_err(|e| e.to_string())?;
-            vesper_mlx::device_available(&runtime_directory().join("libTranscribeMLX.dylib"))
+            vesper_mlx::device_available(&runtime_directory().join("libVesperMLX.dylib"))
                 .map_err(|e| e.to_string())
         })
         .clone()

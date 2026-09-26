@@ -65,7 +65,7 @@ const changed = run('git', ['diff', '--name-only', 'HEAD'], {
   .filter(Boolean);
 if (changed.some((path) => !patchedPaths.includes(path)))
   throw new Error('Unexpected modified MLX Audio source');
-const expected = mkdtempSync(join(tmpdir(), 'transcribe-mlx-source-'));
+const expected = mkdtempSync(join(tmpdir(), 'vesper-mlx-source-'));
 try {
   for (const path of patchedPaths) {
     mkdirSync(dirname(join(expected, path)), { recursive: true });
@@ -91,7 +91,7 @@ run('swift', [
   '-c',
   'release',
   '--product',
-  'TranscribeMLX',
+  'VesperMLX',
 ]);
 run('swift', [
   'build',
@@ -103,15 +103,13 @@ run('swift', [
   'prepare-qwen-tokenizer',
 ]);
 const products = [join(scratch, 'out/Products/Release'), join(scratch, 'release')].find((path) =>
-  existsSync(join(path, 'libTranscribeMLX.dylib')),
+  existsSync(join(path, 'libVesperMLX.dylib')),
 );
 if (!products) throw new Error('Missing MLX library after successful build');
 mkdirSync(destination, { recursive: true });
 for (const name of readdirSync(products).filter(
   (name) =>
-    name === 'libTranscribeMLX.dylib' ||
-    name === 'prepare-qwen-tokenizer' ||
-    name.endsWith('.bundle'),
+    name === 'libVesperMLX.dylib' || name === 'prepare-qwen-tokenizer' || name.endsWith('.bundle'),
 ))
   cpSync(join(products, name), join(destination, name), { recursive: true });
 const metal = join(products, 'mlx-swift_Cmlx.bundle/Contents/Resources/default.metallib');
@@ -129,8 +127,8 @@ writeFileSync(
       runtimeRevision: revision,
       packageLockSha256: hash(join(root, 'native/mlx/Package.resolved')),
       patchSha256: hash(patch),
-      bridgeSha256: hash(join(root, 'native/mlx/Sources/TranscribeMLX/Bridge.swift')),
-      librarySha256: hash(join(destination, 'libTranscribeMLX.dylib')),
+      bridgeSha256: hash(join(root, 'native/mlx/Sources/VesperMLX/Bridge.swift')),
+      librarySha256: hash(join(destination, 'libVesperMLX.dylib')),
       metalSha256: hash(join(destination, 'mlx.metallib')),
       tokenizerToolSha256: hash(join(destination, 'prepare-qwen-tokenizer')),
       tokenizerSourceSha256: hash(join(root, 'native/mlx/Sources/PrepareTokenizer/main.swift')),

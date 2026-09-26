@@ -339,6 +339,9 @@ project-owned completion-report properties use the same Vesper prefix. These
 are private build interfaces: rebuild the bridge and Rust consumers together;
 do not load a renamed copy of an old binary. The pinned upstream Cohere
 Transcribe architecture and ordinary transcription API names are unchanged.
+The generated library is `libVesperMLX.dylib`; its real source, patch and
+binary hashes are checked before packaging. `VESPER_MLX_BUILD_DIRECTORY` is
+injected by the Rust build script, not a user override.
 
 **Vesper** is the display name in the app, documentation, issue templates,
 GitHub issues and project title/readme. Native startup messages and developer

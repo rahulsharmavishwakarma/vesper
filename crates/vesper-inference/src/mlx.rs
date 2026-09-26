@@ -106,7 +106,7 @@ impl Recognizer {
         );
         let started = Instant::now();
         let loaded = vesper_mlx::Model::load(
-            &vesper_models::mlx::runtime_directory().join("libTranscribeMLX.dylib"),
+            &vesper_models::mlx::runtime_directory().join("libVesperMLX.dylib"),
             &directory,
             architecture,
         );
