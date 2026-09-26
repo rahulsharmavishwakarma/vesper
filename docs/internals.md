@@ -116,6 +116,7 @@ The Rust runtime allows one recording, transcription, or model installation oper
 - cancellation and closing flags;
 - current microphone level while recording;
 - latest operation-scoped streaming partial and sequence number;
+- completed raw preview with operation/result identity while postprocessing runs;
 - latest `PipelineResult`.
 
 Each `WorkContext` snapshots the validated settings, dataset root, selected model root, and runtime handle. Old recording watchers cannot claim a newer operation because they must match the operation ID.
@@ -130,7 +131,7 @@ For selected Nemotron microphone capture, the order is important:
 2. Create fresh per-recording stream state before starting capture.
 3. Send bounded, non-overlapping mono chunks and publish operation-ID/sequence-checked partials; partials remain transient.
 4. On Stop, flush the capture tail, signal end of input, and drain native results.
-5. Persist final raw ASR plus selected model/runtime provenance when collection is enabled, then publish it to the UI.
+5. Persist final raw ASR plus selected model/runtime provenance when collection is enabled, then publish a read-only **Recognized text** preview through runtime status. It is separate from decoder partials and the final editable result; cancellation/completion/new operations clear it. Speaker analysis and cleanup continue on the existing worker. See [raw text visibility](inference-performance.md#raw-text-visibility-during-local-postprocessing) for polling and measurement limits.
 6. Load/reuse Qwen weights, create a fresh cleanup context, and process final raw text only.
 7. Persist and publish cleanup, or retain raw text with a warning if cleanup fails or is cancelled.
 

@@ -38,6 +38,35 @@ One build detail matters: `default-features = false` does **not** mean Metal is 
 
 NeMo-Speech.cpp 0.1.0 publishes CPU, CUDA, Vulkan, and Metal release packages. Vesper pins their bytes and hashes rather than treating a requested device string as evidence of availability. NVIDIA does not publish an MLX or ROCm Nemotron package: Apple uses Metal; the AMD profile uses Vulkan for speech and can use ROCm/HIP for Qwen cleanup.
 
+### Raw text visibility during local postprocessing
+
+The shared completion path publishes an operation-scoped, read-only raw text
+preview after the existing raw save/publication attempt and before speaker
+analysis or writing cleanup. The Dictate screen reads it through runtime status;
+it does not accept it as an editable final result or feed it into learning.
+Completed recordings, successful native-stream finalization, completed fallback
+after a failed stream, and imported files use the same completion path.
+Cancellation, completion and a new request clear the preview. Delayed UI status
+responses from before a new action/final result are ignored. Raw-result recovery
+after cancellation and final editing/copy/insertion retain their existing paths.
+
+This is a frozen-weight application change: no additional inference, model
+lifetime changes, decoder changes, checkpoint changes or concurrent GPU work.
+Status polling during postprocessing remains 500 ms, so a short job can complete
+without an intermediate render. It can reduce the wait to *see recognized text*
+when postprocessing is slow; it does not reduce recognition time or stop-to-final
+latency. It is not a new streaming decoder and does not make Cohere live-capable.
+
+The engineering pattern is supported by the local preview/final distinction in
+[WhisperKit's streaming implementation](https://github.com/argmaxinc/argmax-oss-swift/blob/f4e5d6be37ec820614fb0d72037e76c22d4c16f7/Sources/WhisperKit/Core/Audio/AudioStreamTranscriber.swift).
+The [WhisperFlow paper (v2)](https://arxiv.org/abs/2412.11272v2) studies on-device ASR
+scheduling and per-word latency; its decoder/scheduling speedups are separate
+from this display-only change and are not claimed here. Local deterministic
+runtime and delayed-IPC browser tests check ordering, cancellation, request
+isolation and final-draft behavior. They are not model benchmarks or a native
+WebView latency measurement. CPU/Apple Silicon model qualification, sustained
+load and the existing audio-quality gates remain independent requirements.
+
 ## Existing measurements, with their limits
 
 ### Native GPU implementation and screening — 23 September 2026

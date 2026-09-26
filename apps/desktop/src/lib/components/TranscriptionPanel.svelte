@@ -128,6 +128,7 @@
   let activeOperationId = $state<string | null>(null);
   let liveTranscript = $state<StreamingTranscript | null>(null);
   let unlistenPartial: (() => void) | undefined;
+  let pollGeneration = 0;
 
   const desktop = $derived(environment === 'desktop');
   const busy = $derived(Boolean(action || installingModelKey || runtime?.busy || cancelling));
@@ -142,6 +143,17 @@
   );
   const recording = $derived(runtime?.stage === 'recording');
   const processing = $derived(busy && !recording && action !== 'choosing');
+  const transcriptPreview = $derived(
+    runtime?.busy &&
+      processing &&
+      !cancelling &&
+      runtime.stage !== 'cancelling' &&
+      activeOperationId &&
+      runtime.transcriptPreview?.operationId === activeOperationId &&
+      runtime.transcriptPreview.resultId !== result?.resultId
+      ? runtime.transcriptPreview
+      : null,
+  );
   const quietInput = $derived(recording && recordingElapsedMs > 1800 && !inputLevelDetected);
   const ready = $derived(
     statusError === null &&
@@ -157,7 +169,9 @@
         recording: 'Recording',
         recording_complete: 'Recording finished',
         transcribing: 'Transcribing',
+        identifying_speakers: 'Identifying speakers',
         rewriting: 'Polishing text',
+        cancelling: 'Cancelling…',
         idle: 'Ready',
         error: 'Operation failed',
         cancelled: 'Cancelled',
@@ -296,6 +310,7 @@
     activeOperationId = null;
     liveTranscript = null;
     if (changed) {
+      pollGeneration += 1;
       copied = false;
       copyMessage = null;
       onResult(completed);
@@ -391,8 +406,11 @@
   async function pollRuntime() {
     if (!desktop || disposed || polling) return;
     polling = true;
+    const generation = pollGeneration;
     try {
-      runtime = await getRuntimeStatus();
+      const status = await getRuntimeStatus();
+      if (disposed || generation !== pollGeneration) return;
+      runtime = status;
       // Authoritative operation identity also covers shortcut-started captures
       // before their first partial, and failures that finish between polls.
       activeOperationId = runtime.busy ? runtime.operationId : null;
@@ -407,9 +425,13 @@
         inputLevelDetected = false;
       }
       statusError = null;
-      if (!runtime.busy) acceptResult(await getLatestResult());
+      if (!runtime.busy) {
+        const latest = await getLatestResult();
+        if (!disposed && generation === pollGeneration) acceptResult(latest);
+      }
     } catch (cause) {
-      statusError = `Could not check transcription status. ${message(cause)}`;
+      if (!disposed && generation === pollGeneration)
+        statusError = `Could not check transcription status. ${message(cause)}`;
     } finally {
       polling = false;
       if (!disposed && (runtime?.busy || action || installingModelKey || cancelling))
@@ -573,6 +595,7 @@
   }
   async function record() {
     if (blocked || !ready || !devices.length) return;
+    pollGeneration += 1;
     action = 'starting';
     error = null;
     feedback = null;
@@ -608,6 +631,9 @@
   }
   async function transcribe() {
     if (blocked || !ready) return;
+    pollGeneration += 1;
+    activeOperationId = null;
+    liveTranscript = null;
     action = 'choosing';
     error = null;
     feedback = null;
@@ -626,6 +652,7 @@
   }
   async function cancel() {
     if (!desktop || !busy || cancelling || action === 'choosing') return;
+    pollGeneration += 1;
     cancelling = true;
     error = null;
     feedback = null;
@@ -875,7 +902,15 @@
     {#if error}<p class="error" role="alert">{error}</p>{/if}
     {#if feedback}<p class="success">{feedback}</p>{/if}
   </div>
-  {#if liveTranscript && (recording || processing)}
+  {#if transcriptPreview}
+    <div class="live-transcript transcript-preview" aria-live="polite" aria-atomic="true">
+      <div class="section-heading">
+        <h2>Recognized text</h2>
+        <span class="note">{runtime?.stage === 'rewriting' ? 'Polishing…' : 'Finishing…'}</span>
+      </div>
+      <p>{transcriptPreview.rawTranscript}</p>
+    </div>
+  {:else if liveTranscript && (recording || processing) && !cancelling && runtime?.stage !== 'cancelling'}
     <div class="live-transcript" aria-live="polite" aria-atomic="true">
       <div class="section-heading">
         <h2>Live transcript</h2>
