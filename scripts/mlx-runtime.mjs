@@ -42,19 +42,26 @@ const revision = run('git', ['rev-parse', 'HEAD'], {
 }).trim();
 if (revision !== 'd302a5c6080d2bb97bae38c7418f82abb76013b6')
   throw new Error('Unexpected MLX Audio revision');
-const patch = join(root, 'patches/mlx-audio-swift/completion-report.patch');
-try {
-  run('git', ['apply', '--reverse', '--check', patch], { cwd: checkout, stdio: 'pipe' });
-} catch {
-  run('git', ['diff', '--exit-code'], { cwd: checkout });
-  run('git', ['apply', '--check', patch], { cwd: checkout });
-  run('git', ['apply', patch], { cwd: checkout });
+const patches = ['completion-report.patch', 'live-session.patch'].map((name) =>
+  join(root, 'patches/mlx-audio-swift', name),
+);
+for (const patch of patches) {
+  try {
+    run('git', ['apply', '--reverse', '--check', patch], { cwd: checkout, stdio: 'pipe' });
+  } catch {
+    run('git', ['apply', '--check', patch], { cwd: checkout });
+    run('git', ['apply', patch], { cwd: checkout });
+  }
 }
 // A reverse-apply check alone also accepts unrelated edits. Reconstruct the
 // expected patched files outside the checkout and compare their exact bytes.
-const patchedPaths = [...readFileSync(patch, 'utf8').matchAll(/^\+\+\+ b\/(.+)$/gm)].map(
-  (match) => match[1],
-);
+const patchedPaths = [
+  ...new Set(
+    patches.flatMap((patch) =>
+      [...readFileSync(patch, 'utf8').matchAll(/^\+\+\+ b\/(.+)$/gm)].map((match) => match[1]),
+    ),
+  ),
+];
 const changed = run('git', ['diff', '--name-only', 'HEAD'], {
   cwd: checkout,
   stdio: 'pipe',
@@ -77,7 +84,7 @@ try {
       }),
     );
   }
-  run('git', ['apply', patch], { cwd: expected });
+  for (const patch of patches) run('git', ['apply', patch], { cwd: expected });
   for (const path of patchedPaths)
     if (!readFileSync(join(expected, path)).equals(readFileSync(join(checkout, path))))
       throw new Error(`Unexpected MLX Audio patch drift: ${path}`);
@@ -126,8 +133,10 @@ writeFileSync(
       schemaVersion: 1,
       runtimeRevision: revision,
       packageLockSha256: hash(join(root, 'native/mlx/Package.resolved')),
-      patchSha256: hash(patch),
+      patchSha256: hash(patches[0]),
+      livePatchSha256: hash(patches[1]),
       bridgeSha256: hash(join(root, 'native/mlx/Sources/VesperMLX/Bridge.swift')),
+      liveBridgeSha256: hash(join(root, 'native/mlx/Sources/VesperMLX/Live.swift')),
       librarySha256: hash(join(destination, 'libVesperMLX.dylib')),
       metalSha256: hash(join(destination, 'mlx.metallib')),
       tokenizerToolSha256: hash(join(destination, 'prepare-qwen-tokenizer')),

@@ -1,12 +1,12 @@
 # Research basis for streaming inference
 
-Research updated **15 September 2026**. This document maps primary papers to engineering constraints for Vesper. It complements the model-specific [NVIDIA, historical Kyutai, and Moshi review](research-streaming-speech.md), the system-level [device performance plan](inference-performance.md), and the accepted resident-streaming decision in [ADR-0006](adrs/0006-resident-nemotron-streaming-worker.md). Kyutai research is retained as evidence, but [GitHub issue #48](https://github.com/rahulsharmavishwakarma/transcribe/issues/48) records its removal from current application support.
+Research updated **26 September 2026**; earlier dated reviews retain their own evidence scope. This document maps primary papers to engineering constraints for Vesper. It complements the model-specific [NVIDIA, historical Kyutai, and Moshi review](research-streaming-speech.md), the system-level [device performance plan](inference-performance.md), and the accepted resident-streaming decision in [ADR-0006](adrs/0006-resident-nemotron-streaming-worker.md). Kyutai research is retained as evidence, but [GitHub issue #48](https://github.com/rahulsharmavishwakarma/transcribe/issues/48) records its removal from current application support.
 
 ## Executive conclusion
 
 The closest paper to the selectable Nemotron model is **Stateful Conformer with Cache-based Inference for Streaming ASR**. Its main inference lesson is to preserve native encoder, convolution, and transducer state while sending non-overlapping audio chunks. For this application, that points to one resident recognizer with a fresh native stream per recording, not repeated whole-file inference or overlapping rolling-window redecoding. NeMo-Speech.cpp already owns these model-specific caches; application code should use its supported stream lifecycle instead of recreating cache logic.
 
-That conclusion now grounds the approved Nemotron implementation: a bounded Rust worker owns one resident recognizer, microphone capture sends non-overlapping chunks to a fresh native stream, and Qwen retains weights while creating fresh request contexts. It does not validate a latency target, alternate right-context setting, automatic endpointing, lower-bit artifact, or other model adapter.
+That conclusion now grounds the approved Nemotron implementation: a bounded Rust worker owns one resident recognizer, microphone capture sends non-overlapping chunks to a fresh native stream, and the Qwen writing model retains weights while creating fresh request contexts. It does not validate a latency target, alternate right-context setting, automatic endpointing, lower-bit artifact, or other model adapter.
 
 The papers also establish boundaries:
 
@@ -46,7 +46,170 @@ Every performance claim should be labelled as one of:
 
 Prefer papers and official implementations over summaries. Pin exact revisions when an experiment begins. Preserve negative and failed runs; do not time only successful requests.
 
+## Native live-input feasibility by adapter
+
+Source review **26 September 2026**, against baseline application `6f90343`.
+The following tables preserve that source review, not the later implementation
+status. The approved common live interface, resident CPU owners, bounded preview
+scheduler and Qwen cancellation/backlog patch are now described in
+[live adapters](live-transcription.md). Current app support and the historical
+two-clip Nemotron replay are in
+[model presets](model-presets.md#live-transcription-support). Separate adapters
+provide the integration boundary, but do not establish incremental audio support.
+A runtime's live-input API can legitimately revise text or recompute a pending
+window; it need not have Nemotron's cache semantics. Token output from a completed
+audio argument alone does not provide live microphone transcription.
+
+| Selected path | Versioned source finding | Integration boundary |
+| --- | --- | --- |
+| Nemotron / NeMo-Speech.cpp | Pinned runtime `4f9676226f667d14608487df744f375db87127f8` has a recognizer/stream lifecycle and cached RNN-T inference. | Already wired; remaining microphone/display and lifecycle qualification is tracked in #3. |
+| Qwen3-ASR / MLX | Runtime `d302a5c6080d2bb97bae38c7418f82abb76013b6` provides a public session accepting the loaded Qwen model and consecutive audio. See the detailed boundary below. | Candidate extension of the existing Swift/Rust bridge; no replacement checkpoint or dependency required. English/Metal first. |
+| Qwen3-ASR / Sherpa | Current `1.13.8` offline adapter processes complete encoder features and creates request-local decoder state. | The MLX session does not enable this CPU/ONNX path. |
+| Parakeet v3 / Sherpa or MLX | Selected paths are offline. The pinned [NeMo native runtime](https://github.com/NVIDIA/NeMo-Speech.cpp/blob/4f9676226f667d14608487df744f375db87127f8/docs/asr/models.md) explicitly rejects v3 streaming. | Moving the same weights to that runtime or flipping a registry flag is insufficient. |
+| Parakeet Unified / Sherpa | [Official model card](https://huggingface.co/nvidia/parakeet-unified-en-0.6b) describes joint offline/streaming training, but public streaming recomputes left context. The selected export contains its offline mode. | A different export and qualified runtime path are needed; cache passing remains future work in [paper section 4.3](https://arxiv.org/html/2604.19079v1). |
+| Parakeet v2 / European FastConformer | Current offline transducer exports have no verified cache-aware input path here. The [European checkpoint](https://catalog.ngc.nvidia.com/orgs/nvidia/teams/nemo/models/stt_multilingual_fastconformer_hybrid_large_pc_blend_eu) is distinct from NVIDIA's English streaming checkpoint. | Keep these profiles' capabilities separate; architecture family names do not qualify them. |
+| Cohere / Sherpa | [Pinned encoder API](https://github.com/k2-fsa/sherpa-onnx/blob/11afbd009a7f8c08f4bcf2fc1b265d0df4670fbf/sherpa-onnx/csrc/offline-cohere-transcribe-model.h) takes full features, without prior encoder state. MLX also offers a runtime-owned live-input session with repeated pending-window encoding. | No live path in the current adapter. The MLX candidate needs compatible weights and renewed quality qualification; its earlier completed-audio comparison added clean-word errors. |
+| LFM2.5 Audio / llama.cpp mtmd | [Released configuration](https://huggingface.co/LiquidAI/LFM2.5-Audio-1.5B/blob/main/config.json) and [pinned native encoder](https://github.com/ggml-org/llama.cpp/blob/e79e4bf660e19f2ad851e06c6913f7a8c5852621/tools/mtmd/models/conformer.cpp) use full-context audio encoding. | Streaming generated text/audio does not establish incremental ASR input for the selected Q4 pair. |
+| Whisper Small / Turbo | [Official encoder](https://github.com/openai/whisper/blob/v20250625/whisper/model.py) uses full audio-window attention; the pinned MLX token-stream API takes a completed audio array. | Live use needs an explicit buffered decoding design or a different model path; existing output callbacks are insufficient. |
+
+Selected export revisions, distinct from upstream model-card revisions:
+Qwen ONNX `68818b2313fe77bd06f6a7c5068ff3ef59d02b8a`, Qwen MLX
+`89e96d92ba34aca20b3e29fb10cc284097d1219f`, Parakeet v3 ONNX
+`2bda32ec70b097a55adaa07d9a7173915b43cc78`, v3 MLX
+`ed2b7e8c15f9aaa0b5772e2efb986255eaef7e15`, v2
+`1ab9323565ddb038682214b292f588070a538ce2`, Unified
+`8c3a10fb13408c7a7054f6898958bf1c64a8d6c7`, European
+`a68ecf678bbc9369516ca257a8418c8f085771eb`, Cohere
+`156a470cf08eefe706a0004f3c52d9ee567ca7a0`, LFM GGUF
+`7d525f883a077e20afb782f2ff618edcae0e39e4`, Whisper Small
+`8f3c18b358db4d1f2fc1eae49d75cd20989e4309`, Turbo
+`2ca6ff69fc878651b770880507669577ac41c2ff`. Artifact hashes remain canonical in
+[the manifest](../models/artifacts.json) and [presets](../models/presets.json).
+Sherpa source revision is `11afbd009a7f8c08f4bcf2fc1b265d0df4670fbf`.
+
+Local graph inspection with ONNX Runtime 1.30.0 found only audio/length inputs
+and encoded-output/length outputs, without encoder cache tensors, for installed
+v3 and Unified encoders. Their SHA-256 values were respectively
+`acfc2b4456377e15d04f0243af540b7fe7c992f8d898d751cf134c3a55fd2247` and
+`6716910b7a0833997fec7a410494c995d70124001a0e9b66d6370d6aced577e0`.
+This is interface inspection, not ASR or latency measurement; v2 and European
+graphs were not inspected locally. A cache-capable re-export or different
+checkpoint remains an experiment, not an impossible architecture or an approved
+replacement. For example, [Parakeet Realtime EOU 120M](https://huggingface.co/nvidia/parakeet_realtime_eou_120m-v1)
+is a separate English-only streaming candidate without punctuation/capitalization.
+
+The Cohere MLX candidate uses the same pinned session package as Qwen, but
+re-encodes growing audio for partials and finalizes approximately 8-second windows.
+The [earlier FP16 artifact and comparison](inference-performance.md)
+(`beshkenadze/cohere-transcribe-03-2026-mlx-fp16`, revision
+`06bbe0d853a93cbbf7c1f40cffccd4c5481459ef`) document six additional clean-word
+errors in that completed-audio comparison. Production MLX selection therefore
+excludes Cohere. Its live API makes it a research candidate, not a qualified
+replacement for the current default's ONNX files or evidence that training is
+required. Final termination reporting, window boundaries and lifecycle also
+need qualification for this candidate.
+
+### Qwen MLX session: capability and qualification boundary
+
+The pinned [StreamingInferenceSession](https://github.com/Blaizzy/mlx-audio-swift/blob/d302a5c6080d2bb97bae38c7418f82abb76013b6/Sources/MLXAudioSTT/Streaming/StreamingInferenceSession.swift)
+is part of the already linked MLXAudioSTT package. It accepts the same loaded
+Qwen model through `feedAudio`, emits text snapshots, and exposes asynchronous
+Stop plus cancellation. This is the MLX runtime's API; the Qwen team's
+[reference implementation](https://github.com/QwenLM/Qwen3-ASR/blob/7c6daf77a2421100f5fb066495372c00129d39ff/qwen_asr/inference/qwen3_asr.py)
+has different buffering semantics. The [Qwen report](https://arxiv.org/html/2601.21337v1)
+supports chunked recognition and revisable text, not equivalent performance
+between these runtimes.
+
+MLX incrementally computes mel features, caches completed acoustic windows,
+re-encodes the pending window and starts a fresh decoder cache for each pass.
+Defaults use approximately 8-second windows with 1-second overlap and a 1-second
+decode cadence. Those configuration values are not first-word latency results.
+The baseline completed-audio bridge did not call this session. The approved
+live bridge now does, but uses the strict completed-audio pass for final text.
+
+Source inspection identifies production gates: cancellation does not await
+inference quiescence; an event stream and completed-window backlog lack explicit
+bounds; final text has no decoder termination report; boundary finalization can
+reuse partial text; Stop can revise previously confirmed current-window words.
+Automatic-language output parsing also differs from completed-audio generation.
+These are reasons for targeted tests and narrow runtime corrections, not measured
+failures of a Vesper streaming implementation. No Qwen live model run was made
+in this review.
+
+**Frozen-weight application scope:** reuse the existing resident model/worker;
+add an opaque session to the Swift C ABI and safe Rust wrapper; deliver ordered,
+non-overlapping PCM; expose bounded snapshot events; drain Stop before final
+delivery and retain ownership through cancellation. Each recording gets fresh
+state. Keep the current English/Metal qualification scope, and preserve the
+selected model's completed-audio fallback without silently dropping input.
+
+**Runtime-internal scope:** narrowly address cancellation completion, backlog
+bounds and final termination reporting where public APIs cannot satisfy the
+existing app contract. This requires code and qualification beyond setting a
+capability flag. **Training/checkpoint scope:** none for this Qwen candidate;
+new Parakeet checkpoints or exports are separate proposals.
+
+**Unverified hypothesis:** this session can provide useful live Qwen output on
+the current Mac within acceptable memory, latency and quality limits. Qualify
+with paced public fixtures against the same model's completed-audio output:
+first-partial and word-emission timing, Stop-to-final, WER/CER and meaning,
+partial revisions, silence/quiet speech, repeated phrases, short tails and speech
+across 7/8/14/15-second boundaries. Exercise cancellation/restart, overflow and
+sustained memory; then measure native microphone-to-visible behavior. Record
+the full environment and failures under the metrics below. Existing Nemotron
+results do not qualify Qwen. The concrete proposal and approval status belong
+in [issue #3](https://github.com/rahulsharmavishwakarma/transcribe/issues/3).
+
 ## Paper-to-engineering map
+
+### Shared live interface for completed-audio adapters
+
+The 26 September source review extends the integration target to **every current
+ASR adapter**, including CPU paths and existing transducer profiles. One session
+contract can expose input, provisional snapshots, finalization and cancellation
+while keeping model-specific behavior behind the adapter. Native input streaming
+and buffered previews need distinct capability metadata; backend/language support
+continues to depend on the exact model, artifact and runtime.
+
+The reviewed baseline internal API returned `vesper_nemo::Stream`, and both the
+manager and desktop recording entry point gated on `native_streaming`. The
+implementation now generalizes those boundaries and the evaluator alongside
+adapter methods. An asynchronous session must distinguish **pending output** from
+**finished**; an empty poll is not proof of finalization. Existing operation IDs,
+monotonic event sequences and replacement-snapshot UI semantics can be reused.
+
+For completed-audio runtimes, bounded windows can supply provisional previews
+using the existing weights and decoder. [Whisper-Streaming](https://arxiv.org/html/2307.14743v2)
+establishes the feasibility of repeated decoding and agreement-based output; its
+safe buffer trimming additionally uses word timing that Vesper's text-only
+adapter results do not currently expose. It does not establish local quality,
+latency or equivalence to NVIDIA's native buffered RNN-T implementation.
+
+The conservative finalization boundary is therefore an explicit request for the
+existing completed-recording pass after Stop. Preview text remains revisable;
+only the successful final pass feeds cleanup, persistence, learning and insertion.
+This adds preview compute and retains offline Stop-to-final cost. Current segment
+boundaries depend on total recording length, so concatenated preview strings must
+not be treated as equivalent to the existing final result. Repeated words and
+window boundaries require explicit tests rather than blind text deduplication.
+
+Slow synchronous decode can fill the existing 32-chunk channel and interrupt live
+delivery. Scheduling needs one running preview and one newest pending request,
+with obsolete preview requests coalesced independently of retained recording
+audio. Preserve every captured sample for final processing, including when live
+updates cannot keep up. CPU Qwen-ASR and Parakeet reloaded per job in that baseline; useful
+previews require retaining their recognizer at least across one recording's
+preview passes, with fresh decoder state and artifact validation. This is a model
+lifetime change as well as an adapter extension. Existing resident Cohere,
+Whisper, LFM and MLX owners can be reused.
+
+The full proposal, including lifecycle and scheduling changes, is recorded in
+[issue #3](https://github.com/rahulsharmavishwakarma/transcribe/issues/3).
+The [device resource boundary](inference-performance.md#resources-for-live-adapters)
+documents the implemented resource controls and remaining hardware qualification.
+All-model pre-Stop updates, final-result parity, cancellation, bounded queues,
+language constraints and sustained memory require per-backend qualification;
+this source analysis is not an implemented or measured all-model live path.
 
 ### Directly relevant to the default cache-aware RNNT
 

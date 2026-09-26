@@ -1,0 +1,79 @@
+diff --git a/Sources/MLXAudioSTT/Streaming/StreamingEncoder.swift b/Sources/MLXAudioSTT/Streaming/StreamingEncoder.swift
+index 2dd6b7a..b44d558 100644
+--- a/Sources/MLXAudioSTT/Streaming/StreamingEncoder.swift
++++ b/Sources/MLXAudioSTT/Streaming/StreamingEncoder.swift
+@@ -28,6 +28,7 @@ public class StreamingEncoder {
+ 
+     /// Newly encoded full windows not yet consumed by the session.
+     private var newlyEncodedWindows: [MLXArray] = []
++    public var pendingWindowCount: Int { newlyEncodedWindows.count }
+ 
+     /// Total number of *completed* windows encoded since reset.
+     ///
+diff --git a/Sources/MLXAudioSTT/Streaming/StreamingInferenceSession.swift b/Sources/MLXAudioSTT/Streaming/StreamingInferenceSession.swift
+index f679f3c..7056669 100644
+--- a/Sources/MLXAudioSTT/Streaming/StreamingInferenceSession.swift
++++ b/Sources/MLXAudioSTT/Streaming/StreamingInferenceSession.swift
+@@ -136,6 +136,13 @@ private protocol StreamingInferenceSessionCore: AnyObject, Sendable {
+     func feedAudio(samples: [Float])
+     func stop()
+     func cancel()
++    func cancelAndWait() async
++    var bufferedWindows: Int { get }
++}
++
++private extension StreamingInferenceSessionCore {
++    func cancelAndWait() async { cancel() }
++    var bufferedWindows: Int { 0 }
+ }
+ 
+ /// Orchestrates streaming speech-to-text inference.
+@@ -184,6 +191,9 @@ public final class StreamingInferenceSession: @unchecked Sendable {
+     public func cancel() {
+         core.cancel()
+     }
++
++    public func cancelAndWait() async { await core.cancelAndWait() }
++    public var bufferedWindows: Int { core.bufferedWindows }
+ }
+ 
+ private final class MossStreamingInferenceSessionCore: @unchecked Sendable, StreamingInferenceSessionCore {
+@@ -1003,7 +1013,7 @@ private final class QwenStreamingInferenceSessionCore: @unchecked Sendable, Stre
+         )
+ 
+         var continuation: AsyncStream<TranscriptionEvent>.Continuation!
+-        self.events = AsyncStream { continuation = $0 }
++        self.events = AsyncStream(bufferingPolicy: .bufferingNewest(8)) { continuation = $0 }
+         self.continuation = continuation
+         self.isActive = true
+     }
+@@ -1811,6 +1821,29 @@ private final class QwenStreamingInferenceSessionCore: @unchecked Sendable, Stre
+         Memory.clearCache()
+     }
+ 
++    var bufferedWindows: Int { sessionLock.withLock { _ in encoder.pendingWindowCount } }
++
++    func cancelAndWait() async {
++        let tasks = sessionLock.withLock { _ in
++            isActive = false
++            let tasks = (decodeTask, stopTask)
++            tasks.0?.cancel()
++            tasks.1?.cancel()
++            decodeTask = nil
++            stopTask = nil
++            continuation?.finish()
++            continuation = nil
++            return tasks
++        }
++        await tasks.0?.value
++        await tasks.1?.value
++        sessionLock.withLock { _ in
++            encoder.reset()
++            melProcessor.reset()
++            boundaryFastDecodeUntil = nil
++        }
++    }
++
+     public func cancel() {
+         sessionLock.withLock { _ in
+             isActive = false

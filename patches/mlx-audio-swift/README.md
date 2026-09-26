@@ -58,3 +58,20 @@ build does not qualify any speech model. See
 [inference performance](../../docs/inference-performance.md) for measured outcomes
 and remaining integration gates. Reported MLX peak memory is process-lifetime,
 including resident weights; it is not an incremental per-request allocation.
+
+## Live Qwen session correction
+
+The separate `live-session.patch` applies to the same pinned revision. It adds
+an awaitable Qwen cancellation operation that joins decode/Stop tasks before
+resetting mel/encoder state, bounds queued snapshot events to eight, and exposes
+pending acoustic-window count. The C bridge admits at most two queued windows
+and retains the resident model until its collector and native work have joined.
+Default implementations for other upstream session cores do not imply equivalent
+cancellation support; only Qwen is admitted by this bridge.
+
+This patch does not establish final decoder completeness for native live text.
+Live text remains provisional; Stop closes the native session and the application
+uses the ordinary full-recording decode with strict termination checks. English
+and Metal remain the qualified selection boundary. The build verifies exact
+patched bytes and records hashes of both patches and both bridge sources. See
+[live adapters](../../docs/live-transcription.md) for lifecycle and validation.

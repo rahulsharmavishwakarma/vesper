@@ -31,6 +31,14 @@ fn main() {
         ),
         ("native/mlx/Sources/VesperMLX/Bridge.swift", "bridgeSha256"),
         (
+            "native/mlx/Sources/VesperMLX/Live.swift",
+            "liveBridgeSha256",
+        ),
+        (
+            "patches/mlx-audio-swift/live-session.patch",
+            "livePatchSha256",
+        ),
+        (
             "native/mlx/Sources/PrepareTokenizer/main.swift",
             "tokenizerSourceSha256",
         ),
