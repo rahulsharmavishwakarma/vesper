@@ -227,14 +227,14 @@ the frontend migration removes it, including an old `false` value, while retaini
 other preferences. The model remains independently manageable in the catalog;
 ordinary ASR/cleanup installation does not require or install the speaker bundle.
 
-Run the ignored real-model checks with `TRANSCRIBE_DIAR_MODELS` pointing to an
+Run the ignored real-model checks with `VESPER_DIAR_MODELS` pointing to an
 isolated model root containing the speaker bundle, Cohere, Qwen3.5 cleanup and
 Nemotron ASR with its macOS Metal release package, and
-`TRANSCRIBE_DIAR_CORPUS` pointing to the four prepared sample WAV files:
+`VESPER_DIAR_CORPUS` pointing to the four prepared sample WAV files:
 
 ```sh
 cargo test -p vesper-inference real_worker_speaker_samples_and_native_asr_coexistence -- --ignored --nocapture
-TRANSCRIBE_DIAR_FIRST=1 cargo test -p vesper-inference real_worker_speaker_samples_and_native_asr_coexistence -- --ignored --nocapture
+VESPER_DIAR_FIRST=1 cargo test -p vesper-inference real_worker_speaker_samples_and_native_asr_coexistence -- --ignored --nocapture
 cargo test -p vesper-desktop real_asr_speaker_pipeline_persists_and_exports_without_changing_words -- --ignored --nocapture
 ```
 

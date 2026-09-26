@@ -88,10 +88,10 @@ mod tests {
     #[ignore = "requires the pinned namespaced native bundle, GA weights, existing Nemotron ASR and public samples"]
     fn real_worker_speaker_samples_and_native_asr_coexistence() {
         let root = std::path::PathBuf::from(
-            std::env::var_os("TRANSCRIBE_DIAR_MODELS").expect("TRANSCRIBE_DIAR_MODELS"),
+            vesper_core::environment::var_os("VESPER_DIAR_MODELS").expect("VESPER_DIAR_MODELS"),
         );
         let corpus = std::path::PathBuf::from(
-            std::env::var_os("TRANSCRIBE_DIAR_CORPUS").expect("TRANSCRIBE_DIAR_CORPUS"),
+            vesper_core::environment::var_os("VESPER_DIAR_CORPUS").expect("VESPER_DIAR_CORPUS"),
         );
         let audio = vesper_audio::decode_file(corpus.join("fleurs-single.wav"), 0).unwrap();
         let flag = Arc::new(AtomicBool::new(false));
@@ -105,7 +105,7 @@ mod tests {
         // diarizer still exercises both CPU and Metal below.
         let mut asr_config = config.clone();
         asr_config.compute_backend = ComputeBackend::Metal;
-        let reverse = std::env::var_os("TRANSCRIBE_DIAR_FIRST").is_some();
+        let reverse = vesper_core::environment::var_os("VESPER_DIAR_FIRST").is_some();
         // Run this test in two fresh processes, with and without DIAR_FIRST;
         // changing order inside one process would not prove loader isolation.
         {

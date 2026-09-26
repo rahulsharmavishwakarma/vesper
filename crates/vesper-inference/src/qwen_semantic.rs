@@ -179,7 +179,7 @@ mod tests {
     #[ignore = "known failed structured-output gate on installed Qwen; see semantic qualification"]
     fn installed_semantic_smoke() {
         let config = AppConfig::default();
-        let root = PathBuf::from(std::env::var("TRANSCRIBE_MODEL_DIR").unwrap());
+        let root = PathBuf::from(vesper_core::environment::var("VESPER_MODEL_DIR").unwrap());
         let model = Rewriter::load(&config, &root, &AtomicBool::new(false)).unwrap();
         let request = SemanticAnalysisRequest {
             schema_version: 1,

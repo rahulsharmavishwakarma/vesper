@@ -267,13 +267,16 @@ mod tests {
     #[test]
     #[ignore = "requires the pinned built bridge, verified model and two public audio files"]
     fn installed_model_isolation_cancellation_and_completion() {
-        let path = |key| std::path::PathBuf::from(std::env::var_os(key).expect(key));
-        let library = path("TRANSCRIBE_MLX_LIB");
-        let directory = path("TRANSCRIBE_MLX_MODEL");
-        let architecture = std::env::var("TRANSCRIBE_MLX_ARCH").expect("TRANSCRIBE_MLX_ARCH");
-        let language = std::env::var("TRANSCRIBE_MLX_LANGUAGE").unwrap_or_else(|_| "en".into());
-        let a = vesper_audio::decode_file(path("TRANSCRIBE_SMOKE_AUDIO"), 0).unwrap();
-        let b = vesper_audio::decode_file(path("TRANSCRIBE_SMOKE_AUDIO_B"), 0).unwrap();
+        let path =
+            |key| std::path::PathBuf::from(vesper_core::environment::var_os(key).expect(key));
+        let library = path("VESPER_MLX_LIB");
+        let directory = path("VESPER_MLX_MODEL");
+        let architecture =
+            vesper_core::environment::var("VESPER_MLX_ARCH").expect("VESPER_MLX_ARCH");
+        let language =
+            vesper_core::environment::var("VESPER_MLX_LANGUAGE").unwrap_or_else(|_| "en".into());
+        let a = vesper_audio::decode_file(path("VESPER_SMOKE_AUDIO"), 0).unwrap();
+        let b = vesper_audio::decode_file(path("VESPER_SMOKE_AUDIO_B"), 0).unwrap();
         assert!(a.samples().len() <= 480_000 && b.samples().len() <= 480_000);
         let flag = AtomicBool::new(false);
         let mut model = Model::load(&library, &directory, &architecture).unwrap();

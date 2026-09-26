@@ -212,7 +212,8 @@ mod tests {
     #[test]
     #[ignore = "pinned installed Qwen inputs and application-built tokenizer tool"]
     fn tokenizer_preparation_repairs_corruption_and_checks_inputs() {
-        let installed = PathBuf::from(std::env::var_os("TRANSCRIBE_SMOKE_MODELS").expect("models"));
+        let installed =
+            PathBuf::from(vesper_core::environment::var_os("VESPER_SMOKE_MODELS").expect("models"));
         let scratch = tempfile::tempdir().unwrap();
         let directory = scratch.path().join("mlx/qwen");
         std::fs::create_dir_all(&directory).unwrap();
