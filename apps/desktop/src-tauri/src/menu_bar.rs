@@ -10,7 +10,7 @@ use tauri::{
 
 use crate::AppStorage;
 
-const TRAY_ID: &str = "transcribe-menu-bar";
+const TRAY_ID: &str = "vesper-menu-bar";
 
 // The locked macOS tray backend displays this 2x image at 18 logical points.
 #[cfg(target_os = "macos")]
@@ -230,7 +230,7 @@ pub fn setup(app: &tauri::AppHandle) -> tauri::Result<()> {
     }
     let app = app.clone();
     std::thread::Builder::new()
-        .name("transcribe-menu-status".into())
+        .name("vesper-menu-status".into())
         .spawn(move || {
             let mut previous = initial;
             while !stopped.load(Ordering::Relaxed) {

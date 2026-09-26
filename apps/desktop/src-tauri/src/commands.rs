@@ -582,7 +582,7 @@ pub async fn export_dataset(
         if !parent.is_dir() {
             return Err("Choose an existing directory for the export".to_owned());
         }
-        let export_dir = parent.join(format!("transcribe-export-{}", uuid::Uuid::new_v4()));
+        let export_dir = parent.join(format!("vesper-export-{}", uuid::Uuid::new_v4()));
         DatasetStore::open(root)
             .and_then(|store| store.export_dataset(&export_dir, approved_only))
             .map_err(|e| e.to_string())
@@ -894,7 +894,7 @@ pub(crate) async fn start_recording_inner(
         let cancelled = Arc::clone(&setup_context.runtime.cancelled);
         setup_context.runtime.set_recording(setup_context.clone());
         std::thread::Builder::new()
-            .name("transcribe-live-audio".into())
+            .name("vesper-live-audio".into())
             .spawn(move || {
                 let result = forward_live_audio(chunks, stream, cancelled);
                 if result.is_err() {

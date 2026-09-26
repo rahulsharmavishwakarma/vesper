@@ -136,7 +136,7 @@ impl AudioRecorder {
         let pitch = Arc::new(AtomicU32::new(0));
         let thread_pitch = Arc::clone(&pitch);
         let worker = thread::Builder::new()
-            .name("transcribe-microphone".into())
+            .name("vesper-microphone".into())
             .spawn(move || recording_worker(receiver, thread_status, thread_level, thread_pitch))
             .map_err(|err| {
                 audio_error("microphone", format!("cannot start capture worker: {err}"))

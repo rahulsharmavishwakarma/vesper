@@ -18,6 +18,9 @@ do not indicate a different application.
 
 ## First launch
 
+New dataset export folders use `vesper-export-<uuid>`. Existing exported folders
+remain valid and are never renamed automatically; their data format is unchanged.
+
 ### Small windows
 
 When the window is narrow, navigation moves to the top and spacing becomes

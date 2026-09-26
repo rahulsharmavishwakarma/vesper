@@ -167,10 +167,10 @@ Benchmark data is deliberately separate from application persistence. Public arc
 
 ## Export format and durability
 
-The export command creates a unique `transcribe-export-<uuid>` child in a user-selected existing directory. The storage layer itself requires a new or empty destination outside the live dataset. It builds a sibling hidden staging directory containing:
+The export command creates a unique `vesper-export-<uuid>` child in a user-selected existing directory. The storage layer itself requires a new or empty destination outside the live dataset. It builds a sibling hidden staging directory containing:
 
 ```text
-transcribe-export-<uuid>/
+vesper-export-<uuid>/
 ├── metadata.json
 ├── manifest.jsonl
 └── audio/

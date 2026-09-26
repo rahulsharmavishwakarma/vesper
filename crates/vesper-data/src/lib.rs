@@ -469,7 +469,7 @@ impl DatasetStore {
         let parent = destination
             .parent()
             .ok_or(DatasetError::InvalidExportDestination)?;
-        let staging = parent.join(format!(".transcribe-export-{}", Uuid::new_v4()));
+        let staging = parent.join(format!(".vesper-export-{}", Uuid::new_v4()));
         fs::create_dir(&staging)?;
         let result = (|| {
             fs::create_dir(staging.join("audio"))?;
@@ -1030,7 +1030,7 @@ mod tests {
             .unwrap()
             .file_name()
             .to_string_lossy()
-            .starts_with(".transcribe-export-")));
+            .starts_with(".vesper-export-")));
     }
 
     #[test]
