@@ -1,42 +1,42 @@
 --- /dev/null
-+++ b/sherpa-onnx/csrc/transcribe-decode-report.h
++++ b/sherpa-onnx/csrc/vesper-decode-report.h
 @@ -0,0 +1,53 @@
 +// Application-local completion contract for the pinned sherpa-onnx build.
 +// Cohere/Qwen: reporting only. Whisper also removes the duration-derived cap;
 +// see the architecture-specific patch below and docs/research-whisper.md.
-+#ifndef SHERPA_ONNX_CSRC_TRANSCRIBE_DECODE_REPORT_H_
-+#define SHERPA_ONNX_CSRC_TRANSCRIBE_DECODE_REPORT_H_
++#ifndef SHERPA_ONNX_CSRC_VESPER_DECODE_REPORT_H_
++#define SHERPA_ONNX_CSRC_VESPER_DECODE_REPORT_H_
 +#include <string>
 +#include <cmath>
 +#include <cstdint>
 +namespace sherpa_onnx {
-+inline constexpr const char *kTranscribeDecodeReport = "transcribe.decode_report.v1";
-+inline constexpr const char *kTranscribeInputTruncated = "transcribe.input_truncated.v1";
++inline constexpr const char *kVesperDecodeReport = "vesper.decode_report.v1";
++inline constexpr const char *kVesperInputTruncated = "vesper.input_truncated.v1";
 +// Templates allow exercising the exact contract without loading a model.
 +template <typename Stream>
-+void TranscribeReport(Stream *s, const char *reason) {
-+  const bool truncated = s->GetOption(kTranscribeInputTruncated) == "true";
-+  s->SetOption(kTranscribeDecodeReport,
++void VesperReport(Stream *s, const char *reason) {
++  const bool truncated = s->GetOption(kVesperInputTruncated) == "true";
++  s->SetOption(kVesperDecodeReport,
 +      std::string("{\"schemaVersion\":1,\"stopReason\":\"") + reason +
 +      "\",\"inputContextTruncated\":" + (truncated ? "true}" : "false}"));
 +}
 +template <typename Stream>
-+void TranscribeBegin(Stream *s) {
-+  s->SetOption(kTranscribeInputTruncated, "false");
++void VesperBegin(Stream *s) {
++  s->SetOption(kVesperInputTruncated, "false");
 +  // All unlabelled early returns fail closed; no previous report survives.
-+  TranscribeReport(s, "error");
++  VesperReport(s, "error");
 +}
 +template <typename Stream>
-+void TranscribeInputTruncated(Stream *s) {
-+  s->SetOption(kTranscribeInputTruncated, "true");
-+  TranscribeReport(s, "context_limit");
++void VesperInputTruncated(Stream *s) {
++  s->SetOption(kVesperInputTruncated, "true");
++  VesperReport(s, "context_limit");
 +}
 +// Shared by reporting and native tests; EOS at the final cap is still EOS.
-+inline const char *TranscribeCohereStop(bool eos, bool model_limit) {
++inline const char *VesperCohereStop(bool eos, bool model_limit) {
 +  return eos ? "eos" : (model_limit ? "model_token_limit" : "duration_token_limit");
 +}
 +template <typename Read>
-+bool TranscribeHasFiniteLogit(int64_t size, int64_t avoid, Read read) {
++bool VesperHasFiniteLogit(int64_t size, int64_t avoid, Read read) {
 +  for (int64_t i = 0; i < size; ++i) {
 +    if (i != avoid && std::isfinite(read(i))) return true;
 +  }
@@ -44,7 +44,7 @@
 +}
 +// Eigen argmax does not share Qwen's nonfinite-value filtering. Preserve
 +// negative-infinity masks, but reject NaN/positive infinity before argmax.
-+inline bool TranscribeValidGreedyLogits(const float *values, int64_t size) {
++inline bool VesperValidGreedyLogits(const float *values, int64_t size) {
 +  bool finite = false;
 +  for (int64_t i = 0; i < size; ++i) {
 +    if (std::isnan(values[i]) || values[i] == INFINITY) return false;
@@ -60,7 +60,7 @@
  // Copyright (c)  2026 zengyw
  
  #include "sherpa-onnx/csrc/offline-recognizer-qwen3-asr-impl.h"
-+#include "sherpa-onnx/csrc/transcribe-decode-report.h"
++#include "sherpa-onnx/csrc/vesper-decode-report.h"
  
  #include <algorithm>
  #include <array>
@@ -70,7 +70,7 @@
  
 +// Validate the sampled row before the upstream sampler can silently fall back
 +// to token zero. Finite masked rows are valid; an all-nonfinite row is not.
-+static bool TranscribeValidLogits(const Ort::Value &logits, int32_t time,
++static bool VesperValidLogits(const Ort::Value &logits, int32_t time,
 +                                 int64_t avoid_id = -1) {
 +  auto info = logits.GetTensorTypeAndShapeInfo();
 +  auto shape = info.GetShape();
@@ -81,7 +81,7 @@
 +      type != ONNX_TENSOR_ELEMENT_DATA_TYPE_FLOAT16 &&
 +      type != ONNX_TENSOR_ELEMENT_DATA_TYPE_UINT16) return false;
 +  const auto offset = static_cast<size_t>(time) * shape[2];
-+  return TranscribeHasFiniteLogit(shape[2], avoid_id, [&](int64_t i) {
++  return VesperHasFiniteLogit(shape[2], avoid_id, [&](int64_t i) {
 +    return type == ONNX_TENSOR_ELEMENT_DATA_TYPE_FLOAT
 +        ? logits.GetTensorData<float>()[offset + i]
 +        : HalfBitsToFloat(logits.GetTensorData<uint16_t>()[offset + i]);
@@ -95,7 +95,7 @@
    }
  
    if (audio_token_len <= 0) {
-+    if (all_silent) TranscribeReport(stream, "silence_detected");
++    if (all_silent) VesperReport(stream, "silence_detected");
      result.text = "";
      return result;
    }
@@ -103,7 +103,7 @@
    }
  
    if (context_len > max_seq_len) {
-+    TranscribeInputTruncated(stream);
++    VesperInputTruncated(stream);
      const int32_t one_audio_len = static_cast<int32_t>(audio_pad_ids_.size());
      if (one_audio_len <= 0) {
        result.text = "";
@@ -111,7 +111,7 @@
      return result;
    }
  
-+  if (!TranscribeValidLogits(logits, last_idx)) return result;
++  if (!VesperValidLogits(logits, last_idx)) return result;
    int64_t next_id = SampleTokenFromLogits(logits, last_idx, temperature, top_p);
  
    if (next_id == eos_id) {
@@ -119,12 +119,12 @@
                  : static_cast<const void *>(
                        reinterpret_cast<const float *>(base) + offset);
  
-+    if (!TranscribeValidLogits(logits, last_idx, eos_id)) return result;
++    if (!VesperValidLogits(logits, last_idx, eos_id)) return result;
      next_id = SampleTokenWithTemperatureAndTopP(row, is_fp16, vocab_size,
                                                  temperature, top_p, eos_id);
  
      if (next_id == eos_id) {
-+      TranscribeReport(stream, "eos");
++      VesperReport(stream, "eos");
        result.text = "";
        return result;
      }
@@ -132,10 +132,10 @@
    generated_ids.push_back(next_id);
    int32_t cur_len = context_len;
  
-+  TranscribeReport(stream, "max_new_tokens");
++  VesperReport(stream, "max_new_tokens");
    for (int32_t step = 1; step < max_new_tokens; ++step) {
      if (cur_len >= max_seq_len) {
-+      TranscribeReport(stream, "context_limit");
++      VesperReport(stream, "context_limit");
        break;
      }
  
@@ -143,24 +143,24 @@
  
      auto log_shape2 = logits.GetTensorTypeAndShapeInfo().GetShape();
      if (log_shape2.size() < 3) {
-+      TranscribeReport(stream, "error");
++      VesperReport(stream, "error");
        break;
      }
  
      const int32_t time_dim2 = static_cast<int32_t>(log_shape2[1]);
      if (time_dim2 < 1) {
-+      TranscribeReport(stream, "error");
++      VesperReport(stream, "error");
        break;
      }
  
-+    if (!TranscribeValidLogits(logits, time_dim2 - 1)) {
-+      TranscribeReport(stream, "error");
++    if (!VesperValidLogits(logits, time_dim2 - 1)) {
++      VesperReport(stream, "error");
 +      break;
 +    }
      next_id = SampleTokenFromLogits(logits, time_dim2 - 1, temperature, top_p);
  
      if (next_id == eos_id) {
-+      TranscribeReport(stream, "eos");
++      VesperReport(stream, "eos");
        break;
      }
  
@@ -168,14 +168,14 @@
            "qwen3-asr: decode collapsed into a repetition loop after %d "
            "tokens; truncating the repetition",
            static_cast<int32_t>(generated_ids.size()));
-+      TranscribeReport(stream, "repetition");
++      VesperReport(stream, "repetition");
        TrimDegenerateTail(&generated_ids);
        break;
      }
    }
  
 +  for (auto id : generated_ids) {
-+    if (!tokenizer_->ContainsTokenId(id)) TranscribeReport(stream, "error");
++    if (!tokenizer_->ContainsTokenId(id)) VesperReport(stream, "error");
 +  }
    std::vector<int64_t> cleaned_ids = generated_ids;
    if (!generated_ids.empty()) {
@@ -184,7 +184,7 @@
  }
  
  void OfflineRecognizerQwen3ASRImpl::Decode(OfflineStream *stream) const {
-+  TranscribeBegin(stream);
++  VesperBegin(stream);
 +  stream->SetResult(OfflineRecognitionResult{});
 +  try {
    auto memory_info =
@@ -192,7 +192,7 @@
  
    std::vector<float> f = stream->GetFrames();
    if (f.empty()) {
-+    TranscribeReport(stream, "no_input");
++    VesperReport(stream, "no_input");
      OfflineRecognitionResult r;
      r.text = "";
      stream->SetResult(r);
@@ -200,7 +200,7 @@
        FeatToAudioTokensLen(feat_frames, kQwen3ChunkSize);
  
    int32_t valid_frames = std::min(expected_audio_token_len, conv_num_frames);
-+  if (valid_frames < expected_audio_token_len) TranscribeInputTruncated(stream);
++  if (valid_frames < expected_audio_token_len) VesperInputTruncated(stream);
    auto mask_buf =
        std::make_unique<bool[]>(static_cast<size_t>(conv_num_frames));
    std::fill_n(mask_buf.get(), static_cast<size_t>(valid_frames), true);
@@ -209,7 +209,7 @@
  
    stream->SetResult(r);
 +  } catch (const std::exception &ex) {
-+    TranscribeReport(stream, "error");
++    VesperReport(stream, "error");
 +    stream->SetResult(OfflineRecognitionResult{});
 +    SHERPA_ONNX_LOGE("Qwen3-ASR decode failed: %s", ex.what());
 +  }
@@ -233,7 +233,7 @@
  
  #include "sherpa-onnx/csrc/macros.h"
  #include "sherpa-onnx/csrc/math.h"
-+#include "sherpa-onnx/csrc/transcribe-decode-report.h"
++#include "sherpa-onnx/csrc/vesper-decode-report.h"
  #include "sherpa-onnx/csrc/onnx-utils.h"
  
  namespace sherpa_onnx {
@@ -251,7 +251,7 @@
    const float *p_logits = std::get<0>(decoder_out).GetTensorData<float>();
    const float *p_start = p_logits + (logits_shape[1] - 1) * vocab_size;
  
-+  if (!TranscribeValidGreedyLogits(p_start, vocab_size)) return {};
++  if (!VesperValidGreedyLogits(p_start, vocab_size)) return {};
    int64_t max_token_id = MaxElementIndex(p_start, vocab_size);
  
    std::vector<int32_t> predicted_tokens;
@@ -264,14 +264,14 @@
 +        step_shape[1] != 1 || step_shape[2] != vocab_size) return {};
      const float *p_logits = std::get<0>(decoder_out).GetTensorData<float>();
  
-+    if (!TranscribeValidGreedyLogits(p_logits, vocab_size)) return {};
++    if (!VesperValidGreedyLogits(p_logits, vocab_size)) return {};
      max_token_id = MaxElementIndex(p_logits, vocab_size);
    }
  
    std::vector<OfflineCohereTranscribeDecoderResult> ans(1);
  
 +  // The last forward pass may sample EOS exactly at the allowed boundary.
-+  ans[0].stop_reason = TranscribeCohereStop(
++  ans[0].stop_reason = VesperCohereStop(
 +      max_token_id == eos, num_possible_tokens == max_seq_len);
    ans[0].tokens = std::move(predicted_tokens);
  
@@ -282,7 +282,7 @@
  #include <vector>
  
  #include "sherpa-onnx/csrc/math.h"
-+#include "sherpa-onnx/csrc/transcribe-decode-report.h"
++#include "sherpa-onnx/csrc/vesper-decode-report.h"
  #include "sherpa-onnx/csrc/macros.h"
  #include "sherpa-onnx/csrc/offline-cohere-transcribe-decoder.h"
  #include "sherpa-onnx/csrc/offline-cohere-transcribe-greedy-search-decoder.h"
@@ -290,7 +290,7 @@
  
   private:
    void DecodeStream(OfflineStream *s) const {
-+    TranscribeBegin(s);
++    VesperBegin(s);
 +    s->SetResult(OfflineRecognitionResult{});
 +    try {
      auto language = s->GetOption("language");
@@ -301,11 +301,11 @@
      int32_t num_frames = f.size() / feat_dim;
  
 +    if (f.empty()) {
-+      TranscribeReport(s, "no_input");
++      VesperReport(s, "no_input");
 +      return;
 +    }
      if (!CohereHasSignal(f.data(), static_cast<int32_t>(f.size()))) {
-+      TranscribeReport(s, "silence_detected");
++      VesperReport(s, "silence_detected");
        // The whole clip is silence. Return an empty result before the
        // encoder/decoder run, so they cannot hallucinate text for silent
        // audio.
@@ -321,15 +321,15 @@
                                        eos, num_frames);
  
 +      if (results.size() != 1) return;
-+      TranscribeReport(s, results[0].stop_reason);
++      VesperReport(s, results[0].stop_reason);
 +      for (auto id : results[0].tokens) {
-+        if (!symbol_table_.Contains(id)) TranscribeReport(s, "error");
++        if (!symbol_table_.Contains(id)) VesperReport(s, "error");
 +      }
        auto r = Convert(results[0], symbol_table_);
        s->SetResult(r);
 -    } catch (const Ort::Exception &ex) {
 +    } catch (const std::exception &ex) {
-+      TranscribeReport(s, "error");
++      VesperReport(s, "error");
 +      s->SetResult(OfflineRecognitionResult{});
        SHERPA_ONNX_LOGE(
            "\n\nCaught exception:\n\n%s\n\nReturn an empty result. Number of "
@@ -369,7 +369,7 @@
  
  #include "sherpa-onnx/csrc/offline-model-config.h"
  #include "sherpa-onnx/csrc/macros.h"
-+#include "sherpa-onnx/csrc/transcribe-decode-report.h"
++#include "sherpa-onnx/csrc/vesper-decode-report.h"
  #include "sherpa-onnx/csrc/offline-recognizer-impl.h"
  #include "sherpa-onnx/csrc/offline-recognizer.h"
  #include "sherpa-onnx/csrc/offline-whisper-decoder.h"
@@ -424,9 +424,9 @@
 -
 -    mel = Transpose12(model_->Allocator(), &mel);
 -
-+    TranscribeBegin(s);
-+    s->SetOption("transcribe.whisper_scores.v1", "");
-+    s->SetOption("transcribe.whisper_language.v1", "");
++    VesperBegin(s);
++    s->SetOption("vesper.whisper_scores.v1", "");
++    s->SetOption("vesper.whisper_language.v1", "");
 +    s->SetResult(OfflineRecognitionResult{});
      try {
 +      decoder_->SetConfig(config_.model_config.whisper);
@@ -440,11 +440,11 @@
 +      if (feat_dim <= 0 || f.size() % feat_dim != 0) return;
 +      size_t num_frames_size = f.size() / feat_dim;
 +      if (num_frames_size >= static_cast<size_t>(max_num_frames - 50)) {
-+        TranscribeInputTruncated(s);
++        VesperInputTruncated(s);
 +        return;
 +      }
 +      int32_t num_frames = static_cast<int32_t>(num_frames_size);
-+      if (num_frames == 0) { TranscribeReport(s, "no_input"); return; }
++      if (num_frames == 0) { VesperReport(s, "no_input"); return; }
 +
 +      model_->NormalizeFeatures(f.data(), num_frames, feat_dim);
 +
@@ -501,11 +501,11 @@
 +          << "{\"schemaVersion\":1,\"noSpeechProbability\":"
 +          << result.no_speech_probability << ",\"averageLogProbability\":"
 +          << result.average_log_probability << "}";
-+      s->SetOption("transcribe.whisper_scores.v1", scores.str());
-+      s->SetOption("transcribe.whisper_language.v1", result.lang);
-+      TranscribeReport(s, result.stop_reason);
++      s->SetOption("vesper.whisper_scores.v1", scores.str());
++      s->SetOption("vesper.whisper_language.v1", result.lang);
++      VesperReport(s, result.stop_reason);
 +    } catch (const std::exception &ex) {
-+      TranscribeReport(s, "error");
++      VesperReport(s, "error");
 +      s->SetResult(OfflineRecognitionResult{});
 +      SHERPA_ONNX_LOGE("Whisper decode failed: %s", ex.what());
        return;
@@ -520,7 +520,7 @@
  
  #include "sherpa-onnx/csrc/macros.h"
  #include "sherpa-onnx/csrc/math.h"
-+#include "sherpa-onnx/csrc/transcribe-whisper-score.h"
++#include "sherpa-onnx/csrc/vesper-whisper-score.h"
  #include "sherpa-onnx/csrc/offline-whisper-timestamp-rules.h"
  #include "sherpa-onnx/csrc/onnx-utils.h"
  
@@ -555,7 +555,7 @@
 +      logits_shape[2] <= 0 || logits_shape[2] > INT32_MAX) return {};
    int32_t vocab_size = logits_shape[2];
 +  // SOT-row probability BEFORE any timestamp/suppression filters.
-+  const double no_speech_probability = std::exp(TranscribeWhisperLogProbability(
++  const double no_speech_probability = std::exp(VesperWhisperLogProbability(
 +      std::get<0>(decoder_out).GetTensorData<float>(), vocab_size, model_->NoSpeech()));
 +  double selected_log_probability = 0;
 +  double sum_log_probability = 0;
@@ -566,7 +566,7 @@
    {
      const float *p_logits = std::get<0>(decoder_out).GetTensorData<float>();
      const float *p_start = p_logits + (logits_shape[1] - 1) * vocab_size;
-+    if (!TranscribeValidGreedyLogits(p_start, vocab_size)) return {};
++    if (!VesperValidGreedyLogits(p_start, vocab_size)) return {};
  
      if (enable_segment_timestamps) {
        // Make a copy of logits for applying timestamp rules
@@ -574,10 +574,10 @@
                            sample_begin, timestamp_begin, no_timestamps, eot,
                            kMaxInitialTimestampIndex);
        max_token_id = MaxElementIndex(logits_copy.data(), vocab_size);
-+      selected_log_probability = TranscribeWhisperLogProbability(logits_copy.data(), vocab_size, max_token_id);
++      selected_log_probability = VesperWhisperLogProbability(logits_copy.data(), vocab_size, max_token_id);
      } else {
        max_token_id = MaxElementIndex(p_start, vocab_size);
-+      selected_log_probability = TranscribeWhisperLogProbability(p_start, vocab_size, max_token_id);
++      selected_log_probability = VesperWhisperLogProbability(p_start, vocab_size, max_token_id);
      }
    }
  
@@ -589,7 +589,7 @@
 -  int32_t num_possible_tokens = num_feature_frames / 100.0 * 6;
 -  num_possible_tokens = std::min<int32_t>(num_possible_tokens, n_text_ctx / 2);
 +  const int32_t num_possible_tokens =
-+      TranscribeWhisperBudget(n_text_ctx, static_cast<int32_t>(initial_tokens.size()));
++      VesperWhisperBudget(n_text_ctx, static_cast<int32_t>(initial_tokens.size()));
 +  if (num_possible_tokens == 0) return {};
 +  bool context_limit = false;
  
@@ -614,7 +614,7 @@
 +    if (next_info.GetElementType() != ONNX_TENSOR_ELEMENT_DATA_TYPE_FLOAT ||
 +        next_info.GetShape() != std::vector<int64_t>{1, 1, vocab_size}) return {};
      const float *p_logits = std::get<0>(decoder_out).GetTensorData<float>();
-+    if (!TranscribeValidGreedyLogits(p_logits, vocab_size)) return {};
++    if (!VesperValidGreedyLogits(p_logits, vocab_size)) return {};
  
      if (enable_segment_timestamps) {
        // Make a copy of logits for applying timestamp rules
@@ -622,10 +622,10 @@
                            sample_begin, timestamp_begin, no_timestamps, eot,
                            -1);  // -1 = no max_initial constraint
        max_token_id = MaxElementIndex(logits_copy.data(), vocab_size);
-+      selected_log_probability = TranscribeWhisperLogProbability(logits_copy.data(), vocab_size, max_token_id);
++      selected_log_probability = VesperWhisperLogProbability(logits_copy.data(), vocab_size, max_token_id);
      } else {
        max_token_id = MaxElementIndex(p_logits, vocab_size);
-+      selected_log_probability = TranscribeWhisperLogProbability(p_logits, vocab_size, max_token_id);
++      selected_log_probability = VesperWhisperLogProbability(p_logits, vocab_size, max_token_id);
 +    }
 +    if (*p_offset >= n_text_ctx - 1) {
 +      context_limit = true;
@@ -634,7 +634,7 @@
    }
  
    std::vector<OfflineWhisperDecoderResult> ans(1);
-+  ans[0].stop_reason = TranscribeWhisperStop(max_token_id == eot, context_limit);
++  ans[0].stop_reason = VesperWhisperStop(max_token_id == eot, context_limit);
 +  if (max_token_id == eot) sum_log_probability += selected_log_probability;
 +  ans[0].no_speech_probability = no_speech_probability;
 +  ans[0].average_log_probability = sum_log_probability / (predicted_tokens.size() + 1);
@@ -688,19 +688,19 @@
    int32_t SOT() const;
    int32_t TextCtx() const;
 --- /dev/null
-+++ b/sherpa-onnx/csrc/transcribe-whisper-score.h
++++ b/sherpa-onnx/csrc/vesper-whisper-score.h
 @@ -0,0 +1,30 @@
 +// Scores for the application-local Whisper adapter. No sampling changes.
-+#ifndef SHERPA_ONNX_CSRC_TRANSCRIBE_WHISPER_SCORE_H_
-+#define SHERPA_ONNX_CSRC_TRANSCRIBE_WHISPER_SCORE_H_
++#ifndef SHERPA_ONNX_CSRC_VESPER_WHISPER_SCORE_H_
++#define SHERPA_ONNX_CSRC_VESPER_WHISPER_SCORE_H_
 +#include <algorithm>
 +#include <cmath>
 +#include <stdexcept>
-+#include "sherpa-onnx/csrc/transcribe-decode-report.h"
++#include "sherpa-onnx/csrc/vesper-decode-report.h"
 +namespace sherpa_onnx {
-+inline double TranscribeWhisperLogProbability(const float *row, int32_t size,
++inline double VesperWhisperLogProbability(const float *row, int32_t size,
 +                                             int32_t token) {
-+  if (token < 0 || token >= size || !TranscribeValidGreedyLogits(row, size) ||
++  if (token < 0 || token >= size || !VesperValidGreedyLogits(row, size) ||
 +      !std::isfinite(row[token])) {
 +    throw std::runtime_error("Invalid Whisper logits or token");
 +  }
@@ -709,13 +709,13 @@
 +  for (int32_t i = 0; i < size; ++i) sum += std::exp(row[i] - maximum);
 +  return row[token] - maximum - std::log(sum);
 +}
-+inline int32_t TranscribeWhisperBudget(int32_t context, int32_t prompt) {
++inline int32_t VesperWhisperBudget(int32_t context, int32_t prompt) {
 +  // OpenAI's default sample_len is n_text_ctx/2, independent of language and
 +  // duration. Leave room for the next forward pass within the fixed KV cache.
 +  if (context <= 0 || prompt < 0 || prompt >= context) return 0;
 +  return std::min(context / 2, context - prompt - 1);
 +}
-+inline const char *TranscribeWhisperStop(bool eos, bool context_limit) {
++inline const char *VesperWhisperStop(bool eos, bool context_limit) {
 +  return eos ? "eos" : (context_limit ? "context_limit" : "model_token_limit");
 +}
 +}  // namespace sherpa_onnx

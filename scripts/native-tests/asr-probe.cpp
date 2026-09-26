@@ -56,7 +56,7 @@ int main(int argc, char **argv) {
   SherpaOnnxDecodeOfflineStream(recognizer, stream);
   const auto finished = std::chrono::steady_clock::now();
   const char *result = SherpaOnnxGetOfflineStreamResultAsJson(stream);
-  const char *report = SherpaOnnxOfflineStreamGetOption(stream, "transcribe.decode_report.v1");
+  const char *report = SherpaOnnxOfflineStreamGetOption(stream, "vesper.decode_report.v1");
   std::cout << "{\"loadSeconds\":" << std::chrono::duration<double>(loaded - begin).count()
             << ",\"decodeSeconds\":" << std::chrono::duration<double>(finished - decoding).count()
             << ",\"coldAsrSeconds\":" << std::chrono::duration<double>(finished - begin).count()

@@ -57,7 +57,7 @@ if (mode === '--lib-dir' || mode === '--manifest' || mode === '--source-dir') {
       mode === '--source-dir'
         ? resolve(manifest.libDir, '../../source')
         : mode === '--manifest'
-          ? join(manifest.libDir, 'transcribe-runtime.json')
+          ? join(manifest.libDir, 'vesper-runtime.json')
           : manifest.libDir,
     );
   process.exit(0);
@@ -103,7 +103,7 @@ const source = join(work, 'source');
 const build = join(work, 'build');
 const install = join(work, 'install');
 const libDir = join(install, 'lib');
-const manifestPath = join(libDir, 'transcribe-runtime.json');
+const manifestPath = join(libDir, 'vesper-runtime.json');
 if (existsSync(manifestPath)) {
   const manifest = JSON.parse(readFileSync(manifestPath, 'utf8'));
   if (
@@ -136,10 +136,10 @@ if (!existsSync(archive))
 if (hash(readFileSync(archive)) !== sourceSha256)
   throw new Error('Sherpa source archive checksum mismatch');
 mkdirSync(source, { recursive: true });
-if (!existsSync(join(source, '.transcribe-patched'))) {
+if (!existsSync(join(source, '.vesper-patched'))) {
   run('tar', ['-xzf', archive, '--strip-components=1', '-C', source]);
   run('patch', ['--batch', '-p1', '-i', patch], { cwd: source });
-  writeFileSync(join(source, '.transcribe-patched'), patchSha256);
+  writeFileSync(join(source, '.vesper-patched'), patchSha256);
 }
 run('cmake', ['-S', source, '-B', build, `-DCMAKE_INSTALL_PREFIX=${install}`, ...flags]);
 run('cmake', [

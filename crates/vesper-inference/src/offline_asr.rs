@@ -22,7 +22,7 @@ pub(crate) struct SegmentObservation {
     whisper_scores: Option<crate::whisper::Scores>,
 }
 
-const REPORT_OPTION: &str = "transcribe.decode_report.v1";
+const REPORT_OPTION: &str = "vesper.decode_report.v1";
 pub(crate) const QWEN_REVISION: &str = "68818b2313fe77bd06f6a7c5068ff3ef59d02b8a";
 pub(crate) const COHERE_REVISION: &str = "156a470cf08eefe706a0004f3c52d9ee567ca7a0";
 pub(crate) const COHERE_USE_PUNCT: bool = true;
@@ -195,7 +195,7 @@ fn result_text(
         crate::whisper::completed_text(
             &stream.get_option(crate::whisper::SCORE_OPTION),
             text,
-            &stream.get_option("transcribe.whisper_language.v1"),
+            &stream.get_option("vesper.whisper_language.v1"),
         )
     } else {
         Ok(text)

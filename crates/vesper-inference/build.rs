@@ -12,7 +12,7 @@ fn main() {
     let directory = env::var("SHERPA_ONNX_LIB_DIR").expect(
         "Build the patched runtime with `make sherpa-runtime`, then source scripts/dev-env.sh before cargo commands",
     );
-    let manifest_path = Path::new(&directory).join("transcribe-runtime.json");
+    let manifest_path = Path::new(&directory).join("vesper-runtime.json");
     println!("cargo:rerun-if-changed={}", manifest_path.display());
     let manifest: serde_json::Value = serde_json::from_slice(
         &fs::read(&manifest_path)
