@@ -289,6 +289,13 @@ not train model weights or activate a new model. Read the
 [personalization guide](personalization/README.md) for the exact learning,
 review and undo behavior.
 
+**Current project** is a manual selection. Enter a name and save before recording;
+Vesper does not infer it from the app or document you are using. Give vocabulary
+and examples the same project name to limit their use; leave an entry's project
+blank to share it. Switch the current name when changing projects, or leave it
+blank to use only shared entries. Reviewing an older recording keeps its original
+project, including a blank project, rather than borrowing the current selection.
+
 Automatically learned words are used after recognition only when the transcript
 also matches context from a supporting edit. Older learned words may need a fresh
 correction before they apply again. This helps avoid unrelated replacements, but

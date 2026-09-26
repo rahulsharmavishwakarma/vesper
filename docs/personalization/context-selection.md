@@ -4,6 +4,16 @@ Implementation: [profile phrase selection](../../crates/vesper-core/src/personal
 
 One operation freezes one profile and its compact automatic-learning evidence in one SQLite read transaction, after the existing desktop enable migration. A correction learned while another operation is already running applies only to later operations. Context is currently the user-selected project, requested language, available transcript and explicit output settings. The application does not read the receiving editor's document, clipboard history or screen to infer a project.
 
+Projects are names in this profile, not detected folders or separate databases.
+Save **Current project** before recording and change it when moving between
+projects. Blank-scoped vocabulary/examples are shared; nonblank entries match
+the selected project case-insensitively after trimming whitespace. A blank
+selection uses shared entries only. The per-recording scope is retained in
+History: remembering an older cleanup example or opening its correction review
+uses that recording's project, even after the selected project changes. Blank
+and legacy recording scopes remain shared. A correction's project can still be
+changed explicitly before remembering it, or later in Vocabulary.
+
 ## Before recognition
 
 Native phrase hints can use only context available before ASR. Enabled entries must match the requested language and selected project; a nonempty lexical context must also match the project text at this stage. Selection prioritizes project-specific entries, then observed usage, reviewed-source count and stable ID. Canonical spellings are case-insensitively deduplicated.

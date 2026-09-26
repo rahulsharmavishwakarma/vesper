@@ -4,6 +4,7 @@ import { mount, unmount, tick } from 'svelte';
 import { mockIPC, mockWindows, clearMocks } from '@tauri-apps/api/mocks';
 import { emit } from '@tauri-apps/api/event';
 import QuickCapture from '../src/lib/components/QuickCapture.svelte';
+import LearningReview from '../src/lib/components/LearningReview.svelte';
 import App from '../src/App.svelte';
 import { ASR_MODELS, CAPTURE_DESIGNS, defaultSettings } from '../src/lib/config';
 import { MODEL_PRESETS } from '../src/lib/modelPresets';
@@ -761,6 +762,40 @@ await test('Personal preference drafts survive navigation and save independently
     'Clean preferences did not refresh changes made elsewhere',
   );
 });
+
+for (const project of ['', 'atlas', undefined]) {
+  await test(`Review keeps recording project ${project ?? '(legacy)'} after switching projects`, async () => {
+    let request;
+    const profile = { revision: 2, vocabulary: [], activeProject: 'other-project' };
+    mockIPC((command, args) => {
+      if (command === 'get_personalization') return structuredClone(profile);
+      if (command === 'get_correction_suggestions')
+        return [{ reviewRevisionId: 'review', pair: { heard: 'Atlus', intended: 'Atlas' } }];
+      if (command === 'remember_correction') {
+        request = args.request;
+        return structuredClone(profile);
+      }
+      throw new Error(`Unexpected review command: ${command}`);
+    });
+    component = mount(LearningReview, {
+      target,
+      props: {
+        record: { id: 'older-recording', reviewHistory: [{}], personalizationProject: project },
+        onUpdate: () => {},
+      },
+    });
+    await until(() => target.querySelector('input'), 'Review controls did not load');
+    assert(
+      target.querySelector('input').value === (project ?? ''),
+      'Review borrowed the current project',
+    );
+    [...target.querySelectorAll('button')]
+      .find((b) => b.textContent === 'Remember this correction')
+      .click();
+    await until(() => request, 'Correction was not submitted');
+    assert(request.project === (project ?? ''), 'Saved correction changed project');
+  });
+}
 
 await test('Learning draft Copy saves once, blocks repeat clicks, and preserves the draft when learning is undone', async () => {
   let result = {

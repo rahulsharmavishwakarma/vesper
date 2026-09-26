@@ -177,7 +177,9 @@ impl DatasetStore {
             preset: record.config_snapshot.cleanup_preset,
             intent,
             enabled: true,
-            project: profile.active_project.clone(),
+            // Review can happen after switching projects. Preserve the recording's
+            // scope, including an explicitly unscoped or legacy recording.
+            project: record.personalization_project.clone(),
         });
         self.save_personalization(profile)
     }
@@ -575,6 +577,42 @@ fn before(earlier: &str, later: &str) -> bool {
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    #[test]
+    fn remembered_cleanup_keeps_recording_project_after_switch_and_reopen() {
+        for project in ["atlas", ""] {
+            let temp = tempfile::tempdir().unwrap();
+            let root = temp.path().join("data");
+            let audio = temp.path().join("fixture.wav");
+            std::fs::write(&audio, b"synthetic storage fixture").unwrap();
+            let store = DatasetStore::open(root.clone()).unwrap();
+            let session = store.import_audio(&audio, &AppConfig::default()).unwrap();
+            store
+                .set_transcripts(&session.id, "send atlas tomorrow".into(), None, json!({}))
+                .unwrap();
+            store
+                .complete_personalization(
+                    &session.id,
+                    "send atlas tomorrow".into(),
+                    MemoryEvidence::default(),
+                    project.into(),
+                )
+                .unwrap();
+            store
+                .approve_correction(&session.id, "Send Atlas tomorrow.".into())
+                .unwrap();
+            let mut profile = store.personalization().unwrap();
+            profile.active_project = "other-project".into();
+            store.save_personalization(profile).unwrap();
+            drop(store);
+            let store = DatasetStore::open(root).unwrap();
+            let saved = store
+                .remember_cleanup(&session.id, OutputIntent::Note)
+                .unwrap();
+            assert_eq!(saved.examples[0].project, project);
+            assert_eq!(saved.active_project, "other-project");
+        }
+    }
 
     #[test]
     fn desktop_profiles_upgrade_legacy_learning_once_and_preserve_other_choices() {
