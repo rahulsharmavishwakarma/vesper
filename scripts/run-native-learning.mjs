@@ -76,9 +76,9 @@ const child = spawn('/usr/bin/time', ['-l', binary], {
   stdio: ['ignore', fd, fd],
   env: {
     ...process.env,
-    TRANSCRIBE_MODEL_DIR: models,
-    TRANSCRIBE_LEARNING_AUDIO_ROOT: audio,
-    TRANSCRIBE_WEBVIEW_REPORT: resolve(directory, 'requests.jsonl'),
+    VESPER_MODEL_DIR: models,
+    VESPER_LEARNING_AUDIO_ROOT: audio,
+    VESPER_WEBVIEW_REPORT: resolve(directory, 'requests.jsonl'),
   },
 });
 console.log(`Native qualification artifacts: ${directory}`);

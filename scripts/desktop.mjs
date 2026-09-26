@@ -8,6 +8,9 @@ import { fileURLToPath } from 'node:url';
 
 const root = resolve(dirname(fileURLToPath(import.meta.url)), '..');
 
+export const mlxOverride = (environment = process.env) =>
+  environment.VESPER_MLX ?? environment.TRANSCRIBE_MLX;
+
 export function desktopPlan(
   args,
   { platform, arch, host, environmentTarget, configuredTarget, mlx = 'auto' },
@@ -39,7 +42,7 @@ export function desktopPlan(
     throw new Error('Custom Cargo target configuration: pass an explicit Tauri --target.');
   const target = targets[0] || environmentTarget || host;
   if (!targets.length && environmentTarget) head.push('--target', environmentTarget);
-  if (!['auto', '0'].includes(mlx)) throw new Error('TRANSCRIBE_MLX must be auto or 0');
+  if (!['auto', '0'].includes(mlx)) throw new Error('VESPER_MLX must be auto or 0');
   const prepareMlx =
     mlx !== '0' && platform === 'darwin' && arch === 'arm64' && target === 'aarch64-apple-darwin';
   if (prepareMlx) head.push('--config', 'src-tauri/tauri.mlx.conf.json');
@@ -80,7 +83,7 @@ function main() {
     host,
     environmentTarget: process.env.CARGO_BUILD_TARGET,
     configuredTarget: !help && hasConfiguredTarget(),
-    mlx: process.env.TRANSCRIBE_MLX,
+    mlx: mlxOverride(),
   });
   if (plan.prepareMlx) {
     const version = execFileSync('sw_vers', ['-productVersion'], { encoding: 'utf8' });

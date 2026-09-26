@@ -161,7 +161,7 @@ A project-local Rust toolchain can also be installed under `.tooling`. To use th
 source scripts/dev-env.sh
 ```
 
-The script enables the optional toolchain and an existing project-local CMake installation; it does not install Rust, CMake, or Node.js. If `models/downloads` exists, it also supplies that directory through `TRANSCRIBE_MODEL_DIR`, unless already set. Explicit saved `modelDirectory` still takes precedence. `.tooling` is local development state and should not be committed.
+The script enables the optional toolchain and an existing project-local CMake installation; it does not install Rust, CMake, or Node.js. It supplies `VESPER_MODEL_DIR` from an explicit nonempty override, earlier Transcribe/Ukti/STT aliases, or an existing `models/downloads`, in that order. Explicit saved `modelDirectory` still takes precedence. `.tooling` is local development state and should not be committed.
 
 On macOS, install the command line tools if needed:
 

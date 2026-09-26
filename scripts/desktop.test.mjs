@@ -1,6 +1,34 @@
 import assert from 'node:assert/strict';
 import { test } from 'node:test';
-import { desktopPlan } from './desktop.mjs';
+import { desktopPlan, mlxOverride } from './desktop.mjs';
+import { execFileSync } from 'node:child_process';
+
+test('MLX overrides prefer Vesper, preserve legacy fallback, and reject invalid current values', () => {
+  assert.equal(mlxOverride({ VESPER_MLX: 'auto', TRANSCRIBE_MLX: '0' }), 'auto');
+  assert.equal(mlxOverride({ TRANSCRIBE_MLX: '0' }), '0');
+  assert.equal(mlxOverride({}), undefined);
+  assert.throws(
+    () =>
+      desktopPlan(['build'], { ...mac, mlx: mlxOverride({ VESPER_MLX: '', TRANSCRIBE_MLX: '0' }) }),
+    /VESPER_MLX/,
+  );
+});
+
+test('development shell uses nonempty Vesper, Transcribe, Ukti, STT model overrides in order', () => {
+  const names = ['VESPER_MODEL_DIR', 'TRANSCRIBE_MODEL_DIR', 'UKTI_MODEL_DIR', 'STT_MODEL_DIR'];
+  for (let first = 0; first < names.length; first++) {
+    const env = { ...process.env };
+    names.forEach((name, index) => {
+      env[name] = index < first ? '' : `/fixture/${index}`;
+    });
+    const result = execFileSync(
+      '/bin/sh',
+      ['-c', '. ./scripts/dev-env.sh; printf "%s" "$VESPER_MODEL_DIR"'],
+      { env, encoding: 'utf8' },
+    );
+    assert.equal(result, `/fixture/${first}`);
+  }
+});
 
 const mac = { platform: 'darwin', arch: 'arm64', host: 'aarch64-apple-darwin' };
 test('normal Apple Silicon dev/build adds MLX before Cargo arguments', () => {

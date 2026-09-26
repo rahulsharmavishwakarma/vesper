@@ -116,7 +116,7 @@ uses synthetic app settings with the native Mac observation as its device fixtur
 
 ## Building the Apple Silicon application
 
-Normal `npm run desktop:dev`, `npm run desktop:build` and `make build-debug` prepare the pinned MLX runtime and include it for native Apple Silicon builds targeting `aarch64-apple-darwin`. Full Xcode with the Metal compiler, Swift 6.2 or newer, and macOS 14 or newer are required. Debug packaging remains app-only; release packaging retains app and DMG. Intel, universal and other-platform builds keep MLX off. `TRANSCRIBE_MLX=0` explicitly builds the portable path. A missing native prerequisite fails the intended GPU build instead of silently removing acceleration.
+Normal `npm run desktop:dev`, `npm run desktop:build` and `make build-debug` prepare the pinned MLX runtime and include it for native Apple Silicon builds targeting `aarch64-apple-darwin`. Full Xcode with the Metal compiler, Swift 6.2 or newer, and macOS 14 or newer are required. Debug packaging remains app-only; release packaging retains app and DMG. Intel, universal and other-platform builds keep MLX off. `VESPER_MLX=0` explicitly builds the portable path. A missing native prerequisite fails the intended GPU build instead of silently removing acceleration.
 
 Pass a cross-compilation target through Tauri's `--target` before the Cargo `--` separator. The launcher forwards `CARGO_BUILD_TARGET` when no explicit target is supplied and requires an explicit target for custom Cargo target configuration. It never downloads speech model weights. Standalone evaluator builds still use:
 
