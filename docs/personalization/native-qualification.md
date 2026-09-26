@@ -4,6 +4,12 @@
 
 ## Evidence boundaries
 
+Qualification-only app identifiers use `com.vesper.learning-qualification` and
+`com.vesper.dictation-smoke`, separate from the user's application store.
+All Rust qualification variables use `VESPER_*` with corresponding historical
+`TRANSCRIBE_*` read fallbacks. Existing dated results retain their original
+environment/source identities; renaming does not requalify those measurements.
+
 Use three separately reported layers:
 
 1. **Authored desktop lifecycle replay:** constructed ASR text, simulated runtime restarts and ordinary edits exercise the production completion, retry correlation, persistence, selection and draft-edit paths. A frozen-memory arm starts with the same empty memory. References are reporting-only; only explicit feedback rows may teach. Distinct synthetic audio fingerprints are mechanism controls, not independent human recordings.

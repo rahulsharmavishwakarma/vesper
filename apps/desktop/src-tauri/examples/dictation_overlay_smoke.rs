@@ -23,7 +23,7 @@ fn native_probe(round: u32, app: tauri::AppHandle) -> &'static str {
 #[cfg(target_os = "macos")]
 fn main() {
     let mut context = tauri::generate_context!();
-    context.config_mut().identifier = "com.transcribe.dictation-smoke".into();
+    context.config_mut().identifier = "com.vesper.dictation-smoke".into();
     context.config_mut().app.windows.clear();
     context.config_mut().app.security.csp = None;
     context.config_mut().app.security.dev_csp = None;

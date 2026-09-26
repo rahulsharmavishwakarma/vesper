@@ -386,15 +386,15 @@ mod probe {
             return Err("Expected the fixed 38-sample manifest".into());
         }
         let audio = PathBuf::from(
-            std::env::var_os("TRANSCRIBE_LEARNING_AUDIO_ROOT")
-                .ok_or("Set TRANSCRIBE_LEARNING_AUDIO_ROOT")?,
+            vesper_core::environment::var_os("VESPER_LEARNING_AUDIO_ROOT")
+                .ok_or("Set VESPER_LEARNING_AUDIO_ROOT")?,
         );
         let models = PathBuf::from(
-            std::env::var_os("TRANSCRIBE_MODEL_DIR").ok_or("Set TRANSCRIBE_MODEL_DIR")?,
+            vesper_core::environment::var_os("VESPER_MODEL_DIR").ok_or("Set VESPER_MODEL_DIR")?,
         );
         let output = PathBuf::from(
-            std::env::var_os("TRANSCRIBE_WEBVIEW_REPORT")
-                .ok_or("Set a new TRANSCRIBE_WEBVIEW_REPORT path")?,
+            vesper_core::environment::var_os("VESPER_WEBVIEW_REPORT")
+                .ok_or("Set a new VESPER_WEBVIEW_REPORT path")?,
         );
         let config = AppConfig {
             language: Language::English,
@@ -464,7 +464,7 @@ mod probe {
             "evidenceClass":"native WKWebView and production panel/runtime; prerecorded public PCM and scripted edits",
             "microphoneStopToVisibleMs":null,"humanEditingTimeMs":null}))?;
         let mut context = tauri::generate_context!();
-        context.config_mut().identifier = "com.transcribe.learning-qualification".into();
+        context.config_mut().identifier = "com.vesper.learning-qualification".into();
         context.config_mut().build.dev_url = Some(URL.parse()?);
         context.config_mut().app.windows.clear();
         let started = Instant::now();

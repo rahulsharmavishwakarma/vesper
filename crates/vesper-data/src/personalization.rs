@@ -687,10 +687,11 @@ mod tests {
 
     /// Explicit native-data lane; public audio and references only, isolated stores.
     #[test]
-    #[ignore = "requires TRANSCRIBE_PUBLIC_MEMORY_CORPUS pointing to the cached calibration corpus"]
+    #[ignore = "requires VESPER_PUBLIC_MEMORY_CORPUS pointing to the cached calibration corpus"]
     fn public_corpus_reviews_remember_undo_reload_and_reject_stale_updates() {
-        let root =
-            std::path::PathBuf::from(std::env::var_os("TRANSCRIBE_PUBLIC_MEMORY_CORPUS").unwrap());
+        let root = std::path::PathBuf::from(
+            vesper_core::environment::var_os("VESPER_PUBLIC_MEMORY_CORPUS").unwrap(),
+        );
         let manifest: Value =
             serde_json::from_slice(&std::fs::read(root.join("calibration.json")).unwrap()).unwrap();
         let report: Value = serde_json::from_slice(
