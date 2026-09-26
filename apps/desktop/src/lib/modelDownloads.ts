@@ -18,6 +18,34 @@ export interface ModelDownloadState {
   progress: string;
   error: string | null;
   feedback: string | null;
+  audioSetupPaused?: boolean;
+}
+
+export const AUTOMATIC_AUDIO_MODELS = [
+  { modelId: 'dpdfnet8', name: 'Noise reduction' },
+  { modelId: 'silero-v6.2', name: 'Speech detection' },
+  { modelId: 'nvidia/Nemotron-3-Diarization', name: 'Speaker timelines' },
+] as const;
+
+/** Use the native catalog's saved selection and runtime/device admission. Never
+ * download speaker weights when its separately installed runtime is unavailable. */
+export function automaticAudioDownloads(catalog: ModelCatalogInstallation[]): DownloadTarget[] {
+  return AUTOMATIC_AUDIO_MODELS.flatMap(({ modelId, name }) => {
+    const entry = matchingDownload(catalog, {
+      modelId,
+      name,
+      role: 'audio_frontend',
+      quantization: null,
+    });
+    return entry?.selected && entry.supported && entry.runtimeReady
+      ? [{ modelId, name, role: 'audio_frontend' as const, quantization: null }]
+      : [];
+  });
+}
+
+/** Retry transfers automatically without a tight network loop. */
+export function audioSetupRetryDelay(failures: number): number {
+  return [30_000, 120_000, 600_000][Math.min(Math.max(failures - 1, 0), 2)];
 }
 
 export function downloadPercent(progress: InstallProgress | null): number | null {

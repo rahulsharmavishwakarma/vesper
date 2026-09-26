@@ -7,7 +7,9 @@ The original built-ins remain available; the other additional entries are pinned
 [models/presets.json](../models/presets.json). They use the existing profile,
 settings, explicit-download, hash-verification, and inference paths. Selecting
 an entry changes only the settings draft. **Save & download** saves it before
-requesting that model's files; **Save changes** alone does not download anything.
+requesting that model's files; **Save changes** alone does not download speech or
+writing weights. Supporting audio packages are managed automatically once those
+required models are ready; see [automatic audio setup](user-guide.md#experimental-audio-processing).
 
 The menus are the user-facing catalog; there is no JSON profile import section.
 Previously saved custom profiles remain usable in their respective menus.
@@ -48,9 +50,18 @@ native-device gates. The default remains provisional and unchanged.
 Qualify optional gain and denoising separately for each model and artifact.
 One model's regression does not invalidate another model's measured improvement.
 The [automatic-level results](validation/denoising-followup-2026-09-19.md#automatic-level-implementation-and-qualification)
-remain mixed and limited; all optional audio-processing defaults stay off.
-The shared implementation does not add separate adapters or automatic
-model-specific processing presets for this policy.
+remain mixed and limited. The desktop now uses an owner-selected fixed setup:
+DPDFNet8 suppression plus Silero advisory timing; automatic gain remains disabled.
+This is a product decision, not a passed universal quality gate or an adaptive
+per-ASR policy. Benchmark configurations still explicitly select original audio,
+DPDFNet4/8 and gain conditions; their defaults and historical results are unchanged.
+Only ASR and writing models have user-facing model selectors. Missing supporting
+packages download when the required selected models and relevant native runtime
+are ready. Stored files are verified and reused automatically; missing/corrupt
+files are repaired. Failures/cancellation retry with backoff or network reconnection.
+The existing download operation retains pinned hashes and serializes with inference.
+The speaker runtime still requires a separate local build; unavailable runtime
+support does not trigger an unusable weights download.
 
 ## Additional choices
 
@@ -133,3 +144,27 @@ complete profile in `models/presets.json`; do not add a display-only model name.
 same catalog through the actual settings and installer contract. The browser
 page `/tests/recovery.html` tests explicit save/download and reopening with
 synthetic native commands. See [validation instructions](validation.md).
+
+## Automatic audio setup validation
+
+The browser regression page exercises ordered downloads, installed-file reuse,
+missing speaker runtime, cancellation/network failure and automatic timed/online recovery,
+recording exclusion, unsaved settings, folder changes, and priority for explicit
+speech downloads. Native settings tests cover old off/DPDF4/DPDF8 preferences,
+read-only migration, save/reset and unchanged core/evaluator defaults.
+
+The opt-in network test downloads the pinned DPDFNet8 and Silero packages into
+temporary storage, verifies hashes, checks that reinstalling transfers no files,
+repairs a deliberately corrupted file, and runs the managed frontend on a public recording. It passed locally using
+FLEURS en_us test `2013850546771709559.wav`, SHA-256
+`ca2974ef8698d1aeb132782a02aaf50a18707489d1cb132af7a83efbc72bc236`.
+Output is finite, finalized and preserves the resampled sample count; gain stays
+disabled. This is a download/integration check, not an ASR accuracy or latency result.
+No downloaded weights, recordings or generated reports are versioned.
+
+```sh
+. scripts/dev-env.sh
+TRANSCRIBE_SMOKE_AUDIO=/path/to/public.wav cargo test --locked \
+  -p transcribe-desktop --lib managed_audio_downloads_verify_and_reuse_pinned_packages \
+  -- --ignored --nocapture
+```

@@ -307,16 +307,16 @@ test('custom bindings persist, reject equivalent duplicates, and preserve an ava
   assert.equal(recordingShortcuts(legacy).hold, 'CommandOrControl+Shift+D');
 });
 
-test('audio processing migrates off and validates opt-in model choices', () => {
+test('desktop audio migrates to the managed profile and validates legacy inputs', () => {
   assert.deepEqual(parseStoredSettings({}).audioFrontend, {
-    vadEnabled: false,
+    vadEnabled: true,
     autoLevelEnabled: false,
-    noiseReduction: 'off',
+    noiseReduction: 'dpdfnet8',
   });
   assert.deepEqual(parseStoredSettings({ audioFrontend: { vadEnabled: true } }).audioFrontend, {
     vadEnabled: true,
     autoLevelEnabled: false,
-    noiseReduction: 'off',
+    noiseReduction: 'dpdfnet8',
   });
   for (const noiseReduction of ['off', 'dpdfnet4', 'dpdfnet8']) {
     const config = {
@@ -324,7 +324,10 @@ test('audio processing migrates off and validates opt-in model choices', () => {
       audioFrontend: { vadEnabled: true, autoLevelEnabled: true, noiseReduction },
     };
     assert.deepEqual(validateSettings(config), []);
-    assert.deepEqual(parseStoredSettings(config).audioFrontend, config.audioFrontend);
+    const restored = parseStoredSettings(config);
+    assert.deepEqual(restored.audioFrontend, defaultSettings().audioFrontend);
+    assert.equal(config.audioFrontend.noiseReduction, noiseReduction);
+    assert.deepEqual(parseStoredSettings(restored), restored);
   }
   for (const audioFrontend of [
     null,

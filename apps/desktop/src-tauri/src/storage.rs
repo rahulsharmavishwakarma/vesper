@@ -120,7 +120,7 @@ mod tests {
             crate::settings::SettingsStore::new(selected.join("settings.json"))
                 .load()
                 .unwrap(),
-            config
+            crate::settings::managed_audio(config)
         );
         assert_eq!(
             fs::read(selected.join("dataset/audio/original.wav")).unwrap(),

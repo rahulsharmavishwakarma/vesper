@@ -15,7 +15,6 @@ export type CleanupPreset = 'minimal' | 'balanced';
 export type ComputeBackend = 'auto' | 'cpu' | 'metal' | 'cuda' | 'vulkan' | 'rocm';
 export const AUDIO_FRONTENDS = {
   'silero-v6.2': 'Silero v6.2',
-  dpdfnet4: 'DPDFNet4',
   dpdfnet8: 'DPDFNet8',
   'nvidia/Nemotron-3-Diarization': 'Nemotron 3 speaker timelines · 107 MB',
 } as const;
@@ -24,6 +23,10 @@ export type AudioFrontendConfig = {
   autoLevelEnabled: boolean;
   noiseReduction: 'off' | 'dpdfnet4' | 'dpdfnet8';
 };
+/** Fixed desktop profile. Legacy fields remain readable for settings migration. */
+export function automaticAudioFrontend(): AudioFrontendConfig {
+  return { vadEnabled: true, autoLevelEnabled: false, noiseReduction: 'dpdfnet8' };
+}
 export type ImprovementMode = 'review_required' | 'automatic';
 export const CAPTURE_DESIGNS = [
   'split',
@@ -169,7 +172,7 @@ export function defaultSettings(): AppConfig {
       customRewriter: null,
     },
     cleanupEnabled: true,
-    audioFrontend: { vadEnabled: false, autoLevelEnabled: false, noiseReduction: 'off' },
+    audioFrontend: automaticAudioFrontend(),
     language: 'en',
     modelDirectory: null,
     cleanupPreset: 'minimal',
@@ -518,7 +521,7 @@ export function validateSettings(value: unknown): string[] {
 export function parseSettings(value: unknown): AppConfig {
   const errors = validateSettings(value);
   if (errors.length) throw new Error(errors.join(' '));
-  return value as AppConfig;
+  return { ...(value as AppConfig), audioFrontend: automaticAudioFrontend() };
 }
 
 /** Match Rust serde defaults when loading older settings with absent fields. */

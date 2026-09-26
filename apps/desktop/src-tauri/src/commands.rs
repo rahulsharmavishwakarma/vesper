@@ -1161,8 +1161,8 @@ mod settings_tests {
             })
             .unwrap();
             assert_eq!(calls, 1);
-            assert_eq!(saved, defaults);
-            assert_eq!(store.load().unwrap(), defaults);
+            assert_eq!(saved, crate::settings::managed_audio(defaults.clone()));
+            assert_eq!(store.load().unwrap(), saved);
         }
     }
 
@@ -1204,7 +1204,7 @@ mod settings_tests {
             Ok(())
         })
         .unwrap();
-        assert_eq!(saved, AppConfig::default());
+        assert_eq!(saved, crate::settings::managed_audio(AppConfig::default()));
         assert_eq!(store.load().unwrap(), saved);
     }
 
@@ -1272,7 +1272,10 @@ mod profile_tests {
         );
         assert!(config.models.custom_asr.is_none());
         store.save(&config).unwrap();
-        assert_eq!(store.load().unwrap(), config);
+        assert_eq!(
+            store.load().unwrap(),
+            crate::settings::managed_audio(config.clone())
+        );
         let before = config.clone();
         assert!(apply_model_profile(&mut config, "{}").is_err());
         assert_eq!(config, before);

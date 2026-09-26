@@ -9,8 +9,46 @@ import {
   matchingDownload,
   downloadOptionStatus,
   knownDownloadSelection,
+  automaticAudioDownloads,
+  audioSetupRetryDelay,
 } from './modelDownloads.ts';
 import { MODEL_PRESETS } from './modelPresets.ts';
+
+test('automatic audio setup respects native admission and never chooses DPDF4 or main models', () => {
+  const entry = (modelId, changes = {}) => ({
+    modelId,
+    name: modelId,
+    role: 'audio_frontend',
+    quantization: null,
+    selected: true,
+    supported: true,
+    runtimeReady: true,
+    artifactsInstalled: false,
+    ...changes,
+  });
+  const catalog = [
+    entry('silero-v6.2'),
+    entry('dpdfnet4'),
+    entry('dpdfnet8'),
+    entry('nvidia/Nemotron-3-Diarization'),
+    entry(defaultSettings().models.asr, { role: 'speech_recognition' }),
+  ];
+  const ids = (rows) => automaticAudioDownloads(rows).map((e) => e.modelId);
+  assert.deepEqual(ids(catalog), ['dpdfnet8', 'silero-v6.2', 'nvidia/Nemotron-3-Diarization']);
+  for (const override of [{ selected: false }, { supported: false }, { runtimeReady: false }]) {
+    assert.deepEqual(ids(catalog.map((e) => ({ ...e, ...override }))), []);
+  }
+  const installed = catalog.map((e) => ({ ...e, artifactsInstalled: true }));
+  assert.deepEqual(ids(installed), ['dpdfnet8', 'silero-v6.2', 'nvidia/Nemotron-3-Diarization']);
+  assert.deepEqual(ids([]), []);
+});
+
+test('automatic setup retry intervals are bounded and avoid immediate retry loops', () => {
+  assert.deepEqual(
+    [1, 2, 3, 4, 100].map(audioSetupRetryDelay),
+    [30_000, 120_000, 600_000, 600_000, 600_000],
+  );
+});
 
 test('progress uses byte totals, bounds invalid values and never rounds unfinished files to 100%', () => {
   assert.equal(downloadPercent(null), null);
