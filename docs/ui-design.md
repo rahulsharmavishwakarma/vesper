@@ -51,6 +51,11 @@ that macOS `iconutil` decoded successfully. These checks did not launch the app,
 qualify native Dock appearance, exercise a screen reader, or validate microphone,
 inference, release distribution or Windows/Linux behavior.
 
+That identifier describes the 23 September build. The current application uses
+`com.vesper.desktop`, with legacy data lookup documented in
+[development](development.md#product-name-and-compatibility). The selected
+artwork and motion are unchanged by the technical namespace migration.
+
 The identity regression navigates to Settings and activates a visible About
 entry, rather than assuming where that entry is rendered. Brand checks therefore
 remain independent of sidebar/Settings presentation changes; native calls are

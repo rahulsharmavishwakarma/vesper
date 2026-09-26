@@ -343,6 +343,14 @@ The generated library is `libVesperMLX.dylib`; its real source, patch and
 binary hashes are checked before packaging. `VESPER_MLX_BUILD_DIRECTORY` is
 injected by the Rust build script, not a user override.
 
+An existing Swift scratch checkout may contain the previous exact reporting
+patch. The integrity check intentionally refuses to overwrite a modified
+checkout. To upgrade such a cache, stop builds, move `.tooling/mlx-build` to a
+new, unused backup path, and rebuild with `node scripts/mlx-runtime.mjs`.
+Keep that backup until the new build is verified. This is generated source/build
+state, not model weights or application data. Sherpa uses a patch-hash-specific
+build directory, so the prior verified cache can coexist with the new one.
+
 **Vesper** is the display name in the app, documentation, issue templates,
 GitHub issues and project title/readme. Native startup messages and developer
 qualification windows use the same name. The application identity is `com.vesper.desktop`; legacy state is reused in place,
