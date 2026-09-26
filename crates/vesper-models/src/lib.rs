@@ -22,6 +22,7 @@ pub mod mlx;
 mod selection;
 pub use selection::{preferred_speech_config, resolve_speech, SpeechSelection};
 pub mod diarization;
+mod hub_cache;
 mod storage;
 pub use storage::{remove_model, ModelRemoval};
 
@@ -964,11 +965,19 @@ fn install_artifacts(
     cancelled: &AtomicBool,
     progress: &impl Fn(&InstallProgress),
 ) -> Result<()> {
-    let client = reqwest::blocking::Client::builder()
-        .connect_timeout(Duration::from_secs(20))
-        .timeout(Duration::from_secs(1800))
-        .user_agent("vesper-desktop/0.1")
-        .build()?;
+    let http = hub_cache::ArtifactHttp::new()?;
+    let cache = hub_cache::HubCache::from_env();
+    install_artifacts_with_cache(root, artifacts, cancelled, progress, cache.as_ref(), &http)
+}
+
+fn install_artifacts_with_cache(
+    root: &Path,
+    artifacts: &[Artifact],
+    cancelled: &AtomicBool,
+    progress: &impl Fn(&InstallProgress),
+    cache: Option<&hub_cache::HubCache>,
+    http: &hub_cache::ArtifactHttp,
+) -> Result<()> {
     let total_bytes = artifacts.iter().map(|artifact| artifact.size_bytes).sum();
     let mut completed_bytes = 0;
     for (index, artifact) in artifacts.iter().enumerate() {
@@ -1003,37 +1012,17 @@ fn install_artifacts(
             completed_bytes += artifact.size_bytes;
             continue;
         }
-        let parent = target.parent().expect("artifact has a parent");
-        std::fs::create_dir_all(parent)?;
-        let mut staging = tempfile::NamedTempFile::new_in(parent)?;
-        report(InstallPhase::Downloading, 0);
-        let mut response = client.get(&artifact.url).send()?.error_for_status()?;
-        let mut hash = Sha256::new();
-        let mut count = 0u64;
-        let mut buffer = [0u8; 128 * 1024];
-        loop {
-            check_cancel(cancelled)?;
-            let bytes = response.read(&mut buffer)?;
-            if bytes == 0 {
-                break;
-            }
-            count += bytes as u64;
-            if count > artifact.size_bytes {
-                return Err(ModelError::Integrity(artifact.name.clone()));
-            }
-            staging.write_all(&buffer[..bytes])?;
-            hash.update(&buffer[..bytes]);
-            report(InstallPhase::Downloading, count);
+        let reused = match cache {
+            Some(cache) => cache.install(artifact, &target, http, cancelled, &report)?,
+            None => false,
+        };
+        if !reused {
+            let parent = target.parent().expect("artifact has a parent");
+            std::fs::create_dir_all(parent)?;
+            download_artifact(parent, artifact, http, cancelled, &report)?
+                .persist(&target)
+                .map_err(|e| ModelError::Io(e.error))?;
         }
-        report(InstallPhase::Verifying, count);
-        if count != artifact.size_bytes || format!("{:x}", hash.finalize()) != artifact.sha256 {
-            return Err(ModelError::Integrity(artifact.name.clone()));
-        }
-        check_cancel(cancelled)?;
-        staging.as_file().sync_all()?;
-        staging
-            .persist(&target)
-            .map_err(|e| ModelError::Io(e.error))?;
         if artifact.role == "asr_runtime" {
             check_cancel(cancelled)?;
             install_runtime_archive(root, artifact)?;
@@ -1042,6 +1031,42 @@ fn install_artifacts(
         completed_bytes += artifact.size_bytes;
     }
     Ok(())
+}
+
+fn download_artifact(
+    parent: &Path,
+    artifact: &Artifact,
+    http: &hub_cache::ArtifactHttp,
+    cancelled: &AtomicBool,
+    report: &impl Fn(InstallPhase, u64),
+) -> Result<tempfile::NamedTempFile> {
+    let mut staging = tempfile::NamedTempFile::new_in(parent)?;
+    report(InstallPhase::Downloading, 0);
+    let mut response = http.get(artifact)?;
+    let mut hash = Sha256::new();
+    let mut count = 0u64;
+    let mut buffer = [0u8; 128 * 1024];
+    loop {
+        check_cancel(cancelled)?;
+        let bytes = response.read(&mut buffer)?;
+        if bytes == 0 {
+            break;
+        }
+        count += bytes as u64;
+        if count > artifact.size_bytes {
+            return Err(ModelError::Integrity(artifact.name.clone()));
+        }
+        staging.write_all(&buffer[..bytes])?;
+        hash.update(&buffer[..bytes]);
+        report(InstallPhase::Downloading, count);
+    }
+    report(InstallPhase::Verifying, count);
+    if count != artifact.size_bytes || format!("{:x}", hash.finalize()) != artifact.sha256 {
+        return Err(ModelError::Integrity(artifact.name.clone()));
+    }
+    check_cancel(cancelled)?;
+    staging.as_file().sync_all()?;
+    Ok(staging)
 }
 
 /// Downloads the currently selected pipeline on explicit request. Each file is

@@ -147,7 +147,54 @@ Models are files, not database blobs. The effective model directory uses a saved
 
 `models/artifacts.json` is the executable built-in artifact manifest. An entry pins its model ID, source URL/revision, relative path, byte size, SHA-256, role, license description, and where relevant platform, backend, archive type, and quantization. Custom profiles are data-only and are restricted to an already implemented runtime contract; importing a profile never executes repository code.
 
-Installation only accepts catalog entries. Downloads are streamed to a temporary file in the target directory, checked for declared length and SHA-256, synchronized, and atomically persisted. Descendant symlinks below the configured model root are rejected. UI inventory uses fast existence/size checks; installation and pre-inference verification calculate full hashes.
+Installation only accepts catalog entries. Downloads are streamed to a temporary file beside their destination (the shared HF cache for eligible artifacts), checked for declared length and SHA-256, synchronized, and atomically persisted. Descendant symlinks below the configured model root are rejected. UI inventory uses fast existence/size checks; installation and pre-inference verification calculate full hashes.
+
+### Hugging Face cache boundary
+
+The installer checks Vesper's existing managed files first. For a pinned
+`https://huggingface.co/owner/repo/resolve/commit/file` artifact, it then checks
+the exact HF snapshot before making any HTTP request. It honors nonempty
+`HF_HUB_CACHE`, legacy `HUGGINGFACE_HUB_CACHE`, `HF_HOME/hub`, then
+`XDG_CACHE_HOME/huggingface/hub` or `~/.cache/huggingface/hub`. These are
+process environment settings; packaged applications must inherit them at launch.
+A model-folder preference still controls Vesper's runtime-facing layout.
+
+Complete snapshot files and blob links are accepted only after size/SHA-256
+verification. Resolved links must stay inside the configured cache, including
+cache-wide blob storage. Incomplete files, changed revisions and other exports
+are not interchangeable. CPU ONNX and Apple MLX remain distinct artifacts.
+
+On a miss, a bounded HEAD request obtains the pinned commit and blob ETag.
+The installer takes HF's OS file lock at `.locks/models--owner--repo/etag.lock`,
+rechecks the cache, downloads only if necessary, and atomically publishes verified
+bytes and the snapshot reference. LFS ETags must match the manifest SHA-256;
+Git ETags are checked against the Git blob SHA-1 in addition to SHA-256. Lock
+waits and file processing observe cancellation. HTTP requests retain their bounded
+timeouts. Partial downloads remain temporary and are removed on normal failure
+or cancellation; they are never considered valid cache entries. Vesper does not
+resume another tool's incomplete transfer or update mutable HF refs.
+
+Managed hard links keep the adapter's expected path without another full copy
+on the same filesystem. Copy fallback supports other filesystems or unavailable
+hard links; snapshot publication also supports filesystems without symlinks.
+Existing installations are left in place. GitHub-hosted files, runtime archives
+and generated tokenizer assets retain their existing storage path. Descendant
+symlinks in Vesper's managed directory remain forbidden; the cache is a separate,
+validated read boundary. Missing cache metadata or unwritable cache storage
+reports an installation error, preserving existing managed files.
+
+Removing a Vesper model unlinks only its managed paths, preserving shared HF
+blobs and snapshots. Inventory reports logical model size. External in-place changes can affect shared hard
+links; installation and pre-inference verification still reject modified bytes.
+Vesper repairs through atomic replacement, never writes into an existing shared
+inode, and never automatically prunes or migrates the user's HF cache.
+
+The [HF cache format](https://huggingface.co/docs/hub/local-cache),
+[environment reference](https://huggingface.co/docs/huggingface_hub/main/package_reference/environment_variables)
+and [huggingface_hub v1.7.2 installer](https://github.com/huggingface/huggingface_hub/blob/v1.7.2/src/huggingface_hub/file_download.py)
+define the compatibility boundary. There is no Python service or inference API.
+See [HF profiles](huggingface-models.md#integrity-storage-and-access) for the
+existing integrity and access contract.
 
 LFM2.5 Audio uses the compiled llama.cpp/mtmd adapter with an English-only CPU contract. Its backbone and projector share the existing worker lifetime; actual frontend/context/encoding-prefill/generation metrics are attached to execution evidence. See [ADR-0013](adrs/0013-lfm-audio-native-adapter.md).
 

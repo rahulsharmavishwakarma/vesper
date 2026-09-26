@@ -64,13 +64,25 @@ Model downloads need internet access and additional disk space. Files are
 verified before use. Manage installed models, the model folder and device
 acceleration in **Models**. See [model choices](model-presets.md) for details.
 
+Vesper automatically reuses verified model files already in your Hugging Face
+cache, so matching files do not download again. The exact model version and
+format must match; a CPU export and an Apple GPU export can need different files.
+New Hugging Face downloads also use that shared cache. Files are shared where
+possible; a model folder on another drive may need a local copy.
+
+Removing a model removes it from Vesper and keeps the shared HF cache available
+for other applications and later reinstalls. The displayed model size is its
+logical size, not necessarily additional disk space. Existing downloads stay
+where they are. See [cache location and behavior](internals.md#hugging-face-cache-boundary).
+
 Each model card shows its selected model and download status. **Local engine**
 above it shows readiness, CPU, memory and operation timings. Models are checked
 automatically when loaded; the separate **Selected models** verification card is
 not needed. If model files are missing or damaged, use **Download** or **Verify
 files** on the affected model. Verification keeps valid files and downloads
-replacements for missing or damaged files. Repairs require internet access and
-are started by this action, not automatically during transcription.
+replacements for missing or damaged files. Repairs need internet only when a
+verified replacement is not already cached. They start from this action, not
+automatically during transcription.
 
 **Automatic** uses a compatible detected accelerator where the selected runtime
 supports it. LFM Audio and the writing model share native GPU selection; on Apple
