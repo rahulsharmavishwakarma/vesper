@@ -1,5 +1,11 @@
 # Expanded local-memory testing and fixes — 16 September 2026
 
+> Historical evidence: names and commands below describe the recorded revision.
+> For the current checkout, use the corresponding `vesper-*` package/executable
+> and `VESPER_*` override names; legacy environment aliases remain supported.
+> See [current naming and compatibility](../../docs/development.md#product-name-and-compatibility). No measurement has been requalified by renaming.
+
+
 This follow-up reuses cached public recordings and adds controlled simulations for the learning features. **778 deterministic cases now pass, 72 fresh native ASR executions completed without failures, and eight native cleanup calls selected and isolated the expected memories.** Six real-corpus storage workflows, browser error recovery, and native cancellation/profile reset also passed. The [earlier 444-execution screen](2026-09-16-personalization.md) is preserved.
 
 Work and outstanding qualification remain in [#34](https://github.com/rahulsharmavishwakarma/transcribe/issues/34); model/runtime limitations remain under [#33](https://github.com/rahulsharmavishwakarma/transcribe/issues/33). The local debug report at `.cache/benchmarks/results/2026-09-16-memory-regressions/debug-summary.json` records before/after failures, examples, native scores, hashes, artifacts, execution metadata, resource measurements and validation. No private audio, user database, cloud inference, training or model-default change was involved.

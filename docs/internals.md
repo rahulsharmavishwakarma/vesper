@@ -142,7 +142,7 @@ The native Tauri boundary exposes commands for settings/profile management, data
 
 ## Model files and runtime ownership
 
-Models are files, not database blobs. The effective model directory uses a saved `modelDirectory` when present; otherwise startup resolves `TRANSCRIBE_MODEL_DIR`, then the legacy `UKTI_MODEL_DIR`, then `STT_MODEL_DIR`, and finally the Tauri data-root `models/` directory. Debug development can use the repository's `models/downloads/` directory as the last legacy fallback.
+Models are files, not database blobs. The effective model directory uses a saved `modelDirectory` when present; otherwise startup resolves nonempty `VESPER_MODEL_DIR`, then compatibility aliases `TRANSCRIBE_MODEL_DIR`, `UKTI_MODEL_DIR`, `STT_MODEL_DIR`, and finally the selected data-root `models/` directory. Debug development can use the repository's `models/downloads/` directory as the last fallback.
 
 `models/artifacts.json` is the executable built-in artifact manifest. An entry pins its model ID, source URL/revision, relative path, byte size, SHA-256, role, license description, and where relevant platform, backend, archive type, and quantization. Custom profiles are data-only and are restricted to an already implemented runtime contract; importing a profile never executes repository code.
 

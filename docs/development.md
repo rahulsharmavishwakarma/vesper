@@ -284,7 +284,7 @@ When the current `com.vesper.desktop` directory has no actual settings, dataset,
 
 An explicit saved `modelDirectory` takes precedence. Otherwise nonempty overrides are checked in order: `VESPER_MODEL_DIR`, `TRANSCRIBE_MODEL_DIR`, `UKTI_MODEL_DIR`, `STT_MODEL_DIR`. Debug builds also discover an existing repository `models/downloads` folder, including when the debug `.app` is opened from Finder. Release builds without an override use the selected data directory's `models` folder. Browser preview settings read `vesper.browser-preview.settings.v1` first, then the legacy `transcribe.browser-preview.settings.v1`, `ukti.browser-preview.settings.v1` and `stt.browser-preview.settings.v1` keys. Reads never write. Only an explicit Save/Reset writes the Vesper key, leaving legacy bytes untouched. Invalid current settings are reported instead of silently falling back.
 
-`VESPER_NEMO_SPEECH_LIB` selects a custom NeMo library, with `TRANSCRIBE_NEMO_SPEECH_LIB` retained as a fallback. The shared Rust environment resolver prefers a present Vesper value, even if invalid or non-Unicode, rather than hiding configuration errors behind an older value. Only directory overrides treat an empty value as absent. Other developer/qualification overrides are being migrated using this same resolver.
+`VESPER_NEMO_SPEECH_LIB` selects a custom NeMo library, with `TRANSCRIBE_NEMO_SPEECH_LIB` retained as a fallback. The shared Rust environment resolver prefers a present Vesper value, even if invalid or non-Unicode, rather than hiding configuration errors behind an older value. Only directory overrides treat an empty value as absent. Rust developer/qualification overrides use this same resolver.
 
 ### macOS microphone permission and bundles
 
@@ -365,18 +365,27 @@ Temporary audit, benchmark-source, release/version-test and native-probe paths
 use Vesper prefixes. Their creation/cleanup boundaries are unchanged; no
 existing temporary directory or prior measurement is renamed by the app.
 
-Keep these exact technical names until a separately scoped migration updates
-their producers, consumers and compatibility behavior together:
+Current project-owned packages, build interfaces, container tags, hook IDs,
+new exports and future installer filenames use Vesper. The following old names
+are intentional compatibility/evidence, not unfinished product naming:
 
-- Repository slug/clone directory and working GitHub links: `transcribe`.
-- The remaining npm/Python package names and hook IDs retain their existing
-  names until their producers and consumers are updated together.
-- `TRANSCRIBE_*` environment variables and export prefixes.
+- The live repository slug and working GitHub links remain `transcribe` until
+  the owner renames it. No code push or repository rename is implied by a local
+  migration. Update clone/release/issue links and the remote after that action.
+- Old Transcribe/Ukti/STT app/browser identifiers remain lookup aliases.
+  Native saves stay in the selected existing store; browser saves write only
+  the Vesper key. No existing data directory or export is moved or merged.
+- `VESPER_*` runtime and qualification overrides accept corresponding
+  `TRANSCRIBE_*` fallbacks. The launcher also accepts the old MLX switch.
+  Build-injected provenance variables are internal and need no runtime alias.
+- The persisted audio identity hash domain `transcribe-learning-pcm16k-v1`
+  is immutable: changing it would break recognition of previously seen audio.
+  Prior Linux benchmark RSS markers remain parseable.
 
-The app/browser identifiers use Vesper now. Old Transcribe/Ukti/STT identifiers
-are read-only lookup aliases, not competing current names; subsequent native
-saves stay in the selected existing store and browser saves use the Vesper key.
-- Existing release download filenames, including `vesper-macos-arm64.dmg`.
+`node --test scripts/naming-consistency.test.mjs` rejects stale current package,
+bridge, artifact and native-report names while allowing dated evidence and
+explicit storage/environment compatibility. Historical commands target their
+recorded revision; current commands use `vesper-*` and `VESPER_*`.
 
 Do not rename the third-party **Cohere Transcribe** model, the `transcribe.cpp`
 runtime, transcription actions such as **Stop and transcribe**, or API methods.
@@ -528,7 +537,7 @@ Live Nemotron captions currently appear in the recorder. Compatible external fie
 
 ## Automatic Apple Silicon runtime packaging
 
-The shared `scripts/desktop.mjs` launcher drives normal desktop dev/build and `make build-debug`. Native arm64 macOS builds include the existing pinned MLX library, kernels and tokenizer tool; install full Xcode with Metal support and Swift 6.2 or newer. A Swift build failure is not silently converted into a CPU build. `TRANSCRIBE_MLX=0` selects the portable build deliberately. Intel/universal and non-macOS targets remain feature-off. Pass custom targets as Tauri `--target` arguments; target settings after the Cargo separator are rejected. The launcher preserves the normal app/DMG release targets and only debug invocations request app alone. See [accelerator packaging](accelerators.md#building-the-apple-silicon-application) for provenance, signing and standalone evaluator constraints. `node --test scripts/desktop.test.mjs` exercises target/argument policy without invoking compilers.
+The shared `scripts/desktop.mjs` launcher drives normal desktop dev/build and `make build-debug`. Native arm64 macOS builds include the existing pinned MLX library, kernels and tokenizer tool; install full Xcode with Metal support and Swift 6.2 or newer. A Swift build failure is not silently converted into a CPU build. `VESPER_MLX=0` (legacy `TRANSCRIBE_MLX=0` remains accepted) selects the portable build deliberately. Intel/universal and non-macOS targets remain feature-off. Pass custom targets as Tauri `--target` arguments; target settings after the Cargo separator are rejected. The launcher preserves the normal app/DMG release targets and only debug invocations request app alone. See [accelerator packaging](accelerators.md#building-the-apple-silicon-application) for provenance, signing and standalone evaluator constraints. `node --test scripts/desktop.test.mjs` exercises target/argument policy without invoking compilers.
 
 ### Missing Swift build/cache directories
 

@@ -1,5 +1,11 @@
 # Bounded recursive-policy trial — 17 September 2026
 
+> Historical evidence: names and commands below describe the recorded revision.
+> For the current checkout, use the corresponding `vesper-*` package/executable
+> and `VESPER_*` override names; legacy environment aliases remain supported.
+> See [current naming and compatibility](../../docs/development.md#product-name-and-compatibility). No measurement has been requalified by renaming.
+
+
 **The mechanism works, but the trial does not qualify it for live deployment.** The controller made two eligibility-policy changes and a later rollback. Intermediate held-out audits improved versus the starting policy, but the complete constructed run and final test tied that baseline. The adaptive controller also tied the best fixed policies on held-out word edits while making more harmful changes. The separate public replay produced no policy update or quality gain.
 
 The [implementation contract](../../docs/personalization/policy-experiment.md) explains the finite policy family, feedback boundaries and rollback. [Issue #34](https://github.com/rahulsharmavishwakarma/transcribe/issues/34#issuecomment-5717283286) records authorization for this isolated prototype. The local debug report at `.cache/benchmarks/results/2026-09-17-policy-learning/debug-summary.json` contains exact comparisons, distributions, failures, source/binary/manifest hashes and public artifact provenance. No live application policy, model, storage schema or default was changed.

@@ -1,5 +1,11 @@
 # Shared inference request optimization — 17 September 2026
 
+> Historical evidence: names and commands below describe the recorded revision.
+> For the current checkout, use the corresponding `vesper-*` package/executable
+> and `VESPER_*` override names; legacy environment aliases remain supported.
+> See [current naming and compatibility](../development.md#product-name-and-compatibility). No measurement has been requalified by renaming.
+
+
 The shared request-path changes preserve output on **43 baseline/candidate
 pairs**, plus three accelerated/real-time final-text comparisons. The executed
 matrix contains **89 evaluations**: 80 completed-audio ASR→writer evaluations and

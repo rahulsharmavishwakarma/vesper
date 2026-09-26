@@ -3,6 +3,11 @@
 Screenshots mentioned below are local validation captures excluded from source
 control. The written results and reproducible test fixtures remain in the repository.
 
+Pre-Vesper names in dated measurements and quoted commands identify the tested
+revision. Current reproduction commands use `vesper-*` and `VESPER_*`; see
+[naming compatibility](development.md#product-name-and-compatibility). Renaming
+does not transfer old qualification claims to the current build.
+
 The historical ten-second qualification statements below are superseded by
 [long Qwen/Cohere support](#long-qwen3-asr-and-cohere-audio).
 
@@ -203,7 +208,7 @@ state across view changes was reviewed in code: runtime panels remain mounted.
 
 ## Quick capture, notifications, and lowercase rename
 
-Historical record — 14 September 2026, before Vesper: the product metadata, Rust/npm package names, window titles, export prefixes, app identifier, wordmark, native text-only icon, and macOS bundle used lowercase `transcribe`. Existing `com.ukti.desktop` and `com.stt.desktop` data remained readable in place. Stale Ukti/STT bundles and brand-symbol references were removed. Vesper later replaced the display name and artwork while retaining compatibility identifiers; see [product naming](development.md#product-name-and-compatibility).
+Historical record — 14 September 2026, before Vesper: the product metadata, Rust/npm package names, window titles, export prefixes, app identifier, wordmark, native text-only icon, and macOS bundle used lowercase `transcribe`. Existing `com.ukti.desktop` and `com.stt.desktop` data remained readable in place. Stale Ukti/STT bundles and brand-symbol references were removed. Vesper subsequently replaced the display name/artwork and then migrated current technical namespaces, retaining explicit legacy data lookup; see [product naming](development.md#product-name-and-compatibility).
 
 The new quick-capture window was checked at its native 520 × 118 logical-pixel size in idle, recording, processing, and completion states. Its recording trace uses the same RMS value as the main recorder; the processing trace is explicitly indeterminate. A browser-only query preview was used for visual inspection and did not open the microphone. The native Tauri build includes the global-shortcut and notification plugins, a hidden always-on-top `quick-capture` window, permission-gated privacy-safe notifications, and three validated shortcut choices.
 
@@ -466,12 +471,12 @@ From the repository root, after installing prerequisites and the pinned weights:
 
 ```sh
 source scripts/dev-env.sh
-cargo run -p transcribe-models --example install -- models/downloads
-cargo run -p transcribe-inference --example pipeline -- models/downloads .cache/smoke/en.wav
-TRANSCRIBE_SMOKE_MODELS="$PWD/models/downloads" \
-TRANSCRIBE_SMOKE_AUDIO="$PWD/.cache/smoke/en.wav" \
-  cargo test -p transcribe-desktop real_file_pipeline_preserves_audio_predictions_and_export_provenance -- --ignored --nocapture
-cargo run -p transcribe-inference --example cleanup -- models/downloads \
+cargo run -p vesper-models --example install -- models/downloads
+cargo run -p vesper-inference --example pipeline -- models/downloads .cache/smoke/en.wav
+VESPER_SMOKE_MODELS="$PWD/models/downloads" \
+VESPER_SMOKE_AUDIO="$PWD/.cache/smoke/en.wav" \
+  cargo test -p vesper-desktop real_file_pipeline_preserves_audio_predictions_and_export_provenance -- --ignored --nocapture
+cargo run -p vesper-inference --example cleanup -- models/downloads \
   --minimal 'please do not transfer 2,500 rupees to Meera' \
   --balanced 'could Ananya call Vikram at 10:30 tomorrow'
 ```

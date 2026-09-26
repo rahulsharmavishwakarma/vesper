@@ -1,5 +1,11 @@
 # Local policy-learning stress evaluation — 18 September 2026
 
+> Historical evidence: names and commands below describe the recorded revision.
+> For the current checkout, use the corresponding `vesper-*` package/executable
+> and `VESPER_*` override names; legacy environment aliases remain supported.
+> See [current naming and compatibility](../../docs/development.md#product-name-and-compatibility). No measurement has been requalified by renaming.
+
+
 **The expanded simulation found two evaluator defects, now fixed, and confirms that adaptive policy selection is not ready for live use.** All 97 frozen histories completed: 23,809 episodes, including 7,300 held-out audit/final episodes. Adaptation reduced held-out word edits by 18.7% versus the starting policy, but a single fixed context policy performed substantially better. No production policy, model weights, model lifetime or storage schema changed.
 
 The [canonical experiment contract](../../docs/personalization/policy-experiment.md) describes the implementation. [Issue #34](https://github.com/rahulsharmavishwakarma/transcribe/issues/34#issuecomment-5719345518) records the expanded testing scope. The local debug report at `.cache/benchmarks/results/2026-09-18-policy-learning-stress/debug-summary.json` contains per-history counts, all manifest hashes, source/binary hashes, environment, timings, controls and validation results without transcript rows. The [initial 66-episode trial](2026-09-17-policy-learning.md) is preserved as historical evidence.

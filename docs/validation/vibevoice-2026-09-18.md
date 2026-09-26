@@ -1,5 +1,11 @@
 # VibeVoice reference CPU screen — 18 September 2026
 
+> Historical evidence: names and commands below describe the recorded revision.
+> For the current checkout, use the corresponding `vesper-*` package/executable
+> and `VESPER_*` override names; legacy environment aliases remain supported.
+> See [current naming and compatibility](../development.md#product-name-and-compatibility). No measurement has been requalified by renaming.
+
+
 **Streaming-1.5B is not a sub-2B model or a qualified low-latency CPU replacement.**
 The verified family inventory found no complete Microsoft VibeVoice ASR variant
 below two billion total parameters. The explicitly requested checkpoint was

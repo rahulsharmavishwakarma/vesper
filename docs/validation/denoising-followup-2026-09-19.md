@@ -1,5 +1,11 @@
 # Conservative denoising and input-level qualification
 
+> Historical evidence: names and commands below describe the recorded revision.
+> For the current checkout, use the corresponding `vesper-*` package/executable
+> and `VESPER_*` override names; legacy environment aliases remain supported.
+> See [current naming and compatibility](../development.md#product-name-and-compatibility). No measurement has been requalified by renaming.
+
+
 This follow-up tests the required denoising feature using the existing frozen DPDFNet4/8 models and shared online frontend. Its predeclared protocol is recorded in [issue #42](https://github.com/rahulsharmavishwakarma/transcribe/issues/42#issuecomment-5735902954). No production default, adaptive routing, model training or native decoder changes are included.
 
 ## Completed main quality comparison

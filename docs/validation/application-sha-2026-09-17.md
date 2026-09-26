@@ -1,5 +1,11 @@
 # Application verification optimization — 17 September 2026
 
+> Historical evidence: names and commands below describe the recorded revision.
+> For the current checkout, use the corresponding `vesper-*` package/executable
+> and `VESPER_*` override names; legacy environment aliases remain supported.
+> See [current naming and compatibility](../development.md#product-name-and-compatibility). No measurement has been requalified by renaming.
+
+
 The actual Cohere→Qwen request path benefits substantially from enabling the existing SHA library's Apple ARM hardware backend. Across 30 paired completed recordings per build, median ASR time falls **7.246→3.319 seconds (54.2% lower)** and ASR plus writing falls **7.718→3.793 seconds (50.9% lower)**. All paired outputs match. These are inference-stage measurements on one CPU, not microphone/Stop-to-visible latency or a general edge-device performance claim.
 
 Implementation and qualification are tracked in [issue #42](https://github.com/rahulsharmavishwakarma/transcribe/issues/42). The local debug report at `.cache/benchmarks/results/application-sha-2026-09-17/debug-summary.json` contains transcript hashes, scores, failures, stage measurements, artifact/runtime pins, source inventories, binary hashes and process envelopes. Raw public-audio reports remain under the same ignored run directory.

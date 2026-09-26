@@ -1,5 +1,11 @@
 # Cohere residency qualification — 17 September 2026
 
+> Historical evidence: names and commands below describe the recorded revision.
+> For the current checkout, use the corresponding `vesper-*` package/executable
+> and `VESPER_*` override names; legacy environment aliases remain supported.
+> See [current naming and compatibility](../development.md#product-name-and-compatibility). No measurement has been requalified by renaming.
+
+
 Retaining Cohere in the existing worker materially reduces repeated-recording
 latency on this CPU. Across 30 English recordings/build, ASR+writing p50 falls
 **3.279→.805 seconds (75.5% lower)**. All **43 Cohere pairs** preserve raw,

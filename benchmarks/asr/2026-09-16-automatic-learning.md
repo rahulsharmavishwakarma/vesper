@@ -1,5 +1,11 @@
 # Automatic local spelling learning — 16 September 2026
 
+> Historical evidence: names and commands below describe the recorded revision.
+> For the current checkout, use the corresponding `vesper-*` package/executable
+> and `VESPER_*` override names; legacy environment aliases remain supported.
+> See [current naming and compatibility](../../docs/development.md#product-name-and-compatibility). No measurement has been requalified by renaming.
+
+
 Phase A learns eligible scoped spellings from ordinary edits without a per-word Remember action. **All 54 automatic expected-output checks passed in 27 constructed episodes. The public replay activated no automatic memories and produced no held-out accuracy gain.** Automatic learning therefore remains an explicit setting, off by default. These results qualify implementation behavior, not long-term personal benefit.
 
 The [implementation guide](../../docs/personalization/README.md) documents each component. [ADR-0016](../../docs/adrs/0016-automatic-local-spelling-learning.md) records approval and architecture. The local debug report at `.cache/benchmarks/results/2026-09-16-automatic-learning/debug-summary.json` preserves source/binary/fixture hashes, timing distributions, failures, public attribution and the cached recognizer's exact artifacts. Work remains tracked in [#34](https://github.com/rahulsharmavishwakarma/transcribe/issues/34).

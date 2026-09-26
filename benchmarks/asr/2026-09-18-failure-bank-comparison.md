@@ -1,5 +1,11 @@
 # Observed-failure replay comparison — 18 September 2026
 
+> Historical evidence: names and commands below describe the recorded revision.
+> For the current checkout, use the corresponding `vesper-*` package/executable
+> and `VESPER_*` override names; legacy environment aliases remain supported.
+> See [current naming and compatibility](../../docs/development.md#product-name-and-compatibility). No measurement has been requalified by renaming.
+
+
 **The proposed failure-bank variant is not an improvement over our current controller on the primary held-out score.** It increases held-out word edits from **2,599 to 2,625 (+1.0%)**, despite slightly reducing errors over the complete replay and final partition. Both adaptive controllers remain substantially worse than the previously identified fixed context policy, which scores **1,464** on this fresh-seed comparison. Keep this variant isolated from live dictation.
 
 This evaluates our application of the feedback idea discussed in the [Z.ai research assessment](../../docs/research-rsi-2026-09.md#zai-inspiration-diagnose-replay-and-verify). It is not a reproduction of Z.ai's GLM agent, infrastructure or throughput claims. All computation uses the local Rust learner and temporary SQLite stores; no model call, training or production profile change occurs. The [canonical experiment contract](../../docs/personalization/policy-experiment.md#observed-failure-replay-variant) defines the mechanism. [Issue #34](https://github.com/rahulsharmavishwakarma/transcribe/issues/34#issuecomment-5733700652) records the requested scope.

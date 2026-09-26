@@ -1,5 +1,11 @@
 # Dependency security compatibility — 19 September 2026
 
+> Historical evidence: names and commands below describe the recorded revision.
+> For the current checkout, use the corresponding `vesper-*` package/executable
+> and `VESPER_*` override names; legacy environment aliases remain supported.
+> See [current naming and compatibility](../development.md#product-name-and-compatibility). No measurement has been requalified by renaming.
+
+
 This change repairs two CI dependency findings without adding Python to the
 application. GLib receives a maintained upstream source fix for Tauri's Linux
 GTK3 graph. Transformers 5.10.1 is used only by the isolated VibeVoice research

@@ -134,6 +134,8 @@ fn stamp() -> i64 {
 /// Stable across installed models and reruns of identical resampled audio.
 pub fn learning_audio_key(samples: &[f32]) -> String {
     let mut hash = Sha256::new();
+    // Persisted identity domain, not product branding. Changing it would assign
+    // a second identity to existing audio and break cross-install deduplication.
     hash.update(b"transcribe-learning-pcm16k-v1");
     for sample in samples {
         hash.update(sample.to_le_bytes());
@@ -841,6 +843,14 @@ mod tests {
     use super::*;
     const CONTEXT_HEARD: &str = "Open read me for deployment";
     const CONTEXT_EDITED: &str = "Open README.md for deployment";
+
+    #[test]
+    fn audio_identity_is_unchanged_by_product_renaming() {
+        assert_eq!(
+            learning_audio_key(&[0.0, 0.25, -0.5, 1.0]),
+            "f0775b4bdcb5dc3ba83340e1f1bca3da6bb5dfe268f0c35bddf5d2159f0119f1"
+        );
+    }
 
     #[test]
     fn draft_transaction_keeps_background_writes_from_invalidating_its_snapshot() {

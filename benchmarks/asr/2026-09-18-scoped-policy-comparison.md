@@ -1,5 +1,11 @@
 # Scoped policy refinement — 18 September 2026
 
+> Historical evidence: names and commands below describe the recorded revision.
+> For the current checkout, use the corresponding `vesper-*` package/executable
+> and `VESPER_*` override names; legacy environment aliases remain supported.
+> See [current naming and compatibility](../../docs/development.md#product-name-and-compatibility). No measurement has been requalified by renaming.
+
+
 **The refinement improves this fresh simulation beyond both our original adaptive controller and the strong fixed policy.** Across 7,300 held-out episodes, word edits fall from **2,598 original adaptive → 1,372 scoped adaptive**. The previously identified fixed context policy scores **1,468**. This is a promising offline result, with remaining per-case regressions and no gain on the cached public-audio controls. It does not qualify a live rollout or establish recursive discovery of better learning algorithms.
 
 The local debug report at `.cache/benchmarks/results/2026-09-18-scoped-policy-comparison/debug-summary.json` contains all history/source/binary hashes, fixed controls, scenario aggregates, paired episode outcomes, scope counts, isolation checks and repeated timings. The [canonical contract](../../docs/personalization/policy-experiment.md#scoped-policy-alternative) defines the implementation. [Issue #34](https://github.com/rahulsharmavishwakarma/transcribe/issues/34#issuecomment-5733990275) records the requested refinement and predeclared comparison.
