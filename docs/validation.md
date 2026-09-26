@@ -8,6 +8,33 @@ revision. Current reproduction commands use `vesper-*` and `VESPER_*`; see
 [naming compatibility](development.md#product-name-and-compatibility). Renaming
 does not transfer old qualification claims to the current build.
 
+## Vesper technical identity — 26 September 2026
+
+The full project-owned namespace migration was checked on Apple-silicon macOS:
+
+- Workspace/all-target compilation, strict Clippy, Rust tests/doctests and public
+  documentation checks passed (348 tests passed, 36 explicit installed-model
+  tests ignored), plus the new fixed-vector persisted audio-identity regression.
+- Fifteen Python test suites, the three browser scenarios (including the
+  existing mocked-native recovery suite), two Swift tests and native completion
+  report tests passed. Fast checks include storage/override precedence, corrupt
+  current-state handling and a current-namespace regression guard.
+- A separate isolated browser loaded synthetic legacy French settings without
+  creating a Vesper key. Explicit Save wrote the Vesper key and left the prior
+  settings unchanged. No real user browser profile or recordings were used.
+- Both pinned native runtimes were genuinely rebuilt. The debug bundle contains
+  `com.vesper.desktop`, executable `vesper-desktop`, `libVesperMLX.dylib` and the
+  six `vesper_mlx_*` exports. The microphone purpose string still names Vesper.
+- Parsed comparisons of both Cargo locks, all three Python locks and the npm
+  lock confirmed that only local package names/order changed: third-party
+  versions, hashes, sources and dependency edges were preserved.
+
+This is namespace/build/compatibility validation, not new ASR quality evidence,
+permission-prompt qualification, a launched native UI check, notarization or a
+published release. macOS may require new permissions for the new app identity.
+Existing user data is reused in place; historical benchmark records remain
+historical. See [compatibility and cache upgrades](development.md#product-name-and-compatibility).
+
 The historical ten-second qualification statements below are superseded by
 [long Qwen/Cohere support](#long-qwen3-asr-and-cohere-audio).
 
