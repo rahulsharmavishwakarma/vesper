@@ -80,14 +80,16 @@ def main():
     write(root / "environment.json", environment)
     # Use default runtime behavior, independent of shell experiment overrides.
     env = {
-        k: v for k, v in os.environ.items() if not k.startswith(("TRANSCRIBE_", "GGML_", "LLAMA_"))
+        k: v
+        for k, v in os.environ.items()
+        if not k.startswith(("VESPER_", "TRANSCRIBE_", "GGML_", "LLAMA_"))
     }
     overrides = {
         "OMP_NUM_THREADS": "1",
         "OPENBLAS_NUM_THREADS": "1",
         "VECLIB_MAXIMUM_THREADS": "1",
         "MKL_NUM_THREADS": "1",
-        "TRANSCRIBE_EXPERIMENTAL_PREFIX_CACHE": "0",
+        "VESPER_EXPERIMENTAL_PREFIX_CACHE": "0",
     }
     env.update(overrides)
     write(root / "experiment-env.json", overrides)

@@ -23,6 +23,11 @@ These observations come from [Nemotron inference](../crates/vesper-inference/src
 
 Qwen's complete-prefix state experiment is **off by default**. `VESPER_EXPERIMENTAL_PREFIX_CACHE=1` enables it (`TRANSCRIBE_EXPERIMENTAL_PREFIX_CACHE` remains a fallback when the Vesper variable is absent); normal cleanup retains weights and creates fresh contexts. Its hybrid recurrent state and full-attention KV state require the exact runtime's complete-state API. A capability flag is not evidence that prefix reuse executes on default requests.
 
+Current supported-request, Cohere-residency, application-SHA and Whisper
+qualification runners strip both Vesper and legacy Transcribe process overrides
+before applying their explicit `VESPER_EXPERIMENTAL_PREFIX_CACHE=0` baseline.
+Frozen reports retain the environment names actually used for those runs.
+
 One build detail matters: `default-features = false` does **not** mean Metal is absent. The pinned `llama-cpp-2` manifest has an Apple ARM target dependency enabling `metal`. Application features forward `cuda`, `rocm`, and `vulkan`; there is no direct `sycl` feature in this release. Explicitly selecting an unavailable backend fails with a device-selection error. Automatic selection uses a detected native GPU or CPU; failed GPU initialization retries CPU and records its reason. [Pinned Rust binding manifest](https://docs.rs/crate/llama-cpp-2/0.1.156/source/Cargo.toml).
 
 NeMo-Speech.cpp 0.1.0 publishes CPU, CUDA, Vulkan, and Metal release packages. Vesper pins their bytes and hashes rather than treating a requested device string as evidence of availability. NVIDIA does not publish an MLX or ROCm Nemotron package: Apple uses Metal; the AMD profile uses Vulkan for speech and can use ROCm/HIP for Qwen cleanup.

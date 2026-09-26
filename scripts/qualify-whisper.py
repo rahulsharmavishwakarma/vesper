@@ -145,14 +145,16 @@ def main():
     runner_sha256 = digest(Path(__file__))
     write(root / "runner-start.json", {"sha256": runner_sha256, "jobs": len(jobs)})
     env = {
-        k: v for k, v in os.environ.items() if not k.startswith(("TRANSCRIBE_", "GGML_", "LLAMA_"))
+        k: v
+        for k, v in os.environ.items()
+        if not k.startswith(("VESPER_", "TRANSCRIBE_", "GGML_", "LLAMA_"))
     }
     overrides = {
         "OMP_NUM_THREADS": "1",
         "OPENBLAS_NUM_THREADS": "1",
         "VECLIB_MAXIMUM_THREADS": "1",
         "MKL_NUM_THREADS": "1",
-        "TRANSCRIBE_EXPERIMENTAL_PREFIX_CACHE": "0",
+        "VESPER_EXPERIMENTAL_PREFIX_CACHE": "0",
     }
     env.update(overrides)
     write(root / "runtime-env.json", overrides)
