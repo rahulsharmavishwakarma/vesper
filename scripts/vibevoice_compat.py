@@ -27,7 +27,7 @@ def prepare_source(root):
         canonical["modelRevision"],
     ) or digest(patch) != pins["patchSha256"]:
         raise ValueError("VibeVoice compatibility patch provenance mismatch")
-    prepared = tempfile.TemporaryDirectory(prefix="transcribe-vibevoice-source-")
+    prepared = tempfile.TemporaryDirectory(prefix="vesper-vibevoice-source-")
     try:
         target = Path(prepared.name)
         expected = {}

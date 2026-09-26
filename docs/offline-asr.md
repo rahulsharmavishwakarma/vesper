@@ -97,8 +97,8 @@ The standalone [native probe](../scripts/native-tests/asr-probe.cpp) is retained
 ```sh
 c++ -std=c++17 -O2 -I "$(node scripts/sherpa-runtime.mjs --source-dir)" \
   scripts/native-tests/asr-probe.cpp "$SHERPA_ONNX_LIB_DIR"/lib*.a \
-  -framework Foundation -o /tmp/transcribe-asr-probe
-/usr/bin/time -l /tmp/transcribe-asr-probe qwen "$VESPER_MODEL_DIR" \
+  -framework Foundation -o /tmp/vesper-asr-probe
+/usr/bin/time -l /tmp/vesper-asr-probe qwen "$VESPER_MODEL_DIR" \
   /path/to/verified-fixtures/fleurs-en_us.wav English
 ```
 

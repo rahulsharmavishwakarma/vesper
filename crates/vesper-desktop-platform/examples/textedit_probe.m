@@ -21,7 +21,7 @@ int main(int argc, const char **argv) {
         bool axFixture=strcmp(argv[1],"--ax-fixture")==0;
         if (!axFixture && strcmp(argv[1],"--fixture")!=0) return 0;
         NSString *prefix=@"BEGIN fixture left guard | ", *suffix=@" | right guard END fixture";
-        NSString *path=[NSTemporaryDirectory() stringByAppendingPathComponent:[NSString stringWithFormat:@"transcribe-observer-%@.txt",NSUUID.UUID.UUIDString]];
+        NSString *path=[NSTemporaryDirectory() stringByAppendingPathComponent:[NSString stringWithFormat:@"vesper-observer-%@.txt",NSUUID.UUID.UUIDString]];
         [[prefix stringByAppendingString:suffix] writeToFile:path atomically:YES encoding:NSUTF8StringEncoding error:nil];
         NSURL *url=[NSURL fileURLWithPath:path];
         NSWorkspaceOpenConfiguration *configuration=[NSWorkspaceOpenConfiguration configuration];

@@ -117,7 +117,7 @@ def registry_audit_lock(lock_text):
 
 
 def run_audit(root):
-    with tempfile.TemporaryDirectory(prefix="transcribe-rust-audit-") as directory:
+    with tempfile.TemporaryDirectory(prefix="vesper-rust-audit-") as directory:
         shadow = Path(directory) / "Cargo.lock"
         shadow.write_text(registry_audit_lock((root / "Cargo.lock").read_text()))
         subprocess.run(

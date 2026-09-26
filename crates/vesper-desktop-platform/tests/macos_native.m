@@ -12,7 +12,7 @@ int main(void) {
         NSPasteboardItem *item = [[NSPasteboardItem alloc] init];
         NSData *binary = [NSData dataWithBytes:"\x00\x01\xff" length:3];
         assert([item setString:@"Original हिन्दी\nsecond line" forType:NSPasteboardTypeString]);
-        assert([item setData:binary forType:@"org.transcribe.test.binary"]);
+        assert([item setData:binary forType:@"org.vesper.test.binary"]);
         assert([board writeObjects:@[item]]);
         NSArray *saved = snapshot(board);
         assert(saved.count == 1 && [saved[0] types].count == 2);
@@ -20,7 +20,7 @@ int main(void) {
         NSInteger ownership = board.changeCount;
         assert(restoreSnapshot(board, ownership, saved));
         assert([[board stringForType:NSPasteboardTypeString] isEqualToString:@"Original हिन्दी\nsecond line"]);
-        assert([[board dataForType:@"org.transcribe.test.binary"] isEqualToData:binary]);
+        assert([[board dataForType:@"org.vesper.test.binary"] isEqualToData:binary]);
         [board clearContents]; [board setString:@"temporary again" forType:NSPasteboardTypeString];
         ownership = board.changeCount;
         [board clearContents]; [board setString:@"newer user copy" forType:NSPasteboardTypeString];

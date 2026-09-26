@@ -33,8 +33,8 @@ Build the opt-in fixture runner on macOS:
 ```sh
 clang -fobjc-arc -fblocks -framework AppKit -framework ApplicationServices \
   -framework Carbon crates/vesper-desktop-platform/examples/textedit_probe.m \
-  -o /tmp/transcribe-textedit-probe
-/tmp/transcribe-textedit-probe --fixture
+  -o /tmp/vesper-textedit-probe
+/tmp/vesper-textedit-probe --fixture
 ```
 
 It checks permissions without prompting, opens a newly authored temporary plain-text document, verifies that exact fixture, runs actual Command-V and an AX-driven Unicode replacement, and reports acknowledgement/candidate/read bounds. It returns 77 when permissions are unavailable. This is native component qualification, not a microphone-to-editor end-to-end latency test. Never treat a successful fixture as qualification of other editors, IME, rich text, natural authorship or longitudinal learning benefit.

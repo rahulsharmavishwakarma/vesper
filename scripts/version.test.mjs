@@ -13,7 +13,7 @@ test('repository application versions are synchronized', () => {
 });
 
 test('version setter updates every release declaration in an isolated copy', () => {
-  const root = fs.mkdtempSync(path.join(os.tmpdir(), 'transcribe-version-'));
+  const root = fs.mkdtempSync(path.join(os.tmpdir(), 'vesper-version-'));
   for (const relative of [
     'Cargo.toml',
     'Cargo.lock',

@@ -58,7 +58,7 @@ def check_model_api():
         )
         model = VibeVoiceASRForConditionalGeneration(config).eval()
         expected = {name: value.detach().clone() for name, value in model.state_dict().items()}
-        with tempfile.TemporaryDirectory(prefix="transcribe-vibevoice-api-") as directory:
+        with tempfile.TemporaryDirectory(prefix="vesper-vibevoice-api-") as directory:
             model.save_pretrained(directory)
             loaded, info = VibeVoiceASRForConditionalGeneration.from_pretrained(
                 directory, local_files_only=True, output_loading_info=True

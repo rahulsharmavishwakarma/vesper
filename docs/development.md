@@ -361,6 +361,9 @@ retaining accurate dependency provenance comments; `make python-lock-check`
 verifies each manifest, lockfile and export together.
 The VibeVoice reference environment likewise uses `vesper-vibevoice-probe`;
 its isolation, platform markers and pinned third-party packages are unchanged.
+Temporary audit, benchmark-source, release/version-test and native-probe paths
+use Vesper prefixes. Their creation/cleanup boundaries are unchanged; no
+existing temporary directory or prior measurement is renamed by the app.
 
 Keep these exact technical names until a separately scoped migration updates
 their producers, consumers and compatibility behavior together:

@@ -7,7 +7,7 @@ import test from 'node:test';
 import { ASSET_NAMES, publishRelease } from './publish-release.mjs';
 
 function fixture(t, release = null, fail = () => false) {
-  const directory = fs.mkdtempSync(path.join(os.tmpdir(), 'transcribe-publish-test-'));
+  const directory = fs.mkdtempSync(path.join(os.tmpdir(), 'vesper-publish-test-'));
   t.after(() => fs.rmSync(directory, { recursive: true, force: true }));
   const content = 'Synthetic installer bytes; not an executable image';
   const digest = createHash('sha256').update(content).digest('hex');
@@ -29,7 +29,7 @@ function fixture(t, release = null, fail = () => false) {
     digest,
     calls,
     publish: (tag = 'v1.2.3') =>
-      publishRelease({ repository: 'example/transcribe', tag, directory, run }),
+      publishRelease({ repository: 'example/vesper', tag, directory, run }),
   };
 }
 
@@ -39,7 +39,7 @@ test('a new stable release stays draft until the DMG and checksums are uploaded'
   assert.deepEqual(
     f.calls.map((args) => args.slice(0, 2)),
     [
-      ['api', 'repos/example/transcribe/releases/tags/v1.2.3'],
+      ['api', 'repos/example/vesper/releases/tags/v1.2.3'],
       ['release', 'create'],
       ['release', 'upload'],
       ['release', 'edit'],

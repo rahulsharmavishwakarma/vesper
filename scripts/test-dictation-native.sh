@@ -5,7 +5,7 @@ set -eu
   echo 'Native dictation smoke requires macOS.'
   exit 1
 }
-probe_dir=$(mktemp -d "${TMPDIR:-/tmp}/transcribe-dictation.XXXXXX")
+probe_dir=$(mktemp -d "${TMPDIR:-/tmp}/vesper-dictation.XXXXXX")
 trap 'rm -rf "$probe_dir"' EXIT HUP INT TERM
 xcrun clang -fobjc-arc -fblocks -framework AppKit -framework ApplicationServices \
   -framework Carbon crates/vesper-desktop-platform/tests/paste_accessibility.m \
