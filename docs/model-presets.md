@@ -20,6 +20,82 @@ The menus are the user-facing catalog; there is no JSON profile import section.
 Previously saved custom profiles remain usable in their respective menus.
 Additional supported models should be added through the catalog process below.
 
+## Live transcription support
+
+Live means words emitted during microphone capture, before Stop, in Dictate or
+the floating recorder. This table describes the adapters wired into Vesper, not
+every capability of an upstream architecture or checkpoint.
+
+| Speech model or preset | Words while speaking | Current application path |
+| --- | --- | --- |
+| NVIDIA Nemotron 3.5 ASR Streaming 0.6B | Yes | Incremental microphone chunks and revisable partial events |
+| Cohere Transcribe (default) | Yes | Buffered drafts; authoritative completed-audio pass after Stop |
+| NVIDIA Parakeet TDT 0.6B v3 | Yes | Buffered drafts on CPU or qualified MLX |
+| Qwen3-ASR 0.6B | Yes | Native MLX drafts for English/Metal; buffered CPU drafts; completed-audio final |
+| Liquid LFM2.5 Audio 1.5B | Yes | Buffered drafts through its current CPU/GPU runtime |
+| Parakeet TDT v2, Parakeet Unified, FastConformer European presets | Yes | Buffered drafts with the selected transducer export |
+| Whisper Small / Turbo (not in the desktop picker) | Yes | Buffered drafts; catalog quality restrictions remain |
+| Imported custom ASR profiles | Yes | Buffered drafts for compatible validated transducer profiles |
+
+The common live interface selects native sessions or buffered previews after
+resolving the actual backend. Only Nemotron and the qualified Qwen MLX path
+advertise native input streaming. Other speech adapters retain their offline
+model contract behind bounded live previews. Every draft remains revisable;
+writing and insertion operate on the final result. Update frequency depends on
+model speed and device resources, and very short recordings may finish before a
+nonempty draft is available.
+
+See [live adapter behavior, resource policy and finalization](live-transcription.md)
+for implementation and validation boundaries. The [source review](research-streaming-inference-papers.md#native-live-input-feasibility-by-adapter)
+retains the earlier native-capability investigation as dated evidence.
+
+### Historical baseline check — 26 September 2026
+
+Before the all-model live implementation: source revision `6f90343`, debug `vesper-eval`, Apple M5 Pro (18 logical CPUs,
+64 GiB), macOS 27.0 (26A428), AC attached with no reported thermal warning before
+the run. This was a functional replay on a shared host, with no concurrent
+compilation. Nemotron Q8_0 initialized Metal; native ASR used four graph threads,
+Silero/DPDFNet8 used one CPU thread, gain and writing cleanup were off. Runtime
+revision was `4f9676226f667d14608487df744f375db87127f8`; all model/frontend pins
+are in [the artifact manifest](../models/artifacts.json). The encoder used its
+artifact defaults (56 left-context frames, 3 right-context frames, nominal 320 ms
+advance), without endpoint or decoder changes.
+
+Two public FLEURS English clean clips, `16355757648693617724` and
+`13297690853135603331`, came from the existing
+[frontend integration manifest](../benchmarks/asr/manifests/frontend-integration-2026-09-18/streaming.json).
+Their durations were 7.92 and 7.68 seconds. Replay used `--streaming --realtime
+--language en --vad --denoiser dpdfnet8 --chunk-ms 20`; model startup preceded
+paced audio delivery, matching the application's load-before-Listening order.
+
+| Request | First nonempty partial from streaming start | Stop-to-final ASR | Events, including repeated drafts and final |
+| --- | ---: | ---: | ---: |
+| Cold recognizer | 15,290.95 ms, including initial loading | 63.40 ms | 331 |
+| Resident recognizer | 1,353.41 ms | 61.69 ms | 319 |
+
+Both completed without frontend fallback, preserved sample counts and finalized
+the audio frontend. The resident draft arrived before the 7.68-second audio
+delivery ended. The cold first-partial time includes startup and must not be
+reported as microphone-to-word latency. Four word edits occurred across 40
+reference words; this small reused sample is not an accuracy qualification.
+Whole-process peak RSS was 1,197,375,488 bytes. The evaluator binary SHA-256 was
+`917ee593d44805a4891d4daec19f86d4b84eaa31a185f1963374bd4d312289bb`.
+
+All six nonstreaming built-in models and the three additional ASR presets
+rejected a streaming request before model loading, as their contracts require.
+A separate CPU replay attempt stopped at readiness checking: this model folder
+contained the Metal runtime package, not the CPU package. That failure is
+retained; no CPU streaming result is claimed and installed packages were not
+replaced for this check.
+
+Three adapter-registry tests, three live-state reducer tests and all three
+browser suites passed, including mocked live updates and recording isolation.
+Native microphone-to-visible latency, GPU operator placement, VRAM, power draw,
+continuous thermal behavior and broader accent/meaning preservation were not
+qualified by this replay. See [performance evidence](inference-performance.md)
+for separately scoped measurements. No application model choice or runtime
+behavior changed during this investigation.
+
 ## Choosing the default from benchmarks
 
 Default selection follows comparable local application benchmarks, rather than

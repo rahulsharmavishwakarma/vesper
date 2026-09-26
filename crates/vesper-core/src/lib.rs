@@ -17,7 +17,7 @@ mod transcript;
 
 pub use adapters::{
     adapter, mlx_speech_supported, resolve_adapter, AdapterCapabilities, AdapterKind,
-    AdapterRegistration, CacheState, ADAPTERS, MLX_REVISION, MLX_RUNTIME,
+    AdapterRegistration, CacheState, LiveMode, ADAPTERS, MLX_REVISION, MLX_RUNTIME,
 };
 pub use config::{
     AppConfig, AudioFrontendConfig, CaptureDesign, CleanupPreset, ComputeBackend, DictationOutput,

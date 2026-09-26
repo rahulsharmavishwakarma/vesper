@@ -1,6 +1,6 @@
 # Language support and model recommendations
 
-Updated 18 September 2026. This is the canonical product-facing map for transcription languages, model compatibility, benchmark coverage, and future recommendation behavior. Runtime contracts remain authoritative in `vesper-core`; this document explains them without turning an upstream language claim into a local quality claim.
+Updated 26 September 2026. This is the canonical product-facing map for transcription languages, model compatibility, benchmark coverage, and future recommendation behavior. Runtime contracts remain authoritative in `vesper-core`; this document explains them without turning an upstream language claim into a local quality claim.
 
 ## What “supported language” means
 
@@ -23,15 +23,15 @@ Fresh settings select Cohere Transcribe, explicit English, and Qwen3.5 cleanup. 
 
 | Built-in speech model | App language choices | Delivery in this application | Speech backends exposed by the adapter | Current evidence status |
 | --- | --- | --- | --- | --- |
-| Cohere Transcribe (default) | English or French, explicit only | Completed recording/file; bounded long-audio segments | Automatic or CPU | English completed-path evidence; 48-recording Indian-English screen inside a separate personalization envelope; French integration fixture, not a broad French benchmark |
+| Cohere Transcribe (default) | English or French, explicit only | Buffered live drafts; completed recording/file final | Automatic or CPU | English completed-path evidence; 48-recording Indian-English screen inside a separate personalization envelope; French integration fixture, not a broad French benchmark |
 | NVIDIA Nemotron 3.5 ASR Streaming 0.6B | Automatic, English, French, Hindi | Native live partials and completed audio | CPU, Metal, CUDA, Vulkan; the AMD application profile routes speech through Vulkan | Local CPU Hindi, US-English, and Hinglish screens plus separate Indian-English evidence; Hinglish does not currently pass the quality gate |
-| Qwen3-ASR 0.6B | Automatic, English, French, Hindi | Completed recording/file; bounded long-audio segments | Automatic; CPU; Metal for English on Apple Silicon | Local phase-one Hindi, US-English, and Hinglish screening; no qualified Hinglish result |
-| NVIDIA Parakeet TDT 0.6B v3 | Automatic, English, French in the picker | Completed recording/file | Automatic; CPU; Metal for English on Apple Silicon | Compatibility/smoke evidence; no current comparable phase-one matrix; Hindi is unsupported |
-| Liquid LFM2.5 Audio 1.5B | English only, explicit | Completed recording/file; resident weights and bounded segments | Automatic or CPU | Small English application-path screen only; not broad English or edge-device qualification |
+| Qwen3-ASR 0.6B | Automatic, English, French, Hindi | Native MLX or buffered CPU drafts; completed recording/file final | Automatic; CPU; Metal for English on Apple Silicon | Local phase-one Hindi, US-English, and Hinglish screening; no qualified Hinglish result |
+| NVIDIA Parakeet TDT 0.6B v3 | Automatic, English, French in the picker | Buffered live drafts; completed recording/file final | Automatic; CPU; Metal for English on Apple Silicon | Compatibility/smoke evidence; no current comparable phase-one matrix; Hindi is unsupported |
+| Liquid LFM2.5 Audio 1.5B | English only, explicit | Buffered live drafts; resident weights and completed-audio final | Automatic; CPU; Metal; CUDA/Vulkan/ROCm with matching builds | English CPU/Metal evidence; non-Apple GPU qualification deferred to #76 |
 
 “Automatic” in the backend column means the application may choose an available supported execution path and fall back according to that adapter's policy. It is not evidence that a GPU executed every operator. GPU, driver, precision, and runtime-package combinations require separate measurements.
 
-Only Nemotron currently exposes native live transcription events to the application. Qwen3-ASR, Cohere, Parakeet, and LFM are completed-audio paths here.
+All current ASR adapters expose live drafts. Nemotron uses native cache-aware streaming; English/Metal Qwen uses native MLX previews. Other paths use bounded buffered previews. All except Nemotron retain the completed-audio final pass. See [live adapters](live-transcription.md) for measured scope, finalization and resource limits; historical completed-audio quality results do not qualify preview quality.
 
 ## Additional ASR menu profiles
 
@@ -39,9 +39,9 @@ The Models menu also contains three pinned sherpa-onnx transducer profiles, givi
 
 | Menu profile | Declared profile languages | Languages currently selectable in the app | Delivery/backend | Qualification status |
 | --- | --- | --- | --- | --- |
-| NVIDIA Parakeet TDT 0.6B v2 INT8 | English | Automatic, English | Completed audio, CPU | 16-recording US-English CPU screen: 5.25% micro-WER and 0.122 median RTF; broader English qualification remains |
-| NVIDIA Parakeet Unified English 0.6B INT8 | English | Automatic, English | Completed audio, CPU | 16-recording US-English CPU screen: 5.86% micro-WER and 0.115 median RTF; broader English qualification remains |
-| NVIDIA FastConformer European 114M FP32 | English, German, Spanish, French | Automatic, English, French | Completed audio, CPU | 16-recording US-English CPU screen: 9.26% micro-WER and 0.069 median RTF; German/Spanish are not explicit product selections and French remains unmeasured |
+| NVIDIA Parakeet TDT 0.6B v2 INT8 | English | Automatic, English | Buffered live drafts and completed audio, CPU | 16-recording US-English CPU screen: 5.25% micro-WER and 0.122 median RTF; broader English qualification remains |
+| NVIDIA Parakeet Unified English 0.6B INT8 | English | Automatic, English | Buffered live drafts and completed audio, CPU | 16-recording US-English CPU screen: 5.86% micro-WER and 0.115 median RTF; broader English qualification remains |
+| NVIDIA FastConformer European 114M FP32 | English, German, Spanish, French | Automatic, English, French | Buffered live drafts and completed audio, CPU | 16-recording US-English CPU screen: 9.26% micro-WER and 0.069 median RTF; German/Spanish are not explicit product selections and French remains unmeasured |
 
 The development `vesper-eval --model` command accepts seven built-in ASR enum values, including two Whisper evaluation variants that are withheld from product selection. Its validated `--asr-profile` option evaluates the three pinned menu profiles through the production custom-profile adapter.
 

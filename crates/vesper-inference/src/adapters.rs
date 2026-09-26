@@ -29,9 +29,10 @@ pub(crate) fn speech_key(config: &AppConfig, root: &Path) -> Result<SpeechKey> {
     Ok(match config.speech_adapter().kind {
         AdapterKind::NemoRnnt => SpeechKey::Nemo(nemotron::key(config, root)?),
         AdapterKind::LfmAudio => SpeechKey::Lfm(lfm::key(config, root)?),
-        AdapterKind::CohereAsr | AdapterKind::Whisper => {
-            SpeechKey::Sherpa(resident_sherpa::key(config, root)?)
-        }
+        AdapterKind::CohereAsr
+        | AdapterKind::Whisper
+        | AdapterKind::QwenAsr
+        | AdapterKind::SherpaTransducer => SpeechKey::Sherpa(resident_sherpa::key(config, root)?),
         kind => SpeechKey::PerJob(kind, root.to_owned(), Box::new(config.clone())),
     })
 }
@@ -48,7 +49,92 @@ pub(crate) enum SpeechModel {
     PerJob(AdapterKind),
 }
 
+/// The manager handles PCM and snapshots, never runtime-specific handles.
+pub(crate) enum NativeStream<'a> {
+    Nemo(vesper_nemo::Stream<'a>),
+    #[cfg(feature = "mlx")]
+    Mlx(Box<crate::mlx::Live<'a>>),
+}
+
+pub(crate) struct LiveSnapshot {
+    pub text: String,
+    pub audio_processed_seconds: f32,
+    pub is_final: bool,
+}
+
+impl NativeStream<'_> {
+    pub fn push(&mut self, samples: &[f32], rate: u32) -> Result<()> {
+        match self {
+            #[cfg(feature = "mlx")]
+            Self::Mlx(stream) => stream.push(samples, rate),
+            Self::Nemo(stream) => stream
+                .push(samples, rate)
+                .map_err(|e| native("live audio", e)),
+        }
+    }
+    pub fn finish(&mut self) -> Result<()> {
+        match self {
+            #[cfg(feature = "mlx")]
+            Self::Mlx(stream) => {
+                stream.finish();
+                Ok(())
+            }
+            Self::Nemo(stream) => stream.finish().map_err(|e| native("live finalization", e)),
+        }
+    }
+    pub fn poll_result(&mut self) -> Result<Option<LiveSnapshot>> {
+        match self {
+            #[cfg(feature = "mlx")]
+            Self::Mlx(stream) => stream.poll(),
+            Self::Nemo(stream) => stream
+                .poll_result()
+                .map(|value| {
+                    value.map(|result| LiveSnapshot {
+                        text: result.text,
+                        audio_processed_seconds: result.audio_processed_seconds,
+                        is_final: result.is_final,
+                    })
+                })
+                .map_err(|e| native("live decode", e)),
+        }
+    }
+
+    pub fn needs_completed_audio(&self) -> bool {
+        match self {
+            Self::Nemo(_) => false,
+            #[cfg(feature = "mlx")]
+            Self::Mlx(_) => true,
+        }
+    }
+}
+
 impl SpeechModel {
+    pub(crate) fn healthy(&self) -> bool {
+        match self {
+            Self::Sherpa(model) => model.healthy.get(),
+            #[cfg(feature = "mlx")]
+            Self::Mlx(model) => model.healthy.get(),
+            _ => true,
+        }
+    }
+
+    #[allow(clippy::too_many_arguments)]
+    pub(crate) fn preview(
+        &self,
+        audio: &MonoPcm,
+        config: &AppConfig,
+        root: &Path,
+        id: &str,
+        cancelled: &AtomicBool,
+        profile: &PersonalizationProfile,
+    ) -> Result<String> {
+        if let Self::Sherpa(model) = self {
+            return model.preview(audio, config, root, cancelled);
+        }
+        let progress: TranscriptionProgressSink = std::sync::Arc::new(|_| {});
+        self.transcribe(audio, config, root, id, cancelled, &progress, profile)
+    }
+
     pub(crate) fn load(config: &AppConfig, root: &Path, cancelled: &AtomicBool) -> Result<Self> {
         #[cfg(feature = "mlx")]
         if config.uses_mlx_speech() {
@@ -58,9 +144,12 @@ impl SpeechModel {
         }
         require_runtime(config)?;
         match config.speech_adapter().kind {
-            AdapterKind::CohereAsr | AdapterKind::Whisper => Ok(Self::Sherpa(
-                resident_sherpa::Recognizer::load(config, root, cancelled)?,
-            )),
+            AdapterKind::CohereAsr
+            | AdapterKind::Whisper
+            | AdapterKind::QwenAsr
+            | AdapterKind::SherpaTransducer => Ok(Self::Sherpa(resident_sherpa::Recognizer::load(
+                config, root, cancelled,
+            )?)),
             AdapterKind::NemoRnnt => {
                 vesper_models::verify_asr(config, root, cancelled)
                     .map_err(|e| native("speech model verification", e))?;
@@ -114,16 +203,18 @@ impl SpeechModel {
         id: &str,
         cancelled: &AtomicBool,
         profile: &PersonalizationProfile,
-    ) -> Result<vesper_nemo::Stream<'a>> {
+    ) -> Result<NativeStream<'a>> {
         match self {
             #[cfg(feature = "mlx")]
-            Self::Mlx(_) => Err(InferenceError::UnsupportedAsr(config.models.asr.id())),
-            Self::Nemo(model) => model.stream_with_phrases(
-                config,
-                id,
-                cancelled,
-                &profile.speech_phrases(config.language),
-            ),
+            Self::Mlx(model) => model.stream().map(Box::new).map(NativeStream::Mlx),
+            Self::Nemo(model) => model
+                .stream_with_phrases(
+                    config,
+                    id,
+                    cancelled,
+                    &profile.speech_phrases(config.language),
+                )
+                .map(NativeStream::Nemo),
             Self::Lfm(_) | Self::Sherpa(_) | Self::PerJob(_) => {
                 Err(InferenceError::UnsupportedAsr(config.models.asr.id()))
             }

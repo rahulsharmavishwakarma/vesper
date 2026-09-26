@@ -51,6 +51,26 @@ pub struct AdapterRegistration {
     pub capabilities: AdapterCapabilities,
 }
 
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize)]
+#[serde(rename_all = "snake_case")]
+pub enum LiveMode {
+    Native,
+    Buffered,
+    Unavailable,
+}
+
+impl AdapterRegistration {
+    pub fn live_mode(&self) -> LiveMode {
+        if self.task != ModelRole::SpeechRecognition || !self.capabilities.offline {
+            LiveMode::Unavailable
+        } else if self.capabilities.native_streaming {
+            LiveMode::Native
+        } else {
+            LiveMode::Buffered
+        }
+    }
+}
+
 const CPU: &[ComputeBackend] = &[ComputeBackend::Auto, ComputeBackend::Cpu];
 const ALL_BACKENDS: &[ComputeBackend] = &[
     ComputeBackend::Auto,
@@ -103,6 +123,7 @@ const fn mlx_registration(
         capabilities: AdapterCapabilities {
             resident_weights: true,
             completion_report: true,
+            native_streaming: matches!(kind, AdapterKind::QwenAsr),
             ..caps(state, &[Language::English], &[ComputeBackend::Metal])
         },
     }
@@ -147,7 +168,10 @@ pub const ADAPTERS: &[AdapterRegistration] = &[
         architecture: "sherpa_nemo_transducer",
         runtime: "sherpa-onnx",
         runtime_revision: SHERPA,
-        capabilities: caps(CacheState::Rnnt, EN_FR, CPU),
+        capabilities: AdapterCapabilities {
+            resident_weights: true,
+            ..caps(CacheState::Rnnt, EN_FR, CPU)
+        },
     },
     AdapterRegistration {
         kind: AdapterKind::QwenAsr,
@@ -156,6 +180,7 @@ pub const ADAPTERS: &[AdapterRegistration] = &[
         runtime: "sherpa-onnx",
         runtime_revision: SHERPA,
         capabilities: AdapterCapabilities {
+            resident_weights: true,
             completion_report: true,
             ..caps(CacheState::EncoderDecoder, ALL_LANGUAGES, CPU)
         },
@@ -303,6 +328,21 @@ impl AppConfig {
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    #[test]
+    fn every_builtin_asr_has_live_delivery_without_changing_language_contracts() {
+        for model in AsrModel::ALL {
+            let mut config = AppConfig::default();
+            config.models.asr = model;
+            config.compute_backend = ComputeBackend::Cpu;
+            assert_ne!(config.speech_adapter().live_mode(), LiveMode::Unavailable);
+            assert_eq!(config.text_adapter().live_mode(), LiveMode::Unavailable);
+            assert_eq!(
+                config.speech_adapter().live_mode() == LiveMode::Native,
+                model == AsrModel::Nemotron35AsrStreaming06b
+            );
+        }
+    }
     #[test]
     fn whisper_variants_share_one_cpu_completed_audio_contract() {
         for model in [AsrModel::WhisperSmall, AsrModel::WhisperTurbo] {
