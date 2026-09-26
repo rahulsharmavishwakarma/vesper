@@ -660,15 +660,12 @@ await test('Personal preference drafts survive navigation and save independently
   };
   let fail = true;
   let waitForSave;
-  let supportsHints = false;
   const state = await setup({
     main: true,
     intercept: (command, _state, args) => {
       if (command === 'get_personalization') return structuredClone(saved);
       if (command === 'get_selected_adapters')
-        return {
-          speech: { capabilities: { contextualPhrases: supportsHints, nativeStreaming: false } },
-        };
+        throw new Error('Model metadata must not gate personal preferences');
       if (command === 'save_personalization')
         return (async () => {
           await waitForSave?.promise;
@@ -687,6 +684,10 @@ await test('Personal preference drafts survive navigation and save independently
   await until(() => target.querySelector('#settings-language'), 'Settings did not load');
   await navigate('Settings');
   await until(() => target.querySelector('#personal-project'), 'Preferences did not load');
+  assert(
+    !target.querySelector('#improvement-mode'),
+    'Inactive model activation was offered as a working setting',
+  );
   const panel = () => target.querySelector('.personalization');
   const project = () => target.querySelector('#personal-project');
   const save = () => panel().querySelector('button[type="submit"]');
@@ -695,6 +696,12 @@ await test('Personal preference drafts survive navigation and save independently
       (button) => button.textContent === 'Discard changes',
     );
   assert(save().disabled, 'Unchanged preferences can be saved');
+  assert(
+    !target.querySelector('#personal-speech-hints').disabled && !state.counts.get_selected_adapters,
+    'Personal preferences depend on the selected model',
+  );
+  target.querySelector('#personal-speech-hints').click();
+  await tick();
   assert(
     project().form !== target.querySelector('.settings-form'),
     'Personal preferences belong to the application settings form',
@@ -708,12 +715,11 @@ await test('Personal preference drafts survive navigation and save independently
     'Personal edits marked application settings dirty',
   );
   await navigate('Models');
-  supportsHints = true;
   await navigate('Settings');
   assert(project().value === 'Synthetic project', 'Navigation lost the unsaved draft');
   await until(
     () => !target.querySelector('#personal-speech-hints').disabled,
-    'Returning to Settings did not refresh model support',
+    'Changing model pages disabled the application preference',
   );
   save().click();
   await until(() => panel().textContent.includes('Synthetic save failure'), 'Save error missing');
@@ -738,7 +744,7 @@ await test('Personal preference drafts survive navigation and save independently
     'Retry did not save',
   );
   assert(
-    saved.activeProject === 'Synthetic project' && save().disabled,
+    saved.activeProject === 'Synthetic project' && saved.speechBiasEnabled && save().disabled,
     'Saved snapshot not synchronized',
   );
   project().value = 'Unwanted edit';

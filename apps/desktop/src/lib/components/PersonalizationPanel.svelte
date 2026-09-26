@@ -3,7 +3,6 @@
   import {
     getPersonalization,
     savePersonalization,
-    getSelectedAdapters,
     getAutomaticLearning,
     forgetAutomaticLearning,
     type AutomaticLearningState,
@@ -16,20 +15,15 @@
     desktop,
     disabled = false,
     visible = true,
-    settingsRevision = '',
   }: {
     desktop: boolean;
     disabled?: boolean;
     visible?: boolean;
-    settingsRevision?: string;
   } = $props();
   let profile = $state<PersonalizationProfile | null>(null);
   let savedProfile = $state<PersonalizationProfile | null>(null);
   let learning = $state<AutomaticLearningState | null>(null);
   let pending = $state<'loading' | 'saving' | null>(null);
-  let speechBiasSupported = $state(false);
-  let checkingSpeech = $state(false);
-  let speechCheckFailed = $state(false);
   let error = $state('');
   let feedback = $state('');
   const dirty = $derived(
@@ -128,30 +122,6 @@
     document.getElementById('add-vocabulary')?.focus();
   }
   $effect(() => {
-    // Refresh model support when saved model settings change; preserve the local draft on navigation.
-    if (!desktop || !visible) return;
-    void settingsRevision;
-    let current = true;
-    checkingSpeech = true;
-    speechCheckFailed = false;
-    getSelectedAdapters()
-      .then((adapters) => {
-        if (current) speechBiasSupported = adapters.speech.capabilities.contextualPhrases;
-      })
-      .catch(() => {
-        if (current) {
-          speechBiasSupported = false;
-          speechCheckFailed = true;
-        }
-      })
-      .finally(() => {
-        if (current) checkingSpeech = false;
-      });
-    return () => {
-      current = false;
-    };
-  });
-  $effect(() => {
     if (!desktop || !visible) return;
     // History may have remembered new corrections. Refresh clean forms on return,
     // but keep unsaved edits and let the profile revision guard resolve conflicts.
@@ -171,7 +141,8 @@
     <p class="note">
       Vesper automatically learns eligible spellings from your edits in Your text and uses dictation
       usage to rank saved words. Learning stays on this device, even when audio collection is off.
-      Edits in other apps are not observed. You can remove or forget learned words below.
+      Corrections in other apps do not teach your vocabulary. You can remove or forget learned words
+      below.
     </p>
   </header>
   {#if !desktop}
@@ -200,7 +171,9 @@
                 aria-describedby="personal-project-help"
               />
               <p id="personal-project-help" class="note">
-                Choose a project to use its saved words and examples.
+                Enter a project name and save before recording. Vesper does not detect your project
+                from another app. Switch this name when you switch projects; leave it blank to use
+                only shared vocabulary and examples.
               </p>
             </div>
             <div class="field">
@@ -229,7 +202,7 @@
               >
               <p id="personal-corrections-help" class="note checkbox-help">
                 Use saved spellings and pronunciation corrections, even when the writing model is
-                off.
+                off. Works with every supported speech model.
               </p>
             </div>
             <div class="setting-toggle">
@@ -260,18 +233,13 @@
                   id="personal-speech-hints"
                   type="checkbox"
                   bind:checked={profile.speechBiasEnabled}
-                  disabled={!speechBiasSupported || checkingSpeech}
                   aria-describedby="personal-speech-hints-help"
-                /><span>Use my vocabulary during speech recognition</span></label
+                /><span>Request extra speech hints when supported</span></label
               >
               <p id="personal-speech-hints-help" class="note checkbox-help">
-                {checkingSpeech
-                  ? 'Checking speech model support…'
-                  : speechCheckFailed
-                    ? 'Could not check speech model support. Your saved preference is unchanged.'
-                    : speechBiasSupported
-                      ? 'May help recurring names, but can slow processing or affect other words.'
-                      : 'Unavailable with the selected speech model. Saved corrections can still apply afterward.'}
+                Optional recognition help where available; may slow processing or affect other
+                words. Saved corrections and spelling learning work with every speech model without
+                this option. Your preference stays saved when you switch models.
               </p>
             </div>
           </div>
@@ -471,6 +439,19 @@
           {#if learning}
             <div class="preference-group">
               <h3>Automatic learning evidence</h3>
+              {#if !learning.events.some((event) => event.kind === 'user_edit')}
+                <p class="note">
+                  No recent in-app corrections recorded. Edit Your text in Dictate, then leave the
+                  field or copy to save. Dictation and copying alone do not confirm a spelling.
+                  Corrections in other apps do not teach your vocabulary.
+                </p>
+              {/if}
+              <p class="note">
+                Ordinary spellings need corrections in two independent recordings and matching
+                context. Select a recording language in Settings: automatic language mode keeps
+                learned spellings provisional. History reviews require your confirmation; background
+                intent and policy evaluation does not yet change your preferences.
+              </p>
               <p class="note">
                 {learning.candidates.filter((c) => c.state === 'active').length} active · {learning.candidates.filter(
                   (c) => c.state === 'provisional',
@@ -493,7 +474,10 @@
                       ? ` ← ${candidate.alias}`
                       : ''} · {candidate.state} · {candidate.support.length} independent edit sources<br
                     /><span class="note"
-                      >{candidate.project || candidate.context || 'No project context'} · {candidate.reason}</span
+                      >{candidate.project || candidate.context || 'Shared vocabulary'} · {candidate.language ===
+                      'auto'
+                        ? 'Language not established'
+                        : candidate.language} · {candidate.reason}</span
                     >
                   </p>
                 {/each}

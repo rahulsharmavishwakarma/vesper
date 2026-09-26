@@ -101,7 +101,10 @@ export interface AutomaticLearningState {
     lastSeenMs: number;
     reason: string;
   }[];
-  events: { retry: 'possible_repair' | 'continuation' | 'changed_intent' | 'uncertain' | null }[];
+  events: {
+    kind: 'user_edit' | 'raw_observation' | 'memory_undo';
+    retry: 'possible_repair' | 'continuation' | 'changed_intent' | 'uncertain' | null;
+  }[];
 }
 export const getAutomaticLearning = () => invoke<AutomaticLearningState>('get_automatic_learning');
 export const forgetAutomaticLearning = (revision: number) =>
@@ -114,10 +117,6 @@ export const savePersonalization = (profile: PersonalizationProfile) =>
   invoke<PersonalizationProfile>('save_personalization', { profile });
 export const rememberCleanup = (id: string) =>
   invoke<PersonalizationProfile>('remember_cleanup', { id });
-export const getSelectedAdapters = () =>
-  invoke<{ speech: { capabilities: { contextualPhrases: boolean; nativeStreaming: boolean } } }>(
-    'get_selected_adapters',
-  );
 export const getCorrectionSuggestions = (id: string) =>
   invoke<CorrectionSuggestion[]>('get_correction_suggestions', { id });
 export const rememberCorrection = (request: {

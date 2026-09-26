@@ -296,6 +296,31 @@ blank to share it. Switch the current name when changing projects, or leave it
 blank to use only shared entries. Reviewing an older recording keeps its original
 project, including a blank project, rather than borrowing the current selection.
 
+**Apply my saved corrections** works with all supported speech models, including
+when cleanup is off or the writer fails. **Request extra speech hints when supported**
+is a persistent preference that can be saved with any model selected. The current
+Nemotron adapter can use those hints; other adapters ignore the request and still
+use saved corrections afterward. Learning evidence from independent recordings
+can accumulate across model changes; replaying the same audio with another model
+does not count as independent support. A manually added term
+needs a **Heard as** alias to replace a recurring mistake after recognition;
+listing its preferred spelling alone does not create that replacement.
+
+If learning appears inactive, inspect **Automatic learning evidence**. No recent
+in-app corrections means Vesper has not received the relevant feedback: edit
+**Your text** and leave the field or copy to save it. Dictation frequency, Copy,
+and corrections made in another app do not verify spellings. Candidate messages
+explain missing independent support, automatic-language mode, a full vocabulary
+or an existing manually managed entry. Select a recording language and correct
+new recordings to teach automatic aliases; older automatic-language observations
+are not retrospectively assigned a language. History labels require your review;
+background semantic/policy evaluation does not currently activate new preferences
+or train models.
+
+Settings no longer offers the inactive **Improvement policy / Automatic
+activation** selector. Its stored compatibility value does not enable a trainer,
+automatic review or stronger RSI. Automatic spelling learning is separate.
+
 Automatically learned words are used after recognition only when the transcript
 also matches context from a supporting edit. Older learned words may need a fresh
 correction before they apply again. This helps avoid unrelated replacements, but

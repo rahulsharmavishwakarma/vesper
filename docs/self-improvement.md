@@ -14,6 +14,12 @@ The [personalization phase roadmap](personalization/roadmap.md) explains the int
 
 ## User configuration
 
+The desktop does not expose the inactive **Improvement policy** selector. Its
+serialized `improvementMode` field remains compatible with existing settings but
+has no runtime consumer for training, review or promotion. The automatic choice
+does not enable recursive improvement or approve machine predictions. Settings
+instead explains the active in-app spelling loop and explicit History reviews.
+
 | Setting | Default | Intended behavior |
 | --- | --- | --- |
 | `collectTrainingData` | `true` | Retain source audio, predictions, and subsequent user corrections for later review and export. Turning it off stops collection for new sessions. |

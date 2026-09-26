@@ -958,27 +958,10 @@
                 </p>
               </div>
               <div class="field improvement-field">
-                <label for="improvement-mode">Improvement policy</label>
-                <Select
-                  id="improvement-mode"
-                  bind:value={draft.improvementMode}
-                  options={[
-                    {
-                      value: 'review_required',
-                      label: 'Review before activation',
-                      description: 'Approve evaluated model versions',
-                    },
-                    {
-                      value: 'automatic',
-                      label: 'Automatic activation',
-                      description: 'Use evaluated versions automatically',
-                    },
-                  ]}
-                  disabled={pending !== null || pipelineBusy}
-                  describedBy="improvement-help"
-                />
                 <p id="improvement-help" class="note">
-                  Model training is not available yet. This preference has no effect today.
+                  Spelling learning runs automatically from eligible edits to Your text. History
+                  reviews need your confirmation. Automatic model training and activation are not
+                  available.
                 </p>
               </div>
             </section>
@@ -1029,7 +1012,6 @@
         <PersonalizationPanel
           desktop={environment === 'desktop'}
           visible={activeView === 'settings'}
-          settingsRevision={savedJson}
           disabled={pending !== null || pipelineBusy || downloadRequest !== null}
         />
       {/if}
