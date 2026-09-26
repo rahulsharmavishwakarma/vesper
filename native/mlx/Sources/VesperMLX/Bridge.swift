@@ -64,7 +64,12 @@ public func loadModel(
 ) -> UnsafeMutableRawPointer? {
   do {
     guard let path, let architecture else { throw fail("Missing model path or architecture") }
-    guard MTLCreateSystemDefaultDevice() != nil else { throw fail("No usable Metal device") }
+    guard let device = MTLCreateSystemDefaultDevice() else { throw fail("No usable Metal device") }
+    // MLX allocator limits reserve unified memory for capture, the writer and OS.
+    // They do not impose a hard cross-runtime process cap or change wired memory.
+    let workingSet = Int(device.recommendedMaxWorkingSetSize)
+    Memory.cacheLimit = min(256 * 1024 * 1024, workingSet / 16)
+    Memory.memoryLimit = max(256 * 1024 * 1024, workingSet * 3 / 4)
     let directory = URL(fileURLWithPath: String(cString: path), isDirectory: true)
     let kind = String(cString: architecture)
     let required =
@@ -155,6 +160,9 @@ public func transcribe(
       "generationTokens": result.generationTokens, "promptTokens": result.promptTokens,
       "nativeSeconds": Double(elapsed.seconds) + Double(elapsed.attoseconds) / 1e18,
       "peakMemoryGB": Double(Memory.peakMemory) / 1e9,
+      "resources": ["activeBytes": Memory.activeMemory, "cacheBytes": Memory.cacheMemory,
+                    "cacheLimitBytes": Memory.cacheLimit, "memoryLimitBytes": Memory.memoryLimit,
+                    "scope": "MLX allocator; shared unified memory"],
       "provider": "metal", "runtimeRevision": "d302a5c6080d2bb97bae38c7418f82abb76013b6",
     ]
     if let scores = result.vesperWhisperScores { response["whisperScores"] = scores }

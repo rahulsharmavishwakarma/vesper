@@ -41,6 +41,8 @@ pub struct Transcript {
     pub provider: String,
     pub runtime_revision: String,
     pub whisper_scores: Option<WhisperScores>,
+    #[serde(default)]
+    pub resources: Option<serde_json::Value>,
 }
 #[derive(Debug, Deserialize, Serialize)]
 #[serde(rename_all = "camelCase")]
@@ -76,7 +78,27 @@ type Generate = unsafe extern "C" fn(
     *mut c_void,
 ) -> *mut c_char;
 
+type LiveOpen = unsafe extern "C" fn(*mut c_void, *mut *mut c_char) -> *mut c_void;
+type LiveFeed = unsafe extern "C" fn(*mut c_void, *const f32, i64) -> *mut c_char;
+type LivePoll = unsafe extern "C" fn(*mut c_void) -> *mut c_char;
+type LiveClose = unsafe extern "C" fn(*mut c_void);
+
+struct LiveState {
+    handle: NonNull<c_void>,
+    feed: LiveFeed,
+    poll: LivePoll,
+    close: LiveClose,
+}
+
+#[derive(Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct LiveUpdate {
+    pub text: Option<String>,
+    pub input_seconds: f32,
+}
+
 pub struct Model {
+    live: Option<LiveState>,
     handle: NonNull<c_void>,
     unload: Unload,
     free: Free,
@@ -138,6 +160,7 @@ impl Model {
             Error::Initialization(message.unwrap_or_else(|| "model initialization failed".into()))
         })?;
         Ok(Self {
+            live: None,
             handle,
             unload,
             free,
@@ -157,6 +180,11 @@ impl Model {
         max_tokens: usize,
         cancelled: &AtomicBool,
     ) -> Result<Transcript> {
+        if self.live.is_some() {
+            return Err(Error::Input(
+                "close live input before completed transcription",
+            ));
+        }
         if cancelled.load(Ordering::Acquire) {
             return Err(Error::Cancelled);
         }
@@ -206,8 +234,98 @@ impl Model {
     }
 }
 
+impl Model {
+    pub fn begin_live(&mut self) -> Result<()> {
+        if self.live.is_some() {
+            return Err(Error::Input("live session already exists"));
+        }
+        // SAFETY: these optional symbols come from the same verified bridge as
+        // the model. The session is closed/joined before model or image release.
+        let (open, feed, poll, close) = unsafe {
+            (
+                *self
+                    ._library
+                    .get::<LiveOpen>(b"vesper_mlx_live_open\0")
+                    .map_err(runtime)?,
+                *self
+                    ._library
+                    .get::<LiveFeed>(b"vesper_mlx_live_feed\0")
+                    .map_err(runtime)?,
+                *self
+                    ._library
+                    .get::<LivePoll>(b"vesper_mlx_live_poll\0")
+                    .map_err(runtime)?,
+                *self
+                    ._library
+                    .get::<LiveClose>(b"vesper_mlx_live_close\0")
+                    .map_err(runtime)?,
+            )
+        };
+        let mut error = std::ptr::null_mut();
+        // SAFETY: worker exclusively owns the verified model and the out-pointer.
+        let handle = unsafe { open(self.handle.as_ptr(), &mut error) };
+        let message = take_string(error, self.free);
+        let handle = NonNull::new(handle).ok_or_else(|| {
+            Error::Runtime(message.unwrap_or_else(|| "live session initialization failed".into()))
+        })?;
+        self.live = Some(LiveState {
+            handle,
+            feed,
+            poll,
+            close,
+        });
+        Ok(())
+    }
+
+    pub fn feed_live(&mut self, samples: &[f32]) -> Result<()> {
+        if samples.is_empty() {
+            return Ok(());
+        }
+        if samples.len() > 16000 || samples.iter().any(|s| !s.is_finite()) {
+            return Err(Error::Input("invalid live PCM packet"));
+        }
+        let live = self
+            .live
+            .as_ref()
+            .ok_or(Error::Input("live session not started"))?;
+        // SAFETY: Swift copies the finite slice during this synchronous call.
+        let response =
+            unsafe { (live.feed)(live.handle.as_ptr(), samples.as_ptr(), samples.len() as i64) };
+        self.live_response(response).map(|_| ())
+    }
+
+    pub fn poll_live(&mut self) -> Result<LiveUpdate> {
+        let live = self
+            .live
+            .as_ref()
+            .ok_or(Error::Input("live session not started"))?;
+        // SAFETY: exclusive worker access; returned allocation uses bridge free.
+        let response = unsafe { (live.poll)(live.handle.as_ptr()) };
+        serde_json::from_value(self.live_response(response)?).map_err(runtime)
+    }
+
+    fn live_response(&self, response: *mut c_char) -> Result<serde_json::Value> {
+        let text = take_string(response, self.free)
+            .ok_or_else(|| Error::Runtime("missing live response".into()))?;
+        let value: serde_json::Value = serde_json::from_str(&text).map_err(runtime)?;
+        if let Some(error) = value["error"].as_str() {
+            return Err(Error::Runtime(error.into()));
+        }
+        Ok(value)
+    }
+
+    pub fn close_live(&mut self) {
+        if let Some(live) = self.live.take() {
+            // SAFETY: close cancels AND awaits native work/collector before
+            // returning. No in-flight task can outlive this owner or its image.
+            unsafe { (live.close)(live.handle.as_ptr()) };
+        }
+    }
+}
+
 impl Drop for Model {
     fn drop(&mut self) {
+        self.close_live();
         // SAFETY: the exclusively owned retained handle is released exactly once,
         // before the library field is dropped. No call can overlap this drop.
         unsafe { (self.unload)(self.handle.as_ptr()) };

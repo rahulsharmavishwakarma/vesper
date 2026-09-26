@@ -4,7 +4,7 @@ use crate::{
 };
 use serde::Serialize;
 use std::{
-    cell::{Cell, RefCell},
+    cell::{Cell, RefCell, RefMut},
     path::{Path, PathBuf},
     sync::atomic::AtomicBool,
     time::Instant,
@@ -86,6 +86,25 @@ fn map_error(error: vesper_mlx::Error) -> crate::InferenceError {
 }
 
 impl Recognizer {
+    pub(crate) fn stream(&self) -> Result<Live<'_>> {
+        if self.identity.model != AsrModel::Qwen3Asr06b
+            || self.identity.language != Language::English
+        {
+            return Err(crate::InferenceError::UnsupportedAsr(
+                self.identity.model.id(),
+            ));
+        }
+        let mut model = self.model.borrow_mut();
+        model.begin_live().map_err(map_error)?;
+        Ok(Live {
+            model,
+            converter: None,
+            rate: None,
+            finished: false,
+            leading_zero_samples: 0,
+            has_nonzero_input: false,
+        })
+    }
     pub(crate) fn load(config: &AppConfig, root: &Path, cancelled: &AtomicBool) -> Result<Self> {
         check_cancelled(cancelled)?;
         let identity = key(config, root)?;
@@ -173,7 +192,7 @@ impl Recognizer {
                         cancelled,
                     )
                     .map_err(map_error)?;
-                self.metrics.borrow_mut().segments.push(serde_json::json!({"inputSamples":samples.len(), "stopReason":report.stop_reason, "generationTokens":report.generation_tokens, "promptTokens":report.prompt_tokens, "nativeSeconds":report.native_seconds, "processAllocatorPeakGB":report.peak_memory_gb, "whisperScores":report.whisper_scores}));
+                self.metrics.borrow_mut().segments.push(serde_json::json!({"inputSamples":samples.len(), "stopReason":report.stop_reason, "generationTokens":report.generation_tokens, "promptTokens":report.prompt_tokens, "nativeSeconds":report.native_seconds, "processAllocatorPeakGB":report.peak_memory_gb, "whisperScores":report.whisper_scores,"resources":report.resources}));
                 Ok(report.text)
             },
             &|p| {
@@ -198,6 +217,72 @@ impl Recognizer {
 
     pub(crate) fn evidence(&self, config: &AppConfig) -> serde_json::Value {
         serde_json::json!({"requestedBackend":config.compute_backend,"initializedProvider":"metal", "runtime":vesper_core::MLX_RUNTIME, "runtimeRevision":vesper_mlx::RUNTIME_REVISION, "runtimeArtifacts":vesper_models::mlx::runtime_artifacts(), "operatorPlacement":"MLX default GPU; individual kernels not attested", "residentWeights":true,"residentLoadOrdinal":self.load_ordinal,"verificationUs":self.verification_us,"modelLoadUs":self.load_us,"metrics":*self.metrics.borrow(),"contextualPhrasesSupported":false,"contextualPhraseCount":0,"evidence":"verified-application-MLX-fresh-segment-decoder-state"})
+    }
+}
+
+pub(crate) struct Live<'a> {
+    model: RefMut<'a, vesper_mlx::Model>,
+    converter: Option<vesper_audio::StreamingResampler>,
+    rate: Option<u32>,
+    finished: bool,
+    leading_zero_samples: u64,
+    has_nonzero_input: bool,
+}
+
+impl Live<'_> {
+    pub fn push(&mut self, samples: &[f32], rate: u32) -> Result<()> {
+        if self.finished || self.rate.is_some_and(|previous| previous != rate) {
+            return Err(native(
+                "MLX live audio",
+                "closed session or changed sample rate",
+            ));
+        }
+        if self.converter.is_none() {
+            self.converter = Some(vesper_audio::StreamingResampler::new(rate)?);
+            self.rate = Some(rate);
+        }
+        let pcm = self
+            .converter
+            .as_mut()
+            .expect("stream converter")
+            .push(samples)?;
+        for chunk in pcm.chunks(16000) {
+            // The native session can hallucinate from digital silence. Avoid
+            // starting its preview decoder until actual nonzero input arrives.
+            // This is not VAD or an amplitude threshold; final audio is retained
+            // independently by the recorder, including all leading zeros.
+            if !self.has_nonzero_input && chunk.iter().all(|sample| *sample == 0.0) {
+                self.leading_zero_samples += chunk.len() as u64;
+                continue;
+            }
+            self.has_nonzero_input = true;
+            self.model.feed_live(chunk).map_err(map_error)?;
+        }
+        Ok(())
+    }
+
+    pub fn poll(&mut self) -> Result<Option<crate::adapters::LiveSnapshot>> {
+        if self.finished {
+            return Ok(None);
+        }
+        let update = self.model.poll_live().map_err(map_error)?;
+        Ok(update.text.map(|text| crate::adapters::LiveSnapshot {
+            text,
+            audio_processed_seconds: update.input_seconds
+                + self.leading_zero_samples as f32 / 16000.0,
+            is_final: false,
+        }))
+    }
+
+    pub fn finish(&mut self) {
+        self.model.close_live();
+        self.finished = true;
+    }
+}
+
+impl Drop for Live<'_> {
+    fn drop(&mut self) {
+        self.finish();
     }
 }
 
