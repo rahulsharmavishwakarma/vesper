@@ -3348,10 +3348,8 @@ await test('Speaker timelines appear automatically without a toggle or settings 
     'Attribution limitation missing',
   );
   button('Models').click();
-  await until(
-    () => target.textContent.includes('Speaker timelines are added on supported devices'),
-    'Automatic speaker description missing',
-  );
+  await tick();
+  assert(!target.querySelector('#audio-processing-heading'), 'Audio processing card remains');
   assert(!target.querySelector('#models-speakers'), 'Retired speaker toggle is still present');
   assert((state.counts.save_settings ?? 0) === 0, 'Automatic timeline required a settings save');
   button('History').click();
@@ -3436,6 +3434,10 @@ await test('Automatic audio setup downloads only managed models serially and reu
     'Manual audio model chooser remains',
   );
   assert(
+    !target.querySelector('#audio-processing-heading, [aria-label="Automatic audio setup"]'),
+    'Background audio setup still has a settings card',
+  );
+  assert(
     target.querySelector('#models-asr-model') && target.querySelector('#models-cleanup-model'),
     'Speech/writing selectors lost',
   );
@@ -3448,16 +3450,11 @@ await test('Automatic audio setup downloads only managed models serially and reu
   await until(
     () =>
       !audioButton('Cancel download') &&
-      target.querySelectorAll('[aria-label="Automatic audio setup"] [data-status="downloaded"]')
-        .length === 3,
+      active === 0 &&
+      catalog.filter((entry) => entry.artifactsInstalled).length === 3,
     'Setup did not finish',
   );
   assert((state.counts.save_settings ?? 0) === 0, 'Automatic setup saved settings without an edit');
-  assert(
-    target.querySelectorAll('[aria-label="Automatic audio setup"] [data-status="downloaded"]')
-      .length === 3,
-    'Ready states missing',
-  );
   const before = state.counts.list_model_installations;
   audioButton('Dictate').click();
   target.querySelector('[aria-label="Rescan microphones"]').click();
@@ -3527,9 +3524,9 @@ for (const failure of ['cancelled', 'network failure']) {
       target.querySelector('[aria-label="Rescan microphones"]').click();
       await until(() => state.counts.list_model_installations > before, 'Recovery refresh failed');
       assert(calls === 1, 'Failure caused an immediate retry loop');
-      await until(
-        () => target.querySelector('[aria-label="Automatic audio setup"] [data-status="warning"]'),
-        'Failed cached-file verification falsely appears ready',
+      assert(
+        target.textContent.includes('Audio setup will retry automatically'),
+        'Background recovery status disappeared after refresh',
       );
       if (failure === 'cancelled') retries[0]();
       else window.dispatchEvent(new Event('online'));
@@ -3540,12 +3537,8 @@ for (const failure of ['cancelled', 'network failure']) {
       audioButton('Models').click();
       await tick();
       assert(
-        target.textContent.includes('Awaiting device support'),
-        'Missing speaker runtime falsely ready',
-      );
-      assert(
-        !target.querySelector('[aria-labelledby="audio-processing-heading"] button'),
-        'Audio setup offers manual actions',
+        !target.querySelector('#audio-processing-heading, [aria-label="Automatic audio setup"]'),
+        'Audio setup card returned after recovery',
       );
     } finally {
       window.setTimeout = originalTimeout;

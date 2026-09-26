@@ -55,7 +55,6 @@
   import AboutSheet from './lib/components/AboutSheet.svelte';
   import BrandLogo from './lib/components/BrandLogo.svelte';
   import DownloadProgress from './lib/components/DownloadProgress.svelte';
-  import AutomaticAudioSetup from './lib/components/AutomaticAudioSetup.svelte';
   import {
     acceleratorOptions,
     acceleratorReason,
@@ -858,16 +857,6 @@
                   >Adjust writing preferences <Icon name="arrow" /></button
                 >
               </p>
-            </section>
-            <section
-              class="settings-section"
-              hidden={activeView !== 'models'}
-              aria-labelledby="audio-processing-heading"
-            >
-              <h2 id="audio-processing-heading">
-                Audio processing <span class="note">Experimental</span>
-              </h2>
-              <AutomaticAudioSetup state={downloads} desktop={environment === 'desktop'} />
             </section>
             <section
               class="settings-section"

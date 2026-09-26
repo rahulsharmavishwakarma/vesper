@@ -154,7 +154,8 @@ transcript remains available. This recovery needs no setting or per-word setup.
 
 ### Experimental audio processing
 
-In **Models → Audio processing**, supporting audio models are managed by the app.
+Supporting audio models are managed in the background. There is no Audio
+processing card or supporting-model status list in Settings.
 Only the speech (ASR) and writing models have model selectors. Noise reduction
 uses **DPDFNet8**, and **Silero v6.2** adds speech timing annotations without
 removing recorded audio. Automatic volume adjustment is disabled. Older audio
@@ -192,7 +193,7 @@ failures use the original-audio fallback; failures are reported with a warning.
 Speaker analysis runs automatically when its local model and runtime are
 available; there is no enable switch or settings-save step. Its model downloads
 automatically once the selected speech/writing models and local speaker runtime
-are ready. **Models → Audio processing** shows its setup status.
+are ready. This background setup has no separate Settings card.
 This experimental integration requires Apple silicon and the
 [locally built speaker runtime](development.md#experimental-speaker-runtime);
 there is no newly published runtime installer. It runs entirely on device.
