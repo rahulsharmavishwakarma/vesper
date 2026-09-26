@@ -174,6 +174,8 @@ test('current product copy consistently names Vesper', () => {
     'apps/desktop/src/lib/components/PersonalizationPanel.svelte',
   ]) {
     assert.doesNotMatch(read(path), /transcribe Studio/i, path);
+  }
+  for (const path of ['apps/desktop/src/app.css', 'apps/desktop/src/tokens.css']) {
     assert.match(read(path), /Vesper Studio/, path);
   }
 });

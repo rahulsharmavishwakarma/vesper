@@ -37,7 +37,6 @@
 </span>
 
 <style>
-  /* Hallmark · component: model status · existing Studio tokens · P5 H5 E4 S5 R5 V4 */
   .model-status {
     display: inline-flex;
     align-items: center;

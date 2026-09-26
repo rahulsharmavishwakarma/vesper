@@ -270,7 +270,6 @@
 </section>
 
 <style>
-  /* Hallmark · component: Local engine · existing Studio tokens · P4 H5 E4 S5 R5 V4 */
   .engine-status {
     margin: 0 0 var(--space-6);
     border: 1px solid var(--color-line);

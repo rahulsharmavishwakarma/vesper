@@ -543,8 +543,6 @@
 </section>
 
 <style>
-  /* Hallmark · component: personal preferences · existing Vesper Studio tokens
-   * pre-emit critique: P5 H4 E5 S5 R5 V4 */
   .personalization {
     margin-top: var(--space-6);
   }
