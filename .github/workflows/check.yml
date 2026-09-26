@@ -37,7 +37,7 @@ jobs:
       - run: make python-lock-check
       - name: Check repository hygiene
         env:
-          SKIP: transcribe-fast-check
+          SKIP: vesper-fast-check
         run: |
           uv run --locked pre-commit run --all-files --show-diff-on-failure
       - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
@@ -136,7 +136,7 @@ jobs:
           executable=$(/usr/libexec/PlistBuddy -c 'Print :CFBundleExecutable' "$app/Contents/Info.plist")
           test -x "$app/Contents/MacOS/$executable"
           if [ "$(uname -m)" = arm64 ]; then
-            test -s "$app/Contents/Resources/mlx-runtime/libTranscribeMLX.dylib"
+            test -s "$app/Contents/Resources/mlx-runtime/libVesperMLX.dylib"
             test -s "$app/Contents/Resources/mlx-runtime/mlx.metallib"
             test -x "$app/Contents/Resources/mlx-runtime/prepare-qwen-tokenizer"
           fi

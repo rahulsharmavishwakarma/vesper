@@ -352,6 +352,9 @@ use `vesper-*`; the native executable is `vesper-desktop` and the library is
 The npm workspace is `vesper-workspace`, with frontend package
 `@vesper/desktop`; root npm scripts, browser tests and container builds resolve
 that same workspace. These packages remain private, with unchanged versions.
+Contributor Python metadata uses `vesper-tooling`. The hook IDs are
+`vesper-fast-check` and `vesper-push-check`; CI's explicit duplicate-check skip
+uses the matching ID. The checks themselves and dependency pins are unchanged.
 
 Keep these exact technical names until a separately scoped migration updates
 their producers, consumers and compatibility behavior together:

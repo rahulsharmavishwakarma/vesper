@@ -52,7 +52,7 @@ repos:
 
   - repo: local
     hooks:
-      - id: transcribe-fast-check
+      - id: vesper-fast-check
         name: Vesper Python locks, format, language lint, types and Node tests
         entry: make check-fast
         language: system
@@ -61,7 +61,7 @@ repos:
         stages: [pre-commit]
       # Git has contacted the remote before pre-push runs. Keep native builds
       # and browser tests in explicit `make check` and the existing CI jobs.
-      - id: transcribe-push-check
+      - id: vesper-push-check
         name: Vesper version consistency
         entry: make version-check
         language: system

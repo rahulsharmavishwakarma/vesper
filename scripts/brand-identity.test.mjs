@@ -132,9 +132,9 @@ test('current product copy consistently names Vesper', () => {
 });
 
 test('naming cleanup retains working technical names and historical evidence', () => {
-  assert.match(read('pyproject.toml'), /name = "transcribe-tooling"/);
-  assert.match(read('.pre-commit-config.yaml'), /id: transcribe-fast-check/);
-  assert.match(read('.pre-commit-config.yaml'), /id: transcribe-push-check/);
+  assert.match(read('pyproject.toml'), /name = "vesper-tooling"/);
+  assert.match(read('.pre-commit-config.yaml'), /id: vesper-fast-check/);
+  assert.match(read('.pre-commit-config.yaml'), /id: vesper-push-check/);
   assert.match(read('README.md'), /github\.com\/rahulsharmavishwakarma\/transcribe\.git/);
   assert.match(read('README.md'), /download\/transcribe-macos-arm64\.dmg/);
   assert.match(read('apps/desktop/src/lib/config.ts'), /'Cohere Transcribe'/);
