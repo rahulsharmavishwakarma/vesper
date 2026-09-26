@@ -18,6 +18,30 @@ similarity screening was preliminary, not a claim of worldwide exclusivity or
 trademark clearance. Selecting the artwork does not select a distribution
 license or establish that the Vesper name is legally available.
 
+The repository README uses the same full Songbird wordmark in a still graphite
+banner: sage bird/calls, light lettering, and generous clear space. All six
+letters remain visible. The tagline and development status sit outside
+the artwork as accessible, reflowing text. Keep this opening brief and direct;
+do not add decorative animation, borrowed product artwork, fabricated badges or
+claims of a release/license that does not exist. The banner is a derivative,
+not a second logo source; see [brand asset generation](development.md#brand-assets).
+
+Keep the product branding platform-neutral: **“Voice to text, on your device.”**
+The header describes local models and early development, not a Mac-only identity.
+Put current platform requirements in Download, setup and permission guidance;
+macOS on Apple silicon remains the supported target today. Platform-neutral
+wording does not claim other devices are supported or promise a release date.
+
+README validation on 26 September 2026 used GitHub's document-mode Markdown
+renderer and a local browser preview with approximate host typography. The
+banner and header fit at 320/375/414/768/1200 px in light and dark surroundings,
+with no horizontal overflow or split navigation labels. The original nine
+paths match exactly; measured banner contrast is 11.16:1 for the bird and
+15.97:1 for the lettering. This is local rendering evidence, not verification
+of an unpublished asset on the hosted repository or a screen-reader audit.
+Those screenshots precede the platform-neutral wording refinement; the artwork
+and layout are unchanged, but the longer tagline was not requalified in them.
+
 `BrandLogo.svelte` renders that same source at 160 px in the sidebar, 120 px in
 the narrow-window header and 224 px in About, bounded by the available width.
 Existing sage/ink tokens provide its colours. The sidebar's existing button

@@ -1,18 +1,21 @@
-# Vesper
+<p align="center">
+  <img src="docs/assets/vesper-banner.svg" alt="Vesper" width="1200">
+</p>
 
-**Voice to text, on your Mac.**
+<h1 align="center">Voice to text, on your device.</h1>
+
+<p align="center">Local models · Early&nbsp;development</p>
+
+<p align="center">
+  <a href="#getting-started">Get&nbsp;started</a> ·
+  <a href="docs/user-guide.md">User&nbsp;guide</a> ·
+  <a href="#development">Build&nbsp;from&nbsp;source</a> ·
+  <a href="https://github.com/rahulsharmavishwakarma/transcribe/issues">Issues</a>
+</p>
 
 Vesper turns microphone recordings and audio files into text using local models.
 Dictate with a keyboard shortcut, review your words, and optionally clean up
 punctuation and formatting. No account or cloud API key is required.
-
-**macOS · Apple silicon · Early development**
-
-[Getting started](#getting-started) · [User guide](docs/user-guide.md) ·
-[Contributing](CONTRIBUTING.md) · [Report a bug](https://github.com/rahulsharmavishwakarma/transcribe/issues)
-
-The product is **Vesper**. The repository URL and technical identifiers retain
-their existing names for compatibility; see [product naming](docs/development.md#product-name-and-compatibility).
 
 ## Features
 
@@ -64,9 +67,9 @@ available. See [quick capture and permissions](docs/user-guide.md#quick-capture)
 
 ## Privacy
 
-Speech recognition and text cleanup run on your Mac. Audio and transcripts are
-not uploaded for processing. Internet access is needed to download models and
-runtime components; installed models can then work offline.
+Speech recognition and text cleanup run locally on your device. Audio and
+transcripts are not uploaded for processing. Internet access is needed to
+download models and runtime components; installed models can then work offline.
 
 Recording history is saved locally by default. Turn off **Save recordings and
 transcripts** in Settings to stop archiving new sessions. Personal vocabulary
@@ -88,6 +91,10 @@ make dev
 Repository access is required while the project is private. Model downloads
 happen separately in the app. The native app does not require Python;
 contributor checks use Python 3.12 or newer.
+
+The repository URL still uses `transcribe` until the repository is renamed.
+The app and project-owned packages use Vesper; see
+[product naming and compatibility](docs/development.md#product-name-and-compatibility).
 
 ```sh
 make setup-checks

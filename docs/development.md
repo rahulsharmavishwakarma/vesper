@@ -303,6 +303,30 @@ not grant microphone permission or record audio.
 
 Edit only `apps/desktop/src/assets/vesper.svg` for the selected bird/wordmark.
 The frontend embeds that trusted, bundled SVG without a runtime fetch or font.
+
+The README's `docs/assets/vesper-banner.svg` is a generated, self-contained
+1200 × 320 SVG. It preserves every canonical bird/call/letter path and embeds
+the existing background, ink and sage tokens from `apps/desktop/src/tokens.css`.
+Do not separately redraw its logo or edit the generated file. Regenerate it
+after changes to those inputs:
+
+```sh
+node scripts/generate-readme-banner.mjs
+node scripts/generate-readme-banner.mjs --check
+node --test scripts/brand-identity.test.mjs
+```
+
+The banner has no script, animation, external font or image dependency. Its
+relative README image path works in branches and clones; the image's `alt`
+provides the Vesper name when images are unavailable. Keep the tagline,
+platform and development status in real README text, so they remain readable
+at narrow widths. GitHub owns the surrounding Markdown layout and typography.
+Validate GitHub-rendered Markdown plus the local banner at 320/375/414/768 px
+and desktop, in light and dark surroundings; changes are not visible on the
+hosted repository until pushed. `make check-fast` includes banner freshness,
+canonical-path and truthful-release-copy regressions. A banner does not imply
+a published installer or selected open-source license.
+
 Regenerate desktop icons using the existing locked Tauri CLI after `npm ci`:
 
 ```sh

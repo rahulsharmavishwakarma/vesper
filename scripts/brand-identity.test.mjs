@@ -8,6 +8,7 @@ import {
   menuBarIconSource,
   nativeIconFiles,
 } from './generate-brand-icons.mjs';
+import { readmeBannerSource } from './generate-readme-banner.mjs';
 
 const read = (path) => readFileSync(new URL(`../${path}`, import.meta.url), 'utf8');
 const bytes = (path) => readFileSync(new URL(`../${path}`, import.meta.url));
@@ -35,6 +36,46 @@ test('native source is generated from the same bird, not a separate redraw', () 
   assert.equal(iconPalette.background, '#111512');
   assert.equal(iconPalette.bird, '#b1d3a3');
   assert.doesNotMatch(native, /<text\b|data-letter=/);
+});
+
+test('README banner preserves every canonical path and uses existing brand tokens', () => {
+  const banner = read('docs/assets/vesper-banner.svg');
+  const tokens = read('apps/desktop/src/tokens.css');
+  assert.equal(banner, readmeBannerSource(svg, tokens));
+  assert.deepEqual(
+    [...banner.matchAll(/<path\b[^>]*>/g)].map((match) => match[0]),
+    [...svg.matchAll(/<path\b[^>]*>/g)].map((match) => match[0]),
+  );
+  assert.deepEqual(
+    [...banner.matchAll(/data-letter="(.)"/g)].map((match) => match[1]),
+    [...'vesper'],
+  );
+  assert.match(banner, /<title id="title">Vesper<\/title>/);
+  assert.match(banner, /width="1200" height="320" viewBox="0 0 1200 320"/);
+  assert.doesNotMatch(
+    banner,
+    /<(?:text|script|image|use|foreignObject|animate)\b|@import|@font-face|@keyframes|\bhref=|https?:\/\/(?!www\.w3\.org)/,
+  );
+});
+
+test('README banner fails clearly if its canonical inputs are missing', () => {
+  assert.throws(() => readmeBannerSource('<svg/>', ''), /canonical Vesper SVG/);
+  assert.throws(() => readmeBannerSource(svg, ''), /Missing brand token: --color-bg/);
+});
+
+test('README opens with accessible Vesper branding without promising a release', () => {
+  const readme = read('README.md');
+  assert.match(
+    readme,
+    /^<p align="center">\s*<img src="docs\/assets\/vesper-banner.svg" alt="Vesper" width="1200">\s*<\/p>/,
+  );
+  assert.match(readme, /<h1 align="center">Voice to text, on your device\.<\/h1>/);
+  assert.match(readme, /<p align="center">Local models · Early&nbsp;development<\/p>/);
+  assert.doesNotMatch(readme.split('## Features')[0], /\bMac(?:s|OS)?\b|Apple.silicon/i);
+  assert.match(readme, /macOS DMG for Apple-silicon Macs/);
+  assert.match(readme, /A public installer is not available yet/);
+  assert.match(readme, /A project license has not yet been selected/);
+  assert.doesNotMatch(readme, /technical identifiers retain\s+their existing names/);
 });
 
 test('all existing desktop icons have the expected format and dimensions', () => {
@@ -105,7 +146,7 @@ test('Vesper identity retains explicit compatibility for earlier storage', () =>
 
 test('current product copy consistently names Vesper', () => {
   const expected = [
-    ['README.md', '# Vesper'],
+    ['README.md', 'alt="Vesper"'],
     ['CONTRIBUTING.md', '# Contributing to Vesper'],
     ['SECURITY.md', 'Until Vesper publishes stable releases'],
     ['.github/ISSUE_TEMPLATE/bug_report.yml', 'Start Vesper with'],
