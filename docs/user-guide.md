@@ -7,8 +7,8 @@ recording history and personal vocabulary.
 Start at the [product README](../README.md) for download status or follow the
 [development guide](development.md) to run from source. The public DMG and Apple
 Developer ID signing/notarization are not available yet. Once a release is
-available, open its DMG and drag `Vesper.app` to Applications. The repository and
-download filename still use `transcribe`. Existing settings, models and history
+available, open `vesper-macos-arm64.dmg` and drag `Vesper.app` to Applications.
+The repository still uses `transcribe`. Existing settings, models and history
 are reused in place when no Vesper store exists; nothing is moved, merged or reset.
 The new application identifier may require granting macOS microphone,
 Accessibility or notification permissions again. Browser preview reads older

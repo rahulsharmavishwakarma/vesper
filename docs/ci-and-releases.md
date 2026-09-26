@@ -404,26 +404,26 @@ verifies the synchronized application version, and builds the optimized macOS
 app plus DMG using Tauri's existing bundler. Publishing a release in GitHub's UI
 also triggers this workflow for its tag. The collected assets are:
 
-- `transcribe-macos-arm64.dmg`, containing `Vesper.app` and an Applications link;
+- `vesper-macos-arm64.dmg`, containing `Vesper.app` and an Applications link;
 - `SHA256SUMS`, covering that DMG.
 
 The version is recorded in the release tag and app bundle. The asset name stays
 constant so a website download button can link to:
 
 ```text
-https://github.com/rahulsharmavishwakarma/transcribe/releases/latest/download/transcribe-macos-arm64.dmg
+https://github.com/rahulsharmavishwakarma/transcribe/releases/latest/download/vesper-macos-arm64.dmg
 ```
 
 The app bundle and new release titles use the Vesper display name. Packaging
 and the native CI bundle check read `productName` from `tauri.conf.json`, rather
-than assuming that the bundle name matches the internal `transcribe` package.
+than assuming that the bundle name matches the internal `vesper-desktop` package.
 The stable DMG filename, repository URL and application identifier stay unchanged.
 The branding change does not publish an installer or alter release authorization.
 
 A specific release has a permanent version URL, for example:
 
 ```text
-https://github.com/rahulsharmavishwakarma/transcribe/releases/download/v0.1.0/transcribe-macos-arm64.dmg
+https://github.com/rahulsharmavishwakarma/transcribe/releases/download/v0.1.0/vesper-macos-arm64.dmg
 ```
 
 These are planned endpoints until a release succeeds. At the 2026-09-19 review,

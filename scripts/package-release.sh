@@ -46,4 +46,4 @@ test ! -e "$output" || {
 }
 mkdir "$output"
 # The version lives in the tag and bundle; this name keeps the download URL stable.
-cp "$dmg" "$output/transcribe-macos-${architecture}.dmg"
+cp "$dmg" "$output/vesper-macos-${architecture}.dmg"

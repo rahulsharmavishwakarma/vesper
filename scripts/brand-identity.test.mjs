@@ -99,7 +99,7 @@ test('Vesper identity retains explicit compatibility for earlier storage', () =>
   );
   assert.match(read('apps/desktop/src-tauri/src/storage.rs'), /com\.transcribe\.desktop/);
   assert.match(read('scripts/package-release.sh'), /productName/);
-  assert.match(read('scripts/package-release.sh'), /transcribe-macos-/);
+  assert.match(read('scripts/package-release.sh'), /vesper-macos-/);
   assert.match(read('.github/workflows/check.yml'), /productName/);
 });
 
@@ -136,7 +136,7 @@ test('naming cleanup retains working technical names and historical evidence', (
   assert.match(read('.pre-commit-config.yaml'), /id: vesper-fast-check/);
   assert.match(read('.pre-commit-config.yaml'), /id: vesper-push-check/);
   assert.match(read('README.md'), /github\.com\/rahulsharmavishwakarma\/transcribe\.git/);
-  assert.match(read('README.md'), /download\/transcribe-macos-arm64\.dmg/);
+  assert.match(read('README.md'), /download\/vesper-macos-arm64\.dmg/);
   assert.match(read('apps/desktop/src/lib/config.ts'), /'Cohere Transcribe'/);
   assert.match(read('apps/desktop/src/lib/components/QuickCapture.svelte'), /Stop and transcribe/);
   assert.match(read('docs/development.md'), /### Product name and compatibility/);

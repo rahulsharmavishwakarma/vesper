@@ -106,6 +106,6 @@ jobs:
       - name: Record download links
         run: |
           {
-            echo "Version download: https://github.com/$GITHUB_REPOSITORY/releases/download/$GITHUB_REF_NAME/transcribe-macos-arm64.dmg"
-            echo "Latest stable: https://github.com/$GITHUB_REPOSITORY/releases/latest/download/transcribe-macos-arm64.dmg"
+            echo "Version download: https://github.com/$GITHUB_REPOSITORY/releases/download/$GITHUB_REF_NAME/vesper-macos-arm64.dmg"
+            echo "Latest stable: https://github.com/$GITHUB_REPOSITORY/releases/latest/download/vesper-macos-arm64.dmg"
           } >> "$GITHUB_STEP_SUMMARY"

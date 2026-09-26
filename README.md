@@ -34,7 +34,7 @@ macOS DMG for Apple-silicon Macs. Intel Macs, Windows and Linux are not current
 release targets.
 
 When the first stable public release is published, the
-[Mac DMG download](https://github.com/rahulsharmavishwakarma/transcribe/releases/latest/download/transcribe-macos-arm64.dmg)
+[Mac DMG download](https://github.com/rahulsharmavishwakarma/transcribe/releases/latest/download/vesper-macos-arm64.dmg)
 will point to the latest version. Versioned downloads will appear on the
 [Releases page](https://github.com/rahulsharmavishwakarma/transcribe/releases).
 Apple Developer ID signing and notarization are still pending.

@@ -6,7 +6,7 @@ import path from 'node:path';
 import { spawnSync } from 'node:child_process';
 import { fileURLToPath } from 'node:url';
 
-export const ASSET_NAMES = ['transcribe-macos-arm64.dmg', 'SHA256SUMS'];
+export const ASSET_NAMES = ['vesper-macos-arm64.dmg', 'SHA256SUMS'];
 
 export function publishRelease({ repository, tag, directory = 'release', run }) {
   if (!/^[\w.-]+\/[\w.-]+$/.test(repository ?? '')) throw new Error('Invalid repository');

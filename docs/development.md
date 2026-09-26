@@ -15,7 +15,7 @@ The repository contains a Rust workspace and a Tauri 2 desktop application with 
 Tauri's macOS configuration. `make build-debug` remains `.app`-only. Versioned
 build output stays under ignored `target/release/bundle/`; release collection
 verifies the bundle and DMG, then copies the installer to
-`release/transcribe-macos-arm64.dmg`. The [release workflow](ci-and-releases.md#release-workflow-and-download-url)
+`release/vesper-macos-arm64.dmg`. The [release workflow](ci-and-releases.md#release-workflow-and-download-url)
 attaches it to GitHub Releases for a stable direct download URL.
 
 ## Contributor checks
@@ -373,7 +373,7 @@ their producers, consumers and compatibility behavior together:
 The app/browser identifiers use Vesper now. Old Transcribe/Ukti/STT identifiers
 are read-only lookup aliases, not competing current names; subsequent native
 saves stay in the selected existing store and browser saves use the Vesper key.
-- Existing release download filenames, including `transcribe-macos-arm64.dmg`.
+- Existing release download filenames, including `vesper-macos-arm64.dmg`.
 
 Do not rename the third-party **Cohere Transcribe** model, the `transcribe.cpp`
 runtime, transcription actions such as **Stop and transcribe**, or API methods.
