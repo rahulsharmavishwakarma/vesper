@@ -334,6 +334,12 @@ frontend hot reload alone does not replace a running app's packaged icon.
 
 ### Product name and compatibility
 
+The native Swift bridge is `VesperMLX` (`vesper_mlx_*` C symbols). Its
+project-owned completion-report properties use the same Vesper prefix. These
+are private build interfaces: rebuild the bridge and Rust consumers together;
+do not load a renamed copy of an old binary. The pinned upstream Cohere
+Transcribe architecture and ordinary transcription API names are unchanged.
+
 **Vesper** is the display name in the app, documentation, issue templates,
 GitHub issues and project title/readme. Native startup messages and developer
 qualification windows use the same name. The application identity is `com.vesper.desktop`; legacy state is reused in place,

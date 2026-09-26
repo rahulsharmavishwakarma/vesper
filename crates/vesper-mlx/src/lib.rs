@@ -57,7 +57,7 @@ pub fn device_available(library: &Path) -> Result<bool> {
     unsafe {
         let image = Library::new(library).map_err(runtime)?;
         let probe = image
-            .get::<unsafe extern "C" fn() -> bool>(b"transcribe_mlx_device_available\0")
+            .get::<unsafe extern "C" fn() -> bool>(b"vesper_mlx_device_available\0")
             .map_err(runtime)?;
         Ok(probe())
     }
@@ -112,23 +112,21 @@ impl Model {
         // SAFETY: these signatures exactly match native/mlx/Bridge.swift ABI v1.
         let (load, unload, free, generate) = unsafe {
             let version = library
-                .get::<unsafe extern "C" fn() -> u32>(b"transcribe_mlx_abi_version\0")
+                .get::<unsafe extern "C" fn() -> u32>(b"vesper_mlx_abi_version\0")
                 .map_err(runtime)?;
             if version() != 1 {
                 return Err(Error::Runtime("unsupported bridge ABI".into()));
             }
             (
+                *library.get::<Load>(b"vesper_mlx_load\0").map_err(runtime)?,
                 *library
-                    .get::<Load>(b"transcribe_mlx_load\0")
+                    .get::<Unload>(b"vesper_mlx_unload\0")
                     .map_err(runtime)?,
                 *library
-                    .get::<Unload>(b"transcribe_mlx_unload\0")
+                    .get::<Free>(b"vesper_mlx_free_string\0")
                     .map_err(runtime)?,
                 *library
-                    .get::<Free>(b"transcribe_mlx_free_string\0")
-                    .map_err(runtime)?,
-                *library
-                    .get::<Generate>(b"transcribe_mlx_transcribe\0")
+                    .get::<Generate>(b"vesper_mlx_transcribe\0")
                     .map_err(runtime)?,
             )
         };

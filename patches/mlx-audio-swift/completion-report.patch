@@ -4,9 +4,9 @@
  
  /// Output from speech-to-text transcription.
  public struct STTOutput: @unchecked Sendable {
-+    /// Pinned Transcribe patch: actual termination; nil means unverified.
-+    public let transcribeCompletionReason: String?
-+    public let transcribeWhisperScores: [String: Double]?
++    /// Pinned Vesper patch: actual termination; nil means unverified.
++    public let vesperCompletionReason: String?
++    public let vesperWhisperScores: [String: Double]?
      /// The transcribed text.
      public let text: String
  
@@ -16,11 +16,11 @@
          totalTime: Double = 0.0,
 -        peakMemoryUsage: Double = 0.0
 +        peakMemoryUsage: Double = 0.0,
-+        transcribeCompletionReason: String? = nil,
-+        transcribeWhisperScores: [String: Double]? = nil
++        vesperCompletionReason: String? = nil,
++        vesperWhisperScores: [String: Double]? = nil
      ) {
-+        self.transcribeCompletionReason = transcribeCompletionReason
-+        self.transcribeWhisperScores = transcribeWhisperScores
++        self.vesperCompletionReason = vesperCompletionReason
++        self.vesperWhisperScores = vesperWhisperScores
          self.text = text
          self.segments = segments
          self.language = language
@@ -50,7 +50,7 @@
              totalTime: totalTime,
 -            peakMemoryUsage: Double(Memory.peakMemory) / 1e9
 +            peakMemoryUsage: Double(Memory.peakMemory) / 1e9,
-+            transcribeCompletionReason: completion
++            vesperCompletionReason: completion
          )
      }
  
@@ -85,8 +85,8 @@
              totalTime: elapsed,
 -            peakMemoryUsage: Double(Memory.peakMemory) / 1e9
 +            peakMemoryUsage: Double(Memory.peakMemory) / 1e9,
-+            transcribeCompletionReason: completionReason,
-+            transcribeWhisperScores: whisperScores
++            vesperCompletionReason: completionReason,
++            vesperWhisperScores: whisperScores
          )
      }
  
@@ -126,8 +126,8 @@
                  totalTime: elapsed,
 -                peakMemoryUsage: Double(Memory.peakMemory) / 1e9
 +                peakMemoryUsage: Double(Memory.peakMemory) / 1e9,
-+            transcribeCompletionReason: completionReason,
-+            transcribeWhisperScores: whisperScores
++            vesperCompletionReason: completionReason,
++            vesperWhisperScores: whisperScores
              )
              continuation.yield(.result(output))
              continuation.finish()
@@ -328,7 +328,7 @@
              totalTime: totalTime,
 -            peakMemoryUsage: Double(Memory.peakMemory) / 1e9
 +            peakMemoryUsage: Double(Memory.peakMemory) / 1e9,
-+            transcribeCompletionReason: completionReason
++            vesperCompletionReason: completionReason
          )
      }
  
@@ -369,7 +369,7 @@
              segments: result.segments,
 -            language: generationParameters.language
 +            language: generationParameters.language,
-+            transcribeCompletionReason: Task.isCancelled ? "cancelled" : "audio_consumed"
++            vesperCompletionReason: Task.isCancelled ? "cancelled" : "audio_consumed"
          )
      }
  

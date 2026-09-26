@@ -2,10 +2,10 @@
 import PackageDescription
 
 let package = Package(
-  name: "TranscribeMLX",
+  name: "VesperMLX",
   platforms: [.macOS(.v14)],
   products: [
-    .library(name: "TranscribeMLX", type: .dynamic, targets: ["TranscribeMLX"]),
+    .library(name: "VesperMLX", type: .dynamic, targets: ["VesperMLX"]),
     .executable(name: "prepare-qwen-tokenizer", targets: ["PrepareTokenizer"]),
   ],
   dependencies: [
@@ -17,7 +17,7 @@ let package = Package(
   ],
   targets: [
     .testTarget(
-      name: "TranscribeMLXTests",
+      name: "VesperMLXTests",
       dependencies: [
         .product(name: "MLXAudioSTT", package: "mlx-audio-swift"),
         .product(name: "MLX", package: "mlx-swift"),
@@ -28,7 +28,7 @@ let package = Package(
         .product(name: "MLXAudioSTT", package: "mlx-audio-swift")
       ]),
     .target(
-      name: "TranscribeMLX",
+      name: "VesperMLX",
       dependencies: [
         .product(name: "MLXAudioSTT", package: "mlx-audio-swift"),
         .product(name: "MLX", package: "mlx-swift"),

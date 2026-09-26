@@ -5,14 +5,14 @@ import Metal
 
 // C ABI ownership: the Rust inference worker serializes calls and keeps the
 // library alive until the last model/string is released. No download APIs.
-@_cdecl("transcribe_mlx_abi_version")
+@_cdecl("vesper_mlx_abi_version")
 public func abiVersion() -> UInt32 { 1 }
 
 // Read-only availability probe; does not construct a speech model.
-@_cdecl("transcribe_mlx_device_available")
+@_cdecl("vesper_mlx_device_available")
 public func deviceAvailable() -> Bool { MTLCreateSystemDefaultDevice() != nil }
 
-@_cdecl("transcribe_mlx_free_string")
+@_cdecl("vesper_mlx_free_string")
 public func freeString(_ pointer: UnsafeMutablePointer<CChar>?) { free(pointer) }
 
 final class ModelHandle: @unchecked Sendable {
@@ -47,7 +47,7 @@ func blocking<T>(
 }
 
 func fail(_ message: String) -> NSError {
-  NSError(domain: "TranscribeMLX", code: 1, userInfo: [NSLocalizedDescriptionKey: message])
+  NSError(domain: "VesperMLX", code: 1, userInfo: [NSLocalizedDescriptionKey: message])
 }
 
 func jsonString(_ object: [String: Any]) -> UnsafeMutablePointer<CChar>? {
@@ -57,7 +57,7 @@ func jsonString(_ object: [String: Any]) -> UnsafeMutablePointer<CChar>? {
   return strdup(string)
 }
 
-@_cdecl("transcribe_mlx_load")
+@_cdecl("vesper_mlx_load")
 public func loadModel(
   _ path: UnsafePointer<CChar>?, _ architecture: UnsafePointer<CChar>?,
   _ errorOut: UnsafeMutablePointer<UnsafeMutablePointer<CChar>?>?
@@ -96,12 +96,12 @@ public func loadModel(
   }
 }
 
-@_cdecl("transcribe_mlx_unload")
+@_cdecl("vesper_mlx_unload")
 public func unloadModel(_ handle: UnsafeMutableRawPointer?) {
   if let handle { Unmanaged<ModelHandle>.fromOpaque(handle).release() }
 }
 
-@_cdecl("transcribe_mlx_transcribe")
+@_cdecl("vesper_mlx_transcribe")
 public func transcribe(
   _ opaque: UnsafeMutableRawPointer?, _ samples: UnsafePointer<Float>?,
   _ count: Int64, _ options: UnsafePointer<CChar>?,
@@ -151,13 +151,13 @@ public func transcribe(
     let elapsed = start.duration(to: .now).components
     var response: [String: Any] = [
       "schemaVersion": 1, "text": result.text,
-      "stopReason": result.transcribeCompletionReason ?? "unverified",
+      "stopReason": result.vesperCompletionReason ?? "unverified",
       "generationTokens": result.generationTokens, "promptTokens": result.promptTokens,
       "nativeSeconds": Double(elapsed.seconds) + Double(elapsed.attoseconds) / 1e18,
       "peakMemoryGB": Double(Memory.peakMemory) / 1e9,
       "provider": "metal", "runtimeRevision": "d302a5c6080d2bb97bae38c7418f82abb76013b6",
     ]
-    if let scores = result.transcribeWhisperScores { response["whisperScores"] = scores }
+    if let scores = result.vesperWhisperScores { response["whisperScores"] = scores }
     return jsonString(response)
   } catch { return jsonString(["schemaVersion": 1, "error": error.localizedDescription]) }
 }
