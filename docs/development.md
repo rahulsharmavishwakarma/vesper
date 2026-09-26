@@ -355,6 +355,10 @@ that same workspace. These packages remain private, with unchanged versions.
 Contributor Python metadata uses `vesper-tooling`. The hook IDs are
 `vesper-fast-check` and `vesper-push-check`; CI's explicit duplicate-check skip
 uses the matching ID. The checks themselves and dependency pins are unchanged.
+The isolated audio-frontend Python project is `vesper-audio-frontend-probe`.
+Its generated requirements export continues to omit the local package while
+retaining accurate dependency provenance comments; `make python-lock-check`
+verifies each manifest, lockfile and export together.
 
 Keep these exact technical names until a separately scoped migration updates
 their producers, consumers and compatibility behavior together:

@@ -1,5 +1,5 @@
 [project]
-name = "transcribe-audio-frontend-probe"
+name = "vesper-audio-frontend-probe"
 version = "0.0.0"
 description = "Isolated development probe; not part of the desktop runtime"
 requires-python = ">=3.12,<3.13"
