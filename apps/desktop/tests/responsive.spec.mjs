@@ -35,7 +35,7 @@ test('minimum window shows Settings controls and preserves drafts, menus and dia
   await expect(page.locator('.form-feedback')).toContainText('Settings saved on this device.');
   await navigate(page, 'Settings');
 
-  const summary = page.locator('.page-model-summary');
+  const summary = page.locator('.settings-model-summary');
   await expect(summary).toContainText('NVIDIA Nemotron 3.5 ASR Streaming 0.6B');
   await expect(summary).toContainText('Qwen3.5 0.8B');
   await expectInsideWindow(page, page.locator('#settings-language'));
@@ -58,17 +58,19 @@ test('minimum window shows Settings controls and preserves drafts, menus and dia
   await save.click();
   await expect(page.locator('.form-feedback')).toContainText('Settings saved on this device.');
 
-  const about = page.locator('.settings-about-row');
-  await about.scrollIntoViewIfNeeded();
-  await expectInsideWindow(page, about);
+  const about = page
+    .getByRole('navigation', { name: 'Settings sections' })
+    .getByRole('button', { name: 'About', exact: true });
   await about.click();
-  await expect(page.locator('.about-sheet .version')).toContainText('0.1.0');
+  await expect(page.locator('.about-inline .version')).toContainText('0.1.0');
   for (const width of [700, 320, 360]) {
     await page.setViewportSize({ width, height: 480 });
-    await expectInsideWindow(page, page.getByRole('dialog'));
-    await expectInsideWindow(page, page.getByRole('button', { name: 'Close About' }));
+    const copy = page.getByRole('button', { name: 'Copy app info', exact: true });
+    await copy.scrollIntoViewIfNeeded();
+    await expectInsideWindow(page, copy);
   }
-  await page.keyboard.press('Escape');
+  await about.focus();
+  await page.keyboard.press('Enter');
   await expect(about).toBeFocused();
 });
 

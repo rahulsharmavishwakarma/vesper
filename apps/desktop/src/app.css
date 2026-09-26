@@ -953,6 +953,17 @@ h3 {
   padding: var(--space-6);
   margin-bottom: var(--space-6);
 }
+/* Settings titles share the controls' natural tracking and a compact rhythm. */
+.studio-main[data-view='settings']
+  :is(.settings-section > h2, .personalization-heading h2, .settings-about-row) {
+  font-size: 15px;
+  font-weight: 500;
+  line-height: 1.4;
+  letter-spacing: normal;
+}
+.studio-main[data-view='settings'] .settings-section > h2 {
+  margin-bottom: var(--space-4);
+}
 .field {
   margin-bottom: var(--space-6);
 }
@@ -2394,4 +2405,280 @@ button:is(
   height: 16px;
   color: var(--color-muted);
   transform: rotate(-90deg);
+}
+
+/* Selected Settings study: a quiet interior sidebar and one content surface. */
+.settings-layout {
+  display: grid;
+  grid-template-columns: 140px minmax(0, 1fr);
+  gap: var(--space-6);
+  align-items: start;
+}
+.settings-nav {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+  position: sticky;
+  top: var(--space-6);
+}
+.settings-nav button {
+  width: 100%;
+  min-height: 44px;
+  justify-content: flex-start;
+  text-align: left;
+  border: 0;
+  background: var(--color-transparent);
+  color: var(--color-muted);
+  padding: 10px 14px;
+  font-size: 13px;
+  font-weight: 400;
+}
+.settings-nav button:hover:enabled {
+  background: var(--color-raised);
+}
+.settings-nav button[aria-current='page'] {
+  background: var(--color-tint);
+  color: var(--color-ink);
+}
+.settings-content {
+  min-width: 0;
+  padding: 28px;
+  background: var(--color-panel);
+  border: 1px solid var(--color-line);
+  border-radius: var(--radius-md);
+}
+.settings-content .settings-section {
+  padding: 0;
+  border: 0;
+  border-radius: 0;
+  margin: 0;
+  background: var(--color-transparent);
+}
+.studio-main[data-view='settings'] .settings-content .settings-section > h2 {
+  font-size: 20px;
+  font-weight: 500;
+  line-height: 1.4;
+  letter-spacing: normal;
+  margin-bottom: var(--space-2);
+}
+.settings-description {
+  color: var(--color-muted);
+  font-size: 13px;
+  margin-bottom: var(--space-6);
+}
+.settings-content .field {
+  margin-bottom: var(--space-5);
+}
+.settings-content .savebar {
+  border: 0;
+  border-top: 1px solid var(--color-line);
+  border-radius: 0;
+  padding: var(--space-5) 0 0;
+  margin-top: var(--space-6);
+  background: var(--color-transparent);
+}
+.settings-content .savebar .form-actions {
+  flex-direction: row-reverse;
+}
+.settings-content .personalization,
+.settings-content [aria-labelledby='storage-heading'],
+.capture-appearance {
+  margin-top: var(--space-6);
+  border-top: 1px solid var(--color-line);
+  padding-top: var(--space-6);
+}
+.settings-content .personalization-heading h2,
+.settings-content h3 {
+  font-size: 14px;
+  font-weight: 500;
+  letter-spacing: normal;
+}
+.settings-defaults {
+  margin-top: var(--space-6);
+}
+.settings-model-summary {
+  border-top: 1px solid var(--color-line);
+  margin-top: var(--space-6);
+  padding-top: var(--space-5);
+}
+.settings-content [aria-labelledby='speech-heading'] > .field {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(180px, 42%);
+  column-gap: var(--space-5);
+  align-items: center;
+  border-top: 1px solid var(--color-line);
+  padding-top: var(--space-5);
+}
+.settings-content [aria-labelledby='speech-heading'] > .field > label {
+  margin: 0;
+}
+.settings-content [aria-labelledby='speech-heading'] > .field > .note,
+.settings-content [aria-labelledby='speech-heading'] > .field > .error {
+  grid-column: 1 / -1;
+}
+.settings-content .settings-section:not([hidden]) {
+  animation: section-arrive 260ms var(--ease-out) both;
+}
+.appearance-options {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: var(--space-3);
+  margin: var(--space-6) 0 var(--space-3);
+}
+.appearance-options > button {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: var(--space-3);
+  padding: var(--space-3);
+  text-align: left;
+  font-size: 12px;
+  background: var(--color-transparent);
+  border-color: var(--color-line);
+}
+.appearance-options > button[aria-pressed='true'] {
+  background: var(--color-tint);
+  border-color: var(--color-accent);
+}
+.appearance-options .icon {
+  width: 16px;
+  height: 16px;
+  opacity: 0;
+}
+.appearance-options [aria-pressed='true'] .icon {
+  opacity: 1;
+  color: var(--color-accent);
+}
+.theme-mini {
+  display: grid;
+  grid-template-columns: 22% 1fr;
+  grid-template-rows: 1fr 1fr;
+  gap: 7px;
+  height: 70px;
+  padding: 12px;
+  border: 1px solid var(--color-line);
+  border-radius: var(--radius-sm);
+  grid-column: 1 / -1;
+}
+.theme-mini i {
+  grid-row: 1 / -1;
+  background: var(--color-theme-mark);
+  opacity: 0.45;
+  border-radius: 2px;
+}
+.theme-mini b {
+  height: 6px;
+  background: var(--color-theme-mark);
+  border-radius: 2px;
+  align-self: center;
+}
+.mini-light {
+  background: var(--color-theme-paper);
+}
+.mini-dark {
+  background: var(--color-theme-night);
+}
+.mini-system {
+  background: linear-gradient(90deg, var(--color-theme-paper) 50%, var(--color-theme-night) 50%);
+}
+.appearance-motion {
+  display: flex;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: var(--space-3);
+  border-top: 1px solid var(--color-line);
+  margin-top: var(--space-6);
+  padding-top: var(--space-5);
+}
+.appearance-motion .note {
+  margin: 0;
+}
+@media (max-width: 1000px) {
+  .settings-layout {
+    grid-template-columns: 118px minmax(0, 1fr);
+    gap: var(--space-4);
+  }
+  .settings-content {
+    padding: var(--space-6);
+  }
+}
+@media (max-width: 820px) {
+  .settings-layout {
+    grid-template-columns: minmax(0, 1fr);
+  }
+  .settings-nav {
+    flex-direction: row;
+    flex-wrap: wrap;
+    position: static;
+    gap: var(--space-1);
+  }
+  .settings-nav button {
+    width: auto;
+    padding: 8px 12px;
+  }
+}
+@media (max-width: 480px) {
+  .settings-content {
+    padding: var(--space-4);
+  }
+  .settings-nav {
+    gap: 2px;
+  }
+  .settings-nav button {
+    padding: 8px;
+    font-size: 11px;
+  }
+  .settings-content [aria-labelledby='speech-heading'] > .field {
+    grid-template-columns: minmax(0, 1fr);
+    gap: var(--space-2);
+  }
+  .appearance-options {
+    gap: var(--space-2);
+  }
+  .appearance-options > button {
+    padding: var(--space-2);
+    gap: var(--space-2);
+    font-size: 11px;
+  }
+  .theme-mini {
+    padding: 8px;
+    gap: 4px;
+    height: 56px;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .settings-content .settings-section:not([hidden]) {
+    animation: none;
+  }
+}
+.settings-content .setting-toggle .checkbox-field {
+  flex-direction: row-reverse;
+  justify-content: space-between;
+  align-items: center;
+}
+.settings-content .setting-toggle .checkbox-field span {
+  flex: 1;
+}
+.settings-content .setting-toggle .checkbox-help {
+  margin-left: 0;
+  padding-right: var(--space-8);
+}
+.settings-content [aria-labelledby='speech-heading'] > .field > .select-trigger {
+  grid-column: 2;
+  grid-row: 1 / 3;
+}
+.settings-content [aria-labelledby='speech-heading'] > .field > .note,
+.settings-content [aria-labelledby='speech-heading'] > .field > .error {
+  grid-column: 1;
+  margin: 4px 0 0;
+}
+.settings-content .settings-model-summary .configured-models {
+  border: 0;
+  padding: 0;
+  margin: 0;
+}
+@media (max-width: 480px) {
+  .settings-content [aria-labelledby='speech-heading'] > .field > .select-trigger {
+    grid-column: 1;
+    grid-row: auto;
+  }
 }
