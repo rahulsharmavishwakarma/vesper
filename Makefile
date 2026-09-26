@@ -97,8 +97,8 @@ dev: ## Start the native desktop app
 web: ## Start the browser preview (native features disabled)
 	$(RUN) npm run dev
 
-model-profile: ## Generate a GGUF profile: HF_REPO=owner/repo HF_WEIGHTS=file.gguf
-	node scripts/huggingface-profile.mjs --repo "$$HF_REPO" --revision "$$HF_REVISION" --runtime llama_cpp --weights "$$HF_WEIGHTS" --out "$$HF_OUTPUT"
+model-profile: ## Generate a GGUF profile: HF_REPO=owner/repo HF_WEIGHTS=file.gguf HF_LANGUAGES=en
+	node scripts/huggingface-profile.mjs --repo "$$HF_REPO" --revision "$$HF_REVISION" --runtime llama_cpp --weights "$$HF_WEIGHTS" --languages "$$HF_LANGUAGES" --out "$$HF_OUTPUT"
 
 build: ## Build the release desktop app
 	$(RUN) npm run desktop:build

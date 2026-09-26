@@ -12,7 +12,7 @@ const HEX_SHA256 = /^[a-f0-9]{64}$/;
 const HELP = `Generate a pinned public Hugging Face model profile (Node 20+; no Python).
 
 Cleanup:
-  node scripts/huggingface-profile.mjs --repo owner/model --runtime llama_cpp --weights model.gguf
+  node scripts/huggingface-profile.mjs --repo owner/model --runtime llama_cpp --weights model.gguf --languages en
 Speech:
   node scripts/huggingface-profile.mjs --repo owner/model --runtime sherpa_onnx_transducer \\
     --encoder encoder.onnx --decoder decoder.onnx --joiner joiner.onnx --tokens tokens.txt --languages en
@@ -115,8 +115,8 @@ export async function generateProfile(options, fetchImpl = globalThis.fetch) {
     '--languages must contain comma-separated language codes, such as en,hi.',
   );
   requireValue(
-    runtime !== 'sherpa_onnx_transducer' || languages.length,
-    'Speech profiles require --languages declaring the model’s actual supported languages.',
+    languages.length > 0,
+    'Model profiles require --languages declaring the model’s actual supported languages.',
   );
   const name = options.name ?? repo.split('/')[1].slice(0, 120);
   requireValue(
