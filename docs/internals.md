@@ -229,7 +229,7 @@ These limits are enforced in code and should be changed there first; documentati
 
 ## Managed desktop audio processing
 
-[ADR-0019](adrs/0019-shared-audio-frontend.md) adds one shared frontend to the existing inference worker. Desktop settings now normalize the audio profile to advisory Silero speech intervals and DPDFNet8 noise reduction, with automatic gain disabled. The settings store validates old input before normalization, preserves other settings, and writes the managed profile only on an explicit save. Browser preview applies the same normalization. Core/evaluator defaults remain raw so benchmark baselines do not silently change. Models → Audio processing reports setup status without model selectors. Full recordings and live-capable ASR use the same stateful resampling/enhancement contract. Completed-only ASR processes the frontend at Stop.
+[ADR-0019](adrs/0019-shared-audio-frontend.md) adds one shared frontend to the existing inference worker. Desktop settings now normalize the audio profile to advisory Silero speech intervals and DPDFNet8 noise reduction, with automatic gain disabled. The settings store validates old input before normalization, preserves other settings, and writes the managed profile only on an explicit save. Browser preview applies the same normalization. Core/evaluator defaults remain raw so benchmark baselines do not silently change. Full recordings and live-capable ASR use the same stateful resampling/enhancement contract. Completed-only ASR processes the frontend at Stop.
 
 Original recordings remain intact. Missing optional audio models do not block recording when the required speech/writer files are installed. Frontend startup failures use original audio with a warning; mid-stream failures invalidate live drafts in both views and use original audio for completed fallback. The UI reconciles drafts with the active operation even when failure and completion occur between polls. Cancellation is propagated. Execution evidence includes frontend artifact/runtime identities, load costs, resampling/native/finalization times, a bounded dispatch histogram, sample counts and capped advisory intervals. VAD never rejects audio; enhancement remains experimental because clearer audio can produce worse words. Ear/Uhm are not production stages.
 
@@ -243,7 +243,9 @@ valid cached bytes are reused and missing/corrupt files are repaired by the inst
 Failure/cancellation pauses the queue for 30 seconds, then 2 minutes, then 10 minutes
 between subsequent attempts. Reconnection can resume it sooner. Retries retain idle
 and saved-settings guards; timers and network listeners are cleared on unmount, and
-a folder change resets the attempt history. There are no manual audio setup actions. Download state and
+a folder change resets the attempt history. There is no audio setup card or
+supporting-model status list in Settings; the coordinator remains mounted
+independently of the active view. There are no manual audio setup actions. Download state and
 cancellation remain visible outside Models. There is no additional download service,
 runtime hot-swap or training. Setup can continue in a hidden main window while the
 app is open; a closed app does not download.
