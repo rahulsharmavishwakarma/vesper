@@ -4,6 +4,7 @@ import { mount, unmount, tick } from 'svelte';
 import { mockIPC, mockWindows, clearMocks } from '@tauri-apps/api/mocks';
 import { emit } from '@tauri-apps/api/event';
 import QuickCapture from '../src/lib/components/QuickCapture.svelte';
+import LearningReview from '../src/lib/components/LearningReview.svelte';
 import App from '../src/App.svelte';
 import { ASR_MODELS, CAPTURE_DESIGNS, defaultSettings } from '../src/lib/config';
 import { MODEL_PRESETS } from '../src/lib/modelPresets';
@@ -678,15 +679,12 @@ await test('Personal preference drafts survive navigation and save independently
   };
   let fail = true;
   let waitForSave;
-  let supportsHints = false;
   const state = await setup({
     main: true,
     intercept: (command, _state, args) => {
       if (command === 'get_personalization') return structuredClone(saved);
       if (command === 'get_selected_adapters')
-        return {
-          speech: { capabilities: { contextualPhrases: supportsHints, nativeStreaming: false } },
-        };
+        throw new Error('Model metadata must not gate personal preferences');
       if (command === 'save_personalization')
         return (async () => {
           await waitForSave?.promise;
@@ -706,6 +704,10 @@ await test('Personal preference drafts survive navigation and save independently
   await navigate('Settings');
   await settingsSection('Writing');
   await until(() => target.querySelector('#personal-project'), 'Preferences did not load');
+  assert(
+    !target.querySelector('#improvement-mode'),
+    'Inactive model activation was offered as a working setting',
+  );
   const panel = () => target.querySelector('.personalization');
   const project = () => target.querySelector('#personal-project');
   const save = () => panel().querySelector('button[type="submit"]');
@@ -714,6 +716,12 @@ await test('Personal preference drafts survive navigation and save independently
       (button) => button.textContent === 'Discard changes',
     );
   assert(save().disabled, 'Unchanged preferences can be saved');
+  assert(
+    !target.querySelector('#personal-speech-hints').disabled && !state.counts.get_selected_adapters,
+    'Personal preferences depend on the selected model',
+  );
+  target.querySelector('#personal-speech-hints').click();
+  await tick();
   assert(
     project().form !== target.querySelector('.settings-form'),
     'Personal preferences belong to the application settings form',
@@ -727,13 +735,12 @@ await test('Personal preference drafts survive navigation and save independently
     'Personal edits marked application settings dirty',
   );
   await navigate('Models');
-  supportsHints = true;
   await navigate('Settings');
   await settingsSection('Writing');
   assert(project().value === 'Synthetic project', 'Navigation lost the unsaved draft');
   await until(
     () => !target.querySelector('#personal-speech-hints').disabled,
-    'Returning to Settings did not refresh model support',
+    'Changing model pages disabled the application preference',
   );
   save().click();
   await until(() => panel().textContent.includes('Synthetic save failure'), 'Save error missing');
@@ -758,7 +765,7 @@ await test('Personal preference drafts survive navigation and save independently
     'Retry did not save',
   );
   assert(
-    saved.activeProject === 'Synthetic project' && save().disabled,
+    saved.activeProject === 'Synthetic project' && saved.speechBiasEnabled && save().disabled,
     'Saved snapshot not synchronized',
   );
   project().value = 'Unwanted edit';
@@ -783,6 +790,40 @@ await test('Personal preference drafts survive navigation and save independently
     'Clean preferences did not refresh changes made elsewhere',
   );
 });
+
+for (const project of ['', 'atlas', undefined]) {
+  await test(`Review keeps recording project ${project ?? '(legacy)'} after switching projects`, async () => {
+    let request;
+    const profile = { revision: 2, vocabulary: [], activeProject: 'other-project' };
+    mockIPC((command, args) => {
+      if (command === 'get_personalization') return structuredClone(profile);
+      if (command === 'get_correction_suggestions')
+        return [{ reviewRevisionId: 'review', pair: { heard: 'Atlus', intended: 'Atlas' } }];
+      if (command === 'remember_correction') {
+        request = args.request;
+        return structuredClone(profile);
+      }
+      throw new Error(`Unexpected review command: ${command}`);
+    });
+    component = mount(LearningReview, {
+      target,
+      props: {
+        record: { id: 'older-recording', reviewHistory: [{}], personalizationProject: project },
+        onUpdate: () => {},
+      },
+    });
+    await until(() => target.querySelector('input'), 'Review controls did not load');
+    assert(
+      target.querySelector('input').value === (project ?? ''),
+      'Review borrowed the current project',
+    );
+    [...target.querySelectorAll('button')]
+      .find((b) => b.textContent === 'Remember this correction')
+      .click();
+    await until(() => request, 'Correction was not submitted');
+    assert(request.project === (project ?? ''), 'Saved correction changed project');
+  });
+}
 
 await test('Learning draft Copy saves once, blocks repeat clicks, and preserves the draft when learning is undone', async () => {
   let result = {
@@ -1348,6 +1389,86 @@ await test('Model presets save before explicit download and survive reopening', 
   );
 });
 
+await test('language menus follow the writer and preserve incompatible selections for repair', async () => {
+  let saved = defaultSettings();
+  saved.models.asr = 'Qwen/Qwen3-ASR-0.6B';
+  saved.language = 'hi';
+  const english = MODEL_PRESETS.find((entry) => entry.profile.name.startsWith('SmolLM2 360M'));
+  const state = await setup({
+    main: true,
+    intercept: (command, state, args) => {
+      if (command === 'get_settings') return structuredClone(saved);
+      if (command === 'save_settings') {
+        saved = JSON.parse(JSON.stringify(args.settings));
+        return structuredClone(saved);
+      }
+    },
+  });
+  const button = (text) =>
+    [...target.querySelectorAll('button')].find((element) => element.textContent.trim() === text);
+  const navigate = async (text) => {
+    button(text).click();
+    await tick();
+  };
+  const openOptions = async (id) => {
+    target.querySelector(`#${id}`).click();
+    await tick();
+    return [...document.querySelectorAll('[role="option"]')];
+  };
+  await until(() => button('Save changes'), 'Settings did not load');
+  await navigate('Models');
+  (await openOptions('models-cleanup-model'))
+    .find((option) => option.textContent.includes(english.profile.name))
+    .click();
+  await tick();
+  assert(button('Save changes').disabled, 'English writer accepted Hindi');
+  assert(
+    target
+      .querySelector('#models-writer-language-error')
+      ?.textContent.includes('does not declare support'),
+    'Writer language error is missing',
+  );
+  assert(
+    saved.language === 'hi' && !state.counts.save_settings,
+    'Changing writer silently saved a language',
+  );
+  await navigate('Settings');
+  await settingsSection('Recording');
+  let options = await openOptions('settings-language');
+  assert(
+    options.length === 1 && options[0].textContent.includes('English'),
+    'Writer did not narrow language choices',
+  );
+  target
+    .querySelector('#settings-language')
+    .dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape', bubbles: true }));
+  await tick();
+  await settingsSection('Writing');
+  target.querySelector('#cleanup-enabled').click();
+  await tick();
+  await settingsSection('Recording');
+  options = await openOptions('settings-language');
+  assert(
+    options.length === 4 && options.some((option) => option.textContent.includes('Hindi')),
+    'Disabling writer did not restore ASR languages',
+  );
+  options.find((option) => option.textContent.includes('French')).click();
+  await tick();
+  await settingsSection('Writing');
+  target.querySelector('#cleanup-enabled').click();
+  await tick();
+  await settingsSection('Recording');
+  assert(button('Save changes').disabled, 'Re-enabling incompatible writer allowed saving');
+  (await openOptions('settings-language'))[0].click();
+  await tick();
+  assert(!button('Save changes').disabled, 'Compatible English choice could not save');
+  button('Save changes').click();
+  await until(
+    () => saved.language === 'en' && saved.models.customRewriter?.id === english.profile.id,
+    'Compatible writer/language not saved',
+  );
+});
+
 await test('Qwen and Cohere retain language choices without a recording duration cutoff', async () => {
   let saved = defaultSettings();
   saved.models.asr = 'Qwen/Qwen3-ASR-0.6B';
@@ -1397,7 +1518,9 @@ await test('Qwen and Cohere retain language choices without a recording duration
   await choose('models-asr-model', 'Cohere Transcribe');
   assert(button('Save changes').disabled, 'Cohere accepted automatic language');
   assert(
-    target.textContent.includes('Cohere requires an explicit language'),
+    target.textContent.includes(
+      'Cohere Transcribe and the selected processing device support these languages: English, French',
+    ),
     'Cohere language guidance missing',
   );
   assert(

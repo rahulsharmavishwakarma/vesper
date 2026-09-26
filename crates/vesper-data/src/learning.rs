@@ -240,6 +240,7 @@ impl DatasetStore {
         let mut state = self.automatic_learning_state()?;
         prune(&mut state, stamp());
         let mut teaching_changed = false;
+        let mut pending_reason = None;
         let event_id = format!("{}:{revision}", context.result_id);
         if state.events.iter().any(|e| e.id == event_id) {
             outcome.status = "This edit was already processed.".into();
@@ -408,6 +409,22 @@ impl DatasetStore {
                     }
                 }
                 if candidate.state == CandidateState::Provisional {
+                    candidate.reason = if candidate.language == Language::Auto {
+                        "Select a recording language in Settings, then correct a new recording; automatic language mode cannot activate learned spellings.".into()
+                    } else if candidate.support.len() < required {
+                        format!(
+                            "Waiting for independent spelling evidence ({}/{required} recordings). Replaying the same audio does not count again.",
+                            candidate.support.len()
+                        )
+                    } else if candidate.context.is_empty() && candidate.project.is_empty() {
+                        "Waiting for project or transcript context before using this spelling."
+                            .into()
+                    } else if profile.vocabulary.len() >= 128 {
+                        "Vocabulary is full (128 entries). Remove an unused entry, then correct a new recording.".into()
+                    } else {
+                        "An equivalent saved entry is managed manually. Check its enabled state in Vocabulary.".into()
+                    };
+                    pending_reason = Some(candidate.reason.clone());
                     outcome.provisional += 1;
                 }
             }
@@ -436,7 +453,9 @@ impl DatasetStore {
         } else if !outcome.activated.is_empty() {
             "Spelling remembered for relevant future dictation."
         } else if outcome.provisional > 0 {
-            "Spelling evidence saved; waiting for independent support."
+            pending_reason
+                .as_deref()
+                .unwrap_or("Spelling evidence saved; waiting for independent support.")
         } else {
             "Draft updated; no automatic spelling learned."
         }
@@ -1256,6 +1275,44 @@ mod tests {
         );
     }
     #[test]
+    fn independent_corrections_pool_across_models_but_audio_replays_do_not() {
+        let (_dir, store, profile) = setup();
+        let mut first = context(&profile, "first");
+        first.model_id = vesper_core::AsrModel::CohereTranscribe.id().into();
+        let edit = |context: &LearningContext| {
+            store
+                .learn_from_edit(
+                    context,
+                    0,
+                    "deploy kubctl service",
+                    "deploy kubectl service",
+                )
+                .unwrap()
+        };
+        assert_eq!(edit(&first).provisional, 1);
+        for (index, model) in vesper_core::AsrModel::ALL.into_iter().enumerate() {
+            let mut replay = context(&profile, &format!("replay-{index}"));
+            replay.source_key = first.source_key.clone();
+            replay.model_id = model.id().into();
+            assert!(edit(&replay).activated.is_empty());
+        }
+        assert!(store.personalization().unwrap().vocabulary.is_empty());
+        let mut independent = context(&profile, "independent");
+        independent.model_id = vesper_core::AsrModel::WhisperSmall.id().into();
+        assert_eq!(edit(&independent).activated, ["kubectl"]);
+        let snapshot = store.dictation_personalization_snapshot().unwrap();
+        assert_eq!(snapshot.learning.candidates.len(), 1);
+        assert_eq!(snapshot.learning.candidates[0].support.len(), 2);
+        assert_eq!(
+            snapshot
+                .post_asr_profile("deploy kubctl service", Language::English)
+                .personalize("deploy kubctl service", Language::English)
+                .text,
+            "deploy kubectl service"
+        );
+    }
+
+    #[test]
     fn repeated_audio_and_retry_chains_do_not_supply_independent_support() {
         let (_dir, store, p) = setup();
         let one = context(&p, "one");
@@ -1794,15 +1851,61 @@ mod tests {
         assert_eq!(state.candidates.len(), 1);
     }
     #[test]
+    fn pending_diagnostics_distinguish_duplicate_support_and_capacity() {
+        let (_dir, store, profile) = setup();
+        let first = context(&profile, "first");
+        let pending = store
+            .learn_from_edit(&first, 0, "deploy kubctl service", "deploy kubectl service")
+            .unwrap();
+        assert!(pending.status.contains("1/2 recordings"));
+        let mut duplicate = context(&profile, "duplicate");
+        duplicate.source_key = first.source_key;
+        let pending = store
+            .learn_from_edit(
+                &duplicate,
+                0,
+                "deploy kubctl service",
+                "deploy kubectl service",
+            )
+            .unwrap();
+        assert!(pending.status.contains("1/2 recordings"));
+        let mut full = store.personalization().unwrap();
+        full.vocabulary = (0..128)
+            .map(|n| VocabularyEntry {
+                id: format!("manual-{n}"),
+                phrase: format!("term{n}"),
+                ..Default::default()
+            })
+            .collect();
+        store.save_personalization(full).unwrap();
+        let pending = store
+            .learn_from_edit(
+                &context(&profile, "second"),
+                0,
+                "deploy kubctl service",
+                "deploy kubectl service",
+            )
+            .unwrap();
+        assert!(pending.activated.is_empty());
+        assert!(pending.status.contains("Vocabulary is full"));
+        assert!(store.automatic_learning_state().unwrap().candidates[0]
+            .reason
+            .contains("Vocabulary is full"));
+    }
+
+    #[test]
     fn auto_language_and_conflicting_aliases_abstain() {
         let (_dir, store, p) = setup();
         let mut auto = context(&p, "auto");
         auto.language = Language::Auto;
-        assert!(store
+        let outcome = store
             .learn_from_edit(&auto, 0, "Open read me", "Open README.md")
-            .unwrap()
-            .activated
-            .is_empty());
+            .unwrap();
+        assert!(outcome.activated.is_empty());
+        assert!(outcome.status.contains("Select a recording language"));
+        assert!(store.automatic_learning_state().unwrap().candidates[0]
+            .reason
+            .contains("Select a recording language"));
         teach(&store, &p, "one");
         assert!(store
             .learn_from_edit(&context(&p, "other"), 0, "Open read me", "Open README.txt")

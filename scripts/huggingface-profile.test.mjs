@@ -5,7 +5,12 @@ import { generateProfile, parseArguments } from './huggingface-profile.mjs';
 
 const commit = 'a'.repeat(40);
 const digest = 'b'.repeat(64);
-const base = { repo: 'owner/model', runtime: 'llama_cpp', weights: 'weights/model.gguf' };
+const base = {
+  repo: 'owner/model',
+  runtime: 'llama_cpp',
+  weights: 'weights/model.gguf',
+  languages: 'en',
+};
 const weight = {
   rfilename: base.weights,
   size: 563036064,
@@ -77,6 +82,8 @@ test('rejects malformed input before requesting the network', async () => {
     { weights: 'model.onnx' },
     { name: '\u0000' },
     { languages: 'en,,hi' },
+    { languages: undefined },
+    { languages: '' },
     { license: '' },
     { encoder: 'wrong.onnx' },
   ]) {

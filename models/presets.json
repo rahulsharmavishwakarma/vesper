@@ -142,7 +142,10 @@
       "revision": "9217f5db79a29953eb74d5343926648285ec7e67",
       "runtime": "llama_cpp",
       "license": "apache-2.0",
-      "languages": [],
+      "languages": [
+        "en",
+        "fr"
+      ],
       "files": [
         {
           "role": "weights",
@@ -164,7 +167,10 @@
       "revision": "91cad51170dc346986eccefdc2dd33a9da36ead9",
       "runtime": "llama_cpp",
       "license": "apache-2.0",
-      "languages": [],
+      "languages": [
+        "en",
+        "fr"
+      ],
       "files": [
         {
           "role": "weights",
@@ -186,7 +192,9 @@
       "revision": "593b5a2e04c8f3e4ee880263f93e0bd2901ad47f",
       "runtime": "llama_cpp",
       "license": "apache-2.0",
-      "languages": [],
+      "languages": [
+        "en"
+      ],
       "files": [
         {
           "role": "weights",
@@ -208,7 +216,9 @@
       "revision": "2d4a76a30b4af41ecd395c35725ac11688d4cfe4",
       "runtime": "llama_cpp",
       "license": "apache-2.0",
-      "languages": [],
+      "languages": [
+        "en"
+      ],
       "files": [
         {
           "role": "weights",
@@ -220,7 +230,7 @@
     }
   },
   {
-    "description": "Multilingual · 1B · Q4_K_M",
+    "description": "English · 1B · Q4_K_M",
     "precision": "Q4_K_M",
     "sourceUrl": "https://huggingface.co/google/gemma-3-1b-it",
     "profile": {
@@ -230,7 +240,9 @@
       "revision": "f9c28bcd85737ffc5aef028638d3341d49869c27",
       "runtime": "llama_cpp",
       "license": "gemma",
-      "languages": [],
+      "languages": [
+        "en"
+      ],
       "files": [
         {
           "role": "weights",

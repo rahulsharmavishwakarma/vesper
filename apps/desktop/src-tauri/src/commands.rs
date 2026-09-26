@@ -1241,7 +1241,7 @@ mod profile_tests {
     fn profile_json() -> String {
         serde_json::json!({
             "id":"test-cleanup","name":"Test cleanup","repository":"owner/cleanup",
-            "revision":"a".repeat(40),"runtime":"llama_cpp","license":"fixture",
+            "revision":"a".repeat(40),"runtime":"llama_cpp","license":"fixture", "languages":["en"],
             "files":[{"role":"weights","path":"custom.gguf","sha256":"b".repeat(64),"sizeBytes":10}]
         })
         .to_string()

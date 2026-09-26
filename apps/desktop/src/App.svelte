@@ -19,7 +19,10 @@
     defaultSettings,
     effectiveRecordingSeconds,
     requiresCompletionReport,
+    pipelineLanguageOptions,
     transcriptionLanguageOptions,
+    transcriptionLanguageError,
+    writingLanguageError,
     validateSettings,
     type AppConfig,
   } from './lib/config';
@@ -177,21 +180,8 @@
     ...(backendError ? [backendError] : []),
   ]);
   const dirty = $derived(loaded && JSON.stringify(draft) !== savedJson);
-  const languageError = $derived(
-    draft.models.customAsr
-      ? draft.language !== 'auto' && !draft.models.customAsr.languages?.includes(draft.language)
-        ? 'This custom speech profile does not declare support for the selected language.'
-        : null
-      : draft.language === 'hi' && draft.models.asr === 'nvidia/parakeet-tdt-0.6b-v3'
-        ? 'Parakeet does not support Hindi. Select Nemotron to save this language.'
-        : draft.models.asr === 'LiquidAI/LFM2.5-Audio-1.5B' && draft.language !== 'en'
-          ? 'LFM2.5 Audio requires English.'
-          : draft.models.asr === 'CohereLabs/cohere-transcribe-03-2026' &&
-              draft.language !== 'en' &&
-              draft.language !== 'fr'
-            ? 'Cohere requires an explicit language. Select English or French.'
-            : null,
-  );
+  const writerError = $derived(writingLanguageError(draft));
+  const languageError = $derived(transcriptionLanguageError(draft) ?? writerError);
   const asrOptions = $derived(optionsWithDownloads('asr'));
   const asrKnown = $derived(knownDownloadSelection(draft, engineSettings, 'asr'));
   const cleanupOptions = $derived(optionsWithDownloads('rewriter'));
@@ -210,11 +200,11 @@
   );
   const asrPreset = $derived(presetForProfile(draft.models.customAsr));
   const cleanupPreset = $derived(presetForProfile(draft.models.customRewriter));
-  const languageOptions = $derived(transcriptionLanguageOptions(draft.models));
+  const languageOptions = $derived(pipelineLanguageOptions(draft));
   const languageHint = $derived(
     languageOptions.some((option) => option.value === 'auto')
-      ? 'Use Auto when speaking more than one language.'
-      : 'Choose the language you’ll speak.',
+      ? 'Automatic detection lets the speech model identify the language.'
+      : 'Choose a language supported by the speech model and, when enabled, the writing model.',
   );
 
   function modelChoiceContext(role: ModelProfileRole) {
@@ -782,16 +772,13 @@
                       }}
                     />
                     <p id="models-asr-help" class="note">
-                      {#if asrPreset}{asrPreset.description}.{:else if draft.models.customAsr}Languages:
-                        {draft.models.customAsr.languages?.join(', ') ||
-                          'Auto'}.{:else if draft.models.asr === 'LiquidAI/LFM2.5-Audio-1.5B'}English
-                        only. Transcribes after recording stops; longer recordings are processed in
-                        segments.{:else if requiresCompletionReport(draft.models)}{draft.models
-                          .asr === 'CohereLabs/cohere-transcribe-03-2026'
-                          ? 'Choose English or French as your transcription language.'
-                          : 'Supports Auto, English, French and Hindi.'}{:else if draft.models.asr === 'nvidia/parakeet-tdt-0.6b-v3'}Supports
-                        European languages, including English and French. Hindi is unavailable.{:else}Supports
-                        multiple languages, including English, French and Hindi.{/if}
+                      {#if asrPreset}{asrPreset.description}.{/if}
+                      Available language modes: {transcriptionLanguageOptions(
+                        draft.models,
+                        draft.computeBackend,
+                      )
+                        .map((option) => option.label)
+                        .join(', ')}.
                     </p>
                     {#if languageError}<p class="error">
                         {languageError}
@@ -841,6 +828,10 @@
                     <Select
                       id="models-cleanup-model"
                       identity
+                      invalid={writerError !== null}
+                      describedBy={writerError
+                        ? 'models-writer-language-error'
+                        : 'models-writer-language-help'}
                       label={MODEL_ROLE_LABELS.rewriter}
                       value={selectedModelValue(draft.models, 'rewriter')}
                       options={cleanupOptions}
@@ -855,6 +846,14 @@
                       }}
                     />
                   </div>
+                  <p id="models-writer-language-help" class="note">
+                    Writing languages: {draft.models.customRewriter
+                      ? draft.models.customRewriter.languages?.join(', ') || 'Not declared'
+                      : 'English, French and Hindi'}.
+                  </p>
+                  {#if writerError}<p id="models-writer-language-error" class="error">
+                      {writerError}
+                    </p>{/if}
                   <div class="field">
                     <label for="models-cleanup-precision">Model precision</label>
                     {#if draft.models.customRewriter}
@@ -1008,27 +1007,10 @@
                       </p>
                     </div>
                     <div class="field improvement-field">
-                      <label for="improvement-mode">Improvement policy</label>
-                      <Select
-                        id="improvement-mode"
-                        bind:value={draft.improvementMode}
-                        options={[
-                          {
-                            value: 'review_required',
-                            label: 'Review before activation',
-                            description: 'Approve evaluated model versions',
-                          },
-                          {
-                            value: 'automatic',
-                            label: 'Automatic activation',
-                            description: 'Use evaluated versions automatically',
-                          },
-                        ]}
-                        disabled={pending !== null || pipelineBusy}
-                        describedBy="improvement-help"
-                      />
                       <p id="improvement-help" class="note">
-                        Model training is not available yet. This preference has no effect today.
+                        Spelling learning runs automatically from eligible edits to Your text.
+                        History reviews need your confirmation. Automatic model training and
+                        activation are not available.
                       </p>
                     </div>
                     <details class="settings-defaults">
@@ -1154,7 +1136,6 @@
             <PersonalizationPanel
               desktop={environment === 'desktop'}
               visible={activeView === 'settings' && settingsSection === 'writing'}
-              settingsRevision={savedJson}
               disabled={pending !== null || pipelineBusy || downloadRequest !== null}
             />
           {/if}

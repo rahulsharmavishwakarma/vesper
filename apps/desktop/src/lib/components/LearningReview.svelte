@@ -46,7 +46,8 @@
       if (generation !== attempt || id !== record.id) return;
       profile = saved;
       suggestions = candidates;
-      project = record.personalizationProject || saved.activeProject;
+      // Blank is a shared recording, not a request to inherit today's project.
+      project = record.personalizationProject ?? '';
     } catch (cause) {
       if (generation === attempt) error = String(cause);
     } finally {

@@ -38,6 +38,8 @@ restores the last saved values. Personal vocabulary in Writing has its own Save
 preferences and Discard changes actions.
 
 Recording contains language, notifications, saved recordings and model names.
+Its language choices follow both the speech model and the enabled writer. Change
+polishing in Writing, then return to Recording to choose from the updated list.
 Less-used storage options and Restore defaults are under **Advanced storage and
 improvement**. Restore defaults saves the default application preferences; it
 does not remove recordings or vocabulary.
@@ -76,7 +78,7 @@ to be managed separately in **Models**.
    before downloading it; **Save changes** alone does not download speech or writing
    weights. Supporting audio packages download automatically when those models are ready.
 3. Open **Dictate**, select your microphone and choose a language supported by
-   the speech model. Allow microphone access when macOS asks.
+   the speech model and the enabled writing model. Allow microphone access when macOS asks.
 4. Wait until the app is ready before recording. The first recording may take
    longer while a model loads.
 
@@ -94,6 +96,17 @@ Removing a model removes it from Vesper and keeps the shared HF cache available
 for other applications and later reinstalls. The displayed model size is its
 logical size, not necessarily additional disk space. Existing downloads stay
 where they are. See [cache location and behavior](internals.md#hugging-face-cache-boundary).
+
+The language menu follows the selected speech model and processing device. With
+polishing enabled, it also limits choices to the writer's declared languages.
+Changing models does not silently change your language: resolve the inline
+compatibility message before saving, or turn polishing off to use the speech
+model's choices. **Detect automatically** identifies speech language; it does not
+guarantee mixed-language accuracy. Custom writing presets require an explicit
+language. An older writing profile with no language information remains readable;
+reselect its preset in **Models**, choose the built-in writer, or turn polishing
+off. Until repaired, writing is skipped with a warning and the transcript remains
+available. See the [speech and writing language table](language-support-and-recommendations.md#writing-language-compatibility).
 
 Each model card shows its selected model and download status. **Local engine**
 above it shows readiness, CPU, memory and operation timings. Models are checked
@@ -320,6 +333,38 @@ Personal vocabulary persists across model changes. These local corrections do
 not train model weights or activate a new model. Read the
 [personalization guide](personalization/README.md) for the exact learning,
 review and undo behavior.
+
+**Current project** is a manual selection. Enter a name and save before recording;
+Vesper does not infer it from the app or document you are using. Give vocabulary
+and examples the same project name to limit their use; leave an entry's project
+blank to share it. Switch the current name when changing projects, or leave it
+blank to use only shared entries. Reviewing an older recording keeps its original
+project, including a blank project, rather than borrowing the current selection.
+
+**Apply my saved corrections** works with all supported speech models, including
+when cleanup is off or the writer fails. **Request extra speech hints when supported**
+is a persistent preference that can be saved with any model selected. The current
+Nemotron adapter can use those hints; other adapters ignore the request and still
+use saved corrections afterward. Learning evidence from independent recordings
+can accumulate across model changes; replaying the same audio with another model
+does not count as independent support. A manually added term
+needs a **Heard as** alias to replace a recurring mistake after recognition;
+listing its preferred spelling alone does not create that replacement.
+
+If learning appears inactive, inspect **Automatic learning evidence**. No recent
+in-app corrections means Vesper has not received the relevant feedback: edit
+**Your text** and leave the field or copy to save it. Dictation frequency, Copy,
+and corrections made in another app do not verify spellings. Candidate messages
+explain missing independent support, automatic-language mode, a full vocabulary
+or an existing manually managed entry. Select a recording language and correct
+new recordings to teach automatic aliases; older automatic-language observations
+are not retrospectively assigned a language. History labels require your review;
+background semantic/policy evaluation does not currently activate new preferences
+or train models.
+
+Settings no longer offers the inactive **Improvement policy / Automatic
+activation** selector. Its stored compatibility value does not enable a trainer,
+automatic review or stronger RSI. Automatic spelling learning is separate.
 
 Automatically learned words are used after recognition only when the transcript
 also matches context from a supporting edit. Older learned words may need a fresh

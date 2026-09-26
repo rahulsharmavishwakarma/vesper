@@ -4,6 +4,14 @@ Implementation: [core learning policy](../../crates/vesper-core/src/learning.rs)
 
 Learning is automatic desktop behavior: no enable switch or separate Remember action is needed. Completed edits and result observations use the existing background workers. This changes when the existing policy is available, not its admission thresholds or evidence requirements.
 
+Settings distinguishes retained `user_edit` evidence from raw observations and
+shows when no recent in-app correction has been received. Provisional candidate
+and draft-save messages identify the current blocker: unknown recording language,
+independent support count, missing scope, the 128-entry limit, or a manually
+managed equivalent entry. These diagnostics do not change policy 4 or activate
+previously rejected evidence. Repeated raw observations, Copy, and external-editor
+corrections do not teach an alias. The TextEdit experiment remains shadow-only.
+
 ## Evidence flow
 
 A completed ordinary edit is compared against the displayed text, including any memory already applied. The existing contiguous-difference extractor proposes a heard/intended pair. The automatic wrapper permits at most three heard tokens and three intended tokens, with the existing 128-byte phrase limit and an 8,192-byte comparison budget. A target with multiple words must contain exactly the same joined letters as the source, ignoring case and whitespace: for example, `BrooksidePark → Brookside Park`. This supports word-boundary repairs without turning a phrase rewrite into a dictionary rule.

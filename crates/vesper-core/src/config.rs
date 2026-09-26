@@ -45,6 +45,17 @@ pub enum Language {
     French,
 }
 
+impl Language {
+    pub const fn code(self) -> Option<&'static str> {
+        match self {
+            Self::Auto => None,
+            Self::English => Some("en"),
+            Self::French => Some("fr"),
+            Self::Hindi => Some("hi"),
+        }
+    }
+}
+
 #[derive(Debug, Clone, Copy, Default, PartialEq, Eq, Serialize, Deserialize)]
 #[serde(rename_all = "snake_case")]
 pub enum CleanupPreset {
@@ -279,15 +290,8 @@ impl AppConfig {
             }
         }
         if let Some(profile) = &self.models.custom_asr {
-            let required = match self.language {
-                Language::Auto => None,
-                Language::English => Some("en"),
-                Language::Hindi => Some("hi"),
-                Language::French => Some("fr"),
-            };
-            if required
-                .is_some_and(|language| !profile.languages.iter().any(|code| code == language))
-            {
+            let required = self.language.code();
+            if required.is_some_and(|language| !profile.supports_language_code(language)) {
                 return Err(Error::InvalidConfig {
                     field: "language",
                     message:
@@ -302,13 +306,8 @@ impl AppConfig {
         {
             return Err(Error::InvalidConfig {
                 field: "language",
-                message: if self.models.asr == AsrModel::Lfm25Audio15b {
-                    "LFM2.5 Audio requires English; automatic language detection, French and Hindi are unavailable".into()
-                } else if self.language == Language::Auto {
-                    "The selected speech adapter requires an explicit language; select English or French".into()
-                } else {
-                    "The selected speech adapter supports English and French, not Hindi".into()
-                },
+                message: format!("The selected speech model and processing device support these language modes: {}",
+                    speech.capabilities.languages.iter().map(|language| language.code().unwrap_or("auto")).collect::<Vec<_>>().join(", ")),
             });
         }
         if self.models.custom_asr.is_none()
@@ -364,6 +363,32 @@ impl AppConfig {
             }
         }
         Ok(())
+    }
+
+    /// Keep legacy settings readable, but check language before saving an enabled
+    /// writer or scheduling cleanup. Unknown metadata must use the raw fallback.
+    pub fn validate_writer_language(&self) -> Result<()> {
+        if !self.cleanup_enabled {
+            return Ok(());
+        }
+        let Some(profile) = &self.models.custom_rewriter else {
+            // The built-in Qwen3.5 writer covers the application's language modes.
+            return Ok(());
+        };
+        let message = if profile.languages.is_empty() {
+            Some("The writing profile has no declared languages. Reselect a writing preset with language support, or turn polishing off.")
+        } else if let Some(language) = self.language.code() {
+            (!profile.supports_language_code(language)).then_some("The selected writing model does not declare support for this language. Choose a compatible writer or turn polishing off.")
+        } else {
+            Some("Choose an explicit language supported by the custom writing model, or turn polishing off. Automatic detection does not establish writer compatibility.")
+        };
+        match message {
+            Some(message) => Err(Error::InvalidConfig {
+                field: "models.customRewriter.languages",
+                message: message.into(),
+            }),
+            None => Ok(()),
+        }
     }
 
     /// Nonblank custom instructions replace the selected preset. This only

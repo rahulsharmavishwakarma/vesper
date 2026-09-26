@@ -136,21 +136,33 @@ const LANGUAGE_OPTIONS: readonly LanguageOption[] = [
   {
     value: 'auto',
     label: 'Detect automatically',
-    description: 'Best for mixed-language speech when the model supports it',
+    description: 'Let the speech model identify the spoken language',
   },
   { value: 'en', label: 'English', description: 'Transcribe supported English speech' },
   { value: 'fr', label: 'French', description: 'Transcribe supported French speech' },
   { value: 'hi', label: 'Hindi', description: 'Transcribe supported Hindi speech' },
 ];
 
-/** The app currently exposes four language modes; model metadata narrows them. */
-export function transcriptionLanguageOptions(models: AppConfig['models']): LanguageOption[] {
+function declaredLanguages(profile: HuggingFaceProfile): Set<string> {
+  return new Set((profile.languages ?? []).map((tag) => tag.split('-')[0].toLowerCase()));
+}
+
+/** The app currently exposes four language modes; model/backend metadata narrows them. */
+export function transcriptionLanguageOptions(
+  models: AppConfig['models'],
+  backend: ComputeBackend = 'auto',
+): LanguageOption[] {
   if (models.customAsr) {
-    const declared = new Set(models.customAsr.languages ?? []);
+    const declared = declaredLanguages(models.customAsr);
     return LANGUAGE_OPTIONS.filter(
       (option) => option.value === 'auto' || declared.has(option.value),
     );
   }
+  if (
+    backend === 'metal' &&
+    ['nvidia/parakeet-tdt-0.6b-v3', 'Qwen/Qwen3-ASR-0.6B'].includes(models.asr)
+  )
+    return LANGUAGE_OPTIONS.filter((option) => option.value === 'en');
   const supported: readonly Language[] =
     models.asr === 'LiquidAI/LFM2.5-Audio-1.5B'
       ? ['en']
@@ -160,6 +172,33 @@ export function transcriptionLanguageOptions(models: AppConfig['models']): Langu
           ? ['auto', 'en', 'fr']
           : ['auto', 'en', 'fr', 'hi'];
   return LANGUAGE_OPTIONS.filter((option) => supported.includes(option.value));
+}
+
+export function transcriptionLanguageError(config: AppConfig): string | null {
+  const options = transcriptionLanguageOptions(config.models, config.computeBackend);
+  if (options.some((option) => option.value === config.language)) return null;
+  return `${config.models.customAsr?.name ?? ASR_MODELS[config.models.asr] ?? 'This speech model'} and the selected processing device support these languages: ${options.map((option) => option.label).join(', ')}.`;
+}
+
+export function writingLanguageError(config: AppConfig): string | null {
+  const profile = config.models.customRewriter;
+  if (!config.cleanupEnabled || !profile) return null;
+  const declared = declaredLanguages(profile);
+  if (!declared.size)
+    return 'The writing profile has no declared languages. Reselect a writing preset with language support, or turn polishing off.';
+  if (config.language === 'auto')
+    return 'Choose an explicit language supported by the writing model, or turn polishing off. Automatic detection does not establish writer compatibility.';
+  return declared.has(config.language)
+    ? null
+    : 'The selected writing model does not declare support for this language. Choose a compatible writer or turn polishing off.';
+}
+
+/** Shared memory is model independent; spoken/output languages still need compatible weights. */
+export function pipelineLanguageOptions(config: AppConfig): LanguageOption[] {
+  const speech = transcriptionLanguageOptions(config.models, config.computeBackend);
+  if (!config.cleanupEnabled || !config.models.customRewriter) return speech;
+  const declared = declaredLanguages(config.models.customRewriter);
+  return speech.filter((option) => option.value !== 'auto' && declared.has(option.value));
 }
 
 export function defaultSettings(): AppConfig {
@@ -380,7 +419,7 @@ export function parseModelProfileJson(json: string): HuggingFaceProfile {
 }
 
 /** Validate stored and incoming data as well as the editable form. */
-export function validateSettings(value: unknown): string[] {
+export function validateSettings(value: unknown, checkWriterLanguage = true): string[] {
   if (!isRecord(value)) return ['Settings must be an object.'];
   const errors: string[] = [];
   if (value.schemaVersion !== 1) errors.push('This settings version is not supported.');
@@ -396,31 +435,12 @@ export function validateSettings(value: unknown): string[] {
       errors.push(...validateModelProfile(value.models.customAsr, 'asr'));
     if (value.models.customRewriter !== null)
       errors.push(...validateModelProfile(value.models.customRewriter, 'rewriter'));
-    if (
-      value.models.customAsr === null &&
-      value.models.asr === 'nvidia/parakeet-tdt-0.6b-v3' &&
-      value.language === 'hi'
-    ) {
-      errors.push('Parakeet does not support Hindi. Select Nemotron or change the language.');
-    }
-    if (
-      value.models.customAsr === null &&
-      value.models.asr === 'CohereLabs/cohere-transcribe-03-2026' &&
-      value.language !== 'en' &&
-      value.language !== 'fr'
-    ) {
-      errors.push(
-        'Cohere requires an explicit language. Select English or French; automatic detection and Hindi are unavailable.',
-      );
-    }
-    if (
-      value.models.customAsr === null &&
-      value.models.asr === 'LiquidAI/LFM2.5-Audio-1.5B' &&
-      value.language !== 'en'
-    ) {
-      errors.push(
-        'LFM2.5 Audio requires English; automatic detection, French and Hindi are unavailable.',
-      );
+    if (errors.length === 0) {
+      const config = value as unknown as AppConfig;
+      const speechError = transcriptionLanguageError(config);
+      const writerError = checkWriterLanguage ? writingLanguageError(config) : null;
+      if (speechError) errors.push(speechError);
+      if (writerError) errors.push(writerError);
     }
     if (
       value.models.customAsr === null &&
@@ -428,21 +448,10 @@ export function validateSettings(value: unknown): string[] {
         value.models.asr === 'CohereLabs/cohere-transcribe-03-2026') &&
       value.computeBackend !== 'auto' &&
       value.computeBackend !== 'cpu' &&
-      !(
-        value.models.asr === 'Qwen/Qwen3-ASR-0.6B' &&
-        value.computeBackend === 'metal' &&
-        value.language === 'en'
-      )
+      !(value.models.asr === 'Qwen/Qwen3-ASR-0.6B' && value.computeBackend === 'metal')
     ) {
       errors.push('The selected speech model supports Automatic and CPU only.');
     }
-    if (
-      isRecord(value.models.customAsr) &&
-      value.language !== 'auto' &&
-      Array.isArray(value.models.customAsr.languages) &&
-      !value.models.customAsr.languages.includes(value.language)
-    )
-      errors.push('The custom speech profile does not declare support for the selected language.');
   }
 
   if (
@@ -519,7 +528,9 @@ export function validateSettings(value: unknown): string[] {
 }
 
 export function parseSettings(value: unknown): AppConfig {
-  const errors = validateSettings(value);
+  // Legacy writer profiles must remain readable so the user can repair them.
+  // Saves and native rewriting enforce compatibility independently.
+  const errors = validateSettings(value, false);
   if (errors.length) throw new Error(errors.join(' '));
   return { ...(value as AppConfig), audioFrontend: automaticAudioFrontend() };
 }

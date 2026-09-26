@@ -602,16 +602,32 @@ mod tests {
             })
             .unwrap();
         let audio = MonoPcm::new(vec![0.25; 1600], 16000).unwrap();
-        for model in [
-            AsrModel::CohereTranscribe,
-            AsrModel::Nemotron35AsrStreaming06b,
-        ] {
+        let presets: serde_json::Value =
+            serde_json::from_str(include_str!("../../../../models/presets.json")).unwrap();
+        let writer_profile = presets
+            .as_array()
+            .unwrap()
+            .iter()
+            .find(|entry| entry["profile"]["runtime"] == "llama_cpp")
+            .unwrap();
+        for (model, cleanup_enabled, incompatible_writer) in
+            AsrModel::ALL.into_iter().flat_map(|model| {
+                [(false, false), (true, false), (true, true)]
+                    .map(|(enabled, incompatible)| (model, enabled, incompatible))
+            })
+        {
             let mut config = AppConfig {
-                cleanup_enabled: false,
+                cleanup_enabled,
                 collect_training_data: false,
                 ..Default::default()
             };
             config.models.asr = model;
+            if incompatible_writer {
+                let mut writer: vesper_core::HuggingFaceProfile =
+                    serde_json::from_value(writer_profile["profile"].clone()).unwrap();
+                writer.languages = vec!["hi".into()];
+                config.models.custom_rewriter = Some(writer);
+            }
             let context = WorkContext {
                 operation_id: model.id().into(),
                 config,
@@ -643,6 +659,21 @@ mod tests {
             context.runtime.finish(&Ok::<(), String>(()));
             assert_eq!(result.raw_transcript, "run cube control");
             assert!(result.cleaned_transcript.is_none());
+            if incompatible_writer {
+                assert!(result
+                    .warnings
+                    .iter()
+                    .any(|warning| warning.contains("writing language")));
+            }
+            assert_eq!(
+                result
+                    .warnings
+                    .iter()
+                    .any(|warning| warning.contains("Text polishing did not finish")),
+                cleanup_enabled,
+                "Missing writer must use the normal raw fallback: {}",
+                model.id()
+            );
             assert_eq!(
                 result.personalized_transcript.as_deref(),
                 Some("run kubectl")

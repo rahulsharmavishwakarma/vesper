@@ -192,7 +192,16 @@ and [Rust chat template API](https://docs.rs/llama-cpp-2/0.1.156/llama_cpp_2/mod
 
 Use Node 20 or later to obtain pinned file metadata for a catalog candidate:
 
-The Makefile shortcut for a writing model is `make model-profile HF_REPO=owner/repository HF_WEIGHTS=model.gguf`. It writes `models/custom-profile.json`; use `HF_OUTPUT` or `HF_REVISION` to override the output path or source revision. Review the generated profile using the catalog maintenance process before adding it to `models/presets.json`. Generation alone does not add a menu entry. The script form below also supports speech bundles and additional metadata.
+The Makefile shortcut for a writing model is `make model-profile HF_REPO=owner/repository HF_WEIGHTS=model.gguf HF_LANGUAGES=en`. Both speech and writing profile generation require declared languages (`--languages` in the script). Use the exact checkpoint's official evidence, not its runtime or family name. It writes `models/custom-profile.json`; use `HF_OUTPUT` or `HF_REVISION` to override the output path or source revision. Review the generated profile using the catalog maintenance process before adding it to `models/presets.json`. Generation alone does not add a menu entry. The script form below also supports speech bundles and additional metadata.
+
+The application matches base language codes case-insensitively (`en-US` can
+serve the English selection); a declaration is compatibility metadata, not a
+quality benchmark. Legacy writer profiles without languages remain readable for
+repair, but cannot be saved with polishing enabled or used to rewrite text.
+Reselect a catalog preset with current metadata, update the reviewed custom
+profile, or disable polishing. Custom writers require an explicit language;
+automatic speech detection does not establish compatibility with an unknown
+output language. See [writing language compatibility](language-support-and-recommendations.md#writing-language-compatibility).
 
 ```sh
 node scripts/huggingface-profile.mjs \
