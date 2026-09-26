@@ -59,7 +59,7 @@ def time_command(command, platform):
         return ["/usr/bin/time", "-l", *command]
     if platform == "linux":
         # GNU time's %M is KiB; use a stable, locale-independent record.
-        return ["/usr/bin/time", "-f", "TRANSCRIBE_PEAK_RSS_KIB %M", *command]
+        return ["/usr/bin/time", "-f", "VESPER_PEAK_RSS_KIB %M", *command]
     raise RuntimeError(f"native resource measurement is unsupported on {platform}")
 
 
@@ -67,7 +67,7 @@ def peak_rss_bytes(stderr, platform):
     if platform == "darwin":
         pattern, scale = r"^\s*(\d+)\s+maximum resident set size\s*$", 1
     elif platform == "linux":
-        pattern, scale = r"^TRANSCRIBE_PEAK_RSS_KIB (\d+)\s*$", 1024
+        pattern, scale = r"^(?:VESPER|TRANSCRIBE)_PEAK_RSS_KIB (\d+)\s*$", 1024
     else:
         return None
     matches = re.findall(pattern, stderr, flags=re.MULTILINE)

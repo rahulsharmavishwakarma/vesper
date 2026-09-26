@@ -84,7 +84,7 @@ class ResourcePlatformTests(unittest.TestCase):
         )
         self.assertEqual(
             benchmark.time_command(command, "linux"),
-            ["/usr/bin/time", "-f", "TRANSCRIBE_PEAK_RSS_KIB %M", *command],
+            ["/usr/bin/time", "-f", "VESPER_PEAK_RSS_KIB %M", *command],
         )
         self.assertEqual(command, ["/some path/native", "--context", "brackets [x] and spaces"])
         with self.assertRaisesRegex(RuntimeError, "unsupported"):
@@ -95,16 +95,17 @@ class ResourcePlatformTests(unittest.TestCase):
             benchmark.peak_rss_bytes("  12582912  maximum resident set size\n", "darwin"),
             12582912,
         )
+        self.assertEqual(benchmark.peak_rss_bytes("VESPER_PEAK_RSS_KIB 12288\n", "linux"), 12582912)
         self.assertEqual(
             benchmark.peak_rss_bytes("TRANSCRIBE_PEAK_RSS_KIB 12288\n", "linux"), 12582912
         )
 
     def test_missing_or_malformed_measurements_are_not_fabricated(self):
         for platform in ("darwin", "linux"):
-            for stderr in ("", "model completed", "TRANSCRIBE_PEAK_RSS_KIB unknown\n"):
+            for stderr in ("", "model completed", "VESPER_PEAK_RSS_KIB unknown\n"):
                 with self.subTest(platform=platform, stderr=stderr):
                     self.assertIsNone(benchmark.peak_rss_bytes(stderr, platform))
-        self.assertIsNone(benchmark.peak_rss_bytes("TRANSCRIBE_PEAK_RSS_KIB 12\n", "darwin"))
+        self.assertIsNone(benchmark.peak_rss_bytes("VESPER_PEAK_RSS_KIB 12\n", "darwin"))
         self.assertIsNone(benchmark.peak_rss_bytes("  12 maximum resident set size\n", "linux"))
 
 

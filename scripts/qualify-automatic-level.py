@@ -305,7 +305,7 @@ def run(phase):
         "OPENBLAS_NUM_THREADS": "1",
         "VECLIB_MAXIMUM_THREADS": "1",
         "MKL_NUM_THREADS": "1",
-        "TRANSCRIBE_EXPERIMENTAL_PREFIX_CACHE": "0",
+        "VESPER_EXPERIMENTAL_PREFIX_CACHE": "0",
     }
     write(root / "runtime-env.json", overrides)
     pinned = {binary, manifest, pins, env_path, ROOT / "protocol.json"}
