@@ -37,7 +37,11 @@ test('current project namespaces and paths use Vesper, without rewriting histori
       continue;
     const source = readFileSync(new URL(`../${file}`, import.meta.url), 'utf8');
     source.split('\n').forEach((line, index) => {
-      if (stale.test(line) || /std::env::var(?:_os)?\("TRANSCRIBE_/.test(line))
+      if (
+        stale.test(line) ||
+        /std::env::var(?:_os)?\("TRANSCRIBE_/.test(line) ||
+        /^\s*(?:export\s+)?TRANSCRIBE_[A-Z0-9_]+=/.test(line)
+      )
         violations.push(`${file}:${index + 1}: ${line.trim()}`);
     });
   }

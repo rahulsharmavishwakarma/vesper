@@ -338,11 +338,11 @@ uv run --locked python scripts/summarize-whisper.py RESULT_DIR PUBLICATION.json 
 Run the installed-model lifecycle tests sequentially with the same pinned fixtures:
 
 ```sh
-export TRANSCRIBE_SMOKE_MODELS=models/downloads
-export TRANSCRIBE_SMOKE_AUDIO=PUBLIC_ENGLISH_A.wav
-export TRANSCRIBE_COHERE_AUDIO_B=PUBLIC_ENGLISH_B.wav
-export TRANSCRIBE_COHERE_LONG_AUDIO=PUBLIC_MEETING_OVER_29_SECONDS.wav
-export TRANSCRIBE_COHERE_FRENCH_AUDIO=PUBLIC_FRENCH.wav
+export VESPER_SMOKE_MODELS=models/downloads
+export VESPER_SMOKE_AUDIO=PUBLIC_ENGLISH_A.wav
+export VESPER_COHERE_AUDIO_B=PUBLIC_ENGLISH_B.wav
+export VESPER_COHERE_LONG_AUDIO=PUBLIC_MEETING_OVER_29_SECONDS.wav
+export VESPER_COHERE_FRENCH_AUDIO=PUBLIC_FRENCH.wav
 cargo test --release --locked -p vesper-inference installed_whisper_small_residency_isolation_and_invalidation -- --ignored --nocapture --test-threads=1
 cargo test --release --locked -p vesper-inference installed_whisper_turbo_residency_isolation_and_invalidation -- --ignored --nocapture --test-threads=1
 cargo test --release --locked -p vesper-inference installed_cohere_residency_isolation_and_invalidation -- --ignored --nocapture --test-threads=1
@@ -374,4 +374,4 @@ The application evaluator accepts `--vad` and `--denoiser off|dpdfnet4|dpdfnet8`
 
 Use `scripts/prepare-frontend-integration.py` with the root uv environment and cached public FLEURS/MS-SNSD/regression assets to freeze a new selection before inference. Build `cargo build --release -p vesper-eval`, then run `uv run --locked python scripts/qualify-frontend-integration.py streaming`, followed by the `quality` and `soak` phases sequentially. The runner freezes the binary/source hashes, preserves failed processes, records competing work and sampled RSS, and never changes settings based on results. The soak is 30 minutes of paced synthetic repetition and is excluded from accuracy. Frozen attributed public references and recipes are in [the dated manifests](manifests/frontend-integration-2026-09-18/quality.json). Once those manifests exist, preparation rebuilds that exact selection and checks every generated audio hash; it refuses an existing output directory. Original waveforms remain local. The initial run is under `.cache/benchmarks/results/frontend-integration-2026-09-18`; it includes a retained metadata-only split-schema preflight failure. Do not overwrite completed evidence to restart a run.
 
-Installed contracts can be run using `TRANSCRIBE_SMOKE_MODELS` and `TRANSCRIBE_SMOKE_AUDIO` with the ignored tests `installed_frontends_packetization_tails_and_100_recording_resets`, `live_frontend_cancel_fallback_and_reset_isolation`, `live_frontend_load_failure_uses_original_audio_and_retains_asr_errors`, and `live_frontend_device_rates_match_completed_processing`. The live tests need the pinned CPU Nemotron runtime/model plus the same frontend artifact layout. They use public speech fixtures. Full hashes are checked before native model construction. Device-rate tests compare irregular 44.1/48 kHz delivery against completed processing of the same synthetic-rate waveform; they do not substitute for microphone quality qualification.
+Installed contracts can be run using `VESPER_SMOKE_MODELS` and `VESPER_SMOKE_AUDIO` with the ignored tests `installed_frontends_packetization_tails_and_100_recording_resets`, `live_frontend_cancel_fallback_and_reset_isolation`, `live_frontend_load_failure_uses_original_audio_and_retains_asr_errors`, and `live_frontend_device_rates_match_completed_processing`. The live tests need the pinned CPU Nemotron runtime/model plus the same frontend artifact layout. They use public speech fixtures. Full hashes are checked before native model construction. Device-rate tests compare irregular 44.1/48 kHz delivery against completed processing of the same synthetic-rate waveform; they do not substitute for microphone quality qualification.

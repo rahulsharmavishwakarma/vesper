@@ -27,7 +27,7 @@ From the repository root, after sourcing the existing toolchain environment:
 
 ```sh
 source scripts/dev-env.sh
-export TRANSCRIBE_SMOKE_MODELS="$PWD/models/downloads"
+export VESPER_SMOKE_MODELS="$PWD/models/downloads"
 cargo test --locked --offline -p vesper-inference \
   qwen::tests::hybrid_prefix_cache_matches_fresh_requests_and_profile_reset \
   -- --ignored --exact --nocapture
@@ -38,4 +38,4 @@ cargo test --locked --offline -p vesper-inference \
 
 The test performs no model download and uses only synthetic text. Retain the JSON lines tagged `two-pass-prefix-v1`, including failures. Avoid other compute-heavy jobs during measurement. Record hardware/power, application source digest and artifact hash anew on every machine. On macOS, use an already configured and licensed developer toolchain; this test does not alter toolchain licenses.
 
-Application experimentation is explicitly enabled before model loading with `TRANSCRIBE_EXPERIMENTAL_PREFIX_CACHE=1`. Omit it for the baseline. Caching is disabled by default, excludes custom templates and prompts containing retrieved private examples, and keeps fresh per-pass contexts. See [ADR-0012](../../docs/adrs/0012-adapter-registry-and-reviewed-personalization.md) for exact state ownership, memory limits and research sources.
+Application experimentation is explicitly enabled before model loading with `VESPER_EXPERIMENTAL_PREFIX_CACHE=1`. Omit it for the baseline. Caching is disabled by default, excludes custom templates and prompts containing retrieved private examples, and keeps fresh per-pass contexts. See [ADR-0012](../../docs/adrs/0012-adapter-registry-and-reviewed-personalization.md) for exact state ownership, memory limits and research sources.

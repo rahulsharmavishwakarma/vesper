@@ -394,6 +394,8 @@ are intentional compatibility/evidence, not unfinished product naming:
 bridge, artifact and native-report names while allowing dated evidence and
 explicit storage/environment compatibility. Historical commands target their
 recorded revision; current commands use `vesper-*` and `VESPER_*`.
+The guard also checks environment assignments in current ASR/cleanup benchmark
+instructions, so copied examples prefer the canonical namespace.
 
 Do not rename the third-party **Cohere Transcribe** model, the `transcribe.cpp`
 runtime, transcription actions such as **Stop and transcribe**, or API methods.
