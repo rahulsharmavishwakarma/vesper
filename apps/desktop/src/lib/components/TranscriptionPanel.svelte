@@ -17,7 +17,6 @@
   import ConfiguredModels from './ConfiguredModels.svelte';
   import Select from './Select.svelte';
   import {
-    downloadBytes,
     downloadKey,
     automaticAudioDownloads,
     audioSetupRetryDelay,
@@ -582,7 +581,7 @@
     startPolling();
     try {
       const removed = await removeModel(model);
-      downloadFeedback = `${model.name}${model.quantization ? ` · ${model.quantization.slice(0, 2).toUpperCase()}` : ''} removed. ${downloadBytes(removed.removedBytes)} of model files deleted.`;
+      downloadFeedback = `${model.name}${model.quantization ? ` · ${model.quantization.slice(0, 2).toUpperCase()}` : ''} removed from Vesper. Shared cached files are kept.`;
       return removed;
     } finally {
       action = null;

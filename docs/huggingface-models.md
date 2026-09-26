@@ -102,7 +102,10 @@ rejected. Downloads start at `https://huggingface.co/OWNER/REPO/resolve/COMMIT/F
 normal Hugging Face CDN redirects are followed. Files are staged and verified
 before replacement; inference verifies their size and SHA-256 again. Storage is
 namespaced under `huggingface/OWNER/REPO/COMMIT/FILE` within the selected model
-directory. Descendant symbolic links are rejected by installation/verification.
+directory. Managed files can be hard links to verified shared HF cache files,
+with a copy fallback across filesystems. Descendant symbolic links in the managed
+directory remain rejected. See the [cache contract](internals.md#hugging-face-cache-boundary)
+for discovery, atomic publication, cancellation and removal.
 
 For new profiles inspect the [Hub API](https://huggingface.co/docs/hub/api):
 `GET /api/models/OWNER/REPO/revision/COMMIT?blobs=true` returns pinned file
@@ -113,10 +116,45 @@ provenance; read the repository's actual terms before using its weights.
 
 The built-in downloader currently supports public repositories without
 credentials. Gated/private repositories need their files downloaded separately
-after obtaining access, and placed at the matching paths; the same verification
-still applies. Tokens are not stored in profile JSON. A missing local file,
+after obtaining access. Exact pinned files in the standard HF cache are reused;
+files manually placed at the managed paths are also verified. Tokens are not
+stored in profile JSON. A missing local file,
 authorization failure, unsupported architecture or invalid template is reported
 as an error; it does not silently change the selected model.
+
+## Shared-cache validation
+
+Run the isolated cache/installer suite with:
+
+```sh
+. ./scripts/dev-env.sh
+cargo test --locked -p vesper-models
+# Explicit network check: pinned public files, temporary cache and app directories.
+cargo test --locked -p vesper-models public_hf_cache_smoke -- --ignored --nocapture
+```
+
+The default suite uses local HTTP fixtures and temporary directories. It checks
+zero HTTP requests for verified snapshots, plain-file and blob-link layouts,
+environment precedence, revision/export mismatches, incomplete/corrupt files,
+Git and LFS ETags, atomic repair without mutating other shared installations,
+concurrent installs sharing one transfer, cancellable lock waits, failed
+publication and copy fallback. A subprocess exercises the public
+catalog installer, ready status, inventory, removal and offline reinstall using
+its configured HF cache. No user model files are edited or removed.
+
+The explicit public smoke downloads pinned tokenizer metadata and a small ONNX
+artifact, then installs each into a second directory with the same cache and a
+local request counter. It verifies a complete cache hit makes no HTTP request.
+On 2026-09-27, the macOS standard suite passed 41 tests and the MLX feature suite
+passed 44 (installed-model tokenizer and network smoke cases are explicit opt-ins).
+The public smoke passed for the pinned Qwen tokenizer config (12,487 bytes) and
+Cohere encoder ONNX (3,090,822 bytes), with zero requests on their second installs.
+The strict model-crate Clippy and repository fast checks also passed. Removal UI
+checks used synthetic data; a microphone-animation assertion in the broader browser
+suite failed once and passed on an isolated rerun, while both responsive suites
+passed initially. This qualifies storage and installation, not model inference or
+transcription quality. Cross-filesystem fallback is forced in the fixture;
+Windows and network filesystems require their own platform qualification.
 
 ## Cleanup and training data
 

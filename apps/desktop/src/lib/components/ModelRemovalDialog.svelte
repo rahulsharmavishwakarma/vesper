@@ -75,18 +75,22 @@
   }}
 >
   {#if selected}
-    <span class="eyebrow">Free up space</span>
+    <span class="eyebrow">Model storage</span>
     <h2 id="remove-model-heading">Remove this download?</h2>
     <p class="remove-model-name">{selected.name} <span>· {precision(selected)}</span></p>
     <p id="remove-model-description">
-      This deletes {downloadBytes(selected.removableBytes)} of model files. Your recordings and transcripts
-      stay saved. You can download this model again.
+      This removes the model from Vesper. Your recordings and transcripts stay saved. You can
+      install this model again.
     </p>
     {#if selected.selected}<p class="selection-warning">
-        Your selection stays saved, but this model will be unavailable until you download it again.
+        Your selection stays saved, but this model will be unavailable until you install it again.
       </p>{/if}
     {#if selected.downloadedBytes > selected.removableBytes}<p class="note">
-        Files shared with another model will be kept.
+        Shared model files, including the Hugging Face cache, will be kept.
+      </p>{/if}
+    {#if selected.removableBytes > 0}<p class="note">
+        {downloadBytes(selected.removableBytes)} of unshared model files will be deleted. Actual disk
+        space released depends on your filesystem.
       </p>{/if}
     {#if error}<p class="error" role="alert">{error}</p>{/if}
     <div class="remove-actions">

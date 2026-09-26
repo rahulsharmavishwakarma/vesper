@@ -184,7 +184,12 @@ validated read boundary. Missing cache metadata or unwritable cache storage
 reports an installation error, preserving existing managed files.
 
 Removing a Vesper model unlinks only its managed paths, preserving shared HF
-blobs and snapshots. Inventory reports logical model size. External in-place changes can affect shared hard
+blobs and snapshots. Inventory reports logical model size. On Unix, removable
+and removed byte counts include only files with one remaining hard link; these
+are logical unshared bytes, not measured disk savings (clones, compression and
+open handles can differ). Other targets conservatively report zero where the
+stable platform API cannot establish exclusivity. Shared files do not disable
+removal of Vesper's reference. External in-place changes can affect shared hard
 links; installation and pre-inference verification still reject modified bytes.
 Vesper repairs through atomic replacement, never writes into an existing shared
 inode, and never automatically prunes or migrates the user's HF cache.
@@ -193,8 +198,8 @@ The [HF cache format](https://huggingface.co/docs/hub/local-cache),
 [environment reference](https://huggingface.co/docs/huggingface_hub/main/package_reference/environment_variables)
 and [huggingface_hub v1.7.2 installer](https://github.com/huggingface/huggingface_hub/blob/v1.7.2/src/huggingface_hub/file_download.py)
 define the compatibility boundary. There is no Python service or inference API.
-See [HF profiles](huggingface-models.md#integrity-storage-and-access) for the
-existing integrity and access contract.
+See [cache validation](huggingface-models.md#shared-cache-validation) for checks
+and qualification limits.
 
 LFM2.5 Audio uses the compiled llama.cpp/mtmd adapter with an English-only CPU contract. Its backbone and projector share the existing worker lifetime; actual frontend/context/encoding-prefill/generation metrics are attached to execution evidence. See [ADR-0013](adrs/0013-lfm-audio-native-adapter.md).
 

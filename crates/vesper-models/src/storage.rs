@@ -5,8 +5,30 @@ use std::collections::BTreeSet;
 #[derive(Debug, Serialize)]
 #[serde(rename_all = "camelCase")]
 pub struct ModelRemoval {
+    /// Logical bytes unlinked from files with no other hard links. Not physical
+    /// disk savings (clones, compression and open handles are filesystem-specific).
     pub removed_bytes: u64,
     pub removed_files: usize,
+}
+
+fn unshared_bytes(path: &Path) -> Result<u64> {
+    let metadata = path.symlink_metadata()?;
+    if !metadata.is_file() {
+        return Err(ModelError::UnsafePath(path.into()));
+    }
+    #[cfg(unix)]
+    {
+        use std::os::unix::fs::MetadataExt;
+        Ok(if metadata.nlink() == 1 {
+            metadata.len()
+        } else {
+            0
+        })
+    }
+    // No portable stable link-count API at the workspace MSRV. Do not claim
+    // bytes were released where exclusivity cannot be established.
+    #[cfg(not(unix))]
+    Ok(0)
 }
 
 fn weight_paths(spec: &ModelInstallSpec) -> BTreeSet<String> {
@@ -80,7 +102,12 @@ pub(super) fn inspect_storage(
             status.downloaded_bytes = files.iter().map(|(_, bytes)| bytes).sum();
             match removal_plan(spec, specs, root) {
                 Ok(plan) => {
-                    status.removable_bytes = plan.iter().map(|(_, bytes)| bytes).sum();
+                    match plan.iter().try_fold(0, |sum, (path, _)| {
+                        unshared_bytes(path).map(|bytes| sum + bytes)
+                    }) {
+                        Ok(bytes) => status.removable_bytes = bytes,
+                        Err(error) => status.removal_error = Some(error.to_string()),
+                    }
                     if plan.is_empty() && !files.is_empty() {
                         status.removal_error =
                             Some("These files are shared with another model package.".into());
@@ -131,12 +158,13 @@ pub fn remove_model(
         removed_bytes: 0,
         removed_files: 0,
     };
-    for (path, bytes) in plan {
+    for (path, _) in plan {
         // Revalidate immediately before unlinking, including every parent component.
         let relative = path
             .strip_prefix(root)
             .map_err(|_| ModelError::UnsafePath(path.clone()))?;
         let checked = artifact_path(root, &relative.to_string_lossy())?;
+        let bytes = unshared_bytes(&checked)?;
         std::fs::remove_file(checked)?;
         result.removed_bytes += bytes;
         result.removed_files += 1;
@@ -202,7 +230,7 @@ mod tests {
         assert!(status.selected);
         assert!(!status.artifacts_installed); // Corrupt/incomplete weights still take space.
         assert_eq!(status.downloaded_bytes, 2);
-        assert_eq!(status.removable_bytes, 2);
+        assert_eq!(status.removable_bytes, if cfg!(unix) { 2 } else { 0 });
         assert_eq!(status.local_file_count, 1);
         let removed = remove_model(
             &config,
@@ -213,7 +241,8 @@ mod tests {
             Some(RewriteQuantization::Q4_0),
         )
         .unwrap();
-        assert_eq!((removed.removed_files, removed.removed_bytes), (1, 2));
+        assert_eq!(removed.removed_files, 1);
+        assert_eq!(removed.removed_bytes, if cfg!(unix) { 2 } else { 0 });
         assert!(!small.exists());
         assert_eq!(std::fs::read(large).unwrap(), b"q8 other");
         assert_eq!(std::fs::read(unrelated).unwrap(), b"keep me");
@@ -396,3 +425,7 @@ mod tests {
         ));
     }
 }
+
+#[cfg(test)]
+#[path = "storage_cache_tests.rs"]
+mod cache_tests;
