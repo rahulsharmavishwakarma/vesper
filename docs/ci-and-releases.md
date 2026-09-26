@@ -581,6 +581,21 @@ the initial project baseline, so local captures never need to enter that history
 Contributors may attach synthetic screenshots to PRs when useful, keeping those
 captures outside the source tree's public history.
 
+Design-tool caches such as `.hallmark/` are excluded from both Git and Docker
+build contexts. Do not publish session metadata or self-assessment stamps in
+generated assets or frontend source comments. This exclusion does not remove
+legitimate project instructions, test previews, model manifests, third-party
+provenance, or tool names in dated validation evidence. The metadata cleanup
+removes the current tracked cache; the earlier committed copy remains in Git
+history. No history rewrite is needed for this non-secret cache.
+
+`make check-fast` includes the source-hygiene checks in
+`scripts/evidence-hygiene.test.mjs`: they reject tracked local caches and
+frontend critique stamps, and verify the design-cache ignore rules. Brand
+tests also check the banner generator so regeneration cannot restore its
+removed stamps. Existing generated icons, canonical SVGs and required browser
+fixtures remain versioned and tested.
+
 ## Activation and open-source readiness
 
 As of the 2026-09-19 review, GitHub lists no workflows. Configuring files,

@@ -83,7 +83,6 @@
 </div>
 
 <style>
-  /* H02 Quiet slide · P5 H5 E5 S5 R5 V4. The persisted value owns success. */
   .transcript-feedback {
     padding-block: var(--space-3);
     margin-bottom: var(--space-3);

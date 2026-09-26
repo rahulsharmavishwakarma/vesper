@@ -2,6 +2,7 @@
 .github/ISSUE_TEMPLATE
 .cache
 .tooling
+.hallmark
 target
 node_modules
 apps/desktop/node_modules
