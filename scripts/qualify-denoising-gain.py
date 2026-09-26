@@ -236,7 +236,7 @@ def run():
     env = {
         k: v
         for k, v in os.environ.items()
-        if not k.startswith(("TRANSCRIBE_", "UKTI_", "STT_", "GGML_", "LLAMA_"))
+        if not k.startswith(("VESPER_", "TRANSCRIBE_", "UKTI_", "STT_", "GGML_", "LLAMA_"))
     }
     env.update(read(ROOT / "runtime-env.json"))
     runner.run_jobs(ROOT, "quality", jobs, env, pinned)

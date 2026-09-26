@@ -78,7 +78,7 @@ def main():
         "OPENBLAS_NUM_THREADS": "1",
         "VECLIB_MAXIMUM_THREADS": "1",
         "MKL_NUM_THREADS": "1",
-        "TRANSCRIBE_EXPERIMENTAL_PREFIX_CACHE": "0",
+        "VESPER_EXPERIMENTAL_PREFIX_CACHE": "0",
     }
     common.write(ROOT / "runtime-env.json", overrides)
     env = {**os.environ, **overrides}
