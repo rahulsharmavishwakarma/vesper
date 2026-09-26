@@ -108,7 +108,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
             let started = Instant::now();
             model.decode(&stream);
             row["decodeMs"] = json!(started.elapsed().as_secs_f64() * 1000.0);
-            let completion = stream.get_option("transcribe.decode_report.v1");
+            let completion = stream.get_option("vesper.decode_report.v1");
             row["completion"] = serde_json::from_str(&completion)
                 .map_err(|e| format!("invalid completion report: {e}"))?;
             let result = stream.get_result().ok_or("missing recognition result")?;

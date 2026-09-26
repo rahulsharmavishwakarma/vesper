@@ -6,7 +6,7 @@ use sherpa_onnx::{OfflineModelConfig, OfflineRecognizerConfig, OfflineWhisperMod
 use std::path::Path;
 use vesper_core::{AppConfig, AsrModel, Language};
 
-pub(crate) const SCORE_OPTION: &str = "transcribe.whisper_scores.v1";
+pub(crate) const SCORE_OPTION: &str = "vesper.whisper_scores.v1";
 // Preserve the padding used in the prior qualification screen. The official
 // shorter 300-frame suggestion needs its own quality/latency comparison.
 pub(crate) const TAIL_PADDING_FRAMES: i32 = 1000;

@@ -143,7 +143,8 @@ impl Rewriter {
             fallback_reason,
             metrics: RefCell::default(),
             prefix_states: RefCell::default(),
-            prefix_cache_enabled: std::env::var("TRANSCRIBE_EXPERIMENTAL_PREFIX_CACHE").as_deref()
+            prefix_cache_enabled: vesper_core::environment::var("VESPER_EXPERIMENTAL_PREFIX_CACHE")
+                .as_deref()
                 == Ok("1"),
         })
     }
@@ -872,7 +873,7 @@ mod tests {
     #[ignore = "30 paired resident CPU runs; installed Qwen3.5 Q4 required"]
     fn measure_two_pass_prefix_reuse() {
         let root = PathBuf::from(
-            std::env::var_os("TRANSCRIBE_SMOKE_MODELS").expect("TRANSCRIBE_SMOKE_MODELS"),
+            vesper_core::environment::var_os("VESPER_SMOKE_MODELS").expect("VESPER_SMOKE_MODELS"),
         );
         let config = AppConfig {
             compute_backend: ComputeBackend::Cpu,
@@ -923,7 +924,7 @@ mod tests {
     #[ignore = "requires installed Qwen3.5 Q4; explicit CPU prefix-equivalence screening"]
     fn hybrid_prefix_cache_matches_fresh_requests_and_profile_reset() {
         let root = PathBuf::from(
-            std::env::var_os("TRANSCRIBE_SMOKE_MODELS").expect("TRANSCRIBE_SMOKE_MODELS"),
+            vesper_core::environment::var_os("VESPER_SMOKE_MODELS").expect("VESPER_SMOKE_MODELS"),
         );
         let config = AppConfig {
             compute_backend: ComputeBackend::Cpu,
@@ -1062,11 +1063,11 @@ mod tests {
     }
 
     #[test]
-    #[ignore = "requires TRANSCRIBE_SMOKE_GGUF pointing to an existing local instruction GGUF; no download"]
+    #[ignore = "requires VESPER_SMOKE_GGUF pointing to an existing local instruction GGUF; no download"]
     fn existing_gguf_embedded_template_formats_messages_and_rejects_role_tokens() {
-        let path = std::env::var_os("TRANSCRIBE_SMOKE_GGUF")
+        let path = vesper_core::environment::var_os("VESPER_SMOKE_GGUF")
             .or_else(|| std::env::var_os("STT_SMOKE_GGUF"))
-            .expect("TRANSCRIBE_SMOKE_GGUF");
+            .expect("VESPER_SMOKE_GGUF");
         let backend = crate::llama_runtime::backend().unwrap();
         let parameters = LlamaModelParams::default()
             .with_n_gpu_layers(0)
@@ -1161,7 +1162,7 @@ mod tests {
     #[ignore = "requires installed Qwen GGUF; no download"]
     fn installed_qwen_corrects_a_technical_term_at_the_end_of_long_dictation() {
         let model_root = PathBuf::from(
-            std::env::var_os("TRANSCRIBE_SMOKE_MODELS").expect("TRANSCRIBE_SMOKE_MODELS"),
+            vesper_core::environment::var_os("VESPER_SMOKE_MODELS").expect("VESPER_SMOKE_MODELS"),
         );
         let config = AppConfig {
             cleanup_preset: CleanupPreset::Balanced,

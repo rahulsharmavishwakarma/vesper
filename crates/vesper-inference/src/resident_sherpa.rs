@@ -357,7 +357,7 @@ mod tests {
             model.model.decode(&bad);
             assert_eq!(
                 serde_json::from_str::<serde_json::Value>(
-                    &bad.get_option("transcribe.decode_report.v1")
+                    &bad.get_option("vesper.decode_report.v1")
                 )
                 .unwrap()["stopReason"],
                 if asr.is_whisper() {

@@ -21,7 +21,7 @@ The user-selected default is Cohere Transcribe INT8 through sherpa-onnx 1.13.8, 
 
 These observations come from [Nemotron inference](../crates/vesper-inference/src/nemotron.rs), [cleanup inference](../crates/vesper-inference/src/qwen.rs), [model/runtime selection](../crates/vesper-models/src/lib.rs), and [desktop orchestration](../apps/desktop/src-tauri/src/runtime.rs).
 
-Qwen's complete-prefix state experiment is **off by default**. `TRANSCRIBE_EXPERIMENTAL_PREFIX_CACHE=1` enables it; normal cleanup retains weights and creates fresh contexts. Its hybrid recurrent state and full-attention KV state require the exact runtime's complete-state API. A capability flag is not evidence that prefix reuse executes on default requests.
+Qwen's complete-prefix state experiment is **off by default**. `VESPER_EXPERIMENTAL_PREFIX_CACHE=1` enables it (`TRANSCRIBE_EXPERIMENTAL_PREFIX_CACHE` remains a fallback when the Vesper variable is absent); normal cleanup retains weights and creates fresh contexts. Its hybrid recurrent state and full-attention KV state require the exact runtime's complete-state API. A capability flag is not evidence that prefix reuse executes on default requests.
 
 One build detail matters: `default-features = false` does **not** mean Metal is absent. The pinned `llama-cpp-2` manifest has an Apple ARM target dependency enabling `metal`. Application features forward `cuda`, `rocm`, and `vulkan`; there is no direct `sycl` feature in this release. Explicitly selecting an unavailable backend fails with a device-selection error. Automatic selection uses a detected native GPU or CPU; failed GPU initialization retries CPU and records its reason. [Pinned Rust binding manifest](https://docs.rs/crate/llama-cpp-2/0.1.156/source/Cargo.toml).
 
