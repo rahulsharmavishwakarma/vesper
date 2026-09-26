@@ -172,7 +172,7 @@ mod tests {
     }
 
     #[test]
-    #[ignore = "downloads pinned audio models; requires TRANSCRIBE_SMOKE_AUDIO public fixture"]
+    #[ignore = "downloads pinned audio models; requires VESPER_SMOKE_AUDIO public fixture"]
     fn managed_audio_downloads_verify_and_reuse_pinned_packages() {
         use std::{cell::Cell, sync::atomic::AtomicBool};
         use vesper_models::{install_model, list_model_installations, InstallPhase};
@@ -232,7 +232,8 @@ mod tests {
             !store.path.exists(),
             "automatic setup must not write settings"
         );
-        let fixture = std::env::var_os("TRANSCRIBE_SMOKE_AUDIO").expect("public audio fixture");
+        let fixture =
+            vesper_core::environment::var_os("VESPER_SMOKE_AUDIO").expect("public audio fixture");
         let audio = vesper_audio::decode_file(std::path::Path::new(&fixture), 60).unwrap();
         let mut cache = vesper_inference::audio_frontend::FrontendCache::default();
         let (output, metrics) = vesper_inference::audio_frontend::process_completed(

@@ -130,7 +130,7 @@ fn recurring_qualification_enforces_latency_and_complete_timing() {
 }
 
 fn report(value: &Value) {
-    if let Some(path) = std::env::var_os("TRANSCRIBE_LEARNING_REPORT") {
+    if let Some(path) = vesper_core::environment::var_os("VESPER_LEARNING_REPORT") {
         let mut file = fs::OpenOptions::new()
             .write(true)
             .create_new(true)
@@ -528,10 +528,12 @@ struct PublicSample {
 #[test]
 #[ignore = "explicit cached public Svarah audio and installed Cohere/Qwen; no microphone or downloads"]
 fn native_public_capture_learning_against_frozen_memory() {
-    let model_root =
-        PathBuf::from(std::env::var_os("TRANSCRIBE_MODEL_DIR").expect("TRANSCRIBE_MODEL_DIR"));
+    let model_root = PathBuf::from(
+        vesper_core::environment::var_os("VESPER_MODEL_DIR").expect("VESPER_MODEL_DIR"),
+    );
     let audio_root = PathBuf::from(
-        std::env::var_os("TRANSCRIBE_LEARNING_AUDIO_ROOT").expect("TRANSCRIBE_LEARNING_AUDIO_ROOT"),
+        vesper_core::environment::var_os("VESPER_LEARNING_AUDIO_ROOT")
+            .expect("VESPER_LEARNING_AUDIO_ROOT"),
     );
     let manifest: Value = serde_json::from_str(PUBLIC).unwrap();
     let samples: Vec<PublicSample> = serde_json::from_value(manifest["samples"].clone()).unwrap();
@@ -792,8 +794,9 @@ struct RecurringSample {
 #[test]
 #[ignore = "installed models and explicitly prepared synthetic recurring-term corpus"]
 fn native_recurring_spelling_learning_against_frozen_memory() {
-    let model_root = PathBuf::from(std::env::var_os("TRANSCRIBE_MODEL_DIR").unwrap());
-    let audio_root = PathBuf::from(std::env::var_os("TRANSCRIBE_LEARNING_AUDIO_ROOT").unwrap());
+    let model_root = PathBuf::from(vesper_core::environment::var_os("VESPER_MODEL_DIR").unwrap());
+    let audio_root =
+        PathBuf::from(vesper_core::environment::var_os("VESPER_LEARNING_AUDIO_ROOT").unwrap());
     let manifest_bytes = fs::read(audio_root.join("manifest.json")).unwrap();
     let manifest: Value = serde_json::from_slice(&manifest_bytes).unwrap();
     let samples: Vec<RecurringSample> =
@@ -1071,10 +1074,12 @@ fn native_recurring_spelling_learning_against_frozen_memory() {
 #[test]
 #[ignore = "explicit cached public audio and installed Cohere/Qwen; authored edit, no microphone"]
 fn native_public_identifier_memory_roundtrip() {
-    let model_root =
-        PathBuf::from(std::env::var_os("TRANSCRIBE_MODEL_DIR").expect("TRANSCRIBE_MODEL_DIR"));
+    let model_root = PathBuf::from(
+        vesper_core::environment::var_os("VESPER_MODEL_DIR").expect("VESPER_MODEL_DIR"),
+    );
     let audio_root = PathBuf::from(
-        std::env::var_os("TRANSCRIBE_LEARNING_AUDIO_ROOT").expect("TRANSCRIBE_LEARNING_AUDIO_ROOT"),
+        vesper_core::environment::var_os("VESPER_LEARNING_AUDIO_ROOT")
+            .expect("VESPER_LEARNING_AUDIO_ROOT"),
     );
     let manifest: Value = serde_json::from_str(PUBLIC).unwrap();
     let sample: PublicSample = serde_json::from_value(manifest["samples"][0].clone()).unwrap();

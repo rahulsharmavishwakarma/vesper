@@ -661,9 +661,10 @@ mod tests {
     fn new_offline_asr_pipeline_preserves_audio_and_provenance() {
         use std::time::Instant;
         use vesper_core::{AsrModel, Language};
-        let models = PathBuf::from(std::env::var_os("TRANSCRIBE_MODEL_DIR").unwrap());
-        let source = PathBuf::from(std::env::var_os("TRANSCRIBE_ASR_FIXTURES").unwrap())
-            .join("fleurs-en_us.wav");
+        let models = PathBuf::from(vesper_core::environment::var_os("VESPER_MODEL_DIR").unwrap());
+        let source =
+            PathBuf::from(vesper_core::environment::var_os("VESPER_ASR_FIXTURES").unwrap())
+                .join("fleurs-en_us.wav");
         let source = vesper_audio::decode_file(source, 0).unwrap();
         let fixture = tempfile::tempdir().unwrap();
         let audio = fixture.path().join("fleurs-en_us-repeated-3.wav");
@@ -767,14 +768,14 @@ mod tests {
     fn real_file_pipeline_preserves_audio_predictions_and_export_provenance() {
         let directory = tempfile::tempdir().unwrap();
         let model_root = PathBuf::from(
-            std::env::var_os("TRANSCRIBE_SMOKE_MODELS")
+            vesper_core::environment::var_os("VESPER_SMOKE_MODELS")
                 .or_else(|| std::env::var_os("STT_SMOKE_MODELS"))
-                .expect("TRANSCRIBE_SMOKE_MODELS"),
+                .expect("VESPER_SMOKE_MODELS"),
         );
         let audio = PathBuf::from(
-            std::env::var_os("TRANSCRIBE_SMOKE_AUDIO")
+            vesper_core::environment::var_os("VESPER_SMOKE_AUDIO")
                 .or_else(|| std::env::var_os("STT_SMOKE_AUDIO"))
-                .expect("TRANSCRIBE_SMOKE_AUDIO"),
+                .expect("VESPER_SMOKE_AUDIO"),
         );
         let context = WorkContext {
             operation_id: "test".into(),

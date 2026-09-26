@@ -92,10 +92,12 @@ fn automatic_speakers_preserve_raw_when_unavailable_corrupt_or_cancelled() {
 #[test]
 #[ignore = "requires the pinned local diarization runtime, Cohere ASR and public meeting samples"]
 fn real_asr_speaker_pipeline_persists_and_exports_without_changing_words() {
-    let models =
-        PathBuf::from(std::env::var_os("TRANSCRIBE_DIAR_MODELS").expect("TRANSCRIBE_DIAR_MODELS"));
-    let corpus =
-        PathBuf::from(std::env::var_os("TRANSCRIBE_DIAR_CORPUS").expect("TRANSCRIBE_DIAR_CORPUS"));
+    let models = PathBuf::from(
+        vesper_core::environment::var_os("VESPER_DIAR_MODELS").expect("VESPER_DIAR_MODELS"),
+    );
+    let corpus = PathBuf::from(
+        vesper_core::environment::var_os("VESPER_DIAR_CORPUS").expect("VESPER_DIAR_CORPUS"),
+    );
     let dir = tempfile::tempdir().unwrap();
     let mut ctx = context(dir.path(), models);
     // Keep the observed Cohere meeting failure in the matrix. The incomplete

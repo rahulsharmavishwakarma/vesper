@@ -129,7 +129,7 @@ mod tests {
     fn installed_writer_edit_completion_and_forget_race() {
         let dir = tempfile::tempdir().unwrap();
         let root = dir.path().to_path_buf();
-        let model_root = PathBuf::from(std::env::var("TRANSCRIBE_MODEL_DIR").unwrap());
+        let model_root = PathBuf::from(vesper_core::environment::var("VESPER_MODEL_DIR").unwrap());
         let store = DatasetStore::open(root.clone()).unwrap();
         let profile = store.dictation_personalization().unwrap();
         let runtime = Arc::new(Runtime::default());

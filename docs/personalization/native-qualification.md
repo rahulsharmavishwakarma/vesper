@@ -84,9 +84,9 @@ assertion that a spaced ASR transcript misrepresents the generated speech.
 
 ```sh
 node scripts/prepare-recurring-learning.mjs .cache/benchmarks/recurring-learning-new
-TRANSCRIBE_MODEL_DIR="$PWD/models/downloads" \
-TRANSCRIBE_LEARNING_AUDIO_ROOT="$PWD/.cache/benchmarks/recurring-learning-new" \
-TRANSCRIBE_LEARNING_REPORT="$PWD/.cache/benchmarks/results/recurring-learning-new.json" \
+VESPER_MODEL_DIR="$PWD/models/downloads" \
+VESPER_LEARNING_AUDIO_ROOT="$PWD/.cache/benchmarks/recurring-learning-new" \
+VESPER_LEARNING_REPORT="$PWD/.cache/benchmarks/results/recurring-learning-new.json" \
 cargo test --locked -p vesper-desktop \
   runtime::learning_qualification_tests::native_recurring_spelling_learning_against_frozen_memory \
   -- --exact --ignored --nocapture --test-threads=1
@@ -111,14 +111,14 @@ Use the repository's configured Rust/native toolchain and installed model artifa
 
 ```sh
 . ./scripts/dev-env.sh
-TRANSCRIBE_LEARNING_REPORT=/tmp/learning-authored.json \
+VESPER_LEARNING_REPORT=/tmp/learning-authored.json \
   cargo test --locked --offline -p vesper-desktop \
   runtime::learning_qualification_tests::chronological_desktop_learning_against_frozen_memory \
   -- --exact --nocapture
 
-TRANSCRIBE_MODEL_DIR="$PWD/models/downloads" \
-TRANSCRIBE_LEARNING_AUDIO_ROOT="$PWD/.cache/benchmarks/accent-2026-09-18/corpus" \
-TRANSCRIBE_LEARNING_REPORT=/tmp/learning-native.json \
+VESPER_MODEL_DIR="$PWD/models/downloads" \
+VESPER_LEARNING_AUDIO_ROOT="$PWD/.cache/benchmarks/accent-2026-09-18/corpus" \
+VESPER_LEARNING_REPORT=/tmp/learning-native.json \
   cargo test --locked --offline -p vesper-desktop \
   runtime::learning_qualification_tests::native_public_capture_learning_against_frozen_memory \
   -- --exact --ignored --nocapture --test-threads=1
@@ -133,8 +133,8 @@ A separate post-hoc wiring check can be run with the same model/audio variables 
 The cleanup follow-up compares a rejected, test-only shorter prompt with the production prompt on fixed public hypotheses and authored safety controls:
 
 ```sh
-TRANSCRIBE_SMOKE_MODELS="$PWD/models/downloads" \
-TRANSCRIBE_CLEANUP_REPORT=/tmp/cleanup-candidate.json \
+VESPER_SMOKE_MODELS="$PWD/models/downloads" \
+VESPER_CLEANUP_REPORT=/tmp/cleanup-candidate.json \
   cargo test --locked --offline -p vesper-inference \
   qwen::qualification_tests::minimal_prompt_candidate_against_frozen_cases \
   -- --exact --ignored --nocapture --test-threads=1
@@ -144,8 +144,8 @@ This explicit CPU experiment is **expected to fail its candidate qualification g
 
 To check the integrated bounded recovery against the original Minimal path, use
 `qwen::qualification_tests::bounded_recovery_against_frozen_cases` in the same
-command with a fresh report path. Run it once without `TRANSCRIBE_CLEANUP_HOLDOUT`
-for the development cases, and once with `TRANSCRIBE_CLEANUP_HOLDOUT=1` for the
+command with a fresh report path. Run it once without `VESPER_CLEANUP_HOLDOUT`
+for the development cases, and once with `VESPER_CLEANUP_HOLDOUT=1` for the
 disjoint qualification cases. Both are expected to pass their comparison gates;
 remaining raw fallbacks are still recorded. The gate requires identical output
 on every originally accepted case, plus recovery of the three known development
@@ -249,7 +249,7 @@ transaction check without models or a window:
 
 ```sh
 . ./scripts/dev-env.sh
-TRANSCRIBE_LEARNING_REPORT=/tmp/public-admission-diagnostic.json \
+VESPER_LEARNING_REPORT=/tmp/public-admission-diagnostic.json \
   cargo test --locked -p vesper-desktop \
   runtime::learning_qualification_tests::public_correction_admission_diagnostic \
   -- --exact --nocapture
