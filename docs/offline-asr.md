@@ -61,14 +61,14 @@ Full model tests are opt-in and never download files:
 
 ```sh
 source scripts/dev-env.sh
-# TRANSCRIBE_MODEL_DIR defaults to models/downloads; point it at installed artifacts.
-TRANSCRIBE_ASR_FIXTURES=/path/to/verified-fixtures cargo test --locked \
+# VESPER_MODEL_DIR defaults to models/downloads; point it at installed artifacts.
+VESPER_ASR_FIXTURES=/path/to/verified-fixtures cargo test --locked \
   -p vesper-inference qualify_qwen3_asr_public_fixtures -- --ignored --nocapture
-TRANSCRIBE_ASR_FIXTURES=/path/to/verified-fixtures cargo test --locked \
+VESPER_ASR_FIXTURES=/path/to/verified-fixtures cargo test --locked \
   -p vesper-inference qualify_cohere_public_fixtures -- --ignored --nocapture
-TRANSCRIBE_ASR_FIXTURES=/path/to/verified-fixtures cargo test --locked \
+VESPER_ASR_FIXTURES=/path/to/verified-fixtures cargo test --locked \
   -p vesper-inference qualify_qwen_long_audio -- --ignored --nocapture
-TRANSCRIBE_ASR_FIXTURES=/path/to/verified-fixtures cargo test --locked \
+VESPER_ASR_FIXTURES=/path/to/verified-fixtures cargo test --locked \
   -p vesper-inference qualify_cohere_long_audio -- --ignored --nocapture
 ```
 
@@ -85,7 +85,7 @@ Synthetic mono 16 kHz all-zero WAVs cover one second, exactly ten seconds, and 1
 To qualify archival/provenance and the post-stop backend path using the same public PCM (without opening the microphone):
 
 ```sh
-TRANSCRIBE_ASR_FIXTURES=/path/to/verified-fixtures cargo test --locked \
+VESPER_ASR_FIXTURES=/path/to/verified-fixtures cargo test --locked \
   -p vesper-desktop new_offline_asr_pipeline_preserves_audio_and_provenance \
   -- --ignored --nocapture
 ```
@@ -98,7 +98,7 @@ The standalone [native probe](../scripts/native-tests/asr-probe.cpp) is retained
 c++ -std=c++17 -O2 -I "$(node scripts/sherpa-runtime.mjs --source-dir)" \
   scripts/native-tests/asr-probe.cpp "$SHERPA_ONNX_LIB_DIR"/lib*.a \
   -framework Foundation -o /tmp/transcribe-asr-probe
-/usr/bin/time -l /tmp/transcribe-asr-probe qwen "$TRANSCRIBE_MODEL_DIR" \
+/usr/bin/time -l /tmp/transcribe-asr-probe qwen "$VESPER_MODEL_DIR" \
   /path/to/verified-fixtures/fleurs-en_us.wav English
 ```
 

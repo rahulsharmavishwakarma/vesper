@@ -1314,8 +1314,11 @@ mod tests {
     #[test]
     #[ignore = "requires pinned Nemotron CPU and frontend models, and public speech"]
     fn live_frontend_cancel_fallback_and_reset_isolation() {
-        let root = PathBuf::from(std::env::var_os("TRANSCRIBE_SMOKE_MODELS").expect("models"));
-        let path = PathBuf::from(std::env::var_os("TRANSCRIBE_SMOKE_AUDIO").expect("public audio"));
+        let root =
+            PathBuf::from(vesper_core::environment::var_os("VESPER_SMOKE_MODELS").expect("models"));
+        let path = PathBuf::from(
+            vesper_core::environment::var_os("VESPER_SMOKE_AUDIO").expect("public audio"),
+        );
         let audio = vesper_audio::decode_file(path, 0).unwrap();
         let manager = InferenceManager::new().unwrap();
         let mut config = AppConfig::default();
@@ -1399,10 +1402,12 @@ mod tests {
                 }
             }
         }
-        let source = PathBuf::from(std::env::var_os("TRANSCRIBE_SMOKE_MODELS").expect("models"))
-            .canonicalize()
-            .unwrap();
-        let path = PathBuf::from(std::env::var_os("TRANSCRIBE_SMOKE_AUDIO").expect("audio"));
+        let source =
+            PathBuf::from(vesper_core::environment::var_os("VESPER_SMOKE_MODELS").expect("models"))
+                .canonicalize()
+                .unwrap();
+        let path =
+            PathBuf::from(vesper_core::environment::var_os("VESPER_SMOKE_AUDIO").expect("audio"));
         let audio = vesper_audio::decode_file(path, 0).unwrap();
         let root = tempfile::tempdir().unwrap();
         for name in ["nemotron-3.5-asr-streaming-0.6b", "nemo-speech-runtime"] {
@@ -1474,8 +1479,10 @@ mod tests {
     #[test]
     #[ignore = "requires pinned Nemotron CPU/frontend models and public speech"]
     fn live_frontend_device_rates_match_completed_processing() {
-        let root = PathBuf::from(std::env::var_os("TRANSCRIBE_SMOKE_MODELS").expect("models"));
-        let path = PathBuf::from(std::env::var_os("TRANSCRIBE_SMOKE_AUDIO").expect("audio"));
+        let root =
+            PathBuf::from(vesper_core::environment::var_os("VESPER_SMOKE_MODELS").expect("models"));
+        let path =
+            PathBuf::from(vesper_core::environment::var_os("VESPER_SMOKE_AUDIO").expect("audio"));
         let audio = vesper_audio::decode_file(path, 0).unwrap();
         let manager = InferenceManager::new().unwrap();
         let mut config = AppConfig::default();
@@ -1561,17 +1568,17 @@ mod tests {
     #[ignore = "requires downloaded Nemotron files and the public speech fixture"]
     fn real_nemotron_stream_reuses_weights_and_resets_utterance_state() {
         let model_root = PathBuf::from(
-            std::env::var_os("TRANSCRIBE_SMOKE_MODELS").expect("TRANSCRIBE_SMOKE_MODELS"),
+            vesper_core::environment::var_os("VESPER_SMOKE_MODELS").expect("VESPER_SMOKE_MODELS"),
         );
         let audio_path = PathBuf::from(
-            std::env::var_os("TRANSCRIBE_SMOKE_AUDIO").expect("TRANSCRIBE_SMOKE_AUDIO"),
+            vesper_core::environment::var_os("VESPER_SMOKE_AUDIO").expect("VESPER_SMOKE_AUDIO"),
         );
         let audio = vesper_audio::decode_file(&audio_path, 30).unwrap();
         let manager = InferenceManager::new().unwrap();
         let mut config = AppConfig::default();
         config.models.asr = vesper_core::AsrModel::Nemotron35AsrStreaming06b;
         config.compute_backend = vesper_core::ComputeBackend::Cpu;
-        if let Ok(backend) = std::env::var("TRANSCRIBE_NEMO_TEST_BACKEND") {
+        if let Ok(backend) = vesper_core::environment::var("VESPER_NEMO_TEST_BACKEND") {
             config.compute_backend = serde_json::from_value(serde_json::Value::String(backend))
                 .expect("valid explicit test backend");
         }

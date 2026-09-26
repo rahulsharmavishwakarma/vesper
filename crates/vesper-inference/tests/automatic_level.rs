@@ -7,7 +7,8 @@ use vesper_inference::audio_frontend::{process_completed, FrontendCache};
 #[test]
 #[ignore = "requires pinned frontend models"]
 fn automatic_level_preserves_device_rate_samples_across_packet_schedules() {
-    let root = PathBuf::from(std::env::var_os("TRANSCRIBE_SMOKE_MODELS").expect("models"));
+    let root =
+        PathBuf::from(vesper_core::environment::var_os("VESPER_SMOKE_MODELS").expect("models"));
     let cancelled = AtomicBool::new(false);
     let mut cache = FrontendCache::default();
     let mut config = AppConfig::default();

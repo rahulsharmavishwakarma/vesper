@@ -20,7 +20,7 @@ This uses the same pinned download and SHA-256 verification flow as the applicat
 
 Use the public FLEURS data prepared by the [ASR benchmark instructions](../benchmarks/asr/README.md), then run the generic evaluator with `--model LiquidAI/LFM2.5-Audio-1.5B --language en`. Add `--cleanup` for the two-stage pipeline. Record the actual hardware/environment instead of reusing another machine's envelope.
 
-The explicit installed-model contract test performs no recording or download. Set `TRANSCRIBE_SMOKE_MODELS` to the installed model directory, `TRANSCRIBE_SMOKE_AUDIO` to the public English baseline, and `TRANSCRIBE_LFM_AUDIO_B` to a different public English clip. Use absolute paths because Cargo tests run from the crate directory. Install the default Qwen Q4 writing model as well.
+The explicit installed-model contract test performs no recording or download. Set `VESPER_SMOKE_MODELS` to the installed model directory, `VESPER_SMOKE_AUDIO` to the public English baseline, and `VESPER_LFM_AUDIO_B` to a different public English clip. Use absolute paths because Cargo tests run from the crate directory. Install the default Qwen Q4 writing model as well.
 
 ```sh
 cargo test --locked -p vesper-inference \
@@ -28,6 +28,6 @@ cargo test --locked -p vesper-inference \
   -- --ignored --nocapture --test-threads=1
 ```
 
-This exercises 100 repeated isolated requests with process RSS checkpoints, cancellation, silence, output limits, unload/reload, rejected streaming, and actual LFM → Qwen execution. Set `TRANSCRIBE_LFM_TEST_BACKEND=metal` to repeat the same contract on an available Metal device; the default test lane is explicit CPU. Ordinary unit tests also cover missing artifacts and installation changes. The safe runtime cannot interrupt an audio-encoder call immediately; it discards the result when cancellation is observed afterward.
+This exercises 100 repeated isolated requests with process RSS checkpoints, cancellation, silence, output limits, unload/reload, rejected streaming, and actual LFM → Qwen execution. Set `VESPER_LFM_TEST_BACKEND=metal` to repeat the same contract on an available Metal device; the default test lane is explicit CPU. Ordinary unit tests also cover missing artifacts and installation changes. The safe runtime cannot interrupt an audio-encoder call immediately; it discards the result when cancellation is observed afterward.
 
 The [accepted architecture](adrs/0013-lfm-audio-native-adapter.md) records the paper/API boundary and exact runtime revisions. The [official checkpoint documentation](https://docs.liquid.ai/lfm/models/lfm25-audio-1.5b) describes a broader audio model; this adapter implements ASR only. Preserve the checkpoint's LFM Open License and third-party notices when distributing its weights.

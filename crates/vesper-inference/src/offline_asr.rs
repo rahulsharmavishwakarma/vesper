@@ -357,11 +357,12 @@ mod tests {
     // Explicit opt-in only; these tests never fetch audio or model weights.
     fn qualify(model: AsrModel) {
         use std::{path::PathBuf, time::Instant};
-        let root =
-            PathBuf::from(std::env::var("TRANSCRIBE_MODEL_DIR").expect("set TRANSCRIBE_MODEL_DIR"));
+        let root = PathBuf::from(
+            vesper_core::environment::var("VESPER_MODEL_DIR").expect("set VESPER_MODEL_DIR"),
+        );
         let fixtures = PathBuf::from(
-            std::env::var("TRANSCRIBE_ASR_FIXTURES")
-                .expect("set TRANSCRIBE_ASR_FIXTURES to verified FLEURS fixtures"),
+            vesper_core::environment::var("VESPER_ASR_FIXTURES")
+                .expect("set VESPER_ASR_FIXTURES to verified FLEURS fixtures"),
         );
         let mut config = AppConfig::default();
         config.models.asr = model;
@@ -473,8 +474,9 @@ mod tests {
 
     fn qualify_long(model: AsrModel) {
         use std::{cell::RefCell, path::PathBuf, sync::atomic::Ordering, time::Instant};
-        let root = PathBuf::from(std::env::var_os("TRANSCRIBE_MODEL_DIR").unwrap());
-        let fixtures = PathBuf::from(std::env::var_os("TRANSCRIBE_ASR_FIXTURES").unwrap());
+        let root = PathBuf::from(vesper_core::environment::var_os("VESPER_MODEL_DIR").unwrap());
+        let fixtures =
+            PathBuf::from(vesper_core::environment::var_os("VESPER_ASR_FIXTURES").unwrap());
         let mut config = AppConfig::default();
         config.models.asr = model;
         config.language = Language::English;

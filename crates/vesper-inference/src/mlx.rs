@@ -215,9 +215,10 @@ mod tests {
     #[ignore = "requires pinned CPU/MLX Qwen models, a Metal device and public audio"]
     fn automatic_migration_agrees_with_download_readiness_and_execution() {
         use vesper_core::ComputeBackend;
-        let source = PathBuf::from(std::env::var_os("TRANSCRIBE_SMOKE_MODELS").expect("models"));
+        let source =
+            PathBuf::from(vesper_core::environment::var_os("VESPER_SMOKE_MODELS").expect("models"));
         let audio = vesper_audio::decode_file(
-            PathBuf::from(std::env::var_os("TRANSCRIBE_SMOKE_AUDIO").expect("audio")),
+            PathBuf::from(vesper_core::environment::var_os("VESPER_SMOKE_AUDIO").expect("audio")),
             0,
         )
         .unwrap();
@@ -308,7 +309,8 @@ mod tests {
     #[test]
     #[ignore = "installed pinned MLX models and actual Metal for before/after load evidence"]
     fn installed_exact_zero_recordings_do_not_load_weights() {
-        let root = PathBuf::from(std::env::var_os("TRANSCRIBE_SMOKE_MODELS").expect("models"));
+        let root =
+            PathBuf::from(vesper_core::environment::var_os("VESPER_SMOKE_MODELS").expect("models"));
         let silence = MonoPcm::new(vec![0.0; 16000], 16000).unwrap();
         let manager = InferenceManager::new().unwrap();
         let flag = || Arc::new(AtomicBool::new(false));
@@ -390,13 +392,17 @@ mod tests {
     #[test]
     #[ignore = "real Metal, installed pinned MLX variants and public speech fixtures"]
     fn installed_application_lifecycle_and_full_coverage() {
-        let root = PathBuf::from(std::env::var_os("TRANSCRIBE_SMOKE_MODELS").expect("models"));
+        let root =
+            PathBuf::from(vesper_core::environment::var_os("VESPER_SMOKE_MODELS").expect("models"));
         let read = |name| {
-            vesper_audio::decode_file(PathBuf::from(std::env::var_os(name).expect(name)), 0)
-                .unwrap()
+            vesper_audio::decode_file(
+                PathBuf::from(vesper_core::environment::var_os(name).expect(name)),
+                0,
+            )
+            .unwrap()
         };
-        let a = read("TRANSCRIBE_SMOKE_AUDIO");
-        let b = read("TRANSCRIBE_SMOKE_AUDIO_B");
+        let a = read("VESPER_SMOKE_AUDIO");
+        let b = read("VESPER_SMOKE_AUDIO_B");
         let manager = InferenceManager::new().unwrap();
         let flag = || Arc::new(AtomicBool::new(false));
         for model in [

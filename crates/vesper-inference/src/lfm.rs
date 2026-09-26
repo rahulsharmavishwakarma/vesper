@@ -379,16 +379,19 @@ mod tests {
     fn installed_lfm_reset_cancel_limits_and_two_stage_pipeline() {
         use std::sync::{atomic::Ordering, Arc};
         let root = PathBuf::from(
-            std::env::var_os("TRANSCRIBE_SMOKE_MODELS").expect("TRANSCRIBE_SMOKE_MODELS"),
+            vesper_core::environment::var_os("VESPER_SMOKE_MODELS").expect("VESPER_SMOKE_MODELS"),
         );
         let read = |name| {
-            vesper_audio::decode_file(PathBuf::from(std::env::var_os(name).expect(name)), 0)
-                .unwrap()
+            vesper_audio::decode_file(
+                PathBuf::from(vesper_core::environment::var_os(name).expect(name)),
+                0,
+            )
+            .unwrap()
         };
-        let a = read("TRANSCRIBE_SMOKE_AUDIO");
-        let b = read("TRANSCRIBE_LFM_AUDIO_B");
+        let a = read("VESPER_SMOKE_AUDIO");
+        let b = read("VESPER_LFM_AUDIO_B");
         let mut config = config();
-        if let Ok(backend) = std::env::var("TRANSCRIBE_LFM_TEST_BACKEND") {
+        if let Ok(backend) = vesper_core::environment::var("VESPER_LFM_TEST_BACKEND") {
             config.compute_backend = serde_json::from_value(serde_json::Value::String(backend))
                 .expect("valid explicit test backend");
         }

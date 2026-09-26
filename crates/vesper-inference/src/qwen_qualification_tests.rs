@@ -29,16 +29,16 @@ const KNOWN_FAILURES: [&str; 3] = [
 #[test]
 #[ignore = "installed Qwen; compare production recovery with the preserved original path"]
 fn bounded_recovery_against_frozen_cases() {
-    let fixture = if std::env::var_os("TRANSCRIBE_CLEANUP_HOLDOUT").is_some() {
+    let fixture = if vesper_core::environment::var_os("VESPER_CLEANUP_HOLDOUT").is_some() {
         include_str!("../../../benchmarks/cleanup/native-learning-holdout.json")
     } else {
         FIXTURE
     };
-    let root = PathBuf::from(std::env::var_os("TRANSCRIBE_SMOKE_MODELS").unwrap());
+    let root = PathBuf::from(vesper_core::environment::var_os("VESPER_SMOKE_MODELS").unwrap());
     let mut report = OpenOptions::new()
         .create_new(true)
         .write(true)
-        .open(std::env::var_os("TRANSCRIBE_CLEANUP_REPORT").unwrap())
+        .open(vesper_core::environment::var_os("VESPER_CLEANUP_REPORT").unwrap())
         .unwrap();
     let config = AppConfig {
         compute_backend: ComputeBackend::Cpu,
@@ -78,13 +78,13 @@ fn bounded_recovery_against_frozen_cases() {
 #[test]
 #[ignore = "installed Qwen; qualify proper conversation examples before changing production"]
 fn chat_examples_against_frozen_cases() {
-    let fixture = if std::env::var_os("TRANSCRIBE_CLEANUP_HOLDOUT").is_some() {
+    let fixture = if vesper_core::environment::var_os("VESPER_CLEANUP_HOLDOUT").is_some() {
         include_str!("../../../benchmarks/cleanup/native-learning-holdout.json")
     } else {
         FIXTURE
     };
-    let root = PathBuf::from(std::env::var_os("TRANSCRIBE_SMOKE_MODELS").unwrap());
-    let path = std::env::var_os("TRANSCRIBE_CLEANUP_REPORT").expect("new report path");
+    let root = PathBuf::from(vesper_core::environment::var_os("VESPER_SMOKE_MODELS").unwrap());
+    let path = vesper_core::environment::var_os("VESPER_CLEANUP_REPORT").expect("new report path");
     let mut report = OpenOptions::new()
         .create_new(true)
         .write(true)
@@ -139,10 +139,10 @@ fn chat_examples_against_frozen_cases() {
 #[ignore = "installed Qwen CPU comparison; rejected candidate is expected to fail qualification"]
 fn minimal_prompt_candidate_against_frozen_cases() {
     let root = PathBuf::from(
-        std::env::var_os("TRANSCRIBE_SMOKE_MODELS").expect("TRANSCRIBE_SMOKE_MODELS"),
+        vesper_core::environment::var_os("VESPER_SMOKE_MODELS").expect("VESPER_SMOKE_MODELS"),
     );
     // Reserve the result before loading a model; refuse to overwrite evidence.
-    let mut report = std::env::var_os("TRANSCRIBE_CLEANUP_REPORT").map(|path| {
+    let mut report = vesper_core::environment::var_os("VESPER_CLEANUP_REPORT").map(|path| {
         OpenOptions::new()
             .create_new(true)
             .write(true)
