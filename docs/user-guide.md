@@ -279,6 +279,11 @@ do not include transcript text.
 
 ## Troubleshooting
 
+If you run Vesper from source and `make dev` stops with a Swift cache I/O error,
+see [missing Swift build/cache directories](development.md#missing-swift-buildcache-directories).
+The build script can recover links to removed temporary build folders; this
+does not remove your downloaded models or recordings.
+
 | Problem                                     | First checks                                                                                                                                                                                              |
 | ------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | Waveform does not match the microphone      | Confirm the selected input device. After a native audio update, quit the running app and open the newly built version; a page reload does not update the audio code. Background sound can still register. |

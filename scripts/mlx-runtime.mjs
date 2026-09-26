@@ -15,6 +15,7 @@ import {
 import { tmpdir } from 'node:os';
 import { dirname, join, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
+import { prepareMlxBuildDirectories } from './mlx-build-directories.mjs';
 
 const root = resolve(dirname(fileURLToPath(import.meta.url)), '..');
 const run = (command, args, options = {}) =>
@@ -22,14 +23,14 @@ const run = (command, args, options = {}) =>
 if (process.platform !== 'darwin' || process.arch !== 'arm64')
   throw new Error('This bridge build targets Apple Silicon macOS.');
 if (process.argv.length > 2) throw new Error('usage: node scripts/mlx-runtime.mjs');
-const scratch = join(root, '.tooling/mlx-build');
+const { scratch, cache, destination } = prepareMlxBuildDirectories(root);
 const args = [
   '--package-path',
   join(root, 'native/mlx'),
   '--scratch-path',
   scratch,
   '--cache-path',
-  join(root, '.tooling/swift-cache'),
+  cache,
 ];
 run('xcrun', ['metal', '--version']);
 run('swift', ['package', ...args, 'resolve', '--force-resolved-versions']);
@@ -105,7 +106,6 @@ const products = [join(scratch, 'out/Products/Release'), join(scratch, 'release'
   existsSync(join(path, 'libTranscribeMLX.dylib')),
 );
 if (!products) throw new Error('Missing MLX library after successful build');
-const destination = join(root, '.tooling/mlx-runtime');
 mkdirSync(destination, { recursive: true });
 for (const name of readdirSync(products).filter(
   (name) =>

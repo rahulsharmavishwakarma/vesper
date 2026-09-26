@@ -499,3 +499,22 @@ Live Nemotron captions currently appear in the recorder. Compatible external fie
 ## Automatic Apple Silicon runtime packaging
 
 The shared `scripts/desktop.mjs` launcher drives normal desktop dev/build and `make build-debug`. Native arm64 macOS builds include the existing pinned MLX library, kernels and tokenizer tool; install full Xcode with Metal support and Swift 6.2 or newer. A Swift build failure is not silently converted into a CPU build. `TRANSCRIBE_MLX=0` selects the portable build deliberately. Intel/universal and non-macOS targets remain feature-off. Pass custom targets as Tauri `--target` arguments; target settings after the Cargo separator are rejected. The launcher preserves the normal app/DMG release targets and only debug invocations request app alone. See [accelerator packaging](accelerators.md#building-the-apple-silicon-application) for provenance, signing and standalone evaluator constraints. `node --test scripts/desktop.test.mjs` exercises target/argument policy without invoking compilers.
+
+### Missing Swift build/cache directories
+
+An I/O error while reading `.tooling/swift-cache` can mean that a directory is
+a dangling symlink into a deleted temporary checkout. Before invoking Swift,
+the MLX build script checks its three generated directories: `mlx-build`,
+`swift-cache` and `mlx-runtime` under `.tooling`. Missing directories are created
+locally. Dangling symlinks are moved into a uniquely named
+`.tooling/mlx-directory-recovery-*` folder and replaced with real local
+directories; their deleted targets are not recreated.
+
+Run `make dev` again after updating the build script. Rebuilding an empty cache
+requires network access to the pinned Swift dependencies and takes longer than
+an incremental build. Existing directories, valid directory symlinks and their
+contents are retained. Files, non-directory link targets and other filesystem
+errors still stop the build; this recovery is not a workaround for disk or
+permission failures. No model files, recordings or application preferences are
+removed. `node --test scripts/mlx-build-directories.test.mjs` covers recovery
+and preservation without downloading dependencies or invoking a compiler.
