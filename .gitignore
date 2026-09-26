@@ -56,6 +56,7 @@ Desktop.ini
 /artifacts/
 
 # Temporary design explorations belong outside the maintained application
+.hallmark/
 /design-previews/
 /scratch/
 /tmp/

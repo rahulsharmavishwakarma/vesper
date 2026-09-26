@@ -316,6 +316,12 @@ node scripts/generate-readme-banner.mjs --check
 node --test scripts/brand-identity.test.mjs
 ```
 
+The banner and generator retain only project-relevant provenance comments.
+Design-tool caches, prompts and self-assessment stamps are not product assets;
+keep them out of tracked source. The local `.hallmark/` cache is Git-ignored and
+is not needed to regenerate the banner. Brand regressions reject design-tool
+stamps in both the generated SVG and its generator.
+
 The banner has no script, animation, external font or image dependency. Its
 relative README image path works in branches and clones; the image's `alt`
 provides the Vesper name when images are unavailable. Keep the tagline,

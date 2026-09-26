@@ -51,11 +51,17 @@ test('README banner preserves every canonical path and uses existing brand token
     [...'vesper'],
   );
   assert.match(banner, /<title id="title">Vesper<\/title>/);
+  assert.doesNotMatch(banner, /Hallmark|pre-emit critique|P[1-5] H[1-5] E[1-5]/i);
   assert.match(banner, /width="1200" height="320" viewBox="0 0 1200 320"/);
   assert.doesNotMatch(
     banner,
     /<(?:text|script|image|use|foreignObject|animate)\b|@import|@font-face|@keyframes|\bhref=|https?:\/\/(?!www\.w3\.org)/,
   );
+});
+
+test('README banner generator does not reintroduce design-tool metadata', () => {
+  const generator = read('scripts/generate-readme-banner.mjs');
+  assert.doesNotMatch(generator, /Hallmark|pre-emit critique|P[1-5] H[1-5] E[1-5]/i);
 });
 
 test('README banner fails clearly if its canonical inputs are missing', () => {
