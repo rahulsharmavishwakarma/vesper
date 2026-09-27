@@ -373,6 +373,12 @@ are not retrospectively assigned a language. History labels require your review;
 background semantic/policy evaluation does not currently activate new preferences
 or train models.
 
+Ordinary recordings also collect conspicuous technical terms automatically as
+observed candidates (up to 8 per result, bounded storage). They appear directly
+under **Automatic learning evidence** with their observation count, project and
+language, and never activate correction rules. The full candidate history
+remains under **Inspect recent candidates**.
+
 Settings no longer offers the inactive **Improvement policy / Automatic
 activation** selector. Its stored compatibility value does not enable a trainer,
 automatic review or stronger RSI. Automatic spelling learning is separate.
@@ -382,6 +388,23 @@ also matches context from a supporting edit. Older learned words may need a fres
 correction before they apply again. This helps avoid unrelated replacements, but
 can miss a valid correction when you phrase the context differently. Manually
 saved vocabulary and optional recognition hints keep their existing controls.
+
+### What is checked or reviewed automatically?
+
+| Step | Current behavior |
+| --- | --- |
+| Cleanup checks | Runs number, negation and word-change checks against the transcript; rejected cleanup preserves raw text. These checks cannot certify that recognition or meaning is correct. |
+| In-app spelling learning | Eligible saved corrections contribute automatically to scoped vocabulary under the support and context rules above. No per-word approval is needed. |
+| Background edit analysis | After a saved in-app correction, an already-loaded supported writer can analyze intent and context while idle. Its findings are evaluation evidence; they do not change your preferences or approve labels. Recording cancels this work. |
+| Learning-rule comparisons | Explicit in-app edits trigger background comparisons of fixed learning rules. Results do not select a new active rule. |
+| TextEdit corrections | Optional capture collects candidates; **Remember** is still required to add a spelling. |
+| History and model training | History training labels require explicit review. Automatic label approval, candidate training and model promotion are not active. |
+
+Automatic checks therefore do not mark each recording as reviewed. Semantic
+activation remains blocked on failed quality qualification; adaptive learning
+rules and training have separate unfinished gates. See [semantic analysis](personalization/semantic-shadow.md),
+[learning-rule evaluation](personalization/policy-experiment.md#persistent-application-shadow-evaluation)
+and [training qualification](cleanup-adapter-qualification.md).
 
 ## Privacy and storage
 
