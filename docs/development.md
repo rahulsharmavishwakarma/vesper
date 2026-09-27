@@ -91,6 +91,14 @@ retain their original commands as historical evidence; use the current benchmark
 setup for new work. Resolving a probe's dependencies does not qualify its model
 or reproduce an earlier measurement.
 
+The optional Apple-silicon `training/cleanup` project has its own manifest/lock
+for adapter compatibility research. `make python-lock-check` also checks that
+lock; the ordinary Ruff targets include its source without installing its model
+dependencies. `make test-cleanup-bridge` explicitly runs its deterministic tensor
+mapping tests in the separate environment. Its numerical gate currently fails;
+see [cleanup adapter qualification](cleanup-adapter-qualification.md) for exact
+pins, reproduction, measurements and integration limits.
+
 The audits check every contributor group and each isolated benchmark environment.
 Known upstream blockers and failing gates are documented in
 [dependency security status](ci-and-releases.md#dependency-security-status-and-upstream-limits);
@@ -550,7 +558,7 @@ An export contains `manifest.jsonl`, `metadata.json`, and `audio/`. Each JSONL r
 
 Training export uses `approved_only = true`, excluding records without any task-eligible label. An approved edited sentence with no raw prediction is preserved in archives but does not form a cleanup pair or ASR label. Archival export uses `false` to retain all sessions, including unreviewed predictions with null training targets. Export destinations must be new or empty directories outside the dataset store. Existing nonempty exports are never merged or overwritten.
 
-No training runs automatically. A separate optional training environment can be added later; Python is not needed for the current application or dataset storage. See [the self-improvement plan](self-improvement.md) for the evaluation and promotion workflow.
+No training runs automatically. The optional `training/cleanup` uv project tests checkpoint-specific adapter conversion and numerical compatibility; it is not an application training runner. Python is not needed for the current application or dataset storage. See [the self-improvement plan](self-improvement.md) for the evaluation and promotion workflow.
 
 ## Manual runtime checks
 

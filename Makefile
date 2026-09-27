@@ -25,7 +25,7 @@ export HF_REPO HF_WEIGHTS HF_REVISION HF_OUTPUT
 
 .PHONY: help setup setup-checks hooks precommit prepush workflows dev web model-profile build build-debug build-web check check-fast check-web test-tools test-python test-browser benchmark-contract version-check version-set container-build container-smoke fmt fmt-check lint test smoke-native models sherpa-runtime test-native-report
 .PHONY: check-portable check-rust fmt-rust fmt-rust-check fmt-web fmt-web-check fmt-python fmt-python-check fmt-shell fmt-shell-check lint-rust lint-web lint-python lint-shell test-rust doc-rust
-.PHONY: python-lock-check audit-python audit-python-audio-frontend audit-python-vibevoice audit-rust test-glib-backport
+.PHONY: python-lock-check audit-python audit-python-audio-frontend audit-python-vibevoice audit-rust test-glib-backport test-cleanup-bridge
 
 help: ## Show available commands
 	@awk 'BEGIN { FS = ":.*## "; printf "Usage: make <target>\n\n" } /^[a-zA-Z_-]+:.*## / { printf "  %-14s %s\n", $$1, $$2 }' Makefile
@@ -50,6 +50,7 @@ python-lock-check: ## Verify Python manifests, lockfiles and compatibility expor
 	$(UV) lock --check
 	$(UV) lock --check --project benchmarks/asr/python/audio-frontend
 	$(UV) lock --check --project benchmarks/asr/python/vibevoice
+	$(UV) lock --check --project training/cleanup
 	@mkdir -p .cache
 	$(UV) export --locked --project benchmarks/asr/python/audio-frontend --no-dev --no-emit-project --output-file .cache/audio-frontend-requirements.txt > /dev/null
 	cmp benchmarks/asr/audio-frontend-requirements.txt .cache/audio-frontend-requirements.txt
@@ -121,6 +122,9 @@ test-tools: version-check ## Test frontend data helpers and repository tooling
 test-python: ## Run deterministic Python tooling tests without models or datasets
 	$(PYTHON) scripts/run-python-tests.py
 
+test-cleanup-bridge: ## Test the optional cleanup adapter mapping on Apple-silicon macOS
+	$(UV) run --locked --project training/cleanup python -m unittest discover -s training/cleanup -p 'test_*.py'
+
 test-browser: ## Run the existing mocked-native UI regressions in Chromium
 	npm exec playwright test
 
@@ -175,10 +179,10 @@ fmt-web-check: ## Check frontend and Node source formatting with Prettier
 	npm run format:check
 
 fmt-python: ## Format Python tools and tests with Ruff
-	$(RUFF) format scripts
+	$(RUFF) format scripts training/cleanup
 
 fmt-python-check: ## Check Python formatting with Ruff
-	$(RUFF) format --check scripts
+	$(RUFF) format --check scripts training/cleanup
 
 fmt-shell: ## Format maintained shell scripts with shfmt
 	$(SHFMT) -ln posix -i 2 -w scripts/*.sh
@@ -192,7 +196,7 @@ lint-web: ## Lint JavaScript, TypeScript and Svelte with no warnings allowed
 	npm run lint
 
 lint-python: ## Lint every Python tool and test, including import order
-	$(RUFF) check scripts
+	$(RUFF) check scripts training/cleanup
 
 lint-shell: ## Lint POSIX shell scripts and their sourced files
 	$(SHELLCHECK) --external-sources --shell=sh scripts/*.sh
