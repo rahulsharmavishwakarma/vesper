@@ -821,7 +821,7 @@ mod tests {
         assert!(p.validate().is_ok());
         assert_eq!(p.personalize("atlas", Language::English).text, "atlas");
         let mut future = p;
-        future.schema_version = 4;
+        future.schema_version = 5;
         assert!(future.validate().is_err());
         assert_eq!(word_edits("one two", "one"), Some(1));
     }

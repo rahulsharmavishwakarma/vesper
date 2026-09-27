@@ -85,6 +85,8 @@ pub struct PersonalizationProfile {
     pub apply_corrections: bool,
     pub use_remembered_intent: bool,
     pub active_project: String,
+    pub project_mode: crate::ProjectMode,
+    pub project_rules: Vec<crate::ProjectRule>,
     pub automatic_learning: bool,
     /// Changes when learning permission changes or all automatic evidence is forgotten.
     pub learning_epoch: u64,
@@ -95,7 +97,7 @@ pub struct PersonalizationProfile {
 impl Default for PersonalizationProfile {
     fn default() -> Self {
         Self {
-            schema_version: 3,
+            schema_version: 4,
             revision: 0,
             speech_bias_enabled: false,
             output_intent: OutputIntent::default(),
@@ -103,6 +105,8 @@ impl Default for PersonalizationProfile {
             apply_corrections: true,
             use_remembered_intent: false,
             active_project: String::new(),
+            project_mode: crate::ProjectMode::Manual,
+            project_rules: vec![],
             automatic_learning: false,
             learning_epoch: 0,
             vocabulary: vec![],
@@ -113,7 +117,7 @@ impl Default for PersonalizationProfile {
 
 impl PersonalizationProfile {
     pub fn validate(&self) -> std::result::Result<(), String> {
-        if !(1..=3).contains(&self.schema_version)
+        if !(1..=4).contains(&self.schema_version)
             || self.vocabulary.len() > 128
             || self.examples.len() > 64
         {
@@ -125,6 +129,7 @@ impl PersonalizationProfile {
         if !optional_text(&self.active_project, 64) {
             return Err("Project names must be plain text up to 64 bytes.".into());
         }
+        crate::validate_project_rules(&self.project_rules)?;
         let mut ids = std::collections::HashSet::new();
         for entry in &self.vocabulary {
             if !safe_text(&entry.id, 64)

@@ -2,17 +2,32 @@
 
 Implementation: [profile phrase selection](../../crates/vesper-core/src/personalization.rs), [memory application](../../crates/vesper-core/src/memory.rs), and [cleanup prompt construction](../../crates/vesper-inference/src/personalization.rs).
 
-One operation freezes one profile and its compact automatic-learning evidence in one SQLite read transaction, after the existing desktop enable migration. A correction learned while another operation is already running applies only to later operations. Context is currently the user-selected project, requested language, available transcript and explicit output settings. The application does not read the receiving editor's document, clipboard history or screen to infer a project.
+One operation freezes one profile and its compact automatic-learning evidence in one SQLite read transaction, after the existing desktop enable migration. A correction learned while another operation is already running applies only to later operations. Context includes a frozen project selection, requested language, available transcript and explicit output settings. Shortcut dictation can resolve the receiving application and, for TextEdit folder rules, its exposed document URL. It does not read document text, clipboard history or the screen to infer a project.
 
-Projects are names in this profile, not detected folders or separate databases.
-Save **Current project** before recording and change it when moving between
-projects. Blank-scoped vocabulary/examples are shared; nonblank entries match
-the selected project case-insensitively after trimming whitespace. A blank
-selection uses shared entries only. The per-recording scope is retained in
-History: remembering an older cleanup example or opening its correction review
-uses that recording's project, even after the selected project changes. Blank
-and legacy recording scopes remain shared. A correction's project can still be
-changed explicitly before remembering it, or later in Vocabulary.
+Projects remain names in the existing local profile, not separate databases.
+**Project selection → Choose manually** preserves existing behavior. **Use
+application rules** resolves the app at shortcut capture start. A nonempty
+**Project override** wins over every rule. Otherwise the unique most-specific
+matching folder wins, then a unique application rule, then shared vocabulary.
+Equal-specificity conflicts and unavailable required document context abstain.
+An app with folder rules cannot fall back to its broad app rule when the document
+URL is missing. File imports and recordings started in the main window use the
+explicit project name, because they have no receiving application.
+
+The profile accepts at most 32 rules. Application identifiers are read from the
+app selected with the existing native file picker; users do not enter bundle IDs.
+Folder paths are explicitly selected roots. Only TextEdit currently has a document
+context adapter. It reads the focused window's file URL with bounded AX calls,
+checks both application and window identity again, and discards the URL after
+resolution. Other apps use application rules or manual scope. No editor-title
+heuristic or directory/content scanning is performed.
+
+Blank-scoped vocabulary/examples are shared; nonblank entries match the selected
+project case-insensitively after trimming whitespace. A blank selection uses shared
+entries only. Results and History retain the effective name, selection reason and
+rule ID; they do not retain the observed document URL. Remembering an older example
+or reviewing its corrections uses that recording's project. Rule edits and focus
+changes affect later recordings only. Old profiles migrate to manual selection.
 
 ## Before recognition
 
@@ -51,20 +66,20 @@ Usage ranking chooses which existing memory fits a bounded prompt or hint list; 
 
 Pinned artifacts and exact native API sources are recorded in [ADR-0015](../adrs/0015-model-independent-local-memory.md#evidence-and-boundaries). The new feature changes application records and selection order, not inference ownership, decoder internals or model weights.
 
-## Proposed automatic project resolution
+## Automatic project routing boundary
 
-This extension is a design for [#34](https://github.com/rahulsharmavishwakarma/transcribe/issues/34),
-not current behavior. Reuse the existing profile and operation snapshot: resolve
-the receiving application once before recognition, then freeze the effective
-project and the rule that selected it. Do not rewrite the saved manual project
-when focus changes. Proposed precedence is explicit manual override, a unique
-qualified folder rule, a unique app rule, then shared vocabulary. Conflicts,
-unavailable context and unsupported editors must abstain from automatic scope.
-File imports and recordings without a receiving app retain explicit scope.
+The staged extension in [#34](https://github.com/rahulsharmavishwakarma/transcribe/issues/34)
+was approved for implementation. Routing reuses the existing profile and operation
+snapshot; it does not change inference ownership or require model-specific memory.
+The resolver/storage regressions and five authored TextEdit native cases pass;
+the observed native metadata reads were 0.228–0.407 ms on the documented Mac.
+Those component timings exclude snapshot loading, recording startup and rendering.
+See [the exact native envelope](native-qualification.md#automatic-projects-and-external-correction-component-check--27-september-2026).
+Natural-use routing accuracy and end-to-end capture latency remain unqualified.
 
 ```mermaid
 flowchart LR
-    A["Receiving app at capture start"] --> R["PROPOSED: bounded rule resolver"]
+    A["Receiving app at capture start"] --> R["Bounded rule resolver"]
     F["Optional qualified document URL"] --> R
     P["Saved app or folder rules"] --> R
     O["Explicit manual override"] --> R
@@ -84,12 +99,12 @@ contents. Keep observed URLs transient and persist only the effective scope and
 rule identity with a result. Unavailable URL context must be visible when
 folder rules cannot resolve the project.
 
-Use the familiar app-association pattern from [Superwhisper's activation rules](https://superwhisper.com/docs/modes/modes)
-within the existing project controls, with an explicit manual override and a
-visible effective project. Rule changes affect subsequent recordings. Existing
-shadow stores currently compare the operation project with the mutable global
-selection; they must instead validate an app-owned operation reservation and
-epoch before automatic scopes can be enabled. Test same-editor projects,
-ambiguous/nested rules, focus changes, delayed feedback, Undo/Forget and model
-switches, and measure capture-start overhead. No routing accuracy or performance
-gain has been measured for this proposal.
+The interaction follows the app-association pattern in [Superwhisper's activation rules](https://superwhisper.com/docs/modes/modes),
+within existing project controls. The result displays the effective project and
+fallback reason. Shadow learning validates the exact server-authored operation
+context against its retained raw-observation receipt and current learning epoch;
+it no longer compares the operation to the mutable global project. Exact job
+reservations still protect completion after Undo/Forget or superseding edits.
+The receipt carries identifiers and scope, not transcript text; expiry or missing
+evidence makes the analyzer abstain. Ordinary edits remain outside reviewed
+training targets.
