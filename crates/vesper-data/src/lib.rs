@@ -133,6 +133,8 @@ pub struct SessionRecord {
     #[serde(default)]
     pub personalization_project: String,
     #[serde(default)]
+    pub project_selection: Option<vesper_core::ProjectSelection>,
+    #[serde(default)]
     pub personalization_rejected: bool,
     pub corrected_transcript: Option<String>,
     /// Human-verified verbatim speech; distinct from edited prose.
@@ -290,6 +292,7 @@ impl DatasetStore {
                 draft_revision: 0,
                 personalization_evidence: None,
                 personalization_project: String::new(),
+                project_selection: None,
                 personalization_rejected: false,
                 review_status: ReviewStatus::Pending,
                 transcript_feedback: None,

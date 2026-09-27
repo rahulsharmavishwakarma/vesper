@@ -41,7 +41,7 @@ impl DatasetStore {
             .unwrap_or_default();
         profile.validate().map_err(DatasetError::InvalidConfig)?;
         // Schema one has no aliases; migration adds defaults without activating new edits.
-        profile.schema_version = 3;
+        profile.schema_version = 4;
         Ok(profile)
     }
 
@@ -49,17 +49,27 @@ impl DatasetStore {
     /// entries. Example provenance is checked against authoritative human reviews.
     pub fn save_personalization(
         &self,
+        profile: PersonalizationProfile,
+    ) -> Result<PersonalizationProfile> {
+        let tx = self.connection.unchecked_transaction()?;
+        let profile = self.save_personalization_in_transaction(profile)?;
+        tx.commit()?;
+        Ok(profile)
+    }
+
+    /// Caller owns the transaction, including any reviewed receipt consumption.
+    pub(crate) fn save_personalization_in_transaction(
+        &self,
         mut profile: PersonalizationProfile,
     ) -> Result<PersonalizationProfile> {
         profile.validate().map_err(DatasetError::InvalidConfig)?;
-        let tx = self.connection.unchecked_transaction()?;
         let current = self.personalization()?;
         if current.revision != profile.revision {
             return Err(DatasetError::InvalidConfig(
                 "Preferences changed; refresh before saving.".into(),
             ));
         }
-        profile.schema_version = 3;
+        profile.schema_version = 4;
         self.reconcile_automatic_profile(&current, &mut profile)?;
         for word in &mut profile.vocabulary {
             let previous = current.vocabulary.iter().find(|p| p.id == word.id);
@@ -82,7 +92,7 @@ impl DatasetStore {
             }
             let mut witnessed_aliases = std::collections::HashSet::new();
             for source in &word.sources {
-                let record = read_record(&tx, &source.session_id)?;
+                let record = read_record(&self.connection, &source.session_id)?;
                 let review = record
                     .review_history
                     .iter()
@@ -120,7 +130,7 @@ impl DatasetStore {
             }
         }
         for example in &profile.examples {
-            let record = read_record(&tx, &example.session_id)?;
+            let record = read_record(&self.connection, &example.session_id)?;
             if !record.review_history.iter().any(|r| {
                 r.id == example.review_revision_id
                     && r.target_kind == ReviewTargetKind::CleanupCorrection
@@ -136,8 +146,7 @@ impl DatasetStore {
             .revision
             .checked_add(1)
             .ok_or_else(|| DatasetError::InvalidConfig("Profile revision exhausted.".into()))?;
-        tx.execute("INSERT INTO personalization (id, profile_json) VALUES (1, ?1) ON CONFLICT(id) DO UPDATE SET profile_json = excluded.profile_json", [serde_json::to_string(&profile)?])?;
-        tx.commit()?;
+        self.connection.execute("INSERT INTO personalization (id, profile_json) VALUES (1, ?1) ON CONFLICT(id) DO UPDATE SET profile_json = excluded.profile_json", [serde_json::to_string(&profile)?])?;
         Ok(profile)
     }
 
@@ -353,6 +362,23 @@ impl DatasetStore {
         evidence: MemoryEvidence,
         project: String,
     ) -> Result<SessionRecord> {
+        let selection = vesper_core::resolve_project(
+            vesper_core::ProjectMode::Manual,
+            &project,
+            &[],
+            None,
+            None,
+        );
+        self.complete_personalization_scoped(id, text, evidence, selection)
+    }
+
+    pub fn complete_personalization_scoped(
+        &self,
+        id: &str,
+        text: String,
+        evidence: MemoryEvidence,
+        selection: vesper_core::ProjectSelection,
+    ) -> Result<SessionRecord> {
         validate_text(&text, false)?;
         let tx = self.connection.unchecked_transaction()?;
         let mut record = read_record(&tx, id)?;
@@ -366,7 +392,8 @@ impl DatasetStore {
         }
         record.personalized_transcript = (text != baseline).then_some(text);
         record.personalization_evidence = Some(evidence);
-        record.personalization_project = project;
+        record.personalization_project = selection.project.clone();
+        record.project_selection = Some(selection);
         write_record(&tx, &record)?;
         tx.commit()?;
         Ok(record)

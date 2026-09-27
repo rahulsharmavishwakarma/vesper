@@ -83,9 +83,21 @@ impl Default for AutomaticLearningState {
 pub struct DictationPersonalizationSnapshot {
     pub profile: PersonalizationProfile,
     pub learning: AutomaticLearningState,
+    pub project_selection: vesper_core::ProjectSelection,
 }
 
 impl DictationPersonalizationSnapshot {
+    pub fn resolve_project(&mut self, application: Option<&str>, document: Option<&str>) {
+        self.project_selection = vesper_core::resolve_project(
+            self.profile.project_mode,
+            &self.profile.active_project,
+            &self.profile.project_rules,
+            application,
+            document,
+        );
+        self.profile.active_project = self.project_selection.project.clone();
+    }
+
     pub fn post_asr_profile(&self, raw: &str, language: Language) -> PersonalizationProfile {
         let mut selected = self.profile.clone();
         for entry in &mut selected.vocabulary {
@@ -127,6 +139,44 @@ impl DictationPersonalizationSnapshot {
     }
 }
 
+#[cfg(test)]
+mod project_snapshot_tests {
+    use super::*;
+    #[test]
+    fn resolving_an_operation_does_not_rewrite_the_saved_manual_scope_or_follow_new_rules() {
+        let dir = tempfile::tempdir().unwrap();
+        let store = DatasetStore::open(dir.path().into()).unwrap();
+        let mut profile = store.dictation_personalization().unwrap();
+        profile.project_mode = vesper_core::ProjectMode::Automatic;
+        profile.project_rules.push(vesper_core::ProjectRule {
+            id: "editor".into(),
+            application_id: "test.editor".into(),
+            application_name: "Editor".into(),
+            project: "First".into(),
+            folder: None,
+            enabled: true,
+        });
+        store.save_personalization(profile).unwrap();
+        let mut operation = store.dictation_personalization_snapshot().unwrap();
+        operation.resolve_project(Some("test.editor"), None);
+        let mut saved = store.personalization().unwrap();
+        assert!(saved.active_project.is_empty());
+        saved.project_rules[0].project = "Second".into();
+        store.save_personalization(saved).unwrap();
+        assert_eq!(operation.profile.active_project, "First");
+        assert_eq!(
+            operation.project_selection.rule_id.as_deref(),
+            Some("editor")
+        );
+        let import = store.dictation_personalization_snapshot().unwrap();
+        assert!(import.profile.active_project.is_empty());
+        assert_eq!(
+            import.project_selection.source,
+            vesper_core::ProjectSource::Shared
+        );
+    }
+}
+
 fn stamp() -> i64 {
     Utc::now().timestamp_millis()
 }
@@ -144,6 +194,21 @@ pub fn learning_audio_key(samples: &[f32]) -> String {
 }
 
 impl DatasetStore {
+    /// Authenticate the frozen scope against an application-owned observation.
+    /// Frontend callers never supply this context. Expired/forgotten operations
+    /// abstain; a mutable settings project is not evidence about an older result.
+    pub(crate) fn learning_operation_current(&self, context: &LearningContext) -> Result<bool> {
+        if !permitted(&self.personalization()?, context)? {
+            return Ok(false);
+        }
+        Ok(self.automatic_learning_state()?.events.iter().any(|event| {
+            matches!(event.kind, LearningEventKind::RawObservation)
+                && event.context == *context
+                && stamp().saturating_sub(event.timestamp_ms) <= EXPIRY_MS
+                && event.id == format!("{}:observed", context.result_id)
+        }))
+    }
+
     pub fn dictation_personalization_snapshot(&self) -> Result<DictationPersonalizationSnapshot> {
         // Persist the existing desktop enable migration before the read transaction.
         self.dictation_personalization()?;
@@ -151,8 +216,17 @@ impl DatasetStore {
             &self.connection,
             rusqlite::TransactionBehavior::Deferred,
         )?;
+        let profile = self.personalization()?;
+        let project_selection = vesper_core::resolve_project(
+            vesper_core::ProjectMode::Manual,
+            &profile.active_project,
+            &[],
+            None,
+            None,
+        );
         let snapshot = DictationPersonalizationSnapshot {
-            profile: self.personalization()?,
+            profile,
+            project_selection,
             learning: self.automatic_learning_state()?,
         };
         tx.commit()?;
@@ -847,7 +921,7 @@ fn put_state(tx: &Connection, state: &AutomaticLearningState) -> Result<()> {
     Ok(())
 }
 fn put_profile(tx: &Connection, profile: &mut PersonalizationProfile) -> Result<()> {
-    profile.schema_version = 3;
+    profile.schema_version = 4;
     profile.revision = profile
         .revision
         .checked_add(1)

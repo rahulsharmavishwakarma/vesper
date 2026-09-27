@@ -48,7 +48,7 @@ impl DatasetStore {
         let profile = self.personalization()?;
         if !profile.automatic_learning
             || profile.learning_epoch != context.learning_epoch
-            || profile.active_project != context.project
+            || !self.learning_operation_current(context)?
         {
             return Ok(None);
         }
@@ -104,7 +104,7 @@ impl DatasetStore {
         let profile = self.personalization()?;
         if !profile.automatic_learning
             || profile.learning_epoch != reservation.context.learning_epoch
-            || profile.active_project != reservation.context.project
+            || !self.learning_operation_current(&reservation.context)?
         {
             return Ok(false);
         }
@@ -164,6 +164,46 @@ impl DatasetStore {
 mod tests {
     use super::*;
     #[test]
+    fn frozen_operation_scope_survives_settings_changes_but_forged_context_does_not() {
+        let dir = tempfile::tempdir().unwrap();
+        let store = DatasetStore::open(dir.path().into()).unwrap();
+        let profile = store.dictation_personalization().unwrap();
+        let context = LearningContext {
+            result_id: "automatic-project-result".into(),
+            source_key: "audio".into(),
+            episode_id: "episode".into(),
+            project: "Project A".into(),
+            learning_enabled: true,
+            learning_epoch: profile.learning_epoch,
+            ..Default::default()
+        };
+        assert!(store
+            .reserve_external_shadow(&context, None, "read me")
+            .unwrap()
+            .is_none());
+        store.observe_learning(&context, "read me", None).unwrap();
+        let reservation = store
+            .reserve_external_shadow(&context, None, "read me")
+            .unwrap()
+            .unwrap();
+        let mut changed = store.personalization().unwrap();
+        changed.active_project = "Project B".into();
+        store.save_personalization(changed).unwrap();
+        let mut forged = context.clone();
+        forged.project = "Project B".into();
+        assert!(store
+            .reserve_external_shadow(&forged, None, "read me")
+            .unwrap()
+            .is_none());
+        assert!(store
+            .finish_external_shadow(&reservation, "read me", "README")
+            .unwrap());
+        assert_eq!(
+            store.external_shadow_records().unwrap()[0].context.project,
+            "Project A"
+        );
+    }
+    #[test]
     fn external_candidates_are_separate_bounded_exactly_once_and_forget_cannot_resurrect() {
         let dir = tempfile::tempdir().unwrap();
         let store = DatasetStore::open(dir.path().into()).unwrap();
@@ -176,6 +216,9 @@ mod tests {
             learning_epoch: profile.learning_epoch,
             ..Default::default()
         };
+        store
+            .observe_learning(&context, "read me 😀", None)
+            .unwrap();
         let r = store
             .reserve_external_shadow(&context, None, "read me 😀")
             .unwrap()
@@ -191,7 +234,12 @@ mod tests {
             .unwrap());
         assert_eq!(store.personalization().unwrap(), profile);
         assert!(store.list_sessions().unwrap().is_empty());
-        assert!(store.automatic_learning_state().unwrap().events.is_empty());
+        assert!(store
+            .automatic_learning_state()
+            .unwrap()
+            .events
+            .iter()
+            .all(|e| matches!(e.kind, crate::LearningEventKind::RawObservation)));
         let stale = store
             .reserve_external_shadow(&context, None, "old")
             .unwrap()
@@ -215,6 +263,7 @@ mod tests {
             learning_epoch: p.learning_epoch,
             ..Default::default()
         };
+        store.observe_learning(&c, "a", None).unwrap();
         let a = store
             .reserve_external_shadow(&c, None, "a")
             .unwrap()
