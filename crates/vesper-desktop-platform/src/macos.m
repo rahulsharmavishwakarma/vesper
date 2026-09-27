@@ -2,6 +2,7 @@
 #import <ApplicationServices/ApplicationServices.h>
 #import <Carbon/Carbon.h>
 #include <math.h>
+#import "projects.m"
 
 // This is a separately owned NSPanel, not an isa replacement of TaoWindow.
 // Its WebView remains associated with Tauri for IPC. Geometry/show/hide are
