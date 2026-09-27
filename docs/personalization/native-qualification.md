@@ -278,3 +278,37 @@ The WebView summary separately reports expected/acknowledged calibration edits,
 provisional outcomes, activations and maximum active memory. Missing scripted
 feedback now fails the request gate even if final rendering succeeds. This
 prevents a no-feedback run from appearing to qualify the learning path.
+
+## Automatic projects and external correction component check — 27 September 2026
+
+Deterministic coverage includes resolver precedence/ambiguity, immutable snapshots,
+authenticated delayed feedback, and a desktop completion/edit regression that
+changes the saved project and rule during an operation: the output and newly
+learned spelling retain Project A while the settings remain Project B. This uses
+constructed ASR text and SQLite, not microphone or model performance evidence.
+Eight browser regressions cover the existing interactions plus application/folder
+pickers, cancellation, unsaved-preference review gating, explicit Remember and
+narrow layouts.
+
+Hardware/software: Apple M5 Pro, macOS 27.0 (26A428), native AppKit/AX, direct keyboard layout and plain-text TextEdit with English menus. The fixture uses no ASR/writer weights.
+
+The authored TextEdit fixture now checks that the app/focused-window URL matches
+its own temporary file before exercising real Command-V. Correction, explicit
+redundant identity notifications, outside-span replacement, cancellation, and a
+switch to a second authored document all passed in one sequential run. The two
+positive cases produced a candidate; all three negative cases rejected it. Largest
+text reads were 68 UTF-16 units for the positive cases and 81 for the outside-span
+case, below the 8,256-unit bound. The five app/document metadata reads were
+0.324, 0.228, 0.342, 0.318 and 0.407 ms (measured in the native fixture with
+`systemUptime`). These five short synthetic component measurements do not establish
+microphone-to-result latency, automatic project accuracy across editors, natural
+author attribution, longitudinal learning benefit or idle/power behavior.
+
+Reproduce with the compiler command in [external observation](external-observer.md),
+then run `--fixture`, `--fixture redundant`, `--fixture outside`,
+`--fixture cancel`, and `--fixture switch` sequentially. The test opens only
+new authored temporary documents, checks their identity before editing, and
+returns 77 if macOS permissions are unavailable. Keep September 19 failures as
+historical results; the revised acknowledgement wait and identity logic explain
+the changed outcome. No neighboring text or observed document URLs belong in
+published evidence.

@@ -2,7 +2,9 @@
 //! borrowed window handles never outlive their owner during initialization.
 use raw_window_handle::HasWindowHandle;
 mod observation;
+mod projects;
 pub use observation::{cancel_observation, observe_next_paste, ExternalEdit};
+pub use projects::{project_application, project_document, ProjectApplication};
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 pub enum PasteResult {

@@ -38,6 +38,13 @@ int main(int argc, const char **argv) {
         // This opt-in harness verifies its OWN URL before touching content. The
         // production observer never reads document URLs or window titles.
         if (![document isKindOfClass:NSString.class] || ![[[NSURL URLWithString:document].URLByResolvingSymlinksInPath path] isEqual:url.URLByResolvingSymlinksInPath.path]) { printf("{\"failure\":\"fixture_identity\",\"field\":%s,\"window\":%s,\"documentString\":%s}\n", field?"true":"false",window?"true":"false",[document isKindOfClass:NSString.class]?"true":"false"); if(field)CFRelease(field); return 3; }
+        char projectApp[257]={0}, projectName[257]={0}, projectPath[4097]={0};
+        NSTimeInterval projectStart=NSProcessInfo.processInfo.systemUptime;
+        bool projectMatch=td_project_application(projectApp,sizeof(projectApp),projectName,sizeof(projectName),NULL) &&
+            strcmp(projectApp,"com.apple.TextEdit")==0 && td_project_document(projectApp,projectPath,sizeof(projectPath)) &&
+            [[NSString stringWithUTF8String:projectPath] isEqual:url.URLByResolvingSymlinksInPath.path];
+        printf("{\"projectContextMatched\":%s,\"projectCaptureMs\":%.3f}\n",projectMatch?"true":"false",1000*(NSProcessInfo.processInfo.systemUptime-projectStart));
+        if (!projectMatch) { CFRelease(field); return 8; }
         CFRange selected=CFRangeMake(prefix.length,0);
         AXValueRef range=AXValueCreate(kAXValueCFRangeType,&selected);
         AXError selectError=AXUIElementSetAttributeValue(field,kAXSelectedTextRangeAttribute,range);CFRelease(range);
@@ -63,11 +70,25 @@ int main(int argc, const char **argv) {
             for (int attempt=0; attempt<120 && paste==1; attempt++) { paste=td_paste(1,"read me 🧑🏽‍💻"); if(paste==1)pump(0.025); }
         }
         printf("{\"afterDispatchReason\":\"%s\",\"registrationIndex\":%d,\"registrationError\":%d}\n",observationReason,observationRegistrationIndex,observationRegistrationError);
-        pump(0.5);
+        NSDate *ackDeadline = [NSDate dateWithTimeIntervalSinceNow:2.1];
+        while (observationToken && !acknowledged && ackDeadline.timeIntervalSinceNow > 0) pump(0.025);
         printf("{\"paste\":%d,\"acknowledged\":%s,\"receiptActive\":%s}\n",paste,acknowledged?"true":"false",observationToken?"true":"false");
         printf("{\"observerReason\":\"%s\",\"registrationIndex\":%d,\"registrationError\":%d}\n",observationReason,observationRegistrationIndex,observationRegistrationError);
         if(paste!=0 || !observationToken || !acknowledged) { td_observation_cancel(); CFRelease(field);return 5; }
         const char *scenario=argc>2?argv[2]:"correction";
+        if (strcmp(scenario,"redundant")==0) {
+            observationEvent(observationObserver,observedField,kAXFocusedUIElementChangedNotification,NULL);
+            observationEvent(observationObserver,observedWindow,kAXFocusedWindowChangedNotification,NULL);
+            if (!observationToken) { CFRelease(field); return 9; }
+        }
+        if (strcmp(scenario,"switch")==0) {
+            NSString *other=[NSTemporaryDirectory() stringByAppendingPathComponent:[NSString stringWithFormat:@"vesper-observer-other-%@.txt",NSUUID.UUID.UUIDString]];
+            [@"Separate authored fixture" writeToFile:other atomically:YES encoding:NSUTF8StringEncoding error:nil];
+            [NSWorkspace.sharedWorkspace openURLs:@[[NSURL fileURLWithPath:other]] withApplicationAtURL:[NSURL fileURLWithPath:@"/System/Applications/TextEdit.app"] configuration:configuration completionHandler:^(NSRunningApplication *app,NSError *error) { (void)app; (void)error; }];
+            pump(1);
+            printf("{\"scenario\":\"switch\",\"rejected\":%s}\n",!delivered && !observationToken?"true":"false");
+            CFRelease(field); return !delivered && !observationToken?0:10;
+        }
         if (strcmp(scenario,"cancel")==0) {
             td_observation_cancel();pump(0.4);
             printf("{\"scenario\":\"cancel\",\"rejected\":%s}\n",!delivered && !observationToken?"true":"false");

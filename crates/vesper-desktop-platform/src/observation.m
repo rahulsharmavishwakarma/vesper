@@ -13,8 +13,11 @@ static id activationObserver;
 static uint64_t observationReads, observationMaxRead;
 static const char *observationReason = "idle";
 static int observationRegistrationError, observationRegistrationIndex;
+static uint64_t observationGeneration, observationQueuedGeneration;
 
 static void stopObservation(void) {
+    observationGeneration++;
+    observationQueuedGeneration = 0;
     [observationTimer invalidate]; observationTimer = nil;
     if (activationObserver) [NSWorkspace.sharedWorkspace.notificationCenter removeObserver:activationObserver];
     activationObserver = nil;
@@ -125,7 +128,12 @@ static bool observationFocus(void) {
     bool same = current && CFEqual(current, observedField) && editable(current);
     if (current) CFRelease(current);
     id window = attribute(observedField, kAXWindowAttribute);
-    return same && window && CFEqual((__bridge CFTypeRef)window, observedWindow) && plainTextEdit(observedApp);
+    id focusedWindow = attribute(observedApp, kAXFocusedWindowAttribute);
+    return same && window && focusedWindow &&
+        CFGetTypeID((__bridge CFTypeRef)window) == AXUIElementGetTypeID() &&
+        CFGetTypeID((__bridge CFTypeRef)focusedWindow) == AXUIElementGetTypeID() &&
+        CFEqual((__bridge CFTypeRef)window, observedWindow) &&
+        CFEqual((__bridge CFTypeRef)focusedWindow, observedWindow) && plainTextEdit(observedApp);
 }
 // Pure transition gate. Native tests inject observations, never AX permissions.
 static int observationStep(bool ack, NSString *before, NSString *value, CFIndex offset,
@@ -184,17 +192,21 @@ static void sampleObservation(void) {
     stopObservation();
     if (callback) callback(token, before.UTF8String, after.UTF8String);
 }
-static bool observationReadQueued;
 static void observationEvent(AXObserverRef observer, AXUIElementRef element, CFStringRef notification, void *context) {
-    (void)observer; (void)element; (void)context;
-    if (CFEqual(notification, kAXUIElementDestroyedNotification) || CFEqual(notification, kAXFocusedWindowChangedNotification) ||
-        CFEqual(notification, kAXFocusedUIElementChangedNotification)) { observationReason="identity_notification"; stopObservation(); return; }
-    if (observationReadQueued) return;
-    observationReadQueued = true;
-    uint64_t token = observationToken;
+    (void)element; (void)context;
+    if (!observationToken || observer != observationObserver) return;
+    if (CFEqual(notification, kAXUIElementDestroyedNotification)) { observationReason="destroyed"; stopObservation(); return; }
+    if ((CFEqual(notification, kAXFocusedWindowChangedNotification) || CFEqual(notification, kAXFocusedUIElementChangedNotification)) &&
+        !observationFocus()) { observationReason="identity_changed"; stopObservation(); return; }
+    // Revalidate identity synchronously. Coalescing may delay text reads, never
+    // a focus-loss decision (which could otherwise miss an away-and-back).
+    uint64_t generation = observationGeneration;
+    if (observationQueuedGeneration == generation) return;
+    observationQueuedGeneration = generation;
     dispatch_after(dispatch_time(DISPATCH_TIME_NOW, 50 * NSEC_PER_MSEC), dispatch_get_main_queue(), ^{
-        observationReadQueued = false;
-        if (token == observationToken) sampleObservation();
+        if (generation != observationGeneration) return;
+        observationQueuedGeneration = 0;
+        if (observationToken) sampleObservation();
     });
 }
 static void beginObservation(uint64_t token, NSString *value) {
@@ -230,7 +242,12 @@ static void beginObservation(uint64_t token, NSString *value) {
     }
     CFRunLoopAddSource(CFRunLoopGetMain(), AXObserverGetRunLoopSource(observationObserver), kCFRunLoopCommonModes);
     activationObserver = [NSWorkspace.sharedWorkspace.notificationCenter addObserverForName:NSWorkspaceDidActivateApplicationNotification object:nil queue:NSOperationQueue.mainQueue usingBlock:^(NSNotification *note) {
-        (void)note; stopObservation();
+        NSRunningApplication *activated = note.userInfo[NSWorkspaceApplicationKey];
+        pid_t pid = 0;
+        if (!observedApp || AXUIElementGetPid(observedApp, &pid) != kAXErrorSuccess ||
+            !activated || activated.processIdentifier != pid || !observationFocus()) {
+            observationReason="application_changed"; stopObservation();
+        }
     }];
     observationReason="waiting_ack";
     observationStarted = NSProcessInfo.processInfo.systemUptime;
