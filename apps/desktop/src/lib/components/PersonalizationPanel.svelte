@@ -582,12 +582,34 @@
                   (c) => c.state === 'provisional',
                 ).length} awaiting spelling evidence · {learning.candidates.filter(
                   (c) => c.state === 'suspended',
-                ).length} paused. Usage counts do not prove a spelling is correct.
+                ).length} paused · {learning.candidates.filter((c) => c.state === 'observed')
+                  .length} automatically observed. Usage counts do not prove a spelling is correct.
               </p>
               <p class="note">
                 {learning.events.filter((e) => e.retry === 'possible_repair').length} possible repair
                 signals. These do not create replacement rules.
               </p>
+              {#if learning.candidates.some((c) => c.state === 'observed')}
+                <p class="note">
+                  Automatically observed technical terms from ordinary recordings. These never
+                  activate correction rules.
+                </p>
+                {#each learning.candidates
+                  .filter((c) => c.state === 'observed')
+                  .slice()
+                  .reverse()
+                  .slice(0, 8) as term (term.id)}
+                  <p>
+                    <strong>{term.phrase}</strong> · observed {term.observedCount}×<br /><span
+                      class="note"
+                      >{term.project || term.context || 'Shared vocabulary'} · {term.language ===
+                      'auto'
+                        ? 'Language not established'
+                        : term.language} · {term.reason}</span
+                    >
+                  </p>
+                {/each}
+              {/if}
               <details>
                 <summary>Inspect recent candidates</summary>
                 {#each learning.candidates
