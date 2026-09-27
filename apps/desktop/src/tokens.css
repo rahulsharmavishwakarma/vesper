@@ -54,31 +54,32 @@
 
 /* Appearance choices from the selected Settings study. */
 :root {
-  --color-theme-paper: oklch(97% 0.012 100);
+  --color-theme-paper: #f6f7f8;
   --color-theme-night: oklch(22% 0.009 150);
   --color-theme-mark: oklch(63% 0.05 140);
 }
 :root[data-theme='light'] {
   color-scheme: light;
-  --color-bg: oklch(97% 0.012 100);
-  --color-panel: oklch(99% 0.006 100);
-  --color-raised: oklch(94% 0.013 110);
-  --color-ink: oklch(25% 0.021 150);
-  --color-muted: oklch(47% 0.02 145);
-  --color-line: oklch(84% 0.015 135);
-  --color-accent: oklch(42% 0.08 143);
-  --color-accent-hover: oklch(35% 0.07 143);
-  --color-on-accent: oklch(99% 0.006 100);
-  --color-tint: oklch(91% 0.034 140);
+  /* Neutral surfaces keep sage reserved for actions and selected states. */
+  --color-bg: #f6f7f8;
+  --color-panel: #ffffff;
+  --color-raised: #edf0f2;
+  --color-ink: #24292d;
+  --color-muted: #5f686f;
+  --color-line: #dce0e3;
+  --color-accent: #496f59;
+  --color-accent-hover: #395a47;
+  --color-on-accent: #ffffff;
+  --color-tint: #eaf0ec;
   --color-focus: oklch(48% 0.15 250);
   --color-error: oklch(46% 0.15 30);
   --color-error-tint: oklch(94% 0.025 30);
   --color-warning: oklch(43% 0.075 75);
-  --color-control-edge: oklch(58% 0.021 145);
-  --color-control-hover: oklch(47% 0.025 145);
-  --color-accent-light: oklch(46% 0.08 143);
+  --color-control-edge: #858f97;
+  --color-control-hover: #65717a;
+  --color-accent-light: #537863;
   --color-error-light: oklch(50% 0.14 30);
-  --color-surface-light: oklch(96% 0.014 110);
-  --color-overlay: oklch(19% 0.015 150 / 0.4);
-  --color-sheen: oklch(99% 0.006 100 / 0.08);
+  --color-surface-light: #f5f6f7;
+  --color-overlay: rgb(24 29 33 / 40%);
+  --color-sheen: rgb(255 255 255 / 8%);
 }

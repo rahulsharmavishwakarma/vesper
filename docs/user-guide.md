@@ -46,6 +46,8 @@ does not remove recordings or vocabulary.
 
 In **Appearance**, choose Light, Dark or System. The color theme applies immediately
 throughout the app and is remembered locally; System follows device appearance.
+Light uses white panels and soft gray backgrounds with green highlights for
+actions and selected controls.
 Dark is the default. Clearing browser/webview storage resets this visual preference.
 Reduce Motion follows your system setting. Floating capture options on this page
 still require Save changes. Themes in a browser preview and the installed app are

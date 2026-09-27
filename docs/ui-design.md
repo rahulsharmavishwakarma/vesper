@@ -121,6 +121,20 @@ the last saved snapshot. Vocabulary retains its own Save/Discard actions. Restor
 defaults is under Recording's advanced options and still explicitly saves defaults.
 
 Appearance offers Light, Dark and System using the shared semantic tokens.
+Light uses white panels over a soft neutral gray canvas, charcoal text and gray
+control outlines. Reserve the sage accent for primary actions, selections and
+status indicators; do not tint all backgrounds or secondary text green. Its
+appearance swatch uses the same canvas token value. The dark palette is unchanged.
+Keep primary text and supporting copy at least 4.5:1 against their surfaces,
+and active control outlines and focus indicators at least 3:1. Palette revisions
+must be inspected across Dictate, History, Models and Settings, including narrow
+windows and hover, focus, selected, disabled and error states.
+The 27 September 2026 light-palette check measured 14.68:1 for body text on
+panels, 4.96:1 or higher for supporting text and primary-button labels, 3.07:1
+or higher for control outlines on the canvas/panels, and 6.03:1 for focus on the
+canvas. The production renderer build and five existing appearance/responsive
+browser checks passed, including Settings at 320/360/375/414/768/1280 px. These
+are local Chromium checks, not native display or screen-reader qualification.
 Selection applies immediately, defaults to the existing Dark appearance and is
 stored under `vesper-appearance-v1` in the browser/webview's local storage,
 separately from native inference settings. Other windows on the same origin sync
