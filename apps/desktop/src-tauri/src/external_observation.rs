@@ -1,8 +1,54 @@
-//! Optional native insertion observation. External candidates never enter the learner.
+//! Optional native insertion observation and explicit spelling review.
 use crate::{runtime::PipelineResult, AppStorage};
 use std::sync::atomic::Ordering;
 use tauri::Manager;
 use vesper_data::{DatasetStore, ExternalShadowRecord};
+
+#[tauri::command]
+pub async fn get_external_correction_reviews(
+    storage: tauri::State<'_, AppStorage>,
+) -> Result<Vec<vesper_data::ExternalCorrectionReview>, String> {
+    let root = storage.dataset_dir.clone();
+    tauri::async_runtime::spawn_blocking(move || {
+        DatasetStore::open(root)
+            .and_then(|s| s.external_correction_reviews())
+            .map_err(|e| e.to_string())
+    })
+    .await
+    .map_err(|e| e.to_string())?
+}
+
+#[tauri::command]
+pub async fn remember_external_correction(
+    token: String,
+    pair: vesper_core::CorrectionPair,
+    revision: u64,
+    storage: tauri::State<'_, AppStorage>,
+) -> Result<vesper_core::PersonalizationProfile, String> {
+    let root = storage.dataset_dir.clone();
+    tauri::async_runtime::spawn_blocking(move || {
+        DatasetStore::open(root)
+            .and_then(|s| s.remember_external_correction(&token, &pair, revision))
+            .map_err(|e| e.to_string())
+    })
+    .await
+    .map_err(|e| e.to_string())?
+}
+
+#[tauri::command]
+pub async fn dismiss_external_correction(
+    token: String,
+    storage: tauri::State<'_, AppStorage>,
+) -> Result<(), String> {
+    let root = storage.dataset_dir.clone();
+    tauri::async_runtime::spawn_blocking(move || {
+        DatasetStore::open(root)
+            .and_then(|s| s.dismiss_external_correction(&token))
+            .map_err(|e| e.to_string())
+    })
+    .await
+    .map_err(|e| e.to_string())?
+}
 
 pub fn cancel(app: &tauri::AppHandle) {
     app.state::<AppStorage>()

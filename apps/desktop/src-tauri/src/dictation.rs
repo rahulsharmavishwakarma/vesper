@@ -172,7 +172,7 @@ fn emit(app: &tauri::AppHandle) {
 }
 /// All AppKit/AX/clipboard calls are executed on the UI thread. No foreign
 /// pointers cross this boundary, and a stalled UI cannot block the worker forever.
-async fn on_main<T: Send + 'static>(
+pub(crate) async fn on_main<T: Send + 'static>(
     app: &tauri::AppHandle,
     f: impl FnOnce() -> T + Send + 'static,
 ) -> Result<T, String> {
@@ -437,14 +437,49 @@ async fn start(app: tauri::AppHandle, id: u64) {
         }
         return;
     }
+    let root = storage.dataset_dir.clone();
+    let snapshot = tauri::async_runtime::spawn_blocking(move || {
+        vesper_data::DatasetStore::open(root)
+            .and_then(|store| store.dictation_personalization_snapshot())
+            .map_err(|error| error.to_string())
+    })
+    .await;
+    let mut snapshot = match snapshot {
+        Ok(Ok(snapshot)) => snapshot,
+        error => {
+            fail(
+                &app,
+                id,
+                &format!("Could not load project preferences: {error:?}"),
+            );
+            return;
+        }
+    };
     let desktop = app.clone();
     let setup = on_main(&app, move || {
         let storage = desktop.state::<AppStorage>();
         let Ok(mut state) = storage.dictation.state.lock() else {
-            return;
+            return None;
         };
         if state.status.id != id || state.status.phase != Phase::Starting || state.cancelled {
-            return;
+            return None;
+        }
+        if snapshot.profile.project_mode == vesper_core::ProjectMode::Automatic
+            && snapshot.profile.active_project.trim().is_empty()
+        {
+            let application = vesper_desktop_platform::project_application(None);
+            let app_id = application
+                .as_ref()
+                .map(|application| application.id.as_str());
+            let needs_document = snapshot.profile.project_rules.iter().any(|rule| {
+                rule.enabled
+                    && Some(rule.application_id.as_str()) == app_id
+                    && rule.folder.is_some()
+            });
+            let document = app_id
+                .filter(|_| needs_document)
+                .and_then(vesper_desktop_platform::project_document);
+            snapshot.resolve_project(app_id, document.as_deref());
         }
         if state.output == DictationOutput::Paste {
             match vesper_desktop_platform::capture_target(id) {
@@ -460,19 +495,26 @@ async fn start(app: tauri::AppHandle, id: u64) {
         {
             show(&desktop);
         }
+        Some(snapshot)
     })
     .await;
-    if let Err(error) = setup {
-        fail(&app, id, &error);
-        return;
-    }
+    let snapshot = match setup {
+        Ok(Some(snapshot)) => snapshot,
+        Ok(None) => return,
+        Err(error) => {
+            fail(&app, id, &error);
+            return;
+        }
+    };
     if !start_allowed(&storage, id) {
         fail(&app, id, "Recording cancelled.");
         return;
     }
     // Escape is scoped to a dictation session, not a permanent global binding.
     let _ = app.global_shortcut().register("Escape");
-    let result = commands::start_recording_inner(None, app.clone(), app.state(), Some(id)).await;
+    let result =
+        commands::start_recording_inner(None, app.clone(), app.state(), Some(id), Some(snapshot))
+            .await;
     match result {
         Ok(_) => {
             let action = storage

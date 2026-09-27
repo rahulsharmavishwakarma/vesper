@@ -53,6 +53,41 @@ pub fn get_app_info() -> AppInfo {
     }
 }
 
+#[tauri::command]
+pub async fn read_project_application(
+    app: tauri::AppHandle,
+    path: String,
+) -> Result<Option<serde_json::Value>, String> {
+    if path.len() > 4096 || path.contains('\0') || !Path::new(&path).is_absolute() {
+        return Err("Choose an application from the file picker.".into());
+    }
+    crate::dictation::on_main(&app, move || {
+        vesper_desktop_platform::project_application(Some(&path))
+            .map(|app| serde_json::json!({"id": app.id, "name": app.name}))
+    })
+    .await
+}
+
+#[tauri::command]
+pub async fn resolve_project_folder(path: String) -> Result<String, String> {
+    if path.len() > 4096 || !Path::new(&path).is_absolute() {
+        return Err("Choose an absolute project folder.".into());
+    }
+    tauri::async_runtime::spawn_blocking(move || {
+        let folder = std::fs::canonicalize(path).map_err(|error| error.to_string())?;
+        if !folder.is_dir() {
+            return Err("Choose a project folder.".into());
+        }
+        folder
+            .to_str()
+            .filter(|path| path.len() <= 4096)
+            .map(String::from)
+            .ok_or_else(|| "The project folder path is unsupported.".into())
+    })
+    .await
+    .map_err(|error| error.to_string())?
+}
+
 #[derive(Serialize)]
 pub struct AppStatus {
     name: &'static str,
@@ -819,7 +854,7 @@ pub async fn start_recording(
     app: tauri::AppHandle,
     storage: tauri::State<'_, AppStorage>,
 ) -> Result<String, String> {
-    start_recording_inner(device_id, app, storage, None).await
+    start_recording_inner(device_id, app, storage, None, None).await
 }
 
 pub(crate) async fn start_recording_inner(
@@ -827,12 +862,16 @@ pub(crate) async fn start_recording_inner(
     app: tauri::AppHandle,
     storage: tauri::State<'_, AppStorage>,
     dictation_id: Option<u64>,
+    personalization: Option<vesper_data::DictationPersonalizationSnapshot>,
 ) -> Result<String, String> {
     if dictation_id.is_some_and(|id| !crate::dictation::start_allowed(&storage, id)) {
         return Err("Recording cancelled.".into());
     }
     crate::external_observation::cancel(&app);
     let context = begin_context(&storage, "starting", "Starting microphone…", true)?;
+    if let Some(snapshot) = personalization {
+        let _ = context.personalization.set(Ok(snapshot));
+    }
     if dictation_id.is_some_and(|id| !crate::dictation::bind(&storage, id, &context.operation_id)) {
         let result = Err("Recording cancelled.".into());
         context.runtime.finish(&result);
@@ -843,6 +882,8 @@ pub(crate) async fn start_recording_inner(
     let setup_context = context.clone();
     let setup_app = app.clone();
     let started = tauri::async_runtime::spawn_blocking(move || {
+        // Freeze manual/main-window scope before the microphone starts too.
+        setup_context.personalization()?;
         let live = setup_context.config.speech_adapter().live_mode() != vesper_core::LiveMode::Unavailable;
         if !live {
             if dictation_id.is_some_and(|id| !crate::dictation::start_allowed(&setup_app.state(), id)) {
