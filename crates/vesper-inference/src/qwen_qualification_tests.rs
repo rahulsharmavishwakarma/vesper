@@ -115,6 +115,7 @@ fn chat_examples_against_frozen_cases() {
                 &cancelled,
                 "chat-examples",
                 false,
+                None,
             )
             .and_then(|text| {
                 crate::fidelity::validate(raw, &text, CleanupPreset::Minimal)?;
@@ -179,7 +180,16 @@ fn minimal_prompt_candidate_against_frozen_cases() {
         // arms use the same official nonthinking wrapper and strict guard.
         let prompt = format!("<|im_start|>system\n{instruction} Preserve contractions and repeated words exactly.\n<|im_end|>\n<|im_start|>user\n{raw}<|im_end|>\n<|im_start|>assistant\n<think>\n\n</think>\n\n");
         let candidate = model
-            .generate(raw, &prompt, false, true, &cancelled, "candidate", false)
+            .generate(
+                raw,
+                &prompt,
+                false,
+                true,
+                &cancelled,
+                "candidate",
+                false,
+                None,
+            )
             .and_then(|text| {
                 crate::fidelity::validate(raw, &text, CleanupPreset::Minimal)?;
                 Ok(text)

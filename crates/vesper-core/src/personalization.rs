@@ -81,6 +81,8 @@ pub struct PersonalizationProfile {
     pub revision: u64,
     pub speech_bias_enabled: bool,
     pub output_intent: OutputIntent,
+    /// Interpret this recording's presentation in the writing pass. Never a memory label.
+    pub automatic_writing: bool,
     pub preserve_fillers: bool,
     pub apply_corrections: bool,
     pub use_remembered_intent: bool,
@@ -101,6 +103,7 @@ impl Default for PersonalizationProfile {
             revision: 0,
             speech_bias_enabled: false,
             output_intent: OutputIntent::default(),
+            automatic_writing: false,
             preserve_fillers: false,
             apply_corrections: true,
             use_remembered_intent: false,

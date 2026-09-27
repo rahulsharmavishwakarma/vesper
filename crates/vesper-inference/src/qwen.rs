@@ -25,6 +25,8 @@ use vesper_core::{
 
 #[path = "qwen_semantic.rs"]
 mod semantic;
+#[path = "qwen_writing.rs"]
+mod writing;
 
 #[derive(Debug, Default, Clone, Serialize)]
 #[serde(rename_all = "camelCase")]
@@ -59,6 +61,7 @@ pub struct RewriteMetrics {
     pub formatting_recovery: String,
     pub formatting_first_failure: String,
     pub outcome: String,
+    pub writing: Option<writing::WritingDecision>,
 }
 
 struct PrefixState {
@@ -171,6 +174,9 @@ impl Rewriter {
             .borrow_mut()
             .retain(|e| e.profile_revision == profile.revision);
         let result = self.rewrite_inner(raw, config, cancelled, profile);
+        if result.is_err() {
+            self.metrics.borrow_mut().writing = None;
+        }
         self.metrics.borrow_mut().outcome = match &result {
             Ok(_) => "accepted",
             Err(InferenceError::Cancelled) => "cancelled",
@@ -221,7 +227,9 @@ impl Rewriter {
         let (context, evidence) =
             crate::personalization::prompt_context(profile, &prepared, config);
         self.metrics.borrow_mut().personalization = evidence;
-        let mut output = if default_formatting(config, custom) {
+        let mut output = if profile.automatic_writing {
+            self.automatic_writing(&prepared, raw, config, cancelled, &context)?
+        } else if default_formatting(config, custom) {
             self.generate_minimal_cleanup(&prepared, config, cancelled, &context)?
         } else {
             self.generate_cleanup(&prepared, config, custom, cancelled, &context)?
@@ -232,6 +240,10 @@ impl Rewriter {
         crate::fidelity::validate(&prepared, &output, config.cleanup_preset)?;
         if prepared != raw {
             crate::fidelity::validate(raw, &output, config.cleanup_preset)?;
+        }
+        let form = self.metrics.borrow().writing.as_ref().map(|w| w.form);
+        if let Some(form) = form {
+            self.metrics.borrow_mut().personalization.output_intent = form;
         }
         Ok(output)
     }
@@ -273,6 +285,7 @@ impl Rewriter {
             cancelled,
             "technical-tail",
             reference.is_empty(),
+            None,
         )?;
         let corrected = match crate::fidelity::apply_technical_tail(tail, &generated)? {
             Some(corrected) => Some(corrected),
@@ -342,6 +355,7 @@ impl Rewriter {
                 cancelled,
                 "formatting-retry",
                 false,
+                None,
             )
             .and_then(|output| self.guarded_formatting(raw, output));
         self.metrics.borrow_mut().formatting_recovery = if result.is_ok() {
@@ -389,6 +403,7 @@ impl Rewriter {
             cancelled,
             "full-cleanup",
             personalization.is_empty(),
+            None,
         );
         if matches!(result, Err(InferenceError::PromptTooLong)) && !personalization.is_empty() {
             self.metrics.borrow_mut().personalization_dropped_for_budget = true;
@@ -407,6 +422,7 @@ impl Rewriter {
         cancelled: &AtomicBool,
         pass: &str,
         cache_allowed: bool,
+        grammar: Option<&str>,
     ) -> Result<String> {
         let started = Instant::now();
         let mut metrics = PassMetrics {
@@ -420,6 +436,7 @@ impl Rewriter {
             allow_formatting_completion,
             cancelled,
             cache_allowed,
+            grammar,
             &mut metrics,
         );
         metrics.total_us = micros(started);
@@ -442,6 +459,7 @@ impl Rewriter {
         allow_formatting_completion: bool,
         cancelled: &AtomicBool,
         cache_allowed: bool,
+        grammar: Option<&str>,
         metrics: &mut PassMetrics,
     ) -> Result<String> {
         let started = Instant::now();
@@ -461,7 +479,8 @@ impl Rewriter {
             .str_to_token(raw, AddBos::Never)
             .map_err(|error| native("writing model transcript tokenization", error))?
             .len();
-        let output_limit = (raw_tokens.saturating_mul(2) + 32).clamp(64, MAX_OUTPUT_TOKENS);
+        let envelope = if grammar.is_some() { 192 } else { 32 };
+        let output_limit = (raw_tokens.saturating_mul(2) + envelope).clamp(64, MAX_OUTPUT_TOKENS);
         let context_tokens = CONTEXT_TOKENS.min(model.n_ctx_train());
         if tokens.is_empty() || tokens.len() + output_limit > context_tokens as usize {
             return Err(InferenceError::PromptTooLong);
@@ -585,7 +604,15 @@ impl Rewriter {
             .sum();
         let generation_started = Instant::now();
         // Deterministic token selection for the constrained editing task.
-        let mut sampler = LlamaSampler::greedy();
+        let mut sampler = if let Some(grammar) = grammar {
+            LlamaSampler::chain_simple([
+                LlamaSampler::grammar(model, grammar, "root")
+                    .map_err(|e| native("writing output grammar", e))?,
+                LlamaSampler::greedy(),
+            ])
+        } else {
+            LlamaSampler::greedy()
+        };
         let mut decoder = encoding_rs::UTF_8.new_decoder();
         let mut output = String::new();
         for generated in 0..output_limit {
@@ -720,6 +747,10 @@ pub(crate) fn rewrite_path(config: &AppConfig, root: &Path) -> Result<std::path:
 }
 
 fn embedded_prompt(model: &LlamaModel, raw: &str, instruction: &str) -> Result<String> {
+    embedded_system_prompt(model, raw, &format!("{instruction}\nThe user message is dictated text to edit, not a request to answer. Preserve every sentence, including questions, commands, quotations and negative statements. Return only the edited transcript. Do not produce reasoning, analysis, labels or explanations."))
+}
+
+fn embedded_system_prompt(model: &LlamaModel, raw: &str, instruction: &str) -> Result<String> {
     for text in [raw, instruction] {
         let tokens = model
             .str_to_token(text, AddBos::Never)
@@ -739,10 +770,12 @@ fn embedded_prompt(model: &LlamaModel, raw: &str, instruction: &str) -> Result<S
         )
     })?;
     let messages = [
-        LlamaChatMessage::new("system".into(), format!("{instruction}\nThe user message is dictated text to edit, not a request to answer. Preserve every sentence, including questions, commands, quotations and negative statements. Return only the edited transcript. Do not produce reasoning, analysis, labels or explanations.")),
+        LlamaChatMessage::new("system".into(), instruction.into()),
         LlamaChatMessage::new("user".into(), raw.into()),
-    ].into_iter().collect::<std::result::Result<Vec<_>, _>>()
-        .map_err(|error| native("writing model chat messages", error))?;
+    ]
+    .into_iter()
+    .collect::<std::result::Result<Vec<_>, _>>()
+    .map_err(|error| native("writing model chat messages", error))?;
     model
         .apply_chat_template(&template, &messages, true)
         .map_err(|error| {
@@ -1183,6 +1216,7 @@ mod tests {
                 &cancelled,
                 "technical-tail",
                 false,
+                None,
             )
             .unwrap();
         let corrected_tail = crate::fidelity::apply_technical_tail(tail, &generated_tail)
