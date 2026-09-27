@@ -185,6 +185,7 @@ async function setup({ recording = false, preview = false, main = false, interce
             replay: [],
             reviewQueue: [],
           };
+        case 'get_external_correction_reviews':
         case 'get_correction_suggestions':
           return [];
         case 'get_selected_adapters':

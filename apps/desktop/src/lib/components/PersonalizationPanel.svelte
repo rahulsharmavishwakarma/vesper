@@ -5,12 +5,16 @@
     savePersonalization,
     getAutomaticLearning,
     forgetAutomaticLearning,
+    chooseProjectApplication,
+    chooseProjectFolder,
+    type ProjectRule,
     type AutomaticLearningState,
     type PersonalizationProfile,
     type OutputIntent,
   } from '../api/personalization';
   import type { Language } from '../config';
   import Select from './Select.svelte';
+  import ExternalCorrectionReview from './ExternalCorrectionReview.svelte';
   let {
     desktop,
     disabled = false,
@@ -23,7 +27,7 @@
   let profile = $state<PersonalizationProfile | null>(null);
   let savedProfile = $state<PersonalizationProfile | null>(null);
   let learning = $state<AutomaticLearningState | null>(null);
-  let pending = $state<'loading' | 'saving' | null>(null);
+  let pending = $state<'loading' | 'saving' | 'choosing' | null>(null);
   let error = $state('');
   let feedback = $state('');
   const dirty = $derived(
@@ -36,6 +40,50 @@
     { value: 'message', label: 'Message' },
     { value: 'technical', label: 'Technical dictation' },
   ];
+  const projectModes = [
+    { value: 'manual' as const, label: 'Choose manually' },
+    { value: 'automatic' as const, label: 'Use application rules' },
+  ];
+  async function addProjectRule() {
+    if (!profile || controlsDisabled || profile.projectRules.length >= 32) return;
+    pending = 'choosing';
+    error = '';
+    let addedId = '';
+    try {
+      const application = await chooseProjectApplication();
+      if (application) {
+        const id = crypto.randomUUID();
+        profile.projectRules.push({
+          id,
+          applicationId: application.id,
+          applicationName: application.name,
+          project: '',
+          folder: null,
+          enabled: true,
+        });
+        addedId = id;
+      }
+    } catch (cause) {
+      error = String(cause);
+    } finally {
+      pending = null;
+    }
+    await tick();
+    if (addedId && visible) document.getElementById(`project-${addedId}`)?.focus();
+  }
+  async function setProjectFolder(rule: ProjectRule) {
+    if (controlsDisabled) return;
+    pending = 'choosing';
+    error = '';
+    try {
+      const path = await chooseProjectFolder();
+      if (path) rule.folder = path;
+    } catch (cause) {
+      error = String(cause);
+    } finally {
+      pending = null;
+    }
+  }
   const languageOptions: { value: Language; label: string }[] = [
     { value: 'auto', label: 'Any language' },
     { value: 'en', label: 'English' },
@@ -141,8 +189,7 @@
     <p class="note">
       Vesper automatically learns eligible spellings from your edits in Your text and uses dictation
       usage to rank saved words. Learning stays on this device, even when audio collection is off.
-      Corrections in other apps do not teach your vocabulary. You can remove or forget learned words
-      below.
+      TextEdit corrections can be reviewed below. You can remove or forget learned words below.
     </p>
   </header>
   {#if !desktop}
@@ -160,8 +207,18 @@
           <legend class="visually-hidden">Personal preferences</legend>
           <div class="preference-fields">
             <div class="field">
+              <label for="project-mode">Project selection</label>
+              <Select
+                id="project-mode"
+                bind:value={profile.projectMode}
+                options={projectModes}
+                disabled={controlsDisabled}
+              />
+            </div>
+            <div class="field">
               <label for="personal-project"
-                >Current project <span class="optional">(optional)</span></label
+                >{profile.projectMode === 'automatic' ? 'Project override' : 'Current project'}
+                <span class="optional">(optional)</span></label
               >
               <input
                 id="personal-project"
@@ -171,11 +228,78 @@
                 aria-describedby="personal-project-help"
               />
               <p id="personal-project-help" class="note">
-                Enter a project name and save before recording. Vesper does not detect your project
-                from another app. Switch this name when you switch projects; leave it blank to use
-                only shared vocabulary and examples.
+                {#if profile.projectMode === 'automatic'}
+                  Leave blank to use the app where you start shortcut dictation. Enter a name to
+                  override the rules.
+                {:else}
+                  Enter a project name and save before recording. Leave blank to use shared
+                  vocabulary and examples.
+                {/if}
+                Imports and recordings started here use this name. Each recording keeps its original project.
               </p>
             </div>
+            {#if profile.projectMode === 'automatic'}
+              <div class="field project-rules">
+                <h3>Application rules</h3>
+                <p class="note">
+                  Choose an app and name its project. TextEdit can also match a folder. Missing or
+                  conflicting context uses shared vocabulary.
+                </p>
+                {#each profile.projectRules as rule (rule.id)}
+                  <div class="project-rule">
+                    <label class="checkbox-field"
+                      ><input
+                        type="checkbox"
+                        bind:checked={rule.enabled}
+                      />{rule.applicationName}</label
+                    >
+                    <label for={`project-${rule.id}`}>Project for {rule.applicationName}</label>
+                    <input
+                      id={`project-${rule.id}`}
+                      bind:value={rule.project}
+                      maxlength="64"
+                      placeholder="Project name"
+                      required
+                    />
+                    {#if rule.folder}<p class="note project-folder">Folder: {rule.folder}</p>{/if}
+                    <div class="actions">
+                      {#if rule.applicationId === 'com.apple.TextEdit'}
+                        <button
+                          type="button"
+                          class="secondary"
+                          onclick={() => setProjectFolder(rule)}
+                          >{rule.folder ? 'Change folder' : 'Choose folder'}</button
+                        >
+                      {/if}
+                      {#if rule.folder}<button
+                          type="button"
+                          class="secondary"
+                          onclick={() => {
+                            rule.folder = null;
+                          }}>Use entire app</button
+                        >{/if}
+                      <button
+                        type="button"
+                        class="secondary"
+                        aria-label={`Remove ${rule.applicationName} project rule`}
+                        onclick={() => {
+                          if (profile)
+                            profile.projectRules = profile.projectRules.filter(
+                              (item) => item.id !== rule.id,
+                            );
+                        }}>Remove rule</button
+                      >
+                    </div>
+                  </div>
+                {/each}
+                <button
+                  type="button"
+                  class="secondary"
+                  disabled={controlsDisabled || profile.projectRules.length >= 32}
+                  onclick={addProjectRule}>Add application rule</button
+                >
+              </div>
+            {/if}
             <div class="field">
               <label for="personal-intent">Output style</label>
               <Select
@@ -443,7 +567,8 @@
                 <p class="note">
                   No recent in-app corrections recorded. Edit Your text in Dictate, then leave the
                   field or copy to save. Dictation and copying alone do not confirm a spelling.
-                  Corrections in other apps do not teach your vocabulary.
+                  Eligible TextEdit corrections need your confirmation below before becoming
+                  vocabulary.
                 </p>
               {/if}
               <p class="note">
@@ -523,10 +648,32 @@
         </div>
       </div>
     </form>
+    {#if profile}
+      <ExternalCorrectionReview
+        revision={profile.revision}
+        disabled={controlsDisabled || dirty}
+        {visible}
+        onRemember={(saved) => {
+          profile = saved;
+          savedProfile = $state.snapshot(saved);
+        }}
+      />
+    {/if}
   {/if}
 </section>
 
 <style>
+  .project-rules {
+    grid-column: 1 / -1;
+  }
+  .project-rule {
+    display: grid;
+    gap: 0.5rem;
+    padding-block: 0.75rem;
+  }
+  .project-folder {
+    overflow-wrap: anywhere;
+  }
   .personalization {
     margin-top: var(--space-6);
   }

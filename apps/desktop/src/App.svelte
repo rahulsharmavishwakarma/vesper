@@ -996,14 +996,14 @@
                           type="checkbox"
                           bind:checked={draft.textEditObservation}
                           aria-describedby="text-edit-observation-help"
-                        /><span>Evaluate corrections in TextEdit</span></label
+                        /><span>Review corrections in TextEdit</span></label
                       >
                       <p id="text-edit-observation-help" class="note checkbox-help">
                         Optional on Mac. After automatic paste, observe that text and up to 32
                         nearby characters on each side for up to one minute. Stores the inserted and
-                        edited text locally for evaluation; does not teach your dictionary yet.
-                        Requires TextEdit in plain-text mode with English menus. Forget learned
-                        spellings also deletes this data.
+                        edited text locally. Review eligible spellings in Writing before remembering
+                        them. Requires TextEdit in plain-text mode with English menus. Forget
+                        learned spellings also deletes this data.
                       </p>
                     </div>
                     <div class="field improvement-field">

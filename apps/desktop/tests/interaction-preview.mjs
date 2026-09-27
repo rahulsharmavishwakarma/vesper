@@ -56,6 +56,8 @@ if (states) {
     applyCorrections: true,
     useRememberedIntent: false,
     activeProject: '',
+    projectMode: 'manual',
+    projectRules: [],
     vocabulary: [],
     examples: [],
   };
@@ -154,6 +156,46 @@ if (states) {
           const record = records.find((r) => r.id === args.id);
           record.transcriptFeedback = args.feedback;
           return structuredClone(record);
+        }
+        case 'plugin:dialog|open':
+          if (window.previewDialogCancelled) return null;
+          return args.options.directory ? '/Projects/Synthetic' : '/Applications/TextEdit.app';
+        case 'read_project_application':
+          return { id: 'com.apple.TextEdit', name: 'TextEdit' };
+        case 'resolve_project_folder':
+          return args.path;
+        case 'get_external_correction_reviews':
+          return structuredClone(window.previewExternalReviews ?? []);
+        case 'dismiss_external_correction':
+          window.previewExternalReviews = (window.previewExternalReviews ?? []).filter(
+            (item) => item.token !== args.token,
+          );
+          return null;
+        case 'remember_external_correction': {
+          const review = (window.previewExternalReviews ?? []).find(
+            (item) => item.token === args.token,
+          );
+          if (!review || args.revision !== profile.revision)
+            throw new Error('Preferences changed; refresh before remembering this correction.');
+          profile.vocabulary.push({
+            id: 'external-fixture',
+            phrase: args.pair.intended,
+            aliases: [args.pair.heard],
+            language: review.language,
+            project: review.project,
+            context: '',
+            pronunciation: false,
+            enabled: true,
+            sources: [],
+            learnedAt: '',
+            automaticSource: null,
+            usageCount: 0,
+          });
+          profile.revision++;
+          window.previewExternalReviews = window.previewExternalReviews.filter(
+            (item) => item.token !== args.token,
+          );
+          return structuredClone(profile);
         }
         case 'get_personalization':
           return structuredClone(profile);
