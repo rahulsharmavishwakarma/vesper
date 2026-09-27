@@ -41,9 +41,7 @@ impl Runtime {
         };
         // Scope and language are authoritative recording metadata. A settings
         // change cannot reinterpret an older edit as feedback for a new scope.
-        if profile.active_project != request.context.project
-            || config.language != request.context.language
-        {
+        if config.language != request.context.language {
             return;
         }
         request.memories = profile
@@ -156,6 +154,7 @@ mod tests {
             draft_transcript: None,
             draft_revision: 0,
             learning_outcome: None,
+            project_selection: Default::default(),
             learning_context: vesper_core::LearningContext {
                 result_id: "native-shadow".into(),
                 source_key: "authored-native".into(),
@@ -169,6 +168,9 @@ mod tests {
             warnings: vec![],
             duration_seconds: 1.0,
         };
+        store
+            .observe_learning(&result.learning_context, &result.raw_transcript, None)
+            .unwrap();
         runtime.publish(result);
         runtime
             .edit_latest_draft(root.clone(), "native-shadow", 0, "Buy rice and eggs".into())
@@ -256,6 +258,7 @@ mod tests {
             draft_transcript: None,
             draft_revision: 0,
             learning_outcome: None,
+            project_selection: Default::default(),
             learning_context: vesper_core::LearningContext {
                 result_id: "r".into(),
                 source_key: "source".into(),
@@ -269,6 +272,10 @@ mod tests {
             warnings: vec![],
             duration_seconds: 1.0,
         });
+        let observed = runtime.latest().unwrap().unwrap();
+        store
+            .observe_learning(&observed.learning_context, &observed.raw_transcript, None)
+            .unwrap();
         let edited = runtime
             .edit_latest_draft(dir.path().into(), "r", 0, "README".into())
             .unwrap();

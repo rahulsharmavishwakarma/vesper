@@ -7,6 +7,72 @@ const HEARD: &str = "Deploy kubernets to the cluster";
 const EDITED: &str = "Deploy kubernetes to the cluster";
 
 #[test]
+fn automatic_project_completion_and_delayed_edits_keep_receiving_scope_after_settings_change() {
+    let dir = tempfile::tempdir().unwrap();
+    let root = dir.path().join("dataset");
+    let runtime = Arc::new(Runtime::default());
+    let store = DatasetStore::open(root.clone()).unwrap();
+    let mut profile = store.dictation_personalization().unwrap();
+    profile.project_mode = vesper_core::ProjectMode::Automatic;
+    profile.project_rules.push(vesper_core::ProjectRule {
+        id: "editor-a".into(),
+        application_id: "test.editor".into(),
+        application_name: "Editor".into(),
+        project: "Project A".into(),
+        folder: None,
+        enabled: true,
+    });
+    store.save_dictation_personalization(profile).unwrap();
+    let mut snapshot = store.dictation_personalization_snapshot().unwrap();
+    snapshot.resolve_project(Some("test.editor"), None);
+    let context = WorkContext {
+        operation_id: "recording-in-a".into(),
+        config: AppConfig {
+            cleanup_enabled: false,
+            collect_training_data: false,
+            language: Language::English,
+            ..Default::default()
+        },
+        model_root: root.join("no-models"),
+        dataset_root: root.clone(),
+        runtime: Arc::clone(&runtime),
+        inference: Arc::new(vesper_inference::InferenceManager::new().unwrap()),
+        streaming_result: Arc::default(),
+        personalization: Arc::default(),
+    };
+    context.personalization.set(Ok(snapshot)).unwrap();
+    let mut changed = store.personalization().unwrap();
+    changed.active_project = "Project B".into();
+    changed.project_rules[0].project = "Changed rule".into();
+    store.save_dictation_personalization(changed).unwrap();
+    let audio = MonoPcm::new(vec![0.1; 1600], 16000).unwrap();
+    let mut result = context
+        .complete_raw(&audio, &mut None, "Open read me for deployment".into())
+        .unwrap();
+    context.observe_result(&mut result, false);
+    runtime.publish(result.clone());
+    assert_eq!(result.project_selection.project, "Project A");
+    assert_eq!(
+        result.project_selection.source,
+        vesper_core::ProjectSource::Application
+    );
+    assert_eq!(result.learning_context.project, "Project A");
+    runtime
+        .edit_latest_draft(
+            root,
+            &result.result_id,
+            0,
+            "Open README.md for deployment".into(),
+        )
+        .unwrap();
+    let saved = store.personalization().unwrap();
+    assert_eq!(saved.active_project, "Project B");
+    assert_eq!(saved.vocabulary.len(), 1);
+    assert_eq!(saved.vocabulary[0].project, "Project A");
+    assert!(store.list_sessions().unwrap().is_empty());
+}
+
+#[test]
 fn automatic_app_context_guard_applies_to_later_raw_context_and_freezes_per_operation() {
     let dir = tempfile::tempdir().unwrap();
     let root = dir.path().join("dataset");

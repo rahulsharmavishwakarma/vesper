@@ -106,13 +106,14 @@ Continuous model improvement remains a separate train/evaluate/promote milestone
 ### Current personalization boundaries
 
 This diagram describes the implemented flow. The operation freezes its project,
-language and memory before using them. Project selection is currently manual;
-external candidates and semantic/policy evaluations do not activate memory or
-train models. Detailed contracts live in the [personalization guide](personalization/README.md).
+language and memory before using them. Projects resolve from an explicit manual
+override or bounded app/qualified TextEdit folder rules. External candidates need
+explicit spelling confirmation; semantic/policy evaluations do not activate memory
+or train models. Detailed contracts live in the [personalization guide](personalization/README.md).
 
 ```mermaid
 flowchart TD
-    P["Saved project, language and memory"] --> S["Frozen operation snapshot"]
+    P["Manual override, app/folder rules, language and memory"] --> S["Frozen operation snapshot"]
     S --> A["Selected ASR; optional supported hints"]
     A --> R["Durable raw transcript"]
     R --> C["Select memory using raw text and scope"]
@@ -127,15 +128,17 @@ flowchart TD
     G -->|"Eligible spelling"| P
     E --> Q["Semantic and policy shadow evaluation only"]
     O --> T["Opt-in TextEdit receipt"]
-    T --> X["External shadow candidate; no admission"]
+    T --> X["Bounded external correction candidate"]
+    X --> V["Explicit spelling review"]
+    V -->|"Confirm one spelling"| P
     R --> H["Separate explicit human review"]
     H --> D["Reviewed ASR or cleanup export"]
 ```
 
 The shared correction stage remains available with writing disabled or failed;
 unsupported decoder hints do not disable memory. Ordinary edits are spelling
-evidence, not reviewed training targets. The TextEdit observer has not passed
-the complete keyboard-paste qualification described in its [guide](personalization/external-observer.md).
+evidence, not reviewed training targets. The authored native TextEdit keyboard-paste component checks passed; broader
+app-path and natural-use qualification remain open in its [guide](personalization/external-observer.md).
 There is no edge from shadow candidates or reviewed exports to a live training
 or promotion service because that service is not implemented.
 

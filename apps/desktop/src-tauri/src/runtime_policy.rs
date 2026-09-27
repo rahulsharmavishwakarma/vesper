@@ -90,6 +90,7 @@ mod tests {
             draft_transcript: None,
             draft_revision: 0,
             learning_outcome: None,
+            project_selection: Default::default(),
             learning_context: vesper_core::LearningContext {
                 result_id: "worker".into(),
                 source_key: "authored".into(),
@@ -103,6 +104,10 @@ mod tests {
             warnings: vec![],
             duration_seconds: 1.0,
         });
+        let observed = runtime.latest().unwrap().unwrap();
+        store
+            .observe_learning(&observed.learning_context, &observed.raw_transcript, None)
+            .unwrap();
         runtime
             .edit_latest_draft(root.clone(), "worker", 0, "README".into())
             .unwrap();

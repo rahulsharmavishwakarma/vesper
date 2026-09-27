@@ -41,6 +41,7 @@ pub struct PipelineResult {
     pub draft_transcript: Option<String>,
     pub draft_revision: u64,
     pub learning_outcome: Option<vesper_core::LearningOutcome>,
+    pub project_selection: vesper_core::ProjectSelection,
     #[serde(skip)]
     pub learning_context: vesper_core::LearningContext,
     pub session: Option<SessionRecord>,
@@ -62,6 +63,7 @@ mod tests {
             draft_transcript: None,
             draft_revision: 0,
             learning_outcome: None,
+            project_selection: Default::default(),
             learning_context: vesper_core::LearningContext {
                 result_id: id.into(),
                 source_key: format!("audio-{id}"),
@@ -186,6 +188,7 @@ mod tests {
             draft_transcript: None,
             draft_revision: 0,
             learning_outcome: None,
+            project_selection: Default::default(),
             learning_context: Default::default(),
             session: None,
             warnings: vec![],
@@ -1686,6 +1689,7 @@ impl WorkContext {
     }
 
     pub fn process_file(&self, path: &Path) -> Result<PipelineResult, String> {
+        self.personalization()?;
         self.runtime
             .progress("transcribing", "Preserving and decoding audio…");
         let mut session = self.archive(path)?;
@@ -1908,6 +1912,7 @@ impl WorkContext {
             draft_transcript: None,
             draft_revision: 0,
             learning_outcome: None,
+            project_selection: Default::default(),
             learning_context: Default::default(),
             session: session.clone(),
             warnings: vec![],
@@ -2040,6 +2045,7 @@ impl WorkContext {
             return Err("Transcription cancelled.".into());
         }
         let profile = self.personalization()?;
+        result.project_selection = self.personalization_snapshot()?.project_selection.clone();
         result.learning_context = vesper_core::LearningContext {
             result_id: result.result_id.clone(),
             source_key: if profile.automatic_learning {
@@ -2062,11 +2068,11 @@ impl WorkContext {
         result.personalization_evidence = Some(personalized.evidence.clone());
         if let Some(record) = session.as_ref() {
             match DatasetStore::open(self.dataset_root.clone()).and_then(|store| {
-                store.complete_personalization(
+                store.complete_personalization_scoped(
                     &record.id,
                     personalized.text,
                     personalized.evidence,
-                    profile.active_project.clone(),
+                    result.project_selection.clone(),
                 )
             }) {
                 Ok(updated) => *session = Some(updated),
