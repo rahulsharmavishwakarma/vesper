@@ -34,7 +34,7 @@ impl DatasetStore {
         if request.origin != vesper_core::SemanticOrigin::InAppDraftEdit
             || !profile.automatic_learning
             || profile.learning_epoch != request.context.learning_epoch
-            || profile.active_project != request.context.project
+            || !self.learning_operation_current(&request.context)?
             || request.memories.iter().any(|m| {
                 !profile.vocabulary.iter().any(|v| {
                     v.enabled
@@ -95,7 +95,7 @@ impl DatasetStore {
         let profile = self.personalization()?;
         if !profile.automatic_learning
             || profile.learning_epoch != request.context.learning_epoch
-            || profile.active_project != request.context.project
+            || !self.learning_operation_current(&request.context)?
         {
             return Ok(false);
         }
@@ -144,11 +144,12 @@ mod tests {
     use super::*;
     fn request(store: &DatasetStore, id: &str) -> SemanticAnalysisRequest {
         let p = store.dictation_personalization().unwrap();
-        SemanticAnalysisRequest {
+        let request = SemanticAnalysisRequest {
             schema_version: 1,
             origin: vesper_core::SemanticOrigin::InAppDraftEdit,
             session_id: None,
             context: vesper_core::LearningContext {
+                language: vesper_core::Language::English,
                 result_id: id.into(),
                 episode_id: id.into(),
                 source_key: "source".into(),
@@ -161,7 +162,11 @@ mod tests {
             after: "README".into(),
             earlier: None,
             memories: vec![],
-        }
+        };
+        store
+            .observe_learning(&request.context, &request.before, None)
+            .unwrap();
+        request
     }
     #[test]
     fn completion_cannot_resurrect_undo_forget_or_superseded_edits() {
@@ -229,7 +234,12 @@ mod tests {
         report.proposal = Some(r.parse_proposal(r#"{"schemaVersion":1,"relation":"repair","relationEvidence":[{"source":"before","start":0,"end":7},{"source":"after","start":0,"end":6}],"intent":null,"intentEvidence":[],"memories":[]}"#).unwrap());
         assert!(other.finish_semantic_shadow(&r, &report).unwrap());
         assert_eq!(s.personalization().unwrap(), profile);
-        assert!(s.automatic_learning_state().unwrap().events.is_empty());
+        assert!(s
+            .automatic_learning_state()
+            .unwrap()
+            .events
+            .iter()
+            .all(|e| matches!(e.kind, crate::LearningEventKind::RawObservation)));
         assert!(!s.finish_semantic_shadow(&r, &report).unwrap());
         s.forget_automatic_learning(profile.revision).unwrap();
         assert!(!other.finish_semantic_shadow(&r, &report).unwrap());

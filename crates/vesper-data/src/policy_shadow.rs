@@ -211,7 +211,7 @@ impl DatasetStore {
         let profile = self.personalization()?;
         if !profile.automatic_learning
             || profile.learning_epoch != context.learning_epoch
-            || profile.active_project != context.project
+            || !self.learning_operation_current(context)?
         {
             return Ok(None);
         }
@@ -282,7 +282,7 @@ impl DatasetStore {
             && r.context.learning_enabled
             && p.automatic_learning
             && p.learning_epoch == r.context.learning_epoch
-            && p.active_project == r.context.project)
+            && self.learning_operation_current(&r.context)?)
     }
     pub fn finish_policy_shadow(
         &self,
@@ -500,7 +500,7 @@ mod tests {
     use std::sync::atomic::AtomicBool;
     fn context(store: &DatasetStore, id: &str) -> LearningContext {
         let p = store.dictation_personalization().unwrap();
-        LearningContext {
+        let context = LearningContext {
             result_id: id.into(),
             source_key: format!("audio-{id}"),
             episode_id: id.into(),
@@ -508,7 +508,11 @@ mod tests {
             learning_enabled: true,
             language: vesper_core::Language::English,
             ..Default::default()
-        }
+        };
+        store
+            .observe_learning(&context, "authored fixture", None)
+            .unwrap();
+        context
     }
     fn evidence(i: u64) -> Evidence {
         Evidence {

@@ -1,6 +1,8 @@
 //! Local audio and correction storage. This crate does not run inference or training.
 
+mod external_review;
 mod external_shadow;
+pub use external_review::ExternalCorrectionReview;
 mod learning;
 mod personalization;
 pub mod policy;
