@@ -44,3 +44,39 @@ Primary API evidence: [bounded range reads](https://developer.apple.com/document
 ### Current measured status
 
 The September 19 [qualification record](evaluation.md#policy-shadow-and-textedit-component-checks--19-september-2026) separates successful AX-driven TextEdit component tests from actual Command-V runs that stopped on identity notifications. Full paste-to-correction qualification remains open. The harness's `--ax-fixture` mode injects only into its verified authored document; `outside` and `cancel` as an additional argument exercise rejection. This mode does not measure keyboard dispatch. `--fixture` opens visible TextEdit windows; run it only during an intentional GUI test session, and close the authored documents afterward. Ordinary unit/browser tests never launch TextEdit.
+
+## Proposed admission after qualification
+
+The next design in [#61](https://github.com/rahulsharmavishwakarma/transcribe/issues/61)
+reuses this observer and the existing correction-memory APIs. It is not active
+learning from external edits. First diagnose the actual keyboard-paste failure:
+distinguish a redundant focus notification from a genuine retained field/window
+change, while keeping destruction, permission loss and identity mismatch as
+hard stops. Passing an AX-insertion fixture alone does not clear this gate.
+
+```mermaid
+flowchart LR
+    P["Qualified paste and bounded receipt"] --> C["External correction candidate"]
+    C --> R["PROPOSED: review or dismiss"]
+    R -->|"Confirm spelling correction"| M["Existing scoped memory"]
+    R -->|"Dismiss or ambiguous"| N["No admission"]
+    U["Undo remembered correction"] -->|"Remove related memory"| M
+    F["Forget automatic evidence"] -->|"Delete candidates"| C
+```
+
+After native qualification, show the inserted/changed span through a bounded
+review action. A confirmed spelling may use the existing remember-correction
+path with the receipt's frozen project/language and current epoch. It must not
+become a reviewed full transcript, verbatim ASR target or cleanup training label.
+Retain existing expiry, quotas, source deduplication and Undo/Forget semantics;
+Forget invalidates pending candidates without deleting manually remembered
+words. No separate dictionary or inference adapter is needed.
+
+Passive automatic admission remains a separate evidence gate. AX notifications
+and matching boundaries do not distinguish the user from spellcheck or another
+automation. Repeated unreviewed machine edits cannot certify their own truth.
+Test actual Command-V, adjacent edits, app-generated substitutions, undo/redo,
+document reuse, delayed events, unsupported input methods and scope changes.
+Measure native read bounds, capture/stop-to-insert overhead and idle activity.
+Only expand to another editor after its metadata and attribution behavior pass
+the same tests; general screen/document monitoring is outside this design.

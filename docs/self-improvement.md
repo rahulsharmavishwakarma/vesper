@@ -2,13 +2,13 @@
 
 The application has two local improvement paths: **ordinary edit → eligible automatic spelling memory → later scoped use**, and **explicit review → confirm memory → later scoped use**. Automatic local learning is core desktop behavior for new and existing profiles. Eligible edits and usage/retry observations run on the existing background workers without an enable switch or per-word confirmation. This product requirement does not establish that every update improves accuracy; admission guards and outcome evaluation remain necessary. Memory belongs to the application rather than a model and uses no cloud inference or learning API.
 
-[ADR-0016](adrs/0016-automatic-local-spelling-learning.md) records the approved automatic extension. The [implementation guide](personalization/README.md) documents editable drafts, vocabulary admission, context/in-context selection, intent, retry evidence, storage/privacy and testing individually. The [research synthesis](research-automatic-personalization.md) preserves the evidence and proposed later semantic work. Training remains deferred until the user publishes their own model and approves a specific training proposal. The separate [semantic shadow path](personalization/semantic-shadow.md) now analyzes bounded in-app edits with the already-resident local writer. Its proposals cannot change active memory or preferences; installed-model qualification currently fails the semantic quality gate.
+[ADR-0016](adrs/0016-automatic-local-spelling-learning.md) records the approved automatic extension. The [implementation guide](personalization/README.md) documents editable drafts, vocabulary admission, context/in-context selection, intent, retry evidence, storage/privacy and testing individually. The [research synthesis](research-automatic-personalization.md) preserves the evidence and proposed later semantic work. The owner has requested resuming the training direction; the cleanup-first design below still requires its concrete architecture approval and compatibility proof. The separate [semantic shadow path](personalization/semantic-shadow.md) now analyzes bounded in-app edits with the already-resident local writer. Its proposals cannot change active memory or preferences; installed-model qualification currently fails the semantic quality gate.
 
 The [local memory decision](adrs/0015-model-independent-local-memory.md) defines the implemented correction suggestions, scoped vocabulary/aliases, optional output-form suggestions, pronunciation-confusion labels, useful review queue and bounded learning report. Raw speech, machine cleanup, extra personalized output and human targets remain separate. Undo restores the machine result, including with collection off. Remembered pronunciation confusions are text-level adaptation, not accent detection or acoustic weight learning.
 
 The learning report separates actual uses/undos from text replay against later verbatim reviews. Replay excludes teaching examples, duplicate audio and memories created after a recording, groups stored model/provenance/settings, and retains regressions. It is not a prospective holdout, acoustic benchmark or proof of personal benefit. The [personal dictation research](research-personal-dictation.md) documents recent 2025–2026 evidence and qualification limits. Progress and acceptance criteria remain in [#34](https://github.com/rahulsharmavishwakarma/transcribe/issues/34).
 
-The dataset/export and future training contract below preserves separate speech and cleanup supervision. There is no training runner or model promotion service; choosing an improvement mode does not start training. The future training proposal is deferred under [#5](https://github.com/rahulsharmavishwakarma/transcribe/issues/5). Existing local capture, reviews and exports support that later work without making it a dependency of current personalization.
+The dataset/export and future training contract below preserves separate speech and cleanup supervision. There is no training runner or model promotion service; choosing an improvement mode does not start training. The proposed extension is tracked in [#5](https://github.com/rahulsharmavishwakarma/transcribe/issues/5). Existing local capture, reviews and exports support that work without making it a dependency of current personalization.
 
 The [personalization phase roadmap](personalization/roadmap.md) explains the intervening work: qualify ordinary spelling learning, evaluate local semantic preferences/intent/repair, and evaluate separately enabled TextEdit correction candidates in isolated shadow storage. The application now also persists bounded six-policy comparisons of explicit edits; active learning rules remain fixed. These application-memory extensions can improve without retraining. The own-model phase remains optional and uses the training contract below.
 
@@ -75,7 +75,63 @@ Where possible, group related recording sessions by speaker and environment to m
 
 Deleting a source session should remove it from future dataset snapshots. Already exported copies or previously trained weights require their own lifecycle decisions; keep export and candidate manifests so affected artifacts can be identified. The application must distinguish local deletion from deletion of external copies it cannot control.
 
-## Deferred: train a candidate without replacing the working model
+## Proposed cleanup-first implementation
+
+This is a proposed sequence, not an executable feature. Keep application memory
+and feedback portable across models, while binding trained adapters to their
+exact base checkpoint. Start with the normal full-cleanup pass of the built-in
+Qwen3.5-0.8B writer. Keep its technical-tail pass on base weights and preserve
+the existing two-pass routing, fidelity checks and raw fallback. An ordinary
+custom-writer profile is not equivalent: that route skips built-in tail behavior.
+
+```mermaid
+flowchart TD
+    R["Explicitly reviewed cleanup targets"] --> S["PROPOSED: immutable grouped snapshots"]
+    S --> T["Optional local trainer; pinned base"]
+    T --> C["Separate adapter artifact and provenance"]
+    C --> V["Native conversion and load proof"]
+    V --> E["Paired held-out quality and resource gates"]
+    E -->|"All required gates pass"| H["Review candidate report"]
+    E -->|"Fail or missing evidence"| K["Retain or restore prior model"]
+    H -->|"Approve between requests"| A["Atomic activation; retain previous artifact"]
+    A -->|"Failure or user rollback"| K
+```
+
+Reuse reviewed exports, adding per-target withdrawal, immutable source/review
+hashes, grouped and temporal holdouts, and candidate dependency tracking. Add a
+cleanup-only candidate mode to `vesper-eval`, then compare the complete native
+pipeline with identical memory on both arms. Freeze quality, language coverage,
+meaning, latency and memory gates before fitting. Insufficient evidence blocks
+promotion; a small smoke test is not a personal-benefit result.
+
+An optional `training/cleanup/pyproject.toml` and `uv.lock` would isolate local
+MLX training from desktop inference. First prove zero and deterministic nonzero
+adapter conversion, tensor naming/scaling, and native parity. The inspected
+[MLX-LM v0.31.3 exporter](https://github.com/ml-explore/mlx-lm/blob/ed1fca4cef15a824c5f1702c80f70b4cffc8e4dd/mlx_lm/fuse.py#L88-L95)
+does not support Qwen3.5 GGUF export. Its [LoRA tooling](https://github.com/ml-explore/mlx-lm/blob/ed1fca4cef15a824c5f1702c80f70b4cffc8e4dd/mlx_lm/LORA.md)
+does not by itself prove compatibility with the pinned native converter's
+[PEFT adapter input](https://github.com/ggml-org/llama.cpp/blob/e79e4bf660e19f2ad851e06c6913f7a8c5852621/convert_lora_to_gguf.py).
+Reject unsupported mappings instead of changing the production writer runtime.
+
+The proposed training source is
+`Qwen/Qwen3.5-0.8B@2fc06364715b967f1860aea9cf38778875588b17`; native qualification
+uses the currently pinned Q4/Q8 artifacts and `llama-cpp-2 0.1.156` /
+`llama.cpp e79e4bf660e19f2ad851e06c6913f7a8c5852621`. These identify the experiment,
+not a verified export path. [LoRA](https://arxiv.org/abs/2106.09685) supports the
+adaptation method; it supplies no measured quality or speedup for this app.
+
+After conversion proof, use bounded, cancellable jobs from a fresh pinned base
+and cumulative reviewed data. A local candidate registry would record artifact,
+dataset, toolchain, evaluation and predecessor hashes. Activation must preserve
+request isolation and invalidate cached state by candidate identity. Qualify
+load failure, cancellation, restart and rollback on the actual CPU/Metal path.
+Training shares unified memory with inference; a later opt-in idle scheduler
+must yield to dictation and respect power, thermal and memory budgets.
+Automatic training and automatic promotion are separate capabilities. Start
+with reviewed activation; autonomous promotion requires a separately qualified
+gate policy and later-session evidence. Acoustic training is a separate target.
+
+## Train a candidate without replacing the working model
 
 The training job consumes a fixed dataset snapshot and produces a new candidate artifact. Start with the task indicated by the observed errors: speech-recognition mistakes require acoustic/transcription evaluation; unwanted edits require cleanup evaluation. The eventual own-model project must select its training target from measured errors; no specific training method or hosted destination is approved here.
 

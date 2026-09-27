@@ -4,7 +4,7 @@ The [September RSI survey](../research-rsi-2026-09.md) supplies recent primary s
 
 This page explains the product and engineering sequence beyond the implemented automatic dictionary. It complements the [component contracts](README.md), [research synthesis](../research-automatic-personalization.md) and [continuous-improvement contract](../self-improvement.md). Architectural proposals, approval decisions and progress belong to [issue #34 and its sub-issues](https://github.com/rahulsharmavishwakarma/transcribe/issues/34), shown together in the [RSI Project view](https://github.com/users/rahulsharmavishwakarma/projects/2/views/6). The issue links below identify each scope's owner; current status, next action and evidence stay in GitHub rather than a second local backlog.
 
-The original proposal named **phase A** and **phase B**. **C and D below are organizational names.** Semantic shadow analysis in B, the first TextEdit-only shadow scope in C and the persistent policy-shadow contract are explicitly approved and implemented; training in D remains deferred. These approvals cover isolated evaluation. Activating semantic memory, admitting external corrections or promoting a live policy needs a separate decision. [ADR-0016](../adrs/0016-automatic-local-spelling-learning.md) records the implemented phase-A decision.
+The original proposal named **phase A** and **phase B**. **C and D below are organizational names.** Semantic shadow analysis in B, the first TextEdit-only shadow scope in C and the persistent policy-shadow contract are explicitly approved and implemented; training in D now has a proposed cleanup-first design. These approvals cover isolated evaluation. Automatic project resolution, external admission and training/promotion need their concrete architectural decisions. [ADR-0016](../adrs/0016-automatic-local-spelling-learning.md) records the implemented phase-A decision.
 
 ## At a glance
 
@@ -14,11 +14,17 @@ The original proposal named **phase A** and **phase B**. **C and D below are org
 | A qualification | Establish whether learning actually reduces repeated corrections and editing time. | Controlled tests and a public replay exist; longitudinal user evidence is still needed. | [#58](https://github.com/rahulsharmavishwakarma/transcribe/issues/58) |
 | B — semantic personalization | Learn supported writing preferences and better interpret intent, repairs and relevant context. | Bounded [semantic shadow analysis](semantic-shadow.md) is wired to draft edits; activation and personal efficacy remain unqualified. | [#59](https://github.com/rahulsharmavishwakarma/transcribe/issues/59) |
 | C — optional external-app feedback | Learn from a correction made in the editor where dictation was inserted. | Separately enabled TextEdit-only shadow observation is wired to insertion; candidates do not teach vocabulary. See the [observer contract](external-observer.md) for qualification limits. | [#61](https://github.com/rahulsharmavishwakarma/transcribe/issues/61); insertion remains in [#4](https://github.com/rahulsharmavishwakarma/transcribe/issues/4) |
-| D — optional own-model adaptation | Improve acoustic recognition or cleanup through a trained and qualified local artifact. | Deferred until the own-model project and a specific training proposal. | [#5](https://github.com/rahulsharmavishwakarma/transcribe/issues/5) |
+| D — optional own-model adaptation | Improve acoustic recognition or cleanup through a trained and qualified local artifact. | Cleanup-first design proposed; architecture approval and exact training-to-native compatibility proof required. | [#5](https://github.com/rahulsharmavishwakarma/transcribe/issues/5) |
 
 The separate [adaptive-policy qualification gate (#60)](https://github.com/rahulsharmavishwakarma/transcribe/issues/60) owns the evidence and approval needed before promoting the implemented shadow controller to live use. Both live policy promotion and semantic activation depend on A qualification's independently labelled feedback. Native device/permission checks remain in [#7](https://github.com/rahulsharmavishwakarma/transcribe/issues/7); #58 owns the learning outcome across sessions. C and D remain optional directions, not prerequisites for automatic in-app learning.
 
 Application memory remains local and independent of model weights throughout. B and C must operate using installed local components without a hosted inference, embedding or memory API. D is optional: vocabulary and preference learning must continue to work without training or waiting for a new model release.
+
+The extension designs are in [automatic project resolution](context-selection.md#proposed-automatic-project-resolution),
+[reviewed external admission](external-observer.md#proposed-admission-after-qualification)
+and [cleanup-first training](../self-improvement.md#proposed-cleanup-first-implementation).
+Their diagrams describe proposals. Existing manual project selection, isolated
+external candidates and inactive training remain the operational behavior.
 
 ## Will ordinary use produce self-improvement?
 
@@ -126,7 +132,7 @@ The approved implementation and privacy/retention limits live in [TextEdit corre
 
 ## D: optional own-model and acoustic adaptation
 
-When the own-model project begins, separately reviewed data can support candidate cleanup or acoustic training. Cleanup needs raw predictions paired with reviewed edited wording; ASR needs audio paired with reviewed verbatim speech. Ordinary dictionary events and inferred retries are not automatically valid training labels.
+The proposed first training experiment uses separately reviewed cleanup pairs; acoustic training remains a separate later target. Cleanup needs raw predictions paired with reviewed edited wording; ASR needs audio paired with reviewed verbatim speech. Ordinary dictionary events and inferred retries are not automatically valid training labels.
 
 The future workflow is a versioned dataset snapshot, separate candidate training, held-out evaluation of the deployable artifact, an explicit promotion policy and rollback. It must qualify native conversion, quantization, supported languages, latency, memory and retention of general speech ability. Training uses an appropriate source checkpoint, not in-place edits to the deployed quantized file. Local inference continues while optional training is absent; no cloud API is required by this roadmap. Whether training fits the user's device must be measured on the selected recipe and hardware.
 

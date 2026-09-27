@@ -50,3 +50,46 @@ The additional automatic-context selector has the narrower 8,192-byte raw-hypoth
 Usage ranking chooses which existing memory fits a bounded prompt or hint list; it does not increase replacement authority or bypass meaning guards. Local learning runs automatically. Alias application, recognition hints and example-based output intent retain separate settings. Disabling final alias application does not change an independently enabled recognition-hint setting.
 
 Pinned artifacts and exact native API sources are recorded in [ADR-0015](../adrs/0015-model-independent-local-memory.md#evidence-and-boundaries). The new feature changes application records and selection order, not inference ownership, decoder internals or model weights.
+
+## Proposed automatic project resolution
+
+This extension is a design for [#34](https://github.com/rahulsharmavishwakarma/transcribe/issues/34),
+not current behavior. Reuse the existing profile and operation snapshot: resolve
+the receiving application once before recognition, then freeze the effective
+project and the rule that selected it. Do not rewrite the saved manual project
+when focus changes. Proposed precedence is explicit manual override, a unique
+qualified folder rule, a unique app rule, then shared vocabulary. Conflicts,
+unavailable context and unsupported editors must abstain from automatic scope.
+File imports and recordings without a receiving app retain explicit scope.
+
+```mermaid
+flowchart LR
+    A["Receiving app at capture start"] --> R["PROPOSED: bounded rule resolver"]
+    F["Optional qualified document URL"] --> R
+    P["Saved app or folder rules"] --> R
+    O["Explicit manual override"] --> R
+    R --> S["Frozen effective project and provenance"]
+    S --> M["Existing ASR hints, writer and memory"]
+    S --> E["Feedback tied to original operation"]
+```
+
+Apple's [frontmost application](https://developer.apple.com/documentation/appkit/nsworkspace/frontmostapplication)
+and [bundle identifier](https://developer.apple.com/documentation/appkit/nsrunningapplication/bundleidentifier)
+identify an app, not a repository. Two projects in the same editor require a
+qualified document-context adapter or manual selection. Apple's optional
+[accessibility document URL](https://developer.apple.com/documentation/appkit/nsaccessibility-c.protocol/accessibilitydocument)
+can support folder matching only where the editor exposes it reliably. Match
+against user-selected roots; avoid title heuristics, file scanning and document
+contents. Keep observed URLs transient and persist only the effective scope and
+rule identity with a result. Unavailable URL context must be visible when
+folder rules cannot resolve the project.
+
+Use the familiar app-association pattern from [Superwhisper's activation rules](https://superwhisper.com/docs/modes/modes)
+within the existing project controls, with an explicit manual override and a
+visible effective project. Rule changes affect subsequent recordings. Existing
+shadow stores currently compare the operation project with the mutable global
+selection; they must instead validate an app-owned operation reservation and
+epoch before automatic scopes can be enabled. Test same-editor projects,
+ambiguous/nested rules, focus changes, delayed feedback, Undo/Forget and model
+switches, and measure capture-start overhead. No routing accuracy or performance
+gain has been measured for this proposal.
