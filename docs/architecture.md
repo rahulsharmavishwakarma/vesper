@@ -63,7 +63,7 @@ flowchart LR
 
 Fast UI status distinguishes artifact presence from runtime readiness. Full hashes are checked during installation and immediately before inference. Browser preview renders catalog metadata but cannot inspect the filesystem or download files; those actions require Tauri.
 
-Dictate and Settings bind to one persisted transcription-language field. The frontend derives its visible Automatic/English/French/Hindi subset from the selected built-in adapter or the imported ASR profile's declared languages. This is recognition guidance, not a translation stage. Fresh settings use explicit English because Cohere is the current default; Automatic is offered only by compatible models and is not proof of code-switching quality. See the [canonical language matrix](language-support-and-recommendations.md).
+Dictate and Settings bind to one persisted transcription-language field. The frontend derives its visible Automatic/English/French/Hindi subset from the selected speech model and backend, then intersects it with the enabled writer's declared languages. Native save and writing guards enforce compatibility too; an incompatible legacy writer preserves raw output with a warning. This is recognition guidance, not a translation stage. Fresh settings use explicit English because Cohere is the current default; Automatic is offered only by compatible configurations and is not proof of code-switching quality. See the [canonical language matrix](language-support-and-recommendations.md).
 
 ## Execution and cancellation
 
@@ -102,6 +102,44 @@ Settings are atomically replaced JSON rather than database rows; original audio 
 Exports contain original audio, metadata, explicit ASR/cleanup targets, and task eligibility. Reviewed export excludes records without an eligible human label. Archive export preserves pending records with null targets. Audio hashes are rechecked, unsafe paths rejected, and nonempty destinations never overwritten.
 
 Continuous model improvement remains a separate train/evaluate/promote milestone. Both configured promotion modes require reviewed examples. Python can be added to that optional training environment without adding it to this app. See [the improvement plan](self-improvement.md).
+
+### Current personalization boundaries
+
+This diagram describes the implemented flow. The operation freezes its project,
+language and memory before using them. Project selection is currently manual;
+external candidates and semantic/policy evaluations do not activate memory or
+train models. Detailed contracts live in the [personalization guide](personalization/README.md).
+
+```mermaid
+flowchart TD
+    P["Saved project, language and memory"] --> S["Frozen operation snapshot"]
+    S --> A["Selected ASR; optional supported hints"]
+    A --> R["Durable raw transcript"]
+    R --> C["Select memory using raw text and scope"]
+    S --> C
+    C --> W["Optional compatible writer and fidelity checks"]
+    R -->|"Writer off or failed"| M["Shared saved-correction stage"]
+    W --> M
+    C --> M
+    M --> O["Output with recording scope"]
+    O --> E["Edits in Your text"]
+    E --> G["Independent support, language and context gates"]
+    G -->|"Eligible spelling"| P
+    E --> Q["Semantic and policy shadow evaluation only"]
+    O --> T["Opt-in TextEdit receipt"]
+    T --> X["External shadow candidate; no admission"]
+    R --> H["Separate explicit human review"]
+    H --> D["Reviewed ASR or cleanup export"]
+```
+
+The shared correction stage remains available with writing disabled or failed;
+unsupported decoder hints do not disable memory. Ordinary edits are spelling
+evidence, not reviewed training targets. The TextEdit observer has not passed
+the complete keyboard-paste qualification described in its [guide](personalization/external-observer.md).
+There is no edge from shadow candidates or reviewed exports to a live training
+or promotion service because that service is not implemented.
+
+Keep these diagrams in sync using the [Mermaid and Excalidraw review workflow](project-workflow.md#architecture-diagram-workflow).
 
 ## Evaluation and model recommendations
 

@@ -140,6 +140,42 @@ Every issue should have at least one truthful work-type label. Use `enhancement`
 
 Combine work-type labels when the deliverables genuinely span categories, such as `performance` plus `research`. Add an existing area, platform, priority, or status label only when it improves routing. Prefer the existing taxonomy; create a missing label only when it will be reused, and never add an issue-specific synonym.
 
+## Architecture diagram workflow
+
+Mermaid fenced blocks in the owning `docs/` page are the reviewable source for
+architecture diagrams. Use a component/data-flow diagram for ownership and data
+boundaries, or a sequence diagram when ordering, cancellation and asynchronous
+callbacks determine correctness. Update the existing diagram with its related
+implementation; avoid another diagram for a change that leaves these boundaries
+unchanged. [Architecture](architecture.md) owns the overview, and feature guides
+own their detailed flows.
+
+Distinguish current behavior from proposals and failed qualification gates.
+Include the important raw-output, storage, permission, model-lifetime and
+failure boundaries rather than every function. A proposed diagram does not
+approve implementation; the issue retains the architectural decision and
+approval record.
+
+For visual review, use the official [Excalidraw MCP server](https://github.com/excalidraw/excalidraw-mcp)
+when connected. Read its element reference before drawing and confirm the live
+schema: the reviewed `create_view` API accepts an `elements` JSON string, not
+Mermaid text. The separate official [Mermaid-to-Excalidraw converter](https://github.com/excalidraw/mermaid-to-excalidraw)
+can produce elements for supported syntax. Unsupported conversions need an
+equivalent element layout checked against the source; do not silently drop
+edges or treat an image fallback as an editable diagram.
+
+Render the Mermaid source and inspect labels, arrow direction, boundary labels
+and clipping. Inspect the Excalidraw view too when one is produced. If a visual
+artifact is retained, keep its editable `.excalidraw` file beside the owning
+source and update them together. An expiring MCP checkpoint or shared URL is
+not a substitute for repository documentation. Hosted rendering may receive
+only public/synthetic architecture labels, never user audio, transcripts,
+document content, sensitive paths or credentials.
+
+When MCP is unavailable, record that limitation and the Mermaid validation
+performed in the issue. No global MCP configuration change or product runtime
+dependency is required by this documentation workflow.
+
 ## GitHub CLI patterns
 
 Use `gh`, not hand-written REST requests or a local issue directory:

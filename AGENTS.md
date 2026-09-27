@@ -37,6 +37,14 @@ Before declaring a job complete:
 
 The contributor-facing version of this workflow is documented in [docs/project-workflow.md](docs/project-workflow.md).
 
+## Architecture diagrams
+
+Keep architecture diagrams alongside the canonical explanation under `docs/`, using fenced Mermaid as the versioned source. Update the relevant component, data-flow or sequence diagram in the same change when introducing or changing subsystem boundaries, persistence, inference ownership, asynchronous lifecycles or learning/promotion flows. Show ownership, important data and permission boundaries, and failure/cancellation paths where they matter. Label proposed or unqualified paths explicitly; a diagram must not imply that planned behavior is implemented or approved. Small changes that do not affect these relationships need no new diagram.
+
+Use the official [Excalidraw MCP](https://github.com/excalidraw/excalidraw-mcp) for visual architecture review when its tools are available. Check the connected server's tool contract: the current `create_view` accepts Excalidraw element JSON, not raw Mermaid. Convert supported Mermaid with the official [Mermaid-to-Excalidraw](https://github.com/excalidraw/mermaid-to-excalidraw) tooling or map it to equivalent elements; compare labels, links and boundaries against the Mermaid source. Keep any retained editable Excalidraw artifact beside its source, and synchronize both. Use only public/synthetic architectural labels with a hosted renderer; never send private transcripts, document text, paths, credentials or user metadata.
+
+Render and inspect changed diagrams for syntax, clipped labels, direction and readability. If Excalidraw MCP is unavailable, retain and validate Mermaid, record the tool limitation in the issue, and do not claim an Excalidraw review occurred. Do not add diagram packages to the application runtime or modify global MCP settings just to document a change. See [diagram workflow](docs/project-workflow.md#architecture-diagram-workflow).
+
 ## Python tooling
 
 Use **uv and `pyproject.toml` for all Python work**, including contributor tools, scripts, tests, benchmarks and research environments. Keep dependencies, supported Python versions and compatible tool configuration in the owning `pyproject.toml`; use dependency groups for development/test tooling. Manage dependencies with `uv add` / `uv remove`, keep the generated `uv.lock` versioned alongside the manifest, and run project commands through `uv run`. Use `uv sync --locked` and `uv run --locked` for reproducible CI checks.
