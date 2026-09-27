@@ -3,6 +3,41 @@ import type { Language } from '../config';
 import type { SessionRecord } from './dataset';
 
 export type OutputIntent = 'verbatim' | 'note' | 'message' | 'technical';
+export interface ProjectRule {
+  id: string;
+  applicationId: string;
+  applicationName: string;
+  project: string;
+  folder: string | null;
+  enabled: boolean;
+}
+export interface ProjectSelection {
+  project: string;
+  source: 'manual' | 'application' | 'folder' | 'shared' | 'context_unavailable' | 'ambiguous';
+  ruleId: string | null;
+}
+export async function chooseProjectApplication(): Promise<{ id: string; name: string } | null> {
+  const { open } = await import('@tauri-apps/plugin-dialog');
+  const path = await open({
+    title: 'Choose an application',
+    multiple: false,
+    directory: false,
+    filters: [{ name: 'Applications', extensions: ['app'] }],
+  });
+  if (typeof path !== 'string') return null;
+  const application = await invoke<{ id: string; name: string } | null>(
+    'read_project_application',
+    { path },
+  );
+  if (!application)
+    throw new Error('This application could not be identified. Choose a Mac application.');
+  return application;
+}
+export async function chooseProjectFolder(): Promise<string | null> {
+  const { open } = await import('@tauri-apps/plugin-dialog');
+  const path = await open({ title: 'Choose a project folder', multiple: false, directory: true });
+  return typeof path === 'string' ? invoke<string>('resolve_project_folder', { path }) : null;
+}
 export interface VocabularyEntry {
   id: string;
   phrase: string;
@@ -26,6 +61,8 @@ export interface PersonalizationProfile {
   applyCorrections: boolean;
   useRememberedIntent: boolean;
   activeProject: string;
+  projectMode: 'manual' | 'automatic';
+  projectRules: ProjectRule[];
   automaticLearning: boolean;
   learningEpoch: number;
   vocabulary: VocabularyEntry[];
@@ -54,6 +91,23 @@ export interface CorrectionSuggestion {
   reviewRevisionId: string;
   pair: { heard: string; intended: string };
 }
+export interface ExternalCorrectionReview {
+  token: string;
+  before: string;
+  after: string;
+  project: string;
+  language: Language;
+  pairs: { heard: string; intended: string }[];
+}
+export const getExternalCorrectionReviews = () =>
+  invoke<ExternalCorrectionReview[]>('get_external_correction_reviews');
+export const rememberExternalCorrection = (
+  token: string,
+  pair: ExternalCorrectionReview['pairs'][number],
+  revision: number,
+) => invoke<PersonalizationProfile>('remember_external_correction', { token, pair, revision });
+export const dismissExternalCorrection = (token: string) =>
+  invoke<void>('dismiss_external_correction', { token });
 export interface LearningDashboard {
   profileRevision: number;
   inspectedSessions: number;
@@ -75,7 +129,14 @@ export interface LearningDashboard {
   }[];
   reviewQueue: { sessionId: string; reason: string }[];
 }
-export const getPersonalization = () => invoke<PersonalizationProfile>('get_personalization');
+export const getPersonalization = async () => {
+  const profile = await invoke<PersonalizationProfile>('get_personalization');
+  return {
+    ...profile,
+    projectMode: profile.projectMode ?? 'manual',
+    projectRules: profile.projectRules ?? [],
+  };
+};
 export interface LearningOutcome {
   activated: string[];
   provisional: number;

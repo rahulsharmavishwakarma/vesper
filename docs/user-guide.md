@@ -336,12 +336,21 @@ not train model weights or activate a new model. Read the
 [personalization guide](personalization/README.md) for the exact learning,
 review and undo behavior.
 
-**Current project** is a manual selection. Enter a name and save before recording;
-Vesper does not infer it from the app or document you are using. Give vocabulary
-and examples the same project name to limit their use; leave an entry's project
-blank to share it. Switch the current name when changing projects, or leave it
-blank to use only shared entries. Reviewing an older recording keeps its original
+**Project selection** can be manual or use application rules. In Vocabulary,
+choose **Use application rules**, click **Add application rule**, choose an app,
+and name its project, then save. Shortcut dictation freezes the receiving app's
+project before recording. TextEdit rules can also match a selected folder; the
+most specific matching folder wins. Missing document context or conflicting rules
+uses shared vocabulary. Other apps currently support app rules, not folder detection.
+A nonempty **Project override** always wins. Main-window recordings and file imports
+use the explicit project name. Results show the project and any fallback reason.
+
+Give vocabulary and examples the same project name to limit their use; leave an
+entry's project blank to share it. Reviewing an older recording keeps its original
 project, including a blank project, rather than borrowing the current selection.
+Changing rules or switching apps cannot move an in-flight recording's feedback
+into another project. Vesper reads app identity and an optional TextEdit document
+URL for folder rules, never document contents to guess the project.
 
 **Apply my saved corrections** works with all supported speech models, including
 when cleanup is off or the writer fails. **Request extra speech hints when supported**
@@ -421,7 +430,7 @@ The app may retain bounded before/after text and one recent attempt locally for 
 
 ### Optional TextEdit correction evaluation
 
-In **Settings → Recording → Advanced storage and improvement**, **Evaluate corrections in TextEdit** enables a separate local evaluation after automatic paste. It is off by default. The first adapter requires plain-text TextEdit with English menus on Mac and a direct keyboard layout. It observes the inserted text and up to 32 adjacent UTF-16 units on each side for at most one minute; it may abstain when the field, selection or boundaries change. Only inserted/edited text is retained locally, at most 256 records for 30 days. These candidates do not teach your dictionary yet. Disabling stops observation; **Forget learned spellings** also deletes retained candidates. Ordinary in-app spelling learning remains automatic. See the [full scope and limitations](personalization/external-observer.md).
+In **Settings → Recording → Advanced storage and improvement**, **Review corrections in TextEdit** enables bounded local correction capture after automatic paste. It is off by default. The first adapter requires plain-text TextEdit with English menus on Mac and a direct keyboard layout. It observes the inserted text and up to 32 adjacent UTF-16 units on each side for at most one minute; it may abstain when the field, selection or boundaries change. Only inserted/edited text is retained locally, at most 256 records for 30 days. Open **Settings → Writing → Corrections from TextEdit**, review the change, then choose **Remember** for a spelling or **Dismiss correction**. Remember uses the original recording project/language, consumes that candidate and creates a manual vocabulary entry. Remove that word to undo; it does not approve a training label. Save or discard unsaved preferences before reviewing. Disabling stops observation; **Forget learned spellings** also deletes retained candidates. Ordinary in-app spelling learning remains automatic. See the [full scope and limitations](personalization/external-observer.md).
 
 Apple Silicon builds can run **Parakeet** and **Qwen ASR** on the GPU automatically for **English**. Keep **Automatic**, save your model selection, and choose **Download**. Compatible GPU files can use more disk space than CPU files. Existing CPU downloads stay usable until the update is prepared; **Ready · update available** means you can transcribe now or download the optimized package. Removing a model removes its CPU and GPU exports. Full recordings and imported files share this pipeline; live partial transcription still requires Nemotron. Other languages and automatic language detection use their supported paths and may need a separate download. CPU remains an advanced override. See [accelerator setup](accelerators.md#building-the-apple-silicon-application).
 
