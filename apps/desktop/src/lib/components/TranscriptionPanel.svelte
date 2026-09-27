@@ -1,4 +1,5 @@
 <script lang="ts">
+  import ProjectScope from './ProjectScope.svelte';
   import SpeakerTimeline from './SpeakerTimeline.svelte';
   import CaptureGlyph from './CaptureGlyph.svelte';
   import CopyGlyph from './CopyGlyph.svelte';
@@ -987,6 +988,7 @@
             }}>Dismiss recovered text</button
           >
         </details>{/if}
+      <ProjectScope selection={result.projectSelection} />
       {#if result.learningOutcome}<p class="note" aria-live="polite">
           {result.learningOutcome.status}{#if result.learningOutcome.activated.length}
             · {result.learningOutcome.activated.join(', ')}

@@ -29,6 +29,7 @@ export interface SessionRecord {
   draftRevision?: number;
   personalizationEvidence?: MemoryEvidence | null;
   personalizationProject?: string;
+  projectSelection?: import('./personalization').ProjectSelection | null;
   personalizationRejected?: boolean;
   correctedTranscript: string | null;
   verifiedTranscript: string | null;

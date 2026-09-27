@@ -1,4 +1,5 @@
 <script lang="ts">
+  import ProjectScope from './ProjectScope.svelte';
   import { untrack } from 'svelte';
   import type { SessionRecord } from '../api/dataset';
   import {
@@ -118,6 +119,7 @@
 </script>
 
 <div class="learning-review">
+  <ProjectScope selection={record.projectSelection} />
   {#if record.personalizationEvidence?.applied.length}
     <p class="note">
       {record.personalizationEvidence.applied.reduce((n, a) => n + a.occurrences, 0)} remembered correction(s)

@@ -76,6 +76,7 @@ export interface ModelCatalogInstallation extends ModelInstallation {
 }
 
 export interface PipelineResult {
+  projectSelection?: import('./personalization').ProjectSelection;
   speakerTimeline?: import('./dataset').SpeakerTimeline | null;
   resultId: string;
   rawTranscript: string;
