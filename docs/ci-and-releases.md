@@ -389,16 +389,15 @@ make version-check TAG=v0.2.0
 `make version-set` changes files but never creates a commit, tag, or release.
 Review its diff and run `make check` in the version pull request.
 
-The current synchronizer has a coverage gap: its explicit package list omits
-`vesper-desktop-platform` and `vesper-eval`. At revision `7a596c1`, a
-temporary-copy bump from `0.1.0` to `0.1.1` left those two `Cargo.lock` entries at
-`0.1.0`, while `checkVersions` reported success. Its version expression also
-accepts `0.1.1-01`, although [SemVer](https://semver.org/#spec-item-9) disallows
-leading zeroes in numeric prerelease identifiers. The 12 existing version and
-publisher tests pass without detecting these cases. Until corrected, a passing
-version check is not evidence that every workspace package was updated. Repair
-workspace discovery and add independent coverage before the next version bump;
-these findings belong to the existing [release-policy issue #63](https://github.com/rahulsharmavishwakarma/transcribe/issues/63).
+The synchronizer discovers version-inheriting packages from the authoritative
+`[workspace] members` instead of a hard-coded list: it now covers all ten
+members, including `vesper-desktop-platform`, `vesper-eval` and `vesper-mlx`,
+which the previous explicit list omitted (at revision `7a596c1` a bump left
+those `Cargo.lock` entries behind while the check reported success). Numeric
+prerelease identifiers with leading zeroes such as `0.1.1-01` are rejected per
+[SemVer item 9](https://semver.org/#spec-item-9). The 14 version and publisher
+tests include independent temporary-copy coverage that does not reuse the
+production collector. This repair belongs to the existing [release-policy issue #63](https://github.com/rahulsharmavishwakarma/transcribe/issues/63).
 
 ## Release workflow and download URL
 

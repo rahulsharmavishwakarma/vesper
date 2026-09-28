@@ -3,16 +3,8 @@ import fs from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 
-const SEMVER = /^(0|[1-9]\d*)\.(0|[1-9]\d*)\.(0|[1-9]\d*)(?:-[0-9A-Za-z-]+(?:\.[0-9A-Za-z-]+)*)?$/;
-const WORKSPACE_PACKAGES = [
-  'vesper-audio',
-  'vesper-core',
-  'vesper-data',
-  'vesper-desktop',
-  'vesper-inference',
-  'vesper-models',
-  'vesper-nemo',
-];
+const SEMVER =
+  /^(0|[1-9]\d*)\.(0|[1-9]\d*)\.(0|[1-9]\d*)(?:-([0-9A-Za-z-]+(?:\.[0-9A-Za-z-]+)*))?$/;
 
 function readJson(root, relative) {
   return JSON.parse(fs.readFileSync(path.join(root, relative), 'utf8'));
@@ -23,9 +15,48 @@ function writeJson(root, relative, value) {
 }
 
 function requireSemver(version, label = 'version') {
-  if (!SEMVER.test(version))
-    throw new Error(`${label} must be SemVer in X.Y.Z or X.Y.Z-prerelease form.`);
+  const match = SEMVER.exec(version);
+  if (!match) throw new Error(`${label} must be SemVer in X.Y.Z or X.Y.Z-prerelease form.`);
+  // SemVer specification item 9: numeric prerelease identifiers must not
+  // include leading zeroes.
+  if (match[4] !== undefined) {
+    for (const identifier of match[4].split('.')) {
+      if (/^\d+$/.test(identifier) && identifier.length > 1 && identifier.startsWith('0')) {
+        throw new Error(
+          `${label} has a numeric prerelease identifier with leading zeroes: ${identifier}.`,
+        );
+      }
+    }
+  }
   return version;
+}
+
+function workspaceMemberPaths(cargoText) {
+  const section = cargoText.match(/\[workspace\]([\s\S]*?)(?=\n\[|$)/);
+  const members = section?.[1].match(/members = \[([\s\S]*?)\]/)?.[1];
+  if (!members) throw new Error('Cargo.toml is missing [workspace] members.');
+  return [...members.matchAll(/"([^"]+)"/g)].map((member) => member[1]);
+}
+
+// Every local package inheriting [workspace.package].version, discovered from
+// the authoritative workspace members instead of a hard-coded list.
+export function workspaceVersionedPackages(root) {
+  const cargo = fs.readFileSync(path.join(root, 'Cargo.toml'), 'utf8');
+  const names = [];
+  for (const member of workspaceMemberPaths(cargo)) {
+    let manifest;
+    try {
+      manifest = fs.readFileSync(path.join(root, member, 'Cargo.toml'), 'utf8');
+    } catch {
+      throw new Error(`Workspace member ${member} is missing Cargo.toml.`);
+    }
+    const section = manifest.match(/\[package\]([\s\S]*?)(?=\n\[|$)/);
+    const name = section?.[1].match(/^name = "([^"]+)"$/m)?.[1];
+    if (!name) throw new Error(`Workspace member ${member} is missing [package] name.`);
+    if (/^version\.workspace = true$/m.test(section[1])) names.push(name);
+  }
+  if (!names.length) throw new Error('Cargo workspace has no version-inheriting members.');
+  return names;
 }
 
 function cargoWorkspaceVersion(text) {
@@ -35,8 +66,8 @@ function cargoWorkspaceVersion(text) {
   return version;
 }
 
-function cargoLockVersions(text) {
-  return WORKSPACE_PACKAGES.map((name) => {
+function cargoLockVersions(text, names) {
+  return names.map((name) => {
     const escaped = name.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
     const match = text.match(
       new RegExp(`\\[\\[package\\]\\]\\nname = "${escaped}"\\nversion = "([^"]+)"`),
@@ -61,7 +92,7 @@ export function collectVersions(root) {
     ['package-lock.json root', packageLock.version],
     ['package-lock.json packages[""]', packageLock.packages?.['']?.version],
     ['package-lock.json packages["apps/desktop"]', packageLock.packages?.['apps/desktop']?.version],
-    ...cargoLockVersions(cargoLock),
+    ...cargoLockVersions(cargoLock, workspaceVersionedPackages(root)),
   ];
 }
 
@@ -93,8 +124,8 @@ function replaceCargoVersion(text, version) {
   );
 }
 
-function replaceCargoLockVersions(text, version) {
-  for (const name of WORKSPACE_PACKAGES) {
+function replaceCargoLockVersions(text, version, names) {
+  for (const name of names) {
     const escaped = name.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
     const expression = new RegExp(
       `(\\[\\[package\\]\\]\\nname = "${escaped}"\\nversion = ")[^"]+(")`,
@@ -124,7 +155,11 @@ export function setVersion(root, version) {
   const cargoPath = path.join(root, 'Cargo.toml');
   fs.writeFileSync(cargoPath, replaceCargoVersion(fs.readFileSync(cargoPath, 'utf8'), version));
   const lockPath = path.join(root, 'Cargo.lock');
-  fs.writeFileSync(lockPath, replaceCargoLockVersions(fs.readFileSync(lockPath, 'utf8'), version));
+  const names = workspaceVersionedPackages(root);
+  fs.writeFileSync(
+    lockPath,
+    replaceCargoLockVersions(fs.readFileSync(lockPath, 'utf8'), version, names),
+  );
   checkVersions(root);
 }
 
