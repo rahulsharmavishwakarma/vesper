@@ -158,10 +158,8 @@ pub async fn get_personalization(
 #[tauri::command]
 pub async fn save_personalization(
     profile: vesper_core::PersonalizationProfile,
-    app: tauri::AppHandle,
     storage: tauri::State<'_, AppStorage>,
 ) -> Result<vesper_core::PersonalizationProfile, String> {
-    crate::external_observation::cancel(&app);
     let root = storage.dataset_dir.clone();
     let saved = tauri::async_runtime::spawn_blocking(move || {
         DatasetStore::open(root)
@@ -195,20 +193,19 @@ pub async fn get_learning_shadow_diagnostics(
 ) -> Result<serde_json::Value, String> {
     let root = storage.dataset_dir.clone();
     tauri::async_runtime::spawn_blocking(move || {
-        let store=DatasetStore::open(root).map_err(|e| e.to_string())?;
-        let policy=store.policy_shadow_state().map_err(|e| e.to_string())?;
-        let external=store.external_shadow_records().map_err(|e| e.to_string())?;
-        Ok(serde_json::json!({"policy":policy,"external":{"retained":external.len(),"completed":external.iter().filter(|r| r.after.is_some()).count()},"activePolicyChanged":false}))
-    }).await.map_err(|e|e.to_string())?
+        let store = DatasetStore::open(root).map_err(|e| e.to_string())?;
+        let policy = store.policy_shadow_state().map_err(|e| e.to_string())?;
+        Ok(serde_json::json!({"policy":policy,"activePolicyChanged":false}))
+    })
+    .await
+    .map_err(|e| e.to_string())?
 }
 
 #[tauri::command]
 pub async fn forget_automatic_learning(
     revision: u64,
-    app: tauri::AppHandle,
     storage: tauri::State<'_, AppStorage>,
 ) -> Result<vesper_core::PersonalizationProfile, String> {
-    crate::external_observation::cancel(&app);
     let root = storage.dataset_dir.clone();
     let profile = tauri::async_runtime::spawn_blocking(move || {
         DatasetStore::open(root)
@@ -419,7 +416,6 @@ pub fn save_settings(
     replace_global_shortcut(&app, Some(&previous), &settings)?;
     match storage.settings.save(&settings) {
         Ok(saved) => {
-            crate::external_observation::cancel(&app);
             crate::dictation::apply_capture_design(&app, saved.capture_design);
             crate::dictation::apply_output(&app);
             storage.runtime.clear_learning_context();
@@ -444,7 +440,6 @@ pub fn reset_settings(
         replace_global_shortcut(&app, previous, next)
     });
     if let Ok(saved) = &reset {
-        crate::external_observation::cancel(&app);
         crate::dictation::apply_capture_design(&app, saved.capture_design);
         crate::dictation::apply_output(&app);
         storage.runtime.clear_learning_context();
@@ -867,7 +862,6 @@ pub(crate) async fn start_recording_inner(
     if dictation_id.is_some_and(|id| !crate::dictation::start_allowed(&storage, id)) {
         return Err("Recording cancelled.".into());
     }
-    crate::external_observation::cancel(&app);
     let context = begin_context(&storage, "starting", "Starting microphone…", true)?;
     if let Some(snapshot) = personalization {
         let _ = context.personalization.set(Ok(snapshot));

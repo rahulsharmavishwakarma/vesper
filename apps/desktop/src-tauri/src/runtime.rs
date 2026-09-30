@@ -1061,7 +1061,6 @@ pub struct Runtime {
     pub diagnostics: Arc<Diagnostics>,
     pub cancelled: Arc<AtomicBool>,
     pub closing: AtomicBool,
-    pub external_generation: std::sync::atomic::AtomicU64,
 }
 
 #[derive(Serialize)]
@@ -1099,7 +1098,6 @@ impl Runtime {
             return Err("Another operation is running. Stop or cancel it first.".into());
         }
         state.cancel_semantic();
-        self.external_generation.fetch_add(1, Ordering::AcqRel);
         self.cancelled.store(false, Ordering::Relaxed);
         state.busy = true;
         state.stage = stage.into();

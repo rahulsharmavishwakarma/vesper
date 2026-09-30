@@ -1,7 +1,6 @@
 mod commands;
 mod diagnostics;
 mod dictation;
-mod external_observation;
 mod menu_bar;
 mod resources;
 mod runtime;
@@ -167,9 +166,6 @@ pub fn run() {
             commands::get_adapter_registry,
             commands::get_selected_adapters,
             commands::get_personalization,
-            external_observation::get_external_correction_reviews,
-            external_observation::remember_external_correction,
-            external_observation::dismiss_external_correction,
             commands::get_automatic_learning,
             commands::get_learning_shadow_diagnostics,
             commands::forget_automatic_learning,
