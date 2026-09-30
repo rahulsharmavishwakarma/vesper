@@ -1,5 +1,4 @@
 fn main() {
-    println!("cargo:rerun-if-changed=src/observation.m");
     println!("cargo:rerun-if-changed=src/projects.m");
     println!("cargo:rerun-if-changed=src/macos.m");
     if std::env::var("CARGO_CFG_TARGET_OS").as_deref() == Ok("macos") {

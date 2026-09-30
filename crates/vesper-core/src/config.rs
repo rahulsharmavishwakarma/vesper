@@ -197,8 +197,6 @@ pub struct AppConfig {
     pub capture_design: CaptureDesign,
     pub notifications_enabled: bool,
     pub collect_training_data: bool,
-    /// Optional, TextEdit-only external correction shadow evaluation.
-    pub text_edit_observation: bool,
     pub improvement_mode: ImprovementMode,
 }
 
@@ -226,7 +224,6 @@ impl Default for AppConfig {
             capture_design: CaptureDesign::default(),
             notifications_enabled: false,
             collect_training_data: true,
-            text_edit_observation: false,
             improvement_mode: ImprovementMode::default(),
         }
     }

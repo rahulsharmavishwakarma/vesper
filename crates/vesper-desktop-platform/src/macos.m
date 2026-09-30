@@ -21,7 +21,6 @@
     [super sendEvent:event];
 }
 @end
-void td_observation_cancel(void);
 static TDPanel *panel;
 static NSWindow *originalWindow;
 static NSView *originalContent;
@@ -205,7 +204,6 @@ void td_panel_destroy(void) {
     td_paste_access_enabled(false);
     preparedPasteApplications = nil;
     td_target_clear(0);
-    td_observation_cancel();
     restoreClipboard();
     [panel orderOut:nil];
     if (originalWindow && originalContent) {
@@ -344,8 +342,6 @@ static int pasteKeyCode(void) {
     CFRelease(source);
     return found;
 }
-#include "observation.m"
-
 int td_paste(uint64_t token, const char *text) {
     if (![NSThread isMainThread] || (td_permissions(false) & 6) != 6) return -1;
     if (!targetStillMatches(token)) return -2;
@@ -379,7 +375,6 @@ int td_paste(uint64_t token, const char *text) {
     }
     NSInteger owned = board.changeCount;
     pendingClipboard = saved; pendingOwnership = owned;
-    beginObservation(token, value);
     // Consume before posting: another call can never duplicate this dispatch.
     td_target_clear(token);
     CGEventPost(kCGHIDEventTap, down); CGEventPost(kCGHIDEventTap, up);
