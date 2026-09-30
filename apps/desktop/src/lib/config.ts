@@ -128,7 +128,6 @@ export interface AppConfig {
   captureDesign: CaptureDesign;
   notificationsEnabled: boolean;
   collectTrainingData: boolean;
-  textEditObservation: boolean;
   improvementMode: ImprovementMode;
 }
 
@@ -228,7 +227,6 @@ export function defaultSettings(): AppConfig {
     captureDesign: 'split',
     notificationsEnabled: false,
     collectTrainingData: true,
-    textEditObservation: false,
     improvementMode: 'review_required',
   };
 }
@@ -518,8 +516,6 @@ export function validateSettings(value: unknown, checkWriterLanguage = true): st
     errors.push('Choose where completed dictation goes.');
   if (typeof value.notificationsEnabled !== 'boolean')
     errors.push('Choose whether desktop notifications are enabled.');
-  if (typeof value.textEditObservation !== 'boolean')
-    errors.push('Choose whether to observe TextEdit corrections.');
   if (typeof value.collectTrainingData !== 'boolean')
     errors.push('Choose whether training data is collected.');
   if (!isOneOf(value.improvementMode, ['review_required', 'automatic']))
@@ -540,8 +536,10 @@ export function parseStoredSettings(value: unknown): AppConfig {
   if (!isRecord(value)) return parseSettings(value);
 
   // Speaker analysis is automatic; discard the retired preference, including false.
+  // TextEdit correction observation was removed; discard the retired preference.
   const stored = { ...value };
   delete stored.speakerDiarization;
+  delete stored.textEditObservation;
   const defaults = defaultSettings();
   const models = isRecord(value.models)
     ? { ...defaults.models, ...value.models }

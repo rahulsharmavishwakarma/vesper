@@ -14,7 +14,6 @@
   } from '../api/personalization';
   import type { Language } from '../config';
   import Select from './Select.svelte';
-  import ExternalCorrectionReview from './ExternalCorrectionReview.svelte';
   let {
     desktop,
     disabled = false,
@@ -189,7 +188,7 @@
     <p class="note">
       Vesper automatically learns eligible spellings from your edits in Your text and uses dictation
       usage to rank saved words. Learning stays on this device, even when audio collection is off.
-      TextEdit corrections can be reviewed below. You can remove or forget learned words below.
+      You can remove or forget learned words below.
     </p>
   </header>
   {#if !desktop}
@@ -567,8 +566,6 @@
                 <p class="note">
                   No recent in-app corrections recorded. Edit Your text in Dictate, then leave the
                   field or copy to save. Dictation and copying alone do not confirm a spelling.
-                  Eligible TextEdit corrections need your confirmation below before becoming
-                  vocabulary.
                 </p>
               {/if}
               <p class="note">
@@ -670,17 +667,6 @@
         </div>
       </div>
     </form>
-    {#if profile}
-      <ExternalCorrectionReview
-        revision={profile.revision}
-        disabled={controlsDisabled || dirty}
-        {visible}
-        onRemember={(saved) => {
-          profile = saved;
-          savedProfile = $state.snapshot(saved);
-        }}
-      />
-    {/if}
   {/if}
 </section>
 

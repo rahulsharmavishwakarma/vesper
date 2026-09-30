@@ -91,23 +91,6 @@ export interface CorrectionSuggestion {
   reviewRevisionId: string;
   pair: { heard: string; intended: string };
 }
-export interface ExternalCorrectionReview {
-  token: string;
-  before: string;
-  after: string;
-  project: string;
-  language: Language;
-  pairs: { heard: string; intended: string }[];
-}
-export const getExternalCorrectionReviews = () =>
-  invoke<ExternalCorrectionReview[]>('get_external_correction_reviews');
-export const rememberExternalCorrection = (
-  token: string,
-  pair: ExternalCorrectionReview['pairs'][number],
-  revision: number,
-) => invoke<PersonalizationProfile>('remember_external_correction', { token, pair, revision });
-export const dismissExternalCorrection = (token: string) =>
-  invoke<void>('dismiss_external_correction', { token });
 export interface LearningDashboard {
   profileRevision: number;
   inspectedSessions: number;

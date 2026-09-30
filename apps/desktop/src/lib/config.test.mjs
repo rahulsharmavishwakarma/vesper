@@ -382,12 +382,14 @@ test('desktop audio migrates to the managed profile and validates legacy inputs'
   }
 });
 
-test('external TextEdit evaluation is separate, defaults off, and rejects invalid consent', () => {
-  assert.equal(defaultSettings().textEditObservation, false);
-  const old = defaultSettings();
-  delete old.textEditObservation;
-  assert.equal(parseStoredSettings(old).textEditObservation, false);
-  for (const invalid of [null, 'true', 1]) {
-    assert.ok(validateSettings({ ...defaultSettings(), textEditObservation: invalid }).length > 0);
+test('retired TextEdit observation is discarded without changing other preferences', () => {
+  assert.equal(Object.hasOwn(defaultSettings(), 'textEditObservation'), false);
+  for (const value of [true, false, 'true', 1, null]) {
+    const stored = { ...defaultSettings(), textEditObservation: value, cleanupEnabled: false };
+    const restored = parseStoredSettings(stored);
+    assert.equal(Object.hasOwn(restored, 'textEditObservation'), false);
+    assert.equal(restored.cleanupEnabled, false);
+    assert.equal(stored.textEditObservation, value, 'Migration must not mutate the input');
+    assert.deepEqual(parseStoredSettings(JSON.parse(JSON.stringify(restored))), restored);
   }
 });

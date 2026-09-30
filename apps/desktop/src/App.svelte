@@ -989,23 +989,6 @@
                   </div>
                   <details class="settings-advanced">
                     <summary>Advanced storage and improvement</summary>
-                    <div class="setting-toggle">
-                      <label class="checkbox-field" for="text-edit-observation"
-                        ><input
-                          id="text-edit-observation"
-                          type="checkbox"
-                          bind:checked={draft.textEditObservation}
-                          aria-describedby="text-edit-observation-help"
-                        /><span>Review corrections in TextEdit</span></label
-                      >
-                      <p id="text-edit-observation-help" class="note checkbox-help">
-                        Optional on Mac. After automatic paste, observe that text and up to 32
-                        nearby characters on each side for up to one minute. Stores the inserted and
-                        edited text locally. Review eligible spellings in Writing before remembering
-                        them. Requires TextEdit in plain-text mode with English menus. Forget
-                        learned spellings also deletes this data.
-                      </p>
-                    </div>
                     <div class="field improvement-field">
                       <p id="improvement-help" class="note">
                         Spelling learning runs automatically from eligible edits to Your text.
