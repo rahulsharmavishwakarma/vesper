@@ -4,7 +4,7 @@ The [September RSI survey](../research-rsi-2026-09.md) supplies recent primary s
 
 This page explains the product and engineering sequence beyond the implemented automatic dictionary. It complements the [component contracts](README.md), [research synthesis](../research-automatic-personalization.md) and [continuous-improvement contract](../self-improvement.md). Architectural proposals, approval decisions and progress belong to [issue #34 and its sub-issues](https://github.com/rahulsharmavishwakarma/transcribe/issues/34), shown together in the [RSI Project view](https://github.com/users/rahulsharmavishwakarma/projects/2/views/6). The issue links below identify each scope's owner; current status, next action and evidence stay in GitHub rather than a second local backlog.
 
-The original proposal named **phase A** and **phase B**. **C and D below are organizational names.** Semantic shadow analysis in B, the first TextEdit-only shadow scope in C and the persistent policy-shadow contract are explicitly approved and implemented; the staged cleanup-first design in D has now been approved. Automatic project rules and explicit TextEdit spelling admission are implemented, while training/promotion remain gated on exact runtime compatibility and quality evidence. [ADR-0016](../adrs/0016-automatic-local-spelling-learning.md) records the implemented phase-A decision.
+The original proposal named **phase A** and **phase B**. **C and D below are organizational names.** Semantic shadow analysis in B and the persistent policy-shadow contract are explicitly approved and implemented; the staged cleanup-first design in D has now been approved. The former TextEdit-only shadow scope in C was implemented and then removed on 29 September 2026 because dictation pastes into any application; see [C below](#c-external-editor-learning-removed). Automatic project rules are implemented, while training/promotion remain gated on exact runtime compatibility and quality evidence. [ADR-0016](../adrs/0016-automatic-local-spelling-learning.md) records the implemented phase-A decision.
 
 ## At a glance
 
@@ -13,17 +13,17 @@ The original proposal named **phase A** and **phase B**. **C and D below are org
 | A — local spelling memory | Learn eligible spellings and lexical context from ordinary edits; reuse them in relevant dictation across model changes. | Automatic desktop behavior on existing workers, without opt-in; fixed raw-context eligibility is integrated. Broader personal benefit remains unqualified. | [#34](https://github.com/rahulsharmavishwakarma/transcribe/issues/34); guard delivered in [PR #52](https://github.com/rahulsharmavishwakarma/transcribe/pull/52) |
 | A qualification | Establish whether learning actually reduces repeated corrections and editing time. | Controlled tests and a public replay exist; longitudinal user evidence is still needed. | [#58](https://github.com/rahulsharmavishwakarma/transcribe/issues/58) |
 | B — semantic personalization | Learn supported writing preferences and better interpret intent, repairs and relevant context. | Bounded [semantic shadow analysis](semantic-shadow.md) is wired to draft edits; activation and personal efficacy remain unqualified. | [#59](https://github.com/rahulsharmavishwakarma/transcribe/issues/59) |
-| C — optional external-app feedback | Learn from a correction made in the editor where dictation was inserted. | Separately enabled TextEdit-only bounded observation is wired to insertion; explicit review can remember a spelling in the recording’s original scope. See the [observer contract](external-observer.md) for qualification limits. | [#61](https://github.com/rahulsharmavishwakarma/transcribe/issues/61); insertion remains in [#4](https://github.com/rahulsharmavishwakarma/transcribe/issues/4) |
+| C — external-app feedback (removed) | Was: learn from a correction made in the editor where dictation was inserted. | Removed: the TextEdit-only observer covered almost none of real corrections. See the [removal note](external-observer.md). | [#61](https://github.com/rahulsharmavishwakarma/transcribe/issues/61); insertion remains in [#4](https://github.com/rahulsharmavishwakarma/transcribe/issues/4) |
 | D — optional own-model adaptation | Improve acoustic recognition or cleanup through a trained and qualified local artifact. | Cleanup-first design approved; exact adapter conversion/native parity proof in progress. No trained candidate is active. | [#5](https://github.com/rahulsharmavishwakarma/transcribe/issues/5) |
 
 The separate [adaptive-policy qualification gate (#60)](https://github.com/rahulsharmavishwakarma/transcribe/issues/60) owns the evidence and approval needed before promoting the implemented shadow controller to live use. Both live policy promotion and semantic activation depend on A qualification's independently labelled feedback. Native device/permission checks remain in [#7](https://github.com/rahulsharmavishwakarma/transcribe/issues/7); #58 owns the learning outcome across sessions. C and D remain optional directions, not prerequisites for automatic in-app learning.
 
 Application memory remains local and independent of model weights throughout. B and C must operate using installed local components without a hosted inference, embedding or memory API. D is optional: vocabulary and preference learning must continue to work without training or waiting for a new model release.
 
-The extension designs are in [automatic project resolution](context-selection.md#automatic-project-routing-boundary),
-[reviewed external admission](external-observer.md#explicit-spelling-admission)
+The extension designs are in [automatic project resolution](context-selection.md#automatic-project-routing-boundary)
 and [cleanup-first training](../self-improvement.md#proposed-cleanup-first-implementation).
-Project routing and reviewed external spelling admission are implemented boundaries;
+Project routing is an implemented boundary; external spelling admission was removed
+(see the [removal note](external-observer.md));
 the training diagram still describes a gated proposal. Manual project selection
 remains the migration default.
 
@@ -42,7 +42,7 @@ The evidence supports a path, with specific limits:
 | Local phase-A replay | Each automatic mode learned two memories and improved five of 27 constructed episode outputs without worsening any. | A measured reduction in real-user correction burden. The separate public replay learned no active memory and had no held-out gain. |
 | Engineering hypothesis | Scoped memory, reliable edits, later-use evaluation and reversible updates can reduce recurring personal mistakes on device. | Guaranteed, unlimited or monotonic improvement merely from continued use. |
 
-The intended user experience is to dictate and correct naturally when needed; desktop learning is automatic without an enable step. The app manages eligible memories; a user should not need to tune thresholds or curate every dictionary entry. However, learning needs an observed correction: external edits require explicit spelling confirmation in C's TextEdit review before entering vocabulary. A retry can flag an unresolved problem without revealing the desired spelling. New topics, unseen errors and changing preferences can still need feedback.
+The intended user experience is to dictate and correct naturally when needed; desktop learning is automatic without an enable step. The app manages eligible memories; a user should not need to tune thresholds or curate every dictionary entry. However, learning needs an observed correction: in-app edits confirmed through ordinary use enter vocabulary. A retry can flag an unresolved problem without revealing the desired spelling. New topics, unseen errors and changing preferences can still need feedback.
 
 Automatic on-device improvement is a core product requirement, not an optional enhancement users must configure. Phase A runs during normal use; the remaining semantic/context/intent work must eventually fit that same low-effort background experience. This requirement does not activate the unqualified offline policy controller or an autonomous trainer. The separately approved cleanup-first training design remains subject to its compatibility and quality gates. Optional external-app observation and own-model training are possible mechanisms, not prerequisites for learning within the app.
 
@@ -109,7 +109,7 @@ This extends the runtime's bounded recent context, typed feedback and current [i
 
 Improve which existing terms and validated preferences are retrieved for a particular task. Begin with observable context: selected project, requested language, current text and bounded prior interaction evidence. Test same-user terminology across unrelated projects and changing preferences. Before ASR, the current transcript is unavailable; after ASR it can inform cleanup selection.
 
-The existing [retrieval stages and budgets](context-selection.md) are the baseline. Measure relevant-memory coverage, wrong-context application, stale/conflicting memory and prompt cost. Usage frequency can rank an already credible term; it cannot establish its correct spelling. External-document context belongs to C. An embedding model or new dependency would need its own concrete justification and approval.
+The existing [retrieval stages and budgets](context-selection.md) are the baseline. Measure relevant-memory coverage, wrong-context application, stale/conflicting memory and prompt cost. Usage frequency can rank an already credible term; it cannot establish its correct spelling. An embedding model or new dependency would need its own concrete justification and approval.
 
 ### B's shared implementation prerequisite
 
@@ -119,17 +119,9 @@ Start with shadow analysis that proposes candidates without applying them. Compa
 
 The [concrete shadow proposal](https://github.com/rahulsharmavishwakarma/transcribe/issues/59#issuecomment-5740928523) specifies the implemented versioned, evidence-linked relation/output-form/context proposals, one cancellable idle job on the existing inference owner, bounded local retention, epoch/undo/Forget handling and foreground-interference checks. Its approved analysis API, scheduling and proposal storage remain isolated from active memory. The installed writer failed semantic quality qualification; activation remains blocked pending better independent evidence and a separate decision.
 
-## C: optional learning from external editors
+## C: external-editor learning (removed)
 
-Users often correct text after dictating into another application. The optional TextEdit adapter can capture a bounded later replacement as shadow evidence; reliable authorship and correctness remain unqualified. Copy/paste success is not correction feedback.
-
-The approved first adapter uses bounded insertion guards, explicit observation controls and separate candidate storage. Reliable causal/author attribution is still a qualification limit. Unsupported applications, changed focus, moved text and stale callbacks must abstain. Captured edits remain external shadow candidates until explicit spelling review; Remember consumes the candidate and adds manual scoped vocabulary. It does not enter the ordinary automatic-learning pipeline or create reviewed training targets.
-
-This affects native insertion/platform integration, feedback correlation and privacy controls. Validation requires real supported editors, undo/redo, delayed edits, focus changes, permissions off and proof that unrelated document content is not collected. It must not retroactively replace text merely because a memory changes. C is optional and can be designed independently once the event contract is stable; B does not require observing external applications.
-
-### First observer implementation
-
-The approved implementation and privacy/retention limits live in [TextEdit correction review](external-observer.md). It keeps one guarded receipt, uses bounded UTF-16 reads, rejects ambiguous or unsupported observation, and stores candidates separately from ordinary learning. English plain-text TextEdit with a direct keyboard layout is the initial adapter boundary. A successful native fixture does not qualify other editors, natural authorship, IME or passive dictionary admission. Explicit Remember/Dismiss has separate storage and browser regression coverage. The approval and verification record is [#61](https://github.com/rahulsharmavishwakarma/transcribe/issues/61).
+Users often correct text after dictating into another application, so a TextEdit-only adapter covered almost none of real corrections, and per-application adapters do not scale. The optional TextEdit observer was therefore removed on 29 September 2026; the dated design and qualification record is preserved in the [removal note](external-observer.md), and the decision record is [#61](https://github.com/rahulsharmavishwakarma/transcribe/issues/61). Copy/paste success is not correction feedback. In-app draft edits remain the app-agnostic learning path.
 
 ## D: optional own-model and acoustic adaptation
 
