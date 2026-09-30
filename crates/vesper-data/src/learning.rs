@@ -684,7 +684,6 @@ impl DatasetStore {
         let tx = self.connection.unchecked_transaction()?;
         self.invalidate_semantic_result(result_id)?;
         self.invalidate_policy_result(result_id)?;
-        self.invalidate_external_result(result_id)?;
         let state = self.automatic_learning_state()?;
         let prefix = format!("{result_id}:");
         let candidate_ids: Vec<_> = state
@@ -752,7 +751,6 @@ impl DatasetStore {
         tx.execute("DELETE FROM semantic_shadow", [])?;
         tx.execute("DELETE FROM policy_shadow", [])?;
         tx.execute("DELETE FROM policy_shadow_job", [])?;
-        tx.execute("DELETE FROM external_shadow", [])?;
         put_profile(&tx, &mut profile)?;
         put_state(&tx, &AutomaticLearningState::default())?;
         tx.commit()?;
@@ -826,7 +824,6 @@ impl DatasetStore {
             self.connection.execute("DELETE FROM policy_shadow", [])?;
             self.connection
                 .execute("DELETE FROM policy_shadow_job", [])?;
-            self.connection.execute("DELETE FROM external_shadow", [])?;
         }
         prune(&mut state, stamp());
         // The surrounding profile transaction commits this atomically.

@@ -471,10 +471,6 @@ impl DatasetStore {
         for id in ids {
             self.invalidate_policy_result(&id)?;
         }
-        self.connection.execute(
-            "DELETE FROM external_shadow WHERE json_extract(record_json,'$.sessionId')=?1",
-            [session_id],
-        )?;
         Ok(())
     }
     pub(crate) fn invalidate_policy_result(&self, result_id: &str) -> Result<()> {

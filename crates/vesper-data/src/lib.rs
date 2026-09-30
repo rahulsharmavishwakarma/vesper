@@ -1,14 +1,10 @@
 //! Local audio and correction storage. This crate does not run inference or training.
 
-mod external_review;
-mod external_shadow;
-pub use external_review::ExternalCorrectionReview;
 mod learning;
 mod personalization;
 pub mod policy;
 mod policy_shadow;
 mod semantic;
-pub use external_shadow::ExternalShadowRecord;
 pub use learning::{
     learning_audio_key, AutomaticLearningState, DictationPersonalizationSnapshot, EditSupport,
     LearningCandidate, LearningEvent, LearningEventKind,
@@ -220,7 +216,8 @@ impl DatasetStore {
                  id INTEGER PRIMARY KEY CHECK(id = 1),
                  state_json TEXT NOT NULL
              );
-             CREATE TABLE IF NOT EXISTS external_shadow (token TEXT PRIMARY KEY NOT NULL, created_at INTEGER NOT NULL, record_json TEXT NOT NULL);
+             -- TextEdit external observation was removed; drop retained candidate rows.
+             DROP TABLE IF EXISTS external_shadow;
              CREATE TABLE IF NOT EXISTS policy_shadow (id INTEGER PRIMARY KEY CHECK(id=1), state_json TEXT NOT NULL);
              CREATE TABLE IF NOT EXISTS policy_shadow_job (id INTEGER PRIMARY KEY CHECK(id=1), request_json TEXT NOT NULL);
              CREATE TABLE IF NOT EXISTS semantic_shadow (
@@ -232,7 +229,6 @@ impl DatasetStore {
         )?;
         let store = Self { root, connection };
         store.prune_semantic_shadow()?;
-        store.prune_external_shadow()?;
         store.policy_shadow_state()?;
         Ok(store)
     }
