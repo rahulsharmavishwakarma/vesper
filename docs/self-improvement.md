@@ -10,7 +10,7 @@ The learning report separates actual uses/undos from text replay against later v
 
 The dataset/export and future training contract below preserves separate speech and cleanup supervision. There is no training runner or model promotion service; choosing an improvement mode does not start training. The approved extension is tracked in [#5](https://github.com/rahulsharmavishwakarma/transcribe/issues/5). Existing local capture, reviews and exports support that work without making it a dependency of current personalization.
 
-The [personalization phase roadmap](personalization/roadmap.md) explains the intervening work: qualify ordinary spelling learning, evaluate local semantic preferences/intent/repair, and evaluate separately enabled TextEdit correction candidates in isolated shadow storage. The application now also persists bounded six-policy comparisons of explicit edits; active learning rules remain fixed. These application-memory extensions can improve without retraining. The own-model phase remains optional and uses the training contract below.
+The [personalization phase roadmap](personalization/roadmap.md) explains the intervening work: qualify ordinary spelling learning and evaluate local semantic preferences/intent/repair. The application now also persists bounded six-policy comparisons of explicit edits; active learning rules remain fixed. These application-memory extensions can improve without retraining. The own-model phase remains optional and uses the training contract below.
 
 ## User configuration
 

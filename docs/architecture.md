@@ -107,8 +107,7 @@ Continuous model improvement remains a separate train/evaluate/promote milestone
 
 This diagram describes the implemented flow. The operation freezes its project,
 language and memory before using them. Projects resolve from an explicit manual
-override or bounded app/qualified TextEdit folder rules. External candidates need
-explicit spelling confirmation; semantic/policy evaluations do not activate memory
+override or bounded app/folder rules. Semantic/policy evaluations do not activate memory
 or train models. Detailed contracts live in the [personalization guide](personalization/README.md).
 
 ```mermaid
@@ -127,18 +126,13 @@ flowchart TD
     E --> G["Independent support, language and context gates"]
     G -->|"Eligible spelling"| P
     E --> Q["Semantic and policy shadow evaluation only"]
-    O --> T["Opt-in TextEdit receipt"]
-    T --> X["Bounded external correction candidate"]
-    X --> V["Explicit spelling review"]
-    V -->|"Confirm one spelling"| P
     R --> H["Separate explicit human review"]
     H --> D["Reviewed ASR or cleanup export"]
 ```
 
 The shared correction stage remains available with writing disabled or failed;
 unsupported decoder hints do not disable memory. Ordinary edits are spelling
-evidence, not reviewed training targets. The authored native TextEdit keyboard-paste component checks passed; broader
-app-path and natural-use qualification remain open in its [guide](personalization/external-observer.md).
+evidence, not reviewed training targets.
 There is no edge from shadow candidates or reviewed exports to a live training
 or promotion service because that service is not implemented.
 

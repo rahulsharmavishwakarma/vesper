@@ -397,7 +397,7 @@ saved vocabulary and optional recognition hints keep their existing controls.
 | In-app spelling learning | Eligible saved corrections contribute automatically to scoped vocabulary under the support and context rules above. No per-word approval is needed. |
 | Background edit analysis | After a saved in-app correction, an already-loaded supported writer can analyze intent and context while idle. Its findings are evaluation evidence; they do not change your preferences or approve labels. Recording cancels this work. |
 | Learning-rule comparisons | Explicit in-app edits trigger background comparisons of fixed learning rules. Results do not select a new active rule. |
-| TextEdit corrections | Optional capture collects candidates; **Remember** is still required to add a spelling. |
+| External-editor corrections | Not observed. Correct the draft inside Vesper; eligible in-app corrections teach vocabulary automatically. |
 | History and model training | History training labels require explicit review. Automatic label approval, candidate training and model promotion are not active. |
 
 Automatic checks therefore do not mark each recording as reviewed. Semantic
@@ -451,9 +451,9 @@ When you save a correction inside Vesper, the app also attempts a small local an
 
 The app may retain bounded before/after text and one recent attempt locally for up to 30 days, even when saving audio for training is off. At most 256 results are retained, with expiry applied when the store is next accessed. Undo learning removes that result’s analysis; Forget learned words also removes all of this analysis. No audio or training labels are created by it. See [semantic personalization](personalization/semantic-shadow.md) for details and current evidence.
 
-### Optional TextEdit correction evaluation
+### Corrections in other applications
 
-In **Settings → Recording → Advanced storage and improvement**, **Review corrections in TextEdit** enables bounded local correction capture after automatic paste. It is off by default. The first adapter requires plain-text TextEdit with English menus on Mac and a direct keyboard layout. It observes the inserted text and up to 32 adjacent UTF-16 units on each side for at most one minute; it may abstain when the field, selection or boundaries change. Only inserted/edited text is retained locally, at most 256 records for 30 days. Open **Settings → Writing → Corrections from TextEdit**, review the change, then choose **Remember** for a spelling or **Dismiss correction**. Remember uses the original recording project/language, consumes that candidate and creates a manual vocabulary entry. Remove that word to undo; it does not approve a training label. Save or discard unsaved preferences before reviewing. Disabling stops observation; **Forget learned spellings** also deletes retained candidates. Ordinary in-app spelling learning remains automatic. See the [full scope and limitations](personalization/external-observer.md).
+Vesper does not watch text you edit outside the app. A former TextEdit-only correction observer was removed because dictation pastes into any application; see the [removal note](personalization/external-observer.md). To teach a spelling, correct the draft inside Vesper instead — ordinary in-app spelling learning remains automatic.
 
 Apple Silicon builds can run **Parakeet** and **Qwen ASR** on the GPU automatically for **English**. Keep **Automatic**, save your model selection, and choose **Download**. Compatible GPU files can use more disk space than CPU files. Existing CPU downloads stay usable until the update is prepared; **Ready · update available** means you can transcribe now or download the optimized package. Removing a model removes its CPU and GPU exports. Full recordings and imported files share this pipeline; live partial transcription still requires Nemotron. Other languages and automatic language detection use their supported paths and may need a separate download. CPU remains an advanced override. See [accelerator setup](accelerators.md#building-the-apple-silicon-application).
 

@@ -9,8 +9,7 @@ shows when no recent in-app correction has been received. Provisional candidate
 and draft-save messages identify the current blocker: unknown recording language,
 independent support count, missing scope, the 128-entry limit, or a manually
 managed equivalent entry. These diagnostics do not change policy 4 or activate
-previously rejected evidence. Repeated raw observations, Copy, and external-editor
-corrections do not teach an alias. The TextEdit experiment remains shadow-only.
+previously rejected evidence. Repeated raw observations and Copy do not teach an alias.
 
 ## Evidence flow
 
