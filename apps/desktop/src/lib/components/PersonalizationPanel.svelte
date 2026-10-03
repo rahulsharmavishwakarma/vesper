@@ -368,7 +368,7 @@
           </div>
           <div class="preference-group">
             <div class="group-heading">
-              <h3>Vocabulary</h3>
+              <h3 id="vocabulary">Vocabulary</h3>
               <span class="entry-count">{profile.vocabulary.length} / 128</span>
             </div>
             {#if !profile.vocabulary.length}<p class="note">
@@ -561,11 +561,24 @@
           {/if}
           {#if learning}
             <div class="preference-group">
-              <h3>Automatic learning evidence</h3>
+              <div class="group-heading">
+                <h3>Automatic learning evidence</h3>
+                <span class="entry-count"
+                  >{learning.candidates.filter((c) => c.state === 'active').length} active · {learning.candidates.filter(
+                    (c) => c.state === 'provisional',
+                  ).length} awaiting · {learning.candidates.filter((c) => c.state === 'suspended')
+                    .length} paused · {learning.candidates.filter((c) => c.state === 'observed')
+                    .length} observed</span
+                >
+              </div>
+              <p class="note">
+                Vesper learns spellings from edits you save in Dictate. Dictation and copying alone
+                do not confirm a spelling, and nothing here changes your vocabulary by itself.
+              </p>
               {#if !learning.events.some((event) => event.kind === 'user_edit')}
                 <p class="note">
-                  No recent in-app corrections recorded. Edit Your text in Dictate, then leave the
-                  field or copy to save. Dictation and copying alone do not confirm a spelling.
+                  No corrections recorded yet — edit Your text in Dictate and save to teach your
+                  first spelling.
                 </p>
               {/if}
               <p class="note">
@@ -574,41 +587,40 @@
                 learned spellings provisional. History reviews require your confirmation; background
                 intent and policy evaluation does not yet change your preferences.
               </p>
-              <p class="note">
-                {learning.candidates.filter((c) => c.state === 'active').length} active · {learning.candidates.filter(
-                  (c) => c.state === 'provisional',
-                ).length} awaiting spelling evidence · {learning.candidates.filter(
-                  (c) => c.state === 'suspended',
-                ).length} paused · {learning.candidates.filter((c) => c.state === 'observed')
-                  .length} automatically observed. Usage counts do not prove a spelling is correct.
-              </p>
-              <p class="note">
-                {learning.events.filter((e) => e.retry === 'possible_repair').length} possible repair
-                signals. These do not create replacement rules.
-              </p>
               {#if learning.candidates.some((c) => c.state === 'observed')}
-                <p class="note">
-                  Automatically observed technical terms from ordinary recordings. These never
-                  activate correction rules.
-                </p>
+                <div class="sub-heading">
+                  <h4>Observed terms</h4>
+                  <span class="entry-count">Never activate correction rules</span>
+                </div>
                 {#each learning.candidates
                   .filter((c) => c.state === 'observed')
                   .slice()
                   .reverse()
                   .slice(0, 8) as term (term.id)}
-                  <p>
-                    <strong>{term.phrase}</strong> · observed {term.observedCount}×<br /><span
-                      class="note"
-                      >{term.project || term.context || 'Shared vocabulary'} · {term.language ===
+                  <div class="word-entry">
+                    <div class="entry-heading">
+                      <h4>
+                        {term.phrase}
+                        <span class="entry-count">observed {term.observedCount}×</span>
+                      </h4>
+                      <a class="term-manage" href="#vocabulary">Manage in Vocabulary</a>
+                    </div>
+                    <p class="note">
+                      {term.project || term.context || 'Shared vocabulary'} · {term.language ===
                       'auto'
                         ? 'Language not established'
-                        : term.language} · {term.reason}</span
-                    >
-                  </p>
+                        : term.language} · {term.reason}
+                    </p>
+                  </div>
                 {/each}
               {/if}
               <details>
                 <summary>Inspect recent candidates</summary>
+                <p class="note">
+                  {learning.events.filter((e) => e.retry === 'possible_repair').length} possible repair
+                  signals. These do not create replacement rules. Usage counts do not prove a spelling
+                  is correct.
+                </p>
                 {#each learning.candidates
                   .slice()
                   .reverse()
@@ -630,13 +642,15 @@
                   in Vocabulary.
                 </p>
               </details>
-              <button type="button" disabled={controlsDisabled || dirty} onclick={forgetLearning}
-                >Forget automatic learning</button
-              >
-              <p class="note">
-                Removes automatic spellings, candidates and usage evidence. Manually saved words and
-                reviewed recordings remain. New recordings automatically teach fresh corrections.
-              </p>
+              <div class="danger-zone">
+                <button type="button" disabled={controlsDisabled || dirty} onclick={forgetLearning}
+                  >Forget automatic learning</button
+                >
+                <p class="note">
+                  Removes automatic spellings, candidates and usage evidence. Saved words and
+                  reviewed recordings remain.
+                </p>
+              </div>
             </div>
           {/if}
         </fieldset>
@@ -744,6 +758,34 @@
   }
   .entry-heading {
     margin-bottom: var(--space-3);
+  }
+  .sub-heading {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: baseline;
+    justify-content: space-between;
+    gap: var(--space-2);
+    margin: var(--space-5) 0 var(--space-3);
+  }
+  .sub-heading h4 {
+    margin: 0;
+    font-size: 12px;
+    font-weight: 600;
+  }
+  .term-manage {
+    font-size: 12px;
+    white-space: nowrap;
+  }
+  .word-entry .note {
+    margin-bottom: 0;
+  }
+  .danger-zone {
+    margin-top: var(--space-5);
+    padding-top: var(--space-4);
+    border-top: 1px dashed var(--color-line);
+  }
+  .danger-zone .note {
+    margin-top: var(--space-2);
   }
   .entry-heading h4 {
     font-size: 12px;
