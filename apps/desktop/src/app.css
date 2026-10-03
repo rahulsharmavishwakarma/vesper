@@ -548,6 +548,45 @@ h3 {
   border: 0;
   background: var(--color-transparent);
 }
+/* Settings-only icon rail: the settings sections own wayfinding there, so the
+   app sidebar collapses to icons and returns side space. Labels stay in the
+   accessibility tree via .visually-hidden; tooltips come from title. */
+.app-shell {
+  transition: grid-template-columns 220ms ease-out;
+}
+@media (min-width: 701px) {
+  .app-shell.settings-rail {
+    grid-template-columns: 76px minmax(0, 1fr);
+  }
+  .app-shell.settings-rail .sidebar {
+    align-items: center;
+    padding-inline: var(--space-3);
+  }
+  .app-shell.settings-rail .brand {
+    justify-content: center;
+    width: 100%;
+    padding: 0;
+  }
+  .app-shell.settings-rail .brand > .brand-logo {
+    width: 40px;
+  }
+  .app-shell.settings-rail .sidebar nav {
+    width: 100%;
+  }
+  .app-shell.settings-rail .sidebar nav button {
+    justify-content: center;
+    padding-inline: 0;
+  }
+  .app-shell.settings-rail .draft-dot {
+    position: absolute;
+    top: 7px;
+    right: 7px;
+    margin-left: 0;
+  }
+  .app-shell.settings-rail .sidebar-foot {
+    padding-inline: 0;
+  }
+}
 .studio-main {
   width: min(100%, 1072px);
   min-width: 0;

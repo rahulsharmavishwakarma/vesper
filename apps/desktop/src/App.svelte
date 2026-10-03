@@ -451,25 +451,27 @@
 {#if quickWindow}
   <QuickCapture preview={environment === 'browser-preview'} />
 {:else}
-  <div class="app-shell">
+  <div class="app-shell" class:settings-rail={activeView === 'settings'}>
     <aside class="sidebar">
       <button
         type="button"
         class="brand"
         aria-label="Vesper — dictate"
-        onclick={() => navigate('dictate')}><BrandLogo decorative /></button
+        onclick={() => navigate('dictate')}
+        ><BrandLogo decorative mark={activeView === 'settings'} /></button
       >
       <nav aria-label="Application">
         {#each views as view (view.id)}
           <button
             type="button"
             aria-current={activeView === view.id ? 'page' : undefined}
+            title={view.label}
             onclick={() => navigate(view.id)}
             ><Icon
               name={view.icon}
               active={activeView === view.id}
               motionKey={activeView === view.id ? navigationRevision : 0}
-            /><span>{view.label}</span
+            /><span class:visually-hidden={activeView === 'settings'}>{view.label}</span
             >{#if dirty && (view.id === 'settings' || view.id === 'models')}<span
                 class="draft-dot"
                 aria-label="Unsaved settings"
@@ -481,10 +483,13 @@
         {#if pipelineBusy}<button
             type="button"
             class="activity-link"
+            aria-label="Operation in progress"
             onclick={() => navigate('dictate')}
-            ><span class="status-dot"></span>Operation in progress</button
+            ><span class="status-dot"></span><span class:visually-hidden={activeView === 'settings'}
+              >Operation in progress</span
+            ></button
           >{/if}
-        <span class="environment-tag"
+        <span class="environment-tag" hidden={activeView === 'settings'}
           >{environment === 'browser-preview' ? 'Browser preview' : 'On your device'}</span
         >
       </div>

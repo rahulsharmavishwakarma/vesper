@@ -6,7 +6,13 @@
     animate = false,
     decorative = false,
     large = false,
-  }: { animate?: boolean; decorative?: boolean; large?: boolean } = $props();
+    mark = false,
+  }: { animate?: boolean; decorative?: boolean; large?: boolean; mark?: boolean } = $props();
+  // Collapsed rails show the songbird glyph alone: same trusted artwork,
+  // reframed to the mark's viewBox region.
+  const framed = $derived(
+    mark ? artwork.replace('viewBox="0 0 399 104"', 'viewBox="0 0 100 104"') : artwork,
+  );
 
   let reducedMotion = $state(false);
   let interrupted = $state(false);
@@ -33,7 +39,7 @@
 >
   <!-- Only a trusted, bundled SVG is accepted; no caller-supplied markup. -->
   <!-- eslint-disable-next-line svelte/no-at-html-tags -->
-  {@html artwork}
+  {@html framed}
 </span>
 
 <style>
