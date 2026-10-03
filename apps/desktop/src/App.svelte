@@ -948,25 +948,6 @@
                         uses Vulkan; writing uses ROCm.{/if}
                     </p>
                   </div>
-                  <div class="field">
-                    <label for="model-directory">Model folder</label>
-                    <input
-                      id="model-directory"
-                      type="text"
-                      value={draft.modelDirectory ?? ''}
-                      oninput={(event) => {
-                        const path = event.currentTarget.value;
-                        draft.modelDirectory = path.trim() ? path : null;
-                      }}
-                      placeholder="Use the application’s default folder"
-                      aria-describedby="directory-help"
-                      spellcheck="false"
-                    />
-                    <p id="directory-help" class="note">
-                      Enter a folder path, or leave empty to use the default. Saving this path does
-                      not move or download models.
-                    </p>
-                  </div>
                 </section>
                 <section
                   class="settings-section"

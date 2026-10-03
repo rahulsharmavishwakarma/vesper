@@ -183,12 +183,6 @@ test('browsing a shipped package can inspect files without activating the select
   );
   assert.equal(knownDownloadSelection(draft, saved, 'rewriter'), true);
   assert.equal(JSON.stringify(saved), before);
-  draft.modelDirectory = '/different-model-folder';
-  assert.equal(knownDownloadSelection(draft, saved, 'asr'), false);
-  assert.equal(
-    downloadOptionStatus(draft, saved, 'asr', stateWith([]), true).label,
-    'Save to check',
-  );
 });
 
 test('an edited imported profile or a shadowed preset cannot reuse another declaration’s file status', () => {

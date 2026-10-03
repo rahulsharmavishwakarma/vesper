@@ -49,6 +49,17 @@ test('Settings sections preserve independent application and vocabulary drafts',
   await expect.poll(() => page.evaluate(() => window.previewClipboard)).toContain('Version: 0.1.0');
 });
 
+test('Models view offers no Model folder override', async ({ page }) => {
+  await openSettings(page);
+  await page
+    .getByRole('navigation', { name: 'Application', exact: true })
+    .getByRole('button', { name: 'Models', exact: true })
+    .click();
+  await expect(page.getByRole('heading', { name: 'Device and storage' })).toBeVisible();
+  await expect(page.getByLabel('Model folder')).toHaveCount(0);
+  await expect(page.locator('#model-directory')).toHaveCount(0);
+});
+
 test('Appearance persists, follows system changes and recovers from unavailable storage', async ({
   page,
 }) => {

@@ -96,7 +96,7 @@
     </section>
     <section>
       <h2>Error</h2>
-      <label for="preview-invalid">Model folder</label><input
+      <label for="preview-invalid">Backup folder</label><input
         id="preview-invalid"
         aria-invalid="true"
         aria-describedby="preview-error"

@@ -113,7 +113,6 @@ export interface AppConfig {
   cleanupEnabled: boolean;
   audioFrontend: AudioFrontendConfig;
   language: Language;
-  modelDirectory: string | null;
   cleanupPreset: CleanupPreset;
   customCleanupInstruction: string;
   rewriteQuantization: RewriteQuantization;
@@ -212,7 +211,6 @@ export function defaultSettings(): AppConfig {
     cleanupEnabled: true,
     audioFrontend: automaticAudioFrontend(),
     language: 'en',
-    modelDirectory: null,
     cleanupPreset: 'minimal',
     customCleanupInstruction: '',
     rewriteQuantization: 'q4_0',
@@ -473,14 +471,6 @@ export function validateSettings(value: unknown, checkWriterLanguage = true): st
   if (!isOneOf(value.computeBackend, ['auto', 'cpu', 'metal', 'cuda', 'vulkan', 'rocm']))
     errors.push('Select a supported inference backend.');
 
-  if (
-    value.modelDirectory !== null &&
-    (typeof value.modelDirectory !== 'string' ||
-      !value.modelDirectory.trim() ||
-      [...value.modelDirectory].length > 4096)
-  ) {
-    errors.push('Use the default model folder or enter a path of at most 4,096 characters.');
-  }
   if (
     typeof value.customCleanupInstruction !== 'string' ||
     [...value.customCleanupInstruction].length > 4000

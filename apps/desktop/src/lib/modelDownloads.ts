@@ -88,13 +88,13 @@ export function matchingDownload(
 }
 
 /** A dropdown preview can inspect a saved catalog package without activating it.
- * An edited folder or same-ID imported declaration must not reuse old status. */
+ * A same-ID imported declaration must not reuse old status. */
 export function knownDownloadSelection(
   config: AppConfig,
   saved: AppConfig | null,
   role: ModelProfileRole,
 ): boolean {
-  if (!saved || config.modelDirectory !== saved.modelDirectory) return false;
+  if (!saved) return false;
   if (
     role === 'asr' &&
     (config.computeBackend !== saved.computeBackend || config.language !== saved.language)

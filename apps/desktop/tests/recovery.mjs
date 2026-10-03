@@ -3646,9 +3646,9 @@ for (const failure of ['cancelled', 'network failure']) {
   });
 }
 
-await test('Automatic audio setup waits for saved settings and handles a changed model folder', async () => {
+await test('Automatic audio setup waits for saved settings and resumes after saving', async () => {
   let saved = defaultSettings();
-  let folder = 'synthetic-models';
+  const folder = 'synthetic-models';
   const firstCatalog = deferred();
   const installs = [];
   let listed = 0;
@@ -3669,7 +3669,6 @@ await test('Automatic audio setup waits for saved settings and handles a changed
       }
       if (command === 'save_settings') {
         saved = JSON.parse(JSON.stringify(args.settings));
-        folder = saved.modelDirectory;
         return saved;
       }
       if (command === 'install_model') {
@@ -3684,14 +3683,18 @@ await test('Automatic audio setup waits for saved settings and handles a changed
   });
   await until(
     () =>
-      target.querySelector('#model-directory') &&
-      !target.querySelector('#model-directory').disabled,
+      target.querySelector('#compute-backend') &&
+      !target.querySelector('#compute-backend').disabled,
     'Settings missing',
   );
   audioButton('Models').click();
-  const field = target.querySelector('#model-directory');
-  field.value = 'new-synthetic-models';
-  field.dispatchEvent(new Event('input', { bubbles: true }));
+  target.querySelector('#compute-backend').click();
+  await tick();
+  const cpuOption = [...document.querySelectorAll('[role="option"]')].find((option) =>
+    option.textContent.includes('CPU'),
+  );
+  assert(cpuOption, 'CPU processing option missing');
+  cpuOption.click();
   await tick();
   firstCatalog.resolve([audioPackage('dpdfnet8')]);
   await until(() => target.querySelector('[aria-label="Rescan microphones"]'), 'Resources missing');
@@ -3699,7 +3702,7 @@ await test('Automatic audio setup waits for saved settings and handles a changed
   assert(installs.length === 0, 'Dirty settings triggered supporting downloads');
   audioButton('Save changes').click();
   await until(() => installs.length === 1, 'Saving settings did not resume automatic setup');
-  assert(installs[0] === 'new-synthetic-models', 'Used stale model folder');
+  assert(installs[0] === folder, 'Used stale model folder');
   assert(state.counts.save_settings === 1, 'Setup unexpectedly saved settings again');
 });
 
