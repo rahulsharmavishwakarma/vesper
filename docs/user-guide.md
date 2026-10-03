@@ -85,7 +85,7 @@ to be managed separately in **Models**.
    longer while a model loads.
 
 Model downloads need internet access and additional disk space. Files are
-verified before use. Manage installed models, the model folder and device
+verified before use. Manage installed models and device
 acceleration in **Models**. See [model choices](model-presets.md) for details.
 
 Vesper automatically reuses verified model files already in your Hugging Face
@@ -219,13 +219,13 @@ download; cancellation lets you continue with original-audio fallback. Files are
 verified against pinned hashes. Downloads require internet access; transcription
 and audio processing run entirely on device after setup.
 
-Supporting files are checked automatically once per app session and model folder.
+Supporting files are checked automatically once per app session.
 Valid stored files are reused; missing or corrupt files are downloaded and repaired.
 No audio-model selection, download, verification or retry action is needed.
 After a failed or cancelled transfer, setup retries after 30 seconds, then
 2 minutes, with later retries spaced 10 minutes apart; reconnecting to the internet
 also resumes setup. It always waits for recording and settings edits to finish.
-Changing and saving the model folder checks the new location. ASR and writing
+ASR and writing
 weights still use **Save & download**.
 
 Noise reduction applies to live transcription and completed recordings. It can

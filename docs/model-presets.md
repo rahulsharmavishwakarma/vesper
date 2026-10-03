@@ -1,7 +1,6 @@
 # Model presets
 
-For a development model directory, use `VESPER_MODEL_DIR`; a saved
-`modelDirectory` still takes precedence. Earlier environment names remain
+For a development model directory, use `VESPER_MODEL_DIR`. Earlier environment names remain
 [compatibility fallbacks](development.md#product-name-and-compatibility), without
 renaming model IDs or moving downloaded artifacts.
 
