@@ -180,7 +180,6 @@ pub struct AppConfig {
     pub cleanup_enabled: bool,
     pub audio_frontend: AudioFrontendConfig,
     pub language: Language,
-    pub model_directory: Option<String>,
     pub cleanup_preset: CleanupPreset,
     pub custom_cleanup_instruction: String,
     pub rewrite_quantization: RewriteQuantization,
@@ -209,7 +208,6 @@ impl Default for AppConfig {
             audio_frontend: AudioFrontendConfig::default(),
             // The default Cohere adapter requires an explicit supported language.
             language: Language::English,
-            model_directory: None,
             cleanup_preset: CleanupPreset::default(),
             custom_cleanup_instruction: String::new(),
             rewrite_quantization: RewriteQuantization::default(),
@@ -344,20 +342,6 @@ impl AppConfig {
                 field: "customCleanupInstruction",
                 message: "custom writing instructions must not exceed 4000 characters".into(),
             });
-        }
-        if let Some(directory) = &self.model_directory {
-            if directory.trim().is_empty() {
-                return Err(Error::InvalidConfig {
-                    field: "modelDirectory",
-                    message: "model directory must be nonblank, or unset to use the default".into(),
-                });
-            }
-            if directory.chars().count() > 4_096 {
-                return Err(Error::InvalidConfig {
-                    field: "modelDirectory",
-                    message: "model directory must not exceed 4096 characters".into(),
-                });
-            }
         }
         Ok(())
     }
@@ -690,20 +674,6 @@ mod tests {
             ),
             (
                 AppConfig {
-                    model_directory: Some(" \t\n".into()),
-                    ..AppConfig::default()
-                },
-                "modelDirectory",
-            ),
-            (
-                AppConfig {
-                    model_directory: Some("a".repeat(4_097)),
-                    ..AppConfig::default()
-                },
-                "modelDirectory",
-            ),
-            (
-                AppConfig {
                     global_shortcut: "Shift+Q".into(),
                     ..AppConfig::default()
                 },
@@ -720,7 +690,6 @@ mod tests {
             AppConfig {
                 max_recording_seconds: seconds,
                 custom_cleanup_instruction: "é".repeat(4_000),
-                model_directory: Some("é".repeat(4_096)),
                 ..AppConfig::default()
             }
             .validate()

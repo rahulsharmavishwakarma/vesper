@@ -7,9 +7,7 @@ cleanupEnabled = true
 language = "en" # Cohere requires en or fr. Auto/hi require another compatible ASR.
 computeBackend = "auto" # auto, cpu, metal, cuda, vulkan, or rocm
 
-# Omit modelDirectory to represent the default JSON null / Rust None value.
-# Optional override: nonblank path, at most 4096 characters; not scanned yet.
-# modelDirectory = "/absolute/path/to/models"
+# Models always resolve to the default directory; there is no folder override.
 
 cleanupPreset = "minimal" # minimal (formatting only) or balanced (context correction)
 # Nonblank custom text replaces the preset instruction; at most 4000 characters.

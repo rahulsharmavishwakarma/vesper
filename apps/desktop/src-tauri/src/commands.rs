@@ -105,11 +105,7 @@ pub fn get_app_status(storage: tauri::State<'_, AppStorage>) -> Result<AppStatus
     Ok(AppStatus {
         name: "Vesper",
         version: env!("CARGO_PKG_VERSION"),
-        inference_ready: vesper_models::inspect(
-            &config,
-            &vesper_models::model_directory(&config, &storage.model_dir),
-        )
-        .ready,
+        inference_ready: vesper_models::inspect(&config, &storage.model_dir).ready,
         asr_model: config.asr_name().into(),
         rewrite_model: config.rewriter_name().into(),
         message:
@@ -233,7 +229,6 @@ pub async fn edit_latest_draft(
     tauri::async_runtime::spawn_blocking(move || {
         let result = runtime.edit_latest_draft(root.clone(), &result_id, revision, text)?;
         if let Some(config) = config {
-            let model_root = vesper_models::model_directory(&config, &model_root);
             runtime.schedule_semantic_shadow(root, config, model_root, &inference);
         }
         Ok(result)
@@ -626,7 +621,7 @@ fn work_context(storage: &AppStorage) -> Result<WorkContext, String> {
     config.validate().map_err(|e| e.to_string())?;
     Ok(WorkContext {
         operation_id: uuid::Uuid::new_v4().to_string(),
-        model_root: vesper_models::model_directory(&config, &storage.model_dir),
+        model_root: storage.model_dir.clone(),
         config,
         dataset_root: storage.dataset_dir.clone(),
         runtime: Arc::clone(&storage.runtime),
@@ -704,7 +699,7 @@ pub fn list_model_installations(
     storage: tauri::State<'_, AppStorage>,
 ) -> Result<Vec<vesper_models::ModelInstallation>, String> {
     let config = storage.settings.load()?;
-    let root = vesper_models::model_directory(&config, &storage.model_dir);
+    let root = storage.model_dir.clone();
     Ok(vesper_models::list_model_installations(&config, &root))
 }
 

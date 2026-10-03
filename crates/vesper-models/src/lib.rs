@@ -685,14 +685,6 @@ fn install_runtime_archive(root: &Path, artifact: &Artifact) -> Result<()> {
     Ok(())
 }
 
-pub fn model_directory(config: &AppConfig, default_root: &Path) -> PathBuf {
-    config
-        .model_directory
-        .as_ref()
-        .map(PathBuf::from)
-        .unwrap_or_else(|| default_root.to_path_buf())
-}
-
 /// A fast inventory for UI polling. The full hash is always checked before inference.
 pub fn inspect(config: &AppConfig, root: &Path) -> Installation {
     let resolved = match resolve_speech(config, root) {
