@@ -1443,7 +1443,13 @@ details {
   background: var(--color-transparent);
 }
 .recent-panel .session-list {
-  gap: var(--space-3);
+  gap: var(--space-4);
+  border: 0;
+  border-radius: 0;
+  overflow: visible;
+}
+.recent-panel .session-list > li + li {
+  border-top: 0;
 }
 .recent-panel .session-button {
   align-items: center;

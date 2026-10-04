@@ -173,6 +173,7 @@
         })
       : null,
   );
+
   $effect(() => {
     const snapshot = JSON.stringify(draft);
     const writable = loaded && pending === null && !pipelineBusy && validationErrors.length === 0;
@@ -229,6 +230,14 @@
     ...(backendError ? [backendError] : []),
   ]);
   const dirty = $derived(loaded && JSON.stringify(draft) !== savedJson);
+  // The notice only renders for actionable states; idle settings show nothing.
+  const hasNotice = $derived(
+    !loaded ||
+      (error !== null && activeView !== 'models') ||
+      (loaded && validationErrors.length > 0) ||
+      feedback !== null ||
+      saveInFlight,
+  );
   const writerError = $derived(writingLanguageError(draft));
   const languageError = $derived(transcriptionLanguageError(draft) ?? writerError);
   const asrOptions = $derived(optionsWithDownloads('asr'));
@@ -1086,7 +1095,12 @@
                 !dirty &&
                 !error &&
                 loaded) ||
-              (!dirty && !error && loaded && activeView !== 'settings' && activeView !== 'models')}
+              (!dirty &&
+                !error &&
+                loaded &&
+                activeView !== 'settings' &&
+                activeView !== 'models') ||
+              !hasNotice}
           >
             <div class="form-feedback" aria-live="polite">
               {#if error && activeView !== 'models'}<p class="error" role="alert">{error}</p>{/if}
@@ -1098,9 +1112,7 @@
                   </ul>
                 </div>
               {:else if feedback}<p class="success">{feedback}</p>
-              {:else if saveInFlight}<p class="note">Saving…</p>
-              {:else if dirty}<p class="note">Changes will save automatically.</p>
-              {:else if loaded}<p class="note">No unsaved changes.</p>{/if}
+              {:else if saveInFlight}<p class="note">Saving…</p>{/if}
             </div>
             {#if !loaded}<div class="form-actions">
                 <button

@@ -475,13 +475,14 @@
   .select-option.is-active,
   .select-option:hover:not(:disabled),
   .select-option:active:not(:disabled) {
-    background: var(--color-transparent);
+    background: var(--color-line);
     transform: none;
   }
   .select-popup {
     --selection-color: var(--color-raised);
   }
   .select-option[aria-selected='true'] {
+    background: var(--color-tint);
     color: var(--color-accent);
   }
   .select-option:disabled {

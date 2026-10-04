@@ -709,14 +709,12 @@
           {/if}
         </fieldset>
       {/if}
-      <div class="preferences-footer">
+      <div class="preferences-footer" hidden={!error && pending === null && !feedback}>
         <div class="preference-feedback" aria-live="polite">
           {#if error}<p class="error" role="alert">{error}</p>
           {:else if pending === 'loading'}<p class="note">Loading personal preferences…</p>
           {:else if pending === 'saving'}<p class="note">Saving personal preferences…</p>
-          {:else if dirty}<p class="note">Changes will save automatically.</p>
-          {:else if feedback}<p class="success">{feedback}</p>
-          {:else if profile}<p class="note">Personal preferences are up to date.</p>{/if}
+          {:else if feedback}<p class="success">{feedback}</p>{/if}
         </div>
         <div class="form-actions">
           {#if profile}
