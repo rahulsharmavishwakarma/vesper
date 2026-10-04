@@ -82,18 +82,20 @@ test('Ember theme, single family, logo and icons apply with bundled fonts', asyn
   expect(light.muted).toBe('#6b6962');
 
   await dictate.click();
-  await expect(page.locator('.transcription-language .icon')).toBeVisible();
+  await expect(page.locator('.dictate-device .field-label [data-icon="globe"]')).toBeVisible();
+  await expect(page.locator('.dictate-device .field-label [data-icon="mic"]')).toBeVisible();
   await expect(page.locator('.recorder-heading [data-icon="mic"]')).toBeVisible();
+  await expect(page.locator('.recording-timer')).toHaveText('00:00');
   await expect(page.locator('.record-button [data-icon="record"]')).toBeVisible();
   const wave = page.locator('.ember-wave');
   await expect(wave).toBeVisible();
-  expect(await wave.locator('i').count()).toBe(56);
+  expect(await wave.locator('i').count()).toBe(44);
   expect(
     await wave
       .locator('i')
       .first()
       .evaluate((bar) => bar.style.height),
-  ).toBe('3px');
+  ).toBe('4px');
   expect(remoteFonts).toEqual([]);
 });
 

@@ -2377,11 +2377,11 @@ await test('Capture keeps one control and bars follow acknowledged recording and
   const bars = () =>
     [...target.querySelectorAll('.ember-wave i')].map((bar) => parseFloat(bar.style.height));
   await until(() => state.counts.get_audio_features > 2, 'Measured audio was not sampled');
-  assert(bars().length === 56, 'Recorder wave is not the bar strip');
-  await until(() => Math.max(...bars()) > 3, 'Measured signal did not animate');
+  assert(bars().length === 44, 'Recorder wave is not the bar strip');
+  await until(() => Math.max(...bars()) > 4, 'Measured signal did not animate');
   state.quiet = true;
   await until(
-    () => bars().every((height) => height <= 3.02),
+    () => bars().every((height) => height <= 4.02),
     'Silent input retained a moving signal',
   );
   const quiet = bars().join(',');
@@ -2430,7 +2430,7 @@ for (const main of [true, false])
       // bars, pitch alone never reshapes them, and volume drives the height.
       // Pitch tracking stays covered by the floating-capture leg below.
       await until(
-        () => state.counts.get_audio_features > 2 && bars().length === 56,
+        () => state.counts.get_audio_features > 2 && bars().length === 44,
         'Audio telemetry missing',
       );
       if (!matchMedia('(prefers-reduced-motion: reduce)').matches) {

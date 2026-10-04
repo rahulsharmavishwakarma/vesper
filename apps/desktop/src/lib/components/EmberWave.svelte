@@ -2,9 +2,9 @@
   import { onMount } from 'svelte';
   import { getAudioFeatures } from '../api/runtime';
 
-  // Ember live waveform: 56 bars that sit flat while idle and dance in the
+  // Ember live waveform: 44 bars that sit flat while idle and dance in the
   // accent colour from measured microphone level while recording.
-  const BARS = 56;
+  const BARS = 44;
   const flat = () => Array<number>(BARS).fill(0);
   let {
     recording,
@@ -66,7 +66,7 @@
   role="img"
   aria-label={recording ? 'Recording level' : 'Microphone idle'}
 >
-  {#each levels as level, index (index)}<i style:height={`${3 + Math.round(level * 49)}px`}
+  {#each levels as level, index (index)}<i style:height={`${4 + Math.round(level * 150)}px`}
     ></i>{/each}
 </div>
 
@@ -75,13 +75,14 @@
     display: flex;
     align-items: center;
     gap: 3px;
-    height: 56px;
+    flex: 1;
+    min-height: 120px;
     overflow: clip;
   }
   .ember-wave i {
     display: block;
-    width: 3px;
-    min-height: 3px;
+    width: 4px;
+    min-height: 4px;
     flex: none;
     border-radius: 2px;
     background: var(--color-muted);
