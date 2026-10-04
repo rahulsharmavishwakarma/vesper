@@ -63,7 +63,8 @@ test('Models view offers no Model folder override', async ({ page }) => {
 test('App sidebar collapses to an icon rail on Settings only', async ({ page }) => {
   await openSettings(page);
   await expect(page.locator('.app-shell')).toHaveClass(/settings-rail/);
-  await expect(page.locator('.brand svg')).toHaveAttribute('viewBox', '0 0 100 104');
+  await expect(page.locator('.brand svg')).toHaveAttribute('viewBox', '0 0 80 60');
+  await expect(page.locator('.brand .ember-word')).toHaveCount(0);
   const nav = page.getByRole('navigation', { name: 'Application', exact: true });
   await expect(nav.getByRole('button', { name: 'Dictate', exact: true })).toHaveAttribute(
     'title',

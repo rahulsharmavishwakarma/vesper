@@ -823,6 +823,15 @@
     border: 1px solid var(--color-line);
     border-radius: var(--radius-pill);
   }
+  @media (max-width: 480px) {
+    /* Narrow screens cannot fit all four pills in one scroll strip without
+     * clipping the last one, so let them wrap instead. */
+    .filter-pills {
+      width: 100%;
+      flex-wrap: wrap;
+      overflow-x: visible;
+    }
+  }
   .filter-pills button {
     appearance: none;
     border: 1px solid transparent;

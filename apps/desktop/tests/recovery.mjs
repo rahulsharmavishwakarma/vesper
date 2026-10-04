@@ -2987,6 +2987,7 @@ await test('Navigation changes icon state while keeping its target stationary', 
   await until(() => target.querySelector('#settings-language'), 'Settings not loaded');
   const buttons = [...target.querySelectorAll('.sidebar nav button')];
   for (const button of buttons) {
+    const railBefore = target.querySelector('.app-shell')?.classList.contains('settings-rail');
     const before = button.getBoundingClientRect();
     button.click();
     await tick();
@@ -3001,10 +3002,14 @@ await test('Navigation changes icon state while keeping its target stationary', 
       'Navigation target moved during activation',
     );
     const after = button.getBoundingClientRect();
-    assert(
-      before.width === after.width && before.height === after.height,
-      'Navigation target changed size',
-    );
+    // Height must never change: the icon-state swap stays inside the target.
+    // Width may change only when navigation enters or leaves Settings, where
+    // the settings rail intentionally reflows the sidebar.
+    assert(before.height === after.height, 'Navigation target changed size');
+    const railAfter = target.querySelector('.app-shell')?.classList.contains('settings-rail');
+    if (railBefore === railAfter) {
+      assert(before.width === after.width, 'Navigation target changed size');
+    }
     if (!matchMedia('(prefers-reduced-motion: reduce)').matches) {
       const detail = button.querySelector('.nav-detail');
       const animation = detail?.getAnimations()[0];
@@ -3775,10 +3780,18 @@ await test('Automatic audio setup waits for saved settings and resumes after sav
     'Settings missing',
   );
   audioButton('Models').click();
+  // The device section renders hidden until navigation commits; wait for the
+  // trigger to be laid out before clicking it.
+  await until(() => {
+    const trigger = target.querySelector('#compute-backend');
+    return !!trigger && trigger.getClientRects().length > 0 && !trigger.matches(':disabled');
+  }, 'Models device section did not render');
   target.querySelector('#compute-backend').click();
   await tick();
+  // Match the CPU backend by its accessible name, not by text: the Automatic
+  // option's description also mentions the CPU fallback.
   const cpuOption = [...document.querySelectorAll('[role="option"]')].find((option) =>
-    option.textContent.includes('CPU'),
+    (option.getAttribute('aria-label') ?? '').startsWith('CPU.'),
   );
   assert(cpuOption, 'CPU processing option missing');
   cpuOption.click();
