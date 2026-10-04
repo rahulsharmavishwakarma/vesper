@@ -114,7 +114,7 @@
     margin: auto;
     padding: var(--space-6);
     color: var(--color-ink);
-    background: var(--color-panel);
+    background: var(--color-raised);
     border: 1px solid var(--color-line);
     border-radius: var(--radius-lg);
   }

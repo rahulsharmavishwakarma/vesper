@@ -336,12 +336,12 @@
       border-color 140ms var(--ease);
   }
   .select-trigger:hover:not(:disabled) {
-    background: var(--color-panel);
+    background: var(--color-raised);
     border-color: var(--color-control-hover);
   }
   .select-trigger:active:not(:disabled),
   .select-trigger.is-open {
-    background: var(--color-panel);
+    background: var(--color-raised);
     border-color: var(--color-accent);
     transform: none;
   }
@@ -422,7 +422,7 @@
     padding: 4px;
     border: 1px solid var(--color-line);
     border-radius: var(--radius-sm);
-    background: var(--color-panel);
+    background: var(--color-raised);
     color: var(--color-ink);
     box-shadow: 0 8px 24px color-mix(in oklch, var(--color-bg) 65%, var(--color-transparent));
     font-family: var(--font-body);

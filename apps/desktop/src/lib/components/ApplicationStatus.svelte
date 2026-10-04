@@ -274,7 +274,7 @@
     margin: 0 0 var(--space-6);
     border: 1px solid var(--color-line);
     border-radius: var(--radius-lg);
-    background: var(--color-panel);
+    background: var(--color-raised);
   }
   .engine-header {
     display: flex;
@@ -396,7 +396,7 @@
     top: 0;
     font: 9px var(--font-mono);
     color: var(--color-muted);
-    background: var(--color-panel);
+    background: var(--color-raised);
     padding-left: var(--space-1);
   }
   .resource-axis {

@@ -305,7 +305,7 @@ input:disabled,
 select:disabled,
 textarea:disabled {
   color: var(--color-muted);
-  background: var(--color-panel);
+  background: var(--color-raised);
 }
 input[aria-invalid='true'],
 select[aria-invalid='true'],
@@ -581,7 +581,7 @@ h3 {
   padding: var(--space-4) var(--space-5);
   border: 1px solid var(--color-line);
   border-radius: var(--radius-md);
-  background: var(--color-panel);
+  background: var(--color-raised);
 }
 .transcription-language[hidden] {
   display: none;
@@ -603,7 +603,7 @@ h3 {
 }
 .studio-recorder {
   position: relative;
-  background: var(--color-panel);
+  background: var(--color-raised);
   border: 1px solid var(--color-line);
   border-radius: var(--radius-lg);
   padding: var(--space-5) var(--space-6) 0;
@@ -912,7 +912,7 @@ h3 {
   flex-wrap: wrap;
   gap: var(--space-3);
   padding: var(--space-3) var(--space-4);
-  background: var(--color-panel);
+  background: var(--color-raised);
   border: 1px solid var(--color-line);
   border-radius: var(--radius-sm);
 }
@@ -936,7 +936,7 @@ h3 {
   color: var(--color-accent);
 }
 .settings-section {
-  background: var(--color-panel);
+  background: var(--color-raised);
   border: 1px solid var(--color-line);
   border-radius: var(--radius-md);
   padding: var(--space-6);
@@ -964,7 +964,7 @@ label:not(.checkbox-field) {
 .savebar {
   position: static;
   margin-top: var(--space-6);
-  background: var(--color-panel);
+  background: var(--color-raised);
   border: 1px solid var(--color-line);
   border-radius: var(--radius-md);
   padding: var(--space-4) var(--space-5);
@@ -1036,7 +1036,7 @@ details {
   border-radius: var(--radius-md);
   padding: var(--space-5);
   margin-bottom: var(--space-8);
-  background: var(--color-panel);
+  background: var(--color-raised);
 }
 .history-stats .section-heading {
   flex-wrap: wrap;
@@ -1344,10 +1344,10 @@ details {
   white-space: normal;
 }
 .session-button:hover:enabled {
-  background: var(--color-panel);
+  background: var(--color-raised);
 }
 .session-button[aria-expanded='true'] {
-  background: var(--color-panel);
+  background: var(--color-raised);
 }
 .session-button[aria-expanded='true'] .session-preview {
   color: var(--color-accent);
@@ -1401,13 +1401,13 @@ details {
 }
 .session-editor {
   min-width: 0;
-  background: var(--color-panel);
+  background: var(--color-raised);
   border-top: 1px solid var(--color-line);
   padding: var(--space-5);
   animation: panel-enter 160ms var(--ease) both;
 }
 .session-expanded {
-  background: var(--color-panel);
+  background: var(--color-raised);
 }
 .review-draft {
   color: var(--color-accent);
@@ -1461,7 +1461,7 @@ details {
   padding: var(--space-4);
   border: 1px solid var(--color-line);
   border-radius: var(--radius-md);
-  background: var(--color-panel);
+  background: var(--color-raised);
 }
 .live-transcript p {
   min-height: 3lh;
@@ -1689,7 +1689,7 @@ button.inline-link {
 }
 input:not([type='checkbox']):focus:enabled,
 textarea:focus:enabled {
-  background: var(--color-panel);
+  background: var(--color-raised);
 }
 @keyframes check-draw {
   from {
@@ -2432,7 +2432,7 @@ button:is(
 .settings-content {
   min-width: 0;
   padding: 28px;
-  background: var(--color-panel);
+  background: var(--color-raised);
   border: 1px solid var(--color-line);
   border-radius: var(--radius-md);
 }

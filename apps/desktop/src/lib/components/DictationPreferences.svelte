@@ -146,7 +146,7 @@
     margin-bottom: var(--space-6);
     border: 1px solid var(--color-line);
     border-radius: var(--radius-sm);
-    background: var(--color-bg);
+    background: var(--color-raised);
   }
   .permission-state > div:first-child {
     flex: 1 1 240px;

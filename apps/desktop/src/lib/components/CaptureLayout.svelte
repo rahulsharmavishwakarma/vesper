@@ -161,7 +161,7 @@
     position: relative;
     min-width: 0;
     width: 100%;
-    background: var(--color-panel);
+    background: var(--color-raised);
     border: 1px solid var(--color-line);
     border-radius: 20px;
     box-shadow: 0 4px 12px var(--capture-shadow);
@@ -404,7 +404,7 @@
     padding: 10px 12px;
     border-radius: 16px;
     border: 1px solid var(--color-line);
-    background: var(--color-panel);
+    background: var(--color-raised);
     opacity: 0;
     visibility: hidden;
     transform: translateX(4px);
@@ -446,14 +446,14 @@
     flex: 1;
     min-width: 0;
     padding: 10px 16px;
-    background: var(--color-panel);
+    background: var(--color-raised);
     border: 1px solid var(--color-line);
     border-radius: 16px;
     box-shadow: 0 4px 12px var(--capture-shadow);
   }
   .split-action-pod {
     padding: 8px;
-    background: var(--color-panel);
+    background: var(--color-raised);
     border: 1px solid var(--color-line);
     border-radius: 20px;
     box-shadow: 0 4px 12px var(--capture-shadow);
@@ -479,7 +479,7 @@
     margin: 8px 4px 0;
     padding: 6px 10px;
     border-radius: 10px;
-    background: var(--color-panel);
+    background: var(--color-raised);
     color: var(--color-muted);
     font-size: 11px;
     line-height: 16px;
