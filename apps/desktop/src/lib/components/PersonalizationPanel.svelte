@@ -798,17 +798,25 @@
   }
   .add-bar {
     display: flex;
+    flex-wrap: wrap;
     gap: var(--space-2);
     margin-bottom: var(--space-3);
   }
   .add-bar input {
-    flex: 1 1 auto;
+    flex: 1 1 140px;
     min-width: 0;
   }
   .filter-pills {
     display: flex;
     gap: var(--space-1);
+    width: max-content;
+    max-width: 100%;
+    overflow-x: auto;
     margin-bottom: var(--space-2);
+    padding: 3px;
+    background: var(--color-bg);
+    border: 1px solid var(--color-line);
+    border-radius: var(--radius-pill);
   }
   .filter-pills button {
     appearance: none;
