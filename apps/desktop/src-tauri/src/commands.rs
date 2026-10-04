@@ -221,6 +221,40 @@ pub async fn forget_automatic_learning(
     Ok(profile)
 }
 
+/// Dismiss one learning candidate by id. The candidate stays suspended so
+/// future edits never re-learn it; any linked automatic vocabulary entry
+/// leaves the list, because a listed word is always used.
+#[tauri::command]
+pub async fn suspend_automatic_candidate(
+    candidate_id: String,
+    storage: tauri::State<'_, AppStorage>,
+) -> Result<usize, String> {
+    let root = storage.dataset_dir.clone();
+    tauri::async_runtime::spawn_blocking(move || {
+        DatasetStore::open(root)
+            .and_then(|s| s.suspend_automatic_candidate(&candidate_id))
+            .map_err(|e| e.to_string())
+    })
+    .await
+    .map_err(|e| e.to_string())?
+}
+
+/// Promote one proposal candidate to a manual vocabulary entry.
+#[tauri::command]
+pub async fn approve_automatic_candidate(
+    candidate_id: String,
+    storage: tauri::State<'_, AppStorage>,
+) -> Result<vesper_core::PersonalizationProfile, String> {
+    let root = storage.dataset_dir.clone();
+    tauri::async_runtime::spawn_blocking(move || {
+        DatasetStore::open(root)
+            .and_then(|s| s.approve_automatic_candidate(&candidate_id))
+            .map_err(|e| e.to_string())
+    })
+    .await
+    .map_err(|e| e.to_string())?
+}
+
 #[tauri::command]
 pub async fn edit_latest_draft(
     result_id: String,
