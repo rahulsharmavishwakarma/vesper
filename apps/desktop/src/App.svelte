@@ -1066,10 +1066,10 @@
                       type="checkbox"
                       bind:checked={draft.floatingBarEnabled}
                       aria-describedby="floating-bar-help"
-                    /><span>Show the floating capture strip</span></label
+                    /><span>Show the floating capture</span></label
                   >
                   <p id="floating-bar-help" class="note checkbox-help">
-                    The recording shortcut works even when the strip is hidden.
+                    The recording shortcut works even when floating capture is hidden.
                   </p>
                 </div>
                 <CaptureDesignPicker

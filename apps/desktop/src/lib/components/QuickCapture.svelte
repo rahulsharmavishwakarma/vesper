@@ -381,6 +381,13 @@
 {/snippet}
 {#snippet controls(labeled: boolean)}
   <button
+    class="quiet-action"
+    type="button"
+    onclick={dismiss}
+    aria-label={busy ? 'Cancel recording' : 'Hide quick capture'}
+    title={busy ? 'Cancel recording' : 'Hide quick capture'}><Icon name="close" /></button
+  >
+  <button
     class="record-toggle"
     type="button"
     onclick={() => (complete ? copy() : toggle())}
@@ -423,13 +430,6 @@
                 : 'Record'}</span
       >{/if}
   </button>
-  <button
-    class="quiet-action"
-    type="button"
-    onclick={dismiss}
-    aria-label={busy ? 'Cancel recording' : 'Hide quick capture'}
-    title={busy ? 'Cancel recording' : 'Hide quick capture'}><Icon name="close" /></button
-  >
 {/snippet}
 
 <main
@@ -457,6 +457,8 @@
     attention={quietInput}
     complete={Boolean(complete)}
     detailVisible={processing || Boolean(liveText && recording)}
+    phase={recording ? 'recording' : processing ? 'processing' : 'idle'}
+    {recording}
     {waveform}
     actions={controls}
     onOpen={() => {

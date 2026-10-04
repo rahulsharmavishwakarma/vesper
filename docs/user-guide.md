@@ -302,8 +302,11 @@ batches. Select your model on **Models** and wait for **Listening** before speak
 after cold model startup. Live words stay in the recorder; the external field
 receives one final paste after release.
 
-You can change the capture design, move the floating controls, or hide them
-while keeping shortcuts active. On macOS, click the **bird logo** in the menu
+You can change the capture design — **Capsule** (one slim pill), **Split**
+(glass card with a separate action pill) or **Island** (a compact pill that
+grows with the transcript) — move the floating controls, or hide them
+while keeping shortcuts active. The overlay is frosted glass, so it blends
+with the desktop behind it. On macOS, click the **bird logo** in the menu
 bar for recording status and quick access to History, Models, Settings and Quit.
 It shows only the still logo, without the Vesper wordmark or a background tile;
 macOS adjusts its monochrome appearance. Hover for the Vesper name and status.

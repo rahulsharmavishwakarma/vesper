@@ -144,6 +144,33 @@ test('Sidebar nav answers a press with a deeper wash', async ({ page }) => {
   await page.mouse.up();
 });
 
+test('Capture design offers the three glass variants with backdrop blur', async ({ page }) => {
+  await page.goto('/');
+  await page
+    .getByRole('navigation', { name: 'Application', exact: true })
+    .getByRole('button', { name: 'Settings', exact: true })
+    .click();
+  await page
+    .getByRole('navigation', { name: 'Settings sections' })
+    .getByRole('button', { name: 'Appearance', exact: true })
+    .click();
+  const trigger = page.getByRole('combobox', { name: 'Capture design' });
+  await trigger.scrollIntoViewIfNeeded();
+  await trigger.click();
+  const options = page.getByRole('option');
+  await expect(options).toHaveCount(3);
+  for (const design of ['capsule', 'split', 'island']) {
+    await page.getByRole('option', { name: new RegExp(design, 'i') }).click();
+    const layout = page.locator(`.design-preview [data-capture-design="${design}"]`);
+    await expect(layout).toBeVisible();
+    const glass = layout.locator('.glass').first();
+    await expect
+      .poll(() => glass.evaluate((node) => getComputedStyle(node).backdropFilter))
+      .toContain('blur');
+    if (design !== 'island') await trigger.click();
+  }
+});
+
 test('Autosave views never describe saving as a user action', async ({ page }) => {
   await goToDictate(page);
   const nav = page.getByRole('navigation', { name: 'Application', exact: true });

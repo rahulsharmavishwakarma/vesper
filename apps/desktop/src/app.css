@@ -2545,8 +2545,7 @@ button:is(
     [role='option'],
     .session-button,
     .activity-day,
-    .brand,
-    .capture-brand
+    .brand
   ):active:enabled,
 .sliding-selection button:active:enabled {
   transform: none;

@@ -140,6 +140,8 @@
         {status}
         {elapsed}
         complete={stage === 'complete'}
+        phase={stage === 'listening' ? 'recording' : stage === 'processing' ? 'processing' : 'idle'}
+        recording={stage === 'listening'}
         {waveform}
         {actions}
       />
@@ -195,6 +197,7 @@
   >
 {/snippet}
 {#snippet actions(labeled: boolean)}
+  <button type="button" tabindex="-1" aria-label="Dismiss preview"><Icon name="close" /></button>
   <button
     type="button"
     class="record-toggle"
@@ -210,7 +213,6 @@
         >{stage === 'listening' ? 'Stop' : stage === 'processing' ? 'Working' : 'Ready'}</span
       >{/if}</button
   >
-  <button type="button" tabindex="-1" aria-label="Dismiss preview"><Icon name="close" /></button>
 {/snippet}
 
 <style>

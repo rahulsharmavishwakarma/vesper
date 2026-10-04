@@ -394,7 +394,7 @@ await test('Quick-capture completion copies the final operation without starting
     'Copy confirmation did not replace the existing status',
   );
   assert(
-    !target.querySelector('.capture-note, .split-detail'),
+    !target.querySelector('.capture-note, .capture-detail'),
     'Copy confirmation added an extra message surface',
   );
   assert(
@@ -2720,12 +2720,9 @@ await test('Shared selection keeps its backing during rapid changes and dropdown
 for (const design of CAPTURE_DESIGNS) {
   await test(`${design}: dense Reed, live updates, native bounds, final copy and cancel`, async () => {
     const dimensions = {
-      split: [396, 192],
-      ribbon: [388, 148],
-      underline: [454, 224],
-      studio: [412, 232],
-      margin: [272, 280],
-      counter: [200, 304],
+      capsule: [424, 104],
+      split: [454, 232],
+      island: [424, 260],
     };
     const [width, height] = dimensions[design];
     const state = await setup({
@@ -2838,7 +2835,7 @@ await test('Capture drag excludes controls, guards repeats and preserves runtime
   mouse(target.querySelector('.record-toggle'));
   mouse(target.querySelector('.record-toggle .capture-glyph span'));
   mouse(target.querySelector('.quiet-action'));
-  mouse(target.querySelector('.capture-brand'));
+  mouse(target.querySelector('.capture-bird'));
   mouse(surface, 2);
   await tick();
   assert(!state.counts.start_capture_drag, 'A control or non-primary click started dragging');
@@ -2865,13 +2862,13 @@ await test('Capture drag excludes controls, guards repeats and preserves runtime
   );
 });
 
-await test('Split keeps errors and progress inside its signal pod', async () => {
+await test('Split keeps errors and progress inside its glass card', async () => {
   const state = await setup({ recording: true });
   state.runtime = { ...idle, busy: true, stage: 'transcribing', message: 'Transcribing · 45%' };
   state.dictation = { ...state.dictation, phase: 'finishing' };
   await emit('dictation-state', { ...state.dictation });
   await until(
-    () => target.querySelector('.split-signal-pod').textContent.includes('45% complete'),
+    () => target.querySelector('.split-card').textContent.includes('45% complete'),
     'Progress escaped its panel',
   );
   assert(!target.querySelector('.capture-note'), 'Progress created a third surface');
@@ -2879,16 +2876,17 @@ await test('Split keeps errors and progress inside its signal pod', async () => 
   state.dictation = { ...state.dictation, phase: 'error', message: state.runtime.message };
   await emit('dictation-state', { ...state.dictation });
   await until(
-    () =>
-      target
-        .querySelector('.split-signal-pod')
-        .textContent.includes('Synthetic microphone problem.'),
-    'Error missing inside signal pod',
+    () => target.querySelector('.split-card').textContent.includes('Synthetic microphone problem.'),
+    'Error missing inside glass card',
+  );
+  assert(
+    target.querySelector('.split-card .capture-detail'),
+    'Error detail missing inside glass card',
   );
   assert(!target.querySelector('.capture-note'), 'Error created a third surface');
 });
 
-await test('Capture settings preview all six designs, save automatically and restore Split', async () => {
+await test('Capture settings preview all three designs, save automatically and restore Split', async () => {
   let saved = defaultSettings();
   const state = await setup({
     main: true,
@@ -2914,12 +2912,12 @@ await test('Capture settings preview all six designs, save automatically and res
     target.querySelector('#capture-design').textContent.includes('Split'),
     'Split is not the default',
   );
-  for (const design of ['ribbon', 'underline', 'studio', 'margin', 'counter', 'split']) {
+  for (const design of ['capsule', 'split', 'island']) {
     const previous = saved.captureDesign;
     target.querySelector('#capture-design').click();
     await tick();
     const options = [...document.querySelectorAll('[role="option"]')];
-    assert(options.length === 6, 'Settings does not expose all six designs');
+    assert(options.length === 3, 'Settings does not expose all three designs');
     options.find((o) => o.textContent.toLowerCase().startsWith(design)).click();
     await tick();
     assert(
