@@ -26,16 +26,20 @@ remain valid and are never renamed automatically; their data format is unchanged
 When the window is narrow, navigation moves to the top and spacing becomes
 more compact. Both configured model names remain visible in Settings → Recording and
 History. Settings section navigation moves above its content when space is tight.
-Scroll vertically to reach the remaining controls and Save actions. Resizing preserves unsaved preferences; an open dropdown closes and can
+Scroll vertically to reach the remaining controls. Resizing preserves unsaved preferences; an open dropdown closes and can
 be reopened in its new position.
 
 ### Settings
 
 Use the interior sidebar to switch between Recording, Writing, Shortcuts,
 Appearance and About. Changing sections keeps unsaved preferences intact.
-**Save changes** saves application preferences across sections; **Discard changes**
-restores the last saved values. Personal vocabulary in Writing has its own Save
-preferences and Discard changes actions.
+Preferences save automatically about a second after each change, across
+sections, with no Save or Discard action. A small pill at the bottom of the
+sidebar slides in showing Saving…, flips to a tick with the save time, then
+slides away on its own. Invalid choices are never written: they stay on
+screen with guidance until fixed. Downloading a model first flushes any
+pending edit so the saved selection is what downloads. Personal vocabulary
+in Writing saves the same way.
 
 Recording contains language, notifications, saved recordings and model names.
 Its language choices follow both the speech model and the enabled writer. Change
@@ -46,11 +50,11 @@ does not remove recordings or vocabulary.
 
 In **Appearance**, choose Light, Dark or System. The color theme applies immediately
 throughout the app and is remembered locally; System follows device appearance.
-Light uses white cards on a white canvas with a grey sidebar, near-black text
+Light uses white cards on a white canvas with a warm off-white sidebar, near-black text
 and ember highlights for actions and selected controls.
 Dark is the default. Clearing browser/webview storage resets this visual preference.
 Reduce Motion follows your system setting. Floating capture options on this page
-still require Save changes. Themes in a browser preview and the installed app are
+save automatically like everything else. Themes in a browser preview and the installed app are
 stored separately.
 
 ### App information
@@ -76,8 +80,9 @@ to be managed separately in **Models**.
 
 1. Open **Models** and select speech and writing models. The writing model is
    used only when text cleanup is enabled.
-2. Download the selected files. **Save & download** saves a pending selection
-   before downloading it; **Save changes** alone does not download speech or writing
+2. Download the selected files. Downloading first flushes any pending selection
+   and saves it, then downloads it; changing a selection alone only saves it
+   and does not download speech or writing
    weights. Supporting audio packages download automatically when those models are ready.
 3. Open **Dictate**, select your microphone and choose a language supported by
    the speech model and the enabled writing model. Allow microphone access when macOS asks.

@@ -10,9 +10,9 @@ The exact application-language choices, delivery modes, and benchmark status for
 The original built-ins remain available; the other additional entries are pinned profiles from
 [models/presets.json](../models/presets.json). They use the existing profile,
 settings, explicit-download, hash-verification, and inference paths. Selecting
-an entry changes only the settings draft. **Save & download** saves it before
-requesting that model's files; **Save changes** alone does not download speech or
-writing weights. Supporting audio packages are managed automatically once those
+an entry changes only the settings draft. Downloading flushes the draft and
+saves it before requesting that model's files; changing the selection alone
+only autosaves it and does not download speech or writing weights. Supporting audio packages are managed automatically once those
 required models are ready; see [automatic audio setup](user-guide.md#experimental-audio-processing).
 
 The menus are the user-facing catalog; there is no JSON profile import section.
@@ -30,16 +30,16 @@ Live means words emitted during microphone capture, before Stop, in Dictate or
 the floating recorder. This table describes the adapters wired into Vesper, not
 every capability of an upstream architecture or checkpoint.
 
-| Speech model or preset | Words while speaking | Current application path |
-| --- | --- | --- |
-| NVIDIA Nemotron 3.5 ASR Streaming 0.6B | Yes | Incremental microphone chunks and revisable partial events |
-| Cohere Transcribe (default) | Yes | Buffered drafts; authoritative completed-audio pass after Stop |
-| NVIDIA Parakeet TDT 0.6B v3 | Yes | Buffered drafts on CPU or qualified MLX |
-| Qwen3-ASR 0.6B | Yes | Native MLX drafts for English/Metal; buffered CPU drafts; completed-audio final |
-| Liquid LFM2.5 Audio 1.5B | Yes | Buffered drafts through its current CPU/GPU runtime |
-| Parakeet TDT v2, Parakeet Unified, FastConformer European presets | Yes | Buffered drafts with the selected transducer export |
-| Whisper Small / Turbo (not in the desktop picker) | Yes | Buffered drafts; catalog quality restrictions remain |
-| Imported custom ASR profiles | Yes | Buffered drafts for compatible validated transducer profiles |
+| Speech model or preset                                            | Words while speaking | Current application path                                                        |
+| ----------------------------------------------------------------- | -------------------- | ------------------------------------------------------------------------------- |
+| NVIDIA Nemotron 3.5 ASR Streaming 0.6B                            | Yes                  | Incremental microphone chunks and revisable partial events                      |
+| Cohere Transcribe (default)                                       | Yes                  | Buffered drafts; authoritative completed-audio pass after Stop                  |
+| NVIDIA Parakeet TDT 0.6B v3                                       | Yes                  | Buffered drafts on CPU or qualified MLX                                         |
+| Qwen3-ASR 0.6B                                                    | Yes                  | Native MLX drafts for English/Metal; buffered CPU drafts; completed-audio final |
+| Liquid LFM2.5 Audio 1.5B                                          | Yes                  | Buffered drafts through its current CPU/GPU runtime                             |
+| Parakeet TDT v2, Parakeet Unified, FastConformer European presets | Yes                  | Buffered drafts with the selected transducer export                             |
+| Whisper Small / Turbo (not in the desktop picker)                 | Yes                  | Buffered drafts; catalog quality restrictions remain                            |
+| Imported custom ASR profiles                                      | Yes                  | Buffered drafts for compatible validated transducer profiles                    |
 
 The common live interface selects native sessions or buffered previews after
 resolving the actual backend. Only Nemotron and the qualified Qwen MLX path
@@ -72,10 +72,10 @@ Their durations were 7.92 and 7.68 seconds. Replay used `--streaming --realtime
 --language en --vad --denoiser dpdfnet8 --chunk-ms 20`; model startup preceded
 paced audio delivery, matching the application's load-before-Listening order.
 
-| Request | First nonempty partial from streaming start | Stop-to-final ASR | Events, including repeated drafts and final |
-| --- | ---: | ---: | ---: |
-| Cold recognizer | 15,290.95 ms, including initial loading | 63.40 ms | 331 |
-| Resident recognizer | 1,353.41 ms | 61.69 ms | 319 |
+| Request             | First nonempty partial from streaming start | Stop-to-final ASR | Events, including repeated drafts and final |
+| ------------------- | ------------------------------------------: | ----------------: | ------------------------------------------: |
+| Cold recognizer     |     15,290.95 ms, including initial loading |          63.40 ms |                                         331 |
+| Resident recognizer |                                 1,353.41 ms |          61.69 ms |                                         319 |
 
 Both completed without frontend fallback, preserved sample counts and finalized
 the audio frontend. The resident draft arrived before the 7.68-second audio
@@ -150,16 +150,16 @@ support does not trigger an unusable weights download.
 
 ## Additional choices
 
-| Model and original source | Languages declared upstream | File precision | Download bytes |
-| --- | --- | --- | ---: |
-| [Parakeet TDT 0.6B v2](https://huggingface.co/nvidia/parakeet-tdt-0.6b-v2) | English | INT8 | 661,190,513 |
-| [Parakeet Unified English 0.6B](https://huggingface.co/nvidia/parakeet-unified-en-0.6b), offline export | English | INT8 | 663,043,117 |
-| [FastConformer European 114M](https://catalog.ngc.nvidia.com/orgs/nvidia/teams/nemo/models/stt_multilingual_fastconformer_hybrid_large_pc_blend_eu), transducer branch | English, German, Spanish, French | FP32 | 485,282,823 |
-| [Qwen2.5 0.5B Instruct](https://huggingface.co/Qwen/Qwen2.5-0.5B-Instruct-GGUF) | Multilingual | Q4_K_M | 491,400,032 |
-| [Qwen2.5 1.5B Instruct](https://huggingface.co/Qwen/Qwen2.5-1.5B-Instruct-GGUF) | Multilingual | Q4_K_M | 1,117,320,736 |
-| [SmolLM2 360M Instruct](https://huggingface.co/HuggingFaceTB/SmolLM2-360M-Instruct-GGUF) | English | Q8_0 | 386,404,992 |
-| [SmolLM2 1.7B Instruct](https://huggingface.co/HuggingFaceTB/SmolLM2-1.7B-Instruct-GGUF) | English | Q4_K_M | 1,055,609,536 |
-| [Gemma 3 1B IT](https://huggingface.co/ggml-org/gemma-3-1b-it-GGUF) | Multilingual | Q4_K_M | 806,058,240 |
+| Model and original source                                                                                                                                              | Languages declared upstream      | File precision | Download bytes |
+| ---------------------------------------------------------------------------------------------------------------------------------------------------------------------- | -------------------------------- | -------------- | -------------: |
+| [Parakeet TDT 0.6B v2](https://huggingface.co/nvidia/parakeet-tdt-0.6b-v2)                                                                                             | English                          | INT8           |    661,190,513 |
+| [Parakeet Unified English 0.6B](https://huggingface.co/nvidia/parakeet-unified-en-0.6b), offline export                                                                | English                          | INT8           |    663,043,117 |
+| [FastConformer European 114M](https://catalog.ngc.nvidia.com/orgs/nvidia/teams/nemo/models/stt_multilingual_fastconformer_hybrid_large_pc_blend_eu), transducer branch | English, German, Spanish, French | FP32           |    485,282,823 |
+| [Qwen2.5 0.5B Instruct](https://huggingface.co/Qwen/Qwen2.5-0.5B-Instruct-GGUF)                                                                                        | Multilingual                     | Q4_K_M         |    491,400,032 |
+| [Qwen2.5 1.5B Instruct](https://huggingface.co/Qwen/Qwen2.5-1.5B-Instruct-GGUF)                                                                                        | Multilingual                     | Q4_K_M         |  1,117,320,736 |
+| [SmolLM2 360M Instruct](https://huggingface.co/HuggingFaceTB/SmolLM2-360M-Instruct-GGUF)                                                                               | English                          | Q8_0           |    386,404,992 |
+| [SmolLM2 1.7B Instruct](https://huggingface.co/HuggingFaceTB/SmolLM2-1.7B-Instruct-GGUF)                                                                               | English                          | Q4_K_M         |  1,055,609,536 |
+| [Gemma 3 1B IT](https://huggingface.co/ggml-org/gemma-3-1b-it-GGUF)                                                                                                    | Multilingual                     | Q4_K_M         |    806,058,240 |
 
 Sizes describe downloaded files, not runtime RAM. Precision is fixed by each
 preset's files. In particular, SmolLM2 360M uses its author's Q8_0 artifact; the

@@ -129,14 +129,17 @@ Keep the real settings controls and their data ownership. Section changes hide
 panels without recreating the application draft or dirty personal preferences.
 Recording owns language, notifications, saved recordings and advanced storage
 options. Writing owns cleanup and the independent vocabulary/preferences form.
-Shortcuts keeps direct key capture and paste permissions. Application **Save
-changes** saves its shared draft across sections; **Discard changes** restores
-the last saved snapshot. Vocabulary retains its own Save/Discard actions. Restore
+Shortcuts keeps direct key capture and paste permissions. Application edits
+autosave their shared draft across sections about a second after each change;
+a transient sidebar pill (Saving… sliding in, tick with save time, sliding
+away) confirms each write, and explicit actions such as model downloads flush
+pending edits first. There is no Save or Discard action. Vocabulary saves
+through the same mechanism. Restore
 defaults is under Recording's advanced options and still explicitly saves defaults.
 
 Appearance offers Light, Dark and System using the shared semantic tokens.
-Light uses white cards over a warm cream canvas with a peach sidebar, espresso
-text and tan control outlines. Reserve the ember accent for primary actions,
+Light uses white cards over a white canvas with a warm off-white sidebar,
+near-black text and hairline control outlines. Reserve the ember accent for primary actions,
 selections and status indicators; do not tint all backgrounds or secondary text
 orange. Its appearance swatch uses the same canvas token value. Dark pairs a
 near-black canvas with ember accents.
@@ -165,7 +168,7 @@ through storage events; System follows subsequent OS theme changes. A failed
 storage write shows an error without changing the current choice. Clearing local
 storage restores Dark. Reduce Motion follows the OS; this screen reports its
 state rather than pretending to add a separate override. Floating capture options
-remain normal application preferences and require Save changes.
+remain normal application preferences and autosave like everything else.
 
 About renders actual app metadata inline and shares its content and clipboard
 recovery with the native About sheet. Neither surface exposes simulated updates.
@@ -202,7 +205,7 @@ save reachability, dropdowns, dialog bounds and draft preservation on resize.
 
 ## Shortcut recording
 
-Settings → Shortcuts has one shortcut field for each action. Click the field (or focus it and activate it with Enter/Space), press the desired combination, then use **Save changes**. The field displays the captured combination with platform-appropriate modifier names. A valid capture changes only the draft. Escape restores the values present when editing began; Tab, clicking away, or switching windows stops recording keys and keeps a valid draft available to save. Restore defaults remains the existing settings action.
+Settings → Shortcuts has one shortcut field for each action. Click the field (or focus it and activate it with Enter/Space), press the desired combination; it autosaves. The field displays the captured combination with platform-appropriate modifier names. A valid capture changes only the draft. Escape restores the values present when editing began; Tab, clicking away, or switching windows stops recording keys and keeps a valid draft, which autosaves. Restore defaults remains the existing settings action.
 
 The recorder provides a preparing state before native capture is ready, inline unsupported/duplicate feedback, visible keyboard focus, and disabled behavior during an operation. Modifier selection buttons, key dropdowns, the Customize panel, and the extra Use shortcut step are not part of this flow. A shortcut recorder must not start the action it is configuring: the existing native callback routes already-registered combinations to the active main-window editor, while browser key events capture other supported combinations. Editing is session-scoped and stops on blur/close; late callbacks cannot change another field. No additional global keyboard hook is introduced.
 
@@ -211,7 +214,7 @@ The current binding contract is modifier + supported physical key, as described 
 ### Official interaction references
 
 - [Apple: customise keyboard shortcuts](https://support.apple.com/en-gb/guide/mac-help/mchlp2262/mac) edits the existing shortcut by activating its field and pressing the replacement combination. Its guidance also covers conflicts and restoring defaults.
-- [Raycast: Command Aliases & Hotkeys](https://manual.raycast.com/command-aliases-and-hotkeys) uses a shortcut recorder with immediate key display and conflict feedback. Vesper retains explicit Save changes rather than adopting Raycast's automatic saving.
+- [Raycast: Command Aliases & Hotkeys](https://manual.raycast.com/command-aliases-and-hotkeys) uses a shortcut recorder with immediate key display and conflict feedback. Vesper likewise saves automatically after capture, with the sidebar pill confirming each write.
 - [VS Code: keyboard shortcuts](https://code.visualstudio.com/docs/configure/keybindings) documents pressing the intended combination to define a binding and inspecting conflicting assignments.
 
 These are interaction precedents, not evidence that Vesper implements the products' native key-capture internals or their full key support.
