@@ -4,13 +4,12 @@ Implementation: [core learning policy](../../crates/vesper-core/src/learning.rs)
 
 Learning is automatic desktop behavior: no enable switch or separate Remember action is needed. Completed edits and result observations use the existing background workers. This changes when the existing policy is available, not its admission thresholds or evidence requirements.
 
-Settings distinguishes retained `user_edit` evidence from raw observations and
-shows when no recent in-app correction has been received. Provisional candidate
-and draft-save messages identify the current blocker: unknown recording language,
-independent support count, missing scope, the 128-entry limit, or a manually
-managed equivalent entry. These diagnostics do not change policy 4 or activate
-previously rejected evidence. Repeated raw observations, Copy, and external-editor
-corrections do not teach an alias. The TextEdit experiment remains shadow-only.
+Settings shows one Vocabulary list: words you add, words Vesper learned, and
+suggested spellings awaiting your decision. Everything listed is used until you
+remove it; there is no per-word off switch. Suggestions are proposals, not
+vocabulary: adding one makes it yours, dismissing one suspends it so future
+edits never re-learn it. Repeated raw observations, Copy, and external-editor
+corrections do not teach an alias.
 
 ## Evidence flow
 
@@ -32,11 +31,11 @@ The application stores the canonical term and a single observed alias, candidate
 
 ## Context required for post-recognition use
 
-Admission and use are separate. An active automatic word must also match an unquoted alias or canonical spelling in the raw transcript and at least one retained teaching cue. This fixed guard filters the automatic vocabulary supplied to cleanup and the final deterministic correction stage. Both stages reuse selection from the raw hypothesis, so cleanup cannot create context that authorizes its own later correction. Requested language and project must match; automatic language mode, missing candidate provenance, disabled/suspended entries, absent cues and oversized raw input fail closed for automatic words. Manual entries retain their existing rules. Optional pre-recognition hints remain separately controlled and unchanged.
+Admission and use are separate. An active automatic word must also match an unquoted alias or canonical spelling in the raw transcript and at least one retained teaching cue. This fixed guard filters the automatic vocabulary supplied to cleanup and the final deterministic correction stage. Both stages reuse selection from the raw hypothesis, so cleanup cannot create context that authorizes its own later correction. Requested language and project must match; automatic language mode, missing candidate provenance, suspended entries, absent cues and oversized raw input fail closed for automatic words. Manual entries retain their existing rules. Optional pre-recognition hints remain separately controlled and unchanged.
 
 Each independent supporting edit retains at most **16 deduplicated lexical terms, 64 UTF-8 bytes each**, from the displayed before-text. Extraction excludes the heard/intended terms, project words, a fixed English function-word list, purely numeric and quoted terms. It uses a bounded lexical match, not semantic intent or accent detection. Words beyond the 8,192-byte input budget have no automatic context eligibility. An eligible edit still does not label the surrounding transcript as verified speech.
 
-Legacy support with no teaching cues stays stored but cannot satisfy this added guard. A fresh independent edit can supply cues. At the 16-support cap, a fresh cue-bearing record can replace one cue-less legacy record without increasing the support count; repeated audio/episode support cannot add cues this way. Once all records carry cues, new context is not appended beyond that bound. Adding cues to an active entry advances the profile revision in the same transaction. Undo/suspension clears cues; Forget and entry removal delete their owning evidence. Policy 4 clears the first-edit context tags only on automatic entries enabled in the operation-local post-ASR snapshot: the validated raw teaching cues authorize both cleanup retrieval and final application. Stored tags and optional pre-ASR hint scope stay unchanged; manual entries keep their existing context rules. This resolves the first-context veto reproduced in the [pipeline review](evaluation.md#pipeline-review-and-learning-opportunities).
+Legacy support with no teaching cues stays stored but cannot satisfy this added guard. A fresh independent edit can supply cues. At the 16-support cap, a fresh cue-bearing record can replace one cue-less legacy record without increasing the support count; repeated audio/episode support cannot add cues this way. Once all records carry cues, new context is not appended beyond that bound. Adding cues to an active entry advances the profile revision in the same transaction. Undo/suspension clears cues. Removing an automatic entry suspends its candidate as negative evidence while keeping past events; review adoption consumes the candidate and its support into the manual entry. Forget deletes all automatic evidence. Policy 4 clears the first-edit context tags only on automatic entries enabled in the operation-local post-ASR snapshot: the validated raw teaching cues authorize both cleanup retrieval and final application. Stored tags and optional pre-ASR hint scope stay unchanged; manual entries keep their existing context rules. This resolves the first-context veto reproduced in the [pipeline review](evaluation.md#pipeline-review-and-learning-opportunities).
 
 This integrates the stronger fixed-context idea from the benchmarks. It does **not** enable the experimental adaptive controller or transfer its reported gains to real use. It can prevent unrelated replacements and can also miss useful paraphrases; [evaluation](evaluation.md) records both.
 
@@ -54,11 +53,11 @@ Policy 4 withdraws support owned by the current result when a later saved draft
 no longer contains its learned target outside quotes. This applies before
 activation as well as afterward. Other results' support is preserved, duplicate
 callbacks cannot restore a retracted vote, and retraction does not teach a reverse
-alias. If the removed support belongs to an active entry, that entry is paused.
+alias. If the removed support belongs to an active entry, that entry leaves the vocabulary and its candidate stays suspended, so the spelling is not re-learned.
 
 An active automatic target changed back to its original alias, or changed to a
-third spelling through an eligible bounded correction, also pauses the rejected
-rule. That edit supplies no new alias: the displayed intermediate word may have
+third spelling through an eligible bounded correction, also removes the rejected
+word from the vocabulary while keeping its candidate suspended. That edit supplies no new alias: the displayed intermediate word may have
 been generated by the application's own memory. Fresh direct corrections of
 the original recognizer alias can then support the replacement spelling under
 the normal independent-support threshold. A suspended automatic entry does not
