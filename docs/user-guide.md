@@ -46,7 +46,7 @@ does not remove recordings or vocabulary.
 
 In **Appearance**, choose Light, Dark or System. The color theme applies immediately
 throughout the app and is remembered locally; System follows device appearance.
-Light uses white cards on a warm cream canvas with a peach sidebar, espresso text
+Light uses white cards on a white canvas with a grey sidebar, near-black text
 and ember highlights for actions and selected controls.
 Dark is the default. Clearing browser/webview storage resets this visual preference.
 Reduce Motion follows your system setting. Floating capture options on this page
@@ -396,14 +396,14 @@ saved vocabulary and optional recognition hints keep their existing controls.
 
 ### What is checked or reviewed automatically?
 
-| Step | Current behavior |
-| --- | --- |
-| Cleanup checks | Runs number, negation and word-change checks against the transcript; rejected cleanup preserves raw text. These checks cannot certify that recognition or meaning is correct. |
-| In-app spelling learning | Eligible saved corrections contribute automatically to scoped vocabulary under the support and context rules above. No per-word approval is needed. |
-| Background edit analysis | After a saved in-app correction, an already-loaded supported writer can analyze intent and context while idle. Its findings are evaluation evidence; they do not change your preferences or approve labels. Recording cancels this work. |
-| Learning-rule comparisons | Explicit in-app edits trigger background comparisons of fixed learning rules. Results do not select a new active rule. |
-| External-editor corrections | Not observed. Correct the draft inside Vesper; eligible in-app corrections teach vocabulary automatically. |
-| History and model training | History training labels require explicit review. Automatic label approval, candidate training and model promotion are not active. |
+| Step                        | Current behavior                                                                                                                                                                                                                         |
+| --------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Cleanup checks              | Runs number, negation and word-change checks against the transcript; rejected cleanup preserves raw text. These checks cannot certify that recognition or meaning is correct.                                                            |
+| In-app spelling learning    | Eligible saved corrections contribute automatically to scoped vocabulary under the support and context rules above. No per-word approval is needed.                                                                                      |
+| Background edit analysis    | After a saved in-app correction, an already-loaded supported writer can analyze intent and context while idle. Its findings are evaluation evidence; they do not change your preferences or approve labels. Recording cancels this work. |
+| Learning-rule comparisons   | Explicit in-app edits trigger background comparisons of fixed learning rules. Results do not select a new active rule.                                                                                                                   |
+| External-editor corrections | Not observed. Correct the draft inside Vesper; eligible in-app corrections teach vocabulary automatically.                                                                                                                               |
+| History and model training  | History training labels require explicit review. Automatic label approval, candidate training and model promotion are not active.                                                                                                        |
 
 Automatic checks therefore do not mark each recording as reviewed. Semantic
 activation remains blocked on failed quality qualification; adaptive learning
@@ -436,15 +436,15 @@ see [missing Swift build/cache directories](development.md#missing-swift-buildca
 The build script can recover links to removed temporary build folders; this
 does not remove your downloaded models or recordings.
 
-| Problem                                     | First checks                                                                                                                                                                                              |
-| ------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| Waveform does not match the microphone      | Confirm the selected input device. After a native audio update, quit the running app and open the newly built version; a page reload does not update the audio code. Background sound can still register. |
-| Recording will not start                    | Confirm microphone permission, selected input device and model download status. Wait for Listening.                                                                                                       |
-| A language or live captions are unavailable | Check the selected speech model's [supported languages and modes](language-support-and-recommendations.md).                                                                                               |
-| A model download fails                      | Check the connection, free disk space and model-folder access, then retry ASR/writing downloads from Models. Supporting audio setup retries automatically.                                                                                                                    |
-| A shortcut is unavailable                   | Resolve the conflict shown beside the shortcut setting or choose another combination.                                                                                                                     |
-| Automatic paste fails                       | Choose **Paste into the original text field**, save, and check **Ready to paste**. Keep the original field focused. A newly opened Electron editor may need a moment before the first recording; use Copy for an unavailable destination.                                                                                                         |
-| A recording is missing from History         | Check whether Save recordings and transcripts was enabled for that session.                                                                                                                               |
+| Problem                                     | First checks                                                                                                                                                                                                                              |
+| ------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Waveform does not match the microphone      | Confirm the selected input device. After a native audio update, quit the running app and open the newly built version; a page reload does not update the audio code. Background sound can still register.                                 |
+| Recording will not start                    | Confirm microphone permission, selected input device and model download status. Wait for Listening.                                                                                                                                       |
+| A language or live captions are unavailable | Check the selected speech model's [supported languages and modes](language-support-and-recommendations.md).                                                                                                                               |
+| A model download fails                      | Check the connection, free disk space and model-folder access, then retry ASR/writing downloads from Models. Supporting audio setup retries automatically.                                                                                |
+| A shortcut is unavailable                   | Resolve the conflict shown beside the shortcut setting or choose another combination.                                                                                                                                                     |
+| Automatic paste fails                       | Choose **Paste into the original text field**, save, and check **Ready to paste**. Keep the original field focused. A newly opened Electron editor may need a moment before the first recording; use Copy for an unavailable destination. |
+| A recording is missing from History         | Check whether Save recordings and transcripts was enabled for that session.                                                                                                                                                               |
 
 If the problem persists, follow [Support](../SUPPORT.md). Include the application
 version, macOS version, selected model and a synthetic reproduction. Do not
