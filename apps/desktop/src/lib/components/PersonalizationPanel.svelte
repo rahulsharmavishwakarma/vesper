@@ -1,5 +1,6 @@
 <script lang="ts">
-  import { tick, untrack } from 'svelte';
+  import { onDestroy, tick, untrack } from 'svelte';
+  import { Autosaver } from '../autosave.svelte';
   import {
     getPersonalization,
     savePersonalization,
@@ -20,10 +21,12 @@
     desktop,
     disabled = false,
     visible = true,
+    onSaveActivity,
   }: {
     desktop: boolean;
     disabled?: boolean;
     visible?: boolean;
+    onSaveActivity?: (saving: boolean, savedAt: number | null) => void;
   } = $props();
   let profile = $state<PersonalizationProfile | null>(null);
   let savedProfile = $state<PersonalizationProfile | null>(null);
@@ -108,24 +111,39 @@
       pending = null;
     }
   }
-  async function save() {
-    if (!profile || controlsDisabled || !dirty) return;
+  // Debounced autosave: every profile edit schedules a write 800ms out.
+  // Explicit actions flush pending edits first so the revision guard sees
+  // stored state; a failed flush aborts the action and the pill keeps
+  // retrying silently.
+  const panelSaver = new Autosaver(saveNow, 800);
+  onDestroy(() => panelSaver.dispose());
+  $effect(() => {
+    const snapshot = profile === null ? null : JSON.stringify(profile);
+    const saved = savedProfile === null ? null : JSON.stringify(savedProfile);
+    const writable =
+      snapshot !== null && !disabled && visible && pending !== 'loading' && pending !== 'choosing';
+    if (writable && snapshot !== saved) panelSaver.notify();
+    onSaveActivity?.(panelSaver.status === 'saving', panelSaver.savedAt);
+  });
+  async function saveNow(): Promise<boolean> {
+    if (!profile || controlsDisabled) return false;
+    if (JSON.stringify(profile) === JSON.stringify(savedProfile)) return true;
     pending = 'saving';
-    error = '';
-    feedback = '';
     try {
       profile = await savePersonalization($state.snapshot(profile));
       savedProfile = $state.snapshot(profile);
       learning = await getAutomaticLearning();
-      feedback = 'Saved for your next recording.';
-    } catch (e) {
-      error = String(e);
+      panelSaver.noteSaved();
+    } catch {
+      return false;
     } finally {
       pending = null;
     }
+    return true;
   }
   async function forgetLearning() {
-    if (!profile || controlsDisabled || dirty) return;
+    if (!profile || controlsDisabled) return;
+    if (!(await panelSaver.flush())) return;
     pending = 'saving';
     error = '';
     feedback = '';
@@ -140,14 +158,9 @@
       pending = null;
     }
   }
-  function discard() {
-    if (!savedProfile || controlsDisabled) return;
-    profile = $state.snapshot(savedProfile);
-    error = '';
-    feedback = 'Changes discarded.';
-  }
   async function approveCandidate(id: string) {
-    if (!profile || controlsDisabled || dirty) return;
+    if (!profile || controlsDisabled) return;
+    if (!(await panelSaver.flush())) return;
     pending = 'saving';
     error = '';
     feedback = '';
@@ -163,7 +176,8 @@
     }
   }
   async function dismissCandidate(id: string) {
-    if (!profile || controlsDisabled || dirty) return;
+    if (!profile || controlsDisabled) return;
+    if (!(await panelSaver.flush())) return;
     pending = 'saving';
     error = '';
     feedback = '';
@@ -244,10 +258,20 @@
     await tick();
     document.getElementById('add-vocabulary')?.focus();
   }
+  // History may have remembered new corrections. Refresh clean forms when the
+  // panel is (re)shown, but keep unsaved edits and let the profile revision
+  // guard resolve conflicts. Dirty flips from autosave must not reload: the
+  // stored profile already matches the draft, and a reload would briefly
+  // disable the form after every save.
+  let lastShownKey = '';
   $effect(() => {
-    if (!desktop || !visible) return;
-    // History may have remembered new corrections. Refresh clean forms on return,
-    // but keep unsaved edits and let the profile revision guard resolve conflicts.
+    const shownKey = `${desktop}/${visible}`;
+    const reshown = untrack(() => {
+      const changed = shownKey !== lastShownKey;
+      lastShownKey = shownKey;
+      return changed;
+    });
+    if (!desktop || !visible || !reshown) return;
     untrack(() => {
       if (!dirty) void load();
     });
@@ -273,7 +297,6 @@
     <form
       onsubmit={(event) => {
         event.preventDefault();
-        void save();
       }}
       aria-busy={pending !== null}
     >
@@ -575,7 +598,7 @@
                         <button
                           type="button"
                           class="primary sm"
-                          disabled={controlsDisabled || dirty}
+                          disabled={controlsDisabled}
                           onclick={() => {
                             void approveCandidate(candidate.id);
                           }}>Add</button
@@ -584,7 +607,7 @@
                           type="button"
                           class="icon-btn"
                           aria-label={`Dismiss suggestion ${candidate.phrase}`}
-                          disabled={controlsDisabled || dirty}
+                          disabled={controlsDisabled}
                           onclick={() => {
                             void dismissCandidate(candidate.id);
                           }}
@@ -620,7 +643,7 @@
               <button
                 type="button"
                 class="quiet"
-                disabled={controlsDisabled || dirty}
+                disabled={controlsDisabled}
                 onclick={forgetLearning}>Forget automatic learning</button
               >
             </div>
@@ -691,18 +714,12 @@
           {#if error}<p class="error" role="alert">{error}</p>
           {:else if pending === 'loading'}<p class="note">Loading personal preferences…</p>
           {:else if pending === 'saving'}<p class="note">Saving personal preferences…</p>
-          {:else if dirty}<p class="note">Personal preferences have unsaved changes.</p>
+          {:else if dirty}<p class="note">Changes will save automatically.</p>
           {:else if feedback}<p class="success">{feedback}</p>
           {:else if profile}<p class="note">Personal preferences are up to date.</p>{/if}
         </div>
         <div class="form-actions">
           {#if profile}
-            <button type="submit" class="primary" disabled={controlsDisabled || !dirty}
-              >{pending === 'saving' ? 'Saving…' : 'Save preferences'}</button
-            >
-            <button type="button" onclick={discard} disabled={controlsDisabled || !dirty}
-              >Discard changes</button
-            >
             {#if error && !dirty}<button type="button" onclick={load} disabled={controlsDisabled}
                 >Reload saved preferences</button
               >{/if}

@@ -1,8 +1,11 @@
 <script lang="ts">
-  import { onMount, tick } from 'svelte';
+  import { onDestroy, onMount, tick } from 'svelte';
+  import { slide } from 'svelte/transition';
+  import { cubicOut } from 'svelte/easing';
   import { getCurrentWindow } from '@tauri-apps/api/window';
   import { listen } from '@tauri-apps/api/event';
   import { invoke } from '@tauri-apps/api/core';
+  import { Autosaver } from './lib/autosave.svelte';
   import {
     getAppStatus,
     getAcceleratorCapabilities,
@@ -50,7 +53,6 @@
   import Select from './lib/components/Select.svelte';
   import { installPressFeedback } from './lib/actions/pressFeedback';
   import { finishEntranceAnimations } from './lib/actions/entranceMotion';
-  import { ensureNotificationPermission } from './lib/api/notifications';
   import QuickCapture from './lib/components/QuickCapture.svelte';
   import CaptureDesignPicker from './lib/components/CaptureDesignPicker.svelte';
   import DictationPreferences from './lib/components/DictationPreferences.svelte';
@@ -123,12 +125,59 @@
     const top = document.querySelector('.settings-layout')?.getBoundingClientRect().top ?? 0;
     if (top < 0) window.scrollBy(0, top - 16);
   }
-  function discardSettings() {
-    if (!loaded || pending || pipelineBusy) return;
-    draft = JSON.parse(savedJson) as AppConfig;
-    error = null;
-    feedback = 'Changes discarded.';
-  }
+  // Debounced autosave: every draft change schedules a write 800ms out.
+  // Invalid edits never reach the backend (validationErrors stay on screen
+  // until fixed), and the pill below reflects saver + vocabulary-panel state.
+  const settingsSaver = new Autosaver(saveNow, 800);
+  // The sidebar pill is a transient toast: hidden until an edit arrives,
+  // Saving… while a write (or silent retry) is in flight, Saved with the
+  // clock time once it lands, then it slides away on its own.
+  const PILL_DISMISS_MS = 2500;
+  let pillVisible = $state(false);
+  let pillTimer: ReturnType<typeof setTimeout> | undefined;
+  let wasSaving = false;
+  const pillSlide = (node: HTMLElement) =>
+    slide(node, {
+      duration: window.matchMedia('(prefers-reduced-motion: reduce)').matches ? 0 : 220,
+      easing: cubicOut,
+    });
+  $effect(() => {
+    const saving = saveInFlight;
+    if (saving) {
+      clearTimeout(pillTimer);
+      pillTimer = undefined;
+      pillVisible = true;
+    } else if (wasSaving) {
+      pillVisible = true;
+      clearTimeout(pillTimer);
+      pillTimer = setTimeout(() => {
+        pillVisible = false;
+      }, PILL_DISMISS_MS);
+    }
+    wasSaving = saving;
+  });
+  onDestroy(() => {
+    clearTimeout(pillTimer);
+    settingsSaver.dispose();
+  });
+  let panelSaving = $state(false);
+  let panelSavedAt = $state<number | null>(null);
+  const saveInFlight = $derived(settingsSaver.status === 'saving' || panelSaving);
+  const lastSavedAt = $derived(Math.max(settingsSaver.savedAt ?? 0, panelSavedAt ?? 0) || null);
+  const savedClockTime = $derived(
+    lastSavedAt
+      ? new Date(lastSavedAt).toLocaleTimeString([], {
+          hour: '2-digit',
+          minute: '2-digit',
+          second: '2-digit',
+        })
+      : null,
+  );
+  $effect(() => {
+    const snapshot = JSON.stringify(draft);
+    const writable = loaded && pending === null && !pipelineBusy && validationErrors.length === 0;
+    if (writable && snapshot !== savedJson) settingsSaver.notify();
+  });
   const views: {
     id: View;
     label: string;
@@ -276,6 +325,7 @@
     engineSettings = JSON.parse(serialized) as AppConfig;
     shortcutRetryError = null;
     savedJson = serialized;
+    settingsSaver.noteSaved();
     draft = JSON.parse(savedJson) as AppConfig;
     savedCollectionEnabled = settings.collectTrainingData;
     savedRecordingLimit = effectiveRecordingSeconds(settings);
@@ -320,32 +370,19 @@
     }
     await refreshStatus();
   }
-  async function save() {
-    if (pending || pipelineBusy || !loaded || validationErrors.length || !dirty) return false;
-    pending = 'saving';
-    error = null;
-    feedback = null;
+  // Write-through used by the debounced autosaver. Returns true when the
+  // draft matches what is stored (or was just stored); false keeps the
+  // status pill on "Saving" and schedules a silent retry.
+  async function saveNow(): Promise<boolean> {
+    if (pending || pipelineBusy || !loaded || validationErrors.length) return false;
+    if (JSON.stringify(draft) === savedJson) return true;
     try {
-      const saved = await saveSettings(draft);
-      acceptSettings(saved);
-      feedback =
-        environment === 'browser-preview'
-          ? 'Preview settings saved in this browser.'
-          : 'Settings saved on this device.';
-      if (
-        environment === 'desktop' &&
-        saved.notificationsEnabled &&
-        !(await ensureNotificationPermission())
-      ) {
-        feedback = 'Settings saved. Notifications are blocked in system settings.';
-      }
-    } catch (cause) {
-      error = `Could not save settings. ${message(cause)}`;
-    } finally {
-      pending = null;
+      acceptSettings(await saveSettings(draft));
+    } catch {
+      return false;
     }
     await refreshStatus();
-    return error === null;
+    return true;
   }
   async function downloadSelection(role: ModelProfileRole) {
     await downloadPackage(downloadTarget(draft, role));
@@ -363,7 +400,7 @@
     downloadRequest = target.modelId;
     transcriptionPanel.clearDownloadFeedback();
     try {
-      if (dirty && !(await save())) return;
+      if (dirty && !(await settingsSaver.flush())) return;
       await tick();
       await transcriptionPanel.downloadModel(target);
     } finally {
@@ -472,9 +509,9 @@
               active={activeView === view.id}
               motionKey={activeView === view.id ? navigationRevision : 0}
             /><span class:visually-hidden={activeView === 'settings'}>{view.label}</span
-            >{#if dirty && (view.id === 'settings' || view.id === 'models')}<span
+            >{#if saveInFlight && (view.id === 'settings' || view.id === 'models')}<span
                 class="draft-dot"
-                aria-label="Unsaved settings"
+                aria-label="Saving settings"
               ></span>{/if}</button
           >
         {/each}
@@ -492,6 +529,23 @@
         <span class="environment-tag" hidden={activeView === 'settings'}
           >{environment === 'browser-preview' ? 'Browser preview' : 'On your device'}</span
         >
+        {#if pillVisible}<p
+            class="save-status"
+            role="status"
+            aria-label={saveInFlight ? 'Saving settings' : 'Settings saved'}
+            data-state={saveInFlight ? 'saving' : 'saved'}
+            transition:pillSlide
+          >
+            {#if saveInFlight}
+              <span class="spinning" aria-hidden="true"><Icon name="refresh" /></span><span
+                class="save-status-text">Saving…</span
+              >
+            {:else}
+              <Icon name="check" /><span class="save-status-text"
+                >Saved{savedClockTime ? ` ${savedClockTime}` : ''}</span
+              >
+            {/if}
+          </p>{/if}
       </div>
     </aside>
     <main
@@ -586,7 +640,6 @@
                 loaded)}
             onsubmit={(event) => {
               event.preventDefault();
-              void save();
             }}
             oninput={markEdited}
             onchange={markEdited}
@@ -1016,7 +1069,7 @@
                   disabled={pending !== null || pipelineBusy || !draft.floatingBarEnabled}
                 />
               </fieldset>
-              <p class="note">Save changes to apply your floating capture preferences.</p>
+              <p class="note">Capture preferences save automatically.</p>
             </div>
           </section>
           <div
@@ -1026,7 +1079,7 @@
             <AboutSheet inline visible={activeView === 'settings' && settingsSection === 'about'} />
           </div>
           <div
-            class="savebar"
+            class="settings-notice"
             hidden={activeView === 'history' ||
               (activeView === 'settings' &&
                 ['appearance', 'about'].includes(settingsSection) &&
@@ -1039,47 +1092,36 @@
               {#if error && activeView !== 'models'}<p class="error" role="alert">{error}</p>{/if}
               {#if loaded && validationErrors.length}
                 <div class="validation-errors" role="alert">
-                  <p>Fix these settings before saving:</p>
+                  <p>Fix these settings before they can save:</p>
                   <ul>
                     {#each validationErrors as issue, index (index)}<li>{issue}</li>{/each}
                   </ul>
                 </div>
               {:else if feedback}<p class="success">{feedback}</p>
-              {:else if dirty}<p class="note">You have unsaved changes.</p>
+              {:else if saveInFlight}<p class="note">Saving…</p>
+              {:else if dirty}<p class="note">Changes will save automatically.</p>
               {:else if loaded}<p class="note">No unsaved changes.</p>{/if}
             </div>
-            <div class="form-actions">
-              {#if loaded}<button
-                  class="primary"
-                  type="submit"
-                  form="application-settings"
-                  disabled={pending !== null ||
-                    pipelineBusy ||
-                    !dirty ||
-                    validationErrors.length > 0}
-                  >{pending === 'saving' ? 'Saving…' : 'Save changes'}</button
-                >
-              {:else}<button
+            {#if !loaded}<div class="form-actions">
+                <button
                   type="button"
                   onclick={loadSettings}
                   disabled={pending !== null || pipelineBusy}>Try loading again</button
                 >
                 <button type="button" onclick={reset} disabled={pending !== null || pipelineBusy}>
                   {pending === 'resetting' ? 'Restoring…' : 'Restore defaults'}
-                </button>{/if}
-              <button
-                type="button"
-                class="quiet"
-                onclick={discardSettings}
-                disabled={pending !== null || pipelineBusy || !dirty}>Discard changes</button
-              >
-            </div>
+                </button>
+              </div>{/if}
           </div>
           {#if loaded}
             <PersonalizationPanel
               desktop={environment === 'desktop'}
               visible={activeView === 'settings' && settingsSection === 'writing'}
               disabled={pending !== null || pipelineBusy || downloadRequest !== null}
+              onSaveActivity={(saving, at) => {
+                panelSaving = saving;
+                panelSavedAt = at;
+              }}
             />
           {/if}
         </div>

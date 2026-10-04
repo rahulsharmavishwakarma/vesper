@@ -23,7 +23,7 @@ export default defineConfig(
     languageOptions: { globals: globals.browser },
   },
   {
-    files: ['**/*.svelte'],
+    files: ['**/*.svelte', '**/*.svelte.ts'],
     languageOptions: { parserOptions: { parser: ts.parser, svelteConfig } },
     // TypeScript/svelte-check resolves DOM types inside TypeScript script blocks.
     rules: { 'no-undef': 'off' },
