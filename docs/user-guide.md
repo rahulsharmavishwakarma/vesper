@@ -313,9 +313,13 @@ copy its text. Export options distinguish a complete archive from reviewed
 training examples; search filters do not limit an export.
 
 Manage spellings, recurring corrections and writing preferences in
-**Settings → Writing → Your vocabulary and writing**. Eligible edits to **Your text** can
-contribute to local spelling memory for later recordings. Raw predictions remain
-available, and remembered changes can be inspected, undone or forgotten.
+**Settings → Writing → Your vocabulary and writing**. The Vocabulary list holds
+words you add, words Vesper learned from your edits, and suggested spellings
+awaiting your decision. Everything listed is used until you remove it; adding a
+suggestion makes it yours, and dismissing one stops it from being learned again.
+Eligible edits to **Your text** can contribute to local spelling memory for later
+recordings. Raw predictions remain available, and remembered changes can be
+undone or forgotten.
 
 Correct spellings directly in **Your text**; there is no separate Remember step.
 The app can learn eligible joined/split names, closely related spellings and
@@ -327,7 +331,8 @@ and some valid corrections still fall outside the current learning rules.
 
 If you restore an earlier spelling in the same draft, its withdrawn correction
 no longer counts as supporting evidence. Correcting an automatically remembered
-word to another eligible spelling pauses the rejected rule. Fresh corrections
+word to another eligible spelling removes the rejected word from your vocabulary,
+and it will not be learned again. Fresh corrections
 of the original recognition error can then teach its replacement; the app keeps
 your current draft immediately while waiting for that support.
 

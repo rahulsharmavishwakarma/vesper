@@ -169,6 +169,8 @@ pub fn run() {
             commands::get_automatic_learning,
             commands::get_learning_shadow_diagnostics,
             commands::forget_automatic_learning,
+            commands::suspend_automatic_candidate,
+            commands::approve_automatic_candidate,
             commands::edit_latest_draft,
             commands::undo_latest_learning,
             commands::save_personalization,

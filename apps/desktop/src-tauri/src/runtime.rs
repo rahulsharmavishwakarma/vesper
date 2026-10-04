@@ -126,7 +126,9 @@ mod tests {
             undone.draft_transcript.as_deref(),
             Some("Open README.md in the repo")
         );
-        assert!(!store.personalization().unwrap().vocabulary[0].enabled);
+        // Undone automatic memories leave the vocabulary; listed words are
+        // always used.
+        assert!(store.personalization().unwrap().vocabulary.is_empty());
         runtime.begin("recording", "new capture").unwrap();
         assert!(runtime
             .edit_latest_draft(root, "current", 1, "late".into())

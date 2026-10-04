@@ -1165,7 +1165,7 @@ await test('Vocabulary and example dropdowns preserve edits through shared keybo
     !target.querySelector('.personalization select'),
     'Personal preferences still use native dropdowns',
   );
-  target.querySelector('.word-entry .entry-heading button').click();
+  target.querySelector('.word-entry .entry-heading button[aria-label^="Remove"]').click();
   await until(
     () => !target.querySelector('.word-entry') && document.activeElement.id === 'add-vocabulary',
     'Removing a word did not restore useful focus',

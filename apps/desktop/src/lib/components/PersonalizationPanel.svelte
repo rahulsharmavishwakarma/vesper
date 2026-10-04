@@ -5,6 +5,8 @@
     savePersonalization,
     getAutomaticLearning,
     forgetAutomaticLearning,
+    suspendAutomaticCandidate,
+    approveAutomaticCandidate,
     chooseProjectApplication,
     chooseProjectFolder,
     type ProjectRule,
@@ -96,6 +98,8 @@
     feedback = '';
     try {
       profile = await getPersonalization();
+      // Removal is the only off-switch: everything listed is used.
+      for (const word of profile.vocabulary) word.enabled = true;
       savedProfile = $state.snapshot(profile);
       learning = await getAutomaticLearning();
     } catch (e) {
@@ -142,16 +146,81 @@
     error = '';
     feedback = 'Changes discarded.';
   }
+  async function approveCandidate(id: string) {
+    if (!profile || controlsDisabled || dirty) return;
+    pending = 'saving';
+    error = '';
+    feedback = '';
+    try {
+      profile = await approveAutomaticCandidate(id);
+      savedProfile = $state.snapshot(profile);
+      learning = await getAutomaticLearning();
+      feedback = 'Suggestion added to your vocabulary.';
+    } catch (cause) {
+      error = String(cause);
+    } finally {
+      pending = null;
+    }
+  }
+  async function dismissCandidate(id: string) {
+    if (!profile || controlsDisabled || dirty) return;
+    pending = 'saving';
+    error = '';
+    feedback = '';
+    try {
+      await suspendAutomaticCandidate(id);
+      profile = await getPersonalization();
+      for (const word of profile.vocabulary) word.enabled = true;
+      savedProfile = $state.snapshot(profile);
+      learning = await getAutomaticLearning();
+      feedback = 'Suggestion dismissed. It will not be learned again.';
+    } catch (cause) {
+      error = String(cause);
+    } finally {
+      pending = null;
+    }
+  }
+  let vocabFilter = $state<'all' | 'mine' | 'learned' | 'suggested'>('all');
+  let newWord = $state('');
+  let newFix = $state('');
+  let addError = $state('');
+  const suggestions = $derived(
+    (learning?.candidates ?? [])
+      .filter((c) => c.state === 'observed' || c.state === 'provisional')
+      .slice()
+      .reverse(),
+  );
+  const visibleWords = $derived(
+    !profile
+      ? []
+      : vocabFilter === 'mine'
+        ? profile.vocabulary.filter((word) => word.automaticSource === null)
+        : vocabFilter === 'learned'
+          ? profile.vocabulary.filter((word) => word.automaticSource !== null)
+          : profile.vocabulary,
+  );
   async function addWord() {
     if (!profile || controlsDisabled || profile.vocabulary.length >= 128) return;
+    const heard = newWord.trim();
+    const intended = newFix.trim() || heard;
+    addError = '';
+    if (intended) {
+      const dupe = profile.vocabulary.some(
+        (word) => word.phrase.toLowerCase() === intended.toLowerCase(),
+      );
+      if (dupe) {
+        addError = 'That word is already in your vocabulary.';
+        return;
+      }
+    }
     const id = crypto.randomUUID();
-    profile.vocabulary.push({
+    profile.vocabulary.unshift({
       id,
-      phrase: '',
+      phrase: intended,
       language: 'auto',
       context: '',
       enabled: true,
-      aliases: [],
+      aliases: newFix.trim() && heard ? [heard] : [],
       project: profile.activeProject,
       pronunciation: false,
       sources: [],
@@ -159,6 +228,8 @@
       automaticSource: null,
       usageCount: 0,
     });
+    newWord = '';
+    newFix = '';
     await tick();
     document.getElementById(`word-${id}`)?.focus();
   }
@@ -366,139 +437,188 @@
               </p>
             </div>
           </div>
-          <div class="preference-group">
+          <div class="preference-group" id="vocabulary">
             <div class="group-heading">
               <h3 id="vocabulary">Vocabulary</h3>
               <span class="entry-count">{profile.vocabulary.length} / 128</span>
             </div>
-            {#if !profile.vocabulary.length}<p class="note">
-                Add names or terms you want Vesper to get right.
-              </p>{/if}
-            {#each profile.vocabulary as word, index (word.id)}
-              <div class="word-entry">
-                <div class="entry-heading">
-                  <h4>Word {index + 1}</h4>
-                  <button
-                    type="button"
-                    class="quiet"
-                    aria-label={`Remove word ${index + 1}`}
-                    onclick={() => {
-                      void removeWord(word.id);
-                    }}>Remove</button
-                  >
-                </div>
-                <div class="preference-fields">
-                  <div class="field">
-                    <label for={`word-${word.id}`}>Preferred spelling</label><input
-                      id={`word-${word.id}`}
-                      bind:value={word.phrase}
-                      oninput={() => {
-                        word.sources = [];
-                        word.automaticSource = null;
-                      }}
-                      placeholder="Project or person’s name"
-                      maxlength="128"
-                      required
-                    />
-                  </div>
-                  <div class="field">
-                    <label for={`word-language-${word.id}`}>Language</label><Select
-                      id={`word-language-${word.id}`}
-                      bind:value={word.language}
-                      options={languageOptions}
-                      disabled={controlsDisabled}
-                      onChange={() => {
-                        word.sources = [];
-                        word.automaticSource = null;
-                      }}
-                    />
-                  </div>
-                </div>
-                <details>
-                  <summary>Context and pronunciation</summary>
-                  <div class="preference-fields">
-                    <div class="field">
-                      <label for={`word-context-${word.id}`}
-                        >Context words <span class="optional">(optional)</span></label
-                      ><input
-                        id={`word-context-${word.id}`}
-                        bind:value={word.context}
+            <p class="note">Everything here is used. Remove anything you do not want.</p>
+            <div class="add-bar">
+              <input
+                id="new-word"
+                bind:value={newWord}
+                placeholder="Add a word, or what Vesper hears"
+                aria-label="Word"
+                maxlength="128"
+              />
+              <input
+                id="new-fix"
+                bind:value={newFix}
+                placeholder="Should be (optional)"
+                aria-label="Correct spelling"
+                maxlength="128"
+              />
+              <button
+                id="add-vocabulary"
+                type="button"
+                class="primary"
+                onclick={() => {
+                  void addWord();
+                }}
+                disabled={controlsDisabled || profile.vocabulary.length >= 128}>Add</button
+              >
+            </div>
+            {#if addError}<p class="error" role="alert">{addError}</p>{/if}
+            <div class="filter-pills" role="group" aria-label="Filter vocabulary">
+              <button
+                type="button"
+                aria-pressed={vocabFilter === 'all'}
+                onclick={() => (vocabFilter = 'all')}>All</button
+              >
+              <button
+                type="button"
+                aria-pressed={vocabFilter === 'mine'}
+                onclick={() => (vocabFilter = 'mine')}>Yours</button
+              >
+              <button
+                type="button"
+                aria-pressed={vocabFilter === 'learned'}
+                onclick={() => (vocabFilter = 'learned')}>Learned</button
+              >
+              <button
+                type="button"
+                aria-pressed={vocabFilter === 'suggested'}
+                onclick={() => (vocabFilter = 'suggested')}
+                >Suggested<span class="sugg-badge">{suggestions.length}</span></button
+              >
+            </div>
+            {#if vocabFilter !== 'suggested'}
+              {#if !visibleWords.length}<p class="note">
+                  {vocabFilter === 'all'
+                    ? 'Add names or terms you want Vesper to get right.'
+                    : vocabFilter === 'mine'
+                      ? 'Words you add yourself will appear here.'
+                      : 'Words Vesper picks up on its own will appear here.'}
+                </p>{/if}
+              <ul class="term-list">
+                {#each visibleWords as word (word.id)}
+                  <li class="word-entry">
+                    <div class="entry-heading">
+                      {#if word.aliases[0]}<span class="pair-from">{word.aliases[0]}</span><span
+                          class="pair-arrow"
+                          aria-hidden="true">→</span
+                        >{/if}
+                      <input
+                        id={`word-${word.id}`}
+                        class="term-input"
+                        aria-label="Preferred spelling"
+                        bind:value={word.phrase}
                         oninput={() => {
-                          word.automaticSource = null;
                           word.sources = [];
-                        }}
-                        maxlength="256"
-                        placeholder="For example, repository deployment"
-                      />
-                    </div>
-                    <div class="field">
-                      <label for={`word-project-${word.id}`}
-                        >Project <span class="optional">(optional)</span></label
-                      ><input
-                        id={`word-project-${word.id}`}
-                        bind:value={word.project}
-                        oninput={() => {
                           word.automaticSource = null;
-                          word.sources = [];
                         }}
-                        maxlength="64"
+                        placeholder="Project or person’s name"
+                        maxlength="128"
+                        required
                       />
+                      <span class="lang-select"
+                        ><Select
+                          id={`word-language-${word.id}`}
+                          bind:value={word.language}
+                          options={languageOptions}
+                          disabled={controlsDisabled}
+                          onChange={() => {
+                            word.sources = [];
+                            word.automaticSource = null;
+                          }}
+                        /></span
+                      >
+                      <button
+                        type="button"
+                        class="icon-btn"
+                        aria-label={`Remove ${word.phrase || 'word'}`}
+                        onclick={() => {
+                          void removeWord(word.id);
+                        }}
+                        ><svg
+                          viewBox="0 0 16 16"
+                          fill="none"
+                          stroke="currentColor"
+                          stroke-width="1.8"
+                          aria-hidden="true"><path d="M4 4l8 8M12 4l-8 8" /></svg
+                        ></button
+                      >
                     </div>
-                  </div>
-                  <div class="field">
-                    <label for={`word-aliases-${word.id}`}>Heard as</label><textarea
-                      id={`word-aliases-${word.id}`}
-                      rows="2"
-                      value={word.aliases.join('\n')}
-                      oninput={(event) => {
-                        word.aliases = event.currentTarget.value
-                          .split('\n')
-                          .map((s) => s.trim())
-                          .filter(Boolean);
-                        word.sources = [];
-                        word.automaticSource = null;
-                      }}
-                      placeholder="A recurring mistaken spelling"
-                      aria-describedby={`word-aliases-help-${word.id}`}></textarea>
-                    <p id={`word-aliases-help-${word.id}`} class="note">
-                      One phrase per line, up to 8. Context and project limit when this correction
-                      applies.
-                    </p>
-                  </div>
-                  <label class="checkbox-field" for={`word-pronunciation-${word.id}`}
-                    ><input
-                      id={`word-pronunciation-${word.id}`}
-                      type="checkbox"
-                      bind:checked={word.pronunciation}
-                    /><span>This is a recurring pronunciation confusion</span></label
-                  >
-                </details>
-                <div class="setting-toggle">
-                  <label class="checkbox-field" for={`word-enabled-${word.id}`}
-                    ><input
-                      id={`word-enabled-${word.id}`}
-                      type="checkbox"
-                      bind:checked={word.enabled}
-                    /><span>Use this spelling</span></label
-                  >
-                  <p class="note checkbox-help">
-                    {word.automaticSource
-                      ? 'Learned automatically from ordinary edits; not a verified audio transcript.'
-                      : word.sources.length
-                        ? `Confirmed from ${word.sources.length} reviewed correction${word.sources.length === 1 ? '' : 's'}.`
-                        : 'Manually added.'}
-                  </p>
-                </div>
-              </div>
-            {/each}
-            <button
-              id="add-vocabulary"
-              type="button"
-              onclick={() => {
-                void addWord();
-              }}
-              disabled={profile.vocabulary.length >= 128}>Add vocabulary</button
-            >
+                  </li>
+                {/each}
+              </ul>
+            {/if}
+            {#if vocabFilter === 'all' || vocabFilter === 'suggested'}
+              {#if vocabFilter === 'suggested' && !suggestions.length}<p class="note">
+                  No suggestions right now. New ones appear as you edit dictated text.
+                </p>{/if}
+              {#if suggestions.length && vocabFilter === 'suggested'}
+                <ul class="term-list">
+                  {#each suggestions as candidate (candidate.id)}
+                    <li class="word-entry suggestion">
+                      <div class="entry-heading">
+                        <span class="term-static"
+                          >{#if candidate.alias}<span class="pair-from">{candidate.alias}</span
+                            ><span class="pair-arrow" aria-hidden="true">→</span
+                            >{/if}{candidate.phrase}</span
+                        >
+                        <button
+                          type="button"
+                          class="primary sm"
+                          disabled={controlsDisabled || dirty}
+                          onclick={() => {
+                            void approveCandidate(candidate.id);
+                          }}>Add</button
+                        >
+                        <button
+                          type="button"
+                          class="icon-btn"
+                          aria-label={`Dismiss suggestion ${candidate.phrase}`}
+                          disabled={controlsDisabled || dirty}
+                          onclick={() => {
+                            void dismissCandidate(candidate.id);
+                          }}
+                          ><svg
+                            viewBox="0 0 16 16"
+                            fill="none"
+                            stroke="currentColor"
+                            stroke-width="1.8"
+                            aria-hidden="true"><path d="M4 4l8 8M12 4l-8 8" /></svg
+                          ></button
+                        >
+                      </div>
+                    </li>
+                  {/each}
+                </ul>
+              {/if}
+            {/if}
+            <details>
+              <summary>How does this work?</summary>
+              <p class="note">
+                Words you add are used as-is. Words Vesper picks up on its own stay in use unless
+                you remove them. Suggestions are only proposals until you add them.
+              </p>
+            </details>
+            <div class="learn-foot">
+              <label class="checkbox-field" for="learn-from-edits"
+                ><input
+                  id="learn-from-edits"
+                  type="checkbox"
+                  bind:checked={profile.automaticLearning}
+                /><span>Learn from my edits</span></label
+              >
+              <button
+                type="button"
+                class="quiet"
+                disabled={controlsDisabled || dirty}
+                onclick={forgetLearning}>Forget automatic learning</button
+              >
+            </div>
           </div>
           {#if profile.examples.length}
             <div class="preference-group" id="remembered-examples">
@@ -557,100 +677,6 @@
                   >
                 </div>
               {/each}
-            </div>
-          {/if}
-          {#if learning}
-            <div class="preference-group">
-              <div class="group-heading">
-                <h3>Automatic learning evidence</h3>
-                <span class="entry-count"
-                  >{learning.candidates.filter((c) => c.state === 'active').length} active · {learning.candidates.filter(
-                    (c) => c.state === 'provisional',
-                  ).length} awaiting · {learning.candidates.filter((c) => c.state === 'suspended')
-                    .length} paused · {learning.candidates.filter((c) => c.state === 'observed')
-                    .length} observed</span
-                >
-              </div>
-              <p class="note">
-                Vesper learns spellings from edits you save in Dictate. Dictation and copying alone
-                do not confirm a spelling, and nothing here changes your vocabulary by itself.
-              </p>
-              {#if !learning.events.some((event) => event.kind === 'user_edit')}
-                <p class="note">
-                  No corrections recorded yet — edit Your text in Dictate and save to teach your
-                  first spelling.
-                </p>
-              {/if}
-              <p class="note">
-                Ordinary spellings need corrections in two independent recordings and matching
-                context. Select a recording language in Settings: automatic language mode keeps
-                learned spellings provisional. History reviews require your confirmation; background
-                intent and policy evaluation does not yet change your preferences.
-              </p>
-              {#if learning.candidates.some((c) => c.state === 'observed')}
-                <div class="sub-heading">
-                  <h4>Observed terms</h4>
-                  <span class="entry-count">Never activate correction rules</span>
-                </div>
-                {#each learning.candidates
-                  .filter((c) => c.state === 'observed')
-                  .slice()
-                  .reverse()
-                  .slice(0, 8) as term (term.id)}
-                  <div class="word-entry">
-                    <div class="entry-heading">
-                      <h4>
-                        {term.phrase}
-                        <span class="entry-count">observed {term.observedCount}×</span>
-                      </h4>
-                      <a class="term-manage" href="#vocabulary">Manage in Vocabulary</a>
-                    </div>
-                    <p class="note">
-                      {term.project || term.context || 'Shared vocabulary'} · {term.language ===
-                      'auto'
-                        ? 'Language not established'
-                        : term.language} · {term.reason}
-                    </p>
-                  </div>
-                {/each}
-              {/if}
-              <details>
-                <summary>Inspect recent candidates</summary>
-                <p class="note">
-                  {learning.events.filter((e) => e.retry === 'possible_repair').length} possible repair
-                  signals. These do not create replacement rules. Usage counts do not prove a spelling
-                  is correct.
-                </p>
-                {#each learning.candidates
-                  .slice()
-                  .reverse()
-                  .slice(0, 32) as candidate (candidate.id)}
-                  <p>
-                    <strong>{candidate.phrase}</strong>{candidate.alias
-                      ? ` ← ${candidate.alias}`
-                      : ''} · {candidate.state} · {candidate.support.length} independent edit sources<br
-                    /><span class="note"
-                      >{candidate.project || candidate.context || 'Shared vocabulary'} · {candidate.language ===
-                      'auto'
-                        ? 'Language not established'
-                        : candidate.language} · {candidate.reason}</span
-                    >
-                  </p>
-                {/each}
-                <p class="note">
-                  Shows up to 32 recent candidates. Active entries can be edited, paused or removed
-                  in Vocabulary.
-                </p>
-              </details>
-              <div class="danger-zone">
-                <button type="button" disabled={controlsDisabled || dirty} onclick={forgetLearning}
-                  >Forget automatic learning</button
-                >
-                <p class="note">
-                  Removes automatic spellings, candidates and usage evidence. Saved words and
-                  reviewed recordings remain.
-                </p>
-              </div>
             </div>
           {/if}
         </fieldset>
@@ -759,39 +785,10 @@
   .entry-heading {
     margin-bottom: var(--space-3);
   }
-  .sub-heading {
-    display: flex;
-    flex-wrap: wrap;
-    align-items: baseline;
-    justify-content: space-between;
-    gap: var(--space-2);
-    margin: var(--space-5) 0 var(--space-3);
-  }
-  .sub-heading h4 {
-    margin: 0;
-    font-size: 12px;
-    font-weight: 600;
-  }
-  .term-manage {
-    font-size: 12px;
-    white-space: nowrap;
-  }
-  .word-entry .note {
-    margin-bottom: 0;
-  }
-  .danger-zone {
-    margin-top: var(--space-5);
-    padding-top: var(--space-4);
-    border-top: 1px dashed var(--color-line);
-  }
-  .danger-zone .note {
-    margin-top: var(--space-2);
-  }
   .entry-heading h4 {
     font-size: 12px;
     font-weight: 500;
   }
-  .word-entry,
   .example-entry {
     padding: var(--space-4);
     margin-bottom: var(--space-4);
@@ -799,9 +796,143 @@
     border: 1px solid var(--color-line);
     border-radius: var(--radius-sm);
   }
-  .word-entry details {
-    margin-top: 0;
+  .add-bar {
+    display: flex;
+    gap: var(--space-2);
     margin-bottom: var(--space-3);
+  }
+  .add-bar input {
+    flex: 1 1 auto;
+    min-width: 0;
+  }
+  .filter-pills {
+    display: flex;
+    gap: var(--space-1);
+    margin-bottom: var(--space-2);
+  }
+  .filter-pills button {
+    appearance: none;
+    border: 1px solid transparent;
+    border-radius: var(--radius-pill);
+    background: transparent;
+    color: var(--color-muted);
+    font: inherit;
+    font-size: 12px;
+    padding: var(--space-1) var(--space-3);
+    cursor: pointer;
+  }
+  .filter-pills button:hover {
+    color: var(--color-ink);
+  }
+  .filter-pills button[aria-pressed='true'] {
+    background: var(--color-raised);
+    color: var(--color-ink);
+  }
+  .filter-pills button:focus-visible {
+    outline: 2px solid var(--color-focus);
+    outline-offset: 2px;
+  }
+  .sugg-badge {
+    display: inline-block;
+    min-width: 18px;
+    margin-left: var(--space-1);
+    padding: 0 var(--space-1);
+    border-radius: var(--radius-pill);
+    background: var(--color-tint);
+    color: var(--color-accent);
+    font-size: 11px;
+    text-align: center;
+    font-variant-numeric: tabular-nums;
+  }
+  .term-list {
+    list-style: none;
+    margin: 0 0 var(--space-3);
+    padding: 0;
+  }
+  .word-entry {
+    padding: var(--space-2) 0;
+    border-top: 1px solid var(--color-line);
+  }
+  .word-entry .entry-heading {
+    margin-bottom: 0;
+    flex-wrap: nowrap;
+  }
+  .term-input {
+    flex: 1 1 auto;
+    min-width: 0;
+    border: 0;
+    background: transparent;
+    color: var(--color-ink);
+    font: inherit;
+    font-weight: 600;
+    padding: 0;
+  }
+  .term-input:focus {
+    outline: none;
+    border-bottom: 1px solid var(--color-accent);
+  }
+  .term-static {
+    flex: 1 1 auto;
+    min-width: 0;
+    font-weight: 600;
+    overflow-wrap: anywhere;
+  }
+  .pair-from {
+    color: var(--color-muted);
+    font-weight: 400;
+  }
+  .pair-arrow {
+    color: var(--color-muted);
+    margin: 0 var(--space-2);
+  }
+  .lang-select {
+    flex: none;
+  }
+  .icon-btn {
+    appearance: none;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    flex: none;
+    width: 28px;
+    height: 28px;
+    padding: 0;
+    border: 0;
+    border-radius: var(--radius-sm);
+    background: transparent;
+    color: var(--color-muted);
+    cursor: pointer;
+  }
+  .icon-btn:hover:enabled {
+    background: var(--color-raised);
+    color: var(--color-ink);
+  }
+  .icon-btn:focus-visible {
+    outline: 2px solid var(--color-focus);
+    outline-offset: 2px;
+  }
+  .icon-btn svg {
+    width: 14px;
+    height: 14px;
+  }
+  .icon-btn:disabled {
+    opacity: 0.45;
+    cursor: not-allowed;
+  }
+  button.primary.sm {
+    min-height: 30px;
+    padding: 0 var(--space-3);
+    font-size: 12px;
+  }
+  .learn-foot {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: space-between;
+    gap: var(--space-3);
+    margin-top: var(--space-4);
+    padding-top: var(--space-4);
+    border-top: 1px solid var(--color-line);
   }
   .example-text {
     margin: 0 0 var(--space-4);

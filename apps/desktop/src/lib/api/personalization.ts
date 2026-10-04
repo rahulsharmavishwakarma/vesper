@@ -153,6 +153,10 @@ export interface AutomaticLearningState {
 export const getAutomaticLearning = () => invoke<AutomaticLearningState>('get_automatic_learning');
 export const forgetAutomaticLearning = (revision: number) =>
   invoke<PersonalizationProfile>('forget_automatic_learning', { revision });
+export const suspendAutomaticCandidate = (candidateId: string) =>
+  invoke<number>('suspend_automatic_candidate', { candidateId });
+export const approveAutomaticCandidate = (candidateId: string) =>
+  invoke<PersonalizationProfile>('approve_automatic_candidate', { candidateId });
 export const editLatestDraft = (resultId: string, revision: number, text: string) =>
   invoke<import('./runtime').PipelineResult>('edit_latest_draft', { resultId, revision, text });
 export const undoLatestLearning = (resultId: string) =>
