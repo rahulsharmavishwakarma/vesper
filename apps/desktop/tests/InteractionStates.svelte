@@ -73,7 +73,7 @@
     </section>
     <section>
       <h2>Pressed</h2>
-      <button class="primary is-pressed">Save changes</button>
+      <button class="primary is-pressed">Confirm choice</button>
     </section>
     <section>
       <h2>Disabled</h2>

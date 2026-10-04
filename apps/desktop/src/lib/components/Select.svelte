@@ -340,7 +340,7 @@
     min-height: 44px;
     margin: 0;
     padding: 10px 12px;
-    border: 1px solid var(--color-control-edge);
+    border: 1px solid var(--color-line);
     border-radius: var(--radius-sm);
     background: var(--color-bg);
     color: var(--color-ink);

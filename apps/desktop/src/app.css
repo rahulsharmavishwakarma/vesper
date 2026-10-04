@@ -530,6 +530,39 @@ h3 {
   font-size: 10px;
   color: var(--color-muted);
 }
+.save-status {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+  border: 1px solid var(--color-line);
+  border-radius: var(--radius-pill);
+  padding: var(--space-1) var(--space-2);
+  font-size: 10px;
+}
+.save-status .icon {
+  width: 12px;
+  height: 12px;
+}
+.save-status[data-state='saved'] .icon {
+  color: var(--color-accent);
+}
+/* The HTML check draws itself in when the confirmation lands. */
+.save-status[data-state='saved'] .a {
+  animation: icon-draw 600ms var(--ease);
+}
+@keyframes icon-draw {
+  from {
+    stroke-dashoffset: 1;
+  }
+}
+/* The icon rail keeps the toast to its glyph so the pill never overflows. */
+.app-shell.settings-rail .save-status .save-status-text {
+  display: none;
+}
+.save-status > span.spinning {
+  display: inline-flex;
+  animation: refresh-spin 700ms linear infinite;
+}
 .activity-link {
   padding: var(--space-2) 0;
   margin-bottom: var(--space-3);
@@ -822,6 +855,8 @@ body.is-recording .brand-logo .dsh {
   .studio-recorder.is-recording .record-button::after,
   .studio-recorder.is-recording .recorder-heading > .icon,
   .microphone-refresh > span.spinning,
+  .save-status > span.spinning,
+  .save-status[data-state='saved'] .a,
   .activity-link .status-dot::after {
     animation: none;
   }
@@ -1097,7 +1132,7 @@ label:not(.checkbox-field) {
   font-weight: 500;
   margin-bottom: var(--space-2);
 }
-.savebar {
+.settings-notice {
   position: static;
   margin-top: var(--space-6);
   background: var(--color-raised);
@@ -1109,7 +1144,7 @@ label:not(.checkbox-field) {
   justify-content: space-between;
   flex-wrap: wrap;
   gap: var(--space-3);
-  animation: savebar-enter 180ms var(--ease) both;
+  animation: notice-enter 180ms var(--ease) both;
 }
 .form-feedback {
   min-height: 0;
@@ -1916,7 +1951,7 @@ textarea:focus:enabled {
     transform: rotate(360deg);
   }
 }
-@keyframes savebar-enter {
+@keyframes notice-enter {
   from {
     opacity: 0;
     transform: translateY(4px);
@@ -2111,7 +2146,7 @@ textarea:focus:enabled {
     flex-direction: column;
     gap: var(--space-1);
   }
-  .savebar {
+  .settings-notice {
     padding: var(--space-4);
   }
   .form-feedback {
@@ -2311,14 +2346,10 @@ button {
 button:active:enabled {
   transform: translateY(1px) scale(0.985);
 }
+/* Ember buttons are flat accent: the finalized design uses no gloss gradient. */
 button.primary {
-  --button-light: var(--color-accent-light);
-  background-image: linear-gradient(180deg, var(--button-light), var(--color-transparent));
-  box-shadow: inset 0 1px 0 var(--color-sheen);
-}
-.is-recording button.primary,
-button.primary.capturing {
-  --button-light: var(--color-error-light);
+  background-image: none;
+  box-shadow: none;
 }
 button[aria-busy='true']:disabled {
   opacity: 0.75;
@@ -2330,7 +2361,7 @@ button:has(.copy-glyph.copied) {
   color: var(--color-accent);
 }
 :is(input:not([type='checkbox']), textarea):not(:disabled) {
-  border-color: var(--color-control-edge);
+  border-color: var(--color-line);
 }
 :is(input:not([type='checkbox']), textarea):hover:not(:disabled) {
   border-color: var(--color-control-hover);
@@ -2419,7 +2450,8 @@ input[type='checkbox']:disabled {
   transform: none;
 }
 .sidebar nav button[aria-current='page'] {
-  background: linear-gradient(110deg, var(--color-tint), var(--color-raised));
+  background: var(--color-raised);
+  box-shadow: inset 0 0 0 1px var(--color-line);
 }
 .sidebar nav button .icon {
   transition: color var(--duration-hover) var(--ease-out);
@@ -2614,7 +2646,7 @@ button:is(
 .settings-content .field {
   margin-bottom: var(--space-5);
 }
-.settings-content .savebar {
+.settings-content .settings-notice {
   border: 0;
   border-top: 1px solid var(--color-line);
   border-radius: 0;
@@ -2622,7 +2654,7 @@ button:is(
   margin-top: var(--space-6);
   background: var(--color-transparent);
 }
-.settings-content .savebar .form-actions {
+.settings-content .settings-notice .form-actions {
   flex-direction: row-reverse;
 }
 .settings-content .personalization,
@@ -2805,7 +2837,7 @@ button:is(
     transition: none;
   }
 }
-.settings-content .savebar {
+.settings-content .settings-notice {
   position: sticky;
   bottom: 0;
   margin-top: var(--space-8);
@@ -2813,7 +2845,7 @@ button:is(
   border-top: 1px solid var(--color-line);
   background: var(--color-panel);
 }
-.settings-content .savebar .form-feedback {
+.settings-content .settings-notice .form-feedback {
   font-size: 14px;
 }
 .settings-content details.settings-advanced > summary,

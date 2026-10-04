@@ -162,9 +162,9 @@
     {error ??
       (editing
         ? captured
-          ? 'Shortcut recorded. Save changes to apply, or Esc to cancel.'
+          ? 'Shortcut recorded. It saves automatically, or Esc to cancel.'
           : 'Press a key combination. Esc to cancel.'
-        : 'Click the field to change, then Save changes.')}
+        : 'Click the field to change. It saves automatically.')}
   </p>
 </div>
 

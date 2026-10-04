@@ -33,7 +33,7 @@
   });
 </script>
 
-<span class="brand-logo" class:large aria-hidden={decorative ? 'true' : undefined}>
+<span class="brand-logo" class:large class:mark aria-hidden={decorative ? 'true' : undefined}>
   <span class="ember-lockup">
     {#key replay}
       <!-- eslint-disable-next-line svelte/no-at-html-tags -->
@@ -57,6 +57,14 @@
   }
   .large {
     width: 224px;
+  }
+  /* The collapsed rail shows the bird alone: without the wordmark the
+   * lockup-relative sizing leaves a speck, so the mark gets its own size. */
+  .mark {
+    width: auto;
+  }
+  .brand-logo.mark :global(svg) {
+    height: 28px;
   }
   .ember-lockup {
     display: inline-flex;
