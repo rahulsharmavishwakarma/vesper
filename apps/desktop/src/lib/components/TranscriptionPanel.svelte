@@ -1,7 +1,6 @@
 <script lang="ts">
   import ProjectScope from './ProjectScope.svelte';
   import SpeakerTimeline from './SpeakerTimeline.svelte';
-  import CaptureGlyph from './CaptureGlyph.svelte';
   import CopyGlyph from './CopyGlyph.svelte';
   import {
     editLatestDraft,
@@ -763,7 +762,12 @@
   aria-label="Local transcription"
 >
   <div class="dictate-capture" hidden={view !== 'dictate'}>
-    <div class="studio-recorder" class:is-recording={recording} class:is-processing={processing}>
+    <div
+      class="studio-recorder ember-rise"
+      style="--rise-delay: 0.07s;"
+      class:is-recording={recording}
+      class:is-processing={processing}
+    >
       <div class="recorder-toolbar">
         <div class="microphone-control">
           <label for="microphone">Microphone</label>
@@ -812,6 +816,7 @@
       <div class="recorder-stage">
         <div class="recorder-main">
           <div class="recorder-heading">
+            <Icon name="mic" />
             <h2 class="recorder-label"><span role="status">{recorderStatus}</span></h2>
             {#if recording}<span class="recording-timer" aria-label="Recording duration"
                 >{String(Math.floor(recordingElapsedMs / 60000)).padStart(2, '0')}:{String(
@@ -824,6 +829,19 @@
                 {recorderHint}
               </p>{/if}
           </div>
+          <div class="recorder-signal">
+            <AudioIndicator
+              {recording}
+              {processing}
+              {desktop}
+              visible={view === 'dictate'}
+              complete={Boolean(result) && !busy}
+              failed={Boolean(error || statusError || runtime?.stage === 'error')}
+              onSignal={() => {
+                inputLevelDetected = true;
+              }}
+            />
+          </div>
           <div class="capture-actions">
             <button
               class="primary record-button"
@@ -834,7 +852,7 @@
                 ? action !== null || cancelling
                 : blocked || !ready || !devices.length}
             >
-              <CaptureGlyph {recording} />{recording
+              <Icon name="record" />{recording
                 ? action === 'stopping'
                   ? 'Finishing…'
                   : 'Stop and transcribe'
@@ -863,19 +881,6 @@
               type="button"
               onclick={() => onNavigate('models')}>Set up models <Icon name="arrow" /></button
             >{/if}
-        </div>
-        <div class="recorder-signal">
-          <AudioIndicator
-            {recording}
-            {processing}
-            {desktop}
-            visible={view === 'dictate'}
-            complete={Boolean(result) && !busy}
-            failed={Boolean(error || statusError || runtime?.stage === 'error')}
-            onSignal={() => {
-              inputLevelDetected = true;
-            }}
-          />
         </div>
       </div>
       <ConfiguredModels settings={modelSettings} onManage={() => onNavigate('models')} />
@@ -924,7 +929,11 @@
     </div>
   {/if}
   {#if result}
-    <div class="transcription-result" hidden={view !== 'dictate'}>
+    <div
+      class="transcription-result ember-rise"
+      style="--rise-delay: 0.14s;"
+      hidden={view !== 'dictate'}
+    >
       <div class="section-heading">
         <div>
           <h2>Your latest transcription</h2>

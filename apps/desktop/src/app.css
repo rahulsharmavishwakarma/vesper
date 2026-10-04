@@ -588,7 +588,22 @@ h3 {
 }
 .transcription-language h2 {
   margin: 0 0 var(--space-1);
-  font-size: 14px;
+  font-size: 15px;
+  font-weight: 500;
+  letter-spacing: -0.01em;
+}
+.transcription-language-copy {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  gap: 2px var(--space-3);
+  align-items: start;
+}
+.transcription-language-copy > .icon {
+  grid-row: span 2;
+  width: 20px;
+  height: 20px;
+  margin-top: 2px;
+  color: var(--color-accent);
 }
 .transcription-language .note {
   margin: 0;
@@ -606,7 +621,7 @@ h3 {
   background: var(--color-raised);
   border: 1px solid var(--color-line);
   border-radius: var(--radius-lg);
-  padding: var(--space-5) var(--space-6) 0;
+  padding: var(--space-5) var(--space-6);
 }
 .recorder-toolbar {
   display: flex;
@@ -629,11 +644,7 @@ h3 {
   padding-block: var(--space-3);
 }
 .recorder-stage {
-  display: grid;
-  grid-template-columns: minmax(0, 1fr) minmax(160px, 28%);
-  align-items: center;
-  gap: var(--space-6);
-  padding: var(--space-8) 0;
+  padding: var(--space-6) 0 var(--space-2);
 }
 .recorder-main,
 .recorder-signal {
@@ -645,10 +656,20 @@ h3 {
   flex-wrap: wrap;
   gap: var(--space-3);
 }
+.recorder-heading > .icon {
+  width: 28px;
+  height: 28px;
+  flex-shrink: 0;
+  color: var(--color-accent);
+}
+.studio-recorder.is-recording .recorder-heading > .icon {
+  animation: ember-core 0.9s ease-in-out infinite alternate;
+}
 .recorder-label {
-  font-size: 22px;
-  font-weight: 500;
-  letter-spacing: -0.025em;
+  font-size: clamp(26px, 4vw, 32px);
+  font-weight: 800;
+  line-height: 1.1;
+  letter-spacing: -0.035em;
   color: var(--color-ink);
   margin: 0;
   min-width: 0;
@@ -659,9 +680,10 @@ h3 {
   margin-top: var(--space-2);
 }
 .recorder-signal {
-  --voice-height: 80px;
-  --voice-width: 240px;
+  --voice-height: 56px;
+  --voice-width: 100%;
   text-align: center;
+  margin: var(--space-4) 0 var(--space-5);
 }
 .recording-timer {
   display: inline-flex;
@@ -681,11 +703,16 @@ h3 {
 }
 .record-button {
   position: relative;
-  min-width: 140px;
-  padding: var(--space-3) var(--space-5);
-  border-radius: var(--radius-pill);
-  min-height: 48px;
+  min-height: 62px;
+  padding: 0 44px;
+  border-radius: 14px;
+  font-size: 17px;
+  font-weight: 500;
   white-space: nowrap;
+}
+.record-button > .icon {
+  width: 22px;
+  height: 22px;
 }
 .record-button:disabled {
   opacity: 0.65;
@@ -693,23 +720,51 @@ h3 {
 .record-button::after {
   content: '';
   position: absolute;
-  inset: -6px;
-  border: 1px solid var(--color-accent);
+  inset: 0;
+  border: 2px solid var(--color-accent);
   border-radius: inherit;
   opacity: 0;
   pointer-events: none;
 }
-.is-recording .record-button {
-  background: var(--color-error);
-  border-color: var(--color-error);
+.studio-recorder.is-recording .record-button::after {
+  animation: ember-ring 1.5s var(--ease) infinite;
 }
-.is-recording .record-button.primary:hover:enabled {
-  background: var(--color-error);
-  border-color: var(--color-error);
+@keyframes ember-ring {
+  from {
+    transform: scale(1);
+    opacity: 0.7;
+  }
+  to {
+    transform: scale(1.22, 1.55);
+    opacity: 0;
+  }
 }
-.is-recording .record-button::after {
-  border-color: var(--color-error);
-  opacity: 0.4;
+@keyframes ember-core {
+  to {
+    transform: scale(1.35);
+  }
+}
+@keyframes ember-rise {
+  from {
+    opacity: 0;
+    transform: translateY(12px);
+  }
+}
+/* Ember staggered entrance (issue #87): page blocks rise in reading order.
+ * Honors the same reduced-motion contract as the rest of the app. */
+.ember-rise {
+  animation: ember-rise 0.7s var(--ease) both;
+  animation-delay: var(--rise-delay, 0s);
+}
+@media (prefers-reduced-motion: reduce) {
+  .ember-rise {
+    animation: none;
+  }
+  .studio-recorder.is-recording .record-button::after,
+  .studio-recorder.is-recording .recorder-heading > .icon,
+  .microphone-refresh > span.spinning {
+    animation: none;
+  }
 }
 .recorder-hint {
   color: var(--color-muted);
@@ -753,10 +808,12 @@ h3 {
 }
 .configured-models {
   display: flex;
-  align-items: center;
-  gap: var(--space-5);
+  align-items: flex-end;
+  flex-wrap: wrap;
+  gap: var(--space-5) var(--space-10);
   border-top: 1px solid var(--color-line);
-  padding: var(--space-4) 0;
+  margin-top: var(--space-6);
+  padding: var(--space-5) 0 var(--space-1);
   text-align: left;
 }
 .configured-models dl {
@@ -774,7 +831,7 @@ h3 {
 }
 .configured-models dd {
   color: var(--color-ink);
-  font-size: 12px;
+  font-size: 14px;
   font-weight: 500;
   margin: 0;
   overflow-wrap: anywhere;
@@ -784,12 +841,18 @@ h3 {
 }
 .manage-models {
   padding-inline: var(--space-1);
-  font-size: 11px;
+  font-size: 14px;
   flex-shrink: 0;
+  margin-left: auto;
+  color: var(--color-muted);
+}
+.configured-models .manage-models:hover:enabled {
+  color: var(--color-accent);
+  background: var(--color-transparent);
 }
 .manage-models .icon {
-  width: 13px;
-  height: 13px;
+  width: 16px;
+  height: 16px;
 }
 .page-model-summary {
   margin-bottom: var(--space-6);
@@ -806,8 +869,8 @@ h3 {
 }
 .capture-actions {
   align-items: center;
-  gap: var(--space-3);
-  margin-top: var(--space-4);
+  gap: var(--space-5);
+  margin-top: 0;
 }
 .capture-actions > button {
   white-space: nowrap;
@@ -1252,6 +1315,50 @@ details {
 }
 .history-heading .note {
   margin: var(--space-1) 0 0;
+}
+/* Ember recent thoughts (issue #87): standalone cards with an
+ * accent-baited hover, distinct from the full History rows. */
+.recent-panel .history-heading {
+  margin: var(--space-6) 0 var(--space-3);
+}
+.recent-panel .history-heading h2 {
+  font-size: 22px;
+  font-weight: 800;
+  letter-spacing: -0.035em;
+}
+.recent-panel .history-heading .quiet {
+  color: var(--color-muted);
+  font-size: 14px;
+}
+.recent-panel .history-heading .quiet:hover:enabled {
+  color: var(--color-accent);
+  background: var(--color-transparent);
+}
+.recent-panel .session-list {
+  gap: var(--space-3);
+}
+.recent-panel .session-button {
+  align-items: center;
+  gap: var(--space-4);
+  background: var(--color-raised);
+  border: 1px solid var(--color-line);
+  border-radius: var(--radius-md);
+  padding: 18px 24px;
+}
+.recent-panel .session-button:hover:enabled {
+  border-color: var(--color-accent);
+  background: var(--color-raised);
+}
+.recent-panel .session-button .icon {
+  color: var(--color-muted);
+  flex-shrink: 0;
+}
+.recent-panel .session-button:hover:enabled .icon {
+  color: var(--color-accent);
+}
+.recent-panel .session-preview {
+  font-size: 14px;
+  line-height: 1.5;
 }
 .history-actions {
   display: flex;

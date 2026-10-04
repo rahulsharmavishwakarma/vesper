@@ -519,6 +519,8 @@
 <section
   class="dataset-panel"
   class:recent-panel={view === 'recent'}
+  class:ember-rise={view === 'recent'}
+  style="--rise-delay: 0.21s;"
   data-view={view}
   hidden={view === 'hidden'}
   aria-labelledby="dataset-heading"
