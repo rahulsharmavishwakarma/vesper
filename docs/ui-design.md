@@ -1,6 +1,6 @@
 # UI interaction design
 
-Keep common actions familiar and direct. A control should let someone perform the task without assembling its implementation details. Preserve Vesper's shared Inter typography, ember tokens, focus treatment, spacing, and approved motion; simplicity is an interaction requirement as well as a visual one.
+Keep common actions familiar and direct. A control should let someone perform the task without assembling its implementation details. Preserve Vesper's shared Bricolage Grotesque typography, ember tokens, focus treatment, spacing, and approved motion; simplicity is an interaction requirement as well as a visual one.
 
 Source comments explain behavior, constraints and asset ownership. Do not embed
 design-tool names, self-review scores or generation-session stamps in production
@@ -18,8 +18,8 @@ historical names. See [product naming and compatibility](development.md#product-
 [issue #87](https://github.com/rahulsharmavishwakarma/transcribe/issues/87).
 The in-app lockup pairs the filled ember bird in
 [its own SVG](../apps/desktop/src/assets/ember-bird.svg) with a Bricolage
-Grotesque 800 wordmark; every other application string uses a single Inter
-family. The bird keeps two call dashes and an eye-lid highlight with an idle
+Grotesque 800 wordmark, and every other application string uses the same
+Bricolage Grotesque family — body and labels at 400/500, no monospace anywhere. The bird keeps two call dashes and an eye-lid highlight with an idle
 chirp/blink motion and a hover tilt, all stilled by Reduce Motion. Native app
 icons, the menu-bar template and the README banner still derive from the
 Songbird source below until a follow-up requalifies that pipeline.
@@ -121,7 +121,7 @@ The selected HTML Settings study is integrated into the application: an interior
 sidebar for **Recording**, **Writing**, **Shortcuts**, **Appearance** and **About**,
 with one shared content surface. Selected sections have a tonal background and
 no underline. The native application sidebar keeps its existing treatment.
-Sections use extra-bold Inter headings with natural tracking, a 1.4 line height
+Sections use extra-bold Bricolage headings with natural tracking, a 1.4 line height
 and shared description spacing; the main page title stays visually distinct.
 At narrow widths the interior navigation becomes a wrapping row of 44 px targets.
 
