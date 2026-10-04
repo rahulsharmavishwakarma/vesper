@@ -341,22 +341,35 @@ impl DatasetStore {
         }
         // Rejected automatic output is negative evidence, including a third
         // spelling. Do not turn a generated intermediate word into an audio alias.
-        for entry in &mut profile.vocabulary {
-            if entry.automatic_source.is_some()
-                && entry.enabled
-                && scope(entry.language, &entry.project, context)
-                && (withdrawn.contains(entry.automatic_source.as_ref().unwrap())
-                    || (memory_phrase_occurs(before, &entry.phrase)
-                        && !memory_phrase_occurs(after, &entry.phrase)
-                        && (entry.aliases.iter().any(|a| memory_phrase_occurs(after, a))
-                            || pair
-                                .as_ref()
-                                .is_some_and(|p| p.heard.eq_ignore_ascii_case(&entry.phrase)))))
-            {
-                entry.enabled = false;
-                suspend(&mut state, entry.automatic_source.as_deref().unwrap());
-                outcome.suspended += 1;
-            }
+        // Withdrawn automatic spellings leave the vocabulary entirely: a listed
+        // word is always used, so the system removes what it added instead of
+        // parking a disabled entry. The candidate is suspended as negative
+        // evidence so the spelling does not reactivate.
+        let withdrawn_entries: Vec<(String, String)> = profile
+            .vocabulary
+            .iter()
+            .filter(|entry| {
+                entry.automatic_source.is_some()
+                    && entry.enabled
+                    && scope(entry.language, &entry.project, context)
+                    && (withdrawn.contains(entry.automatic_source.as_ref().unwrap())
+                        || (memory_phrase_occurs(before, &entry.phrase)
+                            && !memory_phrase_occurs(after, &entry.phrase)
+                            && (entry.aliases.iter().any(|a| memory_phrase_occurs(after, a))
+                                || pair
+                                    .as_ref()
+                                    .is_some_and(|p| p.heard.eq_ignore_ascii_case(&entry.phrase)))))
+            })
+            .map(|entry| (entry.id.clone(), entry.automatic_source.clone().unwrap()))
+            .collect();
+        for (_, source) in &withdrawn_entries {
+            suspend(&mut state, source);
+            outcome.suspended += 1;
+        }
+        if !withdrawn_entries.is_empty() {
+            profile
+                .vocabulary
+                .retain(|entry| !withdrawn_entries.iter().any(|(id, _)| *id == entry.id));
         }
         if let Some(pair) = pair
             .as_ref()
@@ -680,6 +693,84 @@ impl DatasetStore {
         Ok(count)
     }
 
+    /// Suspend one candidate by id, with or without a vocabulary entry.
+    /// Dismissing a proposal keeps it suspended so future edits never
+    /// re-learn it; any linked automatic entry leaves the vocabulary, because
+    /// a listed word is always used.
+    pub fn suspend_automatic_candidate(&self, candidate_id: &str) -> Result<usize> {
+        let tx = self.connection.unchecked_transaction()?;
+        let mut profile = self.personalization()?;
+        let mut state = self.automatic_learning_state()?;
+        if !state.candidates.iter().any(|c| c.id == candidate_id) {
+            return Ok(0);
+        }
+        suspend(&mut state, candidate_id);
+        profile
+            .vocabulary
+            .retain(|entry| entry.automatic_source.as_deref() != Some(candidate_id));
+        put_profile(&tx, &mut profile)?;
+        put_state(&tx, &state)?;
+        tx.commit()?;
+        Ok(1)
+    }
+
+    /// Promote a proposal candidate (observed or provisional) to a manual
+    /// vocabulary entry. The entry is user-owned and used while listed; the
+    /// candidate is removed so it cannot activate a duplicate.
+    pub fn approve_automatic_candidate(
+        &self,
+        candidate_id: &str,
+    ) -> Result<PersonalizationProfile> {
+        let tx = self.connection.unchecked_transaction()?;
+        let mut profile = self.personalization()?;
+        let mut state = self.automatic_learning_state()?;
+        let position = state
+            .candidates
+            .iter()
+            .position(|c| c.id == candidate_id)
+            .ok_or_else(|| DatasetError::SessionNotFound(candidate_id.into()))?;
+        let candidate = state.candidates[position].clone();
+        if candidate.state == CandidateState::Suspended {
+            return Err(DatasetError::InvalidConfig(
+                "That suggestion was removed; use Forget automatic learning to reset it.".into(),
+            ));
+        }
+        let exists = profile.vocabulary.iter().any(|entry| {
+            entry.phrase == candidate.phrase
+                && entry.project == candidate.project
+                && entry.language == candidate.language
+                && (candidate.alias.is_empty() || entry.aliases.contains(&candidate.alias))
+        });
+        if !exists {
+            if profile.vocabulary.len() >= 128 {
+                return Err(DatasetError::InvalidConfig(
+                    "Vocabulary is full (128 entries). Remove an unused entry first.".into(),
+                ));
+            }
+            let mut aliases = Vec::new();
+            if !candidate.alias.is_empty() {
+                aliases.push(candidate.alias.clone());
+            }
+            profile.vocabulary.push(VocabularyEntry {
+                id: Uuid::new_v4().to_string(),
+                phrase: candidate.phrase.clone(),
+                aliases,
+                language: candidate.language,
+                project: candidate.project.clone(),
+                context: candidate.context.clone(),
+                enabled: true,
+                automatic_source: None,
+                learned_at: now(),
+                ..Default::default()
+            });
+        }
+        state.candidates.remove(position);
+        put_profile(&tx, &mut profile)?;
+        put_state(&tx, &state)?;
+        tx.commit()?;
+        Ok(profile)
+    }
+
     pub fn undo_learning_for_result(&self, result_id: &str) -> Result<usize> {
         let tx = self.connection.unchecked_transaction()?;
         self.invalidate_semantic_result(result_id)?;
@@ -717,14 +808,26 @@ impl DatasetStore {
         let mut profile = self.personalization()?;
         let mut state = self.automatic_learning_state()?;
         let mut count = 0;
-        for entry in &mut profile.vocabulary {
-            if entry.enabled && ids.contains(&entry.id) {
-                if let Some(source) = &entry.automatic_source {
-                    entry.enabled = false;
-                    suspend(&mut state, source);
-                    count += 1;
-                }
-            }
+        // Suspended memories leave the vocabulary: a listed word is always
+        // used. The candidate suspension is kept as negative evidence.
+        let removed: Vec<String> = profile
+            .vocabulary
+            .iter()
+            .filter(|entry| ids.contains(&entry.id) && entry.automatic_source.is_some())
+            .map(|entry| entry.automatic_source.clone().unwrap())
+            .collect();
+        for source in &removed {
+            suspend(&mut state, source);
+            count += 1;
+        }
+        if count > 0 {
+            let sources = removed;
+            profile.vocabulary.retain(|entry| {
+                !entry
+                    .automatic_source
+                    .as_ref()
+                    .is_some_and(|s| sources.contains(s))
+            });
         }
         if count > 0 {
             put_profile(tx, &mut profile)?;
@@ -768,6 +871,7 @@ impl DatasetStore {
         let mut state = self.automatic_learning_state()?;
         let mut invalidate = current.automatic_learning != next.automatic_learning;
         next.learning_epoch = current.learning_epoch;
+        let mut disabled_automatic: Vec<String> = Vec::new();
         for entry in &mut next.vocabulary {
             let previous = current.vocabulary.iter().find(|p| p.id == entry.id);
             entry.usage_count = previous.map_or(0, |p| p.usage_count);
@@ -784,8 +888,11 @@ impl DatasetStore {
                 if !valid {
                     return Err(DatasetError::InvalidConfig("Automatic source cannot be edited. Convert this entry to a manual spelling first.".into()));
                 }
+                // Removal is the only off-switch: a saved automatic entry that
+                // arrives disabled is dropped below and its candidate is
+                // suspended, so a listed word is never silently unused.
                 if !entry.enabled {
-                    suspend(&mut state, source);
+                    disabled_automatic.push(source.clone());
                 }
                 // An explicit inspector enable is a manual decision, not implicit admission.
                 if entry.enabled && previous.is_some_and(|p| !p.enabled) {
@@ -794,29 +901,64 @@ impl DatasetStore {
                 }
             }
         }
+        if !disabled_automatic.is_empty() {
+            next.vocabulary.retain(|entry| {
+                !entry
+                    .automatic_source
+                    .as_ref()
+                    .is_some_and(|s| disabled_automatic.contains(s))
+            });
+            for source in &disabled_automatic {
+                suspend(&mut state, source);
+            }
+            invalidate = true;
+        }
         for previous in &current.vocabulary {
             if let Some(source) = &previous.automatic_source {
-                if !next
-                    .vocabulary
-                    .iter()
-                    .any(|v| v.id == previous.id && v.automatic_source.as_ref() == Some(source))
-                {
-                    let support: Vec<_> = state
-                        .candidates
-                        .iter()
-                        .filter(|c| &c.id == source)
-                        .flat_map(|c| c.support.iter().map(|s| s.event_id.clone()))
-                        .collect();
-                    state.events.retain(|e| {
-                        !support.contains(&e.id)
-                            && !e.pair.as_ref().is_some_and(|p| {
-                                p.intended == previous.phrase && previous.aliases.contains(&p.heard)
-                            })
-                    });
-                    state.candidates.retain(|c| {
-                        &c.id != source && !(c.phrase == previous.phrase && c.alias.is_empty())
-                    });
-                    invalidate = true;
+                match next.vocabulary.iter().find(|v| v.id == previous.id) {
+                    Some(entry) if entry.automatic_source.is_none() => {
+                        // Adopted as a manual entry on review: the automatic
+                        // evidence is consumed, not rejected, so the candidate
+                        // and its support leave with it.
+                        let support: Vec<_> = state
+                            .candidates
+                            .iter()
+                            .filter(|c| &c.id == source)
+                            .flat_map(|c| c.support.iter().map(|s| s.event_id.clone()))
+                            .collect();
+                        state.events.retain(|e| {
+                            !support.contains(&e.id)
+                                && !e.pair.as_ref().is_some_and(|p| {
+                                    p.intended == previous.phrase
+                                        && previous.aliases.contains(&p.heard)
+                                })
+                        });
+                        state.candidates.retain(|c| {
+                            &c.id != source && !(c.phrase == previous.phrase && c.alias.is_empty())
+                        });
+                        invalidate = true;
+                    }
+                    None => {
+                        // A removed automatic entry suspends its candidate
+                        // instead of deleting it: the rejection is negative
+                        // evidence, so future edits do not re-learn a spelling
+                        // the user removed. Same-phrase observations are
+                        // suspended too, or they would re-learn it. Past events
+                        // are kept as an audit trail.
+                        let mut to_suspend = vec![source.clone()];
+                        to_suspend.extend(
+                            state
+                                .candidates
+                                .iter()
+                                .filter(|c| c.phrase == previous.phrase && c.alias.is_empty())
+                                .map(|c| c.id.clone()),
+                        );
+                        for id in &to_suspend {
+                            suspend(&mut state, id);
+                        }
+                        invalidate = true;
+                    }
+                    _ => {}
                 }
             }
         }
@@ -1224,11 +1366,15 @@ mod tests {
             .support
             .iter()
             .all(|s| s.teaching_terms.is_empty()));
+        // Undone automatic memories leave the vocabulary entirely; the
+        // candidate stays suspended so the spelling cannot reactivate.
         assert!(
-            !suspended
-                .post_asr_profile(CONTEXT_HEARD, Language::English)
-                .vocabulary[0]
-                .enabled
+            suspended.profile.vocabulary.is_empty(),
+            "undone automatic memories leave the vocabulary"
+        );
+        assert_eq!(
+            suspended.learning.candidates[0].state,
+            CandidateState::Suspended
         );
         store
             .forget_automatic_learning(suspended.profile.revision)
@@ -1471,16 +1617,23 @@ mod tests {
                 .text,
             "Meet Jonatan tomorrow"
         );
-        assert!(
-            !store
-                .personalization()
-                .unwrap()
-                .vocabulary
-                .iter()
-                .find(|v| v.phrase == "Jonathan")
-                .unwrap()
-                .enabled
-        );
+        // A withdrawn automatic spelling leaves the vocabulary entirely:
+        // listed words are always used. Its candidate stays suspended so the
+        // spelling cannot reactivate.
+        assert!(store
+            .personalization()
+            .unwrap()
+            .vocabulary
+            .iter()
+            .find(|v| v.phrase == "Jonathan")
+            .is_none());
+        assert!(store
+            .automatic_learning_state()
+            .unwrap()
+            .candidates
+            .iter()
+            .filter(|c| c.phrase == "Jonathan")
+            .all(|c| c.state == CandidateState::Suspended));
     }
 
     #[test]
@@ -1728,9 +1881,10 @@ mod tests {
             .learn_from_edit(&context(&p, "undo"), 0, "Open README.md", "Open read me")
             .unwrap();
         assert_eq!(outcome.suspended, 1);
+        // The rejected spelling leaves the vocabulary; the suspended
+        // candidate keeps later edits from re-learning it.
         let profile = store.personalization().unwrap();
-        assert_eq!(profile.vocabulary.len(), 1);
-        assert!(!profile.vocabulary[0].enabled);
+        assert!(profile.vocabulary.is_empty());
         assert_eq!(
             profile.personalize("Open read me", Language::English).text,
             "Open read me"
@@ -1740,7 +1894,120 @@ mod tests {
             CandidateState::Suspended
         );
         teach(&store, &p, "later");
-        assert!(!store.personalization().unwrap().vocabulary[0].enabled);
+        assert!(store.personalization().unwrap().vocabulary.is_empty());
+    }
+
+    #[test]
+    fn dismissing_a_proposal_suspends_it_without_a_vocabulary_entry() {
+        let (_dir, store, p) = setup();
+        store
+            .learn_from_edit(
+                &context(&p, "first"),
+                0,
+                "Meet Jonathon tomorrow",
+                "Meet Jonathan tomorrow",
+            )
+            .unwrap();
+        let id = store.automatic_learning_state().unwrap().candidates[0]
+            .id
+            .clone();
+        assert_eq!(store.suspend_automatic_candidate(&id).unwrap(), 1);
+        assert_eq!(store.suspend_automatic_candidate("missing").unwrap(), 0);
+        let state = store.automatic_learning_state().unwrap();
+        assert_eq!(state.candidates[0].state, CandidateState::Suspended);
+        assert!(store.personalization().unwrap().vocabulary.is_empty());
+        // A dismissed spelling never reactivates from later edits.
+        for id in ["second", "third"] {
+            let outcome = store
+                .learn_from_edit(
+                    &context(&p, id),
+                    0,
+                    "Meet Jonathon tomorrow",
+                    "Meet Jonathan tomorrow",
+                )
+                .unwrap();
+            assert!(outcome.activated.is_empty());
+        }
+        assert!(store.personalization().unwrap().vocabulary.is_empty());
+    }
+
+    #[test]
+    fn approving_a_proposal_promotes_it_to_a_manual_entry() {
+        let (_dir, store, p) = setup();
+        store
+            .learn_from_edit(
+                &context(&p, "first"),
+                0,
+                "Meet Jonathon tomorrow",
+                "Meet Jonathan tomorrow",
+            )
+            .unwrap();
+        let id = store.automatic_learning_state().unwrap().candidates[0]
+            .id
+            .clone();
+        let profile = store.approve_automatic_candidate(&id).unwrap();
+        assert_eq!(profile.vocabulary.len(), 1);
+        let entry = &profile.vocabulary[0];
+        assert_eq!(entry.phrase, "Jonathan");
+        assert_eq!(entry.aliases, ["Jonathon"]);
+        assert!(entry.automatic_source.is_none());
+        assert!(entry.enabled);
+        assert!(store
+            .automatic_learning_state()
+            .unwrap()
+            .candidates
+            .is_empty());
+        // The candidate is gone, so approving again fails.
+        assert!(store.approve_automatic_candidate(&id).is_err());
+    }
+
+    #[test]
+    fn approving_a_removed_proposal_is_rejected() {
+        let (_dir, store, p) = setup();
+        store
+            .learn_from_edit(
+                &context(&p, "first"),
+                0,
+                "Meet Jonathon tomorrow",
+                "Meet Jonathan tomorrow",
+            )
+            .unwrap();
+        let id = store.automatic_learning_state().unwrap().candidates[0]
+            .id
+            .clone();
+        assert_eq!(store.suspend_automatic_candidate(&id).unwrap(), 1);
+        assert!(store.approve_automatic_candidate(&id).is_err());
+    }
+
+    #[test]
+    fn saving_a_disabled_automatic_entry_removes_it_and_suspends_support() {
+        let (_dir, store, p) = setup();
+        teach(&store, &p, "one");
+        let mut profile = store.personalization().unwrap();
+        assert_eq!(profile.vocabulary.len(), 1);
+        profile.vocabulary[0].enabled = false;
+        let saved = store.save_personalization(profile).unwrap();
+        assert!(saved.vocabulary.is_empty());
+        let state = store.automatic_learning_state().unwrap();
+        assert_eq!(state.candidates.len(), 1);
+        assert_eq!(state.candidates[0].state, CandidateState::Suspended);
+    }
+
+    #[test]
+    fn removing_an_automatic_entry_suspends_its_candidate() {
+        let (_dir, store, p) = setup();
+        teach(&store, &p, "one");
+        let mut profile = store.personalization().unwrap();
+        profile.vocabulary.clear();
+        store.save_personalization(profile).unwrap();
+        let state = store.automatic_learning_state().unwrap();
+        assert_eq!(state.candidates.len(), 1);
+        assert_eq!(state.candidates[0].state, CandidateState::Suspended);
+        // Future matching edits do not re-learn the removed spelling.
+        let current = store.personalization().unwrap();
+        let outcome = teach(&store, &current, "two");
+        assert!(outcome.activated.is_empty());
+        assert!(store.personalization().unwrap().vocabulary.is_empty());
     }
     #[test]
     fn forgetting_deletes_derived_evidence_and_rejects_old_sources() {
@@ -1763,12 +2030,15 @@ mod tests {
         let mut removed = store.personalization().unwrap();
         removed.vocabulary.clear();
         store.save_personalization(removed).unwrap();
+        // Clearing an automatic entry suspends its candidate (negative
+        // evidence) instead of deleting it, so the spelling is not re-learned.
+        // Past events are kept as an audit trail.
         assert!(store
             .automatic_learning_state()
             .unwrap()
             .candidates
-            .is_empty());
-        assert!(store.automatic_learning_state().unwrap().events.is_empty());
+            .iter()
+            .all(|c| c.state == CandidateState::Suspended));
     }
     #[test]
     fn cannot_forge_automatic_provenance_or_broaden_its_scope() {
