@@ -46,8 +46,8 @@ does not remove recordings or vocabulary.
 
 In **Appearance**, choose Light, Dark or System. The color theme applies immediately
 throughout the app and is remembered locally; System follows device appearance.
-Light uses white panels and soft gray backgrounds with green highlights for
-actions and selected controls.
+Light uses white cards on a warm cream canvas with a peach sidebar, espresso text
+and ember highlights for actions and selected controls.
 Dark is the default. Clearing browser/webview storage resets this visual preference.
 Reduce Motion follows your system setting. Floating capture options on this page
 still require Save changes. Themes in a browser preview and the installed app are
@@ -57,10 +57,10 @@ stored separately.
 
 Open **Settings → About** to see app information in the content panel.
 Choose **About Vesper…** in the native menu to open the same information in a sheet.
-The selected custom Songbird logo spells all six letters in the sidebar and
-About sheet; the app icon uses the bird alone. Opening either About view animates its
-two small call marks once. The bird and letters stay still, and Reduce Motion
-disables that decoration.
+The Ember logo pairs the ember bird with a Bricolage wordmark in the sidebar and
+About sheet; the app icon still uses the Songbird bird alone. The bird's call marks breathe with
+an idle motion and tilt on hover; opening About replays the motion. The bird body
+and wordmark stay still, and Reduce Motion disables that decoration.
 It shows the compiled application version, development/release build type and
 platform. The copy icon beside those details (tooltip: **Copy app info**) copies
 them for sharing in a bug report; it does not include
