@@ -7,13 +7,10 @@ pub const CONFIG_SCHEMA_VERSION: u32 = 1;
 #[derive(Debug, Clone, Copy, Default, PartialEq, Eq, Serialize, Deserialize)]
 #[serde(rename_all = "snake_case")]
 pub enum CaptureDesign {
+    Capsule,
     #[default]
     Split,
-    Ribbon,
-    Underline,
-    Studio,
-    Margin,
-    Counter,
+    Island,
 }
 
 #[derive(Debug, Clone, Copy, Default, PartialEq, Eq, Serialize, Deserialize)]

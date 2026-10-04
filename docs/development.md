@@ -309,8 +309,10 @@ not grant microphone permission or record audio.
 
 ### Brand assets
 
-Edit only `apps/desktop/src/assets/vesper.svg` for the Songbird bird/wordmark
-and `apps/desktop/src/assets/ember-bird.svg` for the in-app Ember lockup mark.
+Edit only `apps/desktop/src/assets/ember-bird.svg` for the Ember lockup mark:
+it supplies the in-app lockup, the native desktop icons and the menu-bar
+template. `apps/desktop/src/assets/vesper.svg` retains the original Songbird
+bird/wordmark as the README banner source only.
 The frontend embeds those trusted, bundled SVGs without a runtime fetch or font.
 
 The README's `docs/assets/vesper-banner.svg` is a generated, self-contained
@@ -350,9 +352,10 @@ node scripts/generate-brand-icons.mjs --check
 node --test scripts/brand-identity.test.mjs
 ```
 
-The generator extracts the canonical bird, resolves the existing ember
-tokens to sRGB, and updates `icons/source.svg` plus the 18 existing PNG/ICO/ICNS
-derivatives. It also generates `menu-bar-template.svg` and its transparent black
+The generator extracts the Ember bird, paints it in the sRGB equivalents of
+`--color-accent`/`--color-bg` on the icon tile, and updates
+`icons/source.svg` plus the 18 existing PNG/ICO/ICNS derivatives. It also
+generates `menu-bar-template.svg` and its transparent black
 36 × 36 PNG from the same unchanged bird and call paths, without the tile or
 wordmark. Tauri 2.11.5's locked tray-icon 0.24.2 macOS backend sizes this image
 to 18 × 18 logical points, giving a 2× backing image with transparent padding.

@@ -30,7 +30,7 @@ export const nativeIconFiles = [
 
 // sRGB equivalents of the approved --color-bg and --color-accent tokens.
 // The SVG rasterizer needs these resolved colours rather than CSS OKLCH variables.
-export const iconPalette = { background: '#111512', bird: '#b1d3a3' };
+export const iconPalette = { background: '#0a0a0a', bird: '#ff6b3d' };
 
 // Tauri emits ICNS entries in hash-map order. Container order is immaterial to
 // rendering; canonicalize it so regeneration produces stable tracked bytes.
@@ -62,9 +62,9 @@ function canonicalMark(svg) {
 }
 
 export function menuBarIconSource(svg) {
-  return `<svg xmlns="http://www.w3.org/2000/svg" width="36" height="36" viewBox="7 5 96 96">
-  <!-- Generated from src/assets/vesper.svg; transparent macOS template, no tile or lettering. -->
-  <g color="#000000">
+  return `<svg xmlns="http://www.w3.org/2000/svg" width="36" height="36" viewBox="-8 -18 96 96">
+  <!-- Generated from src/assets/ember-bird.svg; transparent macOS template, no tile or lettering. -->
+  <g fill="#000000">
     ${canonicalMark(svg)}
   </g>
 </svg>
@@ -74,9 +74,9 @@ export function menuBarIconSource(svg) {
 export function iconSource(svg) {
   const mark = canonicalMark(svg);
   return `<svg xmlns="http://www.w3.org/2000/svg" width="512" height="512" viewBox="0 0 512 512">
-  <!-- Generated from src/assets/vesper.svg by scripts/generate-brand-icons.mjs. -->
+  <!-- Generated from src/assets/ember-bird.svg by scripts/generate-brand-icons.mjs. -->
   <rect x="16" y="16" width="480" height="480" rx="112" fill="${iconPalette.background}"/>
-  <g transform="translate(48 48) scale(4)" color="${iconPalette.bird}">
+  <g transform="translate(56 106) scale(5)" fill="${iconPalette.bird}">
     ${mark}
   </g>
 </svg>
@@ -85,7 +85,7 @@ export function iconSource(svg) {
 
 export function generateIcons({ check = false } = {}) {
   const directory = join(root, 'apps/desktop/src-tauri/icons');
-  const svg = readFileSync(join(root, 'apps/desktop/src/assets/vesper.svg'), 'utf8');
+  const svg = readFileSync(join(root, 'apps/desktop/src/assets/ember-bird.svg'), 'utf8');
   const source = iconSource(svg);
   const menuBarSource = menuBarIconSource(svg);
   const work = mkdtempSync(join(tmpdir(), 'vesper-icons-'));

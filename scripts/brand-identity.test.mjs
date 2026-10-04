@@ -29,13 +29,21 @@ test('the canonical selected identity spells every letter with custom paths', ()
 });
 
 test('native source is generated from the same bird, not a separate redraw', () => {
+  const ember = read('apps/desktop/src/assets/ember-bird.svg');
   const native = read('apps/desktop/src-tauri/icons/source.svg');
-  assert.equal(native, iconSource(svg));
-  const mark = svg.match(/<g class="vesper-mark"[\s\S]*?<\/g>/)[0];
+  assert.equal(native, iconSource(ember));
+  const mark = ember.match(/<g class="vesper-mark"[\s\S]*?<\/g>/)[0];
   assert.ok(native.includes(mark));
-  assert.equal(iconPalette.background, '#111512');
-  assert.equal(iconPalette.bird, '#b1d3a3');
+  assert.equal(iconPalette.background, '#0a0a0a');
+  assert.equal(iconPalette.bird, '#ff6b3d');
   assert.doesNotMatch(native, /<text\b|data-letter=/);
+});
+
+test('the Ember mark carries the pipeline group with no paint attributes', () => {
+  const ember = read('apps/desktop/src/assets/ember-bird.svg');
+  assert.match(ember, /<g class="vesper-mark">/);
+  assert.match(ember, /viewBox="0 0 80 60"/);
+  assert.doesNotMatch(ember, /<(?:text|script|image|use|foreignObject|animate)\b/);
 });
 
 test('README banner preserves every canonical path and uses existing brand tokens', () => {
@@ -113,10 +121,11 @@ test('all existing desktop icons have the expected format and dimensions', () =>
 });
 
 test('the macOS menu bar uses only the canonical still bird as a template', () => {
+  const ember = read('apps/desktop/src/assets/ember-bird.svg');
   const source = read('apps/desktop/src-tauri/icons/menu-bar-template.svg');
-  assert.equal(source, menuBarIconSource(svg));
-  assert.ok(source.includes(svg.match(/<g class="vesper-mark"[\s\S]*?<\/g>/)[0]));
-  assert.match(source, /color="#000000"/);
+  assert.equal(source, menuBarIconSource(ember));
+  assert.ok(source.includes(ember.match(/<g class="vesper-mark"[\s\S]*?<\/g>/)[0]));
+  assert.match(source, /fill="#000000"/);
   assert.doesNotMatch(source, /<rect\b|data-letter=|<animate\b|<style\b/);
   const png = bytes('apps/desktop/src-tauri/icons/menu-bar-template.png');
   assert.equal(png.readUInt32BE(16), 36);

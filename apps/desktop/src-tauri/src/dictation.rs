@@ -240,12 +240,9 @@ pub(crate) fn apply_output(app: &tauri::AppHandle) {
 pub(crate) fn apply_capture_design(app: &tauri::AppHandle, design: vesper_core::CaptureDesign) {
     use vesper_core::CaptureDesign;
     let (width, height) = match design {
-        CaptureDesign::Split => (396.0, 192.0),
-        CaptureDesign::Ribbon => (388.0, 148.0),
-        CaptureDesign::Underline => (454.0, 224.0),
-        CaptureDesign::Studio => (412.0, 232.0),
-        CaptureDesign::Margin => (272.0, 280.0),
-        CaptureDesign::Counter => (200.0, 304.0),
+        CaptureDesign::Capsule => (424.0, 104.0),
+        CaptureDesign::Split => (454.0, 232.0),
+        CaptureDesign::Island => (424.0, 260.0),
     };
     let handle = app.clone();
     let _ = app.run_on_main_thread(move || {
