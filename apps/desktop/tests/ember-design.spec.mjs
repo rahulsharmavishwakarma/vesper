@@ -22,6 +22,7 @@ test('Ember theme, single family, logo and icons apply with bundled fonts', asyn
       bg: pick('--color-bg'),
       card: pick('--color-raised'),
       accent: pick('--color-accent'),
+      muted: pick('--color-muted'),
       body: getComputedStyle(document.body).fontFamily,
       h1: getComputedStyle(document.querySelector('.studio-main h1')).fontFamily,
       wordmark: getComputedStyle(document.querySelector('.ember-word')).fontFamily,
@@ -30,6 +31,7 @@ test('Ember theme, single family, logo and icons apply with bundled fonts', asyn
   expect(tokens.bg).toBe('#0a0a0a');
   expect(tokens.card).toBe('#151515');
   expect(tokens.accent).toBe('#ff6b3d');
+  expect(tokens.muted).toBe('#9a9088');
   expect(tokens.body).toMatch(/Bricolage/);
   expect(tokens.h1).toMatch(/Bricolage/);
   expect(tokens.wordmark).toMatch(/Bricolage/);
@@ -71,11 +73,13 @@ test('Ember theme, single family, logo and icons apply with bundled fonts', asyn
       bg: pick('--color-bg'),
       card: pick('--color-raised'),
       accent: pick('--color-accent'),
+      muted: pick('--color-muted'),
     };
   });
   expect(light.bg).toBe('#fff8f2');
   expect(light.card).toBe('#ffffff');
-  expect(light.accent).toBe('#c9471c');
+  expect(light.accent).toBe('#e8501f');
+  expect(light.muted).toBe('#85715f');
 
   await dictate.click();
   await expect(page.locator('.transcription-language .icon')).toBeVisible();
