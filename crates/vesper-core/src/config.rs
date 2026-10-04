@@ -13,6 +13,27 @@ pub enum CaptureDesign {
     Island,
 }
 
+/// Retired overlay layouts decode to Split so stored settings survive the
+/// capsule/split/island replacement; anything else unknown stays an error.
+fn deserialize_capture_design<'de, D>(
+    deserializer: D,
+) -> std::result::Result<CaptureDesign, D::Error>
+where
+    D: serde::Deserializer<'de>,
+{
+    let name = String::deserialize(deserializer)?;
+    match name.as_str() {
+        "capsule" => Ok(CaptureDesign::Capsule),
+        "split" => Ok(CaptureDesign::Split),
+        "island" => Ok(CaptureDesign::Island),
+        "ribbon" | "underline" | "studio" | "margin" | "counter" => Ok(CaptureDesign::Split),
+        other => Err(serde::de::Error::unknown_variant(
+            other,
+            &["capsule", "split", "island"],
+        )),
+    }
+}
+
 #[derive(Debug, Clone, Copy, Default, PartialEq, Eq, Serialize, Deserialize)]
 #[serde(rename_all = "snake_case")]
 pub enum RecordingMode {
@@ -190,6 +211,7 @@ pub struct AppConfig {
     pub toggle_shortcut: Option<String>,
     pub dictation_output: DictationOutput,
     pub floating_bar_enabled: bool,
+    #[serde(deserialize_with = "deserialize_capture_design")]
     pub capture_design: CaptureDesign,
     pub notifications_enabled: bool,
     pub collect_training_data: bool,
@@ -525,14 +547,7 @@ mod tests {
 
     #[test]
     fn capture_design_contract_roundtrips_and_rejects_unknown_values() {
-        for name in [
-            "split",
-            "ribbon",
-            "underline",
-            "studio",
-            "margin",
-            "counter",
-        ] {
+        for name in ["capsule", "split", "island"] {
             let config: AppConfig = serde_json::from_value(serde_json::json!({
                 "captureDesign": name, "recordingMode": "hold"
             }))
@@ -540,6 +555,13 @@ mod tests {
             config.validate().unwrap();
             assert_eq!(config.recording_mode, RecordingMode::Hold);
             assert_eq!(serde_json::to_value(config).unwrap()["captureDesign"], name);
+        }
+        for name in ["ribbon", "underline", "studio", "margin", "counter"] {
+            let config: AppConfig = serde_json::from_value(serde_json::json!({
+                "captureDesign": name
+            }))
+            .unwrap();
+            assert_eq!(config.capture_design, CaptureDesign::Split);
         }
         for value in [
             serde_json::json!("unknown"),
