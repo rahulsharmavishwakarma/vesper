@@ -12,7 +12,7 @@
   import { SvelteSet } from 'svelte/reactivity';
   import { listen } from '@tauri-apps/api/event';
   import Icon from './Icon.svelte';
-  import AudioIndicator from './AudioIndicator.svelte';
+  import EmberWave from './EmberWave.svelte';
   import { liveTranscriptFromStatus, mergeLiveTranscript } from '../liveTranscript';
   import ConfiguredModels from './ConfiguredModels.svelte';
   import Select from './Select.svelte';
@@ -708,6 +708,12 @@
   $effect(() => {
     onBusyChange(busy);
   });
+  // The sidebar bird tilts and quickens its call dashes while recording. The
+  // class lives on the body because the lockup renders outside this panel.
+  $effect(() => {
+    document.body.classList.toggle('is-recording', recording);
+    return () => document.body.classList.remove('is-recording');
+  });
   $effect(() => {
     onRuntimeChange?.(runtime);
   });
@@ -830,17 +836,7 @@
               </p>{/if}
           </div>
           <div class="recorder-signal">
-            <AudioIndicator
-              {recording}
-              {processing}
-              {desktop}
-              visible={view === 'dictate'}
-              complete={Boolean(result) && !busy}
-              failed={Boolean(error || statusError || runtime?.stage === 'error')}
-              onSignal={() => {
-                inputLevelDetected = true;
-              }}
-            />
+            <EmberWave {recording} {desktop} visible={view === 'dictate'} />
           </div>
           <div class="capture-actions">
             <button

@@ -387,7 +387,7 @@ input[type='checkbox']:checked {
 .error,
 .validation-errors,
 .note.invalid {
-  color: var(--color-error);
+  color: var(--color-danger);
 }
 .success,
 .review-badge.approved {
@@ -681,10 +681,15 @@ h3 {
   margin-top: var(--space-2);
 }
 .recorder-signal {
-  --voice-height: 56px;
-  --voice-width: 100%;
-  text-align: center;
   margin: var(--space-4) 0 var(--space-5);
+}
+/* While recording, the sidebar bird tilts and its call dashes quicken. The
+ * class lives on the body because the lockup renders outside the recorder. */
+body.is-recording .brand-logo svg {
+  transform: rotate(-8deg);
+}
+body.is-recording .brand-logo .dsh {
+  animation-duration: 0.9s;
 }
 .recording-timer {
   display: inline-flex;
@@ -763,8 +768,12 @@ h3 {
   }
   .studio-recorder.is-recording .record-button::after,
   .studio-recorder.is-recording .recorder-heading > .icon,
-  .microphone-refresh > span.spinning {
+  .microphone-refresh > span.spinning,
+  .activity-link .status-dot::after {
     animation: none;
+  }
+  body.is-recording .brand-logo svg {
+    transform: none;
   }
 }
 .recorder-hint {
@@ -859,11 +868,32 @@ h3 {
   margin-bottom: var(--space-6);
 }
 .status-dot {
+  position: relative;
+  display: inline-block;
   width: 6px;
   height: 6px;
   border-radius: var(--radius-pill);
   background: var(--color-accent);
   flex-shrink: 0;
+}
+.activity-link .status-dot::after {
+  content: '';
+  position: absolute;
+  inset: -4px;
+  border-radius: 50%;
+  border: 1.5px solid var(--color-accent);
+  animation: status-ring 1.8s var(--ease) infinite;
+  pointer-events: none;
+}
+@keyframes status-ring {
+  from {
+    transform: scale(0.6);
+    opacity: 0.8;
+  }
+  to {
+    transform: scale(1.4);
+    opacity: 0;
+  }
 }
 .status-dot.muted {
   background: var(--color-muted);

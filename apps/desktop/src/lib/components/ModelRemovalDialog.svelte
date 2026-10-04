@@ -124,8 +124,12 @@
   .remove-dialog::backdrop {
     background: var(--color-overlay);
   }
+  .remove-confirm:hover:enabled {
+    border-color: var(--color-danger);
+    color: var(--color-danger);
+  }
   .remove-dialog h2 {
-    font-size: 21px;
+    font-size: 22px;
     margin: var(--space-3) 0 var(--space-5);
   }
   .remove-dialog p {

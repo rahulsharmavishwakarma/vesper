@@ -15,6 +15,7 @@
   --color-on-accent: #1a0800;
   --color-tint: #251209;
   --color-focus: #ff6b3d;
+  --color-danger: #ff7a6b;
   --color-error: oklch(80% 0.12 30);
   --color-error-tint: oklch(29% 0.035 30);
   --color-warning: oklch(84% 0.09 85);
@@ -73,6 +74,7 @@
   --color-on-accent: #ffffff;
   --color-tint: #fbe3d3;
   --color-focus: #c9471c;
+  --color-danger: #c93a2a;
   --color-error: oklch(46% 0.15 30);
   --color-error-tint: oklch(94% 0.025 30);
   --color-warning: oklch(43% 0.075 75);
