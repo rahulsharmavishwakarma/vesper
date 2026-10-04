@@ -151,6 +151,15 @@ async function setup({ recording = false, preview = false, main = false, interce
           };
         case 'get_settings':
           return defaultSettings();
+        case 'save_settings':
+          // Autosave reaches the backend from any settings edit. Tests with
+          // their own intercept keep strict assertions; the shared fixture
+          // mirrors the write so unrelated scenarios stay hermetic.
+          state.savedSettings = JSON.parse(JSON.stringify(args.settings));
+          return structuredClone(state.savedSettings);
+        case 'save_personalization':
+          state.savedProfile = JSON.parse(JSON.stringify(args.profile));
+          return structuredClone(state.savedProfile);
         case 'get_automatic_learning':
           return {
             schemaVersion: 1,
@@ -476,12 +485,11 @@ await test('Shortcut and output preferences save together and permission reads d
     () => target.textContent.includes('Ready to paste'),
     'Explicit paste selection did not request access',
   );
-  const save = [...target.querySelectorAll('button')].find(
-    (button) => button.textContent.trim() === 'Save changes',
-  );
-  assert(save && !save.disabled, 'Preferences could not be saved');
-  save.click();
-  await until(() => state.counts.save_settings === 1, 'Save not called');
+  await until(() => state.counts.save_settings === 1, 'Autosave did not persist preferences');
+  await until(() => {
+    const pill = target.querySelector('.save-status');
+    return !pill || pill.textContent.includes('Saved');
+  }, 'Sidebar pill did not confirm the autosave');
   assert(
     saved.holdShortcut === `${/Mac/.test(navigator.platform) ? 'Super' : 'Control'}+Shift+D` &&
       saved.toggleShortcut === 'CommandOrControl+Shift+Space' &&
@@ -551,11 +559,10 @@ await test('Shortcut recorder captures keys, rejects duplicates, cancels, and re
   press(hold, 'Escape');
   await tick();
   assert(hold.textContent.includes('D'), 'Escape did not restore the original shortcut');
-  const saveButton = () =>
-    [...target.querySelectorAll('button')].find(
-      (button) => button.textContent.trim() === 'Save changes',
-    );
-  assert(saveButton().disabled, 'Escape left a phantom settings change');
+  const savePill = () => target.querySelector('.save-status');
+  assert(savePill(), 'Sidebar save status is missing');
+  await new Promise((resolve) => setTimeout(resolve, 1000));
+  assert(!state.counts.save_settings, 'Escape left a phantom settings write');
   await begin('hold-shortcut');
   press(hold, 'KeyK', { ctrlKey: true, shiftKey: true });
   hold.blur();
@@ -581,21 +588,22 @@ await test('Shortcut recorder captures keys, rejects duplicates, cancels, and re
   press(toggle, 'F8', { altKey: true });
   toggle.blur();
   await tick();
-  saveButton().click();
-  await until(
-    () => target.textContent.includes('shortcut in use'),
-    'Registration failure not shown',
-  );
+  await until(() => state.counts.save_settings === 1, 'Autosave did not attempt the write');
   assert(
     saved.holdShortcut === null && saved.toggleShortcut === null,
     'Failure replaced saved bindings',
   );
   assert(hold.textContent.includes('Ctrl + Shift + K'), 'Failure discarded custom draft');
+  assert(savePill()?.dataset.state === 'saving', 'Sidebar pill did not ride out the failed write');
   registrationBlocked = false;
-  await until(() => !saveButton().disabled, 'Save did not recover');
-  saveButton().click();
-  await until(() => saved.toggleShortcut === 'Alt+F8', 'Custom pair was not persisted');
-  assert(saved.holdShortcut === 'Control+Shift+K', 'Hold binding was not persisted');
+  await until(
+    () => saved.toggleShortcut === 'Alt+F8' && saved.holdShortcut === 'Control+Shift+K',
+    'Silent retry did not persist the custom pair',
+  );
+  await until(() => {
+    const pill = savePill();
+    return !pill || pill.textContent.includes('Saved');
+  }, 'Sidebar pill did not confirm the retry');
   [...target.querySelectorAll('nav button')]
     .find((button) => button.textContent.trim() === 'Dictate')
     .click();
@@ -663,7 +671,7 @@ await test('Shortcut recorder abandons delayed setup and handles native register
   );
 });
 
-await test('Personal preference drafts survive navigation and save independently with failure and discard recovery', async () => {
+await test('Personal preference drafts survive navigation and save independently with failure recovery', async () => {
   let saved = {
     schemaVersion: 1,
     revision: 2,
@@ -710,12 +718,11 @@ await test('Personal preference drafts survive navigation and save independently
   );
   const panel = () => target.querySelector('.personalization');
   const project = () => target.querySelector('#personal-project');
-  const save = () => panel().querySelector('button[type="submit"]');
-  const discard = () =>
-    [...panel().querySelectorAll('button')].find(
-      (button) => button.textContent === 'Discard changes',
-    );
-  assert(save().disabled, 'Unchanged preferences can be saved');
+  const saveStatus = () => target.querySelector('.save-status');
+  assert(
+    !panel().querySelector('button[type="submit"]'),
+    'Preferences still need an explicit save',
+  );
   assert(
     !target.querySelector('#personal-speech-hints').disabled && !state.counts.get_selected_adapters,
     'Personal preferences depend on the selected model',
@@ -729,10 +736,9 @@ await test('Personal preference drafts survive navigation and save independently
   project().value = 'Synthetic project';
   project().dispatchEvent(new Event('input', { bubbles: true }));
   await tick();
-  assert(!save().disabled, 'Editing did not enable saving');
-  assert(
-    target.querySelector('button[form="application-settings"][type="submit"]').disabled,
-    'Personal edits marked application settings dirty',
+  await until(
+    () => panel().textContent.includes('Changes will save automatically.'),
+    'Editing did not schedule autosave',
   );
   await navigate('Models');
   await navigate('Settings');
@@ -742,45 +748,35 @@ await test('Personal preference drafts survive navigation and save independently
     () => !target.querySelector('#personal-speech-hints').disabled,
     'Changing model pages disabled the application preference',
   );
-  save().click();
-  await until(() => panel().textContent.includes('Synthetic save failure'), 'Save error missing');
-  assert(
-    project().value === 'Synthetic project' && !save().disabled,
-    'Failed save lost edits or prevented retry',
-  );
-  assert(!state.counts.save_settings, 'Personal save submitted application settings');
-  fail = false;
-  waitForSave = deferred();
-  save().click();
-  await tick();
-  assert(
-    project().matches(':disabled') &&
-      target.querySelector('#personal-intent').disabled &&
-      discard().disabled,
-    'Controls can change during save',
-  );
-  waitForSave.resolve();
   await until(
-    () => panel().textContent.includes('Saved for your next recording.'),
-    'Retry did not save',
+    () => (state.counts.save_personalization ?? 0) >= 1,
+    'Autosave did not attempt the write',
   );
+  assert(project().value === 'Synthetic project', 'Failed autosave lost edits');
+  assert(!state.counts.save_settings, 'Personal save submitted application settings');
   assert(
-    saved.activeProject === 'Synthetic project' && saved.speechBiasEnabled && save().disabled,
-    'Saved snapshot not synchronized',
+    saveStatus()?.dataset.state === 'saving',
+    'Sidebar pill did not stay on Saving through the failure',
   );
-  project().value = 'Unwanted edit';
+  fail = false;
+  await until(() => saved.activeProject === 'Synthetic project', 'Silent retry did not save');
+  assert(saved.speechBiasEnabled, 'Saved snapshot lost the checkbox edit');
+  await until(
+    () => panel().textContent.includes('Personal preferences are up to date.'),
+    'Saved preferences were not acknowledged',
+  );
+  await until(() => {
+    const pill = saveStatus();
+    return !pill || pill.textContent.includes('Saved');
+  }, 'Sidebar pill did not confirm the save');
+  project().value = 'Second edit';
   project().dispatchEvent(new Event('input', { bubbles: true }));
   await tick();
-  discard().click();
-  await tick();
-  assert(
-    project().value === 'Synthetic project' && save().disabled,
-    'Discard did not restore the last successful save',
-  );
-  assert(
-    state.counts.get_personalization === 1,
-    'Discard or navigation silently reloaded the profile',
-  );
+  waitForSave = deferred();
+  await until(() => (state.counts.save_personalization ?? 0) >= 3, 'Autosave did not start');
+  assert(project().matches(':disabled'), 'Controls can change during save');
+  waitForSave.resolve();
+  await until(() => saved.activeProject === 'Second edit', 'Second edit did not save');
   saved.activeProject = 'Updated from History';
   await navigate('History');
   await navigate('Settings');
@@ -994,7 +990,7 @@ await test('Learning draft save failure retains text and retry does not treat un
   );
 });
 
-await test('Learning forget preserves manual words, rejects dirty preferences, and retries failures', async () => {
+await test('Learning forget preserves manual words, flushes dirty preferences, and retries failures', async () => {
   const word = (id, phrase, automaticSource) => ({
     id,
     phrase,
@@ -1029,6 +1025,11 @@ await test('Learning forget preserves manual words, rejects dirty preferences, a
     main: true,
     intercept: (command, _state, args) => {
       if (command === 'get_personalization') return structuredClone(profile);
+      if (command === 'save_personalization')
+        return (async () => {
+          profile = JSON.parse(JSON.stringify(args.profile));
+          return structuredClone(profile);
+        })();
       if (command === 'forget_automatic_learning')
         return (async () => {
           assert(args.revision === profile.revision, 'Forget used a stale profile revision');
@@ -1059,10 +1060,12 @@ await test('Learning forget preserves manual words, rejects dirty preferences, a
   project.value = 'Unsaved project';
   project.dispatchEvent(new Event('input', { bubbles: true }));
   await tick();
-  assert(forget().disabled, 'Forget discarded unsaved profile edits');
-  [...panel().querySelectorAll('button')].find((b) => b.textContent === 'Discard changes').click();
-  await tick();
+  assert(!forget().disabled, 'Forget blocked on a pending autosave');
   forget().click();
+  await until(
+    () => profile.activeProject === 'Unsaved project',
+    'Forget did not flush pending edits first',
+  );
   await until(
     () => panel().textContent.includes('Synthetic forget failure'),
     'Forget failure was hidden',
@@ -1074,21 +1077,22 @@ await test('Learning forget preserves manual words, rejects dirty preferences, a
   pending = deferred();
   fail = false;
   forget().click();
-  await tick();
-  const locked = forget().disabled && project.matches(':disabled');
+  await until(
+    () => forget().disabled && project.matches(':disabled'),
+    'Controls were editable during Forget',
+  );
   pending.resolve();
   await until(
     () => panel().textContent.includes('Automatic learning forgotten.'),
     'Forget retry failed',
   );
-  assert(locked, 'Controls were editable during Forget');
   assert(
     profile.vocabulary.length === 1 && profile.vocabulary[0].id === 'manual',
     'Forget removed a manual word',
   );
   assert(
-    profile.automaticLearning && !state.counts.save_personalization,
-    'Forget disabled automatic learning or resaved stale preferences',
+    profile.automaticLearning && state.counts.save_personalization === 1,
+    'Forget disabled automatic learning or saved more than the flushed draft',
   );
   assert(state.counts.forget_automatic_learning === 2, 'Forget submitted duplicate requests');
 });
@@ -1372,7 +1376,7 @@ await test('Model presets save before explicit download and survive reopening', 
   const button = (text) =>
     [...target.querySelectorAll('button')].find((element) => element.textContent.trim() === text);
   const openModels = async () => {
-    await until(() => button('Save changes'), 'Settings did not load');
+    await until(() => target.querySelector('.configured-models'), 'Settings did not load');
     button('Models').click();
     await tick();
   };
@@ -1386,14 +1390,11 @@ await test('Model presets save before explicit download and survive reopening', 
     option.click();
     await tick();
   };
-  const state = await setup({ main: true, intercept });
+  await setup({ main: true, intercept });
   await openModels();
   await choose('models-asr-model', speech.profile.name);
   await choose('models-cleanup-model', cleanup.profile.name);
-  assert(
-    !state.counts.save_settings && installs.length === 0,
-    'Selection alone saved or downloaded models',
-  );
+  assert(installs.length === 0, 'Selection alone downloaded models');
   assert(
     target.querySelector('#models-cleanup-precision').value === 'Q8_0',
     'Preset precision inherited the built-in Q4 selection',
@@ -1465,19 +1466,23 @@ await test('language menus follow the writer and preserve incompatible selection
     await tick();
     return [...document.querySelectorAll('[role="option"]')];
   };
-  await until(() => button('Save changes'), 'Settings did not load');
+  await until(() => target.querySelector('.configured-models'), 'Settings did not load');
   await navigate('Models');
   (await openOptions('models-cleanup-model'))
     .find((option) => option.textContent.includes(english.profile.name))
     .click();
   await tick();
-  assert(button('Save changes').disabled, 'English writer accepted Hindi');
+  await until(
+    () => target.textContent.includes('Fix these settings before they can save'),
+    'English writer showed no validation notice',
+  );
   assert(
     target
       .querySelector('#models-writer-language-error')
       ?.textContent.includes('does not declare support'),
     'Writer language error is missing',
   );
+  await new Promise((resolve) => setTimeout(resolve, 1000));
   assert(
     saved.language === 'hi' && !state.counts.save_settings,
     'Changing writer silently saved a language',
@@ -1508,14 +1513,15 @@ await test('language menus follow the writer and preserve incompatible selection
   target.querySelector('#cleanup-enabled').click();
   await tick();
   await settingsSection('Recording');
-  assert(button('Save changes').disabled, 'Re-enabling incompatible writer allowed saving');
+  assert(
+    target.textContent.includes('Fix these settings before they can save'),
+    'Re-enabling incompatible writer allowed saving',
+  );
   (await openOptions('settings-language'))[0].click();
   await tick();
-  assert(!button('Save changes').disabled, 'Compatible English choice could not save');
-  button('Save changes').click();
   await until(
     () => saved.language === 'en' && saved.models.customRewriter?.id === english.profile.id,
-    'Compatible writer/language not saved',
+    'Compatible writer/language did not autosave',
   );
 });
 
@@ -1562,11 +1568,14 @@ await test('Qwen and Cohere retain language choices without a recording duration
     await tick();
   };
   const state = await setup({ main: true, intercept });
-  await until(() => button('Save changes'), 'Settings did not load');
+  await until(() => target.querySelector('.configured-models'), 'Settings did not load');
   button('Models').click();
   await tick();
   await choose('models-asr-model', 'Cohere Transcribe');
-  assert(button('Save changes').disabled, 'Cohere accepted automatic language');
+  assert(
+    target.textContent.includes('Fix these settings before they can save'),
+    'Cohere accepted automatic language',
+  );
   assert(
     target.textContent.includes(
       'Cohere Transcribe and the selected processing device support these languages: English, French',
@@ -1580,11 +1589,11 @@ await test('Qwen and Cohere retain language choices without a recording duration
   button('Settings').click();
   await tick();
   await choose('settings-language', 'French');
-  assert(!button('Save changes').disabled, 'Cohere rejected French');
+  await until(() => saved.language === 'fr', 'Cohere French choice did not autosave');
   button('Models').click();
   await tick();
   target.querySelector('[aria-label="Speech model download"] button').click();
-  await until(() => installs.length === 1, 'Cohere explicit save/download did not run');
+  await until(() => installs.length === 1, 'Cohere save/download did not run');
   assert(
     installs[0].modelId === 'CohereLabs/cohere-transcribe-03-2026' &&
       installs[0].quantization === null,
@@ -1598,11 +1607,9 @@ await test('Qwen and Cohere retain language choices without a recording duration
   button('Settings').click();
   await tick();
   await choose('settings-language', 'Hindi');
-  assert(!button('Save changes').disabled, 'Qwen rejected Hindi');
-  button('Save changes').click();
   await until(
     () => saved.models.asr === 'Qwen/Qwen3-ASR-0.6B' && saved.language === 'hi',
-    'Qwen settings were not saved',
+    'Qwen settings did not autosave',
   );
   assert(saved.maxRecordingSeconds === 0, 'Model limit became a general duration quota');
   button('Dictate').click();
@@ -1860,7 +1867,7 @@ await test('Local engine reports measured values and pauses on navigation, visib
     [...target.querySelectorAll('button')].find((element) => element.textContent.trim() === text);
   const panel = () => target.querySelector('.engine-status');
   const refresh = () => target.querySelector('[aria-label="Refresh application status"]').click();
-  await until(() => button('Save changes'), 'Settings did not load');
+  await until(() => target.querySelector('.configured-models'), 'Settings did not load');
   assert(!state.counts.get_engine_diagnostics, 'Resources polled outside Models');
   button('Models').click();
   await tick();
@@ -2023,7 +2030,7 @@ await test('Imported model downloads show byte progress, verification, cancellat
       totalBytes: 2 ** 21,
     };
   };
-  await until(() => button('Save changes'), 'Settings did not load');
+  await until(() => target.querySelector('.configured-models'), 'Settings did not load');
   button('Models').click();
   await until(() => download() && !download().disabled, 'Imported model download unavailable');
   download().click();
@@ -2121,7 +2128,7 @@ await test('Device-aware menu preserves an unavailable saved backend and support
   });
   const button = (text) =>
     [...target.querySelectorAll('button')].find((element) => element.textContent.trim() === text);
-  await until(() => button('Save changes'), 'Settings did not load');
+  await until(() => target.querySelector('.configured-models'), 'Settings did not load');
   button('Models').click();
   await until(() => button('Retry device detection'), 'Device detection error had no retry');
   assert(
@@ -2160,12 +2167,10 @@ await test('Device-aware menu preserves an unavailable saved backend and support
   select.dispatchEvent(new KeyboardEvent('keydown', { key: 'Enter', bubbles: true }));
   await tick();
   assert(
-    select.textContent.includes('Automatic') && !button('Save changes').disabled,
+    select.textContent.includes('Automatic'),
     'Keyboard selection did not recover the unavailable preference',
   );
-  assert(!state.counts.save_settings, 'Choice was saved without an explicit action');
-  button('Save changes').click();
-  await until(() => saved.computeBackend === 'auto', 'Recovered preference was not saved');
+  await until(() => saved.computeBackend === 'auto', 'Recovered preference did not autosave');
 });
 
 await test('Saved model summaries stay synchronized and navigate to the model selectors', async () => {
@@ -2281,12 +2286,11 @@ await test('Saved model summaries stay synchronized and navigate to the model se
   await checkEveryScreen(initialSpeech, 'Qwen3.5 0.8B', false);
   label().querySelector('button').click();
   await tick();
-  button('Save changes').click();
   await until(
     () =>
       saved.models.customRewriter?.id === preset.profile.id &&
       saved.models.customAsr?.id === speechPreset.profile.id,
-    'Both model choices did not save',
+    'Both model choices did not autosave',
   );
   button('Dictate').click();
   await tick();
@@ -2306,8 +2310,7 @@ await test('Saved model summaries stay synchronized and navigate to the model se
   await checkEveryScreen(speechPreset.profile.name, preset.profile.name, false);
   button('Settings').click();
   await tick();
-  button('Save changes').click();
-  await until(() => !saved.cleanupEnabled, 'Cleanup off preference did not save');
+  await until(() => !saved.cleanupEnabled, 'Cleanup off preference did not autosave');
   button('Dictate').click();
   await tick();
   await until(
@@ -2847,7 +2850,7 @@ await test('Split keeps errors and progress inside its signal pod', async () => 
   assert(!target.querySelector('.capture-note'), 'Error created a third surface');
 });
 
-await test('Capture settings preview all six designs, save explicitly and restore Split', async () => {
+await test('Capture settings preview all six designs, save automatically and restore Split', async () => {
   let saved = defaultSettings();
   const state = await setup({
     main: true,
@@ -2885,10 +2888,8 @@ await test('Capture settings preview all six designs, save explicitly and restor
       target.querySelector(`.design-preview [data-capture-design="${design}"]`),
       'Preview does not match selected design',
     );
-    assert(saved.captureDesign === previous, 'Preview saved without Save changes');
-    button('Save changes').click();
-    await until(() => saved.captureDesign === design, 'Design did not save');
-    await until(() => !button('Restore defaults').disabled, 'Save stayed pending');
+    assert(saved.captureDesign === previous, 'Preview saved synchronously');
+    await until(() => saved.captureDesign === design, 'Design did not autosave');
   }
   assert(
     !state.counts.get_audio_features &&
@@ -3738,7 +3739,7 @@ for (const failure of ['cancelled', 'network failure']) {
   });
 }
 
-await test('Automatic audio setup waits for saved settings and resumes after saving', async () => {
+await test('Automatic audio setup waits for saved settings and resumes after autosave', async () => {
   let saved = defaultSettings();
   const folder = 'synthetic-models';
   const firstCatalog = deferred();
@@ -3800,8 +3801,7 @@ await test('Automatic audio setup waits for saved settings and resumes after sav
   await until(() => target.querySelector('[aria-label="Rescan microphones"]'), 'Resources missing');
   await tick();
   assert(installs.length === 0, 'Dirty settings triggered supporting downloads');
-  audioButton('Save changes').click();
-  await until(() => installs.length === 1, 'Saving settings did not resume automatic setup');
+  await until(() => installs.length === 1, 'Autosave did not resume automatic setup');
   assert(installs[0] === folder, 'Used stale model folder');
   assert(state.counts.save_settings === 1, 'Setup unexpectedly saved settings again');
 });

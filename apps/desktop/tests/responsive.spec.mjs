@@ -31,8 +31,7 @@ test('minimum window shows Settings controls and preserves drafts, menus and dia
   );
   await page.locator('#models-asr-model').click();
   await page.getByRole('option', { name: /NVIDIA Nemotron 3\.5/ }).click();
-  await page.getByRole('button', { name: 'Save changes', exact: true }).click();
-  await expect(page.locator('.form-feedback')).toContainText('Settings saved on this device.');
+  await expect(page.locator('.save-status')).toHaveAttribute('data-state', 'saving');
   await navigate(page, 'Settings');
 
   const summary = page.locator('.settings-model-summary');
@@ -51,12 +50,11 @@ test('minimum window shows Settings controls and preserves drafts, menus and dia
   await expect(collection).toBeChecked({ checked: !original });
   await page.setViewportSize({ width: 360, height: 480 });
   await expect(collection).toBeChecked({ checked: !original });
-  const save = page.getByRole('button', { name: 'Save changes', exact: true });
-  await expect(save).toBeEnabled();
-  await save.scrollIntoViewIfNeeded();
-  await expectInsideWindow(page, save);
-  await save.click();
-  await expect(page.locator('.form-feedback')).toContainText('Settings saved on this device.');
+  const pill = page.locator('.save-status');
+  await expect(pill).toHaveCount(0, { timeout: 10_000 });
+  const notice = page.locator('.settings-notice');
+  await expect(notice).toContainText('No unsaved changes.');
+  await expectInsideWindow(page, notice);
 
   const about = page
     .getByRole('navigation', { name: 'Settings sections' })

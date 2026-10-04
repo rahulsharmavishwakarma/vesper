@@ -12,34 +12,39 @@ async function openSettings(page, path = '/tests/interaction-preview.html') {
     .click();
 }
 
-test('Settings sections preserve independent application and vocabulary drafts', async ({
-  page,
-}) => {
+test('Settings sections autosave application and vocabulary drafts', async ({ page }) => {
   await openSettings(page);
   await expect(section(page, 'Recording')).toHaveAttribute('aria-current', 'page');
+  const pill = page.locator('.save-status');
+  const saves = (command) =>
+    page.evaluate(
+      (name) => window.previewCommands.filter((entry) => entry === name).length,
+      command,
+    );
+  await expect(pill).toHaveCount(0);
   const saved = await page.locator('#collect-training').isChecked();
   await page.locator('#collect-training').setChecked(!saved);
+  await expect(pill).toHaveAttribute('data-state', 'saving');
+  await expect(pill).toContainText(/Saved \d/, { timeout: 10_000 });
+  await expect.poll(() => saves('save_settings'), { timeout: 10_000 }).toBeGreaterThan(0);
+  await expect(pill).toHaveCount(0, { timeout: 10_000 });
   await section(page, 'Writing').click();
   await page.locator('#personal-project').fill('Synthetic writing project');
+  await expect.poll(() => saves('save_personalization'), { timeout: 10_000 }).toBeGreaterThan(0);
+  await expect(pill).toContainText(/Saved \d/, { timeout: 10_000 });
+  await expect(pill).toHaveCount(0, { timeout: 10_000 });
   await section(page, 'Shortcuts').click();
   await expect(page.locator('#hold-shortcut')).toBeVisible();
   await section(page, 'Recording').click();
   await expect(page.locator('#collect-training')).toBeChecked({ checked: !saved });
-  await page.locator('.savebar').getByRole('button', { name: 'Discard changes' }).click();
-  await expect(page.locator('#collect-training')).toBeChecked({ checked: saved });
   await section(page, 'Writing').click();
   await expect(page.locator('#personal-project')).toHaveValue('Synthetic writing project');
-  await page
-    .locator('.personalization')
-    .getByRole('button', { name: 'Save preferences', exact: true })
-    .click();
-  await expect(page.locator('.personalization')).toContainText('Saved for your next recording.');
-  await expect(
-    page.locator('.savebar').getByRole('button', { name: 'Save changes', exact: true }),
-  ).toBeDisabled();
+  await expect(page.locator('.personalization')).toContainText(
+    'Personal preferences are up to date.',
+  );
   await section(page, 'Appearance').click();
   await page.locator('#floating-bar').uncheck();
-  await page.getByRole('button', { name: 'Save changes', exact: true }).click();
+  await expect.poll(() => saves('save_settings'), { timeout: 10_000 }).toBeGreaterThan(1);
   await section(page, 'Recording').click();
   await section(page, 'Appearance').click();
   await expect(page.locator('#floating-bar')).not.toBeChecked();

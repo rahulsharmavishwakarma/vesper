@@ -36,8 +36,12 @@ test('project rules save, keep overrides, cancel pickers and fit a narrow screen
   await page.getByRole('button', { name: 'Choose folder', exact: true }).click();
   await expect(page.locator('.project-folder')).toContainText('/Projects/Synthetic');
   await page.locator('#personal-project').fill('Manual override');
-  await page.getByRole('button', { name: 'Save preferences', exact: true }).click();
-  await expect(page.locator('.personalization')).toContainText('Saved for your next recording.');
+  await expect(page.locator('.save-status')).toHaveAttribute('data-state', 'saving');
+  await expect(page.locator('.save-status')).toContainText(/Saved/, { timeout: 10_000 });
+  await expect(page.locator('.save-status')).toHaveCount(0, { timeout: 10_000 });
+  await expect(page.locator('.personalization')).toContainText(
+    'Personal preferences are up to date.',
+  );
   await expect(project).toHaveValue('Project A');
   await expect(page.locator('#personal-project')).toHaveValue('Manual override');
   await page.setViewportSize({ width: 320, height: 720 });
