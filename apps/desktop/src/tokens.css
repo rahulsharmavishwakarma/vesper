@@ -57,32 +57,35 @@
 
 /* Appearance choices from the Ember design system (issue #87). */
 :root {
-  --color-theme-paper: #fff8f2;
+  --color-theme-paper: #ffffff;
   --color-theme-night: #0a0a0a;
   --color-theme-mark: #ff6b3d;
 }
 :root[data-theme='light'] {
+  --color-theme-mark: #e84d17;
+}
+:root[data-theme='light'] {
   color-scheme: light;
-  --color-bg: #fff8f2;
-  --color-panel: #ffeedf;
+  --color-bg: #ffffff;
+  --color-panel: #fafaf8;
   --color-raised: #ffffff;
-  --color-ink: #1d120b;
-  --color-muted: #85715f;
-  --color-line: #f0dccb;
-  --color-accent: #e8501f;
-  --color-accent-hover: #bc4119;
+  --color-ink: #12110f;
+  --color-muted: #6b6962;
+  --color-line: #e8e6e0;
+  --color-accent: #e84d17;
+  --color-accent-hover: #bc3e13;
   --color-on-accent: #ffffff;
-  --color-tint: #fbe3d3;
-  --color-focus: #e8501f;
+  --color-tint: #fdede8;
+  --color-focus: #e84d17;
   --color-danger: #c93a2a;
   --color-error: oklch(46% 0.15 30);
   --color-error-tint: oklch(94% 0.025 30);
   --color-warning: oklch(43% 0.075 75);
-  --color-control-edge: #a08b74;
-  --color-control-hover: #86735f;
-  --color-accent-light: #f29f84;
+  --color-control-edge: #8a8781;
+  --color-control-hover: #74716b;
+  --color-accent-light: #f29d7f;
   --color-error-light: oklch(50% 0.14 30);
-  --color-surface-light: #fff3e9;
-  --color-overlay: rgb(29 18 11 / 40%);
+  --color-surface-light: #f6f5f2;
+  --color-overlay: rgb(18 17 15 / 40%);
   --color-sheen: rgb(255 255 255 / 8%);
 }

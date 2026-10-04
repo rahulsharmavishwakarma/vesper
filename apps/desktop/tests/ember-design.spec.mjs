@@ -76,10 +76,10 @@ test('Ember theme, single family, logo and icons apply with bundled fonts', asyn
       muted: pick('--color-muted'),
     };
   });
-  expect(light.bg).toBe('#fff8f2');
+  expect(light.bg).toBe('#ffffff');
   expect(light.card).toBe('#ffffff');
-  expect(light.accent).toBe('#e8501f');
-  expect(light.muted).toBe('#85715f');
+  expect(light.accent).toBe('#e84d17');
+  expect(light.muted).toBe('#6b6962');
 
   await dictate.click();
   await expect(page.locator('.transcription-language .icon')).toBeVisible();
