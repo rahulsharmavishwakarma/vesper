@@ -736,10 +736,7 @@ await test('Personal preference drafts survive navigation and save independently
   project().value = 'Synthetic project';
   project().dispatchEvent(new Event('input', { bubbles: true }));
   await tick();
-  await until(
-    () => panel().textContent.includes('Changes will save automatically.'),
-    'Editing did not schedule autosave',
-  );
+  await until(() => saveStatus()?.dataset.state === 'saving', 'Editing did not schedule autosave');
   await navigate('Models');
   await navigate('Settings');
   await settingsSection('Writing');
@@ -762,8 +759,8 @@ await test('Personal preference drafts survive navigation and save independently
   await until(() => saved.activeProject === 'Synthetic project', 'Silent retry did not save');
   assert(saved.speechBiasEnabled, 'Saved snapshot lost the checkbox edit');
   await until(
-    () => panel().textContent.includes('Personal preferences are up to date.'),
-    'Saved preferences were not acknowledged',
+    () => panel().querySelector('.preferences-footer')?.hidden === true,
+    'Saved preferences left a stale footer',
   );
   await until(() => {
     const pill = saveStatus();
@@ -2535,6 +2532,47 @@ for (const main of [true, false])
       assert(path() === unvoiced, 'Unvoiced input invents changing pitch');
     }
   });
+
+await test('Recent thoughts render standalone cards without list rules', async () => {
+  const record = (id) => ({
+    id,
+    createdAt: new Date().toISOString(),
+    originalFilename: `${id}.wav`,
+    audioRelativePath: `audio/${id}.wav`,
+    audioSha256: id,
+    audioBytes: 1024,
+    rawTranscript: `Synthetic thought ${id}.`,
+    cleanedTranscript: null,
+    correctedTranscript: null,
+    verifiedTranscript: null,
+    reviewHistory: [],
+    reviewStatus: 'pending',
+    transcriptFeedback: null,
+    configSnapshot: defaultSettings(),
+    modelVersions: {},
+  });
+  await setup({
+    main: true,
+    intercept: (command) => {
+      if (command === 'list_sessions') return [record('first'), record('second')];
+    },
+  });
+  await until(
+    () => target.querySelectorAll('.recent-panel .session-button').length === 2,
+    'Recent thoughts missing',
+  );
+  const border = (selector) => {
+    const element = target.querySelector(selector);
+    assert(element, `Missing element: ${selector}`);
+    return getComputedStyle(element).borderTopWidth;
+  };
+  assert(border('.recent-panel .session-list') === '0px', 'Recent list kept its outer rule');
+  assert(
+    border('.recent-panel .session-list > li + li') === '0px',
+    'Recent cards kept divider rules',
+  );
+  assert(border('.recent-panel .session-button') === '1px', 'Recent card lost its outline');
+});
 
 await test('History feedback persists, rolls back failed saves, clears and undoes independently of reviews', async () => {
   const original = {

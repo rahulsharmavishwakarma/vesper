@@ -30,6 +30,12 @@ test('minimum window shows Settings controls and preserves drafts, menus and dia
     () => new Promise((resolve) => requestAnimationFrame(() => requestAnimationFrame(resolve))),
   );
   await page.locator('#models-asr-model').click();
+  const selectedWash = await page.evaluate(() => {
+    const option = document.querySelector('[role="option"][aria-selected="true"]');
+    return option ? getComputedStyle(option).backgroundColor : null;
+  });
+  expect(selectedWash).not.toBeNull();
+  expect(selectedWash).not.toBe('rgba(0, 0, 0, 0)');
   await page.getByRole('option', { name: /NVIDIA Nemotron 3\.5/ }).click();
   await expect(page.locator('.save-status')).toHaveAttribute('data-state', 'saving');
   await navigate(page, 'Settings');
@@ -52,9 +58,7 @@ test('minimum window shows Settings controls and preserves drafts, menus and dia
   await expect(collection).toBeChecked({ checked: !original });
   const pill = page.locator('.save-status');
   await expect(pill).toHaveCount(0, { timeout: 10_000 });
-  const notice = page.locator('.settings-notice');
-  await expect(notice).toContainText('No unsaved changes.');
-  await expectInsideWindow(page, notice);
+  await expect(page.locator('.settings-notice')).toBeHidden();
 
   const about = page
     .getByRole('navigation', { name: 'Settings sections' })

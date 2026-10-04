@@ -39,9 +39,7 @@ test('Settings sections autosave application and vocabulary drafts', async ({ pa
   await expect(page.locator('#collect-training')).toBeChecked({ checked: !saved });
   await section(page, 'Writing').click();
   await expect(page.locator('#personal-project')).toHaveValue('Synthetic writing project');
-  await expect(page.locator('.personalization')).toContainText(
-    'Personal preferences are up to date.',
-  );
+  await expect(page.locator('.preferences-footer')).toBeHidden();
   await section(page, 'Appearance').click();
   await page.locator('#floating-bar').uncheck();
   await expect.poll(() => saves('save_settings'), { timeout: 10_000 }).toBeGreaterThan(1);
