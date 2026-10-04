@@ -1,31 +1,17 @@
 @import './tokens.css';
 @font-face {
-  font-family: 'Geist';
+  font-family: 'Inter';
   font-style: normal;
-  font-weight: 400;
+  font-weight: 100 900;
   font-display: swap;
-  src: url('./assets/geist-400.ttf') format('truetype');
+  src: url('./assets/inter.ttf') format('truetype');
 }
 @font-face {
-  font-family: 'Geist';
+  font-family: 'Bricolage Grotesque';
   font-style: normal;
-  font-weight: 500;
+  font-weight: 200 800;
   font-display: swap;
-  src: url('./assets/geist-500.ttf') format('truetype');
-}
-@font-face {
-  font-family: 'Geist';
-  font-style: normal;
-  font-weight: 600;
-  font-display: swap;
-  src: url('./assets/geist-600.ttf') format('truetype');
-}
-@font-face {
-  font-family: 'Geist';
-  font-style: normal;
-  font-weight: 700;
-  font-display: swap;
-  src: url('./assets/geist-700.ttf') format('truetype');
+  src: url('./assets/bricolage-grotesque.ttf') format('truetype');
 }
 :root {
   font-synthesis: none;
@@ -204,7 +190,7 @@ details[open] summary {
   padding-left: var(--space-5);
 }
 
-/* Vesper Studio: token-driven visual styles. Motion follows application state.
+/* Vesper Ember: token-driven visual styles. Motion follows application state.
  * Structural resets stay separate from this token-driven visual layer.
  */
 :root {
@@ -433,21 +419,24 @@ h3 {
   overflow-wrap: anywhere;
 }
 h1 {
+  font-family: var(--font-display);
   font-size: clamp(26px, 3vw, 36px);
-  line-height: 1.2;
-  letter-spacing: -0.045em;
-  font-weight: 500;
+  line-height: 1.1;
+  letter-spacing: -0.035em;
+  font-weight: 800;
   margin-bottom: var(--space-3);
 }
 h2 {
+  font-family: var(--font-display);
   font-size: 15px;
   letter-spacing: -0.02em;
-  font-weight: 500;
+  font-weight: 800;
   margin-bottom: var(--space-6);
 }
 h3 {
+  font-family: var(--font-display);
   font-size: 13px;
-  font-weight: 500;
+  font-weight: 800;
 }
 .app-shell {
   display: grid;
