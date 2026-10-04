@@ -68,10 +68,15 @@ test('Ember theme, single family, logo and icons apply with bundled fonts', asyn
   const light = await page.evaluate(() => {
     const root = getComputedStyle(document.documentElement);
     const pick = (name) => root.getPropertyValue(name).trim();
-    return { bg: pick('--color-bg'), card: pick('--color-raised') };
+    return {
+      bg: pick('--color-bg'),
+      card: pick('--color-raised'),
+      accent: pick('--color-accent'),
+    };
   });
   expect(light.bg).toBe('#fff8f2');
   expect(light.card).toBe('#ffffff');
+  expect(light.accent).toBe('#c9471c');
 
   await dictate.click();
   await expect(page.locator('.transcription-language .icon')).toBeVisible();

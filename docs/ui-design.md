@@ -150,6 +150,12 @@ or higher for control outlines on the canvas/panels, and 6.03:1 for focus on the
 canvas. The production renderer build and five existing appearance/responsive
 browser checks passed, including Settings at 320/360/375/414/768/1280 px. These
 are local Chromium checks, not native display or screen-reader qualification.
+The Ember palette (October 2026) measures 18.43:1 dark body and 17.45:1 light
+body text, 6.33:1 dark and 4.94:1 light supporting text, 6.88:1 dark and
+4.77:1 light primary-button labels, 3.32:1 dark and 3.10:1 light control
+outlines, and 7.00:1 dark and 4.54:1 light focus. Ember deepens the light
+accent, muted tone and both control outlines from the finalized mock values to
+hold these bars; the hues are unchanged.
 Selection applies immediately, defaults to the existing Dark appearance and is
 stored under `vesper-appearance-v1` in the browser/webview's local storage,
 separately from native inference settings. Other windows on the same origin sync
