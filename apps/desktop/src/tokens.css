@@ -1,9 +1,9 @@
 /* Vesper Ember · the approved ember-on-black design (issue #87). */
 :root {
   color-scheme: dark;
-  --font-body: 'Inter', system-ui, sans-serif;
-  --font-display: 'Inter', system-ui, sans-serif;
-  --font-mono: ui-monospace, SFMono-Regular, monospace;
+  --font-body: 'Bricolage Grotesque', sans-serif;
+  --font-display: 'Bricolage Grotesque', sans-serif;
+  --font-mono: 'Bricolage Grotesque', sans-serif;
   --color-bg: #0a0a0a;
   --color-panel: #0a0a0a;
   --color-raised: #151515;
