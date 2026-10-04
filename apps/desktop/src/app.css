@@ -2535,6 +2535,172 @@ button:is(
 .settings-defaults {
   margin-top: var(--space-6);
 }
+
+/* Sage Settings refresh (Refs #85): underline section tabs, divider-separated
+   setting rows with switches on the right, two-column preference fields, and a
+   centered sticky save bar. Visual only; ids, labels, and behavior unchanged. */
+.settings-layout {
+  grid-template-columns: minmax(0, 1fr);
+}
+.settings-nav {
+  flex-direction: row;
+  position: static;
+  gap: var(--space-1);
+  border-bottom: 1px solid var(--color-line);
+  overflow-x: auto;
+}
+.settings-nav button {
+  width: auto;
+  min-height: 0;
+  padding: 10px 14px;
+  border-bottom: 2px solid transparent;
+  border-radius: 0;
+  margin-bottom: -1px;
+  white-space: nowrap;
+  color: var(--color-muted);
+}
+.settings-nav button:hover:enabled {
+  background: var(--color-transparent);
+  color: var(--color-ink);
+}
+.settings-nav button[aria-current='page'] {
+  background: var(--color-transparent);
+  color: var(--color-ink);
+  border-bottom-color: var(--color-accent);
+}
+.studio-main[data-view='settings'] .settings-content .settings-section > h2 {
+  font-size: 16px;
+  font-weight: 600;
+}
+.settings-content .preference-fields {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0 var(--space-4);
+}
+.settings-content .preference-fields > .field {
+  margin-bottom: var(--space-4);
+}
+.settings-content .preference-fields > .project-rules {
+  grid-column: 1 / -1;
+}
+.settings-content .setting-toggle {
+  padding: var(--space-3) 0;
+}
+.settings-content .setting-toggle + .setting-toggle {
+  margin-top: 0;
+  border-top: 1px solid var(--color-line);
+}
+.settings-content .setting-toggle .checkbox-field {
+  align-items: center;
+  min-height: 0;
+  padding-block: 0;
+  gap: var(--space-4);
+}
+.settings-content .setting-toggle .checkbox-field input[type='checkbox'] {
+  order: 2;
+  margin-left: auto;
+  appearance: none;
+  -webkit-appearance: none;
+  display: block;
+  position: relative;
+  width: 38px;
+  height: 22px;
+  flex: 0 0 38px;
+  padding: 0;
+  border: 0;
+  border-radius: var(--radius-pill);
+  background: var(--color-control-edge);
+  cursor: pointer;
+  transform: none;
+  transition: background-color var(--duration-state) var(--ease-out);
+}
+.settings-content .setting-toggle input[type='checkbox']::before {
+  content: '';
+  position: absolute;
+  top: 3px;
+  left: 3px;
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  background: oklch(93% 0.01 100);
+  clip-path: none;
+  opacity: 1;
+  transform: none;
+  transition: transform var(--duration-state) var(--ease-out);
+}
+.settings-content .setting-toggle input[type='checkbox']:checked {
+  background: var(--color-accent);
+  border-color: var(--color-accent);
+}
+.settings-content .setting-toggle input[type='checkbox']:checked::before {
+  transform: translateX(16px);
+  background: var(--color-on-accent);
+  opacity: 1;
+}
+.settings-content .setting-toggle input[type='checkbox']:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+.settings-content .setting-toggle .checkbox-help {
+  margin-left: 0;
+}
+.settings-content .savebar {
+  position: sticky;
+  bottom: 0;
+  margin-top: var(--space-8);
+  padding: var(--space-4) 0;
+  border-top: 1px solid var(--color-line);
+  background: var(--color-panel);
+}
+.settings-content .savebar .form-feedback {
+  font-size: 14px;
+}
+.settings-content details.settings-advanced > summary,
+.settings-content .preference-group > details > summary {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-3);
+  border: 1px solid var(--color-line);
+  border-radius: var(--radius-sm);
+  padding: var(--space-3) var(--space-4);
+  font-size: 13px;
+  color: var(--color-ink);
+  list-style: none;
+}
+.settings-content details.settings-advanced > summary::after,
+.settings-content .preference-group > details > summary::after {
+  content: '';
+  flex: none;
+  width: 8px;
+  height: 8px;
+  border-right: 1.5px solid var(--color-muted);
+  border-bottom: 1.5px solid var(--color-muted);
+  transform: rotate(-45deg);
+}
+.settings-content details.settings-advanced[open] > summary::after,
+.settings-content .preference-group > details[open] > summary::after {
+  transform: rotate(45deg);
+}
+.settings-content details.settings-advanced > summary::-webkit-details-marker,
+.settings-content .preference-group > details > summary::-webkit-details-marker {
+  display: none;
+}
+.settings-content details.settings-advanced > summary:hover,
+.settings-content .preference-group > details > summary:hover {
+  border-color: var(--color-control-edge);
+}
+@media (max-width: 640px) {
+  .settings-content .preference-fields {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .settings-content .setting-toggle input[type='checkbox'],
+  .settings-content .setting-toggle input[type='checkbox']::before {
+    transition: none;
+  }
+}
 .settings-model-summary {
   border-top: 1px solid var(--color-line);
   margin-top: var(--space-6);
