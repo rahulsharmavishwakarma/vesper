@@ -8,29 +8,21 @@ export const captureDesignOptions: {
   width: number;
 }[] = [
   {
+    value: 'capsule',
+    label: 'Capsule',
+    description: 'One slim pill with waveform and actions',
+    width: 400,
+  },
+  {
     value: 'split',
     label: 'Split',
-    description: 'Separate waveform and action pod · default',
-    width: 372,
-  },
-  { value: 'ribbon', label: 'Ribbon', description: 'Everything in one slim strip', width: 364 },
-  {
-    value: 'underline',
-    label: 'Underline',
-    description: 'Live words above the waveform',
+    description: 'Glass card with a separate action pill · default',
     width: 430,
   },
   {
-    value: 'studio',
-    label: 'Studio',
-    description: 'Wide waveform with labeled controls',
-    width: 388,
+    value: 'island',
+    label: 'Island',
+    description: 'Compact pill that grows with the transcript',
+    width: 400,
   },
-  {
-    value: 'margin',
-    label: 'Margin',
-    description: 'Vertical controls with a side status label',
-    width: 248,
-  },
-  { value: 'counter', label: 'Counter', description: 'Elapsed time takes the lead', width: 176 },
 ];

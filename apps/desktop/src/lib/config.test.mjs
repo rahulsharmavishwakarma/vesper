@@ -278,7 +278,7 @@ test('dictation preferences preserve explicit choices and reject unknown behavio
 });
 
 // This preference must migrate without dropping model/recording choices.
-test('all six capture designs survive storage; malformed values fail validation', () => {
+test('all three capture designs survive storage; malformed values fail validation', () => {
   for (const captureDesign of CAPTURE_DESIGNS) {
     const config = { ...defaultSettings(), captureDesign, recordingMode: 'hold' };
     assert.deepEqual(parseStoredSettings(JSON.parse(JSON.stringify(config))), config);
@@ -288,6 +288,21 @@ test('all six capture designs survive storage; malformed values fail validation'
       () => parseStoredSettings({ ...defaultSettings(), captureDesign }),
       /capture design/,
     );
+  }
+});
+
+test('retired capture designs migrate to Split without losing other preferences', () => {
+  for (const captureDesign of ['ribbon', 'underline', 'studio', 'margin', 'counter']) {
+    const stored = {
+      ...defaultSettings(),
+      captureDesign,
+      recordingMode: 'hold',
+      customCleanupInstruction: 'Preserve product names.',
+    };
+    const restored = parseStoredSettings(JSON.parse(JSON.stringify(stored)));
+    assert.equal(restored.captureDesign, 'split');
+    assert.equal(restored.recordingMode, 'hold');
+    assert.equal(restored.customCleanupInstruction, 'Preserve product names.');
   }
 });
 

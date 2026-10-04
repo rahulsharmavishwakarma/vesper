@@ -28,14 +28,7 @@ export function automaticAudioFrontend(): AudioFrontendConfig {
   return { vadEnabled: true, autoLevelEnabled: false, noiseReduction: 'dpdfnet8' };
 }
 export type ImprovementMode = 'review_required' | 'automatic';
-export const CAPTURE_DESIGNS = [
-  'split',
-  'ribbon',
-  'underline',
-  'studio',
-  'margin',
-  'counter',
-] as const;
+export const CAPTURE_DESIGNS = ['capsule', 'split', 'island'] as const;
 export type CaptureDesign = (typeof CAPTURE_DESIGNS)[number];
 export type ModelProfileRole = 'asr' | 'rewriter';
 export const MODEL_ROLE_LABELS = { asr: 'Speech model', rewriter: 'Writing model' } as const;
@@ -530,6 +523,11 @@ export function parseStoredSettings(value: unknown): AppConfig {
   const stored = { ...value };
   delete stored.speakerDiarization;
   delete stored.textEditObservation;
+  // The retired overlay layouts fall back to the Split default instead of
+  // failing validation; anything else invalid still fails below.
+  const retiredDesigns = ['ribbon', 'underline', 'studio', 'margin', 'counter'];
+  if (typeof stored.captureDesign === 'string' && retiredDesigns.includes(stored.captureDesign))
+    delete stored.captureDesign;
   const defaults = defaultSettings();
   const models = isRecord(value.models)
     ? { ...defaults.models, ...value.models }
