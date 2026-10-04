@@ -194,14 +194,16 @@ test('naming cleanup retains working technical names and historical evidence', (
   assert.match(read('docs/validation.md'), /target\/debug\/bundle\/macos\/transcribe\.app/);
 });
 
-test('component motion targets calls only and supplies a still alternative', () => {
+test('component motion targets the mark details only and supplies a still alternative', () => {
   const component = read('apps/desktop/src/lib/components/BrandLogo.svelte');
   assert.match(component, /prefers-reduced-motion: reduce/);
   assert.match(component, /animate = false/);
-  assert.doesNotMatch(component, /infinite|scale\(|scaleX\(|scaleY\(/);
-  assert.match(component, /vesper-call-1/);
-  assert.match(component, /vesper-call-2/);
-  assert.match(component, /import artwork from '\.\.\/\.\.\/assets\/vesper.svg\?raw'/);
+  assert.match(component, /import artwork from '\.\.\/\.\.\/assets\/ember-bird\.svg\?raw'/);
+  assert.match(component, /ember-chirp/);
+  assert.match(component, /ember-blink/);
+  assert.doesNotMatch(component, /vesper-call-|data-letter=/);
+  const animated = [...component.matchAll(/animation:\s*([\w-]+)/g)].map((match) => match[1]);
+  assert.deepEqual(animated, ['ember-chirp', 'ember-blink', 'none']);
 });
 
 test('ICNS entry normalization is stable and rejects truncated containers', () => {

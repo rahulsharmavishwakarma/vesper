@@ -471,7 +471,7 @@ h3 {
 .brand:hover:enabled {
   background: var(--color-transparent);
 }
-/* The selected SVG wordmark replaces the former text-only brand span. */
+/* The Ember lockup (bird mark plus Bricolage wordmark) scales with its container. */
 .brand > .brand-logo {
   width: 160px;
   max-width: 100%;
