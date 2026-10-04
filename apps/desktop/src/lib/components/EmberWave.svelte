@@ -31,21 +31,26 @@
     }
     let disposed = false;
     const timer = window.setInterval(() => void sample().catch(() => undefined), 110);
-    async function sample() {
-      if (disposed || document.hidden) return;
-      let level = 0;
+    async function readLevel(): Promise<number | null> {
       try {
         const value = await getAudioFeatures();
-        if (disposed || !Number.isFinite(value.level)) return;
-        level = Math.max(0, Math.min(1, value.level));
+        if (!Number.isFinite(value.level)) return null;
+        return Math.max(0, Math.min(1, value.level));
       } catch {
-        return;
+        return null;
       }
-      const now = performance.now();
+    }
+    async function sample() {
+      if (disposed || document.hidden) return;
+      const level = await readLevel();
+      if (disposed || level === null) return;
+      // Deterministic in level and position only: constant input holds a
+      // constant display, so motion always answers measured sound. Levels
+      // below the silence floor render flat.
+      const gated = level < 0.01 ? 0 : Math.min(1, level * 5);
       levels = levels.map((_, index) => {
         const envelope = Math.sin(((index + 0.5) / BARS) * Math.PI);
-        const wobble = 0.75 + 0.25 * Math.sin(now / 300 + index * 0.7);
-        return Math.min(1, level * 5 * (0.3 + 0.7 * envelope) * wobble);
+        return gated * (0.3 + 0.7 * envelope);
       });
     }
     return () => {
