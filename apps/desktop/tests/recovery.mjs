@@ -1122,8 +1122,45 @@ await test('Vocabulary and example dropdowns preserve edits through shared keybo
   };
   await setup({
     main: true,
-    intercept: (command) =>
-      command === 'get_personalization' ? structuredClone(saved) : undefined,
+    intercept: (command) => {
+      if (command === 'get_personalization') return structuredClone(saved);
+      if (command === 'get_automatic_learning')
+        return {
+          schemaVersion: 1,
+          policyVersion: 1,
+          expiredCandidates: 0,
+          candidates: [
+            {
+              id: 'dup',
+              phrase: 'SyntheticName',
+              alias: '',
+              language: 'en',
+              project: '',
+              context: '',
+              state: 'observed',
+              support: [],
+              observedCount: 1,
+              lastSeenMs: 1,
+              reason: 'Duplicates the added word.',
+            },
+            {
+              id: 'fresh',
+              phrase: 'FreshTerm',
+              alias: '',
+              language: 'en',
+              project: '',
+              context: '',
+              state: 'observed',
+              support: [],
+              observedCount: 1,
+              lastSeenMs: 1,
+              reason: 'A genuine proposal.',
+            },
+          ],
+          events: [],
+        };
+      return undefined;
+    },
   });
   await until(() => target.querySelector('#settings-language'), 'Settings did not load');
   [...target.querySelectorAll('nav button')]
@@ -1165,6 +1202,19 @@ await test('Vocabulary and example dropdowns preserve edits through shared keybo
     !target.querySelector('.personalization select'),
     'Personal preferences still use native dropdowns',
   );
+  [...target.querySelectorAll('.filter-pills button')]
+    .find((button) => button.textContent.includes('Suggested'))
+    .click();
+  await tick();
+  const suggestionRows = [...target.querySelectorAll('.word-entry')];
+  assert(
+    suggestionRows.length === 1 && suggestionRows[0].textContent.includes('FreshTerm'),
+    'A listed word was offered as a suggestion',
+  );
+  [...target.querySelectorAll('.filter-pills button')]
+    .find((button) => button.textContent.trim() === 'All')
+    .click();
+  await tick();
   target.querySelector('.word-entry .entry-heading button[aria-label^="Remove"]').click();
   await until(
     () => !target.querySelector('.word-entry') && document.activeElement.id === 'add-vocabulary',
