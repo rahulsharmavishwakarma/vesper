@@ -77,7 +77,9 @@
     fill: currentColor;
   }
   .ember-word {
-    font-family: var(--font-display);
+    /* The logo lockup keeps its finalized Bricolage wordmark; all other
+     * application text uses the single Inter family (issue #87). */
+    font-family: 'Bricolage Grotesque', 'Inter', system-ui, sans-serif;
     font-weight: 800;
     letter-spacing: -0.035em;
     line-height: 1;

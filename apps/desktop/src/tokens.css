@@ -2,7 +2,7 @@
 :root {
   color-scheme: dark;
   --font-body: 'Inter', system-ui, sans-serif;
-  --font-display: 'Bricolage Grotesque', 'Inter', system-ui, sans-serif;
+  --font-display: 'Inter', system-ui, sans-serif;
   --font-mono: ui-monospace, SFMono-Regular, monospace;
   --color-bg: #0a0a0a;
   --color-panel: #0a0a0a;
