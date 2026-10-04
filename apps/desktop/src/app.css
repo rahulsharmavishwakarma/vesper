@@ -218,13 +218,16 @@ button {
   border-radius: var(--radius-sm);
   background: var(--color-raised);
   color: var(--color-ink);
-  font-size: 13px;
+  font-size: 15px;
   padding: 10px var(--space-4);
   transition:
     transform 160ms var(--ease),
     opacity 160ms var(--ease),
     background-color 140ms var(--ease),
     border-color 140ms var(--ease);
+}
+button.primary:hover:enabled {
+  transform: translateY(-2px);
 }
 button:hover:enabled {
   background: var(--color-line);
@@ -266,7 +269,7 @@ button.quiet:hover:enabled {
 }
 :is(button, input, select, textarea, summary, a):focus-visible {
   outline: 2px solid var(--color-focus);
-  outline-offset: 3px;
+  outline-offset: 2px;
 }
 input:not([type='checkbox']),
 select,
@@ -276,7 +279,7 @@ textarea {
   border-radius: var(--radius-sm);
   color: var(--color-ink);
   min-height: 44px;
-  font-size: 13px;
+  font-size: 15px;
   max-width: 100%;
   transition:
     border-color 140ms var(--ease),
@@ -367,7 +370,7 @@ input[type='checkbox']:checked {
   color: var(--color-muted);
 }
 .eyebrow {
-  font-size: 10px;
+  font-size: 11px;
   letter-spacing: 0.1em;
   text-transform: uppercase;
   font-weight: 500;
@@ -375,8 +378,8 @@ input[type='checkbox']:checked {
 }
 .note,
 .preview-note {
-  font-size: 12px;
-  line-height: 1.7;
+  font-size: 13.5px;
+  line-height: 1.5;
 }
 .note {
   margin-top: var(--space-2);
@@ -413,16 +416,20 @@ h3 {
 }
 h1 {
   font-family: var(--font-display);
-  font-size: clamp(26px, 3vw, 36px);
-  line-height: 1.1;
+  font-size: clamp(40px, 5vw, 66px);
+  line-height: 1.02;
   letter-spacing: -0.035em;
   font-weight: 800;
   margin-bottom: var(--space-3);
 }
+.studio-main[data-view='models'] h1 {
+  font-size: clamp(40px, 4.5vw, 60px);
+}
 h2 {
   font-family: var(--font-display);
-  font-size: 15px;
-  letter-spacing: -0.02em;
+  font-size: 22px;
+  line-height: 1.2;
+  letter-spacing: -0.035em;
   font-weight: 800;
   margin-bottom: var(--space-6);
 }
@@ -433,7 +440,7 @@ h3 {
 }
 .app-shell {
   display: grid;
-  grid-template-columns: 224px minmax(0, 1fr);
+  grid-template-columns: 220px minmax(0, 1fr);
   min-height: 100vh;
 }
 .sidebar {
@@ -531,16 +538,17 @@ h3 {
   background: var(--color-transparent);
 }
 .studio-main {
-  width: min(100%, 1072px);
+  width: min(100%, 980px);
   min-width: 0;
   margin: 0 auto;
-  padding: var(--space-8) var(--space-12) var(--space-12);
+  padding: var(--space-8) 44px var(--space-12);
 }
 .page-header {
   margin-bottom: var(--space-8);
 }
 .intro {
-  font-size: 13px;
+  font-size: 17px;
+  line-height: 1.5;
   margin-bottom: 0;
 }
 .section-heading {
@@ -570,7 +578,7 @@ h3 {
   grid-template-columns: minmax(0, 1fr) minmax(220px, 320px);
   align-items: start;
   gap: var(--space-6);
-  margin-bottom: var(--space-6);
+  margin-bottom: var(--space-4);
   padding: var(--space-4) var(--space-5);
   border: 1px solid var(--color-line);
   border-radius: var(--radius-md);
@@ -614,7 +622,7 @@ h3 {
   background: var(--color-raised);
   border: 1px solid var(--color-line);
   border-radius: var(--radius-lg);
-  padding: var(--space-5) var(--space-6);
+  padding: 22px 26px;
 }
 .recorder-toolbar {
   display: flex;
@@ -1126,10 +1134,10 @@ details {
 }
 .history-metrics dd {
   margin: 0;
-  font-size: clamp(18px, 2.5vw, 26px);
+  font-size: clamp(30px, 6vw, 44px);
   font-variant-numeric: tabular-nums;
-  line-height: 1.3;
-  letter-spacing: -0.03em;
+  line-height: 1;
+  letter-spacing: -0.04em;
   overflow-wrap: anywhere;
 }
 .history-metrics dd span {
@@ -1312,7 +1320,7 @@ details {
 /* Ember recent thoughts (issue #87): standalone cards with an
  * accent-baited hover, distinct from the full History rows. */
 .recent-panel .history-heading {
-  margin: var(--space-6) 0 var(--space-3);
+  margin: var(--space-4) 0 var(--space-3);
 }
 .recent-panel .history-heading h2 {
   font-size: 22px;
@@ -1491,7 +1499,7 @@ details {
   flex-wrap: wrap;
   align-items: center;
   gap: var(--space-1) var(--space-3);
-  font-size: 10px;
+  font-size: 11px;
   color: var(--color-muted);
 }
 .review-badge {
@@ -1991,13 +1999,13 @@ textarea:focus:enabled {
     right: 7px;
   }
   .studio-main {
-    padding: var(--space-4) var(--space-4) var(--space-8);
+    padding: var(--space-4) 18px var(--space-8);
   }
   .page-header {
     margin-bottom: var(--space-4);
   }
   .page-header h1 {
-    font-size: 24px;
+    font-size: 40px;
     margin-bottom: var(--space-2);
   }
   .page-model-summary {
