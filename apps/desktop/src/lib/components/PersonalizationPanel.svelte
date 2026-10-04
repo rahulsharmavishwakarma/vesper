@@ -184,9 +184,14 @@
   let newWord = $state('');
   let newFix = $state('');
   let addError = $state('');
+  // A listed word is never a suggestion: everything in vocabulary is used.
   const suggestions = $derived(
     (learning?.candidates ?? [])
-      .filter((c) => c.state === 'observed' || c.state === 'provisional')
+      .filter(
+        (c) =>
+          (c.state === 'observed' || c.state === 'provisional') &&
+          !profile?.vocabulary.some((word) => word.phrase.toLowerCase() === c.phrase.toLowerCase()),
+      )
       .slice()
       .reverse(),
   );
