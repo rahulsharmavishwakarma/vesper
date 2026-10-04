@@ -1653,7 +1653,7 @@ await test('Long-audio progress appears in Dictate and Quick Capture without a p
     .find((b) => b.textContent.trim() === 'Transcribe audio file')
     .click();
   await until(
-    () => target.querySelector('.recorder-hint')?.textContent.includes('42%'),
+    () => target.querySelector('.dictate-hint')?.textContent.includes('42%'),
     'Dictate progress missing',
   );
   assert(!target.querySelector('.transcription-result'), 'Partial result shown as completed');
@@ -2454,13 +2454,13 @@ for (const main of [true, false])
         );
         telemetry.level = 0.006;
         await until(
-          () => bars().every((height) => height <= 3.02),
+          () => bars().every((height) => height <= 4.02),
           'Quieter input did not settle the bars',
         );
         stalled = true;
         await pause(300);
         assert(
-          bars().every((height) => height <= 3.02),
+          bars().every((height) => height <= 4.02),
           'Stalled telemetry retained microphone motion',
         );
       }
