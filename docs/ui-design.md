@@ -146,7 +146,12 @@ near-black canvas with ember accents.
 Keep primary text and supporting copy at least 4.5:1 against their surfaces,
 and active control outlines and focus indicators at least 3:1. Palette revisions
 must be inspected across Dictate, History, Models and Settings, including narrow
-windows and hover, focus, selected, disabled and error states.
+windows and hover, focus, pressed, selected, disabled and error states.
+A press answers with a deeper wash while held on targets that must stay still
+(sidebar nav, segmented options, history cards, listbox options); plain buttons
+keep the small press scale. Icon-bearing labels stay flex so the glyph centers
+with the text. Settings copy must never describe saving as a user action:
+writes are automatic, confirmed only by the transient sidebar pill.
 The 27 September 2026 light-palette check measured 14.68:1 for body text on
 panels, 4.96:1 or higher for supporting text and primary-button labels, 3.07:1
 or higher for control outlines on the canvas/panels, and 6.03:1 for focus on the

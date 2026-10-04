@@ -107,3 +107,49 @@ test('Ember entrance motion rests under reduced motion', async ({ page }) => {
   );
   expect(rise).toBe('none');
 });
+
+test('Dictate field icons center with their label text', async ({ page }) => {
+  await goToDictate(page);
+  for (const target of ['dictate-language', 'microphone']) {
+    const geometry = await page.evaluate((id) => {
+      const label = document.querySelector(`label[for="${id}"]`);
+      const icon = label.querySelector('svg');
+      const labelBox = label.getBoundingClientRect();
+      const iconBox = icon.getBoundingClientRect();
+      return {
+        display: getComputedStyle(label).display,
+        delta: Math.abs(labelBox.top + labelBox.height / 2 - (iconBox.top + iconBox.height / 2)),
+      };
+    }, target);
+    expect(geometry.display).toBe('flex');
+    expect(geometry.delta).toBeLessThan(1);
+  }
+});
+
+test('Sidebar nav answers a press with a deeper wash', async ({ page }) => {
+  await goToDictate(page);
+  const history = page
+    .getByRole('navigation', { name: 'Application', exact: true })
+    .getByRole('button', { name: 'History', exact: true });
+  await history.hover();
+  await expect
+    .poll(() => history.evaluate((button) => getComputedStyle(button).backgroundColor))
+    .toBe('rgb(21, 21, 21)');
+  const box = await history.boundingBox();
+  await page.mouse.move(box.x + box.width / 2, box.y + box.height / 2);
+  await page.mouse.down();
+  await expect
+    .poll(() => history.evaluate((button) => getComputedStyle(button).backgroundColor))
+    .toBe('rgb(39, 39, 39)');
+  await page.mouse.up();
+});
+
+test('Autosave views never describe saving as a user action', async ({ page }) => {
+  await goToDictate(page);
+  const nav = page.getByRole('navigation', { name: 'Application', exact: true });
+  for (const view of ['Dictate', 'Models', 'Settings']) {
+    await nav.getByRole('button', { name: view, exact: true }).click();
+    await expect(page.locator('.studio-main')).not.toContainText(/Save your (changes|preferences)/);
+    await expect(page.locator('.studio-main')).not.toContainText(/unsaved changes/i);
+  }
+});

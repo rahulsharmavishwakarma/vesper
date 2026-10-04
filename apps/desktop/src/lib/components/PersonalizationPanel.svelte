@@ -330,8 +330,8 @@
                   Leave blank to use the app where you start shortcut dictation. Enter a name to
                   override the rules.
                 {:else}
-                  Enter a project name and save before recording. Leave blank to use shared
-                  vocabulary and examples.
+                  Enter a project name before recording. Leave blank to use shared vocabulary and
+                  examples.
                 {/if}
                 Imports and recordings started here use this name. Each recording keeps its original project.
               </p>

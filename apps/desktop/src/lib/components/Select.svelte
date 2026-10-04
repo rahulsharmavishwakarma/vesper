@@ -473,9 +473,12 @@
     transition: background-color 100ms var(--ease);
   }
   .select-option.is-active,
-  .select-option:hover:not(:disabled),
-  .select-option:active:not(:disabled) {
+  .select-option:hover:not(:disabled) {
     background: var(--color-line);
+    transform: none;
+  }
+  .select-option:active:not(:disabled) {
+    background: color-mix(in oklch, var(--color-line) 70%, var(--color-ink) 30%);
     transform: none;
   }
   .select-popup {

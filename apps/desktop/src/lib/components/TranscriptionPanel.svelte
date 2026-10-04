@@ -218,7 +218,7 @@
                         runtime?.stage === 'error'
                       ? 'Recorder needs attention'
                       : settingsDirty
-                        ? 'Save your preferences first'
+                        ? 'Saving your preferences…'
                         : refreshing
                           ? 'Checking your microphone…'
                           : !ready
@@ -929,9 +929,6 @@
     </div>
   </div>
   <div class="runtime-feedback" class:is-active={busy} aria-live="polite">
-    {#if settingsDirty && view === 'models'}<p class="note">
-        Save your changes before installing models.
-      </p>{/if}
     {#if desktop && runtime && ((busy && view === 'models') || runtime.stage === 'error' || runtime.stage === 'cancelled')}<p
         class="runtime-stage"
       >

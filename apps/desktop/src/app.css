@@ -496,6 +496,10 @@ h3 {
   color: var(--color-ink);
   background: var(--color-raised);
 }
+/* Press answers with a deeper wash; the target itself never moves. */
+.sidebar nav button:active:enabled {
+  background: var(--color-line);
+}
 .sidebar nav button[aria-current='page'] .icon {
   color: var(--color-accent);
 }
@@ -672,7 +676,10 @@ h3 {
 .device-field .select-trigger {
   max-width: none;
 }
-.field-label {
+/* label.field-label outranks the generic label:not() rule above, whose :not()
+ * carries class specificity and would otherwise collapse this to block (the
+ * icon then rides the text baseline instead of centering with the letters). */
+label.field-label {
   display: flex;
   align-items: center;
   gap: 8px;
@@ -2024,6 +2031,7 @@ textarea:focus:enabled {
 }
 .sliding-selection button:active:enabled {
   transform: none;
+  background: var(--color-tint);
 }
 .sliding-selection button[aria-pressed='true'] {
   color: var(--color-accent);
@@ -2033,6 +2041,7 @@ textarea:focus:enabled {
 }
 .session-button:active:enabled {
   transform: none;
+  background: var(--color-tint);
 }
 @media (prefers-reduced-motion: reduce) {
   .sliding-selection[data-motion-ready]::before {
