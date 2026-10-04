@@ -2972,9 +2972,9 @@ await test('Navigation changes icon state while keeping its target stationary', 
       );
     }
   }
-  const knob = target.querySelector('[data-icon="settings"] .first');
+  const knob = target.querySelector('[data-icon="settings"] .k1');
   await until(
-    () => getComputedStyle(knob).transform === 'matrix(1, 0, 0, 1, 6, 0)',
+    () => getComputedStyle(knob).transform === 'matrix(1, 0, 0, 1, 7, 0)',
     'Selected Settings icon did not settle',
   );
   const selected = buttons.at(-1);
