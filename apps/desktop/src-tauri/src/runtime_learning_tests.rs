@@ -401,7 +401,8 @@ fn automatic_app_silence_and_duplicate_audio_do_not_supply_independent_edit_supp
         HEARD,
     );
     assert!(later.personalized_transcript.is_none());
-    assert!(!store.personalization().unwrap().vocabulary[0].enabled);
+    // The undone spelling leaves the vocabulary instead of lingering disabled.
+    assert!(store.personalization().unwrap().vocabulary.is_empty());
 }
 
 #[test]
