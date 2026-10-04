@@ -597,34 +597,6 @@
               <fieldset disabled={pending !== null || pipelineBusy || downloadRequest !== null}>
                 <legend class="visually-hidden">Application settings</legend>
                 <section
-                  class="transcription-language ember-rise"
-                  style="--rise-delay: 0s;"
-                  hidden={activeView !== 'dictate'}
-                  aria-labelledby="dictate-language-heading"
-                >
-                  <div class="transcription-language-copy">
-                    <Icon name="globe" />
-                    <h2 id="dictate-language-heading">Transcription language</h2>
-                    <p id="dictate-language-help" class="note">{languageHint}</p>
-                  </div>
-                  <div class="transcription-language-control">
-                    <label for="dictate-language">Language mode</label>
-                    <Select
-                      id="dictate-language"
-                      bind:value={draft.language}
-                      options={languageOptions}
-                      disabled={pending !== null || pipelineBusy}
-                      invalid={languageError !== null}
-                      describedBy={languageError
-                        ? 'dictate-language-error'
-                        : 'dictate-language-help'}
-                    />
-                    {#if languageError}<p id="dictate-language-error" class="error">
-                        {languageError}
-                      </p>{/if}
-                  </div>
-                </section>
-                <section
                   class="settings-section"
                   hidden={activeView !== 'settings' || settingsSection !== 'recording'}
                   id="settings-recording-panel"
@@ -1130,6 +1102,14 @@
         downloadRequested={downloadRequest !== null}
         modelSettings={engineSettings}
         maxRecordingSeconds={savedRecordingLimit}
+        transcriptionLanguage={draft.language}
+        {languageOptions}
+        {languageError}
+        {languageHint}
+        onTranscriptionLanguage={(value) => {
+          draft.language = value;
+          markEdited();
+        }}
         onBusyChange={(busy) => {
           pipelineBusy = busy;
         }}

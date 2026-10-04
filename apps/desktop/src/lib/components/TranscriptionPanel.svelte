@@ -23,7 +23,14 @@
     type DownloadTarget,
     type ModelDownloadState,
   } from '../modelDownloads';
-  import { ASR_MODELS, CLEANUP_MODELS, CLEANUP_QUANTIZATIONS, type AppConfig } from '../config';
+  import {
+    ASR_MODELS,
+    CLEANUP_MODELS,
+    CLEANUP_QUANTIZATIONS,
+    type AppConfig,
+    type Language,
+    type LanguageOption,
+  } from '../config';
   import type { AppEnvironment } from '../api/desktop';
   import {
     cancelOperation,
@@ -57,6 +64,11 @@
     downloadRequested = false,
     modelSettings,
     maxRecordingSeconds,
+    transcriptionLanguage,
+    languageOptions,
+    languageError,
+    languageHint,
+    onTranscriptionLanguage,
     onBusyChange,
     onResult,
     onDownloadState,
@@ -72,6 +84,11 @@
     downloadRequested?: boolean;
     modelSettings: AppConfig | null;
     maxRecordingSeconds: number;
+    transcriptionLanguage: Language;
+    languageOptions: LanguageOption[];
+    languageError: string | null;
+    languageHint: string;
+    onTranscriptionLanguage: (language: Language) => void;
     onBusyChange: (busy: boolean) => void;
     onRuntimeChange?: (runtime: RuntimeStatus | null) => void;
     onResult: (result: PipelineResult) => void;
@@ -228,6 +245,16 @@
             !devices.length
           ? 'Connect a microphone, then select Rescan.'
           : null,
+  );
+  function formatElapsed(ms: number) {
+    const total = Math.max(0, Math.floor(ms / 1000));
+    return `${String(Math.floor(total / 60)).padStart(2, '0')}:${String(total % 60).padStart(2, '0')}`;
+  }
+  const dictateHint = $derived(
+    recorderHint ??
+      (recording
+        ? 'Speak naturally. Press Stop when you are done.'
+        : 'Press Record and start speaking.'),
   );
   const previewCatalog: ModelCatalogInstallation[] = [
     ...Object.entries(ASR_MODELS).map(([modelId, name]) => ({
@@ -774,11 +801,26 @@
       class:is-recording={recording}
       class:is-processing={processing}
     >
-      <div class="recorder-toolbar">
-        <div class="microphone-control">
-          <label for="microphone">Microphone</label>
+      <div class="dictate-device">
+        <div class="device-field">
+          <label class="field-label" for="dictate-language"
+            ><Icon name="globe" />Transcription language</label
+          >
+          <Select
+            id="dictate-language"
+            value={transcriptionLanguage}
+            options={languageOptions}
+            disabled={settingsBusy || !settingsLoaded || busy}
+            invalid={languageError !== null}
+            describedBy={languageError ? 'dictate-language-error' : 'dictate-language-help'}
+            onChange={(value) => onTranscriptionLanguage(value)}
+          />
+          {#if languageError}<p id="dictate-language-error" class="error">{languageError}</p>
+          {:else}<p id="dictate-language-help" class="field-hint">{languageHint}</p>{/if}
+        </div>
+        <div class="device-field">
+          <label class="field-label" for="microphone"><Icon name="mic" />Microphone</label>
           <div class="microphone-picker">
-            <Icon name="mic" />
             <Select
               id="microphone"
               bind:value={deviceId}
@@ -813,30 +855,17 @@
             </button>
           </div>
         </div>
-        <span class="recorder-limit"
-          >{maxRecordingSeconds > 0
-            ? `Up to ${maxRecordingSeconds} seconds with this model`
-            : 'No fixed time limit'}</span
-        >
       </div>
-      <div class="recorder-stage">
-        <div class="recorder-main">
-          <div class="recorder-heading">
-            <Icon name="mic" />
-            <h2 class="recorder-label"><span role="status">{recorderStatus}</span></h2>
-            {#if recording}<span class="recording-timer" aria-label="Recording duration"
-                >{String(Math.floor(recordingElapsedMs / 60000)).padStart(2, '0')}:{String(
-                  Math.floor(recordingElapsedMs / 1000) % 60,
-                ).padStart(2, '0')}</span
-              >{/if}
-          </div>
-          <div class="recorder-guidance" aria-live="polite">
-            {#if recorderHint}<p class="recorder-hint" class:quiet-input={quietInput}>
-                {recorderHint}
-              </p>{/if}
-          </div>
-          <div class="recorder-signal">
-            <EmberWave {recording} {desktop} visible={view === 'dictate'} />
+      <div class="dictate-body">
+        <div class="dictate-controls">
+          <div>
+            <div class="recorder-heading">
+              <Icon name="mic" />
+              <h2 class="recorder-label"><span role="status">{recorderStatus}</span></h2>
+            </div>
+            <p class="dictate-hint" class:quiet-input={quietInput} aria-live="polite">
+              {dictateHint}
+            </p>
           </div>
           <div class="capture-actions">
             <button
@@ -869,17 +898,34 @@
                 disabled={cancelling}>{cancelling ? 'Cancelling…' : 'Cancel operation'}</button
               >{/if}
           </div>
-          {#if ready && installation?.files.some((file) => !file.installed)}<p class="note">
-              {installation.message}
-            </p>{/if}
-          {#if desktop && settingsLoaded && !ready && !settingsDirty && !busy}<button
-              class="quiet setup-link"
-              type="button"
-              onclick={() => onNavigate('models')}>Set up models <Icon name="arrow" /></button
-            >{/if}
+        </div>
+        <div class="dictate-stage">
+          <div class="stage-header">
+            <span class="recording-timer" class:live={recording} aria-label="Recording duration"
+              >{formatElapsed(recordingElapsedMs)}</span
+            >
+            <span
+              >{maxRecordingSeconds > 0
+                ? `Up to ${maxRecordingSeconds} seconds with this model`
+                : 'No fixed time limit'}</span
+            >
+          </div>
+          <div class="recorder-signal">
+            <EmberWave {recording} {desktop} visible={view === 'dictate'} />
+          </div>
         </div>
       </div>
-      <ConfiguredModels settings={modelSettings} onManage={() => onNavigate('models')} />
+      {#if ready && installation?.files.some((file) => !file.installed)}<p class="note">
+          {installation.message}
+        </p>{/if}
+      {#if desktop && settingsLoaded && !ready && !settingsDirty && !busy}<button
+          class="quiet setup-link"
+          type="button"
+          onclick={() => onNavigate('models')}>Set up models <Icon name="arrow" /></button
+        >{/if}
+      <div class="dictate-models">
+        <ConfiguredModels settings={modelSettings} onManage={() => onNavigate('models')} />
+      </div>
     </div>
   </div>
   <div class="runtime-feedback" class:is-active={busy} aria-live="polite">

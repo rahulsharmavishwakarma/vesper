@@ -612,83 +612,102 @@ h3 {
 .transcription-panel {
   margin: 0;
 }
-.transcription-language {
-  display: grid;
-  grid-template-columns: minmax(0, 1fr) minmax(220px, 320px);
-  align-items: start;
-  gap: var(--space-6);
-  margin-bottom: var(--space-4);
-  padding: var(--space-4) var(--space-5);
-  border: 1px solid var(--color-line);
-  border-radius: var(--radius-md);
-  background: var(--color-raised);
-}
-.transcription-language[hidden] {
-  display: none;
-}
-.transcription-language h2 {
-  margin: 0 0 var(--space-1);
-  font-size: 15px;
-  font-weight: 500;
-  letter-spacing: -0.01em;
-}
-.transcription-language-copy {
-  display: grid;
-  grid-template-columns: auto minmax(0, 1fr);
-  gap: 2px var(--space-3);
-  align-items: start;
-}
-.transcription-language-copy > .icon {
-  grid-row: span 2;
-  width: 20px;
-  height: 20px;
-  margin-top: 2px;
-  color: var(--color-accent);
-}
-.transcription-language .note {
-  margin: 0;
-  font-size: 11px;
-}
-.transcription-language-control label {
-  margin-top: 0;
-}
-.transcription-language-control > .note,
-.transcription-language-control > .error {
-  margin-top: var(--space-2);
-}
 .studio-recorder {
   position: relative;
   background: var(--color-raised);
   border: 1px solid var(--color-line);
   border-radius: var(--radius-lg);
-  padding: 22px 26px;
+  padding: 0;
+  overflow: hidden;
 }
-.recorder-toolbar {
+/* Dictate device card (Ember v2): language and microphone side by side with
+ * icon labels, then the control/stage body grid and the models row. */
+.dictate-device {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 24px;
+  padding: 24px 28px;
+  border-bottom: 1px solid var(--color-line);
+}
+.device-field {
+  min-width: 0;
+}
+.device-field > .error,
+.device-field > .field-hint {
+  margin: 8px 0 0;
+}
+.device-field .select-trigger {
+  max-width: none;
+}
+.field-label {
   display: flex;
-  align-items: flex-end;
+  align-items: center;
+  gap: 8px;
+  font-weight: 500;
+  margin-bottom: 8px;
+}
+.field-label > .icon {
+  width: 18px;
+  height: 18px;
+  flex: none;
+  color: var(--color-accent);
+}
+.field-hint {
+  display: block;
+  margin: 0;
+  font-size: 13.5px;
+  color: var(--color-muted);
+}
+.dictate-body {
+  display: grid;
+  grid-template-columns: minmax(0, 5fr) minmax(0, 6fr);
+  gap: 28px;
+  padding: 28px;
+}
+.dictate-controls {
+  display: flex;
+  flex-direction: column;
   justify-content: space-between;
-  gap: var(--space-4);
-}
-.microphone-control {
-  flex: 0 1 380px;
+  gap: 28px;
   min-width: 0;
 }
-.microphone-control > label {
-  color: var(--color-muted);
-  font-size: 11px;
-  margin-bottom: var(--space-2);
-}
-.recorder-limit {
-  color: var(--color-muted);
-  font-size: 11px;
-  padding-block: var(--space-3);
-}
-.recorder-stage {
-  padding: var(--space-6) 0 var(--space-2);
-}
-.recorder-main,
-.recorder-signal {
+.dictate-stage {
+  display: flex;
+  flex-direction: column;
   min-width: 0;
+  min-height: 210px;
+  padding: 4px 0;
+}
+.stage-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: var(--space-3);
+  color: var(--color-muted);
+  font-size: 13.5px;
+}
+.dictate-hint {
+  margin: 6px 0 0;
+  font-size: 13.5px;
+  color: var(--color-muted);
+}
+.dictate-hint.quiet-input {
+  color: var(--color-error);
+}
+.dictate-models {
+  border-top: 1px solid var(--color-line);
+  padding: 20px 28px 24px;
+}
+.dictate-models .configured-models {
+  border-top: 0;
+  margin-top: 0;
+  padding: 0;
+}
+@media (max-width: 860px) {
+  .dictate-device,
+  .dictate-body {
+    grid-template-columns: 1fr;
+  }
 }
 .recorder-heading {
   display: flex;
@@ -715,12 +734,12 @@ h3 {
   min-width: 0;
   overflow-wrap: anywhere;
 }
-.recorder-guidance {
-  min-height: 26px;
-  margin-top: var(--space-2);
-}
 .recorder-signal {
-  margin: var(--space-4) 0 var(--space-5);
+  flex: 1;
+  display: flex;
+  min-height: 0;
+  min-width: 0;
+  margin: 0;
 }
 /* While recording, the sidebar bird tilts and its call dashes quicken. The
  * class lives on the body because the lockup renders outside the recorder. */
@@ -731,20 +750,15 @@ body.is-recording .brand-logo .dsh {
   animation-duration: 0.9s;
 }
 .recording-timer {
-  display: inline-flex;
-  align-items: center;
-  gap: var(--space-2);
-  font-size: 11px;
+  font-family: 'Bricolage Grotesque', sans-serif;
+  font-weight: 800;
+  font-size: 24px;
+  letter-spacing: -0.02em;
   font-variant-numeric: tabular-nums;
   color: var(--color-ink);
-  animation: panel-enter 160ms var(--ease) both;
 }
-.recording-timer::before {
-  content: '';
-  width: 5px;
-  height: 5px;
-  border-radius: 50%;
-  background: var(--color-error);
+.recording-timer.live {
+  color: var(--color-accent);
 }
 .record-button {
   position: relative;
@@ -815,14 +829,7 @@ body.is-recording .brand-logo .dsh {
     transform: none;
   }
 }
-.recorder-hint {
-  color: var(--color-muted);
-  font-size: 12px;
-  margin: 0;
-}
-.recorder-hint.quiet-input {
-  color: var(--color-error);
-}
+
 .setup-link {
   margin-top: var(--space-2);
 }
@@ -833,10 +840,6 @@ body.is-recording .brand-logo .dsh {
   flex: 1;
   gap: var(--space-2);
   color: var(--color-muted);
-}
-.microphone-picker > .icon {
-  width: 16px;
-  height: 16px;
 }
 .microphone-picker .select-trigger {
   flex: 1;
@@ -2014,11 +2017,6 @@ textarea:focus:enabled {
   }
 }
 @media (max-width: 1050px) {
-  .recorder-stage {
-    grid-template-columns: minmax(0, 1fr);
-    gap: var(--space-4);
-    padding: var(--space-6) 0;
-  }
   .recorder-signal {
     --voice-height: 48px;
   }
@@ -2099,25 +2097,6 @@ textarea:focus:enabled {
   }
   .intro {
     font-size: 12px;
-  }
-  .studio-recorder {
-    padding: var(--space-4) var(--space-4) 0;
-  }
-  .transcription-language {
-    grid-template-columns: 1fr;
-    gap: var(--space-4);
-    padding: var(--space-4);
-  }
-  .recorder-toolbar {
-    align-items: stretch;
-    flex-direction: column;
-    gap: var(--space-1);
-  }
-  .microphone-control {
-    flex-basis: auto;
-  }
-  .recorder-limit {
-    padding: 0;
   }
   .microphone-picker .select-trigger {
     max-width: none;
