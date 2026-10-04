@@ -309,12 +309,13 @@ not grant microphone permission or record audio.
 
 ### Brand assets
 
-Edit only `apps/desktop/src/assets/vesper.svg` for the selected bird/wordmark.
-The frontend embeds that trusted, bundled SVG without a runtime fetch or font.
+Edit only `apps/desktop/src/assets/vesper.svg` for the Songbird bird/wordmark
+and `apps/desktop/src/assets/ember-bird.svg` for the in-app Ember lockup mark.
+The frontend embeds those trusted, bundled SVGs without a runtime fetch or font.
 
 The README's `docs/assets/vesper-banner.svg` is a generated, self-contained
 1200 × 320 SVG. It preserves every canonical bird/call/letter path and embeds
-the existing background, ink and sage tokens from `apps/desktop/src/tokens.css`.
+the existing background, ink and ember tokens from `apps/desktop/src/tokens.css`.
 Do not separately redraw its logo or edit the generated file. Regenerate it
 after changes to those inputs:
 
@@ -349,7 +350,7 @@ node scripts/generate-brand-icons.mjs --check
 node --test scripts/brand-identity.test.mjs
 ```
 
-The generator extracts the canonical bird, resolves the existing graphite/sage
+The generator extracts the canonical bird, resolves the existing ember
 tokens to sRGB, and updates `icons/source.svg` plus the 18 existing PNG/ICO/ICNS
 derivatives. It also generates `menu-bar-template.svg` and its transparent black
 36 × 36 PNG from the same unchanged bird and call paths, without the tile or

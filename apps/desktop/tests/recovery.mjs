@@ -2340,7 +2340,7 @@ await test('Saved model summaries stay synchronized and navigate to the model se
   assert(!state.counts.start_recording, 'Label interaction started recording');
 });
 
-await test('Capture keeps one control and Reed follows acknowledged recording and real silence', async () => {
+await test('Capture keeps one control and bars follow acknowledged recording and real silence', async () => {
   const start = deferred();
   const state = await setup({
     main: true,
@@ -2359,44 +2359,44 @@ await test('Capture keeps one control and Reed follows acknowledged recording an
     'Recorder unavailable',
   );
   const button = target.querySelector('.record-button'),
-    glyph = button.querySelector('.capture-glyph');
+    detail = button.querySelector('[data-icon="record"] .a'),
+    recorder = () => target.querySelector('.studio-recorder');
   button.click();
   await until(() => state.counts.start_recording, 'Start was not requested');
-  assert(!glyph.classList.contains('recording'), 'Capture animated before acknowledgement');
+  assert(!recorder().classList.contains('is-recording'), 'Capture animated before acknowledgement');
   start.resolve();
   await until(
-    () => glyph.classList.contains('recording') && !button.disabled,
+    () => recorder().classList.contains('is-recording') && !button.disabled,
     'Capture did not acknowledge recording',
   );
   assert(
     target.querySelector('.record-button') === button &&
-      button.querySelector('.capture-glyph') === glyph,
+      button.querySelector('[data-icon="record"] .a') === detail,
     'Record control remounted',
   );
-  const path = () => target.querySelector('.studio-recorder .wave-trace').getAttribute('d');
+  const bars = () =>
+    [...target.querySelectorAll('.ember-wave i')].map((bar) => parseFloat(bar.style.height));
   await until(() => state.counts.get_audio_features > 2, 'Measured audio was not sampled');
-  assert((path().match(/M /g) ?? []).length === 45, 'Full recorder is not Reed');
-  const moving = path();
-  await new Promise((r) => setTimeout(r, 60));
-  assert(path() !== moving, 'Measured signal did not animate');
+  assert(bars().length === 56, 'Recorder wave is not the bar strip');
+  await until(() => Math.max(...bars()) > 3, 'Measured signal did not animate');
   state.quiet = true;
   await until(
-    () => !/M [\d.]+ (?!49.00)[\d.]+ V/.test(path()),
+    () => bars().every((height) => height <= 3.02),
     'Silent input retained a moving signal',
   );
-  const quiet = path();
+  const quiet = bars().join(',');
   await new Promise((r) => setTimeout(r, 70));
-  assert(path() === quiet, 'Silence invented movement');
+  assert(bars().join(',') === quiet, 'Silence invented movement');
   button.click();
   await until(
-    () => !glyph.classList.contains('recording') && !button.disabled,
+    () => !recorder().classList.contains('is-recording') && !button.disabled,
     'Stop did not settle',
   );
   assert(target.querySelector('.record-button') === button, 'Stop replaced the control');
 });
 
 for (const main of [true, false])
-  await test(`Microphone synchronization: ${main ? 'Dictate' : 'floating capture'} follows pitch and volume without autonomous motion`, async () => {
+  await test(`Microphone synchronization: ${main ? 'Dictate bars follow volume' : 'floating capture follows pitch and volume'} without autonomous motion`, async () => {
     let telemetry = { level: 0.025, pitchHz: 110 };
     let stalled = false;
     let nextReading = null;
@@ -2422,7 +2422,50 @@ for (const main of [true, false])
       target.querySelector('.record-button').click();
     }
     const path = () => target.querySelector('.voice-indicator .wave-trace')?.getAttribute('d');
+    const bars = () =>
+      [...target.querySelectorAll('.ember-wave i')].map((bar) => parseFloat(bar.style.height));
     const pause = (ms) => new Promise((r) => setTimeout(r, ms));
+    if (main) {
+      // The Dictate bar strip shows energy only: steady input holds steady
+      // bars, pitch alone never reshapes them, and volume drives the height.
+      // Pitch tracking stays covered by the floating-capture leg below.
+      await until(
+        () => state.counts.get_audio_features > 2 && bars().length === 56,
+        'Audio telemetry missing',
+      );
+      if (!matchMedia('(prefers-reduced-motion: reduce)').matches) {
+        await pause(400);
+        const steady = bars();
+        await pause(150);
+        assert(
+          steady.every((height, index) => bars()[index] === height),
+          'Unchanged volume drives an unrelated looping animation',
+        );
+        telemetry.pitchHz = 330;
+        await pause(400);
+        assert(
+          bars().every((height, index) => bars()[index] === steady[index]),
+          'Pitch alone reshaped the energy display',
+        );
+        telemetry.level = 0.4;
+        await until(
+          () => Math.max(...bars()) > Math.max(...steady) + 10,
+          'Louder input did not raise the bars',
+        );
+        telemetry.level = 0.006;
+        await until(
+          () => bars().every((height) => height <= 3.02),
+          'Quieter input did not settle the bars',
+        );
+        stalled = true;
+        await pause(300);
+        assert(
+          bars().every((height) => height <= 3.02),
+          'Stalled telemetry retained microphone motion',
+        );
+      }
+      return;
+    }
     await until(() => state.counts.get_audio_features > 2 && path(), 'Audio telemetry missing');
     if (!matchMedia('(prefers-reduced-motion: reduce)').matches) {
       await pause(650);
@@ -2971,9 +3014,9 @@ await test('Navigation changes icon state while keeping its target stationary', 
       );
     }
   }
-  const knob = target.querySelector('[data-icon="settings"] .first');
+  const knob = target.querySelector('[data-icon="settings"] .k1');
   await until(
-    () => getComputedStyle(knob).transform === 'matrix(1, 0, 0, 1, 6, 0)',
+    () => getComputedStyle(knob).transform === 'matrix(1, 0, 0, 1, 7, 0)',
     'Selected Settings icon did not settle',
   );
   const selected = buttons.at(-1);
@@ -3207,21 +3250,32 @@ await test('Shared disclosure arrows track native open state and retain keyboard
   );
 });
 
-await test('Selected Vesper identity keeps every letter still and limits motion to two calls', async () => {
+await test('Ember lockup keeps the bird body and wordmark still', async () => {
   const state = await setup({ main: true });
   const sidebar = target.querySelector('.brand .brand-logo');
   const sheet = target.querySelector('.about-sheet');
   const logo = sheet.querySelector('.brand-logo');
-  const letters = (element) => [...element.querySelectorAll('[data-letter]')];
   for (const element of [sidebar, logo]) {
-    assert(
-      letters(element)
-        .map((letter) => letter.dataset.letter)
-        .join('') === 'vesper',
-      'Incomplete wordmark',
-    );
+    assert(element.querySelector('.ember-word')?.textContent === 'vesper', 'Incomplete wordmark');
+    assert(element.querySelector('svg'), 'Missing bird mark');
   }
-  assert(sidebar.getAnimations({ subtree: true }).length === 0, 'Sidebar logo animates');
+  const moving = (element) =>
+    element.getAnimations({ subtree: true }).map((animation) => animation.effect.target);
+  const still = (element) => {
+    for (const node of moving(element)) {
+      assert(
+        node.classList.contains('dsh') || node.classList.contains('lid'),
+        'Animation targets the bird body or wordmark',
+      );
+    }
+  };
+  if (matchMedia('(prefers-reduced-motion: reduce)').matches) {
+    assert(moving(sidebar).length === 0, 'Reduced motion did not suppress logo motion');
+  } else {
+    assert(moving(sidebar).length > 0, 'Idle call motion missing');
+    still(sidebar);
+    still(logo);
+  }
   [...target.querySelectorAll('.sidebar nav button')]
     .find((button) => button.textContent.includes('Settings'))
     .click();
@@ -3233,41 +3287,24 @@ await test('Selected Vesper identity keeps every letter still and limits motion 
   if (matchMedia('(prefers-reduced-motion: reduce)').matches) {
     assert(animations.length === 0, 'Reduced motion did not suppress logo motion');
   } else {
-    assert(animations.length === 2, 'Expected exactly two call-stroke animations');
+    assert(animations.length > 0, 'About did not replay call motion');
     for (const animation of animations) {
       assert(
-        /^vesper-call-[12]$/.test(animation.effect.target.getAttribute('class')),
-        'Animation targets the bird or letters',
+        animation.effect.target.classList.contains('dsh') ||
+          animation.effect.target.classList.contains('lid'),
+        'Animation targets the bird body or wordmark',
       );
-      assert(animation.effect.getTiming().iterations === 1, 'Logo loops');
+      assert(animation.effect.getTiming().iterations === Infinity, 'Call motion is not ambient');
       animation.pause();
     }
-    for (const time of [0, 120, 240, 360, 480, 600, 720, 840]) {
-      animations.forEach((animation) => {
-        animation.currentTime = time;
-      });
-      for (const letter of letters(logo)) {
-        const path = letter.querySelector('path');
-        assert(
-          getComputedStyle(path).opacity === '1' && getComputedStyle(path).transform === 'none',
-          'A letter fades or moves',
-        );
-        assert(path.getBBox().width > 0 && path.getBBox().height > 0, 'A letter is missing');
-      }
-    }
-    animations.forEach((animation) => animation.finish());
-  }
-  for (const call of logo.querySelectorAll('[class^="vesper-call-"]')) {
-    assert(getComputedStyle(call).opacity === '1', 'The final mark is incomplete');
   }
   sheet.querySelector('.close').click();
-  await until(() => !logo.classList.contains('animate'), 'Close did not clear motion activation');
   await openNativeAbout(state);
   await tick();
   if (!matchMedia('(prefers-reduced-motion: reduce)').matches) {
     const replay = logo.getAnimations({ subtree: true });
     assert(
-      replay.length === 2 && replay.every((animation) => !animations.includes(animation)),
+      replay.length > 0 && replay.every((animation) => !animations.includes(animation)),
       'Reopening did not start fresh motion',
     );
   }

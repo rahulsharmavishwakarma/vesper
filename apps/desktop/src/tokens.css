@@ -1,30 +1,32 @@
-/* Vesper Studio · the approved graphite and sage design. */
+/* Vesper Ember · the approved ember-on-black design (issue #87). */
 :root {
   color-scheme: dark;
-  --font-body: 'Geist', system-ui, sans-serif;
-  --font-mono: ui-monospace, SFMono-Regular, monospace;
-  --color-bg: oklch(19% 0.008 150);
-  --color-panel: oklch(22% 0.009 150);
-  --color-raised: oklch(27% 0.01 150);
-  --color-ink: oklch(95% 0.01 100);
-  --color-muted: oklch(71% 0.013 140);
-  --color-line: oklch(34% 0.012 150);
-  --color-accent: oklch(83% 0.075 137);
-  --color-accent-hover: oklch(89% 0.065 137);
-  --color-on-accent: oklch(23% 0.035 140);
-  --color-tint: oklch(30% 0.027 140);
-  --color-focus: oklch(80% 0.12 240);
+  --font-body: 'Bricolage Grotesque', sans-serif;
+  --font-display: 'Bricolage Grotesque', sans-serif;
+  --font-mono: 'Bricolage Grotesque', sans-serif;
+  --color-bg: #0a0a0a;
+  --color-panel: #0a0a0a;
+  --color-raised: #151515;
+  --color-ink: #fff5ee;
+  --color-muted: #9a9088;
+  --color-line: #272727;
+  --color-accent: #ff6b3d;
+  --color-accent-hover: #ff8258;
+  --color-on-accent: #1a0800;
+  --color-tint: #251209;
+  --color-focus: #ff6b3d;
+  --color-danger: #ff7a6b;
   --color-error: oklch(80% 0.12 30);
   --color-error-tint: oklch(29% 0.035 30);
   --color-warning: oklch(84% 0.09 85);
   --color-transparent: transparent;
-  --color-control-edge: oklch(55.5% 0.018 145);
-  --color-control-hover: oklch(64% 0.024 145);
-  --color-accent-light: oklch(87% 0.069 137);
+  --color-control-edge: #6b6259;
+  --color-control-hover: #7d7468;
+  --color-accent-light: #ff8a5c;
   --color-error-light: oklch(84% 0.1 30);
-  --color-surface-light: oklch(29.5% 0.014 145);
-  --color-overlay: oklch(8% 0.008 150 / 0.72);
-  --color-sheen: oklch(97% 0.01 130 / 0.09);
+  --color-surface-light: #1c1a18;
+  --color-overlay: rgb(0 0 0 / 72%);
+  --color-sheen: rgb(255 245 238 / 8%);
   --space-1: 4px;
   --space-2: 8px;
   --space-3: 12px;
@@ -35,11 +37,12 @@
   --space-10: 40px;
   --space-12: 48px;
   --space-16: 64px;
-  --radius-sm: 8px;
+  --radius-sm: 10px;
   --radius-md: 16px;
   --radius-lg: 24px;
   --radius-pill: 999px;
-  --ease: cubic-bezier(0.2, 0.8, 0.2, 1);
+  --ease: cubic-bezier(0.22, 1, 0.36, 1);
+  --ease-spring: cubic-bezier(0.34, 1.56, 0.64, 1);
   --ease-slide: cubic-bezier(0.22, 0.8, 0.3, 1);
   --duration-slide: 260ms;
   --ease-out: cubic-bezier(0.2, 0.8, 0.2, 1);
@@ -52,34 +55,34 @@
   --ease-nav-icon: cubic-bezier(0.35, 0, 0.2, 1);
 }
 
-/* Appearance choices from the selected Settings study. */
+/* Appearance choices from the Ember design system (issue #87). */
 :root {
-  --color-theme-paper: #f6f7f8;
-  --color-theme-night: oklch(22% 0.009 150);
-  --color-theme-mark: oklch(63% 0.05 140);
+  --color-theme-paper: #fff8f2;
+  --color-theme-night: #0a0a0a;
+  --color-theme-mark: #ff6b3d;
 }
 :root[data-theme='light'] {
   color-scheme: light;
-  /* Neutral surfaces keep sage reserved for actions and selected states. */
-  --color-bg: #f6f7f8;
-  --color-panel: #ffffff;
-  --color-raised: #edf0f2;
-  --color-ink: #24292d;
-  --color-muted: #5f686f;
-  --color-line: #dce0e3;
-  --color-accent: #496f59;
-  --color-accent-hover: #395a47;
+  --color-bg: #fff8f2;
+  --color-panel: #ffeedf;
+  --color-raised: #ffffff;
+  --color-ink: #1d120b;
+  --color-muted: #7d6959;
+  --color-line: #f0dccb;
+  --color-accent: #c9471c;
+  --color-accent-hover: #a83a16;
   --color-on-accent: #ffffff;
-  --color-tint: #eaf0ec;
-  --color-focus: oklch(48% 0.15 250);
+  --color-tint: #fbe3d3;
+  --color-focus: #c9471c;
+  --color-danger: #c93a2a;
   --color-error: oklch(46% 0.15 30);
   --color-error-tint: oklch(94% 0.025 30);
   --color-warning: oklch(43% 0.075 75);
-  --color-control-edge: #858f97;
-  --color-control-hover: #65717a;
-  --color-accent-light: #537863;
+  --color-control-edge: #a08b74;
+  --color-control-hover: #86735f;
+  --color-accent-light: #f4814f;
   --color-error-light: oklch(50% 0.14 30);
-  --color-surface-light: #f5f6f7;
-  --color-overlay: rgb(24 29 33 / 40%);
+  --color-surface-light: #fff3e9;
+  --color-overlay: rgb(29 18 11 / 40%);
   --color-sheen: rgb(255 255 255 / 8%);
 }

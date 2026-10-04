@@ -182,7 +182,7 @@
     border-radius: var(--radius-sm);
   }
   .shortcut-field:hover:enabled {
-    background: var(--color-panel);
+    background: var(--color-raised);
     border-color: var(--color-control-hover);
   }
   .shortcut-field:focus-visible {

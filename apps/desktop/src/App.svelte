@@ -597,11 +597,13 @@
               <fieldset disabled={pending !== null || pipelineBusy || downloadRequest !== null}>
                 <legend class="visually-hidden">Application settings</legend>
                 <section
-                  class="transcription-language"
+                  class="transcription-language ember-rise"
+                  style="--rise-delay: 0s;"
                   hidden={activeView !== 'dictate'}
                   aria-labelledby="dictate-language-heading"
                 >
                   <div class="transcription-language-copy">
+                    <Icon name="globe" />
                     <h2 id="dictate-language-heading">Transcription language</h2>
                     <p id="dictate-language-help" class="note">{languageHint}</p>
                   </div>

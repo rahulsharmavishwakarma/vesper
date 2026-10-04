@@ -1,6 +1,6 @@
 # UI interaction design
 
-Keep common actions familiar and direct. A control should let someone perform the task without assembling its implementation details. Preserve Vesper's shared typography, graphite/sage tokens, focus treatment, spacing, and approved motion; simplicity is an interaction requirement as well as a visual one.
+Keep common actions familiar and direct. A control should let someone perform the task without assembling its implementation details. Preserve Vesper's shared Bricolage Grotesque typography, ember tokens, focus treatment, spacing, and approved motion; simplicity is an interaction requirement as well as a visual one.
 
 Source comments explain behavior, constraints and asset ownership. Do not embed
 design-tool names, self-review scores or generation-session stamps in production
@@ -14,8 +14,20 @@ GitHub issue text and project display metadata. Do not substitute it for the
 transcription verb, third-party model names, executable identifiers or recorded
 historical names. See [product naming and compatibility](development.md#product-name-and-compatibility).
 
-**A — Songbird** is the owner-selected Vesper identity, approved in
-[issue #71](https://github.com/rahulsharmavishwakarma/transcribe/issues/71).
+**Ember** is the current Vesper identity, finalized by the owner in
+[issue #87](https://github.com/rahulsharmavishwakarma/transcribe/issues/87).
+The in-app lockup pairs the filled ember bird in
+[its own SVG](../apps/desktop/src/assets/ember-bird.svg) with a Bricolage
+Grotesque 800 wordmark, and every other application string uses the same
+Bricolage Grotesque family — body and labels at 400/500, no monospace anywhere. The bird keeps two call dashes and an eye-lid highlight with an idle
+chirp/blink motion and a hover tilt, all stilled by Reduce Motion. Native app
+icons, the menu-bar template and the README banner still derive from the
+Songbird source below until a follow-up requalifies that pipeline.
+
+**A — Songbird** was the owner-selected Vesper identity, approved in
+[issue #71](https://github.com/rahulsharmavishwakarma/transcribe/issues/71),
+until Ember superseded it for in-app UI. Its selection and qualification are
+preserved here as history.
 The original bird, two call strokes and six individually drawn letter paths live
 in [the canonical SVG](../apps/desktop/src/assets/vesper.svg). No logo library,
 external font or downloaded artwork supplies this mark. The earlier web
@@ -23,8 +35,9 @@ similarity screening was preliminary, not a claim of worldwide exclusivity or
 trademark clearance. Selecting the artwork does not select a distribution
 license or establish that the Vesper name is legally available.
 
-The repository README uses the same full Songbird wordmark in a still graphite
-banner: sage bird/calls, light lettering, and generous clear space. All six
+The repository README uses the Songbird wordmark in a still ember
+banner: the Songbird bird/calls recolored ember on near-black, light lettering,
+and generous clear space. All six
 letters remain visible. The tagline and development status sit outside
 the artwork as accessible, reflowing text. Keep this opening brief and direct;
 do not add decorative animation, borrowed product artwork, fabricated badges or
@@ -47,16 +60,17 @@ of an unpublished asset on the hosted repository or a screen-reader audit.
 Those screenshots precede the platform-neutral wording refinement; the artwork
 and layout are unchanged, but the longer tagline was not requalified in them.
 
-`BrandLogo.svelte` renders that same source at 160 px in the sidebar, 120 px in
-the narrow-window header and 224 px in About, bounded by the available width.
-Existing sage/ink tokens provide its colours. The sidebar's existing button
-retains its accessible destination and keyboard behavior; About exposes the SVG
-as “Vesper.” The compact capture strip
-keeps readable text. The macOS menu bar uses only the still bird and its two
+`BrandLogo.svelte` renders the Ember lockup at 160 px in the sidebar, 120 px in
+the narrow-window header and 224 px in About, scaled by container width and
+bounded by the available width. The accent token colours the bird; ink colours
+the wordmark, which remains real text. The sidebar's existing button
+retains its accessible destination and keyboard behavior; About replays the idle
+call motion on opening. The compact capture strip
+keeps readable text. The macOS menu bar uses only the still Songbird bird and its two
 call strokes, with no wordmark or tile. Its transparent template lets macOS
 choose the monochrome tint; the tooltip retains the Vesper name and activity.
 Clicking continues to open the same native menu. Native app icons use a still
-bird on the existing graphite rounded tile, generated from the same source
+bird on a near-black rounded tile, generated from the Songbird source
 rather than redrawn.
 
 Only About opening triggers a finite, staggered reveal of the two call strokes.
@@ -107,7 +121,7 @@ The selected HTML Settings study is integrated into the application: an interior
 sidebar for **Recording**, **Writing**, **Shortcuts**, **Appearance** and **About**,
 with one shared content surface. Selected sections have a tonal background and
 no underline. The native application sidebar keeps its existing treatment.
-Sections use 20 px medium Geist headings with natural tracking, a 1.4 line height
+Sections use extra-bold Bricolage headings with natural tracking, a 1.4 line height
 and shared description spacing; the main page title stays visually distinct.
 At narrow widths the interior navigation becomes a wrapping row of 44 px targets.
 
@@ -121,10 +135,11 @@ the last saved snapshot. Vocabulary retains its own Save/Discard actions. Restor
 defaults is under Recording's advanced options and still explicitly saves defaults.
 
 Appearance offers Light, Dark and System using the shared semantic tokens.
-Light uses white panels over a soft neutral gray canvas, charcoal text and gray
-control outlines. Reserve the sage accent for primary actions, selections and
-status indicators; do not tint all backgrounds or secondary text green. Its
-appearance swatch uses the same canvas token value. The dark palette is unchanged.
+Light uses white cards over a warm cream canvas with a peach sidebar, espresso
+text and tan control outlines. Reserve the ember accent for primary actions,
+selections and status indicators; do not tint all backgrounds or secondary text
+orange. Its appearance swatch uses the same canvas token value. Dark pairs a
+near-black canvas with ember accents.
 Keep primary text and supporting copy at least 4.5:1 against their surfaces,
 and active control outlines and focus indicators at least 3:1. Palette revisions
 must be inspected across Dictate, History, Models and Settings, including narrow
@@ -135,6 +150,12 @@ or higher for control outlines on the canvas/panels, and 6.03:1 for focus on the
 canvas. The production renderer build and five existing appearance/responsive
 browser checks passed, including Settings at 320/360/375/414/768/1280 px. These
 are local Chromium checks, not native display or screen-reader qualification.
+The Ember palette (October 2026) measures 18.43:1 dark body and 17.45:1 light
+body text, 6.33:1 dark and 4.94:1 light supporting text, 6.88:1 dark and
+4.77:1 light primary-button labels, 3.32:1 dark and 3.10:1 light control
+outlines, and 7.00:1 dark and 4.54:1 light focus. Ember deepens the light
+accent, muted tone and both control outlines from the finalized mock values to
+hold these bars; the hues are unchanged.
 Selection applies immediately, defaults to the existing Dark appearance and is
 stored under `vesper-appearance-v1` in the browser/webview's local storage,
 separately from native inference settings. Other windows on the same origin sync

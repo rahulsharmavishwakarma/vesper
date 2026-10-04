@@ -1,31 +1,10 @@
 @import './tokens.css';
 @font-face {
-  font-family: 'Geist';
+  font-family: 'Bricolage Grotesque';
   font-style: normal;
-  font-weight: 400;
+  font-weight: 200 800;
   font-display: swap;
-  src: url('./assets/geist-400.ttf') format('truetype');
-}
-@font-face {
-  font-family: 'Geist';
-  font-style: normal;
-  font-weight: 500;
-  font-display: swap;
-  src: url('./assets/geist-500.ttf') format('truetype');
-}
-@font-face {
-  font-family: 'Geist';
-  font-style: normal;
-  font-weight: 600;
-  font-display: swap;
-  src: url('./assets/geist-600.ttf') format('truetype');
-}
-@font-face {
-  font-family: 'Geist';
-  font-style: normal;
-  font-weight: 700;
-  font-display: swap;
-  src: url('./assets/geist-700.ttf') format('truetype');
+  src: url('./assets/bricolage-grotesque.ttf') format('truetype');
 }
 :root {
   font-synthesis: none;
@@ -204,7 +183,7 @@ details[open] summary {
   padding-left: var(--space-5);
 }
 
-/* Vesper Studio: token-driven visual styles. Motion follows application state.
+/* Vesper Ember: token-driven visual styles. Motion follows application state.
  * Structural resets stay separate from this token-driven visual layer.
  */
 :root {
@@ -239,13 +218,16 @@ button {
   border-radius: var(--radius-sm);
   background: var(--color-raised);
   color: var(--color-ink);
-  font-size: 13px;
+  font-size: 15px;
   padding: 10px var(--space-4);
   transition:
     transform 160ms var(--ease),
     opacity 160ms var(--ease),
     background-color 140ms var(--ease),
     border-color 140ms var(--ease);
+}
+button.primary:hover:enabled {
+  transform: translateY(-2px);
 }
 button:hover:enabled {
   background: var(--color-line);
@@ -287,7 +269,7 @@ button.quiet:hover:enabled {
 }
 :is(button, input, select, textarea, summary, a):focus-visible {
   outline: 2px solid var(--color-focus);
-  outline-offset: 3px;
+  outline-offset: 2px;
 }
 input:not([type='checkbox']),
 select,
@@ -297,7 +279,7 @@ textarea {
   border-radius: var(--radius-sm);
   color: var(--color-ink);
   min-height: 44px;
-  font-size: 13px;
+  font-size: 15px;
   max-width: 100%;
   transition:
     border-color 140ms var(--ease),
@@ -319,7 +301,7 @@ input:disabled,
 select:disabled,
 textarea:disabled {
   color: var(--color-muted);
-  background: var(--color-panel);
+  background: var(--color-raised);
 }
 input[aria-invalid='true'],
 select[aria-invalid='true'],
@@ -388,7 +370,7 @@ input[type='checkbox']:checked {
   color: var(--color-muted);
 }
 .eyebrow {
-  font-size: 10px;
+  font-size: 11px;
   letter-spacing: 0.1em;
   text-transform: uppercase;
   font-weight: 500;
@@ -396,8 +378,8 @@ input[type='checkbox']:checked {
 }
 .note,
 .preview-note {
-  font-size: 12px;
-  line-height: 1.7;
+  font-size: 13.5px;
+  line-height: 1.5;
 }
 .note {
   margin-top: var(--space-2);
@@ -405,7 +387,7 @@ input[type='checkbox']:checked {
 .error,
 .validation-errors,
 .note.invalid {
-  color: var(--color-error);
+  color: var(--color-danger);
 }
 .success,
 .review-badge.approved {
@@ -433,25 +415,32 @@ h3 {
   overflow-wrap: anywhere;
 }
 h1 {
-  font-size: clamp(26px, 3vw, 36px);
-  line-height: 1.2;
-  letter-spacing: -0.045em;
-  font-weight: 500;
+  font-family: var(--font-display);
+  font-size: clamp(40px, 5vw, 66px);
+  line-height: 1.02;
+  letter-spacing: -0.035em;
+  font-weight: 800;
   margin-bottom: var(--space-3);
 }
+.studio-main[data-view='models'] h1 {
+  font-size: clamp(40px, 4.5vw, 60px);
+}
 h2 {
-  font-size: 15px;
-  letter-spacing: -0.02em;
-  font-weight: 500;
+  font-family: var(--font-display);
+  font-size: 22px;
+  line-height: 1.2;
+  letter-spacing: -0.035em;
+  font-weight: 800;
   margin-bottom: var(--space-6);
 }
 h3 {
+  font-family: var(--font-display);
   font-size: 13px;
-  font-weight: 500;
+  font-weight: 800;
 }
 .app-shell {
   display: grid;
-  grid-template-columns: 224px minmax(0, 1fr);
+  grid-template-columns: 220px minmax(0, 1fr);
   min-height: 100vh;
 }
 .sidebar {
@@ -482,7 +471,7 @@ h3 {
 .brand:hover:enabled {
   background: var(--color-transparent);
 }
-/* The selected SVG wordmark replaces the former text-only brand span. */
+/* The Ember lockup (bird mark plus Bricolage wordmark) scales with its container. */
 .brand > .brand-logo {
   width: 160px;
   max-width: 100%;
@@ -588,16 +577,17 @@ h3 {
   }
 }
 .studio-main {
-  width: min(100%, 1072px);
+  width: min(100%, 980px);
   min-width: 0;
   margin: 0 auto;
-  padding: var(--space-8) var(--space-12) var(--space-12);
+  padding: var(--space-8) 44px var(--space-12);
 }
 .page-header {
   margin-bottom: var(--space-8);
 }
 .intro {
-  font-size: 13px;
+  font-size: 17px;
+  line-height: 1.5;
   margin-bottom: 0;
 }
 .section-heading {
@@ -627,18 +617,33 @@ h3 {
   grid-template-columns: minmax(0, 1fr) minmax(220px, 320px);
   align-items: start;
   gap: var(--space-6);
-  margin-bottom: var(--space-6);
+  margin-bottom: var(--space-4);
   padding: var(--space-4) var(--space-5);
   border: 1px solid var(--color-line);
   border-radius: var(--radius-md);
-  background: var(--color-panel);
+  background: var(--color-raised);
 }
 .transcription-language[hidden] {
   display: none;
 }
 .transcription-language h2 {
   margin: 0 0 var(--space-1);
-  font-size: 14px;
+  font-size: 15px;
+  font-weight: 500;
+  letter-spacing: -0.01em;
+}
+.transcription-language-copy {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  gap: 2px var(--space-3);
+  align-items: start;
+}
+.transcription-language-copy > .icon {
+  grid-row: span 2;
+  width: 20px;
+  height: 20px;
+  margin-top: 2px;
+  color: var(--color-accent);
 }
 .transcription-language .note {
   margin: 0;
@@ -653,10 +658,10 @@ h3 {
 }
 .studio-recorder {
   position: relative;
-  background: var(--color-panel);
+  background: var(--color-raised);
   border: 1px solid var(--color-line);
   border-radius: var(--radius-lg);
-  padding: var(--space-5) var(--space-6) 0;
+  padding: 22px 26px;
 }
 .recorder-toolbar {
   display: flex;
@@ -679,11 +684,7 @@ h3 {
   padding-block: var(--space-3);
 }
 .recorder-stage {
-  display: grid;
-  grid-template-columns: minmax(0, 1fr) minmax(160px, 28%);
-  align-items: center;
-  gap: var(--space-6);
-  padding: var(--space-8) 0;
+  padding: var(--space-6) 0 var(--space-2);
 }
 .recorder-main,
 .recorder-signal {
@@ -695,10 +696,20 @@ h3 {
   flex-wrap: wrap;
   gap: var(--space-3);
 }
+.recorder-heading > .icon {
+  width: 28px;
+  height: 28px;
+  flex-shrink: 0;
+  color: var(--color-accent);
+}
+.studio-recorder.is-recording .recorder-heading > .icon {
+  animation: ember-core 0.9s ease-in-out infinite alternate;
+}
 .recorder-label {
-  font-size: 22px;
-  font-weight: 500;
-  letter-spacing: -0.025em;
+  font-size: clamp(26px, 4vw, 32px);
+  font-weight: 800;
+  line-height: 1.1;
+  letter-spacing: -0.035em;
   color: var(--color-ink);
   margin: 0;
   min-width: 0;
@@ -709,9 +720,15 @@ h3 {
   margin-top: var(--space-2);
 }
 .recorder-signal {
-  --voice-height: 80px;
-  --voice-width: 240px;
-  text-align: center;
+  margin: var(--space-4) 0 var(--space-5);
+}
+/* While recording, the sidebar bird tilts and its call dashes quicken. The
+ * class lives on the body because the lockup renders outside the recorder. */
+body.is-recording .brand-logo svg {
+  transform: rotate(-8deg);
+}
+body.is-recording .brand-logo .dsh {
+  animation-duration: 0.9s;
 }
 .recording-timer {
   display: inline-flex;
@@ -731,11 +748,16 @@ h3 {
 }
 .record-button {
   position: relative;
-  min-width: 140px;
-  padding: var(--space-3) var(--space-5);
-  border-radius: var(--radius-pill);
-  min-height: 48px;
+  min-height: 62px;
+  padding: 0 44px;
+  border-radius: 14px;
+  font-size: 17px;
+  font-weight: 500;
   white-space: nowrap;
+}
+.record-button > .icon {
+  width: 22px;
+  height: 22px;
 }
 .record-button:disabled {
   opacity: 0.65;
@@ -743,23 +765,55 @@ h3 {
 .record-button::after {
   content: '';
   position: absolute;
-  inset: -6px;
-  border: 1px solid var(--color-accent);
+  inset: 0;
+  border: 2px solid var(--color-accent);
   border-radius: inherit;
   opacity: 0;
   pointer-events: none;
 }
-.is-recording .record-button {
-  background: var(--color-error);
-  border-color: var(--color-error);
+.studio-recorder.is-recording .record-button::after {
+  animation: ember-ring 1.5s var(--ease) infinite;
 }
-.is-recording .record-button.primary:hover:enabled {
-  background: var(--color-error);
-  border-color: var(--color-error);
+@keyframes ember-ring {
+  from {
+    transform: scale(1);
+    opacity: 0.7;
+  }
+  to {
+    transform: scale(1.22, 1.55);
+    opacity: 0;
+  }
 }
-.is-recording .record-button::after {
-  border-color: var(--color-error);
-  opacity: 0.4;
+@keyframes ember-core {
+  to {
+    transform: scale(1.35);
+  }
+}
+@keyframes ember-rise {
+  from {
+    opacity: 0;
+    transform: translateY(12px);
+  }
+}
+/* Ember staggered entrance (issue #87): page blocks rise in reading order.
+ * Honors the same reduced-motion contract as the rest of the app. */
+.ember-rise {
+  animation: ember-rise 0.7s var(--ease) both;
+  animation-delay: var(--rise-delay, 0s);
+}
+@media (prefers-reduced-motion: reduce) {
+  .ember-rise {
+    animation: none;
+  }
+  .studio-recorder.is-recording .record-button::after,
+  .studio-recorder.is-recording .recorder-heading > .icon,
+  .microphone-refresh > span.spinning,
+  .activity-link .status-dot::after {
+    animation: none;
+  }
+  body.is-recording .brand-logo svg {
+    transform: none;
+  }
 }
 .recorder-hint {
   color: var(--color-muted);
@@ -803,10 +857,12 @@ h3 {
 }
 .configured-models {
   display: flex;
-  align-items: center;
-  gap: var(--space-5);
+  align-items: flex-end;
+  flex-wrap: wrap;
+  gap: var(--space-5) var(--space-10);
   border-top: 1px solid var(--color-line);
-  padding: var(--space-4) 0;
+  margin-top: var(--space-6);
+  padding: var(--space-5) 0 var(--space-1);
   text-align: left;
 }
 .configured-models dl {
@@ -824,7 +880,7 @@ h3 {
 }
 .configured-models dd {
   color: var(--color-ink);
-  font-size: 12px;
+  font-size: 14px;
   font-weight: 500;
   margin: 0;
   overflow-wrap: anywhere;
@@ -834,30 +890,57 @@ h3 {
 }
 .manage-models {
   padding-inline: var(--space-1);
-  font-size: 11px;
+  font-size: 14px;
   flex-shrink: 0;
+  margin-left: auto;
+  color: var(--color-muted);
+}
+.configured-models .manage-models:hover:enabled {
+  color: var(--color-accent);
+  background: var(--color-transparent);
 }
 .manage-models .icon {
-  width: 13px;
-  height: 13px;
+  width: 16px;
+  height: 16px;
 }
 .page-model-summary {
   margin-bottom: var(--space-6);
 }
 .status-dot {
+  position: relative;
+  display: inline-block;
   width: 6px;
   height: 6px;
   border-radius: var(--radius-pill);
   background: var(--color-accent);
   flex-shrink: 0;
 }
+.activity-link .status-dot::after {
+  content: '';
+  position: absolute;
+  inset: -4px;
+  border-radius: 50%;
+  border: 1.5px solid var(--color-accent);
+  animation: status-ring 1.8s var(--ease) infinite;
+  pointer-events: none;
+}
+@keyframes status-ring {
+  from {
+    transform: scale(0.6);
+    opacity: 0.8;
+  }
+  to {
+    transform: scale(1.4);
+    opacity: 0;
+  }
+}
 .status-dot.muted {
   background: var(--color-muted);
 }
 .capture-actions {
   align-items: center;
-  gap: var(--space-3);
-  margin-top: var(--space-4);
+  gap: var(--space-5);
+  margin-top: 0;
 }
 .capture-actions > button {
   white-space: nowrap;
@@ -962,7 +1045,7 @@ h3 {
   flex-wrap: wrap;
   gap: var(--space-3);
   padding: var(--space-3) var(--space-4);
-  background: var(--color-panel);
+  background: var(--color-raised);
   border: 1px solid var(--color-line);
   border-radius: var(--radius-sm);
 }
@@ -986,7 +1069,7 @@ h3 {
   color: var(--color-accent);
 }
 .settings-section {
-  background: var(--color-panel);
+  background: var(--color-raised);
   border: 1px solid var(--color-line);
   border-radius: var(--radius-md);
   padding: var(--space-6);
@@ -1014,7 +1097,7 @@ label:not(.checkbox-field) {
 .savebar {
   position: static;
   margin-top: var(--space-6);
-  background: var(--color-panel);
+  background: var(--color-raised);
   border: 1px solid var(--color-line);
   border-radius: var(--radius-md);
   padding: var(--space-4) var(--space-5);
@@ -1086,7 +1169,7 @@ details {
   border-radius: var(--radius-md);
   padding: var(--space-5);
   margin-bottom: var(--space-8);
-  background: var(--color-panel);
+  background: var(--color-raised);
 }
 .history-stats .section-heading {
   flex-wrap: wrap;
@@ -1120,10 +1203,10 @@ details {
 }
 .history-metrics dd {
   margin: 0;
-  font-size: clamp(18px, 2.5vw, 26px);
+  font-size: clamp(30px, 6vw, 44px);
   font-variant-numeric: tabular-nums;
-  line-height: 1.3;
-  letter-spacing: -0.03em;
+  line-height: 1;
+  letter-spacing: -0.04em;
   overflow-wrap: anywhere;
 }
 .history-metrics dd span {
@@ -1303,6 +1386,50 @@ details {
 .history-heading .note {
   margin: var(--space-1) 0 0;
 }
+/* Ember recent thoughts (issue #87): standalone cards with an
+ * accent-baited hover, distinct from the full History rows. */
+.recent-panel .history-heading {
+  margin: var(--space-4) 0 var(--space-3);
+}
+.recent-panel .history-heading h2 {
+  font-size: 22px;
+  font-weight: 800;
+  letter-spacing: -0.035em;
+}
+.recent-panel .history-heading .quiet {
+  color: var(--color-muted);
+  font-size: 14px;
+}
+.recent-panel .history-heading .quiet:hover:enabled {
+  color: var(--color-accent);
+  background: var(--color-transparent);
+}
+.recent-panel .session-list {
+  gap: var(--space-3);
+}
+.recent-panel .session-button {
+  align-items: center;
+  gap: var(--space-4);
+  background: var(--color-raised);
+  border: 1px solid var(--color-line);
+  border-radius: var(--radius-md);
+  padding: 18px 24px;
+}
+.recent-panel .session-button:hover:enabled {
+  border-color: var(--color-accent);
+  background: var(--color-raised);
+}
+.recent-panel .session-button .icon {
+  color: var(--color-muted);
+  flex-shrink: 0;
+}
+.recent-panel .session-button:hover:enabled .icon {
+  color: var(--color-accent);
+}
+.recent-panel .session-preview {
+  font-size: 14px;
+  line-height: 1.5;
+}
 .history-actions {
   display: flex;
   align-items: center;
@@ -1394,10 +1521,10 @@ details {
   white-space: normal;
 }
 .session-button:hover:enabled {
-  background: var(--color-panel);
+  background: var(--color-raised);
 }
 .session-button[aria-expanded='true'] {
-  background: var(--color-panel);
+  background: var(--color-raised);
 }
 .session-button[aria-expanded='true'] .session-preview {
   color: var(--color-accent);
@@ -1441,7 +1568,7 @@ details {
   flex-wrap: wrap;
   align-items: center;
   gap: var(--space-1) var(--space-3);
-  font-size: 10px;
+  font-size: 11px;
   color: var(--color-muted);
 }
 .review-badge {
@@ -1451,13 +1578,13 @@ details {
 }
 .session-editor {
   min-width: 0;
-  background: var(--color-panel);
+  background: var(--color-raised);
   border-top: 1px solid var(--color-line);
   padding: var(--space-5);
   animation: panel-enter 160ms var(--ease) both;
 }
 .session-expanded {
-  background: var(--color-panel);
+  background: var(--color-raised);
 }
 .review-draft {
   color: var(--color-accent);
@@ -1511,7 +1638,7 @@ details {
   padding: var(--space-4);
   border: 1px solid var(--color-line);
   border-radius: var(--radius-md);
-  background: var(--color-panel);
+  background: var(--color-raised);
 }
 .live-transcript p {
   min-height: 3lh;
@@ -1739,7 +1866,7 @@ button.inline-link {
 }
 input:not([type='checkbox']):focus:enabled,
 textarea:focus:enabled {
-  background: var(--color-panel);
+  background: var(--color-raised);
 }
 @keyframes check-draw {
   from {
@@ -1941,14 +2068,14 @@ textarea:focus:enabled {
     right: 7px;
   }
   .studio-main {
-    padding: var(--space-4) var(--space-4) var(--space-8);
+    padding: var(--space-4) 18px var(--space-8);
   }
   .page-header {
-    margin-bottom: var(--space-4);
+    margin-bottom: var(--space-2);
   }
   .page-header h1 {
-    font-size: 24px;
-    margin-bottom: var(--space-2);
+    font-size: 40px;
+    margin-bottom: var(--space-1);
   }
   .page-model-summary {
     margin-bottom: var(--space-4);
@@ -1999,7 +2126,7 @@ textarea:focus:enabled {
     padding: var(--space-4);
   }
   .settings-section > h2 {
-    margin-bottom: var(--space-4);
+    margin-bottom: var(--space-2);
   }
   .model-files li {
     flex-direction: column;
@@ -2482,7 +2609,7 @@ button:is(
 .settings-content {
   min-width: 0;
   padding: 28px;
-  background: var(--color-panel);
+  background: var(--color-raised);
   border: 1px solid var(--color-line);
   border-radius: var(--radius-md);
 }
@@ -2864,6 +2991,7 @@ button:is(
 @media (max-width: 820px) {
   .settings-layout {
     grid-template-columns: minmax(0, 1fr);
+    row-gap: var(--space-2);
   }
   .settings-nav {
     flex-direction: row;

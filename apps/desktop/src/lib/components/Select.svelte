@@ -53,6 +53,10 @@
     open = false;
     search = '';
   }
+  // Popup anchor: a scroll event that did not move the trigger (e.g. the
+  // scroll that brought the trigger into view, delivered after the popup
+  // opened) must not close the popup.
+  let anchor = { left: 0, top: 0 };
   function place() {
     const rect = trigger.getBoundingClientRect();
     const viewport = window.visualViewport;
@@ -82,7 +86,17 @@
   }
   async function reveal() {
     await tick();
-    if (open) document.getElementById(optionId(active))?.scrollIntoView({ block: 'nearest' });
+    // Scroll the active option into view inside the popup only. scrollIntoView
+    // also scrolls the page, which fires the scroll-away closer and kills a
+    // popup that opens near the viewport edge before anyone can click it.
+    if (!open || !popup) return;
+    const option = document.getElementById(optionId(active));
+    if (!option || !popup.contains(option)) return;
+    const popupRect = popup.getBoundingClientRect();
+    const optionRect = option.getBoundingClientRect();
+    if (optionRect.top < popupRect.top) popup.scrollTop -= popupRect.top - optionRect.top;
+    else if (optionRect.bottom > popupRect.bottom)
+      popup.scrollTop += optionRect.bottom - popupRect.bottom;
   }
   function show() {
     if (!available() || !options.some((option) => !option.disabled)) return;
@@ -93,6 +107,8 @@
     active = options.findIndex((option) => option.value === value && !option.disabled);
     if (active < 0) active = options.findIndex((option) => !option.disabled);
     place();
+    const rect = trigger.getBoundingClientRect();
+    anchor = { left: rect.left, top: rect.top };
     open = true;
     void reveal();
   }
@@ -193,7 +209,10 @@
         close();
     };
     const scroll = (event: Event) => {
-      if (!(event.target instanceof Node && popup?.contains(event.target))) close();
+      if (event.target instanceof Node && popup?.contains(event.target)) return;
+      const rect = trigger.getBoundingClientRect();
+      if (Math.abs(rect.left - anchor.left) < 1 && Math.abs(rect.top - anchor.top) < 1) return;
+      close();
     };
     const visibility = new MutationObserver(() => {
       if (!available()) close();
@@ -336,12 +355,12 @@
       border-color 140ms var(--ease);
   }
   .select-trigger:hover:not(:disabled) {
-    background: var(--color-panel);
+    background: var(--color-raised);
     border-color: var(--color-control-hover);
   }
   .select-trigger:active:not(:disabled),
   .select-trigger.is-open {
-    background: var(--color-panel);
+    background: var(--color-raised);
     border-color: var(--color-accent);
     transform: none;
   }
@@ -422,7 +441,7 @@
     padding: 4px;
     border: 1px solid var(--color-line);
     border-radius: var(--radius-sm);
-    background: var(--color-panel);
+    background: var(--color-raised);
     color: var(--color-ink);
     box-shadow: 0 8px 24px color-mix(in oklch, var(--color-bg) 65%, var(--color-transparent));
     font-family: var(--font-body);
