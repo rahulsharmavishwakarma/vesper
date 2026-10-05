@@ -24,6 +24,31 @@ evidence as historical, with a current-name note where needed; see
 8. Run proportionate validation and publish the result, documentation location, limitations, and deferred work to the issue.
 9. Confirm labels still represent the completed scope, then close only when every completion criterion—including documentation—is complete. Leave incomplete work open with an explicit status.
 
+## GitHub Project progress view
+
+The repository-linked project is **Vesper · Product & engineering** (user project
+number 2). Every tracked issue gets a project item; the item's Status, Area,
+Progress, Next step and Evidence stay current at each lifecycle update. Status
+semantics: implemented work awaiting qualification stays in Validation, failed
+gates or unmet approvals show Blocked, explicitly deferred work stays in
+Backlog, and only completed criteria earn Done. Do not invent priorities,
+deadlines or completion percentages.
+
+Project commands need the `read:project` and `project` token scopes
+(`write:project` is not a valid GitHub scope). If `gh project list` reports
+missing scopes, run `gh auth refresh -s read:project -s project` and complete
+the browser confirmation, then retry. Link and update items with:
+
+```sh
+gh project item-add 2 --owner rahulsharmavishwakarma --url <issue-url>
+gh project item-edit --id <item-id> --field-id PVTSSF_lAHOBZEJlc4Bj9iYzhiv9_I \
+  --single-select-option-id <status-option-id>
+```
+
+If Projects access is unavailable, record the blocker on the tracking issue
+and reconcile its project item when access returns — never silently skip the
+project update.
+
 ## Feature branches and pull requests
 
 Use a new task-specific feature branch before editing code, documentation or
