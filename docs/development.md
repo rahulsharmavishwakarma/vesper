@@ -314,6 +314,11 @@ it supplies the in-app lockup, the native desktop icons and the menu-bar
 template. `apps/desktop/src/assets/vesper.svg` retains the original Songbird
 bird/wordmark as the README banner source only.
 The frontend embeds those trusted, bundled SVGs without a runtime fetch or font.
+The bird's eye is an evenodd cutout in the body path; the `.lid` blink ellipse
+shares the bird fill, so it must keep its collapsed default `transform` in the
+source file — rasterized exports (dock, notifications, menu-bar template) have
+no brand CSS to hide it, and a full-size lid would plug the eye. In-app CSS
+overrides that attribute for the blink animation.
 
 The README's `docs/assets/vesper-banner.svg` is a generated, self-contained
 1200 × 320 SVG. It preserves every canonical bird/call/letter path and embeds

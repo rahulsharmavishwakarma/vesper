@@ -46,6 +46,18 @@ test('the Ember mark carries the pipeline group with no paint attributes', () =>
   assert.doesNotMatch(ember, /<(?:text|script|image|use|foreignObject|animate)\b/);
 });
 
+test('the Ember eye stays open where brand CSS cannot run', () => {
+  // The lid ellipse shares the bird fill, so rasterized exports (dock,
+  // notifications, menu-bar template) would plug the evenodd eye cutout
+  // without a collapsed default. In-app CSS still overrides this attribute
+  // for the blink.
+  const ember = read('apps/desktop/src/assets/ember-bird.svg');
+  assert.match(
+    ember,
+    /<ellipse class="lid"[^>]*transform="translate\(38\.5 17\.4\) scale\(1 0\) translate\(-38\.5 -17\.4\)"/,
+  );
+});
+
 test('README banner preserves every canonical path and uses existing brand tokens', () => {
   const banner = read('docs/assets/vesper-banner.svg');
   const tokens = read('apps/desktop/src/tokens.css');
