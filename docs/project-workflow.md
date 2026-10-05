@@ -41,7 +41,8 @@ the browser confirmation, then retry. Link and update items with:
 
 ```sh
 gh project item-add 2 --owner rahulsharmavishwakarma --url <issue-url>
-gh project item-edit --id <item-id> --field-id PVTSSF_lAHOBZEJlc4Bj9iYzhiv9_I \
+gh project item-edit --id <item-id> --project-id PVT_kwHOBZEJlc4Bj9iY \
+  --field-id PVTSSF_lAHOBZEJlc4Bj9iYzhiv9_I \
   --single-select-option-id <status-option-id>
 ```
 
