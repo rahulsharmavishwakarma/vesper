@@ -128,14 +128,14 @@ pub fn default_model_catalog() -> Vec<ModelSpec> {
             id: AsrModel::Qwen3Asr06b.id().into(),
             name: AsrModel::Qwen3Asr06b.name().into(),
             role: ModelRole::SpeechRecognition,
-            languages: "Automatic, English, French and Hindi in this app.".into(),
+            languages: "30 vendor-declared languages with automatic detection; see the language menu.".into(),
             description: "Local CPU transcription with automatic processing of longer recordings.".into(),
         },
         ModelSpec {
             id: AsrModel::CohereTranscribe.id().into(),
             name: AsrModel::CohereTranscribe.name().into(),
             role: ModelRole::SpeechRecognition,
-            languages: "Select English or French; automatic detection and Hindi are unavailable.".into(),
+            languages: "14 vendor-declared languages selected explicitly; automatic detection and Hindi are unavailable.".into(),
             description: "Local CPU transcription with automatic processing of longer recordings.".into(),
         },
         ModelSpec {
