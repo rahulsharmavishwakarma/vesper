@@ -138,6 +138,66 @@ test('Sidebar nav answers a press with a deeper wash', async ({ page }) => {
   await page.mouse.up();
 });
 
+test('Interaction motion stays on the compositor', async ({ page }) => {
+  await goToDictate(page);
+  // No transition may animate layout: the rail collapse, the segmented pill
+  // and every other interaction path must glide on transform/opacity only.
+  const layoutTransitions = await page.evaluate(() => {
+    const offenders = [];
+    const isLayout = (property) =>
+      property === 'all' ||
+      property.startsWith('grid-template') ||
+      /^(margin|padding|inset|width|height|min-|max-|flex-basis|top|left)/.test(property);
+    const walk = (rules) => {
+      for (const rule of rules) {
+        if (rule.type === CSSRule.STYLE_RULE) {
+          const declared = rule.style.getPropertyValue('transition');
+          if (!declared || declared === 'none') continue;
+          for (const part of declared.split(',')) {
+            const property = part.trim().split(/\s+/)[0];
+            if (property && isLayout(property))
+              offenders.push(`${rule.selectorText}: ${part.trim()}`);
+          }
+        } else if (rule.cssRules) walk(rule.cssRules);
+      }
+    };
+    for (const sheet of document.styleSheets) {
+      try {
+        walk(sheet.cssRules);
+      } catch {
+        continue;
+      }
+    }
+    return offenders;
+  });
+  expect(layoutTransitions).toEqual([]);
+  // The recording indicator breathes opacity; it must never scale-bounce.
+  const coreFrames = await page.evaluate(() => {
+    for (const sheet of document.styleSheets) {
+      let rules;
+      try {
+        rules = sheet.cssRules;
+      } catch {
+        continue;
+      }
+      for (const rule of rules) {
+        if (rule.type === CSSRule.KEYFRAMES_RULE && rule.name === 'ember-core')
+          return [...rule.cssRules].map((frame) => frame.cssText).join(' ');
+      }
+    }
+    return null;
+  });
+  expect(coreFrames).toContain('opacity');
+  expect(coreFrames).not.toContain('scale');
+  await expect
+    .poll(() =>
+      page.evaluate(
+        () => getComputedStyle(document.querySelector('.app-shell')).transitionDuration,
+      ),
+    )
+    .toBe('0s');
+});
+
 test('Capture design offers the three glass variants with backdrop blur', async ({ page }) => {
   await page.goto('/');
   await page

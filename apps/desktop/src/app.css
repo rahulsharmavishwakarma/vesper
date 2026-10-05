@@ -577,9 +577,10 @@ h3 {
 /* Settings-only icon rail: the settings sections own wayfinding there, so the
    app sidebar collapses to icons and returns side space. Labels stay in the
    accessibility tree via .visually-hidden; tooltips come from title. */
-.app-shell {
-  transition: grid-template-columns 220ms ease-out;
-}
+/* The rail switch flips several sidebar metrics at once; the grid column is
+ * intentionally not interpolated — animating it relaid out the whole window
+ * every frame. The collapse lands in one frame and content entrances carry
+ * the motion instead. */
 @media (min-width: 701px) {
   .app-shell.settings-rail {
     grid-template-columns: 76px minmax(0, 1fr);
@@ -841,8 +842,11 @@ body.is-recording .brand-logo .dsh {
   }
 }
 @keyframes ember-core {
+  from {
+    opacity: 1;
+  }
   to {
-    transform: scale(1.35);
+    opacity: 0.45;
   }
 }
 @keyframes ember-rise {
@@ -2014,10 +2018,10 @@ textarea:focus:enabled {
   z-index: -1;
 }
 .sliding-selection[data-motion-ready]::before {
+  /* The pill glides on transform only; width/height land instantly so segment
+   * switches never animate layout. */
   transition:
     transform var(--duration-slide) var(--ease-slide),
-    width var(--duration-slide) var(--ease-slide),
-    height var(--duration-slide) var(--ease-slide),
     opacity 160ms linear,
     background-color var(--duration-slide) var(--ease-slide);
 }
