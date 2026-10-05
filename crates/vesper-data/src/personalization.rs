@@ -676,7 +676,12 @@ mod tests {
             expected.automatic_learning = true;
             expected.revision += 1;
             expected.learning_epoch += 1;
-            assert_eq!(store.dictation_personalization().unwrap(), expected);
+            // Legacy manual words migrate to confirmed, which refreshes the stamp.
+            expected.vocabulary[0].confirmed = true;
+            let migrated = store.dictation_personalization().unwrap();
+            expected.vocabulary[0].learned_at = migrated.vocabulary[0].learned_at.clone();
+            assert!(!expected.vocabulary[0].learned_at.is_empty());
+            assert_eq!(migrated, expected);
             assert_eq!(store.dictation_personalization().unwrap(), expected);
             assert!(store.save_dictation_personalization(previous).is_err());
             let reopened = DatasetStore::open(dir.path().join("data")).unwrap();
