@@ -322,12 +322,13 @@ training examples; search filters do not limit an export.
 
 Manage spellings, recurring corrections and writing preferences in
 **Settings → Writing → Your vocabulary and writing**. The Vocabulary list holds
-words you add, words Vesper learned from your edits, and suggested spellings
-awaiting your decision. Everything listed is used until you remove it; adding a
-suggestion makes it yours, and dismissing one stops it from being learned again.
-Eligible edits to **Your text** can contribute to local spelling memory for later
-recordings. Raw predictions remain available, and remembered changes can be
-undone or forgotten.
+words you add, words Vesper learned from your edits, and proposals it is still
+learning. Everything listed is used until you remove it. Tick a row to confirm
+its spelling: confirmed words are always trusted, while unticked automatic words
+are used when they match what you say. Removing a word stops it from being
+learned again. Eligible edits to **Your text** can contribute to local spelling
+memory for later recordings. Raw predictions remain available, and remembered
+changes can be undone or forgotten.
 
 Correct spellings directly in **Your text**; there is no separate Remember step.
 The app can learn eligible joined/split names, closely related spellings and
@@ -396,11 +397,13 @@ Settings no longer offers the inactive **Improvement policy / Automatic
 activation** selector. Its stored compatibility value does not enable a trainer,
 automatic review or stronger RSI. Automatic spelling learning is separate.
 
-Automatically learned words are used after recognition only when the transcript
-also matches context from a supporting edit. Older learned words may need a fresh
-correction before they apply again. This helps avoid unrelated replacements, but
-can miss a valid correction when you phrase the context differently. Manually
-saved vocabulary and optional recognition hints keep their existing controls.
+Unticked automatically learned words are used after recognition only when the
+transcript also matches context from a supporting edit. Older learned words may
+need a fresh correction before they apply again. Ticking a word confirms it, so
+it applies without the context match. This helps avoid unrelated replacements,
+but can miss a valid correction when you phrase the context differently.
+Manually saved vocabulary and optional recognition hints keep their existing
+controls.
 
 ### What is checked or reviewed automatically?
 

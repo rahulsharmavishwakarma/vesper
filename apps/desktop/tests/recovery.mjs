@@ -1095,7 +1095,7 @@ await test('Learning forget preserves manual words, flushes dirty preferences, a
 });
 
 await test('Vocabulary and example dropdowns preserve edits through shared keyboard selection', async () => {
-  const saved = {
+  let saved = {
     schemaVersion: 1,
     revision: 0,
     automaticLearning: true,
@@ -1121,48 +1121,87 @@ await test('Vocabulary and example dropdowns preserve edits through shared keybo
       },
     ],
   };
+  const dismissed = new Set();
+  const promoted = [];
+  const learning = makeLearning();
   await setup({
     main: true,
-    intercept: (command) => {
+    intercept: (command, _state, args) => {
+      if (command === 'approve_automatic_candidate') {
+        const position = learning.candidates.findIndex((c) => c.id === args.candidateId);
+        if (position < 0) throw new Error('Unknown candidate');
+        const [candidate] = learning.candidates.splice(position, 1);
+        promoted.push(candidate.phrase);
+        saved.vocabulary.push({
+          id: `promoted-${candidate.id}`,
+          phrase: candidate.phrase,
+          aliases: candidate.alias ? [candidate.alias] : [],
+          language: candidate.language,
+          project: candidate.project,
+          context: '',
+          enabled: true,
+          confirmed: true,
+          automaticSource: null,
+          pronunciation: false,
+          learnedAt: '',
+          sources: [],
+          usageCount: 0,
+        });
+        return structuredClone(saved);
+      }
+      if (command === 'suspend_automatic_candidate') {
+        dismissed.add(args.candidateId);
+        return 1;
+      }
+      if (command === 'save_personalization') {
+        saved = JSON.parse(JSON.stringify(args.profile));
+        return structuredClone(saved);
+      }
       if (command === 'get_personalization') return structuredClone(saved);
       if (command === 'get_automatic_learning')
         return {
-          schemaVersion: 1,
-          policyVersion: 1,
-          expiredCandidates: 0,
-          candidates: [
-            {
-              id: 'dup',
-              phrase: 'SyntheticName',
-              alias: '',
-              language: 'en',
-              project: '',
-              context: '',
-              state: 'observed',
-              support: [],
-              observedCount: 1,
-              lastSeenMs: 1,
-              reason: 'Duplicates the added word.',
-            },
-            {
-              id: 'fresh',
-              phrase: 'FreshTerm',
-              alias: '',
-              language: 'en',
-              project: '',
-              context: '',
-              state: 'observed',
-              support: [],
-              observedCount: 1,
-              lastSeenMs: 1,
-              reason: 'A genuine proposal.',
-            },
-          ],
-          events: [],
+          ...structuredClone(learning),
+          candidates: learning.candidates.filter((c) => !dismissed.has(c.id)),
         };
       return undefined;
     },
   });
+  function makeLearning() {
+    return {
+      schemaVersion: 1,
+      policyVersion: 1,
+      expiredCandidates: 0,
+      candidates: [
+        {
+          id: 'dup',
+          phrase: 'SyntheticName',
+          alias: '',
+          language: 'en',
+          project: '',
+          context: '',
+          state: 'observed',
+          support: [],
+          observedCount: 1,
+          lastSeenMs: 1,
+          reason: 'Duplicates the added word.',
+        },
+        {
+          id: 'fresh',
+          phrase: 'FreshTerm',
+          alias: '',
+          language: 'en',
+          project: '',
+          context: '',
+          state: 'observed',
+          support: [],
+          observedCount: 1,
+          lastSeenMs: 1,
+          reason: 'A genuine proposal.',
+        },
+      ],
+      events: [],
+    };
+  }
   await until(() => target.querySelector('#settings-language'), 'Settings did not load');
   [...target.querySelectorAll('nav button')]
     .find((button) => button.textContent.trim() === 'Settings')
@@ -1203,23 +1242,71 @@ await test('Vocabulary and example dropdowns preserve edits through shared keybo
     !target.querySelector('.personalization select'),
     'Personal preferences still use native dropdowns',
   );
+  // Proposals share the one list: the duplicate stays hidden, the genuine
+  // one renders as a Learning row beside the added word.
+  await until(() => target.querySelector('.word-entry.learning'), 'Learning row did not appear');
+  assert(
+    [...target.querySelectorAll('.word-entry')].length === 2,
+    'Expected the added word plus one Learning row',
+  );
+  const learningRow = target.querySelector('.word-entry.learning');
+  assert(
+    learningRow.textContent.includes('FreshTerm') && learningRow.textContent.includes('Learning'),
+    'A listed word was offered as a proposal, or the genuine one is missing',
+  );
+  assert(learningRow.querySelector('button[aria-label^="Confirm"]'), 'Learning row has no tick');
+  // Learned shows proposals; Yours hides them.
   [...target.querySelectorAll('.filter-pills button')]
-    .find((button) => button.textContent.includes('Suggested'))
+    .find((button) => button.textContent.includes('Learned'))
     .click();
   await tick();
-  const suggestionRows = [...target.querySelectorAll('.word-entry')];
   assert(
-    suggestionRows.length === 1 && suggestionRows[0].textContent.includes('FreshTerm'),
-    'A listed word was offered as a suggestion',
+    target.querySelector('.word-entry.learning') &&
+      ![...target.querySelectorAll('.word-entry input')].some((i) => i.value === 'SyntheticName'),
+    'Learned filter hid the proposal or leaked a manual word',
   );
+  [...target.querySelectorAll('.filter-pills button')]
+    .find((button) => button.textContent.trim() === 'Yours')
+    .click();
+  await tick();
+  assert(!target.querySelector('.word-entry.learning'), 'Yours filter leaked a Learning row');
   [...target.querySelectorAll('.filter-pills button')]
     .find((button) => button.textContent.trim() === 'All')
     .click();
   await tick();
-  target.querySelector('.word-entry .entry-heading button[aria-label^="Remove"]').click();
+  // The tick confirms the proposal into the vocabulary. Autosave flights
+  // briefly disable the form, so retry the tick until the backend sees it.
+  await until(() => {
+    if (!promoted.includes('FreshTerm'))
+      target.querySelector('.word-entry.learning button[aria-label^="Confirm"]')?.click();
+    return promoted.includes('FreshTerm');
+  }, 'Confirm did not reach the backend');
   await until(
-    () => !target.querySelector('.word-entry') && document.activeElement.id === 'add-vocabulary',
-    'Removing a word did not restore useful focus',
+    () =>
+      [...target.querySelectorAll('.word-entry')].some(
+        (row) =>
+          row.querySelector('input')?.value === 'FreshTerm' && row.querySelector('.tick-static'),
+      ),
+    'Confirming a proposal did not tick it into the vocabulary',
+  );
+  // Removing every listed word un-hides the duplicate as a Learning row;
+  // dismissing it empties the list and restores useful focus.
+  for (const remove of [
+    ...target.querySelectorAll('.word-entry:not(.learning) button[aria-label^="Remove"]'),
+  ])
+    remove.click();
+  await until(() => {
+    const rows = [...target.querySelectorAll('.word-entry')];
+    return rows.length === 1 && rows[0].classList.contains('learning');
+  }, 'Removing listed words did not resurface the hidden proposal');
+  await until(() => {
+    const learningRow = target.querySelector('.word-entry.learning');
+    if (learningRow) learningRow.querySelector('button[aria-label^="Remove"]')?.click();
+    return !target.querySelector('.word-entry');
+  }, 'Dismissing the proposal did not empty the list');
+  await until(
+    () => document.activeElement.id === 'add-vocabulary',
+    'Dismissing the proposal did not restore useful focus',
   );
 });
 

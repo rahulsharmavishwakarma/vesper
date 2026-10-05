@@ -103,6 +103,9 @@
       profile = await getPersonalization();
       // Removal is the only off-switch: everything listed is used.
       for (const word of profile.vocabulary) word.enabled = true;
+      // Words you added are always confirmed, even before the next save migrates them.
+      for (const word of profile.vocabulary)
+        if (word.automaticSource === null) word.confirmed = true;
       savedProfile = $state.snapshot(profile);
       learning = await getAutomaticLearning();
     } catch (e) {
@@ -168,12 +171,20 @@
       profile = await approveAutomaticCandidate(id);
       savedProfile = $state.snapshot(profile);
       learning = await getAutomaticLearning();
-      feedback = 'Suggestion added to your vocabulary.';
+      feedback = 'Confirmed. Vesper will use this spelling.';
     } catch (cause) {
       error = String(cause);
     } finally {
       pending = null;
     }
+  }
+  // The tick flips the confirmed flag on automatic entries; the debounced
+  // autosave persists it. Manual entries are always confirmed.
+  function toggleConfirmed(id: string) {
+    if (!profile || controlsDisabled) return;
+    const word = profile.vocabulary.find((entry) => entry.id === id);
+    if (!word || word.automaticSource === null) return;
+    word.confirmed = !word.confirmed;
   }
   async function dismissCandidate(id: string) {
     if (!profile || controlsDisabled) return;
@@ -185,21 +196,26 @@
       await suspendAutomaticCandidate(id);
       profile = await getPersonalization();
       for (const word of profile.vocabulary) word.enabled = true;
+      for (const word of profile.vocabulary)
+        if (word.automaticSource === null) word.confirmed = true;
       savedProfile = $state.snapshot(profile);
       learning = await getAutomaticLearning();
-      feedback = 'Suggestion dismissed. It will not be learned again.';
+      feedback = 'Removed. It will not be learned again.';
     } catch (cause) {
       error = String(cause);
     } finally {
       pending = null;
     }
+    await tick();
+    if (!error) document.getElementById('add-vocabulary')?.focus();
   }
-  let vocabFilter = $state<'all' | 'mine' | 'learned' | 'suggested'>('all');
+  let vocabFilter = $state<'all' | 'mine' | 'learned'>('all');
   let newWord = $state('');
   let newFix = $state('');
   let addError = $state('');
-  // A listed word is never a suggestion: everything in vocabulary is used.
-  const suggestions = $derived(
+  // Proposals not yet in the vocabulary render as Learning rows in the same
+  // list. A listed word is never a proposal: everything in vocabulary is used.
+  const learningRows = $derived(
     (learning?.candidates ?? [])
       .filter(
         (c) =>
@@ -218,6 +234,8 @@
           ? profile.vocabulary.filter((word) => word.automaticSource !== null)
           : profile.vocabulary,
   );
+  // Learning rows share the list under All and Learned, never under Yours.
+  const showLearning = $derived(vocabFilter !== 'mine');
   async function addWord() {
     if (!profile || controlsDisabled || profile.vocabulary.length >= 128) return;
     const heard = newWord.trim();
@@ -239,6 +257,7 @@
       language: 'auto',
       context: '',
       enabled: true,
+      confirmed: true,
       aliases: newFix.trim() && heard ? [heard] : [],
       project: profile.activeProject,
       pronunciation: false,
@@ -511,62 +530,49 @@
               <button
                 type="button"
                 aria-pressed={vocabFilter === 'learned'}
-                onclick={() => (vocabFilter = 'learned')}>Learned</button
-              >
-              <button
-                type="button"
-                aria-pressed={vocabFilter === 'suggested'}
-                onclick={() => (vocabFilter = 'suggested')}
-                >Suggested<span class="sugg-badge">{suggestions.length}</span></button
+                onclick={() => (vocabFilter = 'learned')}
+                >Learned{#if learningRows.length}<span class="count-badge"
+                    >{learningRows.length}</span
+                  >{/if}</button
               >
             </div>
-            {#if vocabFilter !== 'suggested'}
-              {#if !visibleWords.length}<p class="note">
-                  {vocabFilter === 'all'
-                    ? 'Add names or terms you want Vesper to get right.'
-                    : vocabFilter === 'mine'
-                      ? 'Words you add yourself will appear here.'
-                      : 'Words Vesper picks up on its own will appear here.'}
-                </p>{/if}
-              <ul class="term-list">
-                {#each visibleWords as word (word.id)}
-                  <li class="word-entry">
+            {#if showLearning && learningRows.length}
+              <ul class="term-list" aria-label="Learning words">
+                {#each learningRows as candidate (candidate.id)}
+                  <li class="word-entry learning">
                     <div class="entry-heading">
-                      {#if word.aliases[0]}<span class="pair-from">{word.aliases[0]}</span><span
-                          class="pair-arrow"
-                          aria-hidden="true">→</span
-                        >{/if}
-                      <input
-                        id={`word-${word.id}`}
-                        class="term-input"
-                        aria-label="Preferred spelling"
-                        bind:value={word.phrase}
-                        oninput={() => {
-                          word.sources = [];
-                          word.automaticSource = null;
+                      <button
+                        type="button"
+                        class="icon-btn tick"
+                        aria-label={`Confirm ${candidate.phrase}`}
+                        title="Confirm this spelling"
+                        disabled={controlsDisabled}
+                        onclick={() => {
+                          void approveCandidate(candidate.id);
                         }}
-                        placeholder="Project or person’s name"
-                        maxlength="128"
-                        required
-                      />
-                      <span class="lang-select"
-                        ><Select
-                          id={`word-language-${word.id}`}
-                          bind:value={word.language}
-                          options={languageOptions}
-                          disabled={controlsDisabled}
-                          onChange={() => {
-                            word.sources = [];
-                            word.automaticSource = null;
-                          }}
-                        /></span
+                        ><svg
+                          viewBox="0 0 16 16"
+                          fill="none"
+                          stroke="currentColor"
+                          stroke-width="1.8"
+                          aria-hidden="true"><path d="M3 8.5l3.5 3.5L13 4.5" /></svg
+                        ></button
                       >
+                      <span class="term-static"
+                        >{#if candidate.alias}<span class="pair-from">{candidate.alias}</span><span
+                            class="pair-arrow"
+                            aria-hidden="true">→</span
+                          >{/if}{candidate.phrase}</span
+                      >
+                      <span class="row-badge">Learning</span>
                       <button
                         type="button"
                         class="icon-btn"
-                        aria-label={`Remove ${word.phrase || 'word'}`}
+                        aria-label={`Remove ${candidate.phrase}`}
+                        title="Remove; it will not be learned again"
+                        disabled={controlsDisabled}
                         onclick={() => {
-                          void removeWord(word.id);
+                          void dismissCandidate(candidate.id);
                         }}
                         ><svg
                           viewBox="0 0 16 16"
@@ -581,55 +587,107 @@
                 {/each}
               </ul>
             {/if}
-            {#if vocabFilter === 'all' || vocabFilter === 'suggested'}
-              {#if vocabFilter === 'suggested' && !suggestions.length}<p class="note">
-                  No suggestions right now. New ones appear as you edit dictated text.
-                </p>{/if}
-              {#if suggestions.length && vocabFilter === 'suggested'}
-                <ul class="term-list">
-                  {#each suggestions as candidate (candidate.id)}
-                    <li class="word-entry suggestion">
-                      <div class="entry-heading">
-                        <span class="term-static"
-                          >{#if candidate.alias}<span class="pair-from">{candidate.alias}</span
-                            ><span class="pair-arrow" aria-hidden="true">→</span
-                            >{/if}{candidate.phrase}</span
-                        >
-                        <button
-                          type="button"
-                          class="primary sm"
-                          disabled={controlsDisabled}
-                          onclick={() => {
-                            void approveCandidate(candidate.id);
-                          }}>Add</button
-                        >
-                        <button
-                          type="button"
-                          class="icon-btn"
-                          aria-label={`Dismiss suggestion ${candidate.phrase}`}
-                          disabled={controlsDisabled}
-                          onclick={() => {
-                            void dismissCandidate(candidate.id);
-                          }}
-                          ><svg
-                            viewBox="0 0 16 16"
-                            fill="none"
-                            stroke="currentColor"
-                            stroke-width="1.8"
-                            aria-hidden="true"><path d="M4 4l8 8M12 4l-8 8" /></svg
-                          ></button
-                        >
-                      </div>
-                    </li>
-                  {/each}
-                </ul>
-              {/if}
-            {/if}
+            {#if !visibleWords.length && !(showLearning && learningRows.length)}<p class="note">
+                {vocabFilter === 'all'
+                  ? 'Add names or terms you want Vesper to get right.'
+                  : vocabFilter === 'mine'
+                    ? 'Words you add yourself will appear here.'
+                    : 'Words Vesper picks up on its own will appear here.'}
+              </p>{/if}
+            <ul class="term-list">
+              {#each visibleWords as word (word.id)}
+                <li class="word-entry">
+                  <div class="entry-heading">
+                    {#if word.automaticSource === null}
+                      <span
+                        class="tick-static"
+                        title="Words you add are always confirmed"
+                        aria-label={`${word.phrase || 'Word'} confirmed`}
+                        role="img"
+                        ><svg
+                          viewBox="0 0 16 16"
+                          fill="none"
+                          stroke="currentColor"
+                          stroke-width="1.8"
+                          aria-hidden="true"><path d="M3 8.5l3.5 3.5L13 4.5" /></svg
+                        ></span
+                      >
+                    {:else}
+                      <button
+                        type="button"
+                        class="icon-btn tick"
+                        aria-pressed={word.confirmed}
+                        aria-label={word.confirmed
+                          ? `Unconfirm ${word.phrase || 'word'}`
+                          : `Confirm ${word.phrase || 'word'}`}
+                        title={word.confirmed
+                          ? 'Confirmed: always trusted'
+                          : 'Confirm this spelling'}
+                        disabled={controlsDisabled}
+                        onclick={() => toggleConfirmed(word.id)}
+                        ><svg
+                          viewBox="0 0 16 16"
+                          fill="none"
+                          stroke="currentColor"
+                          stroke-width="1.8"
+                          aria-hidden="true"><path d="M3 8.5l3.5 3.5L13 4.5" /></svg
+                        ></button
+                      >
+                    {/if}
+                    {#if word.aliases[0]}<span class="pair-from">{word.aliases[0]}</span><span
+                        class="pair-arrow"
+                        aria-hidden="true">→</span
+                      >{/if}
+                    <input
+                      id={`word-${word.id}`}
+                      class="term-input"
+                      aria-label="Preferred spelling"
+                      bind:value={word.phrase}
+                      oninput={() => {
+                        word.sources = [];
+                        word.automaticSource = null;
+                      }}
+                      placeholder="Project or person’s name"
+                      maxlength="128"
+                      required
+                    />
+                    <span class="lang-select"
+                      ><Select
+                        id={`word-language-${word.id}`}
+                        bind:value={word.language}
+                        options={languageOptions}
+                        disabled={controlsDisabled}
+                        onChange={() => {
+                          word.sources = [];
+                          word.automaticSource = null;
+                        }}
+                      /></span
+                    >
+                    <button
+                      type="button"
+                      class="icon-btn"
+                      aria-label={`Remove ${word.phrase || 'word'}`}
+                      onclick={() => {
+                        void removeWord(word.id);
+                      }}
+                      ><svg
+                        viewBox="0 0 16 16"
+                        fill="none"
+                        stroke="currentColor"
+                        stroke-width="1.8"
+                        aria-hidden="true"><path d="M4 4l8 8M12 4l-8 8" /></svg
+                      ></button
+                    >
+                  </div>
+                </li>
+              {/each}
+            </ul>
             <details>
               <summary>How does this work?</summary>
               <p class="note">
-                Words you add are used as-is. Words Vesper picks up on its own stay in use unless
-                you remove them. Suggestions are only proposals until you add them.
+                Everything here is used. Tick a word to confirm it: confirmed words are always
+                trusted. Unticked automatic words are used when they match what you say. Remove
+                anything you do not want; removed words never come back.
               </p>
             </details>
             <div class="learn-foot">
@@ -869,7 +927,7 @@
     outline: 2px solid var(--color-focus);
     outline-offset: 2px;
   }
-  .sugg-badge {
+  .count-badge {
     display: inline-block;
     min-width: 18px;
     margin-left: var(--space-1);
@@ -880,6 +938,27 @@
     font-size: 11px;
     text-align: center;
     font-variant-numeric: tabular-nums;
+  }
+  .icon-btn.tick[aria-pressed='true'] {
+    color: var(--color-accent);
+  }
+  .tick-static {
+    display: inline-flex;
+    flex: none;
+    align-items: center;
+    justify-content: center;
+    width: 28px;
+    height: 28px;
+    color: var(--color-muted);
+  }
+  .tick-static svg {
+    width: 14px;
+    height: 14px;
+  }
+  .row-badge {
+    flex: none;
+    color: var(--color-muted);
+    font-size: 11px;
   }
   .term-list {
     list-style: none;
@@ -956,10 +1035,9 @@
     opacity: 0.45;
     cursor: not-allowed;
   }
-  button.primary.sm {
-    min-height: 30px;
-    padding: 0 var(--space-3);
-    font-size: 12px;
+  .word-entry.learning .term-static {
+    color: var(--color-muted);
+    font-weight: 400;
   }
   .learn-foot {
     display: flex;
