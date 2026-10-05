@@ -12,7 +12,7 @@
   import { SvelteSet } from 'svelte/reactivity';
   import { listen } from '@tauri-apps/api/event';
   import Icon from './Icon.svelte';
-  import EmberWave from './EmberWave.svelte';
+  import AudioIndicator from './AudioIndicator.svelte';
   import { liveTranscriptFromStatus, mergeLiveTranscript } from '../liveTranscript';
   import ConfiguredModels from './ConfiguredModels.svelte';
   import Select from './Select.svelte';
@@ -911,7 +911,17 @@
             >
           </div>
           <div class="recorder-signal">
-            <EmberWave {recording} {desktop} visible={view === 'dictate'} />
+            <AudioIndicator
+              {recording}
+              {processing}
+              {desktop}
+              visible={view === 'dictate'}
+              complete={Boolean(result) && !busy}
+              failed={Boolean(error || statusError || runtime?.stage === 'error')}
+              onSignal={() => {
+                inputLevelDetected = true;
+              }}
+            />
           </div>
         </div>
       </div>

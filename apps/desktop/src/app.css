@@ -780,6 +780,8 @@ label.field-label {
   min-height: 0;
   min-width: 0;
   margin: 0;
+  --voice-height: 56px;
+  --voice-width: 100%;
 }
 /* While recording, the sidebar bird tilts and its call dashes quicken. The
  * class lives on the body because the lockup renders outside the recorder. */

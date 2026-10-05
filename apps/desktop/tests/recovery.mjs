@@ -2340,7 +2340,7 @@ await test('Saved model summaries stay synchronized and navigate to the model se
   assert(!state.counts.start_recording, 'Label interaction started recording');
 });
 
-await test('Capture keeps one control and bars follow acknowledged recording and real silence', async () => {
+await test('Capture keeps one control and the reed follows acknowledged recording and real silence', async () => {
   const start = deferred();
   const state = await setup({
     main: true,
@@ -2374,19 +2374,19 @@ await test('Capture keeps one control and bars follow acknowledged recording and
       button.querySelector('[data-icon="record"] .a') === detail,
     'Record control remounted',
   );
-  const bars = () =>
-    [...target.querySelectorAll('.ember-wave i')].map((bar) => parseFloat(bar.style.height));
+  const path = () =>
+    target.querySelector('.studio-recorder .voice-indicator .wave-trace')?.getAttribute('d');
   await until(() => state.counts.get_audio_features > 2, 'Measured audio was not sampled');
-  assert(bars().length === 44, 'Recorder wave is not the bar strip');
-  await until(() => Math.max(...bars()) > 4, 'Measured signal did not animate');
+  assert(typeof path() === 'string' && path().length > 0, 'Recorder wave is not the reed trace');
   state.quiet = true;
-  await until(
-    () => bars().every((height) => height <= 4.02),
-    'Silent input retained a moving signal',
-  );
-  const quiet = bars().join(',');
+  const voiced = path();
+  await until(() => path() !== voiced, 'Silent input was ignored');
+  await new Promise((r) => setTimeout(r, 450));
+  const settled = path();
+  await new Promise((r) => setTimeout(r, 100));
+  assert(path() === settled, 'Silent input retained a moving signal');
   await new Promise((r) => setTimeout(r, 70));
-  assert(bars().join(',') === quiet, 'Silence invented movement');
+  assert(path() === settled, 'Silence invented movement');
   button.click();
   await until(
     () => !recorder().classList.contains('is-recording') && !button.disabled,
@@ -2396,7 +2396,7 @@ await test('Capture keeps one control and bars follow acknowledged recording and
 });
 
 for (const main of [true, false])
-  await test(`Microphone synchronization: ${main ? 'Dictate bars follow volume' : 'floating capture follows pitch and volume'} without autonomous motion`, async () => {
+  await test(`Microphone synchronization: ${main ? 'Dictate reed follows pitch and volume' : 'floating capture follows pitch and volume'} without autonomous motion`, async () => {
     let telemetry = { level: 0.025, pitchHz: 110 };
     let stalled = false;
     let nextReading = null;
@@ -2422,47 +2422,49 @@ for (const main of [true, false])
       target.querySelector('.record-button').click();
     }
     const path = () => target.querySelector('.voice-indicator .wave-trace')?.getAttribute('d');
-    const bars = () =>
-      [...target.querySelectorAll('.ember-wave i')].map((bar) => parseFloat(bar.style.height));
     const pause = (ms) => new Promise((r) => setTimeout(r, ms));
     if (main) {
-      // The Dictate bar strip shows energy only: steady input holds steady
-      // bars, pitch alone never reshapes them, and volume drives the height.
-      // Pitch tracking stays covered by the floating-capture leg below.
-      await until(
-        () => state.counts.get_audio_features > 2 && bars().length === 44,
-        'Audio telemetry missing',
-      );
+      // The Dictate reed shows measured pitch and energy: steady input holds
+      // a steady trace, pitch alone reshapes the spacing, and volume drives
+      // the stroke height. Same assertions as the floating-capture leg below,
+      // scoped to the studio recorder.
+      const wave = () =>
+        target.querySelector('.studio-recorder .voice-indicator .wave-trace')?.getAttribute('d');
+      await until(() => state.counts.get_audio_features > 2 && wave(), 'Audio telemetry missing');
       if (!matchMedia('(prefers-reduced-motion: reduce)').matches) {
-        await pause(400);
-        const steady = bars();
-        await pause(150);
+        await pause(650);
+        const steady = wave();
+        await pause(100);
         assert(
-          steady.every((height, index) => bars()[index] === height),
-          'Unchanged volume drives an unrelated looping animation',
+          wave() === steady,
+          'Unchanged pitch/volume still drive an unrelated looping animation',
         );
         telemetry.pitchHz = 330;
-        await pause(400);
-        assert(
-          bars().every((height, index) => bars()[index] === steady[index]),
-          'Pitch alone reshaped the energy display',
-        );
-        telemetry.level = 0.4;
-        await until(
-          () => Math.max(...bars()) > Math.max(...steady) + 10,
-          'Louder input did not raise the bars',
-        );
+        await until(() => wave() !== steady, 'Pitch change was ignored');
+        await pause(350);
+        const higherPitch = wave();
+        await pause(100);
+        assert(wave() === higherPitch, 'Pitch change did not settle');
+        nextReading = { level: 0.025, pitchHz: null };
+        await until(() => nextReading === null, 'Unvoiced consonant was not sampled');
+        await pause(90);
+        assert(wave() === higherPitch, 'A brief unvoiced consonant collapsed the wavelength');
+        telemetry.pitchHz = null;
+        await pause(500);
+        assert(wave() === higherPitch, 'A longer unvoiced sound reshaped unchanged audio energy');
+        telemetry.pitchHz = 330;
+        await pause(120);
+        assert(wave() === higherPitch, 'Pitch reacquisition jumped despite the same voice');
+        nextReading = { level: 0.025, pitchHz: 660 };
+        await until(() => nextReading === null, 'Octave outlier was not sampled');
+        await pause(90);
+        assert(wave() === higherPitch, 'One octave outlier reshaped the waveform');
         telemetry.level = 0.006;
-        await until(
-          () => bars().every((height) => height <= 4.02),
-          'Quieter input did not settle the bars',
-        );
-        stalled = true;
-        await pause(300);
-        assert(
-          bars().every((height) => height <= 4.02),
-          'Stalled telemetry retained microphone motion',
-        );
+        await until(() => wave() !== higherPitch, 'Volume change was ignored');
+        await pause(450);
+        const quieter = wave();
+        await pause(100);
+        assert(wave() === quieter, 'Volume change did not settle');
       }
       return;
     }

@@ -87,15 +87,9 @@ test('Ember theme, single family, logo and icons apply with bundled fonts', asyn
   await expect(page.locator('.recorder-heading [data-icon="mic"]')).toBeVisible();
   await expect(page.locator('.recording-timer')).toHaveText('00:00');
   await expect(page.locator('.record-button [data-icon="record"]')).toBeVisible();
-  const wave = page.locator('.ember-wave');
+  const wave = page.locator('.recorder-signal .voice-indicator .wave-trace');
   await expect(wave).toBeVisible();
-  expect(await wave.locator('i').count()).toBe(44);
-  expect(
-    await wave
-      .locator('i')
-      .first()
-      .evaluate((bar) => bar.style.height),
-  ).toBe('4px');
+  expect(await wave.getAttribute('d')).toMatch(/^M [\d.]+ [\d.]+ V [\d.]+/);
   expect(remoteFonts).toEqual([]);
 });
 
