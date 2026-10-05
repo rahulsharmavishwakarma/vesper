@@ -44,6 +44,7 @@ export interface VocabularyEntry {
   language: Language;
   context: string;
   enabled: boolean;
+  confirmed: boolean;
   aliases: string[];
   project: string;
   pronunciation: boolean;
