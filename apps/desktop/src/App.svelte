@@ -890,7 +890,7 @@
                   <p id="models-writer-language-help" class="note">
                     Writing languages: {draft.models.customRewriter
                       ? draft.models.customRewriter.languages?.join(', ') || 'Not declared'
-                      : 'English, French and Hindi'}.
+                      : 'Many languages (the vendor publishes no per-language list)'}.
                   </p>
                   {#if writerError}<p id="models-writer-language-error" class="error">
                       {writerError}

@@ -61,6 +61,80 @@ pub enum Language {
     Hindi,
     #[serde(rename = "fr")]
     French,
+    #[serde(rename = "bg")]
+    Bulgarian,
+    #[serde(rename = "hr")]
+    Croatian,
+    #[serde(rename = "cs")]
+    Czech,
+    #[serde(rename = "da")]
+    Danish,
+    #[serde(rename = "nl")]
+    Dutch,
+    #[serde(rename = "et")]
+    Estonian,
+    #[serde(rename = "fi")]
+    Finnish,
+    #[serde(rename = "de")]
+    German,
+    #[serde(rename = "el")]
+    Greek,
+    #[serde(rename = "hu")]
+    Hungarian,
+    #[serde(rename = "it")]
+    Italian,
+    #[serde(rename = "lv")]
+    Latvian,
+    #[serde(rename = "lt")]
+    Lithuanian,
+    #[serde(rename = "mt")]
+    Maltese,
+    #[serde(rename = "pl")]
+    Polish,
+    #[serde(rename = "pt")]
+    Portuguese,
+    #[serde(rename = "ro")]
+    Romanian,
+    #[serde(rename = "sk")]
+    Slovak,
+    #[serde(rename = "sl")]
+    Slovenian,
+    #[serde(rename = "es")]
+    Spanish,
+    #[serde(rename = "sv")]
+    Swedish,
+    #[serde(rename = "ru")]
+    Russian,
+    #[serde(rename = "uk")]
+    Ukrainian,
+    #[serde(rename = "ar")]
+    Arabic,
+    #[serde(rename = "ja")]
+    Japanese,
+    #[serde(rename = "ko")]
+    Korean,
+    #[serde(rename = "vi")]
+    Vietnamese,
+    #[serde(rename = "zh")]
+    Chinese,
+    #[serde(rename = "tr")]
+    Turkish,
+    #[serde(rename = "id")]
+    Indonesian,
+    #[serde(rename = "ms")]
+    Malay,
+    #[serde(rename = "th")]
+    Thai,
+    #[serde(rename = "fa")]
+    Persian,
+    #[serde(rename = "mk")]
+    Macedonian,
+    #[serde(rename = "yue")]
+    Cantonese,
+    #[serde(rename = "fil")]
+    Filipino,
+    #[serde(rename = "nb")]
+    NorwegianBokmal,
 }
 
 impl Language {
@@ -70,6 +144,43 @@ impl Language {
             Self::English => Some("en"),
             Self::French => Some("fr"),
             Self::Hindi => Some("hi"),
+            Self::Bulgarian => Some("bg"),
+            Self::Croatian => Some("hr"),
+            Self::Czech => Some("cs"),
+            Self::Danish => Some("da"),
+            Self::Dutch => Some("nl"),
+            Self::Estonian => Some("et"),
+            Self::Finnish => Some("fi"),
+            Self::German => Some("de"),
+            Self::Greek => Some("el"),
+            Self::Hungarian => Some("hu"),
+            Self::Italian => Some("it"),
+            Self::Latvian => Some("lv"),
+            Self::Lithuanian => Some("lt"),
+            Self::Maltese => Some("mt"),
+            Self::Polish => Some("pl"),
+            Self::Portuguese => Some("pt"),
+            Self::Romanian => Some("ro"),
+            Self::Slovak => Some("sk"),
+            Self::Slovenian => Some("sl"),
+            Self::Spanish => Some("es"),
+            Self::Swedish => Some("sv"),
+            Self::Russian => Some("ru"),
+            Self::Ukrainian => Some("uk"),
+            Self::Arabic => Some("ar"),
+            Self::Japanese => Some("ja"),
+            Self::Korean => Some("ko"),
+            Self::Vietnamese => Some("vi"),
+            Self::Chinese => Some("zh"),
+            Self::Turkish => Some("tr"),
+            Self::Indonesian => Some("id"),
+            Self::Malay => Some("ms"),
+            Self::Thai => Some("th"),
+            Self::Persian => Some("fa"),
+            Self::Macedonian => Some("mk"),
+            Self::Cantonese => Some("yue"),
+            Self::Filipino => Some("fil"),
+            Self::NorwegianBokmal => Some("nb"),
         }
     }
 }
@@ -596,12 +707,23 @@ mod tests {
                 Language::English,
                 Language::French,
                 Language::Hindi,
+                Language::German,
+                Language::Japanese,
+                Language::Cantonese,
             ] {
                 let mut config = AppConfig::default();
                 config.models.asr = model;
                 config.language = language;
+                // Qwen3-ASR declares 30 recognition languages; Cohere declares
+                // 14 explicit languages with no auto-detect and no Hindi.
                 let valid = model == AsrModel::Qwen3Asr06b
-                    || matches!(language, Language::English | Language::French);
+                    || matches!(
+                        language,
+                        Language::English
+                            | Language::French
+                            | Language::German
+                            | Language::Japanese
+                    );
                 assert_eq!(config.validate().is_ok(), valid);
                 let restored: AppConfig =
                     serde_json::from_str(&serde_json::to_string(&config).unwrap()).unwrap();
@@ -672,6 +794,42 @@ mod tests {
         ));
         config.models.asr = AsrModel::Nemotron35AsrStreaming06b;
         config.validate().unwrap();
+    }
+
+    #[test]
+    fn vendor_declared_languages_validate_per_speech_model() {
+        // (model, language, expected-valid): Parakeet declares 25 EU
+        // languages (no Hindi), Nemotron 32 out-of-the-box locales,
+        // Cohere 14 explicit languages with no auto-detect.
+        for (model, language, valid) in [
+            (AsrModel::ParakeetTdt06bV3, Language::German, true),
+            (AsrModel::ParakeetTdt06bV3, Language::Auto, true),
+            (AsrModel::ParakeetTdt06bV3, Language::Japanese, false),
+            (AsrModel::Nemotron35AsrStreaming06b, Language::Chinese, true),
+            (
+                AsrModel::Nemotron35AsrStreaming06b,
+                Language::NorwegianBokmal,
+                true,
+            ),
+            (AsrModel::Nemotron35AsrStreaming06b, Language::Greek, false),
+            (AsrModel::CohereTranscribe, Language::Japanese, true),
+            (AsrModel::CohereTranscribe, Language::Auto, false),
+            (AsrModel::CohereTranscribe, Language::Hindi, false),
+            (AsrModel::Qwen3Asr06b, Language::Cantonese, true),
+            (AsrModel::Qwen3Asr06b, Language::Filipino, true),
+            (AsrModel::Lfm25Audio15b, Language::English, true),
+            (AsrModel::Lfm25Audio15b, Language::French, false),
+        ] {
+            let config = AppConfig {
+                language,
+                models: ModelSelection {
+                    asr: model,
+                    ..ModelSelection::default()
+                },
+                ..AppConfig::default()
+            };
+            assert_eq!(config.validate().is_ok(), valid, "{model:?} {language:?}");
+        }
     }
 
     #[test]

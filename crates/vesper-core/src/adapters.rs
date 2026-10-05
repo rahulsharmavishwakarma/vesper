@@ -80,14 +80,168 @@ const ALL_BACKENDS: &[ComputeBackend] = &[
     ComputeBackend::Vulkan,
     ComputeBackend::Rocm,
 ];
+/// Every language mode the app can offer. Text adapters stay on this full
+/// union; speech adapters use the per-model vendor-declared tables below.
 const ALL_LANGUAGES: &[Language] = &[
     Language::Auto,
     Language::English,
     Language::Hindi,
     Language::French,
+    Language::Bulgarian,
+    Language::Croatian,
+    Language::Czech,
+    Language::Danish,
+    Language::Dutch,
+    Language::Estonian,
+    Language::Finnish,
+    Language::German,
+    Language::Greek,
+    Language::Hungarian,
+    Language::Italian,
+    Language::Latvian,
+    Language::Lithuanian,
+    Language::Maltese,
+    Language::Polish,
+    Language::Portuguese,
+    Language::Romanian,
+    Language::Slovak,
+    Language::Slovenian,
+    Language::Spanish,
+    Language::Swedish,
+    Language::Russian,
+    Language::Ukrainian,
+    Language::Arabic,
+    Language::Japanese,
+    Language::Korean,
+    Language::Vietnamese,
+    Language::Chinese,
+    Language::Turkish,
+    Language::Indonesian,
+    Language::Malay,
+    Language::Thai,
+    Language::Persian,
+    Language::Macedonian,
+    Language::Cantonese,
+    Language::Filipino,
+    Language::NorwegianBokmal,
 ];
 const EN_FR: &[Language] = &[Language::Auto, Language::English, Language::French];
 const EXPLICIT_EN_FR: &[Language] = &[Language::English, Language::French];
+/// Parakeet TDT v3: 25 vendor-declared ASR languages (NeMo sherpa path
+/// auto-detects; the list gates what the app offers and validates).
+const PARAKEET_LANGUAGES: &[Language] = &[
+    Language::Auto,
+    Language::English,
+    Language::Bulgarian,
+    Language::Croatian,
+    Language::Czech,
+    Language::Danish,
+    Language::Dutch,
+    Language::Estonian,
+    Language::Finnish,
+    Language::French,
+    Language::German,
+    Language::Greek,
+    Language::Hungarian,
+    Language::Italian,
+    Language::Latvian,
+    Language::Lithuanian,
+    Language::Maltese,
+    Language::Polish,
+    Language::Portuguese,
+    Language::Romanian,
+    Language::Slovak,
+    Language::Slovenian,
+    Language::Spanish,
+    Language::Swedish,
+    Language::Russian,
+    Language::Ukrainian,
+];
+/// Nemotron 3.5 streaming: 32 locales that transcribe out of the box
+/// (8 adaptation-ready locales need fine-tuning and stay excluded).
+const NEMOTRON_LANGUAGES: &[Language] = &[
+    Language::Auto,
+    Language::English,
+    Language::Spanish,
+    Language::French,
+    Language::Italian,
+    Language::Portuguese,
+    Language::Dutch,
+    Language::German,
+    Language::Turkish,
+    Language::Russian,
+    Language::Arabic,
+    Language::Hindi,
+    Language::Japanese,
+    Language::Korean,
+    Language::Vietnamese,
+    Language::Ukrainian,
+    Language::Polish,
+    Language::Swedish,
+    Language::Czech,
+    Language::NorwegianBokmal,
+    Language::Danish,
+    Language::Bulgarian,
+    Language::Finnish,
+    Language::Croatian,
+    Language::Slovak,
+    Language::Chinese,
+    Language::Hungarian,
+    Language::Romanian,
+    Language::Estonian,
+];
+/// Qwen3-ASR: 30 vendor-declared recognition languages (dialects excluded).
+const QWEN_ASR_LANGUAGES: &[Language] = &[
+    Language::Auto,
+    Language::Chinese,
+    Language::English,
+    Language::Cantonese,
+    Language::Arabic,
+    Language::German,
+    Language::French,
+    Language::Spanish,
+    Language::Portuguese,
+    Language::Indonesian,
+    Language::Italian,
+    Language::Korean,
+    Language::Russian,
+    Language::Thai,
+    Language::Vietnamese,
+    Language::Japanese,
+    Language::Turkish,
+    Language::Hindi,
+    Language::Malay,
+    Language::Dutch,
+    Language::Swedish,
+    Language::Danish,
+    Language::Finnish,
+    Language::Polish,
+    Language::Czech,
+    Language::Filipino,
+    Language::Persian,
+    Language::Greek,
+    Language::Hungarian,
+    Language::Macedonian,
+    Language::Romanian,
+];
+/// Cohere Transcribe: 14 vendor-declared languages, no auto-detect, no Hindi.
+/// ISO codes are standard mappings of the vendor's language names.
+const COHERE_LANGUAGES: &[Language] = &[
+    Language::English,
+    Language::French,
+    Language::German,
+    Language::Italian,
+    Language::Spanish,
+    Language::Portuguese,
+    Language::Greek,
+    Language::Dutch,
+    Language::Polish,
+    Language::Chinese,
+    Language::Japanese,
+    Language::Korean,
+    Language::Vietnamese,
+    Language::Arabic,
+];
 const SHERPA: &str = "11afbd009a7f8c08f4bcf2fc1b265d0df4670fbf";
 const LLAMA: &str = "e79e4bf660e19f2ad851e06c6913f7a8c5852621";
 const SPEECH: ModelRole = ModelRole::SpeechRecognition;
@@ -159,7 +313,7 @@ pub const ADAPTERS: &[AdapterRegistration] = &[
             native_streaming: true,
             contextual_phrases: true,
             resident_weights: true,
-            ..caps(CacheState::Rnnt, ALL_LANGUAGES, ALL_BACKENDS)
+            ..caps(CacheState::Rnnt, NEMOTRON_LANGUAGES, ALL_BACKENDS)
         },
     },
     AdapterRegistration {
@@ -170,7 +324,7 @@ pub const ADAPTERS: &[AdapterRegistration] = &[
         runtime_revision: SHERPA,
         capabilities: AdapterCapabilities {
             resident_weights: true,
-            ..caps(CacheState::Rnnt, EN_FR, CPU)
+            ..caps(CacheState::Rnnt, PARAKEET_LANGUAGES, CPU)
         },
     },
     AdapterRegistration {
@@ -182,7 +336,7 @@ pub const ADAPTERS: &[AdapterRegistration] = &[
         capabilities: AdapterCapabilities {
             resident_weights: true,
             completion_report: true,
-            ..caps(CacheState::EncoderDecoder, ALL_LANGUAGES, CPU)
+            ..caps(CacheState::EncoderDecoder, QWEN_ASR_LANGUAGES, CPU)
         },
     },
     AdapterRegistration {
@@ -194,7 +348,7 @@ pub const ADAPTERS: &[AdapterRegistration] = &[
         capabilities: AdapterCapabilities {
             resident_weights: true,
             completion_report: true,
-            ..caps(CacheState::EncoderDecoder, EXPLICIT_EN_FR, CPU)
+            ..caps(CacheState::EncoderDecoder, COHERE_LANGUAGES, CPU)
         },
     },
     AdapterRegistration {
@@ -394,6 +548,72 @@ mod tests {
         let restored: AppConfig =
             serde_json::from_str(&serde_json::to_string(&config).unwrap()).unwrap();
         assert_eq!(restored, config);
+    }
+
+    #[test]
+    fn language_manifest_matches_adapter_capability_tables() {
+        // models/languages.json is the human-edited source of record; the
+        // const tables above must mirror it exactly (Auto <-> autoDetect).
+        let manifest: serde_json::Value =
+            serde_json::from_str(include_str!("../../../models/languages.json")).unwrap();
+        let table = manifest.as_object().unwrap();
+        for model in AsrModel::ALL {
+            let entry = &table[model.id()];
+            let declared: std::collections::BTreeSet<&str> = entry["languages"]
+                .as_array()
+                .unwrap()
+                .iter()
+                .map(|v| v.as_str().unwrap())
+                .collect();
+            let auto = entry["autoDetect"].as_bool().unwrap();
+            let (kind, expected): (AdapterKind, Vec<&str>) = match model {
+                AsrModel::ParakeetTdt06bV3 => (
+                    AdapterKind::SherpaTransducer,
+                    PARAKEET_LANGUAGES
+                        .iter()
+                        .map(|l| l.code().unwrap_or("auto"))
+                        .collect(),
+                ),
+                AsrModel::Nemotron35AsrStreaming06b => (
+                    AdapterKind::NemoRnnt,
+                    NEMOTRON_LANGUAGES
+                        .iter()
+                        .map(|l| l.code().unwrap_or("auto"))
+                        .collect(),
+                ),
+                AsrModel::Qwen3Asr06b => (
+                    AdapterKind::QwenAsr,
+                    QWEN_ASR_LANGUAGES
+                        .iter()
+                        .map(|l| l.code().unwrap_or("auto"))
+                        .collect(),
+                ),
+                AsrModel::CohereTranscribe => (
+                    AdapterKind::CohereAsr,
+                    COHERE_LANGUAGES
+                        .iter()
+                        .map(|l| l.code().unwrap_or("auto"))
+                        .collect(),
+                ),
+                AsrModel::WhisperSmall | AsrModel::WhisperTurbo => (
+                    AdapterKind::Whisper,
+                    EN_FR.iter().map(|l| l.code().unwrap_or("auto")).collect(),
+                ),
+                AsrModel::Lfm25Audio15b => (AdapterKind::LfmAudio, vec!["en"]),
+            };
+            let expected_set: std::collections::BTreeSet<&str> = expected.into_iter().collect();
+            let mut manifest_set = declared;
+            if auto {
+                manifest_set.insert("auto");
+            }
+            assert_eq!(manifest_set, expected_set, "{}", model.id());
+            assert_eq!(
+                adapter(kind).capabilities.languages.len(),
+                expected_set.len(),
+                "{}",
+                model.id()
+            );
+        }
     }
 
     #[test]

@@ -98,14 +98,65 @@ fn accepted_text(report: &str, text: &str, purpose: DecodePurpose) -> Result<Str
     }
 }
 
+/// Vendor-declared language prompts. Qwen takes an English language name,
+/// Cohere takes an ISO code (standard mappings of the vendor's language names).
 fn language(config: &AppConfig) -> Option<&'static str> {
     match (config.models.asr, config.language) {
         (_, Language::Auto) => None,
-        (AsrModel::Qwen3Asr06b, Language::English) => Some("English"),
-        (AsrModel::Qwen3Asr06b, Language::French) => Some("French"),
-        (AsrModel::Qwen3Asr06b, Language::Hindi) => Some("Hindi"),
-        (AsrModel::CohereTranscribe, Language::English) => Some("en"),
-        (AsrModel::CohereTranscribe, Language::French) => Some("fr"),
+        (AsrModel::Qwen3Asr06b, language) => Some(match language {
+            Language::Auto => return None,
+            Language::English => "English",
+            Language::French => "French",
+            Language::Hindi => "Hindi",
+            Language::Chinese => "Chinese",
+            Language::Cantonese => "Cantonese",
+            Language::Arabic => "Arabic",
+            Language::German => "German",
+            Language::Spanish => "Spanish",
+            Language::Portuguese => "Portuguese",
+            Language::Indonesian => "Indonesian",
+            Language::Italian => "Italian",
+            Language::Korean => "Korean",
+            Language::Russian => "Russian",
+            Language::Thai => "Thai",
+            Language::Vietnamese => "Vietnamese",
+            Language::Japanese => "Japanese",
+            Language::Turkish => "Turkish",
+            Language::Malay => "Malay",
+            Language::Dutch => "Dutch",
+            Language::Swedish => "Swedish",
+            Language::Danish => "Danish",
+            Language::Finnish => "Finnish",
+            Language::Polish => "Polish",
+            Language::Czech => "Czech",
+            Language::Filipino => "Filipino",
+            Language::Persian => "Persian",
+            Language::Greek => "Greek",
+            Language::Hungarian => "Hungarian",
+            Language::Macedonian => "Macedonian",
+            Language::Romanian => "Romanian",
+            // Invalid combinations are rejected by AppConfig::validate.
+            _ => return None,
+        }),
+        (AsrModel::CohereTranscribe, language) => Some(match language {
+            Language::Auto => return None,
+            Language::English => "en",
+            Language::French => "fr",
+            Language::German => "de",
+            Language::Italian => "it",
+            Language::Spanish => "es",
+            Language::Portuguese => "pt",
+            Language::Greek => "el",
+            Language::Dutch => "nl",
+            Language::Polish => "pl",
+            Language::Chinese => "zh",
+            Language::Japanese => "ja",
+            Language::Korean => "ko",
+            Language::Vietnamese => "vi",
+            Language::Arabic => "ar",
+            // Invalid combinations are rejected by AppConfig::validate.
+            _ => return None,
+        }),
         _ => None, // Invalid combinations are rejected by AppConfig::validate.
     }
 }

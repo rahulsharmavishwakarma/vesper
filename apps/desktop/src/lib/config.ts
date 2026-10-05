@@ -1,4 +1,5 @@
 import { sameShortcut, shortcutIdentity } from './recording-shortcuts.ts';
+import languageManifest from '../../../../models/languages.json' with { type: 'json' };
 
 export const ASR_MODELS = {
   'nvidia/parakeet-tdt-0.6b-v3': 'NVIDIA Parakeet TDT 0.6B v3',
@@ -9,7 +10,48 @@ export const ASR_MODELS = {
 } as const;
 
 export type AsrModel = keyof typeof ASR_MODELS;
-export type Language = 'auto' | 'en' | 'fr' | 'hi';
+export type Language =
+  | 'auto'
+  | 'ar'
+  | 'bg'
+  | 'yue'
+  | 'zh'
+  | 'hr'
+  | 'cs'
+  | 'da'
+  | 'nl'
+  | 'en'
+  | 'et'
+  | 'fil'
+  | 'fi'
+  | 'fr'
+  | 'de'
+  | 'el'
+  | 'hi'
+  | 'hu'
+  | 'id'
+  | 'it'
+  | 'ja'
+  | 'ko'
+  | 'lv'
+  | 'lt'
+  | 'mk'
+  | 'ms'
+  | 'mt'
+  | 'nb'
+  | 'fa'
+  | 'pl'
+  | 'pt'
+  | 'ro'
+  | 'ru'
+  | 'sk'
+  | 'sl'
+  | 'es'
+  | 'sv'
+  | 'th'
+  | 'tr'
+  | 'uk'
+  | 'vi';
 export type LanguageOption = { value: Language; label: string; description: string };
 export type CleanupPreset = 'minimal' | 'balanced';
 export type ComputeBackend = 'auto' | 'cpu' | 'metal' | 'cuda' | 'vulkan' | 'rocm';
@@ -129,16 +171,82 @@ const LANGUAGE_OPTIONS: readonly LanguageOption[] = [
     label: 'Detect automatically',
     description: 'Let the speech model identify the spoken language',
   },
+  { value: 'ar', label: 'Arabic', description: 'Transcribe supported Arabic speech' },
+  { value: 'bg', label: 'Bulgarian', description: 'Transcribe supported Bulgarian speech' },
+  { value: 'yue', label: 'Cantonese', description: 'Transcribe supported Cantonese speech' },
+  { value: 'zh', label: 'Chinese (Mandarin)', description: 'Transcribe supported Mandarin speech' },
+  { value: 'hr', label: 'Croatian', description: 'Transcribe supported Croatian speech' },
+  { value: 'cs', label: 'Czech', description: 'Transcribe supported Czech speech' },
+  { value: 'da', label: 'Danish', description: 'Transcribe supported Danish speech' },
+  { value: 'nl', label: 'Dutch', description: 'Transcribe supported Dutch speech' },
   { value: 'en', label: 'English', description: 'Transcribe supported English speech' },
+  { value: 'et', label: 'Estonian', description: 'Transcribe supported Estonian speech' },
+  { value: 'fil', label: 'Filipino', description: 'Transcribe supported Filipino speech' },
+  { value: 'fi', label: 'Finnish', description: 'Transcribe supported Finnish speech' },
   { value: 'fr', label: 'French', description: 'Transcribe supported French speech' },
+  { value: 'de', label: 'German', description: 'Transcribe supported German speech' },
+  { value: 'el', label: 'Greek', description: 'Transcribe supported Greek speech' },
   { value: 'hi', label: 'Hindi', description: 'Transcribe supported Hindi speech' },
+  { value: 'hu', label: 'Hungarian', description: 'Transcribe supported Hungarian speech' },
+  { value: 'id', label: 'Indonesian', description: 'Transcribe supported Indonesian speech' },
+  { value: 'it', label: 'Italian', description: 'Transcribe supported Italian speech' },
+  { value: 'ja', label: 'Japanese', description: 'Transcribe supported Japanese speech' },
+  { value: 'ko', label: 'Korean', description: 'Transcribe supported Korean speech' },
+  { value: 'lv', label: 'Latvian', description: 'Transcribe supported Latvian speech' },
+  { value: 'lt', label: 'Lithuanian', description: 'Transcribe supported Lithuanian speech' },
+  { value: 'mk', label: 'Macedonian', description: 'Transcribe supported Macedonian speech' },
+  { value: 'ms', label: 'Malay', description: 'Transcribe supported Malay speech' },
+  { value: 'mt', label: 'Maltese', description: 'Transcribe supported Maltese speech' },
+  {
+    value: 'nb',
+    label: 'Norwegian (Bokmål)',
+    description: 'Transcribe supported Norwegian speech',
+  },
+  { value: 'fa', label: 'Persian', description: 'Transcribe supported Persian speech' },
+  { value: 'pl', label: 'Polish', description: 'Transcribe supported Polish speech' },
+  { value: 'pt', label: 'Portuguese', description: 'Transcribe supported Portuguese speech' },
+  { value: 'ro', label: 'Romanian', description: 'Transcribe supported Romanian speech' },
+  { value: 'ru', label: 'Russian', description: 'Transcribe supported Russian speech' },
+  { value: 'sk', label: 'Slovak', description: 'Transcribe supported Slovak speech' },
+  { value: 'sl', label: 'Slovenian', description: 'Transcribe supported Slovenian speech' },
+  { value: 'es', label: 'Spanish', description: 'Transcribe supported Spanish speech' },
+  { value: 'sv', label: 'Swedish', description: 'Transcribe supported Swedish speech' },
+  { value: 'th', label: 'Thai', description: 'Transcribe supported Thai speech' },
+  { value: 'tr', label: 'Turkish', description: 'Transcribe supported Turkish speech' },
+  { value: 'uk', label: 'Ukrainian', description: 'Transcribe supported Ukrainian speech' },
+  { value: 'vi', label: 'Vietnamese', description: 'Transcribe supported Vietnamese speech' },
 ];
 
 function declaredLanguages(profile: HuggingFaceProfile): Set<string> {
   return new Set((profile.languages ?? []).map((tag) => tag.split('-')[0].toLowerCase()));
 }
 
-/** The app currently exposes four language modes; model/backend metadata narrows them. */
+interface ModelLanguages {
+  languages: readonly Language[];
+  autoDetect: boolean;
+}
+
+/** Vendor-declared transcription languages per built-in model (models/languages.json).
+ * The backend agreement test pins these lists to the adapter capability tables. */
+const MODEL_LANGUAGES: Record<string, ModelLanguages> = (() => {
+  const known = new Set(LANGUAGE_OPTIONS.map((option) => option.value));
+  const table: Record<string, ModelLanguages> = {};
+  for (const [id, entry] of Object.entries(
+    languageManifest as unknown as Record<string, { languages: unknown; autoDetect: unknown }>,
+  )) {
+    if (id.startsWith('_') || !entry || typeof entry !== 'object') continue;
+    const languages = Array.isArray(entry.languages)
+      ? entry.languages.filter((code): code is Language => known.has(code as Language))
+      : [];
+    table[id] = { languages, autoDetect: entry.autoDetect === true };
+  }
+  return table;
+})();
+
+/** Fallback when the manifest lacks a model: the legacy four modes. */
+const LEGACY_LANGUAGES: readonly Language[] = ['auto', 'en', 'fr', 'hi'];
+
+/** The app offers each speech model's vendor-declared languages; model/backend metadata narrows them. */
 export function transcriptionLanguageOptions(
   models: AppConfig['models'],
   backend: ComputeBackend = 'auto',
@@ -154,14 +262,10 @@ export function transcriptionLanguageOptions(
     ['nvidia/parakeet-tdt-0.6b-v3', 'Qwen/Qwen3-ASR-0.6B'].includes(models.asr)
   )
     return LANGUAGE_OPTIONS.filter((option) => option.value === 'en');
-  const supported: readonly Language[] =
-    models.asr === 'LiquidAI/LFM2.5-Audio-1.5B'
-      ? ['en']
-      : models.asr === 'CohereLabs/cohere-transcribe-03-2026'
-        ? ['en', 'fr']
-        : models.asr === 'nvidia/parakeet-tdt-0.6b-v3'
-          ? ['auto', 'en', 'fr']
-          : ['auto', 'en', 'fr', 'hi'];
+  const entry = MODEL_LANGUAGES[models.asr];
+  const supported: readonly Language[] = entry
+    ? [...(entry.autoDetect ? (['auto'] as const) : []), ...entry.languages]
+    : LEGACY_LANGUAGES;
   return LANGUAGE_OPTIONS.filter((option) => supported.includes(option.value));
 }
 
@@ -455,7 +559,12 @@ export function validateSettings(value: unknown, checkWriterLanguage = true): st
     errors.push('Choose valid audio processing settings.');
   if (typeof value.cleanupEnabled !== 'boolean')
     errors.push('Choose whether the writing model is enabled.');
-  if (!isOneOf(value.language, ['auto', 'en', 'fr', 'hi']))
+  if (
+    !isOneOf(
+      value.language,
+      LANGUAGE_OPTIONS.map((option) => option.value),
+    )
+  )
     errors.push('Select a supported language.');
   if (!isOneOf(value.cleanupPreset, ['minimal', 'balanced']))
     errors.push('Select a writing style.');

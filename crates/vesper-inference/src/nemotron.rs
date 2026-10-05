@@ -142,12 +142,52 @@ fn validate_audio(_audio: &MonoPcm, config: &AppConfig, cancelled: &AtomicBool) 
     Ok(())
 }
 
+/// Vendor locale per language: the first-listed locale for each base code.
 pub(crate) fn language_code(language: Language) -> Option<&'static str> {
     match language {
         Language::Auto => None,
         Language::English => Some("en-US"),
         Language::Hindi => Some("hi-IN"),
         Language::French => Some("fr-FR"),
+        Language::Spanish => Some("es-US"),
+        Language::Italian => Some("it-IT"),
+        Language::Portuguese => Some("pt-BR"),
+        Language::Dutch => Some("nl-NL"),
+        Language::German => Some("de-DE"),
+        Language::Turkish => Some("tr-TR"),
+        Language::Russian => Some("ru-RU"),
+        Language::Arabic => Some("ar-AR"),
+        Language::Japanese => Some("ja-JP"),
+        Language::Korean => Some("ko-KR"),
+        Language::Vietnamese => Some("vi-VN"),
+        Language::Ukrainian => Some("uk-UA"),
+        Language::Polish => Some("pl-PL"),
+        Language::Swedish => Some("sv-SE"),
+        Language::Czech => Some("cs-CZ"),
+        Language::NorwegianBokmal => Some("nb-NO"),
+        Language::Danish => Some("da-DK"),
+        Language::Bulgarian => Some("bg-BG"),
+        Language::Finnish => Some("fi-FI"),
+        Language::Croatian => Some("hr-HR"),
+        Language::Slovak => Some("sk-SK"),
+        Language::Chinese => Some("zh-CN"),
+        Language::Hungarian => Some("hu-HU"),
+        Language::Romanian => Some("ro-RO"),
+        Language::Estonian => Some("et-EE"),
+        // Not vendor-declared for this checkpoint; validation rejects these
+        // combinations first, and automatic detection is the safe fallback.
+        Language::Slovenian
+        | Language::Latvian
+        | Language::Lithuanian
+        | Language::Maltese
+        | Language::Greek
+        | Language::Indonesian
+        | Language::Malay
+        | Language::Thai
+        | Language::Persian
+        | Language::Macedonian
+        | Language::Cantonese
+        | Language::Filipino => None,
     }
 }
 
@@ -171,6 +211,15 @@ mod tests {
         assert_eq!(language_code(Language::English), Some("en-US"));
         assert_eq!(language_code(Language::Hindi), Some("hi-IN"));
         assert_eq!(language_code(Language::French), Some("fr-FR"));
+        // First-listed vendor locale per base code; undeclared checkpoints
+        // fall back to automatic detection.
+        assert_eq!(language_code(Language::Spanish), Some("es-US"));
+        assert_eq!(language_code(Language::Portuguese), Some("pt-BR"));
+        assert_eq!(language_code(Language::Chinese), Some("zh-CN"));
+        assert_eq!(language_code(Language::NorwegianBokmal), Some("nb-NO"));
+        assert_eq!(language_code(Language::Arabic), Some("ar-AR"));
+        assert_eq!(language_code(Language::Slovenian), None);
+        assert_eq!(language_code(Language::Cantonese), None);
     }
 
     #[test]
