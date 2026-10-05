@@ -104,6 +104,14 @@ impl DictationPersonalizationSnapshot {
             let Some(source) = &entry.automatic_source else {
                 continue;
             };
+            if entry.confirmed {
+                // User-confirmed: trusted like a manual entry, no per-utterance
+                // evidence gate. Unticked automatic entries keep the gate below.
+                if entry.enabled {
+                    entry.context.clear();
+                }
+                continue;
+            }
             let eligible = self.learning.candidates.iter().any(|candidate| {
                 candidate.id == *source
                     && candidate.state == CandidateState::Active
@@ -760,6 +768,7 @@ impl DatasetStore {
                 context: candidate.context.clone(),
                 enabled: true,
                 automatic_source: None,
+                confirmed: true,
                 learned_at: now(),
                 ..Default::default()
             });
@@ -897,6 +906,11 @@ impl DatasetStore {
                     entry.automatic_source = None;
                     invalidate = true;
                 }
+            }
+            // User-added words are always confirmed; the tick only gates
+            // automatic entries.
+            if entry.automatic_source.is_none() {
+                entry.confirmed = true;
             }
         }
         if !disabled_automatic.is_empty() {
@@ -1949,6 +1963,8 @@ mod tests {
         assert_eq!(entry.aliases, ["Jonathon"]);
         assert!(entry.automatic_source.is_none());
         assert!(entry.enabled);
+        // Approving ticks the entry: user-owned words are always confirmed.
+        assert!(entry.confirmed);
         assert!(store
             .automatic_learning_state()
             .unwrap()
@@ -1956,6 +1972,52 @@ mod tests {
             .is_empty());
         // The candidate is gone, so approving again fails.
         assert!(store.approve_automatic_candidate(&id).is_err());
+    }
+
+    #[test]
+    fn ticking_an_automatic_entry_trusts_it_without_utterance_evidence() {
+        let (_dir, store, p) = setup();
+        teach(&store, &p, "one");
+        assert!(!store.personalization().unwrap().vocabulary[0].confirmed);
+        // Unticked: an unrelated utterance keeps the entry gated off.
+        let snapshot = store.dictation_personalization_snapshot().unwrap();
+        assert!(
+            !snapshot
+                .post_asr_profile("Hello world today", Language::English)
+                .vocabulary[0]
+                .enabled
+        );
+        // Tick it: the same unrelated utterance now keeps it enabled.
+        let mut profile = store.personalization().unwrap();
+        profile.vocabulary[0].confirmed = true;
+        store.save_personalization(profile).unwrap();
+        assert!(store.personalization().unwrap().vocabulary[0].confirmed);
+        let snapshot = store.dictation_personalization_snapshot().unwrap();
+        assert!(
+            snapshot
+                .post_asr_profile("Hello world today", Language::English)
+                .vocabulary[0]
+                .enabled
+        );
+        // Removing a ticked entry still suspends it; later edits never return it.
+        let mut profile = store.personalization().unwrap();
+        profile.vocabulary.clear();
+        store.save_personalization(profile).unwrap();
+        let current = store.personalization().unwrap();
+        let outcome = teach(&store, &current, "two");
+        assert!(outcome.activated.is_empty());
+        assert!(store.personalization().unwrap().vocabulary.is_empty());
+    }
+
+    #[test]
+    fn manual_entries_are_always_confirmed_on_save() {
+        let (_dir, store, p) = setup();
+        teach(&store, &p, "one");
+        let mut profile = store.personalization().unwrap();
+        profile.vocabulary[0].automatic_source = None;
+        profile.vocabulary[0].confirmed = false;
+        let saved = store.save_personalization(profile).unwrap();
+        assert!(saved.vocabulary[0].confirmed);
     }
 
     #[test]

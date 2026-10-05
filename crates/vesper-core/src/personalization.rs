@@ -46,6 +46,9 @@ pub struct VocabularyEntry {
     /// Store-owned candidate provenance; distinct from a human review.
     #[serde(default)]
     pub automatic_source: Option<String>,
+    /// User confirmation tick: confirmed entries are trusted like manual ones.
+    #[serde(default)]
+    pub confirmed: bool,
     #[serde(default)]
     pub usage_count: u32,
 }
