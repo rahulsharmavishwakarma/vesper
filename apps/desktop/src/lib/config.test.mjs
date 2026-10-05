@@ -90,14 +90,37 @@ test('new settings remain formatting-only and stored context correction is prese
 test('transcription language choices follow the selected speech model', () => {
   const settings = defaultSettings();
   const values = () => transcriptionLanguageOptions(settings.models).map((option) => option.value);
-  assert.deepEqual(values(), ['en', 'fr']);
+  // Default Cohere: 14 vendor-declared languages, no auto-detect, no Hindi.
+  // Order follows the shared language options, not the manifest.
+  assert.deepEqual(values(), [
+    'ar',
+    'zh',
+    'nl',
+    'en',
+    'fr',
+    'de',
+    'el',
+    'it',
+    'ja',
+    'ko',
+    'pl',
+    'pt',
+    'es',
+    'vi',
+  ]);
   settings.models.asr = 'nvidia/nemotron-3.5-asr-streaming-0.6b';
-  assert.deepEqual(values(), ['auto', 'en', 'fr', 'hi']);
+  const nemotron = values();
+  assert.equal(nemotron.length, 29);
+  for (const code of ['auto', 'en', 'hi', 'zh', 'nb', 'et']) assert.ok(nemotron.includes(code));
+  for (const code of ['el', 'yue']) assert.ok(!nemotron.includes(code));
 
   settings.models.asr = 'nvidia/parakeet-tdt-0.6b-v3';
-  assert.deepEqual(values(), ['auto', 'en', 'fr']);
+  const parakeet = values();
+  assert.equal(parakeet.length, 26);
+  for (const code of ['auto', 'en', 'de', 'uk']) assert.ok(parakeet.includes(code));
+  for (const code of ['hi', 'ja', 'zh']) assert.ok(!parakeet.includes(code));
   settings.models.asr = 'CohereLabs/cohere-transcribe-03-2026';
-  assert.deepEqual(values(), ['en', 'fr']);
+  assert.ok(!values().includes('auto') && !values().includes('hi'));
 
   settings.models.customAsr = {
     ...cleanupProfile(),
@@ -148,7 +171,8 @@ test('language choices respect the ASR backend and enabled writer without mutati
   settings.language = 'auto';
   assert.match(writingLanguageError(settings), /explicit language/);
   settings.cleanupEnabled = false;
-  assert.deepEqual(values(), ['auto', 'en', 'fr', 'hi']);
+  assert.equal(values().length, 31);
+  assert.ok(values().includes('yue') && values().includes('fil'));
   assert.deepEqual(validateSettings(settings), []);
 });
 
