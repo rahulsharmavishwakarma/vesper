@@ -1293,7 +1293,10 @@ await test('View transcript navigates from Settings and refreshes the latest res
     target.querySelector('.studio-main').dataset.view === 'dictate',
     'View transcript left the app on Settings',
   );
-  assert(target.textContent.includes('No fixed time limit'), 'General duration policy is missing');
+  assert(
+    !target.textContent.includes('No fixed time limit'),
+    'Removed duration hint reappeared on Dictate',
+  );
 });
 
 await test('Corrupt settings show recovery controls and reset restores manual capture', async () => {
@@ -1612,8 +1615,8 @@ await test('Qwen and Cohere retain language choices without a recording duration
   button('Dictate').click();
   await tick();
   assert(
-    target.textContent.includes('No fixed time limit'),
-    'Recording still has a duration quota',
+    !target.textContent.includes('No fixed time limit'),
+    'Removed duration hint reappeared on Dictate',
   );
   for (const page of ['Dictate', 'Settings', 'Models', 'History']) {
     button(page).click();

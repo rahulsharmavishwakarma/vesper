@@ -904,11 +904,9 @@
             <span class="recording-timer" class:live={recording} aria-label="Recording duration"
               >{formatElapsed(recordingElapsedMs)}</span
             >
-            <span
-              >{maxRecordingSeconds > 0
-                ? `Up to ${maxRecordingSeconds} seconds with this model`
-                : 'No fixed time limit'}</span
-            >
+            {#if maxRecordingSeconds > 0}<span
+                >{`Up to ${maxRecordingSeconds} seconds with this model`}</span
+              >{/if}
           </div>
           <div class="recorder-signal">
             <AudioIndicator

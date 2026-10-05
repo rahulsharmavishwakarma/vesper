@@ -617,7 +617,8 @@ segment/decoder provenance. Post-stop tests supply public PCM directly; they do
 not measure a real microphone or user-visible stop latency.
 
 All 14 actual-component browser scenarios pass. The Dictate screen
-shows Qwen selected with no fixed time limit. Processing progress is visible in
+shows Qwen selected with no duration hint (an adapter cutoff still surfaces an
+"Up to N seconds" note). Processing progress is visible in
 Dictate and Quick Capture.
 Dictate has no horizontal overflow at 320 pixels; Quick Capture fits 440 × 96.
 These use synthetic native responses and qualify rendering, not native window
