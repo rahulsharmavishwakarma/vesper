@@ -198,6 +198,51 @@ test('Interaction motion stays on the compositor', async ({ page }) => {
     .toBe('0s');
 });
 
+test('Segmented pill lands exactly on the pressed segment', async ({ page }) => {
+  await page.goto('/tests/interaction-preview.html?states');
+  const group = page.getByRole('group', { name: 'Preview segments' });
+  const geometry = () =>
+    group.evaluate((host) => {
+      const pressed = host.querySelector('button[aria-pressed="true"]');
+      const matrix = new DOMMatrix(getComputedStyle(host, '::before').transform);
+      return {
+        scaleX: matrix.a,
+        scaleY: matrix.d,
+        x: matrix.e,
+        y: matrix.f,
+        width: parseFloat(host.style.getPropertyValue('--selection-width')),
+        height: parseFloat(host.style.getPropertyValue('--selection-height')),
+        tx: pressed.offsetLeft,
+        ty: pressed.offsetTop,
+        tw: pressed.offsetWidth,
+        th: pressed.offsetHeight,
+      };
+    });
+  // A slow switch morphs size through scale, then settles exactly.
+  await group.getByRole('button', { name: 'Needs review' }).click();
+  await page.waitForTimeout(120);
+  const midflight = await geometry();
+  expect(midflight.width).toBeCloseTo(midflight.tw, 0);
+  expect(Math.abs(midflight.scaleX - 1)).toBeGreaterThan(0.03);
+  await page.waitForTimeout(500);
+  let settled = await geometry();
+  expect(settled.scaleX).toBeCloseTo(1, 1);
+  expect(settled.scaleY).toBeCloseTo(1, 1);
+  expect(settled.x).toBeCloseTo(settled.tx, 0);
+  expect(settled.y).toBeCloseTo(settled.ty, 0);
+  expect(settled.width).toBeCloseTo(settled.tw, 0);
+  expect(settled.height).toBeCloseTo(settled.th, 0);
+  // A rapid re-switch retargets mid-glide and still lands exactly.
+  await group.getByRole('button', { name: 'Reviewed' }).click();
+  await group.getByRole('button', { name: 'All' }).click();
+  await page.waitForTimeout(500);
+  settled = await geometry();
+  expect(settled.scaleX).toBeCloseTo(1, 1);
+  expect(settled.scaleY).toBeCloseTo(1, 1);
+  expect(settled.x).toBeCloseTo(settled.tx, 0);
+  expect(settled.width).toBeCloseTo(settled.tw, 0);
+});
+
 test('Capture design offers the three glass variants with backdrop blur', async ({ page }) => {
   await page.goto('/');
   await page

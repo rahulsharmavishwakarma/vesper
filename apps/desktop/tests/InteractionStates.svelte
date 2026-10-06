@@ -7,6 +7,7 @@
   import ModelRemovalDialog from '../src/lib/components/ModelRemovalDialog.svelte';
   import ModelStatus from '../src/lib/components/ModelStatus.svelte';
   import { installPressFeedback } from '../src/lib/actions/pressFeedback';
+  import { selectionHighlight } from '../src/lib/actions/selectionHighlight';
   import { onMount } from 'svelte';
   import type { TranscriptFeedback as Feedback } from '../src/lib/api/dataset';
   import type { ModelCatalogInstallation } from '../src/lib/api/runtime';
@@ -14,7 +15,13 @@
   let enabled = $state(true),
     value = $state('local'),
     copied = $state(true),
-    feedback = $state<Feedback>(null);
+    feedback = $state<Feedback>(null),
+    segment = $state('all');
+  const segments = [
+    { value: 'all', label: 'All' },
+    { value: 'pending', label: 'Needs review' },
+    { value: 'approved', label: 'Reviewed' },
+  ];
   let removal: ReturnType<typeof ModelRemovalDialog>;
   const options = [
     { value: 'local', label: 'On this device' },
@@ -126,6 +133,23 @@
       feedback = value;
     }}
   />
+  <section>
+    <h2>Segmented</h2>
+    <div
+      class="history-filters"
+      use:selectionHighlight={segment}
+      role="group"
+      aria-label="Preview segments"
+    >
+      {#each segments as choice (choice.value)}<button
+          type="button"
+          aria-pressed={segment === choice.value}
+          onclick={() => {
+            segment = choice.value;
+          }}>{choice.label}</button
+        >{/each}
+    </div>
+  </section>
   <details>
     <summary>Disclosure details</summary>
     <p>The arrow changes direction and the content stays keyboard accessible.</p>

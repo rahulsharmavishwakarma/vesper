@@ -2010,7 +2010,9 @@ textarea:focus:enabled {
   left: 0;
   width: var(--selection-width, 0px);
   height: var(--selection-height, 0px);
-  transform: translate(var(--selection-x, 0px), var(--selection-y, 0px));
+  transform-origin: 0 0;
+  transform: translate(var(--selection-x, 0px), var(--selection-y, 0px))
+    scale(var(--selection-sx, 1), var(--selection-sy, 1));
   border-radius: var(--radius-sm);
   background: var(--selection-color, var(--color-tint));
   opacity: 0;
@@ -2018,7 +2020,8 @@ textarea:focus:enabled {
   z-index: -1;
 }
 .sliding-selection[data-motion-ready]::before {
-  /* The pill glides on transform only; width/height land instantly so segment
+  /* The pill glides and morphs on transform only (translate + scale); the
+   * size vars snap invisibly under the compensating FLIP scale, so segment
    * switches never animate layout. */
   transition:
     transform var(--duration-slide) var(--ease-slide),
