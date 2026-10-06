@@ -126,7 +126,6 @@ const ALL_LANGUAGES: &[Language] = &[
     Language::NorwegianBokmal,
 ];
 const EN_FR: &[Language] = &[Language::Auto, Language::English, Language::French];
-const EXPLICIT_EN_FR: &[Language] = &[Language::English, Language::French];
 /// Parakeet TDT v3: 25 vendor-declared ASR languages (NeMo sherpa path
 /// auto-detects; the list gates what the app offers and validates).
 const PARAKEET_LANGUAGES: &[Language] = &[

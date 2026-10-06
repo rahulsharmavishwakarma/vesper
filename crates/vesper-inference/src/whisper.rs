@@ -48,6 +48,10 @@ pub(crate) fn recognizer_config(
                     Language::Hindi => {
                         return Err(native("Whisper language", "Hindi is not qualified"))
                     }
+                    // AppConfig::validate admits only the modes above for
+                    // Whisper; reject anything else instead of silently
+                    // falling back to an unqualified language.
+                    _ => return Err(native("Whisper language", "language is not qualified")),
                 },
                 task: Some("transcribe".into()),
                 tail_paddings: TAIL_PADDING_FRAMES,
