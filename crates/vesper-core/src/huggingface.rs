@@ -272,6 +272,40 @@ mod tests {
     }
 
     #[test]
+    fn custom_writer_validates_every_manifest_language() {
+        use crate::{AppConfig, Language};
+        // Union of every speech-manifest code; extending the manifest extends
+        // this coverage with no test edit.
+        let manifest: serde_json::Value =
+            serde_json::from_str(include_str!("../../../models/languages.json")).unwrap();
+        let mut codes = Vec::new();
+        for (id, entry) in manifest.as_object().unwrap() {
+            if id == "writers" || id.starts_with('_') {
+                continue;
+            }
+            for value in entry["languages"].as_array().unwrap() {
+                let language: Language = serde_json::from_value(value.clone()).unwrap();
+                if !codes.contains(&language) {
+                    codes.push(language);
+                }
+            }
+        }
+        assert!(!codes.is_empty());
+        for language in codes {
+            let mut config = AppConfig::default();
+            config.cleanup_enabled = true;
+            let mut profile = fixture();
+            profile.languages = vec![language.code().unwrap().into()];
+            config.models.custom_rewriter = Some(profile);
+            config.language = language;
+            assert!(config.validate_writer_language().is_ok(), "{language:?}");
+            // The unrestricted built-in writer covers every manifest mode.
+            config.models.custom_rewriter = None;
+            assert!(config.validate_writer_language().is_ok(), "{language:?}");
+        }
+    }
+
+    #[test]
     fn rejects_traversal_urls_escapes_and_mutable_revisions() {
         fixture().validate().unwrap();
         for path in [
