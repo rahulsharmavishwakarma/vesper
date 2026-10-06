@@ -1,12 +1,6 @@
 import { invoke, isTauri } from '@tauri-apps/api/core';
 import desktopPackage from '../../../package.json' with { type: 'json' };
-import {
-  ASR_MODELS,
-  CLEANUP_MODELS,
-  defaultSettings,
-  parseSettings,
-  type AppConfig,
-} from '../config';
+import { catalogModel, defaultSettings, parseSettings, type AppConfig } from '../config';
 import type { EngineDiagnostics } from '../engineStatus';
 import type { AcceleratorCapabilities } from '../accelerators';
 import { readPreviewSettings, writePreviewSettings } from '../browserSettings';
@@ -98,9 +92,14 @@ export async function getAppStatus(): Promise<AppStatusSnapshot> {
         name: 'Vesper',
         version: desktopPackage.version,
         inference_ready: false,
-        asr_model: settings.models.customAsr?.name ?? ASR_MODELS[settings.models.asr],
+        asr_model:
+          settings.models.customAsr?.name ??
+          catalogModel(settings.models.asr)?.name ??
+          settings.models.asr,
         rewrite_model:
-          settings.models.customRewriter?.name ?? CLEANUP_MODELS[settings.models.rewriter].name,
+          settings.models.customRewriter?.name ??
+          catalogModel(settings.models.rewriter)?.name ??
+          settings.models.rewriter,
         message:
           'Browser preview. Settings are stored only in this browser; inference is not connected.',
         shortcut_error: null,

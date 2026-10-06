@@ -1,15 +1,61 @@
 import { sameShortcut, shortcutIdentity } from './recording-shortcuts.ts';
 import languageManifest from '../../../../models/languages.json' with { type: 'json' };
+import modelCatalog from '../../../../models/catalog.json' with { type: 'json' };
 
-export const ASR_MODELS = {
-  'nvidia/parakeet-tdt-0.6b-v3': 'NVIDIA Parakeet TDT 0.6B v3',
-  'nvidia/nemotron-3.5-asr-streaming-0.6b': 'NVIDIA Nemotron 3.5 ASR Streaming 0.6B',
-  'Qwen/Qwen3-ASR-0.6B': 'Qwen3-ASR 0.6B',
-  'CohereLabs/cohere-transcribe-03-2026': 'Cohere Transcribe',
-  'LiquidAI/LFM2.5-Audio-1.5B': 'Liquid LFM2.5 Audio 1.5B',
-} as const;
+export interface CatalogModel {
+  readonly name: string;
+  readonly role: string;
+  readonly status: string;
+  readonly creator: string;
+  readonly picker_blurb: string;
+}
 
-export type AsrModel = keyof typeof ASR_MODELS;
+function parseModelCatalog(): Record<string, CatalogModel> {
+  const root = modelCatalog as unknown as { models?: unknown };
+  const table: Record<string, CatalogModel> = {};
+  if (!Array.isArray(root.models)) return table;
+  for (const entry of root.models) {
+    if (!entry || typeof entry !== 'object') continue;
+    const record = entry as Record<string, unknown>;
+    if (typeof record.id !== 'string' || typeof record.name !== 'string') continue;
+    table[record.id] = {
+      name: record.name,
+      role: typeof record.role === 'string' ? record.role : '',
+      status: typeof record.status === 'string' ? record.status : '',
+      creator: typeof record.creator === 'string' ? record.creator : '',
+      picker_blurb: typeof record.picker_blurb === 'string' ? record.picker_blurb : '',
+    };
+  }
+  return table;
+}
+
+/** Model display source of truth (models/catalog.json). The selectable-id
+ * contract below mirrors the backend enum; the backend rejects unknown ids. */
+const MODEL_CATALOG: Record<string, CatalogModel> = parseModelCatalog();
+
+/** Catalog statuses offered in product pickers; anything else stays unoffered. */
+export const OFFERED_MODEL_STATUSES: ReadonlySet<string> = new Set([
+  'default',
+  'optional',
+  'optional_fallback',
+]);
+
+export function catalogModel(id: string): CatalogModel | null {
+  return MODEL_CATALOG[id] ?? null;
+}
+
+/** Offered catalog ids for a role, in catalog order. */
+export function offeredModelIds(role: string): string[] {
+  return Object.keys(MODEL_CATALOG).filter(
+    (id) => MODEL_CATALOG[id].role === role && OFFERED_MODEL_STATUSES.has(MODEL_CATALOG[id].status),
+  );
+}
+
+export const ASR_MODELS: Record<string, string> = Object.fromEntries(
+  offeredModelIds('speech_recognition').map((id) => [id, MODEL_CATALOG[id].name]),
+);
+
+export type AsrModel = string;
 export type Language =
   | 'auto'
   | 'ar'
@@ -75,11 +121,11 @@ export type CaptureDesign = (typeof CAPTURE_DESIGNS)[number];
 export type ModelProfileRole = 'asr' | 'rewriter';
 export const MODEL_ROLE_LABELS = { asr: 'Speech model', rewriter: 'Writing model' } as const;
 
-/** Built-in cleanup models with pinned artifacts understood by vesper-models. */
+/** Built-in cleanup models with pinned artifacts understood by vesper-models.
+ * Display names and descriptions come from models/catalog.json; only the
+ * functional runtime and quantization pins stay here. */
 export const CLEANUP_MODELS = {
   'Qwen/Qwen3.5-0.8B': {
-    name: 'Qwen3.5 0.8B',
-    description: 'Small multilingual writing model that preserves transcript meaning',
     runtime: 'llama_cpp',
     quantizations: ['q4_0', 'q8_0'],
   },
@@ -104,11 +150,14 @@ export const CLEANUP_QUANTIZATIONS = {
 export type RewriteQuantization = keyof typeof CLEANUP_QUANTIZATIONS;
 
 export const CLEANUP_MODEL_OPTIONS = (Object.keys(CLEANUP_MODELS) as RewriteModel[]).map(
-  (value) => ({
-    value,
-    label: CLEANUP_MODELS[value].name,
-    description: CLEANUP_MODELS[value].description,
-  }),
+  (value) => {
+    const display = catalogModel(value);
+    return {
+      value,
+      label: display?.name ?? value,
+      description: display?.picker_blurb ?? '',
+    };
+  },
 );
 
 export const CLEANUP_QUANTIZATION_OPTIONS = (
@@ -296,7 +345,7 @@ export function transcriptionLanguageOptions(
 export function transcriptionLanguageError(config: AppConfig): string | null {
   const options = transcriptionLanguageOptions(config.models, config.computeBackend);
   if (options.some((option) => option.value === config.language)) return null;
-  return `${config.models.customAsr?.name ?? ASR_MODELS[config.models.asr] ?? 'This speech model'} and the selected processing device support these languages: ${options.map((option) => option.label).join(', ')}.`;
+  return `${config.models.customAsr?.name ?? catalogModel(config.models.asr)?.name ?? 'This speech model'} and the selected processing device support these languages: ${options.map((option) => option.label).join(', ')}.`;
 }
 
 export function writingLanguageError(config: AppConfig): string | null {

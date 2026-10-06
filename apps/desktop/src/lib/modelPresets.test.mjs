@@ -1,5 +1,7 @@
 import assert from 'node:assert/strict';
+import { readFileSync } from 'node:fs';
 import test from 'node:test';
+import { OFFERED_MODEL_STATUSES } from './config.ts';
 import { defaultSettings, parseStoredSettings, validateSettings } from './config.ts';
 import { downloadTarget } from './modelDownloads.ts';
 import {
@@ -145,6 +147,27 @@ test('creator identity follows original catalog provenance, not community packag
     'Creator not specified',
     'An imported namespace is not proof of original creator identity',
   );
+});
+
+test('picker options follow the model catalog, withheld entries stay out', () => {
+  const catalog = JSON.parse(
+    readFileSync(new URL('../../../../models/catalog.json', import.meta.url), 'utf8'),
+  );
+  const offered = OFFERED_MODEL_STATUSES;
+  const speech = modelOptions(defaultSettings().models, 'asr');
+  const writing = modelOptions(defaultSettings().models, 'rewriter');
+  for (const entry of catalog.models) {
+    const options = entry.role === 'speech_recognition' ? speech : writing;
+    const found = options.find((option) => option.value === entry.id);
+    if (offered.has(entry.status)) {
+      assert.ok(found, `offered catalog model ${entry.id} must be selectable`);
+      assert.equal(found.label, entry.name);
+      assert.equal(found.creator, entry.creator);
+      assert.equal(found.description, entry.picker_blurb);
+    } else {
+      assert.equal(found, undefined, `withheld catalog model ${entry.id} must stay out`);
+    }
+  }
 });
 
 test('speech preset language restrictions survive selection and validation', () => {

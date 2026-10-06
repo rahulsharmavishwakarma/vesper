@@ -27,6 +27,7 @@
     ASR_MODELS,
     CLEANUP_MODELS,
     CLEANUP_QUANTIZATIONS,
+    catalogModel,
     type AppConfig,
     type Language,
     type LanguageOption,
@@ -291,7 +292,7 @@
         const details = CLEANUP_QUANTIZATIONS[quantization];
         return {
           modelId,
-          name: model.name,
+          name: catalogModel(modelId)?.name ?? modelId,
           role: 'text_reconstruction' as const,
           quantization,
           selected: false,
