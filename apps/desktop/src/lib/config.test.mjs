@@ -1,16 +1,20 @@
 import assert from 'node:assert/strict';
+import { readFileSync } from 'node:fs';
 import test from 'node:test';
 import {
+  ASR_MODELS,
   CAPTURE_DESIGNS,
   CLEANUP_MODELS,
   CLEANUP_MODEL_OPTIONS,
   CLEANUP_QUANTIZATIONS,
   CLEANUP_QUANTIZATION_OPTIONS,
+  LANGUAGE_OPTIONS,
   defaultSettings,
   recordingShortcuts,
   effectiveRecordingSeconds,
   parseModelProfileJson,
   parseStoredSettings,
+  transcriptionLanguageError,
   transcriptionLanguageOptions,
   pipelineLanguageOptions,
   writingLanguageError,
@@ -430,5 +434,101 @@ test('retired TextEdit observation is discarded without changing other preferenc
     assert.equal(restored.cleanupEnabled, false);
     assert.equal(stored.textEditObservation, value, 'Migration must not mutate the input');
     assert.deepEqual(parseStoredSettings(JSON.parse(JSON.stringify(restored))), restored);
+  }
+});
+
+const languageManifest = JSON.parse(
+  readFileSync(new URL('../../../../models/languages.json', import.meta.url), 'utf8'),
+);
+
+test('every manifest speech language is offered per ASR model and validates', () => {
+  const known = LANGUAGE_OPTIONS.map((option) => option.value);
+  for (const [id, entry] of Object.entries(languageManifest)) {
+    if (id.startsWith('_') || id === 'writers' || !entry || typeof entry !== 'object') continue;
+    const settings = defaultSettings();
+    settings.models = { ...settings.models, asr: id };
+    const offered = transcriptionLanguageOptions(settings.models).map((option) => option.value);
+    const expected = [...(entry.autoDetect ? ['auto'] : []), ...entry.languages];
+    assert.deepEqual(new Set(offered), new Set(expected), `menu mismatch for ${id}`);
+    for (const code of expected) {
+      assert.equal(
+        transcriptionLanguageError({ ...settings, language: code }),
+        null,
+        `${id} should accept ${code}`,
+      );
+    }
+    const outside = known.find((code) => !expected.includes(code));
+    if (outside !== undefined) {
+      assert.notEqual(
+        transcriptionLanguageError({ ...settings, language: outside }),
+        null,
+        `${id} should reject ${outside}`,
+      );
+    }
+  }
+  // Every selectable model must be declared; the manifest may additionally
+  // cover evaluated-but-withheld models (Whisper: executable false, the
+  // picker stays at eight choices per the documented quality gates).
+  for (const id of Object.keys(ASR_MODELS)) {
+    assert.ok(languageManifest[id], `selectable model ${id} must be declared in the manifest`);
+  }
+});
+
+test('every manifest writer language validates on the writing path', () => {
+  const writers = languageManifest.writers ?? {};
+  assert.ok(Object.keys(writers).length > 0, 'manifest must declare built-in writers');
+  for (const [id, entry] of Object.entries(writers)) {
+    const settings = defaultSettings();
+    settings.cleanupEnabled = true;
+    settings.models = { ...settings.models, rewriter: id, customRewriter: null };
+    const speech = transcriptionLanguageOptions(settings.models).map((option) => option.value);
+    if (entry.unrestricted) {
+      // No published per-language list: every speech-offered mode stays allowed.
+      assert.deepEqual(
+        pipelineLanguageOptions(settings).map((option) => option.value),
+        speech,
+        `unrestricted writer ${id} must not narrow speech options`,
+      );
+      for (const code of speech) {
+        assert.equal(
+          writingLanguageError({ ...settings, language: code }),
+          null,
+          `unrestricted writer ${id} should accept ${code}`,
+        );
+      }
+      continue;
+    }
+    for (const code of entry.languages) {
+      assert.equal(
+        writingLanguageError({ ...settings, language: code }),
+        null,
+        `writer ${id} should accept ${code}`,
+      );
+    }
+  }
+});
+
+test('a custom writing profile validates per declared language', () => {
+  for (const code of LANGUAGE_OPTIONS.map((option) => option.value)) {
+    if (code === 'auto') continue;
+    const settings = defaultSettings();
+    settings.cleanupEnabled = true;
+    settings.models = {
+      ...settings.models,
+      customAsr: { languages: [code] },
+      customRewriter: { ...cleanupProfile(), languages: [code] },
+    };
+    const settingsWithLanguage = { ...settings, language: code };
+    assert.ok(
+      pipelineLanguageOptions(settingsWithLanguage)
+        .map((option) => option.value)
+        .includes(code),
+      `custom writer declaring ${code} should keep it offered`,
+    );
+    assert.equal(
+      writingLanguageError(settingsWithLanguage),
+      null,
+      `custom writer declaring ${code} should validate`,
+    );
   }
 });

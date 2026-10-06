@@ -165,7 +165,7 @@ export interface AppConfig {
   improvementMode: ImprovementMode;
 }
 
-const LANGUAGE_OPTIONS: readonly LanguageOption[] = [
+export const LANGUAGE_OPTIONS: readonly LanguageOption[] = [
   {
     value: 'auto',
     label: 'Detect automatically',
@@ -234,11 +234,35 @@ const MODEL_LANGUAGES: Record<string, ModelLanguages> = (() => {
   for (const [id, entry] of Object.entries(
     languageManifest as unknown as Record<string, { languages: unknown; autoDetect: unknown }>,
   )) {
-    if (id.startsWith('_') || !entry || typeof entry !== 'object') continue;
+    if (id.startsWith('_') || id === 'writers' || !entry || typeof entry !== 'object') continue;
     const languages = Array.isArray(entry.languages)
       ? entry.languages.filter((code): code is Language => known.has(code as Language))
       : [];
     table[id] = { languages, autoDetect: entry.autoDetect === true };
+  }
+  return table;
+})();
+
+interface WriterLanguages {
+  languages: readonly Language[];
+  unrestricted: boolean;
+}
+
+/** Built-in writer language support (models/languages.json writers section).
+ * Unrestricted writers publish no per-language list; every mode stays allowed. */
+const MODEL_WRITER_LANGUAGES: Record<string, WriterLanguages> = (() => {
+  const known = new Set(LANGUAGE_OPTIONS.map((option) => option.value));
+  const table: Record<string, WriterLanguages> = {};
+  const section = (languageManifest as unknown as Record<string, unknown>).writers;
+  if (!section || typeof section !== 'object') return table;
+  for (const [id, entry] of Object.entries(
+    section as Record<string, { languages: unknown; unrestricted: unknown }>,
+  )) {
+    if (!entry || typeof entry !== 'object') continue;
+    const languages = Array.isArray(entry.languages)
+      ? entry.languages.filter((code): code is Language => known.has(code as Language))
+      : [];
+    table[id] = { languages, unrestricted: entry.unrestricted === true };
   }
   return table;
 })();
@@ -277,7 +301,18 @@ export function transcriptionLanguageError(config: AppConfig): string | null {
 
 export function writingLanguageError(config: AppConfig): string | null {
   const profile = config.models.customRewriter;
-  if (!config.cleanupEnabled || !profile) return null;
+  if (!config.cleanupEnabled) return null;
+  if (!profile) {
+    // Built-in writer: unrestricted writers publish no per-language list,
+    // so every mode stays allowed and nothing is invented.
+    const writer = MODEL_WRITER_LANGUAGES[config.models.rewriter];
+    if (!writer || writer.unrestricted) return null;
+    if (config.language === 'auto')
+      return 'Choose an explicit language supported by the writing model, or turn polishing off. Automatic detection does not establish writer compatibility.';
+    return writer.languages.includes(config.language)
+      ? null
+      : 'The selected writing model does not declare support for this language. Choose a compatible writer or turn polishing off.';
+  }
   const declared = declaredLanguages(profile);
   if (!declared.size)
     return 'The writing profile has no declared languages. Reselect a writing preset with language support, or turn polishing off.';
@@ -291,9 +326,15 @@ export function writingLanguageError(config: AppConfig): string | null {
 /** Shared memory is model independent; spoken/output languages still need compatible weights. */
 export function pipelineLanguageOptions(config: AppConfig): LanguageOption[] {
   const speech = transcriptionLanguageOptions(config.models, config.computeBackend);
-  if (!config.cleanupEnabled || !config.models.customRewriter) return speech;
-  const declared = declaredLanguages(config.models.customRewriter);
-  return speech.filter((option) => option.value !== 'auto' && declared.has(option.value));
+  if (!config.cleanupEnabled) return speech;
+  if (config.models.customRewriter) {
+    const declared = declaredLanguages(config.models.customRewriter);
+    return speech.filter((option) => option.value !== 'auto' && declared.has(option.value));
+  }
+  const writer = MODEL_WRITER_LANGUAGES[config.models.rewriter];
+  if (!writer || writer.unrestricted) return speech;
+  const allowed = new Set(writer.languages);
+  return speech.filter((option) => option.value !== 'auto' && allowed.has(option.value));
 }
 
 export function defaultSettings(): AppConfig {
