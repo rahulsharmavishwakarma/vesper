@@ -108,65 +108,72 @@ pub struct ModelSpec {
     pub description: String,
 }
 
+/// Display catalog built from models/catalog.json with language counts from
+/// models/languages.json. Speech entries come first in catalog order, then
+/// writers. Display stays data-driven; the enums and dispatch arms stay code.
+fn catalog_specs() -> Vec<ModelSpec> {
+    let catalog: serde_json::Value =
+        serde_json::from_str(include_str!("../../../models/catalog.json"))
+            .expect("models/catalog.json must be valid");
+    let manifest: serde_json::Value =
+        serde_json::from_str(include_str!("../../../models/languages.json"))
+            .expect("models/languages.json must be valid");
+    let mut specs = Vec::new();
+    for role in ["speech_recognition", "text_reconstruction"] {
+        for entry in catalog["models"]
+            .as_array()
+            .expect("catalog needs a models array")
+        {
+            if entry["role"] != role {
+                continue;
+            }
+            let id = entry["id"]
+                .as_str()
+                .expect("catalog entries need string ids");
+            let kind = match role {
+                "speech_recognition" => ModelRole::SpeechRecognition,
+                _ => ModelRole::TextReconstruction,
+            };
+            let languages = if role == "speech_recognition" {
+                let declared = &manifest[id]["languages"];
+                let count = declared
+                    .as_array()
+                    .unwrap_or_else(|| panic!("languages.json lacks '{id}'"))
+                    .len();
+                let auto = manifest[id]["autoDetect"].as_bool().unwrap_or(false);
+                if count == 1 {
+                    "1 vendor-declared language, explicit selection only.".to_string()
+                } else if auto {
+                    format!("{count} vendor-declared languages with automatic detection.")
+                } else {
+                    format!("{count} vendor-declared languages, explicit selection only.")
+                }
+            } else {
+                "Multilingual; evaluate writing quality for the product's target languages."
+                    .to_string()
+            };
+            specs.push(ModelSpec {
+                id: id.into(),
+                name: entry["name"]
+                    .as_str()
+                    .expect("catalog entries need names")
+                    .into(),
+                role: kind,
+                languages,
+                description: entry["description"]
+                    .as_str()
+                    .expect("catalog entries need descriptions")
+                    .into(),
+            });
+        }
+    }
+    specs
+}
+
+static CATALOG_SPECS: std::sync::OnceLock<Vec<ModelSpec>> = std::sync::OnceLock::new();
+
 pub fn default_model_catalog() -> Vec<ModelSpec> {
-    vec![
-        ModelSpec {
-            id: AsrModel::ParakeetTdt06bV3.id().into(),
-            name: AsrModel::ParakeetTdt06bV3.name().into(),
-            role: ModelRole::SpeechRecognition,
-            languages: "25 European languages, including English; Hindi is not supported.".into(),
-            description: "Optional offline compatibility model for European languages.".into(),
-        },
-        ModelSpec {
-            id: AsrModel::Nemotron35AsrStreaming06b.id().into(),
-            name: AsrModel::Nemotron35AsrStreaming06b.name().into(),
-            role: ModelRole::SpeechRecognition,
-            languages: "32 locales work out of the box, including English and Hindi; eight additional locales require adaptation.".into(),
-            description: "Default multilingual, cache-aware streaming model; mixed-language accuracy needs evaluation.".into(),
-        },
-        ModelSpec {
-            id: AsrModel::Qwen3Asr06b.id().into(),
-            name: AsrModel::Qwen3Asr06b.name().into(),
-            role: ModelRole::SpeechRecognition,
-            languages: "30 vendor-declared languages with automatic detection; see the language menu.".into(),
-            description: "Local CPU transcription with automatic processing of longer recordings.".into(),
-        },
-        ModelSpec {
-            id: AsrModel::CohereTranscribe.id().into(),
-            name: AsrModel::CohereTranscribe.name().into(),
-            role: ModelRole::SpeechRecognition,
-            languages: "14 vendor-declared languages selected explicitly; automatic detection and Hindi are unavailable.".into(),
-            description: "Local CPU transcription with automatic processing of longer recordings.".into(),
-        },
-        ModelSpec {
-            id: AsrModel::Lfm25Audio15b.id().into(),
-            name: AsrModel::Lfm25Audio15b.name().into(),
-            role: ModelRole::SpeechRecognition,
-            languages: "English only; select English explicitly.".into(),
-            description: "Local CPU transcription of completed recordings using resident Q4 weights. Longer audio is processed in segments.".into(),
-        },
-        ModelSpec {
-            id: AsrModel::WhisperSmall.id().into(),
-            name: AsrModel::WhisperSmall.name().into(),
-            role: ModelRole::SpeechRecognition,
-            languages: "English and French, explicit or automatic. Hindi is not qualified.".into(),
-            description: "INT8 CPU transcription of completed recordings; longer audio is processed in segments.".into(),
-        },
-        ModelSpec {
-            id: AsrModel::WhisperTurbo.id().into(),
-            name: AsrModel::WhisperTurbo.name().into(),
-            role: ModelRole::SpeechRecognition,
-            languages: "English and French, explicit or automatic. Hindi is not qualified.".into(),
-            description: "INT8 CPU transcription of completed recordings with a larger encoder and four decoder layers.".into(),
-        },
-        ModelSpec {
-            id: RewriteModel::Qwen35_08b.id().into(),
-            name: RewriteModel::Qwen35_08b.name().into(),
-            role: ModelRole::TextReconstruction,
-            languages: "Multilingual; evaluate writing quality for the product's target languages.".into(),
-            description: "Small writing model candidate with thinking disabled; preserve meaning and the original transcript.".into(),
-        },
-    ]
+    CATALOG_SPECS.get_or_init(catalog_specs).clone()
 }
 
 #[cfg(test)]
@@ -227,5 +234,33 @@ mod tests {
     #[test]
     fn removed_models_are_not_silently_migrated() {
         assert!(serde_json::from_str::<AsrModel>(r#""kyutai/stt-1b-en_fr-candle""#).is_err());
+    }
+
+    #[test]
+    fn catalog_display_matches_manifest_counts_and_names() {
+        // models/catalog.json is the display source; languages.json owns the
+        // counts. Extending either extends this coverage with no test edit.
+        let catalog: serde_json::Value =
+            serde_json::from_str(include_str!("../../../models/catalog.json")).unwrap();
+        let manifest: serde_json::Value =
+            serde_json::from_str(include_str!("../../../models/languages.json")).unwrap();
+        let specs = default_model_catalog();
+        assert_eq!(specs.len(), catalog["models"].as_array().unwrap().len());
+        for entry in catalog["models"].as_array().unwrap() {
+            let id = entry["id"].as_str().unwrap();
+            let spec = specs
+                .iter()
+                .find(|s| s.id == id)
+                .unwrap_or_else(|| panic!("catalog model {id} missing from default_model_catalog"));
+            assert_eq!(spec.name, entry["name"].as_str().unwrap());
+            assert_eq!(spec.description, entry["description"].as_str().unwrap());
+            if spec.role == ModelRole::SpeechRecognition {
+                let count = manifest[id]["languages"].as_array().unwrap().len();
+                assert!(
+                    spec.languages.starts_with(&count.to_string()),
+                    "{id} clause must lead with its manifest count"
+                );
+            }
+        }
     }
 }

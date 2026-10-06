@@ -781,7 +781,7 @@ mod tests {
                 config.models.asr = model;
                 config.language = serde_json::from_value(iso.clone().into()).unwrap();
                 assert_eq!(
-                    language(&config).as_deref(),
+                    language(&config),
                     Some(expected.as_str().unwrap()),
                     "{id} {iso}"
                 );
