@@ -98,67 +98,22 @@ fn accepted_text(report: &str, text: &str, purpose: DecodePurpose) -> Result<Str
     }
 }
 
-/// Vendor-declared language prompts. Qwen takes an English language name,
-/// Cohere takes an ISO code (standard mappings of the vendor's language names).
+/// Vendor-declared language prompts from models/languages.json. Qwen takes an
+/// English language name, Cohere takes an ISO code (standard mappings of the
+/// vendor's language names). Unmapped modes yield no prompt; invalid
+/// combinations are rejected by AppConfig::validate.
 fn language(config: &AppConfig) -> Option<&'static str> {
-    match (config.models.asr, config.language) {
-        (_, Language::Auto) => None,
-        (AsrModel::Qwen3Asr06b, language) => Some(match language {
-            Language::Auto => return None,
-            Language::English => "English",
-            Language::French => "French",
-            Language::Hindi => "Hindi",
-            Language::Chinese => "Chinese",
-            Language::Cantonese => "Cantonese",
-            Language::Arabic => "Arabic",
-            Language::German => "German",
-            Language::Spanish => "Spanish",
-            Language::Portuguese => "Portuguese",
-            Language::Indonesian => "Indonesian",
-            Language::Italian => "Italian",
-            Language::Korean => "Korean",
-            Language::Russian => "Russian",
-            Language::Thai => "Thai",
-            Language::Vietnamese => "Vietnamese",
-            Language::Japanese => "Japanese",
-            Language::Turkish => "Turkish",
-            Language::Malay => "Malay",
-            Language::Dutch => "Dutch",
-            Language::Swedish => "Swedish",
-            Language::Danish => "Danish",
-            Language::Finnish => "Finnish",
-            Language::Polish => "Polish",
-            Language::Czech => "Czech",
-            Language::Filipino => "Filipino",
-            Language::Persian => "Persian",
-            Language::Greek => "Greek",
-            Language::Hungarian => "Hungarian",
-            Language::Macedonian => "Macedonian",
-            Language::Romanian => "Romanian",
-            // Invalid combinations are rejected by AppConfig::validate.
-            _ => return None,
-        }),
-        (AsrModel::CohereTranscribe, language) => Some(match language {
-            Language::Auto => return None,
-            Language::English => "en",
-            Language::French => "fr",
-            Language::German => "de",
-            Language::Italian => "it",
-            Language::Spanish => "es",
-            Language::Portuguese => "pt",
-            Language::Greek => "el",
-            Language::Dutch => "nl",
-            Language::Polish => "pl",
-            Language::Chinese => "zh",
-            Language::Japanese => "ja",
-            Language::Korean => "ko",
-            Language::Vietnamese => "vi",
-            Language::Arabic => "ar",
-            // Invalid combinations are rejected by AppConfig::validate.
-            _ => return None,
-        }),
-        _ => None, // Invalid combinations are rejected by AppConfig::validate.
-    }
+    let (runtime, language) = match (config.models.asr, config.language) {
+        (_, Language::Auto) => return None,
+        (AsrModel::Qwen3Asr06b, language) => ("qwen", language),
+        (AsrModel::CohereTranscribe, language) => ("sherpa", language),
+        _ => return None,
+    };
+    vesper_core::runtime_language_code(
+        runtime,
+        config.models.asr.id(),
+        language.code().expect("explicit language has an ISO code"),
+    )
 }
 
 pub(crate) fn recognizer_config(
@@ -803,6 +758,41 @@ mod tests {
         assert_eq!(language(&config), Some("fr"));
         config.language = Language::English;
         assert_eq!(language(&config), Some("en"));
+    }
+
+    #[test]
+    fn vendor_prompts_match_the_manifest_for_every_declared_language() {
+        // Manifest-driven: extending Qwen/Cohere support extends this coverage
+        // with no test edit.
+        let manifest: serde_json::Value =
+            serde_json::from_str(include_str!("../../../models/languages.json")).unwrap();
+        for (id, runtime, model) in [
+            ("Qwen/Qwen3-ASR-0.6B", "qwen", AsrModel::Qwen3Asr06b),
+            (
+                "CohereLabs/cohere-transcribe-03-2026",
+                "sherpa",
+                AsrModel::CohereTranscribe,
+            ),
+        ] {
+            let entry = &manifest[id];
+            let mut count = 0;
+            for (iso, expected) in entry["runtimeCodes"][runtime].as_object().unwrap() {
+                let mut config = AppConfig::default();
+                config.models.asr = model;
+                config.language = serde_json::from_value(iso.clone().into()).unwrap();
+                assert_eq!(
+                    language(&config).as_deref(),
+                    Some(expected.as_str().unwrap()),
+                    "{id} {iso}"
+                );
+                count += 1;
+            }
+            assert_eq!(
+                count,
+                entry["languages"].as_array().unwrap().len(),
+                "every offered language needs a {runtime} prompt"
+            );
+        }
     }
 
     #[test]

@@ -41,17 +41,20 @@ pub(crate) fn recognizer_config(
             whisper: OfflineWhisperModelConfig {
                 encoder: Some(path("encoder.int8.onnx")?),
                 decoder: Some(path("decoder.int8.onnx")?),
+                // Codes come from models/languages.json; unmapped modes are
+                // rejected here because AppConfig::validate admits only the
+                // declared Whisper modes.
                 language: match config.language {
                     Language::Auto => None,
-                    Language::English => Some("en".into()),
-                    Language::French => Some("fr".into()),
-                    Language::Hindi => {
-                        return Err(native("Whisper language", "Hindi is not qualified"))
-                    }
-                    // AppConfig::validate admits only the modes above for
-                    // Whisper; reject anything else instead of silently
-                    // falling back to an unqualified language.
-                    _ => return Err(native("Whisper language", "language is not qualified")),
+                    language => Some(
+                        vesper_core::runtime_language_code(
+                            "sherpa",
+                            config.models.asr.id(),
+                            language.code().expect("explicit language has an ISO code"),
+                        )
+                        .ok_or_else(|| native("Whisper language", "language is not qualified"))
+                        .map(str::to_owned)?,
+                    ),
                 },
                 task: Some("transcribe".into()),
                 tail_paddings: TAIL_PADDING_FRAMES,
