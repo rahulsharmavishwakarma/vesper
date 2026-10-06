@@ -13,3 +13,6 @@ mlx = []
 serde.workspace = true
 serde_json.workspace = true
 thiserror.workspace = true
+
+[build-dependencies]
+serde_json.workspace = true

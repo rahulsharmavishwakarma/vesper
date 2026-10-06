@@ -483,8 +483,29 @@ impl AppConfig {
             return Ok(());
         }
         let Some(profile) = &self.models.custom_rewriter else {
-            // The built-in Qwen3.5 writer covers the application's language modes.
-            return Ok(());
+            // Built-in writer support comes from models/languages.json. An
+            // unrestricted writer publishes no per-language list, so every
+            // application mode stays allowed and nothing is invented.
+            let Some(writer) = crate::generated::generated_writer(self.models.rewriter.id()) else {
+                return Err(Error::InvalidConfig {
+                    field: "models.rewriter",
+                    message: "the selected writing model declares no language support".into(),
+                });
+            };
+            if writer.unrestricted {
+                return Ok(());
+            }
+            return match self.language.code() {
+                None => Err(Error::InvalidConfig {
+                    field: "language",
+                    message: "Choose an explicit language supported by the writing model, or turn polishing off. Automatic detection does not establish writer compatibility.".into(),
+                }),
+                Some(_) if writer.languages.contains(&self.language) => Ok(()),
+                Some(_) => Err(Error::InvalidConfig {
+                    field: "language",
+                    message: "The selected writing model does not declare support for this language. Choose a compatible writer or turn polishing off.".into(),
+                }),
+            };
         };
         let message = if profile.languages.is_empty() {
             Some("The writing profile has no declared languages. Reselect a writing preset with language support, or turn polishing off.")

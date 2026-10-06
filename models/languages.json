@@ -1,5 +1,5 @@
 {
-  "_comment": "Vendor-declared transcription languages per built-in speech model (Refs #100). Researched 2026-10-05/06 from official Hugging Face model pages and vendor docs; see issue #100 for sources and caveats. 'languages' holds explicit ISO codes only; 'autoDetect' records whether the vendor declares automatic language detection. Cohere ISO codes are standard mappings of the vendor's published language names. Whisper entries preserve the app's existing qualified claim (not vendor-researched). Frontend menus and the backend agreement test read this file; adapter tables in vesper-core mirror it.",
+  "_comment": "Vendor-declared transcription languages per built-in speech model (Refs #100). Researched 2026-10-05/06 from official Hugging Face model pages and vendor docs; see issue #100 for sources and caveats. 'languages' holds explicit ISO codes only; 'autoDetect' records whether the vendor declares automatic language detection. Cohere ISO codes are standard mappings of the vendor's published language names. Whisper entries preserve the app's existing qualified claim (not vendor-researched). 'runtimeCodes' maps ISO codes to the per-runtime values the inference backends require (NeMo locales, Qwen display names, sherpa ISO codes); models without a map need none (Parakeet auto-detects, LFM is English-only). The 'writers' section declares built-in writer language support the same way; 'unrestricted' marks writers whose vendor publishes no per-language list (behavior unchanged: all application modes allowed). Frontend menus and vesper-core build.rs codegen read this file; no hand-mirrored list may drift from it.",
   "nvidia/parakeet-tdt-0.6b-v3": {
     "languages": [
       "bg",
@@ -63,7 +63,39 @@
       "et"
     ],
     "autoDetect": true,
-    "source": "vendor"
+    "source": "vendor",
+    "runtimeCodes": {
+      "nemo": {
+        "en": "en-US",
+        "es": "es-US",
+        "fr": "fr-FR",
+        "it": "it-IT",
+        "pt": "pt-BR",
+        "nl": "nl-NL",
+        "de": "de-DE",
+        "tr": "tr-TR",
+        "ru": "ru-RU",
+        "ar": "ar-AR",
+        "hi": "hi-IN",
+        "ja": "ja-JP",
+        "ko": "ko-KR",
+        "vi": "vi-VN",
+        "uk": "uk-UA",
+        "pl": "pl-PL",
+        "sv": "sv-SE",
+        "cs": "cs-CZ",
+        "nb": "nb-NO",
+        "da": "da-DK",
+        "bg": "bg-BG",
+        "fi": "fi-FI",
+        "hr": "hr-HR",
+        "sk": "sk-SK",
+        "zh": "zh-CN",
+        "hu": "hu-HU",
+        "ro": "ro-RO",
+        "et": "et-EE"
+      }
+    }
   },
   "Qwen/Qwen3-ASR-0.6B": {
     "languages": [
@@ -99,7 +131,41 @@
       "ro"
     ],
     "autoDetect": true,
-    "source": "vendor"
+    "source": "vendor",
+    "runtimeCodes": {
+      "qwen": {
+        "zh": "Chinese",
+        "en": "English",
+        "yue": "Cantonese",
+        "ar": "Arabic",
+        "de": "German",
+        "fr": "French",
+        "es": "Spanish",
+        "pt": "Portuguese",
+        "id": "Indonesian",
+        "it": "Italian",
+        "ko": "Korean",
+        "ru": "Russian",
+        "th": "Thai",
+        "vi": "Vietnamese",
+        "ja": "Japanese",
+        "tr": "Turkish",
+        "hi": "Hindi",
+        "ms": "Malay",
+        "nl": "Dutch",
+        "sv": "Swedish",
+        "da": "Danish",
+        "fi": "Finnish",
+        "pl": "Polish",
+        "cs": "Czech",
+        "fil": "Filipino",
+        "fa": "Persian",
+        "el": "Greek",
+        "hu": "Hungarian",
+        "mk": "Macedonian",
+        "ro": "Romanian"
+      }
+    }
   },
   "CohereLabs/cohere-transcribe-03-2026": {
     "languages": [
@@ -119,7 +185,25 @@
       "ar"
     ],
     "autoDetect": false,
-    "source": "vendor-names-to-iso"
+    "source": "vendor-names-to-iso",
+    "runtimeCodes": {
+      "sherpa": {
+        "en": "en",
+        "fr": "fr",
+        "de": "de",
+        "it": "it",
+        "es": "es",
+        "pt": "pt",
+        "el": "el",
+        "nl": "nl",
+        "pl": "pl",
+        "zh": "zh",
+        "ja": "ja",
+        "ko": "ko",
+        "vi": "vi",
+        "ar": "ar"
+      }
+    }
   },
   "LiquidAI/LFM2.5-Audio-1.5B": {
     "languages": ["en"],
@@ -129,11 +213,31 @@
   "openai/whisper-small": {
     "languages": ["en", "fr"],
     "autoDetect": true,
-    "source": "qualified"
+    "source": "qualified",
+    "runtimeCodes": {
+      "sherpa": {
+        "en": "en",
+        "fr": "fr"
+      }
+    }
   },
   "openai/whisper-large-v3-turbo": {
     "languages": ["en", "fr"],
     "autoDetect": true,
-    "source": "qualified"
+    "source": "qualified",
+    "runtimeCodes": {
+      "sherpa": {
+        "en": "en",
+        "fr": "fr"
+      }
+    }
+  },
+  "writers": {
+    "Qwen/Qwen3.5-0.8B": {
+      "languages": [],
+      "unrestricted": true,
+      "vendorClaim": "Vendor claims 201 languages and dialects (Qwen/Qwen3.5-0.8B model card, 2026-10-07); no per-language list published. Third-party note: quality not guaranteed for low-resource languages.",
+      "source": "vendor-claim-unenumerated"
+    }
   }
 }

@@ -125,122 +125,12 @@ const ALL_LANGUAGES: &[Language] = &[
     Language::Filipino,
     Language::NorwegianBokmal,
 ];
-const EN_FR: &[Language] = &[Language::Auto, Language::English, Language::French];
-/// Parakeet TDT v3: 25 vendor-declared ASR languages (NeMo sherpa path
-/// auto-detects; the list gates what the app offers and validates).
-const PARAKEET_LANGUAGES: &[Language] = &[
-    Language::Auto,
-    Language::English,
-    Language::Bulgarian,
-    Language::Croatian,
-    Language::Czech,
-    Language::Danish,
-    Language::Dutch,
-    Language::Estonian,
-    Language::Finnish,
-    Language::French,
-    Language::German,
-    Language::Greek,
-    Language::Hungarian,
-    Language::Italian,
-    Language::Latvian,
-    Language::Lithuanian,
-    Language::Maltese,
-    Language::Polish,
-    Language::Portuguese,
-    Language::Romanian,
-    Language::Slovak,
-    Language::Slovenian,
-    Language::Spanish,
-    Language::Swedish,
-    Language::Russian,
-    Language::Ukrainian,
-];
-/// Nemotron 3.5 streaming: 32 locales that transcribe out of the box
-/// (8 adaptation-ready locales need fine-tuning and stay excluded).
-const NEMOTRON_LANGUAGES: &[Language] = &[
-    Language::Auto,
-    Language::English,
-    Language::Spanish,
-    Language::French,
-    Language::Italian,
-    Language::Portuguese,
-    Language::Dutch,
-    Language::German,
-    Language::Turkish,
-    Language::Russian,
-    Language::Arabic,
-    Language::Hindi,
-    Language::Japanese,
-    Language::Korean,
-    Language::Vietnamese,
-    Language::Ukrainian,
-    Language::Polish,
-    Language::Swedish,
-    Language::Czech,
-    Language::NorwegianBokmal,
-    Language::Danish,
-    Language::Bulgarian,
-    Language::Finnish,
-    Language::Croatian,
-    Language::Slovak,
-    Language::Chinese,
-    Language::Hungarian,
-    Language::Romanian,
-    Language::Estonian,
-];
-/// Qwen3-ASR: 30 vendor-declared recognition languages (dialects excluded).
-const QWEN_ASR_LANGUAGES: &[Language] = &[
-    Language::Auto,
-    Language::Chinese,
-    Language::English,
-    Language::Cantonese,
-    Language::Arabic,
-    Language::German,
-    Language::French,
-    Language::Spanish,
-    Language::Portuguese,
-    Language::Indonesian,
-    Language::Italian,
-    Language::Korean,
-    Language::Russian,
-    Language::Thai,
-    Language::Vietnamese,
-    Language::Japanese,
-    Language::Turkish,
-    Language::Hindi,
-    Language::Malay,
-    Language::Dutch,
-    Language::Swedish,
-    Language::Danish,
-    Language::Finnish,
-    Language::Polish,
-    Language::Czech,
-    Language::Filipino,
-    Language::Persian,
-    Language::Greek,
-    Language::Hungarian,
-    Language::Macedonian,
-    Language::Romanian,
-];
-/// Cohere Transcribe: 14 vendor-declared languages, no auto-detect, no Hindi.
-/// ISO codes are standard mappings of the vendor's language names.
-const COHERE_LANGUAGES: &[Language] = &[
-    Language::English,
-    Language::French,
-    Language::German,
-    Language::Italian,
-    Language::Spanish,
-    Language::Portuguese,
-    Language::Greek,
-    Language::Dutch,
-    Language::Polish,
-    Language::Chinese,
-    Language::Japanese,
-    Language::Korean,
-    Language::Vietnamese,
-    Language::Arabic,
-];
+/// Adapter language sets generated from models/languages.json (see build.rs).
+/// The manifest is the source of record; nothing here may drift from it.
+use crate::generated::{
+    COHERE_LANGUAGES, LFM_LANGUAGES, NEMOTRON_LANGUAGES, PARAKEET_LANGUAGES, QWEN_ASR_LANGUAGES,
+    WHISPER_LANGUAGES,
+};
 const SHERPA: &str = "11afbd009a7f8c08f4bcf2fc1b265d0df4670fbf";
 const LLAMA: &str = "e79e4bf660e19f2ad851e06c6913f7a8c5852621";
 const SPEECH: ModelRole = ModelRole::SpeechRecognition;
@@ -359,7 +249,7 @@ pub const ADAPTERS: &[AdapterRegistration] = &[
         capabilities: AdapterCapabilities {
             resident_weights: true,
             completion_report: true,
-            ..caps(CacheState::EncoderDecoder, EN_FR, CPU)
+            ..caps(CacheState::EncoderDecoder, WHISPER_LANGUAGES, CPU)
         },
     },
     AdapterRegistration {
@@ -371,11 +261,7 @@ pub const ADAPTERS: &[AdapterRegistration] = &[
         capabilities: AdapterCapabilities {
             resident_weights: true,
             completion_report: true,
-            ..caps(
-                CacheState::HybridRecurrentKv,
-                &[Language::English],
-                ALL_BACKENDS,
-            )
+            ..caps(CacheState::HybridRecurrentKv, LFM_LANGUAGES, ALL_BACKENDS)
         },
     },
     AdapterRegistration {
@@ -509,7 +395,10 @@ mod tests {
             assert!(!capability.native_streaming && !capability.contextual_phrases);
             for language in ALL_LANGUAGES {
                 config.language = *language;
-                assert_eq!(config.validate().is_ok(), EN_FR.contains(language));
+                assert_eq!(
+                    config.validate().is_ok(),
+                    WHISPER_LANGUAGES.contains(language)
+                );
             }
             config.language = Language::English;
             for backend in ALL_BACKENDS {
@@ -550,69 +439,104 @@ mod tests {
     }
 
     #[test]
-    fn language_manifest_matches_adapter_capability_tables() {
-        // models/languages.json is the human-edited source of record; the
-        // const tables above must mirror it exactly (Auto <-> autoDetect).
+    fn manifest_wiring_matches_adapter_capabilities() {
+        // models/languages.json is the source of record and build.rs generates
+        // the capability tables from it; this test guards the remaining hand
+        // wiring, i.e. each model resolves to the adapter carrying its own set.
         let manifest: serde_json::Value =
             serde_json::from_str(include_str!("../../../models/languages.json")).unwrap();
         let table = manifest.as_object().unwrap();
         for model in AsrModel::ALL {
             let entry = &table[model.id()];
-            let declared: std::collections::BTreeSet<&str> = entry["languages"]
+            let mut declared: std::collections::BTreeSet<&str> = entry["languages"]
+                .as_array()
+                .unwrap_or_else(|| panic!("manifest lacks languages for {}", model.id()))
+                .iter()
+                .map(|v| v.as_str().expect("manifest language codes are strings"))
+                .collect();
+            let auto = entry["autoDetect"]
+                .as_bool()
+                .unwrap_or_else(|| panic!("manifest lacks autoDetect for {}", model.id()));
+            if auto {
+                declared.insert("auto");
+            }
+            let kind = match model {
+                AsrModel::ParakeetTdt06bV3 => AdapterKind::SherpaTransducer,
+                AsrModel::Nemotron35AsrStreaming06b => AdapterKind::NemoRnnt,
+                AsrModel::Qwen3Asr06b => AdapterKind::QwenAsr,
+                AsrModel::CohereTranscribe => AdapterKind::CohereAsr,
+                AsrModel::WhisperSmall | AsrModel::WhisperTurbo => AdapterKind::Whisper,
+                AsrModel::Lfm25Audio15b => AdapterKind::LfmAudio,
+            };
+            let offered: std::collections::BTreeSet<&str> = adapter(kind)
+                .capabilities
+                .languages
+                .iter()
+                .map(|l| l.code().unwrap_or("auto"))
+                .collect();
+            assert_eq!(offered, declared, "{}", model.id());
+        }
+    }
+
+    #[test]
+    fn every_manifest_language_validates_per_model() {
+        // Admission follows the manifest for every model and language;
+        // extending either extends this coverage with no test edit.
+        let manifest: serde_json::Value =
+            serde_json::from_str(include_str!("../../../models/languages.json")).unwrap();
+        let table = manifest.as_object().unwrap();
+        for model in AsrModel::ALL {
+            let entry = &table[model.id()];
+            let mut codes: Vec<Language> = entry["languages"]
                 .as_array()
                 .unwrap()
                 .iter()
-                .map(|v| v.as_str().unwrap())
+                .map(|v| {
+                    serde_json::from_value::<Language>(v.clone()).expect("manifest codes resolve")
+                })
                 .collect();
-            let auto = entry["autoDetect"].as_bool().unwrap();
-            let (kind, expected): (AdapterKind, Vec<&str>) = match model {
-                AsrModel::ParakeetTdt06bV3 => (
-                    AdapterKind::SherpaTransducer,
-                    PARAKEET_LANGUAGES
-                        .iter()
-                        .map(|l| l.code().unwrap_or("auto"))
-                        .collect(),
-                ),
-                AsrModel::Nemotron35AsrStreaming06b => (
-                    AdapterKind::NemoRnnt,
-                    NEMOTRON_LANGUAGES
-                        .iter()
-                        .map(|l| l.code().unwrap_or("auto"))
-                        .collect(),
-                ),
-                AsrModel::Qwen3Asr06b => (
-                    AdapterKind::QwenAsr,
-                    QWEN_ASR_LANGUAGES
-                        .iter()
-                        .map(|l| l.code().unwrap_or("auto"))
-                        .collect(),
-                ),
-                AsrModel::CohereTranscribe => (
-                    AdapterKind::CohereAsr,
-                    COHERE_LANGUAGES
-                        .iter()
-                        .map(|l| l.code().unwrap_or("auto"))
-                        .collect(),
-                ),
-                AsrModel::WhisperSmall | AsrModel::WhisperTurbo => (
-                    AdapterKind::Whisper,
-                    EN_FR.iter().map(|l| l.code().unwrap_or("auto")).collect(),
-                ),
-                AsrModel::Lfm25Audio15b => (AdapterKind::LfmAudio, vec!["en"]),
-            };
-            let expected_set: std::collections::BTreeSet<&str> = expected.into_iter().collect();
-            let mut manifest_set = declared;
-            if auto {
-                manifest_set.insert("auto");
+            if entry["autoDetect"].as_bool().unwrap() {
+                codes.push(Language::Auto);
             }
-            assert_eq!(manifest_set, expected_set, "{}", model.id());
-            assert_eq!(
-                adapter(kind).capabilities.languages.len(),
-                expected_set.len(),
-                "{}",
-                model.id()
-            );
+            for language in &codes {
+                let mut config = AppConfig::default();
+                config.models.asr = model;
+                config.language = *language;
+                assert!(config.validate().is_ok(), "{:?} {language:?}", model);
+            }
+            // One undeclared mode still fails instead of falling back.
+            if let Some(outside) = ALL_LANGUAGES.iter().find(|l| !codes.contains(l)) {
+                let mut config = AppConfig::default();
+                config.models.asr = model;
+                config.language = *outside;
+                assert!(config.validate().is_err(), "{:?} {outside:?}", model);
+            }
         }
+    }
+
+    #[test]
+    fn generated_runtime_codes_match_the_manifest() {
+        let manifest: serde_json::Value =
+            serde_json::from_str(include_str!("../../../models/languages.json")).unwrap();
+        let table = manifest.as_object().unwrap();
+        let mut count = 0;
+        for model in AsrModel::ALL {
+            let entry = &table[model.id()];
+            if let Some(runtimes) = entry.get("runtimeCodes").and_then(|v| v.as_object()) {
+                for (runtime, map) in runtimes {
+                    for (iso, expected) in map.as_object().unwrap() {
+                        assert_eq!(
+                            crate::generated::runtime_language_code(runtime, model.id(), iso),
+                            Some(expected.as_str().unwrap()),
+                            "{runtime} {} {iso}",
+                            model.id()
+                        );
+                        count += 1;
+                    }
+                }
+            }
+        }
+        assert!(count > 0, "manifest runtimeCodes must not be empty");
     }
 
     #[test]

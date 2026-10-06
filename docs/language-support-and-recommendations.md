@@ -28,10 +28,20 @@ Fresh settings select Cohere Transcribe, explicit English, and Qwen3.5 cleanup. 
 | Qwen3-ASR 0.6B | Automatic plus 30 declared languages | Native MLX or buffered CPU drafts; completed recording/file final | Automatic; CPU; Metal for English on Apple Silicon | Local phase-one Hindi, US-English, and Hinglish screening; no qualified Hinglish result |
 | NVIDIA Parakeet TDT 0.6B v3 | Automatic plus 25 declared European languages | Buffered live drafts; completed recording/file final | Automatic; CPU; Metal for English on Apple Silicon | Compatibility/smoke evidence; no current comparable phase-one matrix; Hindi is unsupported |
 | Liquid LFM2.5 Audio 1.5B | English only, explicit | Buffered live drafts; resident weights and completed-audio final | Automatic; CPU; Metal; CUDA/Vulkan/ROCm with matching builds | English CPU/Metal evidence; non-Apple GPU qualification deferred to #76 |
+| OpenAI Whisper Small | Automatic, English, French (qualified claim, not vendor-researched) | Completed recording/file final, INT8 CPU | Automatic or CPU | Adapter validation record 2026-09-18; withheld from the picker (`executable: false`, failed noise/repetition gates) |
+| OpenAI Whisper Turbo | Automatic, English, French (qualified claim, not vendor-researched) | Completed recording/file final, larger encoder, INT8 CPU | Automatic or CPU | Same adapter record and picker status as Whisper Small |
 
 “Automatic” in the backend column means the application may choose an available supported execution path and fall back according to that adapter's policy. It is not evidence that a GPU executed every operator. GPU, driver, precision, and runtime-package combinations require separate measurements.
 
 All current ASR adapters expose live drafts. Nemotron uses native cache-aware streaming; English/Metal Qwen uses native MLX previews. Other paths use bounded buffered previews. All except Nemotron retain the completed-audio final pass. See [live adapters](live-transcription.md) for measured scope, finalization and resource limits; historical completed-audio quality results do not qualify preview quality.
+
+## Language data source and code generation
+
+`models/languages.json` is the single human-edited source of record for per-model language support (Refs #100). Each speech entry holds `languages` (explicit ISO codes), `autoDetect`, `source`, and optional `runtimeCodes`: the per-runtime values inference backends require (NeMo locales, Qwen display names, sherpa ISO codes). Models that need no runtime value declare none (Parakeet auto-detects; LFM is English-only). The `writers` section declares built-in writer support the same way; `unrestricted: true` marks writers whose vendor publishes no per-language list, in which case every application mode stays allowed and nothing is invented.
+
+`vesper-core/build.rs` generates the adapter language tables, the runtime-code lookup, and the writer table from the manifest at compile time; a malformed manifest fails the build naming the offending key. The agreement test pins each model's adapter capabilities to its manifest set, and per-language tests on both the speech and writing paths read the manifest directly, so extending it extends coverage with no test edit. Menus (frontend) read the manifest file; validation (backend) reads the generated tables, so the two cannot drift.
+
+To onboard a model: add one manifest block with vendor-declared languages researched from the vendor page at a recorded revision (never guessed), wire one ADAPTERS registration plus its runtime adapter code, and every menu, validation, and per-language test follows with no further list edits. Product selection stays a separate qualification decision: the manifest may cover evaluated-but-withheld models (Whisper keeps `executable: false` after failed noise/repetition gates). The `Language` enum itself is unchanged: adding a *language* still touches the enum, its ISO code, and the frontend options.
 
 ## Additional ASR menu profiles
 
@@ -60,7 +70,7 @@ speech model's choices.
 
 | Writing selection | Explicit product languages | Evidence and boundary |
 | --- | --- | --- |
-| Built-in Qwen3.5 0.8B | English, French, Hindi | Official multilingual coverage; existing Automatic behavior retained |
+| Built-in Qwen3.5 0.8B | All application modes (no per-language list published) | Vendor claims 201 languages and dialects (model card, 2026-10-07); third-party note: quality is not guaranteed for low-resource languages |
 | Qwen2.5 0.5B / 1.5B Q4_K_M presets | English, French | Both are named by the pinned model cards; Hindi is conservatively withheld without exact checkpoint evidence/qualification |
 | SmolLM2 360M Q8_0 / 1.7B Q4_K_M presets | English | Official cards describe primarily English behavior |
 | Gemma 3 1B Q4_K_M preset | English | Exact-size release guidance distinguishes the 1B model from larger multilingual variants; family-wide claims are insufficient |
