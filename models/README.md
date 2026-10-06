@@ -1,8 +1,8 @@
 # Models
 
-The native app downloads any supported catalog entry only on explicit request; downloading an unselected model does not change settings. No weights are committed. [artifacts.json](artifacts.json) is the built-in installation manifest; [presets.json](presets.json) supplies additional pinned profiles to the model menus. [catalog.json](catalog.json) retains informational metadata for the original built-ins and research context.
+The native app downloads any supported catalog entry only on explicit request; downloading an unselected model does not change settings. No weights are committed. [artifacts.json](artifacts.json) is the built-in installation manifest; [presets.json](presets.json) supplies additional pinned profiles to the model menus. [catalog.json](catalog.json) is the display source of truth for picker names, creators, blurbs, and offer status, plus research metadata for the original built-ins; executable installation and runtime selection stay implemented in vesper-models and vesper-inference.
 
-The menus contain eight ASR and six cleanup choices. Additional options include
+The menus contain ten ASR and six cleanup choices. Additional options include
 Qwen3-ASR, Cohere, Parakeet v2, Parakeet Unified, FastConformer, Qwen2.5, SmolLM2, and Gemma 3.
 See [preset files, compatibility evidence, and validation limits](../docs/model-presets.md).
 
