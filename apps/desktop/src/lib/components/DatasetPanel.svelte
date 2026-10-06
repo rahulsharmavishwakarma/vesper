@@ -333,6 +333,20 @@
       });
     }
   });
+  // View switches do not remount this panel, so returning to History or the
+  // dictate tab would otherwise keep showing the list from before a shortcut
+  // recording completed in another app.
+  let previousView: typeof view | undefined;
+  $effect(() => {
+    const current = view;
+    const changed = previousView !== undefined && current !== previousView;
+    previousView = current;
+    if (changed && current !== 'hidden') {
+      untrack(() => {
+        if (desktop && !externalBusy && pending === null) void refresh();
+      });
+    }
+  });
 </script>
 
 {#snippet statusMessage()}
