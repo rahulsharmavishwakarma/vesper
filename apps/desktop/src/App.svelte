@@ -5,6 +5,7 @@
   import { getCurrentWindow } from '@tauri-apps/api/window';
   import { listen } from '@tauri-apps/api/event';
   import { invoke } from '@tauri-apps/api/core';
+  import type { DictationStatus } from './lib/api/dictation';
   import { Autosaver } from './lib/autosave.svelte';
   import {
     getAppStatus,
@@ -105,6 +106,9 @@
   const asrDownload = $derived(downloadTarget(draft, 'asr'));
   const cleanupDownload = $derived(downloadTarget(draft, 'rewriter'));
   let datasetRevision = $state(0);
+  // Last shortcut/main recording already counted in datasetRevision, so each
+  // completion refreshes History exactly once even when the poll loop is idle.
+  let lastCompletedDictationId = 0;
   let removalDialog: ModelRemovalDialog | undefined = $state();
   let aboutSheet: AboutSheet | undefined = $state();
   let savedRecordingLimit = $state(0);
@@ -453,7 +457,29 @@
     const removePressFeedback = installPressFeedback();
     let unlistenTranscript: (() => void) | undefined;
     let unlistenMenu: (() => void) | undefined;
+    let unlistenDictation: (() => void) | undefined;
     if (environment === 'desktop') {
+      // Shortcut completions in other apps never reach the TranscriptionPanel
+      // poll loop when this window is idle; refresh History from the event.
+      void getCurrentWindow()
+        .listen<DictationStatus>('dictation-state', (event) => {
+          const status = event.payload;
+          if (
+            !disposed &&
+            (status.phase === 'ready' ||
+              status.phase === 'sent' ||
+              status.phase === 'error' ||
+              status.phase === 'cancelled') &&
+            status.id !== lastCompletedDictationId
+          ) {
+            lastCompletedDictationId = status.id;
+            datasetRevision += 1;
+          }
+        })
+        .then((unlisten) => {
+          if (disposed) unlisten();
+          else unlistenDictation = unlisten;
+        });
       void listen('show-transcript', () => {
         navigate('dictate');
         void transcriptionPanel?.revealLatestResult();
@@ -490,6 +516,7 @@
       removePressFeedback();
       unlistenTranscript?.();
       unlistenMenu?.();
+      unlistenDictation?.();
     };
   });
 </script>

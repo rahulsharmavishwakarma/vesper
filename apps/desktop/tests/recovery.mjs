@@ -325,6 +325,75 @@ await test('Native shortcut state drives the overlay without WebView capture com
   );
 });
 
+await test('Shortcut completion refreshes History without manual reload', async () => {
+  const record = (id, text) => ({
+    id,
+    createdAt: '2026-10-06T12:00:00.000Z',
+    originalFilename: `${id}.wav`,
+    audioRelativePath: `audio/${id}.wav`,
+    audioSha256: 'synthetic',
+    audioBytes: 100,
+    rawTranscript: text,
+    speakerTimeline: null,
+    cleanedTranscript: null,
+    correctedTranscript: null,
+    verifiedTranscript: null,
+    reviewHistory: [],
+    personalizedTranscript: null,
+    draftTranscript: null,
+    draftRevision: 0,
+    personalizationEvidence: null,
+    personalizationProject: '',
+    projectSelection: null,
+    personalizationRejected: false,
+    reviewStatus: 'pending',
+    transcriptFeedback: null,
+    configSnapshot: {},
+    modelVersions: {},
+    pipelineEvents: [],
+  });
+  const records = [record('old', 'An older dictation')];
+  await setup({
+    main: true,
+    intercept: (command) => {
+      if (command === 'list_sessions') return structuredClone(records);
+      return undefined;
+    },
+  });
+  await until(() => target.querySelector('#settings-language'), 'Settings did not load');
+  [...target.querySelectorAll('nav button')]
+    .find((button) => button.textContent.trim() === 'History')
+    .click();
+  await tick();
+  await until(
+    () => target.querySelectorAll('#history-recordings .session-button').length === 1,
+    'History did not load the stored recording',
+  );
+  // A shortcut recording completes in another app: no poll loop, no remount.
+  records.unshift(record('fresh', 'A shortcut dictation from another app'));
+  await emit('dictation-state', {
+    id: 9,
+    revision: 4,
+    phase: 'sent',
+    mode: 'toggle',
+    operationId: 'op-9',
+    message: 'Paste sent.',
+    text: 'A shortcut dictation from another app',
+    startedAtUnixMs: Date.now(),
+    captureReadyMs: null,
+    stopToFinalMs: null,
+    finalToDispatchMs: null,
+  });
+  await until(
+    () => target.querySelectorAll('#history-recordings .session-button').length === 2,
+    'History did not refresh after the shortcut completion',
+  );
+  assert(
+    target.querySelector('#history-recordings').textContent.includes('shortcut dictation'),
+    'The shortcut recording is not listed',
+  );
+});
+
 await test('Repeated button clicks cannot overlap a pending native request', async () => {
   const request = deferred();
   const state = await setup({
