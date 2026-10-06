@@ -1,7 +1,7 @@
 {
   "schema_version": 1,
   "status": "reference_only",
-  "description": "Informational model catalog. Executable installation and runtime selection are implemented in vesper-models and vesper-inference.",
+  "description": "Model display catalog: names, creators, picker blurbs, qualification status, and research metadata. Menus and ModelSpec display read this file; executable installation and runtime selection stay implemented in vesper-models and vesper-inference.",
   "defaults": {
     "asr": "CohereLabs/cohere-transcribe-03-2026",
     "rewriter": "Qwen/Qwen3.5-0.8B"
@@ -48,7 +48,9 @@
           "quantization": null
         }
       ],
-      "artifact_notes": "Exact executable installation metadata is maintained in artifacts.json. Download size is not application RAM."
+      "artifact_notes": "Exact executable installation metadata is maintained in artifacts.json. Download size is not application RAM.",
+      "creator": "NVIDIA",
+      "picker_blurb": "25 European languages · CPU"
     },
     {
       "id": "nvidia/nemotron-3.5-asr-streaming-0.6b",
@@ -71,7 +73,9 @@
           "sha256": "3fc991d3badad7277c11030a7519832cddaf2057aafed6d4b25147e953a070b1"
         }
       ],
-      "artifact_notes": "The installer also pins the platform-specific NeMo-Speech.cpp 0.1.0 runtime archive and preserves its license notices."
+      "artifact_notes": "The installer also pins the platform-specific NeMo-Speech.cpp 0.1.0 runtime archive and preserves its license notices.",
+      "creator": "NVIDIA",
+      "picker_blurb": "Multilingual, including Hindi"
     },
     {
       "id": "Qwen/Qwen3.5-0.8B",
@@ -102,7 +106,9 @@
           "quantization": "q8_0"
         }
       ],
-      "artifact_notes": "Exact executable installation metadata is maintained in artifacts.json. Download size is not application RAM."
+      "artifact_notes": "Exact executable installation metadata is maintained in artifacts.json. Download size is not application RAM.",
+      "creator": "Qwen · Alibaba",
+      "picker_blurb": "Small multilingual writing model that preserves transcript meaning"
     },
     {
       "id": "Qwen/Qwen3-ASR-0.6B",
@@ -147,7 +153,9 @@
           "sha256": "4942d005604266809309cabc9f4e9cb89ce855d59b14681fdc0e1cc62ea26c4c"
         }
       ],
-      "artifact_notes": "Exact executable metadata is in artifacts.json; see docs/offline-asr.md."
+      "artifact_notes": "Exact executable metadata is in artifacts.json; see docs/offline-asr.md.",
+      "creator": "Qwen · Alibaba",
+      "picker_blurb": "Multilingual, including Hindi · CPU"
     },
     {
       "id": "CohereLabs/cohere-transcribe-03-2026",
@@ -182,7 +190,9 @@
           "sha256": "013ede043ae2480e3a9205cc34550d9686100cc682bacc90f702facdfbb93035"
         }
       ],
-      "artifact_notes": "Exact executable metadata is in artifacts.json; see docs/offline-asr.md."
+      "artifact_notes": "Exact executable metadata is in artifacts.json; see docs/offline-asr.md.",
+      "creator": "Cohere",
+      "picker_blurb": "Default · select English or French · CPU"
     },
     {
       "id": "LiquidAI/LFM2.5-Audio-1.5B",
@@ -210,14 +220,16 @@
           "quantization": "q4_0"
         }
       ],
-      "artifact_notes": "Exact executable metadata is in artifacts.json; see docs/lfm-audio.md."
+      "artifact_notes": "Exact executable metadata is in artifacts.json; see docs/lfm-audio.md.",
+      "creator": "Liquid AI",
+      "picker_blurb": "English only · completed recordings · CPU · Q4"
     },
     {
       "id": "openai/whisper-small",
       "name": "OpenAI Whisper Small INT8",
       "role": "speech_recognition",
-      "status": "qualification_pending",
-      "description": "Shared Whisper CPU adapter and verified installer implemented; product selection withheld after noise and repetition quality failures. English/French evaluation only; no native streaming.",
+      "status": "optional",
+      "description": "Shared Whisper CPU adapter and verified installer implemented. Offered in product selection by owner decision 2026-10-07 despite failed noise/repetition quality gates (see docs/language-support-and-recommendations.md and docs/validation/whisper-adapter-2026-09-18.md). English/French modes only; no native streaming.",
       "source_url": "https://huggingface.co/openai/whisper-small",
       "license": "MIT",
       "proposed_runtime": "Pinned sherpa-onnx 1.13.8 with native completion/confidence patch",
@@ -225,14 +237,16 @@
       "artifact_revision": "8f3c18b358db4d1f2fc1eae49d75cd20989e4309",
       "artifact_manifest": "models/artifacts.json",
       "artifact_size_bytes": 375485327,
-      "validation": "docs/validation/whisper-adapter-2026-09-18.md"
+      "validation": "docs/validation/whisper-adapter-2026-09-18.md",
+      "creator": "OpenAI",
+      "picker_blurb": "English and French · completed recordings · CPU · INT8"
     },
     {
       "id": "openai/whisper-large-v3-turbo",
       "name": "OpenAI Whisper Turbo INT8",
       "role": "speech_recognition",
-      "status": "qualification_pending",
-      "description": "Shared Whisper CPU adapter and verified installer implemented; product selection withheld after noise and repetition quality failures. English/French evaluation only; no native streaming.",
+      "status": "optional",
+      "description": "Shared Whisper CPU adapter and verified installer implemented. Offered in product selection by owner decision 2026-10-07 despite failed noise/repetition quality gates (see docs/language-support-and-recommendations.md and docs/validation/whisper-adapter-2026-09-18.md). English/French modes only; no native streaming.",
       "source_url": "https://huggingface.co/openai/whisper-large-v3-turbo",
       "license": "MIT",
       "proposed_runtime": "Pinned sherpa-onnx 1.13.8 with native completion/confidence patch",
@@ -240,7 +254,9 @@
       "artifact_revision": "2ca6ff69fc878651b770880507669577ac41c2ff",
       "artifact_manifest": "models/artifacts.json",
       "artifact_size_bytes": 1036613791,
-      "validation": "docs/validation/whisper-adapter-2026-09-18.md"
+      "validation": "docs/validation/whisper-adapter-2026-09-18.md",
+      "creator": "OpenAI",
+      "picker_blurb": "English and French · completed recordings · CPU · INT8 · larger encoder"
     }
   ]
 }
