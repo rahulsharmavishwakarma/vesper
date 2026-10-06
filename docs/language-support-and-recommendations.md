@@ -28,7 +28,7 @@ Fresh settings select Cohere Transcribe, explicit English, and Qwen3.5 cleanup. 
 | Qwen3-ASR 0.6B | Automatic plus 30 declared languages | Native MLX or buffered CPU drafts; completed recording/file final | Automatic; CPU; Metal for English on Apple Silicon | Local phase-one Hindi, US-English, and Hinglish screening; no qualified Hinglish result |
 | NVIDIA Parakeet TDT 0.6B v3 | Automatic plus 25 declared European languages | Buffered live drafts; completed recording/file final | Automatic; CPU; Metal for English on Apple Silicon | Compatibility/smoke evidence; no current comparable phase-one matrix; Hindi is unsupported |
 | Liquid LFM2.5 Audio 1.5B | English only, explicit | Buffered live drafts; resident weights and completed-audio final | Automatic; CPU; Metal; CUDA/Vulkan/ROCm with matching builds | English CPU/Metal evidence; non-Apple GPU qualification deferred to #76 |
-| OpenAI Whisper Small | Automatic, English, French (qualified claim, not vendor-researched) | Completed recording/file final, INT8 CPU | Automatic or CPU | Adapter validation record 2026-09-18; withheld from the picker (`executable: false`, failed noise/repetition gates) |
+| OpenAI Whisper Small | Automatic, English, French (qualified claim, not vendor-researched) | Completed recording/file final, INT8 CPU | Automatic or CPU | Adapter validation record 2026-09-18; offered by owner decision 2026-10-07 despite failed noise/repetition gates |
 | OpenAI Whisper Turbo | Automatic, English, French (qualified claim, not vendor-researched) | Completed recording/file final, larger encoder, INT8 CPU | Automatic or CPU | Same adapter record and picker status as Whisper Small |
 
 “Automatic” in the backend column means the application may choose an available supported execution path and fall back according to that adapter's policy. It is not evidence that a GPU executed every operator. GPU, driver, precision, and runtime-package combinations require separate measurements.
@@ -41,11 +41,13 @@ All current ASR adapters expose live drafts. Nemotron uses native cache-aware st
 
 `vesper-core/build.rs` generates the adapter language tables, the runtime-code lookup, and the writer table from the manifest at compile time; a malformed manifest fails the build naming the offending key. The agreement test pins each model's adapter capabilities to its manifest set, and per-language tests on both the speech and writing paths read the manifest directly, so extending it extends coverage with no test edit. Menus (frontend) read the manifest file; validation (backend) reads the generated tables, so the two cannot drift.
 
-To onboard a model: add one manifest block with vendor-declared languages researched from the vendor page at a recorded revision (never guessed), wire one ADAPTERS registration plus its runtime adapter code, and every menu, validation, and per-language test follows with no further list edits. Product selection stays a separate qualification decision: the manifest may cover evaluated-but-withheld models (Whisper keeps `executable: false` after failed noise/repetition gates). The `Language` enum itself is unchanged: adding a *language* still touches the enum, its ISO code, and the frontend options.
+To onboard a model: add one manifest block with vendor-declared languages researched from the vendor page at a recorded revision (never guessed), wire one ADAPTERS registration plus its runtime adapter code, and every menu, validation, and per-language test follows with no further list edits. Product selection stays a separate qualification decision via the catalog `status`: withheld entries never reach the picker. The `Language` enum itself is unchanged: adding a *language* still touches the enum, its ISO code, and the frontend options.
+
+Picker display (names, creators, blurbs) comes from `models/catalog.json`, not code: the frontend `modelOptions` and the backend `default_model_catalog()` both read the catalog, with language counts from `models/languages.json`. Withheld catalog statuses stay out of the picker by construction, and parity tests pin both directions. Only the selectable-id contract (`ASR_MODELS` keys, `CLEANUP_MODELS` keys) stays code-side with the backend enums, which reject unknown ids.
 
 ## Additional ASR menu profiles
 
-The Models menu also contains three pinned sherpa-onnx transducer profiles, giving eight ASR choices in total. These reuse the custom-profile runtime path rather than adding new built-in architecture adapters.
+The Models menu also contains three pinned sherpa-onnx transducer profiles, giving ten ASR choices in total. These reuse the custom-profile runtime path rather than adding new built-in architecture adapters.
 
 | Menu profile | Declared profile languages | Languages currently selectable in the app | Delivery/backend | Qualification status |
 | --- | --- | --- | --- | --- |
@@ -53,7 +55,7 @@ The Models menu also contains three pinned sherpa-onnx transducer profiles, givi
 | NVIDIA Parakeet Unified English 0.6B INT8 | English | Automatic, English | Buffered live drafts and completed audio, CPU | 16-recording US-English CPU screen: 5.86% micro-WER and 0.115 median RTF; broader English qualification remains |
 | NVIDIA FastConformer European 114M FP32 | English, German, Spanish, French | Automatic, English, German, Spanish, French | Buffered live drafts and completed audio, CPU | 16-recording US-English CPU screen: 9.26% micro-WER and 0.069 median RTF; German/Spanish now resolve as explicit selections and French remains unmeasured |
 
-The development `vesper-eval --model` command accepts seven built-in ASR enum values, including two Whisper evaluation variants that are withheld from product selection. Its validated `--asr-profile` option evaluates the three pinned menu profiles through the production custom-profile adapter.
+The development `vesper-eval --model` command accepts seven built-in ASR enum values, including two Whisper variants now also offered in product selection by owner decision 2026-10-07. Its validated `--asr-profile` option evaluates the three pinned menu profiles through the production custom-profile adapter.
 
 Cleanup models are a separate role. Qwen3.5-0.8B and the optional cleanup presets cannot be compared as speech recognizers. Cleanup needs its own fidelity, meaning-preservation, latency, and memory benchmark.
 
@@ -112,15 +114,15 @@ follows from this metadata update.
 
 ## Whisper evaluation gate
 
-Whisper Small and Turbo now share a real architecture adapter, resident Sherpa ownership and pinned INT8 installation. They run through the application manager in completed-audio English/French mode, including automatic detection restricted to those languages. The picker remains at eight choices: Whisper noise/repetition quality gates have failed, so its recommendation metadata retains `executable: false`. This flag represents release qualification; it does not mean the development adapter is missing. Hindi, code-switching, singing and native Whisper streaming are not qualified. See [the dated adapter regression](validation/whisper-adapter-2026-09-18.md).
+Whisper Small and Turbo now share a real architecture adapter, resident Sherpa ownership and pinned INT8 installation. They run through the application manager in completed-audio English/French mode, including automatic detection restricted to those languages. Whisper noise/repetition quality gates have failed, and the catalog carried them as withheld; the owner overrode this on 2026-10-07 to offer both variants in the picker. The failures stand as recorded evidence and still exclude Whisper from qualified recommendation. Hindi, code-switching, singing and native Whisper streaming are not qualified. See [the dated adapter regression](validation/whisper-adapter-2026-09-18.md).
 
 ## Current numeric benchmark coverage
 
-The Models menu has **eight ASR choices**: five built-in adapters and three custom-profile choices. All eight have results on one comparable 16-recording US-English completed-audio CPU screen. That closes execution coverage only for this narrow profile; it is not an all-language, streaming, or all-device qualification.
+The Models menu has **ten ASR choices**: seven built-in adapters and three custom-profile choices. Eight of the ten have results on one comparable 16-recording US-English completed-audio CPU screen; the Whisper pair has adapter validation only (2026-09-18), not that screen. That closes execution coverage only for this narrow profile; it is not an all-language, streaming, or all-device qualification.
 
 The development evaluator accepts one validated `--asr-profile` declaration and routes it through the same production custom-profile adapter. This enabled comparable runs for Parakeet v2, Parakeet Unified English, and FastConformer without a second inference implementation. The [dated result](../benchmarks/asr/2026-09-18-app-catalog-en-us.md) preserves the then-nine-model, 144-execution screen, including Kyutai's failed quality and real-time gates. Kyutai was subsequently removed from application support under [GitHub issue #48](https://github.com/rahulsharmavishwakarma/transcribe/issues/48); historical measurements remain evidence, not a downloadable-model claim.
 
-Coverage remains narrower when filtered by language: Nemotron and Qwen3-ASR have Hindi and Hinglish screening; Nemotron and Cohere have a separate Indian-English screen inside a personalization experiment envelope, which is deliberately excluded from base-model recommendation ranking. Qwen3.5 cleanup has end-to-end and fidelity measurements, but it is a text rewriter and is not part of the eight-ASR count. Therefore the benchmark now covers every current app-catalog ASR choice only for the specific US-English CPU lane and still cannot produce a complete language/device recommendation.
+Coverage remains narrower when filtered by language: Nemotron and Qwen3-ASR have Hindi and Hinglish screening; Nemotron and Cohere have a separate Indian-English screen inside a personalization experiment envelope, which is deliberately excluded from base-model recommendation ranking. Qwen3.5 cleanup has end-to-end and fidelity measurements, but it is a text rewriter and is not part of the ten-ASR count. Therefore the benchmark now covers every current app-catalog ASR choice only for the specific US-English CPU lane and still cannot produce a complete language/device recommendation.
 
 ## Language-by-language view
 

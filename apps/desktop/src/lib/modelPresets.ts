@@ -3,6 +3,8 @@ import {
   ASR_MODELS,
   CLEANUP_MODEL_OPTIONS,
   CLEANUP_MODELS,
+  catalogModel,
+  offeredModelIds,
   parseModelProfileJson,
   type AppConfig,
   type HuggingFaceProfile,
@@ -92,26 +94,28 @@ export function selectedModelValue(models: AppConfig['models'], role: ModelProfi
 }
 
 export function modelOptions(models: AppConfig['models'], role: ModelProfileRole) {
+  // Display comes from models/catalog.json; only the selectable-id contract
+  // (ASR_MODELS keys, CLEANUP_MODELS keys) stays code-side with the backend.
   const builtIns =
     role === 'asr'
-      ? Object.entries(ASR_MODELS).map(([value, label]) => ({
-          value,
-          label,
-          creator: MODEL_CREATORS[value] ?? UNKNOWN_CREATOR,
-          description: value.includes('nemotron')
-            ? 'Multilingual, including Hindi'
-            : value === 'Qwen/Qwen3-ASR-0.6B'
-              ? 'Multilingual, including Hindi · CPU'
-              : value === 'CohereLabs/cohere-transcribe-03-2026'
-                ? 'Default · select English or French · CPU'
-                : value === 'LiquidAI/LFM2.5-Audio-1.5B'
-                  ? 'English only · completed recordings · CPU · Q4'
-                  : '25 European languages · CPU',
-        }))
-      : CLEANUP_MODEL_OPTIONS.map((option) => ({
-          ...option,
-          creator: MODEL_CREATORS[option.value] ?? UNKNOWN_CREATOR,
-        }));
+      ? offeredModelIds('speech_recognition').map((value) => {
+          const display = catalogModel(value);
+          return {
+            value,
+            label: display?.name ?? value,
+            creator: display?.creator || UNKNOWN_CREATOR,
+            description: display?.picker_blurb ?? '',
+          };
+        })
+      : CLEANUP_MODEL_OPTIONS.map((option) => {
+          const display = catalogModel(option.value);
+          return {
+            ...option,
+            label: display?.name ?? option.label,
+            description: display?.picker_blurb ?? option.description,
+            creator: display?.creator || UNKNOWN_CREATOR,
+          };
+        });
   const presets = MODEL_PRESETS.filter((preset) => preset.profile.runtime === runtimeFor(role)).map(
     (preset) => ({
       value: `preset:${preset.profile.id}`,

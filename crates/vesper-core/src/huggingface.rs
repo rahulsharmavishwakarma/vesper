@@ -293,7 +293,6 @@ mod tests {
         assert!(!codes.is_empty());
         for language in codes {
             let mut config = AppConfig::default();
-            config.cleanup_enabled = true;
             let mut profile = fixture();
             profile.languages = vec![language.code().unwrap().into()];
             config.models.custom_rewriter = Some(profile);

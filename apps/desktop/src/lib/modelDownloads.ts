@@ -1,4 +1,4 @@
-import { ASR_MODELS, CLEANUP_MODELS, type AppConfig, type ModelProfileRole } from './config.ts';
+import { catalogModel, type AppConfig, type ModelProfileRole } from './config.ts';
 import type { InstallProgress, ModelCatalogInstallation } from './api/runtime';
 import { presetForProfile, sameModelProfile } from './modelPresets.ts';
 
@@ -76,7 +76,9 @@ export function downloadTarget(config: AppConfig, role: ModelProfileRole): Downl
     modelId: profile?.id ?? (speech ? config.models.asr : config.models.rewriter),
     name:
       profile?.name ??
-      (speech ? ASR_MODELS[config.models.asr] : CLEANUP_MODELS[config.models.rewriter].name),
+      (speech
+        ? (catalogModel(config.models.asr)?.name ?? config.models.asr)
+        : (catalogModel(config.models.rewriter)?.name ?? config.models.rewriter)),
     quantization: speech || profile ? null : config.rewriteQuantization,
   };
 }

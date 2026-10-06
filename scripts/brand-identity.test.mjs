@@ -207,7 +207,8 @@ test('naming cleanup retains working technical names and historical evidence', (
   assert.match(read('.pre-commit-config.yaml'), /id: vesper-push-check/);
   assert.match(read('README.md'), /github\.com\/rahulsharmavishwakarma\/transcribe\.git/);
   assert.match(read('README.md'), /download\/vesper-macos-arm64\.dmg/);
-  assert.match(read('apps/desktop/src/lib/config.ts'), /'Cohere Transcribe'/);
+  assert.match(read('models/catalog.json'), /"name": "Cohere Transcribe"/);
+  assert.match(read('apps/desktop/src/lib/config.ts'), /models\/catalog\.json/);
   assert.match(read('apps/desktop/src/lib/components/QuickCapture.svelte'), /Stop and transcribe/);
   assert.match(read('docs/development.md'), /### Product name and compatibility/);
   assert.match(read('docs/validation.md'), /id="transcribe-integration-update"/);
