@@ -5,6 +5,7 @@ mod config;
 mod diarization;
 pub mod environment;
 mod error;
+mod generated;
 mod huggingface;
 mod learning;
 mod memory;
@@ -27,6 +28,7 @@ pub use config::{
 };
 pub use diarization::{SpeakerSegment, SpeakerTimeline};
 pub use error::{Error, Result};
+pub use generated::runtime_language_code;
 pub use huggingface::{HuggingFaceFile, HuggingFaceProfile, ModelFileRole, ModelRuntime};
 pub use learning::*;
 pub use memory::{
