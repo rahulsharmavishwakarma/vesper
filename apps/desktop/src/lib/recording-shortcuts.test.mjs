@@ -16,13 +16,18 @@ test('custom shortcuts normalize modifiers and distinguish platform-specific key
     assert.ok(!sameShortcut('Super+K', 'Control+K', mac));
     assert.equal(shortcutIdentity(`CommandOrControl+${primary}+K`, mac), null);
     for (const key of SHORTCUT_KEYS) assert.ok(shortcutIdentity(`Alt+${key}`, mac), key);
+    for (const valid of ['Control+Enter', 'Alt+Tab', 'Control+Backspace', 'Super+Delete']) {
+      assert.ok(shortcutIdentity(valid, mac), valid);
+    }
     for (const invalid of [
       'K',
+      'Enter',
       'Shift+K',
+      'Shift+Enter',
       'Control',
       'Fn',
       'Alt+Escape',
-      'Control+Enter',
+      'Escape',
       'Alt+F25',
       'Alt++K',
       'Ctrl+K',
@@ -52,7 +57,11 @@ test('shortcut recording captures physical codes and rejects composition and mod
   assert.equal(shortcutFromKeyboard({ ...key, code: 'Digit7' }), 'Control+Alt+7');
   assert.equal(shortcutFromKeyboard({ ...key, code: 'F8' }), 'Control+Alt+F8');
   assert.equal(shortcutFromKeyboard({ ...key, code: 'Slash' }), 'Control+Alt+Slash');
-  for (const code of ['Escape', 'ControlLeft', 'MetaRight', 'Fn', 'Unidentified', 'Enter']) {
+  assert.equal(shortcutFromKeyboard({ ...key, code: 'Enter' }), 'Control+Alt+Enter');
+  assert.equal(shortcutFromKeyboard({ ...key, code: 'Tab' }), 'Control+Alt+Tab');
+  assert.equal(shortcutFromKeyboard({ ...key, code: 'Backspace' }), 'Control+Alt+Backspace');
+  assert.equal(shortcutFromKeyboard({ ...key, code: 'Delete' }), 'Control+Alt+Delete');
+  for (const code of ['Escape', 'ControlLeft', 'MetaRight', 'Fn', 'Unidentified']) {
     assert.equal(shortcutFromKeyboard({ ...key, code }), null, code);
   }
   assert.equal(shortcutFromKeyboard({ ...key, isComposing: true }), null);

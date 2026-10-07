@@ -22,6 +22,11 @@ pub fn recording_shortcut_identity(value: &str, mac: bool) -> Option<String> {
             "End",
             "PageUp",
             "PageDown",
+            // Editing keys bindable with a modifier; Escape stays reserved.
+            "Enter",
+            "Tab",
+            "Backspace",
+            "Delete",
             "Backquote",
             "Minus",
             "Equal",
@@ -82,7 +87,16 @@ mod tests {
                 recording_shortcut_identity("Shift+CommandOrControl+K", mac),
                 Some(format!("{primary}+Shift+K"))
             );
-            for valid in ["Alt+7", "Control+Alt+F24", "Super+Space", "Control+Slash"] {
+            for valid in [
+                "Alt+7",
+                "Control+Alt+F24",
+                "Super+Space",
+                "Control+Slash",
+                "Control+Enter",
+                "Alt+Tab",
+                "Control+Backspace",
+                "Super+Delete",
+            ] {
                 assert!(recording_shortcut_identity(valid, mac).is_some(), "{valid}");
             }
             for invalid in [
@@ -91,7 +105,8 @@ mod tests {
                 "Control",
                 "Fn",
                 "Alt+Escape",
-                "Control+Enter",
+                "Escape",
+                "Enter",
                 "Alt+F25",
                 "Alt++K",
                 "Ctrl+K",

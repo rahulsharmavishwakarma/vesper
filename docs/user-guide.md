@@ -274,7 +274,10 @@ The desktop app must be running for its global shortcuts to work.
 | Hold to talk    | `⌥ Shift D`          | Hold while speaking; release to finish.  |
 | Press to toggle | `⌘ Shift Space`      | Press once to start and again to finish. |
 
-Both shortcuts can be changed in **Settings → Shortcuts**. Existing
+Both shortcuts can be changed in **Settings → Shortcuts**. Any combination
+with a modifier works — letters, numbers, function keys and editing keys such
+as Enter, Tab, Backspace or Delete. A bare key is not accepted, since it would
+fire while you type. Existing
 installations keep their saved shortcuts. Wait for the floating controls to
 show **Listening** before speaking.
 
