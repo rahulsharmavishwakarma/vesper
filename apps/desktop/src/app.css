@@ -224,7 +224,8 @@ button {
     transform 160ms var(--ease),
     opacity 160ms var(--ease),
     background-color 140ms var(--ease),
-    border-color 140ms var(--ease);
+    border-color 140ms var(--ease),
+    color 140ms var(--ease);
 }
 button.primary:hover:enabled {
   transform: translateY(-2px);
@@ -1912,10 +1913,8 @@ button.inline-link {
 .sidebar nav button[aria-current='page'] .icon {
   animation: icon-settle 240ms var(--ease) both;
 }
-.history-filters button[aria-pressed='true'],
-.stats-range button[aria-pressed='true'] {
-  animation: selection-arrive 180ms var(--ease) both;
-}
+/* Segmented selections confirm through the gliding pill and a calm recolor;
+ * the pressed label itself stays still on every switch. */
 .success,
 .runtime-feedback > .error,
 .history-feedback > .error {
@@ -2273,6 +2272,13 @@ textarea:focus:enabled {
 }
 .dataset-panel[data-view='full'] .session-list > li {
   animation: section-arrive 260ms var(--ease) var(--row-enter-delay, 0ms) backwards;
+}
+/* Filter, search and day swaps hold row entrances for one beat so the switch
+ * reads as a single motion with the gliding pill. Pagination turns keep
+ * replaying them; reduced motion stills everything regardless. The extra
+ * attribute beats the view-scoped row rule without touching it. */
+.dataset-panel .session-list[data-calm] > li {
+  animation: none;
 }
 .dataset-panel[data-view='full'] .history-metrics > div {
   animation: metric-arrive 260ms var(--ease) var(--metric-delay, 60ms) backwards;

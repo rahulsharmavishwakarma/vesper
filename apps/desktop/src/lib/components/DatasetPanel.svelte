@@ -6,7 +6,7 @@
   import { historyReveal, revealAccessibility } from '../actions/historyReveal';
   import Select from './Select.svelte';
   import { rememberCleanup } from '../api/personalization';
-  import { onMount, tick, untrack } from 'svelte';
+  import { onDestroy, onMount, tick, untrack } from 'svelte';
   import Icon from './Icon.svelte';
   import HistoryStats from './HistoryStats.svelte';
   import LearningReview from './LearningReview.svelte';
@@ -275,10 +275,26 @@
     );
   }
   function clearFilters() {
-    query = '';
-    filter = 'all';
-    selectedDay = '';
-    page = 1;
+    calmSwap(() => {
+      query = '';
+      filter = 'all';
+      selectedDay = '';
+      page = 1;
+    });
+  }
+  let calmRows = $state(false);
+  let calmTimer: ReturnType<typeof setTimeout> | undefined;
+  onDestroy(() => clearTimeout(calmTimer));
+  // A filter, search or day swap replaces rows under the gliding pill; hold
+  // row entrances for one beat so the switch reads as a single motion.
+  // Pagination turns keep replaying entrances; the timer only stills swaps.
+  function calmSwap(mutator: () => void) {
+    mutator();
+    calmRows = true;
+    clearTimeout(calmTimer);
+    calmTimer = setTimeout(() => {
+      calmRows = false;
+    }, 450);
   }
   async function openLearningReview(id: string) {
     clearFilters();
@@ -549,8 +565,10 @@
       {records}
       {selectedDay}
       onSelectDay={(day) => {
-        selectedDay = day;
-        page = 1;
+        calmSwap(() => {
+          selectedDay = day;
+          page = 1;
+        });
       }}
     />{/if}
   <div class="section-heading history-heading">
@@ -602,7 +620,9 @@
           placeholder="Search words or filenames…"
           bind:value={query}
           oninput={() => {
-            page = 1;
+            calmSwap(() => {
+              page = 1;
+            });
           }}
           disabled={!desktop || !hasLoaded}
         />{#if query}<button
@@ -627,8 +647,10 @@
             aria-pressed={filter === choice.value}
             disabled={!desktop || !hasLoaded}
             onclick={() => {
-              if (filter !== choice.value) page = 1;
-              filter = choice.value as HistoryFilter;
+              calmSwap(() => {
+                if (filter !== choice.value) page = 1;
+                filter = choice.value as HistoryFilter;
+              });
             }}>{choice.label}<span>{choice.count}</span></button
           >
         {/each}
@@ -679,7 +701,12 @@
             <button type="button" onclick={clearFilters}>Clear filters</button>
           </div>
         {:else}
-          <ul class="session-list" id="history-recordings" aria-label="Saved recordings">
+          <ul
+            class="session-list"
+            id="history-recordings"
+            aria-label="Saved recordings"
+            data-calm={calmRows || undefined}
+          >
             {#each view === 'recent' ? records.slice(0, 3) : pagination.items as record, index (record.id)}
               <li
                 class:session-expanded={view !== 'recent' && selected?.id === record.id}

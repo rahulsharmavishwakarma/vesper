@@ -4069,6 +4069,69 @@ await test('Automatic audio setup waits for an active recording to finish', asyn
   await until(() => calls === 1, 'Audio setup did not resume after recording');
 });
 
+await test('History filter swaps hold row entrances and still the pressed label', async () => {
+  const record = (id, status) => ({
+    id,
+    createdAt: '2026-10-06T12:00:00.000Z',
+    originalFilename: `${id}.wav`,
+    audioRelativePath: `audio/${id}.wav`,
+    audioSha256: 'synthetic',
+    audioBytes: 100,
+    rawTranscript: `Synthetic recording ${id}.`,
+    speakerTimeline: null,
+    cleanedTranscript: null,
+    correctedTranscript: null,
+    verifiedTranscript: null,
+    reviewHistory: [],
+    personalizedTranscript: null,
+    draftTranscript: null,
+    draftRevision: 0,
+    personalizationEvidence: null,
+    personalizationProject: '',
+    projectSelection: null,
+    personalizationRejected: false,
+    reviewStatus: status,
+    transcriptFeedback: null,
+    configSnapshot: {},
+    modelVersions: {},
+    pipelineEvents: [],
+  });
+  // Approved rows first so the pending swap mounts fresh rows under the hold.
+  const records = [
+    record('approved-a', 'approved'),
+    record('approved-b', 'approved'),
+    ...Array.from({ length: 10 }, (_, index) => record(`pending-${index}`, 'pending')),
+  ];
+  await setup({
+    main: true,
+    intercept: (command) => {
+      if (command === 'list_sessions') return structuredClone(records);
+      return undefined;
+    },
+  });
+  const byText = (label) =>
+    [...target.querySelectorAll('button')].find((button) =>
+      button.textContent.trim().startsWith(label),
+    );
+  byText('History').click();
+  await until(() => target.querySelector('.history-filters'), 'History filters missing');
+  const filters = () => target.querySelector('.history-filters');
+  const list = () => target.querySelector('#history-recordings');
+  byText('Needs review').click();
+  await tick();
+  assert(list()?.dataset.calm === 'true', 'Filter swap did not hold row entrances');
+  const pressed = filters().querySelector('button[aria-pressed="true"]');
+  const pulses = pressed
+    .getAnimations()
+    .filter((animation) => animation.constructor.name !== 'CSSTransition');
+  assert(pulses.length === 0, 'Pressed filter label replayed motion on switch');
+  const replaying = [...list().querySelectorAll(':scope > li')].filter((row) =>
+    row.getAnimations().some((animation) => animation.playState !== 'finished'),
+  );
+  assert(replaying.length === 0, 'Rows replayed entrances during a filter swap');
+  await until(() => !('calm' in list().dataset), 'Calm hold never released');
+});
+
 if (unexpected.length)
   results.push({
     name: 'No unexpected native commands or unhandled errors',
