@@ -568,6 +568,10 @@ h3 {
   display: inline-flex;
   animation: refresh-spin 700ms linear infinite;
 }
+.permission-actions span.spinning {
+  display: inline-flex;
+  animation: refresh-spin 700ms linear infinite;
+}
 .activity-link {
   padding: var(--space-2) 0;
   margin-bottom: var(--space-3);
@@ -869,6 +873,7 @@ body.is-recording .brand-logo .dsh {
   .studio-recorder.is-recording .record-button::after,
   .studio-recorder.is-recording .recorder-heading > .icon,
   .microphone-refresh > span.spinning,
+  .permission-actions span.spinning,
   .save-status > span.spinning,
   .save-status[data-state='saved'] .a,
   .activity-link .status-dot::after {

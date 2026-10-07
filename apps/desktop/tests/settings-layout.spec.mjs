@@ -153,3 +153,28 @@ test('All five Settings sections fit narrow and desktop layouts in both themes',
     }
   }
 });
+
+test('Denied paste access explains the restart requirement', async ({ page }) => {
+  await openSettings(page);
+  await section(page, 'Shortcuts').click();
+  await page.getByRole('combobox', { name: 'After shortcut dictation' }).click();
+  await page.getByRole('option', { name: 'Paste into the original text field' }).click();
+  const state = page.locator('.permission-state');
+  await expect(state).toContainText('Allow access to paste');
+  await expect(state).toContainText('quit and reopen Vesper');
+  await expect(
+    state.getByRole('button', { name: 'Allow access' }).locator('[data-icon="check"]'),
+  ).toBeVisible();
+  await expect(
+    state.getByRole('button', { name: 'Check access' }).locator('[data-icon="refresh"]'),
+  ).toBeVisible();
+  await page.getByRole('button', { name: 'Check access' }).click();
+  await expect(state).toContainText('quit and reopen Vesper');
+  await expect
+    .poll(() =>
+      page.evaluate(
+        () => window.previewCommands.filter((entry) => entry === 'dictation_permissions').length,
+      ),
+    )
+    .toBeGreaterThan(0);
+});

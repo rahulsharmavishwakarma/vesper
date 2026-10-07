@@ -1,5 +1,6 @@
 <script lang="ts">
   import { onMount } from 'svelte';
+  import Icon from './Icon.svelte';
   import { recordingShortcuts, type AppConfig } from '../config';
   import { getDictationPermissions, type DictationPermissions } from '../api/dictation';
   import Select from './Select.svelte';
@@ -12,6 +13,7 @@
   let permissions = $state<DictationPermissions | null>(null);
   let checking = $state(false);
   let error = $state<string | null>(null);
+  let requested = $state(false);
   let disposed = false;
   const shortcuts = $derived(recordingShortcuts(settings));
   function selectShortcut(mode: 'hold' | 'toggle', value: string) {
@@ -30,6 +32,7 @@
   );
   async function refresh(request = false) {
     if (!desktop || checking) return;
+    if (request) requested = true;
     checking = true;
     error = null;
     try {
@@ -125,12 +128,21 @@
       {#if !ready}<button
           type="button"
           onclick={() => refresh(true)}
-          disabled={disabled || checking}>Allow access</button
+          disabled={disabled || checking}><Icon name="check" />Allow access</button
         >{/if}
-      <button type="button" class="quiet" onclick={() => refresh()} disabled={disabled || checking}
-        >{checking ? 'Checking…' : 'Check access'}</button
-      >
+      {#if !ready}<button
+          type="button"
+          class="quiet"
+          onclick={() => refresh()}
+          disabled={disabled || checking}
+          ><span class:spinning={checking} aria-hidden="true"><Icon name="refresh" /></span
+          >{checking ? 'Checking…' : 'Check access'}</button
+        >{/if}
     </div>
+    {#if requested && permissions && !permissions.accessibility}<p class="note">
+        If you just turned this on, quit and reopen Vesper, then check again — macOS can keep
+        reporting the old state until the app restarts.
+      </p>{/if}
   </div>
 {/if}
 {#if error}<p class="error" role="alert">{error}</p>{/if}
