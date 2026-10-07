@@ -82,7 +82,8 @@ to be managed separately in **Models**.
    used only when text cleanup is enabled. Each picker row shows the model's
    supported languages; a row with more than six languages shows a count that
    expands to the full list, and the writing model shows Many languages
-   because it publishes no per-language list.
+   because it publishes no per-language list. The Needs row at the top of an
+   open picker narrows both lists to models covering English, French or Hindi.
 2. Download the selected files. Downloading first flushes any pending selection
    and saves it, then downloads it; changing a selection alone only saves it
    and does not download speech or writing

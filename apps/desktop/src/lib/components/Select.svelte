@@ -4,6 +4,7 @@
   import Icon from './Icon.svelte';
   import ModelStatus from './ModelStatus.svelte';
   import type { DownloadOptionStatus } from '../modelDownloads';
+  import { filterModelOptions } from '../modelPresets';
   import { optionHighlight } from '../actions/selectionHighlight';
 
   type Option = {
@@ -26,6 +27,7 @@
     invalid = false,
     label,
     identity = false,
+    languageFilters,
     onChange,
   }: {
     id: string;
@@ -36,8 +38,11 @@
     invalid?: boolean;
     label?: string;
     identity?: boolean;
+    languageFilters?: { value: string; label: string }[];
     onChange?: (value: T) => void;
   } = $props();
+  let langFilter = $state('all');
+  const visibleOptions = $derived(filterModelOptions(options, langFilter));
   let trigger: HTMLButtonElement;
   let popup = $state<HTMLDivElement>();
   let open = $state(false);
@@ -56,6 +61,7 @@
   function close() {
     open = false;
     search = '';
+    langFilter = 'all';
     expandedLanguages.clear();
   }
   let expandedLanguages = new SvelteSet<T>();
@@ -74,6 +80,8 @@
     } else if (event.key === 'Escape') {
       event.stopPropagation();
       if (expandedLanguages.has(value)) toggleLanguages(value, event);
+    } else if (event.key === 'Tab') {
+      close();
     }
   }
   // Popup anchor: a scroll event that did not move the trigger (e.g. the
@@ -90,8 +98,8 @@
     const below = top + height - rect.bottom - 12;
     const above = rect.top - top - 12;
     const desired = Math.min(
-      options.some((option) => option.status || option.creator) ? 360 : 240,
-      options.reduce(
+      visibleOptions.some((option) => option.status || option.creator) ? 360 : 240,
+      visibleOptions.reduce(
         (height, option) =>
           height +
           (option.description || option.creator ? 64 : 44) +
@@ -125,13 +133,13 @@
       popup.scrollTop += optionRect.bottom - popupRect.bottom;
   }
   function show() {
-    if (!available() || !options.some((option) => !option.disabled)) return;
+    if (!available() || !visibleOptions.some((option) => !option.disabled)) return;
     accessibleLabel = Array.from(trigger.labels ?? [])
       .map((element) => element.textContent?.trim())
       .filter(Boolean)
       .join(' ');
-    active = options.findIndex((option) => option.value === value && !option.disabled);
-    if (active < 0) active = options.findIndex((option) => !option.disabled);
+    active = visibleOptions.findIndex((option) => option.value === value && !option.disabled);
+    if (active < 0) active = visibleOptions.findIndex((option) => !option.disabled);
     place();
     const rect = trigger.getBoundingClientRect();
     anchor = { left: rect.left, top: rect.top };
@@ -139,7 +147,7 @@
     void reveal();
   }
   function choose(index: number) {
-    const option = options[index];
+    const option = visibleOptions[index];
     if (!available() || !option || option.disabled) return;
     const changed = value !== option.value;
     value = option.value;
@@ -153,10 +161,10 @@
   function move(step: number, edge = false) {
     if (!open) show();
     if (!open) return;
-    let index = edge ? (step > 0 ? -1 : options.length) : active;
-    for (let count = 0; count < options.length; count++) {
-      index = (index + step + options.length) % options.length;
-      if (!options[index].disabled) {
+    let index = edge ? (step > 0 ? -1 : visibleOptions.length) : active;
+    for (let count = 0; count < visibleOptions.length; count++) {
+      index = (index + step + visibleOptions.length) % visibleOptions.length;
+      if (!visibleOptions[index].disabled) {
         active = index;
         void reveal();
         return;
@@ -206,9 +214,12 @@
     const repeated = [...search].every((character) => character === search[0]);
     const prefix = repeated ? search[0] : search;
     const start = repeated ? active + 1 : active;
-    for (let offset = 0; offset < options.length; offset++) {
-      const index = (start + offset + options.length) % options.length;
-      if (!options[index].disabled && options[index].label.toLocaleLowerCase().startsWith(prefix)) {
+    for (let offset = 0; offset < visibleOptions.length; offset++) {
+      const index = (start + offset + visibleOptions.length) % visibleOptions.length;
+      if (
+        !visibleOptions[index].disabled &&
+        visibleOptions[index].label.toLocaleLowerCase().startsWith(prefix)
+      ) {
         active = index;
         void reveal();
         break;
@@ -220,9 +231,9 @@
     return { destroy: () => node.remove() };
   }
   $effect(() => {
-    if (disabled || !options.some((option) => !option.disabled)) close();
-    else if (open && (!options[active] || options[active].disabled)) {
-      active = options.findIndex((option) => !option.disabled);
+    if (disabled || !visibleOptions.some((option) => !option.disabled)) close();
+    else if (open && (!visibleOptions[active] || visibleOptions[active].disabled)) {
+      active = visibleOptions.findIndex((option) => !option.disabled);
     }
   });
   onMount(() => {
@@ -316,7 +327,28 @@
     style:width={`${position.width}px`}
     style:max-height={`${position.height}px`}
   >
-    {#each options as option, index (option.value)}
+    {#if languageFilters?.length}
+      <div class="lang-filter" role="group" aria-label="Filter by language">
+        <span>Needs</span>
+        <button
+          type="button"
+          aria-pressed={langFilter === 'all'}
+          onclick={() => {
+            langFilter = 'all';
+          }}>Any language</button
+        >
+        {#each languageFilters as filter (filter.value)}
+          <button
+            type="button"
+            aria-pressed={langFilter === filter.value}
+            onclick={() => {
+              langFilter = filter.value;
+            }}>{filter.label}</button
+          >
+        {/each}
+      </div>
+    {/if}
+    {#each visibleOptions as option, index (option.value)}
       <button
         type="button"
         id={optionId(index)}
@@ -353,11 +385,14 @@
               >{#if option.creator}<span class="creator-name">{option.creator}</span
                 >{/if}{#if option.creator && option.description}<span aria-hidden="true">·</span
                 >{/if}{#if option.description}<small>{option.description}</small>{/if}</span
-            >{/if}{#if option.unrestrictedLanguages}<span class="lang-chip"
-              ><Icon name="globe" />Many languages</span
+            >{/if}{#if option.unrestrictedLanguages}<span
+              class="lang-chip"
+              class:hit={langFilter !== 'all'}><Icon name="globe" />Many languages</span
             >
           {:else if option.languages && option.languages.length > 0}
-            {#if option.languages.length <= EXPANDABLE_LANGUAGE_COUNT}<span class="lang-chip"
+            {#if option.languages.length <= EXPANDABLE_LANGUAGE_COUNT}<span
+                class="lang-chip"
+                class:hit={langFilter !== 'all'}
                 ><Icon name="globe" />{option.languages
                   .map((language) => language.label)
                   .join(' · ')}</span
@@ -366,6 +401,7 @@
               {@const panelOpen = expandedLanguages.has(option.value)}
               <span
                 class="lang-chip lang-expand"
+                class:hit={langFilter !== 'all'}
                 role="button"
                 tabindex="0"
                 aria-expanded={panelOpen}
@@ -380,10 +416,13 @@
                   class="lang-panel"
                   role="group"
                   aria-label={`${option.label} languages`}
-                  ><span class="lang-count">{option.languages.length} languages</span><span
-                    class="lang-list"
-                    >{#each option.languages as language (language.value)}<span class="lang-item"
-                        >{language.label}</span
+                  ><span class="lang-panel-head"
+                    ><span>{option.languages.length} languages</span><span>Scroll for more</span
+                    ></span
+                  ><span class="lang-list"
+                    >{#each option.languages as language (language.value)}<span
+                        class="lang-item"
+                        class:hit={language.value === langFilter}>{language.label}</span
                       >{/each}</span
                   ></span
                 >{/if}
@@ -397,6 +436,9 @@
         >
       </button>
     {/each}
+    {#if visibleOptions.length === 0}
+      <div class="filter-empty">No model covers that language yet.</div>
+    {/if}
   </div>
 {/if}
 
@@ -593,43 +635,87 @@
     font-size: 11px;
     line-height: 1.4;
   }
+  .lang-filter {
+    position: sticky;
+    top: -4px;
+    z-index: 2;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    flex-wrap: wrap;
+    margin: -4px -4px 4px;
+    padding: 10px 12px;
+    border-bottom: 1px solid var(--color-line);
+    border-radius: var(--radius-sm) var(--radius-sm) 0 0;
+    background: var(--color-raised);
+    color: var(--color-muted);
+    font-size: 13px;
+  }
+  .lang-filter button {
+    border: 1px solid var(--color-line);
+    background: transparent;
+    border-radius: 999px;
+    padding: 4px 13px;
+    color: var(--color-muted);
+    font-family: inherit;
+    font-size: 13px;
+    cursor: pointer;
+  }
+  .lang-filter button:hover {
+    color: var(--color-ink);
+  }
+  .lang-filter button[aria-pressed='true'] {
+    background: var(--color-accent);
+    border-color: var(--color-accent);
+    color: var(--color-on-accent);
+    font-weight: 500;
+  }
+  .lang-filter button:focus-visible {
+    outline: 2px solid var(--color-focus);
+    outline-offset: 2px;
+  }
+  .filter-empty {
+    padding: 28px;
+    text-align: center;
+    color: var(--color-muted);
+    font-size: 13px;
+  }
   .lang-chip {
     display: inline-flex;
     align-items: center;
     align-self: flex-start;
-    gap: 6px;
+    gap: 5px;
     max-width: 100%;
-    padding: 3px 9px;
-    border: 1px solid var(--color-line);
+    padding: 2px 9px;
+    border: 1px solid transparent;
     border-radius: 999px;
-    background: color-mix(in oklch, var(--color-line) 45%, var(--color-transparent));
-    color: var(--color-muted);
-    font-size: 12px;
+    background: var(--color-tint);
+    color: var(--color-accent);
+    font-size: 12.5px;
+    font-weight: 500;
     line-height: 1.4;
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
   }
   .lang-chip :global(svg) {
-    width: 14px;
-    height: 14px;
+    width: 12px;
+    height: 12px;
     flex-shrink: 0;
+  }
+  .lang-chip.hit {
+    background: var(--color-accent);
+    color: var(--color-on-accent);
   }
   .lang-expand {
     cursor: pointer;
-    color: var(--color-accent);
-    border-color: color-mix(in oklch, var(--color-accent) 40%, var(--color-transparent));
-  }
-  .lang-expand:hover {
-    background: var(--color-tint);
+    font-family: inherit;
   }
   .lang-expand:focus-visible {
     outline: 2px solid var(--color-focus);
     outline-offset: 2px;
   }
   .lang-expand :global(svg:last-child) {
-    width: 12px;
-    height: 12px;
     transition: transform var(--duration-state) var(--ease-out);
   }
   .lang-expand[aria-expanded='true'] :global(svg:last-child) {
@@ -637,33 +723,40 @@
   }
   .lang-panel {
     display: grid;
-    gap: 6px;
-    padding: 8px 10px;
+    margin-top: 10px;
+    padding: 10px 12px;
     border: 1px solid var(--color-line);
-    border-radius: 8px;
+    border-radius: 12px;
     background: var(--color-bg);
   }
-  .lang-count {
+  .lang-panel-head {
+    display: flex;
+    justify-content: space-between;
+    margin-bottom: 8px;
     color: var(--color-muted);
-    font-size: 11px;
-    line-height: 1.4;
+    font-size: 12.5px;
   }
   .lang-list {
     display: flex;
     flex-wrap: wrap;
-    gap: 4px;
-    max-height: 96px;
+    gap: 6px;
+    max-height: 104px;
     overflow-y: auto;
+    padding-right: 6px;
     scrollbar-width: thin;
   }
   .lang-item {
-    padding: 2px 8px;
+    padding: 2px 10px;
+    border: 1px solid var(--color-line);
     border-radius: 999px;
-    background: color-mix(in oklch, var(--color-line) 45%, var(--color-transparent));
-    color: var(--color-ink);
-    font-size: 12px;
-    line-height: 1.4;
+    color: var(--color-muted);
+    font-size: 12.5px;
     white-space: nowrap;
+  }
+  .lang-item.hit {
+    background: var(--color-accent);
+    border-color: var(--color-accent);
+    color: var(--color-on-accent);
   }
   .option-status {
     display: flex;
