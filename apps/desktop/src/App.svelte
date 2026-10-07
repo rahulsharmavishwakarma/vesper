@@ -24,6 +24,7 @@
     effectiveRecordingSeconds,
     requiresCompletionReport,
     pipelineLanguageOptions,
+    fallbackLanguage,
     transcriptionLanguageOptions,
     transcriptionLanguageError,
     writingLanguageError,
@@ -836,6 +837,7 @@
                       describedBy="models-asr-help"
                       onChange={(value) => {
                         draft.models = selectModel(modelChoiceContext('asr'), 'asr', value);
+                        draft.language = fallbackLanguage(draft);
                         markEdited();
                       }}
                     />
@@ -910,6 +912,7 @@
                           'rewriter',
                           value,
                         );
+                        draft.language = fallbackLanguage(draft);
                         markEdited();
                       }}
                     />
