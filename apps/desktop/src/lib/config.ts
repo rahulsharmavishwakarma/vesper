@@ -397,6 +397,24 @@ export function pipelineLanguageOptions(config: AppConfig): LanguageOption[] {
   return speech.filter((option) => option.value !== 'auto' && allowed.has(option.value));
 }
 
+export interface ModelLanguageSummary {
+  languages: readonly Language[];
+  unrestricted: boolean;
+}
+
+/** Explicit vendor-declared languages for a built-in speech model (no `auto` mode). */
+export function speechModelLanguages(id: string): readonly Language[] {
+  return MODEL_LANGUAGES[id]?.languages ?? [];
+}
+
+/** Language support for a built-in writer; unrestricted means no per-language list. */
+export function writerLanguageSummary(id: string): ModelLanguageSummary {
+  const entry = MODEL_WRITER_LANGUAGES[id];
+  return entry
+    ? { languages: entry.languages, unrestricted: entry.unrestricted }
+    : { languages: [], unrestricted: false };
+}
+
 export function defaultSettings(): AppConfig {
   return {
     schemaVersion: 1,

@@ -3,9 +3,12 @@ import {
   ASR_MODELS,
   CLEANUP_MODEL_OPTIONS,
   CLEANUP_MODELS,
+  LANGUAGE_OPTIONS,
   catalogModel,
   offeredModelIds,
   parseModelProfileJson,
+  speechModelLanguages,
+  writerLanguageSummary,
   type AppConfig,
   type HuggingFaceProfile,
   type ModelProfileRole,
@@ -93,10 +96,61 @@ export function selectedModelValue(models: AppConfig['models'], role: ModelProfi
   return presetForProfile(profile) ? `preset:${profile.id}` : 'custom';
 }
 
-export function modelOptions(models: AppConfig['models'], role: ModelProfileRole) {
+export interface ModelOptionLanguage {
+  value: string;
+  label: string;
+}
+
+export interface ModelOption {
+  value: string;
+  label: string;
+  creator: string;
+  description: string;
+  /** Explicit vendor-declared languages for the picker chip; empty when unknown. */
+  languages: ModelOptionLanguage[];
+  /** True when the writer publishes no per-language list (chip reads "Many languages"). */
+  unrestrictedLanguages: boolean;
+}
+
+const LANGUAGE_LABELS: Map<string, string> = new Map(
+  LANGUAGE_OPTIONS.map((option) => [option.value, option.label]),
+);
+
+/** Picker chips show explicit languages only; `auto` is a mode, not a language. */
+function languageChips(codes: readonly string[]): ModelOptionLanguage[] {
+  return codes
+    .filter((code) => code !== 'auto' && LANGUAGE_LABELS.has(code))
+    .map((code) => ({ value: code, label: LANGUAGE_LABELS.get(code) ?? code }));
+}
+
+export interface LanguageFilterable {
+  languages?: { value: string; label: string }[];
+  unrestrictedLanguages?: boolean;
+}
+
+/** The picker's "Needs" filter offers the mock's three focus languages. */
+export const MODEL_LANGUAGE_FILTERS: ModelOptionLanguage[] = ['en', 'fr', 'hi'].map((code) => ({
+  value: code,
+  label: LANGUAGE_LABELS.get(code) ?? code,
+}));
+
+/** Narrow picker rows to one filter language; `all` keeps every row.
+ * Writers without a published list cover every language by definition. */
+export function filterModelOptions<Option extends LanguageFilterable>(
+  options: readonly Option[],
+  language: string,
+): Option[] {
+  if (language === 'all') return [...options];
+  return options.filter(
+    (option) =>
+      option.unrestrictedLanguages || option.languages?.some((entry) => entry.value === language),
+  );
+}
+
+export function modelOptions(models: AppConfig['models'], role: ModelProfileRole): ModelOption[] {
   // Display comes from models/catalog.json; only the selectable-id contract
   // (ASR_MODELS keys, CLEANUP_MODELS keys) stays code-side with the backend.
-  const builtIns =
+  const builtIns: ModelOption[] =
     role === 'asr'
       ? offeredModelIds('speech_recognition').map((value) => {
           const display = catalogModel(value);
@@ -105,40 +159,47 @@ export function modelOptions(models: AppConfig['models'], role: ModelProfileRole
             label: display?.name ?? value,
             creator: display?.creator || UNKNOWN_CREATOR,
             description: display?.picker_blurb ?? '',
+            languages: languageChips(speechModelLanguages(value)),
+            unrestrictedLanguages: false,
           };
         })
       : CLEANUP_MODEL_OPTIONS.map((option) => {
           const display = catalogModel(option.value);
+          const summary = writerLanguageSummary(option.value);
           return {
-            ...option,
+            value: option.value,
             label: display?.name ?? option.label,
             description: display?.picker_blurb ?? option.description,
             creator: display?.creator || UNKNOWN_CREATOR,
+            languages: languageChips(summary.languages),
+            unrestrictedLanguages: summary.unrestricted,
           };
         });
-  const presets = MODEL_PRESETS.filter((preset) => preset.profile.runtime === runtimeFor(role)).map(
-    (preset) => ({
-      value: `preset:${preset.profile.id}`,
-      label: preset.profile.name,
-      creator: presetCreator(preset),
-      description: preset.description,
-    }),
-  );
+  const presets: ModelOption[] = MODEL_PRESETS.filter(
+    (preset) => preset.profile.runtime === runtimeFor(role),
+  ).map((preset) => ({
+    value: `preset:${preset.profile.id}`,
+    label: preset.profile.name,
+    creator: presetCreator(preset),
+    description: preset.description,
+    languages: languageChips(preset.profile.languages ?? []),
+    unrestrictedLanguages: false,
+  }));
   const profile = selectedProfile(models, role);
-  return [
-    ...builtIns,
-    ...presets,
-    ...(profile && !presetForProfile(profile)
+  const custom: ModelOption[] =
+    profile && !presetForProfile(profile)
       ? [
           {
             value: 'custom',
             label: profile.name,
             creator: UNKNOWN_CREATOR,
             description: 'Imported model profile',
+            languages: languageChips(profile.languages ?? []),
+            unrestrictedLanguages: false,
           },
         ]
-      : []),
-  ];
+      : [];
+  return [...builtIns, ...presets, ...custom];
 }
 
 export function selectModel(

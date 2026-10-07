@@ -50,7 +50,7 @@
       ],
       "artifact_notes": "Exact executable installation metadata is maintained in artifacts.json. Download size is not application RAM.",
       "creator": "NVIDIA",
-      "picker_blurb": "25 European languages · CPU"
+      "picker_blurb": "25 European languages"
     },
     {
       "id": "nvidia/nemotron-3.5-asr-streaming-0.6b",
@@ -155,7 +155,7 @@
       ],
       "artifact_notes": "Exact executable metadata is in artifacts.json; see docs/offline-asr.md.",
       "creator": "Qwen · Alibaba",
-      "picker_blurb": "Multilingual, including Hindi · CPU"
+      "picker_blurb": "Multilingual, including Hindi"
     },
     {
       "id": "CohereLabs/cohere-transcribe-03-2026",
@@ -192,7 +192,7 @@
       ],
       "artifact_notes": "Exact executable metadata is in artifacts.json; see docs/offline-asr.md.",
       "creator": "Cohere",
-      "picker_blurb": "Default · select English or French · CPU"
+      "picker_blurb": "Default · select English or French"
     },
     {
       "id": "LiquidAI/LFM2.5-Audio-1.5B",
@@ -222,7 +222,7 @@
       ],
       "artifact_notes": "Exact executable metadata is in artifacts.json; see docs/lfm-audio.md.",
       "creator": "Liquid AI",
-      "picker_blurb": "English only · completed recordings · CPU · Q4"
+      "picker_blurb": "English only · Q4"
     },
     {
       "id": "openai/whisper-small",
@@ -239,7 +239,7 @@
       "artifact_size_bytes": 375485327,
       "validation": "docs/validation/whisper-adapter-2026-09-18.md",
       "creator": "OpenAI",
-      "picker_blurb": "English and French · completed recordings · CPU · INT8"
+      "picker_blurb": "English and French · INT8"
     },
     {
       "id": "openai/whisper-large-v3-turbo",
@@ -256,7 +256,7 @@
       "artifact_size_bytes": 1036613791,
       "validation": "docs/validation/whisper-adapter-2026-09-18.md",
       "creator": "OpenAI",
-      "picker_blurb": "English and French · completed recordings · CPU · INT8 · larger encoder"
+      "picker_blurb": "English and French · INT8 · larger encoder"
     }
   ]
 }

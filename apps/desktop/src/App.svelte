@@ -32,6 +32,7 @@
     type AppConfig,
   } from './lib/config';
   import {
+    MODEL_LANGUAGE_FILTERS,
     modelOptions,
     presetForProfile,
     selectModel,
@@ -833,6 +834,7 @@
                       label={MODEL_ROLE_LABELS.asr}
                       value={selectedModelValue(draft.models, 'asr')}
                       options={asrOptions}
+                      languageFilters={MODEL_LANGUAGE_FILTERS}
                       disabled={pending !== null || pipelineBusy}
                       describedBy="models-asr-help"
                       onChange={(value) => {
@@ -905,6 +907,7 @@
                       label={MODEL_ROLE_LABELS.rewriter}
                       value={selectedModelValue(draft.models, 'rewriter')}
                       options={cleanupOptions}
+                      languageFilters={MODEL_LANGUAGE_FILTERS}
                       disabled={pending !== null || pipelineBusy}
                       onChange={(value) => {
                         draft.models = selectModel(

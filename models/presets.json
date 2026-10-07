@@ -1,6 +1,6 @@
 [
   {
-    "description": "English · 0.6B · INT8 · CPU",
+    "description": "English · 0.6B · INT8",
     "precision": "INT8",
     "sourceUrl": "https://huggingface.co/nvidia/parakeet-tdt-0.6b-v2",
     "profile": {
@@ -43,7 +43,7 @@
     }
   },
   {
-    "description": "English · 0.6B · INT8 · CPU",
+    "description": "English · 0.6B · INT8",
     "precision": "INT8",
     "sourceUrl": "https://huggingface.co/nvidia/parakeet-unified-en-0.6b",
     "profile": {
@@ -86,7 +86,7 @@
     }
   },
   {
-    "description": "English, French, German, Spanish · 114M · CPU",
+    "description": "English, French, German, Spanish · 114M",
     "precision": "FP32",
     "sourceUrl": "https://catalog.ngc.nvidia.com/orgs/nvidia/teams/nemo/models/stt_multilingual_fastconformer_hybrid_large_pc_blend_eu",
     "profile": {

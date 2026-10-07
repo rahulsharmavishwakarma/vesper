@@ -79,7 +79,11 @@ to be managed separately in **Models**.
 ### Initial setup
 
 1. Open **Models** and select speech and writing models. The writing model is
-   used only when text cleanup is enabled.
+   used only when text cleanup is enabled. Each picker row shows the model's
+   supported languages; a row with more than six languages shows a count that
+   expands to the full list, and the writing model shows Many languages
+   because it publishes no per-language list. The Needs row at the top of an
+   open picker narrows both lists to models covering English, French or Hindi.
 2. Download the selected files. Downloading first flushes any pending selection
    and saves it, then downloads it; changing a selection alone only saves it
    and does not download speech or writing
@@ -132,7 +136,7 @@ runtime retries on CPU and records the reason. An explicitly selected GPU fails
 when unavailable instead of silently switching devices. The first GPU request
 can take longer while native kernels initialize.
 
-GPU support is specific to the model and runtime. On Apple Silicon, Automatic chooses the compatible GPU files for English Parakeet and Qwen ASR when this app includes the verified runtime and detects a usable GPU. Save your selection and use Download; no backend choice is required. Cohere and Whisper Turbo retain their CPU speech paths. The writing model makes its own accelerator selection. Whisper remains outside the desktop model picker.
+GPU support is specific to the model and runtime. On Apple Silicon, Automatic chooses the compatible GPU files for English Parakeet and Qwen ASR when this app includes the verified runtime and detects a usable GPU. Save your selection and use Download; no backend choice is required. Cohere and Whisper Turbo retain their CPU speech paths. The writing model makes its own accelerator selection. Whisper models are offered as optional picker entries by owner decision despite failed noise/repetition gates; see the [speech and writing language table](language-support-and-recommendations.md#writing-language-compatibility).
 See [performance evidence](inference-performance.md)
 for tested combinations and remaining limits.
 
