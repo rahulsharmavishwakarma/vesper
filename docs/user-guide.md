@@ -280,7 +280,12 @@ show **Listening** before speaking.
 
 To insert a finished transcript into another app, select **Paste into the
 original text field** in Settings → Shortcuts, enable the requested macOS
-Accessibility access and save. Focus the intended field before recording.
+Accessibility access and save. If you just enabled it, quit and reopen Vesper
+before checking again — macOS can keep reporting the old state until the app
+restarts. The same restart applies after toggling the switch off and on again.
+A freshly rebuilt or updated unsigned app is a new code identity to macOS, so
+grant access again after replacing the build. Focus the intended field before
+recording.
 Hold release or Toggle Stop then inserts the finished transcript after
 transcription and writing complete. Keep the original field and caret selected
 until it finishes. **Keep in app** deliberately disables automatic paste;
