@@ -161,6 +161,8 @@ test('Denied paste access explains the restart requirement', async ({ page }) =>
   await page.getByRole('option', { name: 'Paste into the original text field' }).click();
   const state = page.locator('.permission-state');
   await expect(state).toContainText('Allow access to paste');
+  await expect(state.locator('.status-radio')).toHaveAttribute('data-state', 'denied');
+  await expect(state.locator('.status-radio').locator('[data-icon="warning"]')).toBeVisible();
   await expect(state).toContainText('quit and reopen Vesper');
   await expect(
     state.getByRole('button', { name: 'Allow access' }).locator('[data-icon="check"]'),
@@ -177,4 +179,41 @@ test('Denied paste access explains the restart requirement', async ({ page }) =>
       ),
     )
     .toBeGreaterThan(0);
+});
+
+test('Persisted paste mode explains the restart requirement after a quiet check', async ({
+  page,
+}) => {
+  await openSettings(page, '/tests/interaction-preview.html?paste=1');
+  await section(page, 'Shortcuts').click();
+  const state = page.locator('.permission-state');
+  await expect(state).toContainText('Allow access to paste');
+  await expect(state.locator('.status-radio')).toHaveAttribute('data-state', 'denied');
+  // No Allow access click: the mount-time quiet check alone must surface the guidance.
+  await expect(state).toContainText('quit and reopen Vesper');
+});
+
+test('Granted paste access shows the Ember ready status', async ({ page }) => {
+  await openSettings(page);
+  await section(page, 'Shortcuts').click();
+  await page.getByRole('combobox', { name: 'After shortcut dictation' }).click();
+  await page.getByRole('option', { name: 'Paste into the original text field' }).click();
+  const state = page.locator('.permission-state');
+  await expect(state).toContainText('Allow access to paste');
+  await expect(state.locator('.status-radio')).toHaveAttribute('data-state', 'denied');
+  await page.evaluate(() => {
+    window.previewPermissions = {
+      supported: true,
+      accessibility: true,
+      eventPosting: true,
+      clipboard: true,
+    };
+  });
+  await state.getByRole('button', { name: 'Check access' }).click();
+  await expect(state).toContainText('Ready to paste');
+  await expect(state.locator('.status-radio')).toHaveAttribute('data-state', 'ready');
+  await expect(state.locator('.status-radio').locator('[data-icon="check"]')).toBeVisible();
+  await expect(state).not.toContainText('quit and reopen Vesper');
+  await expect(state.getByRole('button', { name: 'Allow access' })).toHaveCount(0);
+  await expect(state.getByRole('button', { name: 'Check access' })).toHaveCount(0);
 });

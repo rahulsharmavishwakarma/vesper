@@ -22,6 +22,7 @@ if (states) {
   });
   mockWindows('main');
   let settings = defaultSettings();
+  if (new URLSearchParams(location.search).get('paste') === '1') settings.dictationOutput = 'paste';
   const catalog = [
     ...Object.entries(ASR_MODELS).map(([modelId, name]) => ({
       modelId,
@@ -92,6 +93,7 @@ if (states) {
     modelVersions: {},
   }));
   window.previewCommands = [];
+  window.previewPermissions = null;
   mockIPC(
     async (command, args) => {
       window.previewCommands.push(command);
@@ -203,7 +205,14 @@ if (states) {
             backends: [{ backend: 'metal', compiled: true, devices: ['Synthetic Apple GPU'] }],
           };
         case 'dictation_permissions':
-          return { supported: true, accessibility: false, eventPosting: false, clipboard: false };
+          return (
+            window.previewPermissions ?? {
+              supported: true,
+              accessibility: false,
+              eventPosting: false,
+              clipboard: false,
+            }
+          );
         default:
           throw new Error(`Visual fixture does not run ${command}.`);
       }

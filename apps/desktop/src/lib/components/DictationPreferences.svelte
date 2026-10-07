@@ -13,7 +13,7 @@
   let permissions = $state<DictationPermissions | null>(null);
   let checking = $state(false);
   let error = $state<string | null>(null);
-  let requested = $state(false);
+  let checked = $state(false);
   let disposed = false;
   const shortcuts = $derived(recordingShortcuts(settings));
   function selectShortcut(mode: 'hold' | 'toggle', value: string) {
@@ -32,12 +32,14 @@
   );
   async function refresh(request = false) {
     if (!desktop || checking) return;
-    if (request) requested = true;
     checking = true;
     error = null;
     try {
       const next = await getDictationPermissions(request);
-      if (!disposed) permissions = next;
+      if (!disposed) {
+        permissions = next;
+        checked = true;
+      }
     } catch (cause) {
       if (!disposed) error = cause instanceof Error ? cause.message : String(cause);
     } finally {
@@ -108,7 +110,15 @@
 </div>
 {#if desktop && settings.dictationOutput === 'paste'}
   <div class="permission-state" role="status">
-    <div>
+    <span
+      class="status-radio"
+      data-state={checking ? 'checking' : ready ? 'ready' : 'denied'}
+      aria-hidden="true"
+      >{#if ready}<Icon name="check" />{:else if checking}<span class="spinning"
+          ><Icon name="refresh" /></span
+        >{:else}<Icon name="warning" />{/if}</span
+    >
+    <div class="permission-copy">
       <strong
         >{checking
           ? 'Checking paste access…'
@@ -139,7 +149,7 @@
           >{checking ? 'Checking…' : 'Check access'}</button
         >{/if}
     </div>
-    {#if requested && permissions && !permissions.accessibility}<p class="note">
+    {#if checked && permissions && !permissions.accessibility}<p class="note">
         If you just turned this on, quit and reopen Vesper, then check again — macOS can keep
         reporting the old state until the app restarts.
       </p>{/if}
@@ -160,8 +170,20 @@
     border-radius: var(--radius-sm);
     background: var(--color-raised);
   }
-  .permission-state > div:first-child {
+  .permission-copy {
     flex: 1 1 240px;
+  }
+  .status-radio {
+    display: inline-flex;
+    flex: none;
+    align-items: center;
+    justify-content: center;
+    width: 30px;
+    height: 30px;
+    border: 1px solid var(--color-line);
+    border-radius: 50%;
+    background: var(--color-raised);
+    color: var(--color-warning);
   }
   .permission-state strong {
     font-size: 13px;

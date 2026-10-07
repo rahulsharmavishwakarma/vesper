@@ -572,6 +572,26 @@ h3 {
   display: inline-flex;
   animation: refresh-spin 700ms linear infinite;
 }
+/* Paste-access status radio: an Ember glyph in a state ring beside the copy. */
+.status-radio .icon {
+  width: 16px;
+  height: 16px;
+}
+.status-radio[data-state='ready'] {
+  color: var(--color-accent);
+  border-color: var(--color-accent);
+}
+.status-radio[data-state='denied'] {
+  color: var(--color-danger);
+}
+/* The Ember check draws itself in when the grant lands, mirroring the save pill. */
+.status-radio[data-state='ready'] .a {
+  animation: icon-draw 600ms var(--ease);
+}
+.status-radio .spinning {
+  display: inline-flex;
+  animation: refresh-spin 700ms linear infinite;
+}
 .activity-link {
   padding: var(--space-2) 0;
   margin-bottom: var(--space-3);
@@ -876,6 +896,8 @@ body.is-recording .brand-logo .dsh {
   .permission-actions span.spinning,
   .save-status > span.spinning,
   .save-status[data-state='saved'] .a,
+  .status-radio .spinning,
+  .status-radio[data-state='ready'] .a,
   .activity-link .status-dot::after {
     animation: none;
   }
