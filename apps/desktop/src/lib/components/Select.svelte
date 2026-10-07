@@ -333,6 +333,7 @@
         <button
           type="button"
           aria-pressed={langFilter === 'all'}
+          onpointerdown={(event) => event.preventDefault()}
           onclick={() => {
             langFilter = 'all';
           }}>Any language</button
@@ -341,6 +342,7 @@
           <button
             type="button"
             aria-pressed={langFilter === filter.value}
+            onpointerdown={(event) => event.preventDefault()}
             onclick={() => {
               langFilter = filter.value;
             }}>{filter.label}</button
@@ -363,7 +365,7 @@
           option.unrestrictedLanguages
             ? 'Many languages'
             : option.languages?.length
-              ? `${option.languages.length} languages`
+              ? `${option.languages.length} ${option.languages.length === 1 ? 'language' : 'languages'}`
               : undefined,
           option.status?.label,
         ]
@@ -429,11 +431,12 @@
             {/if}
           {/if}</span
         >
-        {#if option.status}<span class="option-status"><ModelStatus status={option.status} /></span
+        {#if option.value === value}<span class="selected-check" aria-hidden="true"
+            ><Icon name="check" /></span
+          >
+        {:else if option.status}<span class="option-status"
+            ><ModelStatus status={option.status} /></span
           >{/if}
-        <span class="selected-check" aria-hidden="true"
-          >{#if option.value === value}<Icon name="check" />{/if}</span
-        >
       </button>
     {/each}
     {#if visibleOptions.length === 0}
@@ -684,6 +687,7 @@
     display: inline-flex;
     align-items: center;
     align-self: flex-start;
+    justify-self: start;
     gap: 5px;
     max-width: 100%;
     padding: 2px 9px;
