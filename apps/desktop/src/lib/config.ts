@@ -373,6 +373,17 @@ export function writingLanguageError(config: AppConfig): string | null {
 }
 
 /** Shared memory is model independent; spoken/output languages still need compatible weights. */
+/** Nearest supported transcription mode after a model switch: keep the current
+ * language when offered, else automatic detection, else English, else the
+ * first offered explicit language. Never leaves a stranded selection behind. */
+export function fallbackLanguage(config: AppConfig): Language {
+  const offered = pipelineLanguageOptions(config).map((option) => option.value);
+  if (offered.includes(config.language)) return config.language;
+  if (offered.includes('auto')) return 'auto';
+  if (offered.includes('en')) return 'en';
+  return offered.find((code) => code !== 'auto') ?? config.language;
+}
+
 export function pipelineLanguageOptions(config: AppConfig): LanguageOption[] {
   const speech = transcriptionLanguageOptions(config.models, config.computeBackend);
   if (!config.cleanupEnabled) return speech;

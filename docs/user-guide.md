@@ -106,9 +106,10 @@ where they are. See [cache location and behavior](internals.md#hugging-face-cach
 
 The language menu follows the selected speech model and processing device. With
 polishing enabled, it also limits choices to the writer's declared languages.
-Changing models does not silently change your language: resolve the inline
-compatibility message before saving, or turn polishing off to use the speech
-model's choices. **Detect automatically** identifies speech language; it does not
+Changing models keeps your language when the new model supports it; otherwise it
+falls back to automatic detection, then English, then the first offered
+language, so the settings always stay saveable. Turn polishing off to use the
+speech model's choices. **Detect automatically** identifies speech language; it does not
 guarantee mixed-language accuracy. Custom writing presets require an explicit
 language. An older writing profile with no language information remains readable;
 reselect its preset in **Models**, choose the built-in writer, or turn polishing
