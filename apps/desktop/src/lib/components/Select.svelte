@@ -1,5 +1,6 @@
 <script lang="ts" generics="T extends string">
   import { onMount, tick } from 'svelte';
+  import { SvelteSet } from 'svelte/reactivity';
   import Icon from './Icon.svelte';
   import ModelStatus from './ModelStatus.svelte';
   import type { DownloadOptionStatus } from '../modelDownloads';
@@ -12,7 +13,10 @@
     description?: string;
     disabled?: boolean;
     status?: DownloadOptionStatus;
+    languages?: { value: string; label: string }[];
+    unrestrictedLanguages?: boolean;
   };
+  const EXPANDABLE_LANGUAGE_COUNT = 6;
   let {
     id,
     value = $bindable(),
@@ -52,6 +56,25 @@
   function close() {
     open = false;
     search = '';
+    expandedLanguages.clear();
+  }
+  let expandedLanguages = new SvelteSet<T>();
+  function toggleLanguages(value: T, event: Event) {
+    // The chip lives inside the option row: toggling must not choose the model.
+    event.stopPropagation();
+    event.preventDefault();
+    if (expandedLanguages.has(value)) expandedLanguages.delete(value);
+    else expandedLanguages.add(value);
+  }
+  function chipKeydown(value: T, event: KeyboardEvent) {
+    if (event.key === 'Enter' || event.key === ' ') {
+      event.stopPropagation();
+      event.preventDefault();
+      toggleLanguages(value, event);
+    } else if (event.key === 'Escape') {
+      event.stopPropagation();
+      if (expandedLanguages.has(value)) toggleLanguages(value, event);
+    }
   }
   // Popup anchor: a scroll event that did not move the trigger (e.g. the
   // scroll that brought the trigger into view, delivered after the popup
@@ -69,7 +92,10 @@
     const desired = Math.min(
       options.some((option) => option.status || option.creator) ? 360 : 240,
       options.reduce(
-        (height, option) => height + (option.description || option.creator ? 64 : 44),
+        (height, option) =>
+          height +
+          (option.description || option.creator ? 64 : 44) +
+          (option.languages?.length || option.unrestrictedLanguages ? 24 : 0),
         10,
       ),
     );
@@ -298,7 +324,17 @@
         class:is-active={active === index}
         class:has-status={Boolean(option.status)}
         role="option"
-        aria-label={[option.creator, option.label, option.description, option.status?.label]
+        aria-label={[
+          option.creator,
+          option.label,
+          option.description,
+          option.unrestrictedLanguages
+            ? 'Many languages'
+            : option.languages?.length
+              ? `${option.languages.length} languages`
+              : undefined,
+          option.status?.label,
+        ]
           .filter(Boolean)
           .join('. ')}
         aria-selected={option.value === value}
@@ -317,7 +353,42 @@
               >{#if option.creator}<span class="creator-name">{option.creator}</span
                 >{/if}{#if option.creator && option.description}<span aria-hidden="true">·</span
                 >{/if}{#if option.description}<small>{option.description}</small>{/if}</span
-            >{/if}</span
+            >{/if}{#if option.unrestrictedLanguages}<span class="lang-chip"
+              ><Icon name="globe" />Many languages</span
+            >
+          {:else if option.languages && option.languages.length > 0}
+            {#if option.languages.length <= EXPANDABLE_LANGUAGE_COUNT}<span class="lang-chip"
+                ><Icon name="globe" />{option.languages
+                  .map((language) => language.label)
+                  .join(' · ')}</span
+              >
+            {:else}
+              {@const panelOpen = expandedLanguages.has(option.value)}
+              <span
+                class="lang-chip lang-expand"
+                role="button"
+                tabindex="0"
+                aria-expanded={panelOpen}
+                aria-label={`${option.languages.length} languages supported by ${option.label}. Activate to ${panelOpen ? 'hide' : 'show'} the list.`}
+                onclick={(event) => toggleLanguages(option.value, event)}
+                onkeydown={(event) => chipKeydown(option.value, event)}
+                ><Icon name="globe" />{option.languages.length} languages<Icon
+                  name="chevron"
+                /></span
+              >
+              {#if panelOpen}<span
+                  class="lang-panel"
+                  role="group"
+                  aria-label={`${option.label} languages`}
+                  ><span class="lang-count">{option.languages.length} languages</span><span
+                    class="lang-list"
+                    >{#each option.languages as language (language.value)}<span class="lang-item"
+                        >{language.label}</span
+                      >{/each}</span
+                  ></span
+                >{/if}
+            {/if}
+          {/if}</span
         >
         {#if option.status}<span class="option-status"><ModelStatus status={option.status} /></span
           >{/if}
@@ -522,6 +593,78 @@
     font-size: 11px;
     line-height: 1.4;
   }
+  .lang-chip {
+    display: inline-flex;
+    align-items: center;
+    align-self: flex-start;
+    gap: 6px;
+    max-width: 100%;
+    padding: 3px 9px;
+    border: 1px solid var(--color-line);
+    border-radius: 999px;
+    background: color-mix(in oklch, var(--color-line) 45%, var(--color-transparent));
+    color: var(--color-muted);
+    font-size: 12px;
+    line-height: 1.4;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+  .lang-chip :global(svg) {
+    width: 14px;
+    height: 14px;
+    flex-shrink: 0;
+  }
+  .lang-expand {
+    cursor: pointer;
+    color: var(--color-accent);
+    border-color: color-mix(in oklch, var(--color-accent) 40%, var(--color-transparent));
+  }
+  .lang-expand:hover {
+    background: var(--color-tint);
+  }
+  .lang-expand:focus-visible {
+    outline: 2px solid var(--color-focus);
+    outline-offset: 2px;
+  }
+  .lang-expand :global(svg:last-child) {
+    width: 12px;
+    height: 12px;
+    transition: transform var(--duration-state) var(--ease-out);
+  }
+  .lang-expand[aria-expanded='true'] :global(svg:last-child) {
+    transform: rotate(180deg);
+  }
+  .lang-panel {
+    display: grid;
+    gap: 6px;
+    padding: 8px 10px;
+    border: 1px solid var(--color-line);
+    border-radius: 8px;
+    background: var(--color-bg);
+  }
+  .lang-count {
+    color: var(--color-muted);
+    font-size: 11px;
+    line-height: 1.4;
+  }
+  .lang-list {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 4px;
+    max-height: 96px;
+    overflow-y: auto;
+    scrollbar-width: thin;
+  }
+  .lang-item {
+    padding: 2px 8px;
+    border-radius: 999px;
+    background: color-mix(in oklch, var(--color-line) 45%, var(--color-transparent));
+    color: var(--color-ink);
+    font-size: 12px;
+    line-height: 1.4;
+    white-space: nowrap;
+  }
   .option-status {
     display: flex;
     justify-content: flex-end;
@@ -590,7 +733,8 @@
   @media (prefers-reduced-motion: reduce) {
     .select-trigger,
     .caret,
-    .select-option {
+    .select-option,
+    .lang-expand :global(svg:last-child) {
       transition: none;
     }
     .select-popup,
