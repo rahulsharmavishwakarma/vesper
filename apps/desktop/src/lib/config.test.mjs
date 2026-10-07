@@ -16,6 +16,7 @@ import {
   parseStoredSettings,
   transcriptionLanguageError,
   transcriptionLanguageOptions,
+  fallbackLanguage,
   pipelineLanguageOptions,
   writingLanguageError,
   validateSettings,
@@ -440,6 +441,50 @@ test('retired TextEdit observation is discarded without changing other preferenc
 const languageManifest = JSON.parse(
   readFileSync(new URL('../../../../models/languages.json', import.meta.url), 'utf8'),
 );
+
+test('model switches fall back to a supported transcription language', () => {
+  const cohere = () => {
+    const settings = defaultSettings();
+    settings.models = {
+      ...settings.models,
+      asr: 'CohereLabs/cohere-transcribe-03-2026',
+    };
+    return settings;
+  };
+  // Keeps the current language when the new model supports it.
+  assert.equal(fallbackLanguage({ ...cohere(), language: 'fr' }), 'fr');
+  assert.equal(fallbackLanguage({ ...cohere(), language: 'de' }), 'de');
+  // Explicit-only Cohere: stranded auto and Hindi both fall back to English.
+  assert.equal(fallbackLanguage({ ...cohere(), language: 'auto' }), 'en');
+  assert.equal(fallbackLanguage({ ...cohere(), language: 'hi' }), 'en');
+  // Auto-detect models keep automatic detection.
+  const parakeet = defaultSettings();
+  parakeet.models = { ...parakeet.models, asr: 'nvidia/parakeet-tdt-0.6b-v3' };
+  assert.equal(fallbackLanguage({ ...parakeet, language: 'auto' }), 'auto');
+  assert.equal(fallbackLanguage({ ...parakeet, language: 'fr' }), 'fr');
+  // A custom profile keeps automatic detection when it offers it.
+  const custom = defaultSettings();
+  custom.models = { ...custom.models, customAsr: { languages: ['de'] } };
+  assert.equal(fallbackLanguage({ ...custom, language: 'fr' }), 'auto');
+  // A restricting writer narrows the fallback the same way.
+  const written = cohere();
+  written.cleanupEnabled = true;
+  written.models = {
+    ...written.models,
+    customRewriter: { ...cleanupProfile(), languages: ['fr'] },
+  };
+  assert.equal(fallbackLanguage({ ...written, language: 'fr' }), 'fr');
+  assert.equal(fallbackLanguage({ ...written, language: 'de' }), 'fr');
+  // Otherwise the first offered explicit language wins.
+  const narrowed = cohere();
+  narrowed.cleanupEnabled = true;
+  narrowed.models = {
+    ...narrowed.models,
+    customRewriter: { ...cleanupProfile(), languages: ['de'] },
+  };
+  assert.equal(fallbackLanguage({ ...narrowed, language: 'fr' }), 'de');
+  assert.equal(fallbackLanguage({ ...narrowed, language: 'de' }), 'de');
+});
 
 test('every manifest speech language is offered per ASR model and validates', () => {
   const known = LANGUAGE_OPTIONS.map((option) => option.value);
