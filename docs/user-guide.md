@@ -326,12 +326,15 @@ reloads it.
 Manage spellings, recurring corrections and writing preferences in
 **Settings → Writing → Your vocabulary and writing**. The Vocabulary list holds
 words you add, words Vesper learned from your edits, and proposals it is still
-learning. Everything listed is used until you remove it. Tick a row to confirm
-its spelling: confirmed words are always trusted, while unticked automatic words
-are used when they match what you say. Removing a word stops it from being
-learned again. Eligible edits to **Your text** can contribute to local spelling
-memory for later recordings. Raw predictions remain available, and remembered
-changes can be undone or forgotten.
+learning (badged Learning, not applied yet). Listed words are used until you
+remove them. Tick a learned word to confirm it: confirmed words always apply,
+while unticked ones apply when they match what you say. Ticking a proposal
+adopts it as yours on the spot. Editing a row's spelling makes it yours too.
+Removing a learned word or proposal blocks that spelling for good; removing a
+word you added does not — a later edit can teach it again. Eligible edits to
+**Your text** can contribute to local spelling memory for later recordings.
+Raw predictions remain available, and remembered changes can be undone or
+forgotten.
 
 Correct spellings directly in **Your text**; there is no separate Remember step.
 The app can learn eligible joined/split names, closely related spellings and

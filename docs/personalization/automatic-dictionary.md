@@ -4,13 +4,25 @@ Implementation: [core learning policy](../../crates/vesper-core/src/learning.rs)
 
 Learning is automatic desktop behavior: no enable switch or separate Remember action is needed. Completed edits and result observations use the existing background workers. This changes when the existing policy is available, not its admission thresholds or evidence requirements.
 
-Settings shows one Vocabulary list: words you add, words Vesper learned, and
-proposals it is still learning. Everything listed is used until you remove it;
-there is no per-word off switch. Each row has a tick: ticking confirms the
-spelling, and confirmed words are always trusted. Unticked automatic words are
-used when the transcript matches their supporting context. Removing any row
-suspends its evidence so future edits never re-learn it. Repeated raw
-observations and Copy do not teach an alias.
+Settings shows one Vocabulary list with three row kinds. Proposals Vesper is
+still learning appear first with a Learning badge: they are not applied yet.
+Words you add and words Vesper already learned are applied: each listed word is
+used until you remove it, and there is no per-word off switch. Unticked
+automatic words apply when the transcript matches their supporting context;
+ticked (confirmed) words always apply. Words you add are always confirmed.
+Repeated raw observations and Copy do not teach an alias.
+
+Row actions, as implemented (`PersonalizationPanel.svelte`, `learning.rs`):
+
+- Tick a proposal to adopt it immediately as a manual, confirmed word.
+- Tick a learned word to confirm it: it stays automatic (Forget still clears
+  it) but skips the per-utterance context gate. Unticking restores the gate.
+- Edit a row's spelling or language to convert it to a manual word. The
+  candidate evidence is consumed, so it cannot reactivate a duplicate.
+- Remove a learned word or a proposal to suspend its evidence: same-phrase
+  observations are suspended too, so future edits never re-learn it. Removing
+  a word you added carries no such block: a later eligible edit can teach that
+  spelling again.
 
 ## Evidence flow
 
@@ -27,7 +39,6 @@ A term must look like an identifier or a related spelling. Identifier evidence r
 - `Language::Auto` cannot activate an automatic alias because the actual language has not been established by this layer. The evidence can remain provisional.
 - A candidate needs project or lexical context. Without a project, up to three informative terms from the original context limit its later application.
 - Conflicting existing aliases suspend the candidate. The store does not overwrite or re-enable an equivalent manually managed entry. Full vocabulary capacity leaves the candidate unactivated.
-- Ticking a row sets its `confirmed` flag: confirmed automatic entries skip the per-utterance evidence gate and apply like manual entries. Unticked automatic entries keep the gate. Words you add are always confirmed; saving enforces this even for older entries.
 
 The application stores the canonical term and a single observed alias, candidate provenance, language/context and a store-authored activation time. These entries have no forged human-review source. An explicit later reviewed confirmation may take ownership of the same alias through the manual path.
 
