@@ -123,6 +123,30 @@ function languageChips(codes: readonly string[]): ModelOptionLanguage[] {
     .map((code) => ({ value: code, label: LANGUAGE_LABELS.get(code) ?? code }));
 }
 
+export interface LanguageFilterable {
+  languages?: { value: string; label: string }[];
+  unrestrictedLanguages?: boolean;
+}
+
+/** The picker's "Needs" filter offers the mock's three focus languages. */
+export const MODEL_LANGUAGE_FILTERS: ModelOptionLanguage[] = ['en', 'fr', 'hi'].map((code) => ({
+  value: code,
+  label: LANGUAGE_LABELS.get(code) ?? code,
+}));
+
+/** Narrow picker rows to one filter language; `all` keeps every row.
+ * Writers without a published list cover every language by definition. */
+export function filterModelOptions<Option extends LanguageFilterable>(
+  options: readonly Option[],
+  language: string,
+): Option[] {
+  if (language === 'all') return [...options];
+  return options.filter(
+    (option) =>
+      option.unrestrictedLanguages || option.languages?.some((entry) => entry.value === language),
+  );
+}
+
 export function modelOptions(models: AppConfig['models'], role: ModelProfileRole): ModelOption[] {
   // Display comes from models/catalog.json; only the selectable-id contract
   // (ASR_MODELS keys, CLEANUP_MODELS keys) stays code-side with the backend.
