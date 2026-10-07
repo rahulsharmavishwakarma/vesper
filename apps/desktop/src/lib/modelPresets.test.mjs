@@ -170,6 +170,43 @@ test('picker options follow the model catalog, withheld entries stay out', () =>
   }
 });
 
+test('picker options carry vendor-declared languages without runtime tags', () => {
+  const manifest = JSON.parse(
+    readFileSync(new URL('../../../../models/languages.json', import.meta.url), 'utf8'),
+  );
+  const models = defaultSettings().models;
+  const speech = modelOptions(models, 'asr');
+  const writing = modelOptions(models, 'rewriter');
+  for (const option of [...speech, ...writing]) {
+    assert.ok(Array.isArray(option.languages), `${option.value} must expose chip languages`);
+    assert.equal(typeof option.unrestrictedLanguages, 'boolean');
+    assert.ok(
+      !/CPU|completed recordings/.test(option.description),
+      `${option.value} blurb must not carry runtime tags`,
+    );
+    for (const language of option.languages) {
+      assert.ok(language.value && language.label, 'every chip needs a code and a label');
+    }
+    assert.ok(
+      !option.languages.some((language) => language.value === 'auto'),
+      'auto is a mode, not a chip language',
+    );
+  }
+  for (const [id, entry] of Object.entries(manifest)) {
+    if (id.startsWith('_') || id === 'writers') continue;
+    const found = speech.find((option) => option.value === id);
+    if (!found) continue; // withheld models stay out of the picker
+    assert.deepEqual(
+      found.languages.map((language) => language.value),
+      entry.languages,
+      `chip mismatch for ${id}`,
+    );
+  }
+  const writer = writing.find((option) => option.value === models.rewriter);
+  assert.equal(writer.unrestrictedLanguages, true, 'built-in writer publishes no language list');
+  assert.deepEqual(writer.languages, []);
+});
+
 test('speech preset language restrictions survive selection and validation', () => {
   const english = MODEL_PRESETS.find(
     (entry) =>
