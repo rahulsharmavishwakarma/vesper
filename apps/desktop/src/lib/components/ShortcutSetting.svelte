@@ -92,7 +92,8 @@
   }
   function keydown(event: KeyboardEvent) {
     if (!editing) return; // Enter/Space activates the normal button.
-    if (event.key === 'Tab') {
+    // Bare Tab and Shift+Tab keep moving focus; Tab with another modifier records.
+    if (event.key === 'Tab' && !event.ctrlKey && !event.metaKey && !event.altKey) {
       stop();
       return;
     }
@@ -107,8 +108,8 @@
     if (shortcut) accept(shortcut);
     else
       error = isMacKeyboard()
-        ? 'Press Command, Ctrl or Option with a letter, number or function key.'
-        : 'Press Ctrl, Alt or Super with a letter, number or function key.';
+        ? 'Press Command, Ctrl or Option with another key — Enter, Tab, Backspace and Delete work too.'
+        : 'Press Ctrl, Alt or Super with another key — Enter, Tab, Backspace and Delete work too.';
   }
   $effect(() => {
     if (disabled) stop();

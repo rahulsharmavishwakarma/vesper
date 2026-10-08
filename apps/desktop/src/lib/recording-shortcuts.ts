@@ -14,6 +14,13 @@ export const SHORTCUT_KEYS = [
   'End',
   'PageUp',
   'PageDown',
+  // Editing keys are bindable with a modifier. Escape stays reserved for
+  // cancelling capture, and bare Tab keeps leaving the field for keyboard
+  // navigation, so only Tab with a modifier reaches this list.
+  'Enter',
+  'Tab',
+  'Backspace',
+  'Delete',
   'Backquote',
   'Minus',
   'Equal',
@@ -83,6 +90,10 @@ export function shortcutKeyLabel(key: string): string {
         ArrowRight: '→',
         PageUp: 'Page Up',
         PageDown: 'Page Down',
+        Enter: 'Enter',
+        Tab: 'Tab',
+        Backspace: 'Backspace',
+        Delete: 'Delete',
         Backquote: '`',
         Minus: '−',
         Equal: '=',

@@ -625,6 +625,12 @@ await test('Shortcut recorder captures keys, rejects duplicates, cancels, and re
   press(hold, 'KeyK', { ctrlKey: true, shiftKey: true });
   await tick();
   assert(hold.textContent.includes('Ctrl + Shift + K'), 'Pressed shortcut did not update');
+  press(hold, 'Enter', { ctrlKey: true });
+  await tick();
+  assert(hold.textContent.includes('Ctrl + Enter'), 'Editing key combo not captured');
+  press(hold, 'Tab', { ctrlKey: true });
+  await tick();
+  assert(hold.textContent.includes('Ctrl + Tab'), 'Tab combo not captured');
   press(hold, 'Escape');
   await tick();
   assert(hold.textContent.includes('D'), 'Escape did not restore the original shortcut');
@@ -632,6 +638,10 @@ await test('Shortcut recorder captures keys, rejects duplicates, cancels, and re
   assert(savePill(), 'Sidebar save status is missing');
   await new Promise((resolve) => setTimeout(resolve, 1000));
   assert(!state.counts.save_settings, 'Escape left a phantom settings write');
+  await begin('hold-shortcut');
+  press(hold, 'Tab');
+  await tick();
+  assert(!hold.classList.contains('is-recording'), 'Bare Tab did not leave the field');
   await begin('hold-shortcut');
   press(hold, 'KeyK', { ctrlKey: true, shiftKey: true });
   hold.blur();
