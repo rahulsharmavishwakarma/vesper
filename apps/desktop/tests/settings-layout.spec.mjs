@@ -63,6 +63,27 @@ test('Models view offers no Model folder override', async ({ page }) => {
   await expect(page.locator('#model-directory')).toHaveCount(0);
 });
 
+test('Model switches fall back to a supported transcription language', async ({ page }) => {
+  const app = page.getByRole('navigation', { name: 'Application', exact: true });
+  await openSettings(page);
+  await app.getByRole('button', { name: 'Models', exact: true }).click();
+  await page.getByRole('combobox', { name: 'Speech model' }).click();
+  await page.getByRole('option', { name: /Parakeet TDT 0.6B v3/ }).click();
+  await app.getByRole('button', { name: 'Settings', exact: true }).click();
+  await section(page, 'Recording').click();
+  await page.getByRole('combobox', { name: 'Transcription language' }).click();
+  await page.getByRole('option', { name: /Detect automatically/ }).click();
+  await app.getByRole('button', { name: 'Models', exact: true }).click();
+  await page.getByRole('combobox', { name: 'Speech model' }).click();
+  await page.getByRole('option', { name: /Cohere Transcribe/ }).click();
+  await app.getByRole('button', { name: 'Settings', exact: true }).click();
+  await section(page, 'Recording').click();
+  await expect(page.getByRole('combobox', { name: 'Transcription language' })).toContainText(
+    'English',
+  );
+  await expect(page.locator('.validation-errors')).toHaveCount(0);
+});
+
 test('App sidebar collapses to an icon rail on Settings only', async ({ page }) => {
   await openSettings(page);
   await expect(page.locator('.app-shell')).toHaveClass(/settings-rail/);
