@@ -599,6 +599,30 @@ pub fn matches_operation(storage: &AppStorage, id: u64) -> bool {
             && state.status.operation_id == storage.runtime.operation_id()
     })
 }
+/// Delivery message for a paste outcome. Secure input engaged mid-flight fails
+/// the retained-target check, so without the override it would report a changed
+/// field; the override names the true blocker instead. Success is never
+/// overridden: a sent paste stays a sent paste even if a prompt appears later.
+fn paste_message(
+    outcome: vesper_desktop_platform::PasteResult,
+    secure_input: bool,
+) -> &'static str {
+    use vesper_desktop_platform::PasteResult;
+    if secure_input && outcome == PasteResult::TargetChanged {
+        return "A secure field (such as a password prompt) is blocking automatic paste. Dismiss it and try again — your transcript is ready to copy.";
+    }
+    match outcome {
+        PasteResult::Sent => "Paste sent. Your transcript is also available to copy.",
+        PasteResult::TargetChanged => "The text field changed. Copy your transcript when ready.",
+        PasteResult::ClipboardUnavailable => {
+            "Clipboard unavailable. Your transcript is ready to copy."
+        }
+        PasteResult::ModifiersHeld => "Release the shortcut keys, then copy your transcript.",
+        PasteResult::Unavailable => {
+            "Automatic paste unavailable. Your transcript is ready to copy."
+        }
+    }
+}
 /// Runs before runtime.finish, so another operation cannot begin while a paste
 /// is pending. Every native completion path calls this with its own operation ID.
 pub async fn completed(
@@ -695,22 +719,8 @@ pub async fn completed(
                 };
                 state.status.final_to_dispatch_ms =
                     (outcome == PasteResult::Sent).then(|| began.elapsed().as_millis() as u64);
-                state.status.message = match outcome {
-                    PasteResult::Sent => "Paste sent. Your transcript is also available to copy.",
-                    PasteResult::TargetChanged => {
-                        "The text field changed. Copy your transcript when ready."
-                    }
-                    PasteResult::ClipboardUnavailable => {
-                        "Clipboard unavailable. Your transcript is ready to copy."
-                    }
-                    PasteResult::ModifiersHeld => {
-                        "Release the shortcut keys, then copy your transcript."
-                    }
-                    PasteResult::Unavailable => {
-                        "Automatic paste unavailable. Your transcript is ready to copy."
-                    }
-                }
-                .into();
+                state.status.message =
+                    paste_message(outcome, vesper_desktop_platform::secure_input()).into();
             }
         }
     }
@@ -773,6 +783,39 @@ mod tests {
         );
         assert_eq!(state.ready(id), Action::None);
         assert_eq!(state.status.phase, Phase::Finishing);
+    }
+    #[test]
+    fn delivery_names_secure_input_instead_of_a_changed_field() {
+        use vesper_desktop_platform::PasteResult;
+        assert_eq!(
+            paste_message(PasteResult::Sent, false),
+            "Paste sent. Your transcript is also available to copy."
+        );
+        assert_eq!(
+            paste_message(PasteResult::TargetChanged, false),
+            "The text field changed. Copy your transcript when ready."
+        );
+        assert_eq!(
+            paste_message(PasteResult::ClipboardUnavailable, false),
+            "Clipboard unavailable. Your transcript is ready to copy."
+        );
+        assert_eq!(
+            paste_message(PasteResult::ModifiersHeld, false),
+            "Release the shortcut keys, then copy your transcript."
+        );
+        assert_eq!(
+            paste_message(PasteResult::Unavailable, false),
+            "Automatic paste unavailable. Your transcript is ready to copy."
+        );
+        let secure = paste_message(PasteResult::TargetChanged, true);
+        assert!(
+            secure.contains("secure field") && !secure.contains("changed"),
+            "mid-flight secure input must not report a changed field: {secure}"
+        );
+        assert_eq!(
+            paste_message(PasteResult::Sent, true),
+            "Paste sent. Your transcript is also available to copy."
+        );
     }
     #[test]
     fn stopping_a_main_window_recording_never_enables_automatic_paste() {
