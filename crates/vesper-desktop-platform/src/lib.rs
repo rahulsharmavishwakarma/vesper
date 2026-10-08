@@ -25,6 +25,7 @@ mod ffi {
         pub fn td_panel_hide();
         pub fn td_panel_destroy();
         pub fn td_permissions(request: bool) -> u32;
+        pub fn td_secure_input() -> bool;
         pub fn td_paste_access_enabled(enabled: bool);
         pub fn td_target_capture(token: u64) -> i32;
         pub fn td_target_clear(token: u64);
@@ -159,6 +160,25 @@ pub fn permissions(request: bool) -> u32 {
         0
     }
 }
+pub fn secure_input() -> bool {
+    #[cfg(target_os = "macos")]
+    // SAFETY: Scalar result; no external handles cross this boundary.
+    unsafe {
+        ffi::td_secure_input()
+    }
+    #[cfg(not(target_os = "macos"))]
+    false
+}
+fn capture_message(code: i32) -> Result<(), String> {
+    match code {
+        0 => Ok(()),
+        -1 => Err("Enable Accessibility access in Settings to paste automatically.".into()),
+        -4 => Err("A secure field (such as a password prompt) is blocking automatic paste. Dismiss it and try again — your transcript will be available to copy.".into()),
+        _ => Err(
+            "No supported text field selected. Your transcript will be available to copy.".into(),
+        ),
+    }
+}
 pub fn capture_target(token: u64) -> Result<(), String> {
     #[cfg(target_os = "macos")]
     // SAFETY: Native code owns all AX references; Rust receives no external handles.
@@ -168,13 +188,7 @@ pub fn capture_target(token: u64) -> Result<(), String> {
         let _ = token;
         -1
     };
-    match code {
-        0 => Ok(()),
-        -1 => Err("Enable Accessibility access in Settings to paste automatically.".into()),
-        _ => Err(
-            "No supported text field selected. Your transcript will be available to copy.".into(),
-        ),
-    }
+    capture_message(code)
 }
 pub fn clear_target(token: u64) {
     #[cfg(target_os = "macos")]
@@ -205,5 +219,30 @@ pub fn paste(token: u64, text: &str) -> PasteResult {
     {
         let _ = (token, text);
         PasteResult::Unavailable
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    #[test]
+    fn capture_codes_name_the_true_blocker() {
+        assert!(capture_message(0).is_ok());
+        assert_eq!(
+            capture_message(-1).unwrap_err(),
+            "Enable Accessibility access in Settings to paste automatically."
+        );
+        let secure = capture_message(-4).unwrap_err();
+        assert!(
+            secure.contains("secure field") && !secure.contains("Accessibility"),
+            "secure input must not point at Settings: {secure}"
+        );
+        for code in [-2, -3, -99] {
+            assert_eq!(
+                capture_message(code).unwrap_err(),
+                "No supported text field selected. Your transcript will be available to copy.",
+                "{code}"
+            );
+        }
     }
 }

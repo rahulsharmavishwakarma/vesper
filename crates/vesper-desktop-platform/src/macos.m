@@ -273,10 +273,18 @@ static AXUIElementRef focused(pid_t pid) {
     AXUIElementSetMessagingTimeout((AXUIElementRef)result, 0.15f);
     return (AXUIElementRef)result;
 }
+bool td_secure_input(void) {
+    if (![NSThread isMainThread]) return false;
+    return IsSecureEventInputEnabled();
+}
 int td_target_capture(uint64_t token) {
     if (![NSThread isMainThread]) return -1;
     td_target_clear(0);
-    if ((td_permissions(false) & 6) != 6 || IsSecureEventInputEnabled()) return -1;
+    if ((td_permissions(false) & 6) != 6) return -1;
+    // Secure input is a separate, global state (any password prompt, Touch ID,
+    // or sudo session anywhere); attributing it to Accessibility sends users
+    // to the wrong Settings pane, so it gets its own code.
+    if (IsSecureEventInputEnabled()) return -4;
     NSRunningApplication *front = NSWorkspace.sharedWorkspace.frontmostApplication;
     // Terminals require independent bracketed-paste/command execution qualification.
     if (!front || front.processIdentifier == getpid() ||
