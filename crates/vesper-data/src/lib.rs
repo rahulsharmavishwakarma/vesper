@@ -28,7 +28,7 @@ use serde::{Deserialize, Serialize};
 use serde_json::{json, Value};
 use sha2::{Digest, Sha256};
 use uuid::Uuid;
-use vesper_core::AppConfig;
+use vesper_core::{AppConfig, LearningContext, LearningOutcome};
 
 pub type Result<T> = std::result::Result<T, DatasetError>;
 pub const MAX_TRANSCRIPT_CHARS: usize = 100_000;
@@ -441,6 +441,18 @@ impl DatasetStore {
         text: String,
         kind: ReviewTargetKind,
     ) -> Result<SessionRecord> {
+        self.approve_text_with_feedback(id, text, kind, None)
+    }
+
+    /// Record an approval and optionally stamp the usefulness vote in the same
+    /// transaction. `None` feedback preserves whatever vote is already stored.
+    fn approve_text_with_feedback(
+        &self,
+        id: &str,
+        text: String,
+        kind: ReviewTargetKind,
+        feedback: Option<TranscriptFeedback>,
+    ) -> Result<SessionRecord> {
         validate_text(&text, true)?;
         let transaction = self.connection.unchecked_transaction()?;
         let mut record = read_record(&transaction, id)?;
@@ -449,6 +461,9 @@ impl DatasetStore {
                 record.verified_transcript = Some(text.clone())
             }
             ReviewTargetKind::CleanupCorrection => record.corrected_transcript = Some(text.clone()),
+        }
+        if let Some(vote) = feedback {
+            record.transcript_feedback = Some(vote);
         }
         record.review_history.push(ReviewRevision {
             id: Uuid::new_v4().to_string(),
@@ -460,6 +475,113 @@ impl DatasetStore {
         write_record(&transaction, &record)?;
         transaction.commit()?;
         Ok(record)
+    }
+
+    /// A History/Dictate like on the polished text. Approves what the user
+    /// actually verified: a verbatim ASR label only when the polished text is
+    /// byte-identical to what was heard, otherwise a cleanup correction. The
+    /// like itself teaches nothing; only an edited correction learns.
+    pub fn approve_like(&self, id: &str, polished_text: String) -> Result<SessionRecord> {
+        let transaction = self.connection.unchecked_transaction()?;
+        let record = read_record(&transaction, id)?;
+        let kind = if record.raw_transcript.as_deref() == Some(polished_text.as_str()) {
+            ReviewTargetKind::VerbatimTranscription
+        } else {
+            ReviewTargetKind::CleanupCorrection
+        };
+        drop(record);
+        drop(transaction);
+        self.approve_text_with_feedback(id, polished_text, kind, Some(TranscriptFeedback::Like))
+    }
+
+    /// Read the stored audio bytes for in-app playback, with the same
+    /// path-integrity checks as export. Playback is a convenience read; it
+    /// never modifies the record, so missing audio is reported as `None`.
+    pub fn session_audio_bytes(&self, id: &str) -> Result<Option<(String, Vec<u8>)>> {
+        let transaction = self.connection.unchecked_transaction()?;
+        let record = read_record(&transaction, id)?;
+        let path = self.checked_audio_path(&record)?;
+        drop(transaction);
+        let bytes = match fs::read(&path) {
+            Ok(bytes) => bytes,
+            Err(error) if error.kind() == std::io::ErrorKind::NotFound => return Ok(None),
+            Err(error) => return Err(DatasetError::Io(error)),
+        };
+        if bytes.len() as u64 > MAX_AUDIO_BYTES {
+            return Err(DatasetError::InvalidAudio);
+        }
+        let extension = Path::new(&record.audio_relative_path)
+            .extension()
+            .and_then(|value| value.to_str())
+            .unwrap_or("")
+            .to_ascii_lowercase();
+        Ok(Some((extension, bytes)))
+    }
+
+    /// Undo a review: drop the approved labels and the vote, back to Pending.
+    /// No history entry is appended because there is no retract revision kind;
+    /// the taught vocabulary entries this approval may have produced stay and
+    /// are removed explicitly by the user.
+    pub fn retract_approval(&self, id: &str) -> Result<SessionRecord> {
+        let transaction = self.connection.unchecked_transaction()?;
+        let mut record = read_record(&transaction, id)?;
+        record.verified_transcript = None;
+        record.corrected_transcript = None;
+        record.transcript_feedback = None;
+        record.review_status = ReviewStatus::Pending;
+        write_record(&transaction, &record)?;
+        transaction.commit()?;
+        Ok(record)
+    }
+
+    /// Save a user's correction from a History/Dictate review and teach the
+    /// automatic-learning loop from that explicit edit. Learning runs before
+    /// the approval commit so a retry after a crash reuses the same revision
+    /// and the edit is processed exactly once. Approval itself is always
+    /// recorded, even when learning is off.
+    pub fn approve_correction_and_learn(
+        &self,
+        id: &str,
+        corrected_text: String,
+    ) -> Result<(SessionRecord, LearningOutcome)> {
+        validate_text(&corrected_text, true)?;
+        let profile = self.personalization()?;
+        let transaction = self.connection.unchecked_transaction()?;
+        let record = read_record(&transaction, id)?;
+        drop(transaction);
+        let before = record
+            .corrected_transcript
+            .clone()
+            .or(record.personalized_transcript.clone())
+            .or(record.cleaned_transcript.clone())
+            .or(record.raw_transcript.clone())
+            .unwrap_or_default();
+        let revision = record.review_history.len() as u64;
+        let context = LearningContext {
+            result_id: record.id.clone(),
+            source_key: "history-review".into(),
+            episode_id: record.id.clone(),
+            language: record.config_snapshot.language,
+            project: record.personalization_project.clone(),
+            model_id: record.config_snapshot.asr_name().into(),
+            learning_epoch: profile.learning_epoch,
+            learning_enabled: profile.automatic_learning,
+        };
+        let outcome = if profile.automatic_learning {
+            self.learn_from_edit(&context, revision, &before, &corrected_text)?
+        } else {
+            LearningOutcome {
+                status: "Correction saved for this session. Learning is off.".into(),
+                ..Default::default()
+            }
+        };
+        let saved = self.approve_text_with_feedback(
+            id,
+            corrected_text,
+            ReviewTargetKind::CleanupCorrection,
+            None,
+        )?;
+        Ok((saved, outcome))
     }
 
     /// Export JSONL records, metadata, and original audio. Call with `true` for
@@ -784,6 +906,121 @@ mod tests {
             2
         );
         assert!(row["asrTarget"].is_null());
+    }
+
+    #[test]
+    fn like_approves_polished_kind_by_what_was_heard_and_undo_returns_to_pending() {
+        let directory = tempfile::tempdir().unwrap();
+        let store = DatasetStore::open(directory.path().join("dataset")).unwrap();
+        let record = import(&store, directory.path(), "vote.wav");
+        store
+            .set_transcripts(&record.id, "Original words.".into(), None, empty_object())
+            .unwrap();
+        store
+            .complete_cleanup(&record.id, "Polished words.".into())
+            .unwrap();
+
+        // Polished differs from raw: like approves a cleanup correction, not speech.
+        let liked = store
+            .approve_like(&record.id, "Polished words.".into())
+            .unwrap();
+        assert_eq!(liked.review_status, ReviewStatus::Approved);
+        assert_eq!(
+            liked.corrected_transcript.as_deref(),
+            Some("Polished words.")
+        );
+        assert_eq!(liked.verified_transcript, None);
+        assert_eq!(liked.transcript_feedback, Some(TranscriptFeedback::Like));
+        assert!(matches!(
+            liked.review_history.last().unwrap().target_kind,
+            ReviewTargetKind::CleanupCorrection
+        ));
+
+        let undone = store.retract_approval(&record.id).unwrap();
+        assert_eq!(undone.review_status, ReviewStatus::Pending);
+        assert_eq!(undone.verified_transcript, None);
+        assert_eq!(undone.corrected_transcript, None);
+        assert_eq!(undone.transcript_feedback, None);
+
+        // Polished identical to raw: like approves a verbatim ASR label.
+        let verified = store
+            .approve_like(&record.id, "Original words.".into())
+            .unwrap();
+        assert_eq!(
+            verified.verified_transcript.as_deref(),
+            Some("Original words.")
+        );
+        assert!(matches!(
+            verified.review_history.last().unwrap().target_kind,
+            ReviewTargetKind::VerbatimTranscription
+        ));
+    }
+
+    #[test]
+    fn correction_save_teaches_learning_loop_from_history_review() {
+        let directory = tempfile::tempdir().unwrap();
+        let store = DatasetStore::open(directory.path().join("dataset")).unwrap();
+        let record = import(&store, directory.path(), "history-learn.wav");
+        store
+            .set_transcripts(
+                &record.id,
+                "Open read me for deployment".into(),
+                None,
+                empty_object(),
+            )
+            .unwrap();
+        let profile = store
+            .save_personalization(vesper_core::PersonalizationProfile {
+                automatic_learning: true,
+                active_project: record.personalization_project.clone(),
+                ..Default::default()
+            })
+            .unwrap();
+
+        let (saved, outcome) = store
+            .approve_correction_and_learn(&record.id, "Open README.md for deployment".into())
+            .unwrap();
+        assert_eq!(saved.review_status, ReviewStatus::Approved);
+        assert_eq!(
+            saved.corrected_transcript.as_deref(),
+            Some("Open README.md for deployment")
+        );
+        assert_eq!(outcome.profile_revision, profile.revision);
+        assert_eq!(
+            store.automatic_learning_state().unwrap().candidates.len(),
+            1
+        );
+        assert_eq!(
+            store
+                .dictation_personalization_snapshot()
+                .unwrap()
+                .learning
+                .candidates[0]
+                .support[0]
+                .teaching_terms,
+            ["deployment"]
+        );
+    }
+
+    #[test]
+    fn correction_save_records_approval_when_learning_is_off() {
+        let directory = tempfile::tempdir().unwrap();
+        let store = DatasetStore::open(directory.path().join("dataset")).unwrap();
+        let record = import(&store, directory.path(), "history-off.wav");
+        store
+            .set_transcripts(&record.id, "Original words.".into(), None, empty_object())
+            .unwrap();
+
+        let (saved, outcome) = store
+            .approve_correction_and_learn(&record.id, "Edited words.".into())
+            .unwrap();
+        assert_eq!(saved.review_status, ReviewStatus::Approved);
+        assert!(outcome.status.contains("Learning is off"));
+        assert!(store
+            .automatic_learning_state()
+            .unwrap()
+            .candidates
+            .is_empty());
     }
 
     fn import(store: &DatasetStore, directory: &Path, name: &str) -> SessionRecord {

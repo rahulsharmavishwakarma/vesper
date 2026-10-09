@@ -597,6 +597,108 @@ pub async fn approve_correction(
     .map_err(|e| e.to_string())?
 }
 
+/// A History/Dictate like on the polished text: verbatim label only when the
+/// polished text matches what was heard, otherwise a cleanup correction, plus
+/// the Like vote. The like itself teaches nothing.
+#[tauri::command]
+pub async fn approve_like(
+    id: String,
+    polished_text: String,
+    storage: tauri::State<'_, AppStorage>,
+) -> Result<SessionRecord, String> {
+    let root = storage.dataset_dir.clone();
+    tauri::async_runtime::spawn_blocking(move || {
+        DatasetStore::open(root)
+            .and_then(|store| store.approve_like(&id, polished_text))
+            .map_err(|e| e.to_string())
+    })
+    .await
+    .map_err(|e| e.to_string())?
+}
+
+/// Undo a review: drop approved labels and the vote, back to Pending.
+#[tauri::command]
+pub async fn retract_approval(
+    id: String,
+    storage: tauri::State<'_, AppStorage>,
+) -> Result<SessionRecord, String> {
+    let root = storage.dataset_dir.clone();
+    tauri::async_runtime::spawn_blocking(move || {
+        DatasetStore::open(root)
+            .and_then(|store| store.retract_approval(&id))
+            .map_err(|e| e.to_string())
+    })
+    .await
+    .map_err(|e| e.to_string())?
+}
+
+/// Audio bytes for in-app History/Dictate playback as a data URL, or `None`
+/// when the stored file is gone. Playback never modifies the record.
+#[tauri::command]
+pub async fn session_audio_data_url(
+    id: String,
+    storage: tauri::State<'_, AppStorage>,
+) -> Result<Option<String>, String> {
+    use base64::Engine as _;
+    let root = storage.dataset_dir.clone();
+    let data = tauri::async_runtime::spawn_blocking(move || {
+        DatasetStore::open(root)
+            .and_then(|store| store.session_audio_bytes(&id))
+            .map_err(|e| e.to_string())
+    })
+    .await
+    .map_err(|e| e.to_string())??;
+    match data {
+        None => Ok(None),
+        Some((extension, bytes)) => {
+            let mime = match extension.as_str() {
+                "wav" => "audio/wav",
+                "mp3" => "audio/mpeg",
+                "m4a" | "mp4" => "audio/mp4",
+                "flac" => "audio/flac",
+                "ogg" | "opus" => "audio/ogg",
+                "aac" => "audio/aac",
+                "aif" | "aiff" => "audio/aiff",
+                "webm" => "audio/webm",
+                _ => "application/octet-stream",
+            };
+            Ok(Some(format!(
+                "data:{mime};base64,{}",
+                base64::engine::general_purpose::STANDARD.encode(&bytes)
+            )))
+        }
+    }
+}
+
+#[derive(Serialize)]
+#[serde(rename_all = "camelCase")]
+pub struct CorrectionLearned {
+    pub record: SessionRecord,
+    pub learning_outcome: vesper_core::LearningOutcome,
+}
+
+/// Save a user's correction from a History/Dictate review and teach the
+/// automatic-learning loop from that explicit edit.
+#[tauri::command]
+pub async fn approve_correction_and_learn(
+    id: String,
+    corrected_text: String,
+    storage: tauri::State<'_, AppStorage>,
+) -> Result<CorrectionLearned, String> {
+    let root = storage.dataset_dir.clone();
+    tauri::async_runtime::spawn_blocking(move || {
+        DatasetStore::open(root)
+            .and_then(|store| store.approve_correction_and_learn(&id, corrected_text))
+            .map(|(record, learning_outcome)| CorrectionLearned {
+                record,
+                learning_outcome,
+            })
+            .map_err(|e| e.to_string())
+    })
+    .await
+    .map_err(|e| e.to_string())?
+}
+
 #[tauri::command]
 pub async fn approve_transcription(
     id: String,

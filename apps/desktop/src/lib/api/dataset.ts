@@ -113,6 +113,37 @@ export async function approveTranscription(
   return invoke<SessionRecord>('approve_transcription', { id, verbatimText });
 }
 
+export interface CorrectionLearned {
+  record: SessionRecord;
+  learningOutcome: import('./personalization').LearningOutcome;
+}
+
+export async function approveLike(id: string, polishedText: string): Promise<SessionRecord> {
+  requireDesktop();
+  if (!polishedText.trim()) throw new Error('Nothing to approve yet.');
+  return invoke<SessionRecord>('approve_like', { id, polishedText });
+}
+
+export async function retractApproval(id: string): Promise<SessionRecord> {
+  requireDesktop();
+  return invoke('retract_approval', { id });
+}
+
+export async function approveCorrectionAndLearn(
+  id: string,
+  correctedText: string,
+): Promise<CorrectionLearned> {
+  requireDesktop();
+  if (!correctedText.trim()) throw new Error('Enter a reviewed label before saving.');
+  if ([...correctedText].length > 100000) throw new Error('Keep labels within 100,000 characters.');
+  return invoke<CorrectionLearned>('approve_correction_and_learn', { id, correctedText });
+}
+
+export async function sessionAudioDataUrl(id: string): Promise<string | null> {
+  requireDesktop();
+  return invoke<string | null>('session_audio_data_url', { id });
+}
+
 export async function chooseAndExportDataset(approvedOnly: boolean): Promise<ExportSummary | null> {
   requireDesktop();
   const { open } = await import('@tauri-apps/plugin-dialog');
