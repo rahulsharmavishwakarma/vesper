@@ -336,6 +336,20 @@ recording appears here, including shortcut dictations finished in other apps:
 the list refreshes itself when a recording completes, and returning to History
 reloads it.
 
+Expanding a recording shows its transcript card, also used for the latest
+result in Dictate. The card plays the saved audio (play/pause, seek bar,
+1×–2× speed) and shows **Heard** beside **Polished · edit to teach**;
+highlighted Heard words were changed or dropped by cleanup. Answer **Is the
+polished text right?** with a vote: a like approves the polished text (a
+verified speech label only when it matches what was heard, otherwise a
+reviewed correction) and teaches nothing by itself, while a dislike opens the
+polished text for editing and saving the correction teaches Vesper from that
+explicit edit. Approved cards show **Verified label** or **Learned from your
+edit** with **Undo**, which returns the card to needs-review and clears the
+vote without removing already taught vocabulary. **Details** lists the audio
+file facts, the project, per-recording speaker ranges when available, and a
+**Remember as writing example** action for approved corrections.
+
 Manage spellings, recurring corrections and writing preferences in
 **Settings → Writing → Your vocabulary and writing**. The Vocabulary list holds
 words you add, words Vesper learned from your edits, and proposals it is still
