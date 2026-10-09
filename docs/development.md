@@ -178,7 +178,7 @@ xcode-select --install
 brew install cmake
 ```
 
-Xcode Command Line Tools supply Clang and the CoreAudio frameworks used by CPAL. If bindgen cannot find libclang, check the selected Xcode toolchain with `xcode-select -p`; set `LIBCLANG_PATH` to the `lib` directory of that toolchain only if discovery fails.
+Xcode Command Line Tools supply Clang and the CoreAudio frameworks used by CPAL. If bindgen cannot find libclang, check the selected Xcode toolchain with `xcode-select -p`; set `LIBCLANG_PATH` to the `lib` directory of that toolchain only if discovery fails. If the MLX Swift build fails with `unable to spawn process '.../Metal.xctoolchain/usr/bin/metal'`, macOS swapped the MetalToolchain cryptex mount under the cached build plan: delete `.tooling/mlx-build` and rebuild so SwiftPM re-resolves `metal` via `xcrun`.
 
 On Ubuntu 24.04 or a compatible Debian distribution:
 
