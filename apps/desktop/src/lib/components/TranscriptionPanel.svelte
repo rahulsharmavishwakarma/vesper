@@ -1,5 +1,6 @@
 <script lang="ts">
   import ProjectScope from './ProjectScope.svelte';
+  import TranscriptCard from './TranscriptCard.svelte';
   import SpeakerTimeline from './SpeakerTimeline.svelte';
   import CopyGlyph from './CopyGlyph.svelte';
   import {
@@ -1056,40 +1057,26 @@
               onclick={undoLearned}>Undo learning</button
             >{/if}
         </p>{/if}
-      <details>
-        <summary>Original outputs</summary>
-        <div class="transcript-columns">
-          <div>
-            <label for="raw-result">Raw transcript</label><textarea
-              id="raw-result"
-              rows="4"
-              readonly
-              value={result.rawTranscript}></textarea>
-          </div>
-          {#if result.cleanedTranscript !== null}<div>
-              <label for="cleaned-result">Polished transcript</label><textarea
-                id="cleaned-result"
-                rows="4"
-                readonly
-                value={result.cleanedTranscript}></textarea>
-            </div>{/if}
-        </div>
-        {#if result.personalizedTranscript != null}<div>
-            <label for="personalized-result">With your remembered corrections</label><textarea
-              id="personalized-result"
-              rows="4"
-              readonly
-              value={result.personalizedTranscript}></textarea><button
-              class="quiet"
-              type="button"
-              disabled={undoing || busy || savingDraft || draft !== savedDraft}
-              onclick={undoRemembered}>Undo remembered edits</button
-            >
-          </div>{/if}
-      </details>
-      {#if result.session}<p class="note">Saved to History with audio.</p>{:else}<p class="note">
-          Not saved to History.
-        </p>{/if}
+      {#if result.session}
+        {#key result.session.id}
+          <TranscriptCard
+            record={result.session}
+            disabled={busy || savingDraft || undoing}
+            onUpdate={(updated) => {
+              if (result) result = { ...result, session: updated };
+            }}
+          />
+        {/key}
+      {:else}<p class="note">Not saved to History.</p>{/if}
+      {#if result.personalizedTranscript != null}<div>
+          <p class="note">With your remembered corrections applied.</p>
+          <button
+            class="quiet"
+            type="button"
+            disabled={undoing || busy || savingDraft || draft !== savedDraft}
+            onclick={undoRemembered}>Undo remembered edits</button
+          >
+        </div>{/if}
       {#if result.warnings.length}<ul class="pipeline-warnings">
           {#each result.warnings as warning, index (index)}<li>{warning}</li>{/each}
         </ul>{/if}

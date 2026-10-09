@@ -1,11 +1,8 @@
 <script lang="ts">
-  import SpeakerTimeline from './SpeakerTimeline.svelte';
-  import CopyGlyph from './CopyGlyph.svelte';
-  import TranscriptFeedbackControl from './TranscriptFeedback.svelte';
+  import TranscriptCard from './TranscriptCard.svelte';
   import { selectionHighlight } from '../actions/selectionHighlight';
   import { historyReveal, revealAccessibility } from '../actions/historyReveal';
   import Select from './Select.svelte';
-  import { rememberCleanup } from '../api/personalization';
   import { onDestroy, onMount, tick, untrack } from 'svelte';
   import Icon from './Icon.svelte';
   import HistoryStats from './HistoryStats.svelte';
@@ -23,13 +20,9 @@
   } from '../history';
   import type { AppEnvironment } from '../api/desktop';
   import {
-    approveCorrection,
-    approveTranscription,
     chooseAndExportDataset,
     chooseAndImportAudio,
     listSessions,
-    setTranscriptFeedback,
-    type TranscriptFeedback,
     type SessionRecord,
   } from '../api/dataset';
 
@@ -57,14 +50,8 @@
   let selectedDay = $state('');
   let page = $state(1);
   let pageSize = $state(10);
-  let copiedId = $state('');
-  let copyingId = $state('');
-  let copyTimer: ReturnType<typeof setTimeout> | undefined;
-  let corrections = $state<Record<string, string>>({});
-  let reviewOpen = $state<Record<string, boolean>>({});
   let feedbackTarget = $state('');
-  let labelKind = $state<'verbatim' | 'cleanup'>('verbatim');
-  let pending = $state<'loading' | 'importing' | 'approving' | 'rating' | 'exporting' | null>(null);
+  let pending = $state<'loading' | 'importing' | 'exporting' | null>(null);
   let error = $state<string | null>(null);
   let feedback = $state<string | null>(null);
   let approvedOnly = $state(true);
@@ -78,17 +65,6 @@
   );
   const pagination = $derived(paginateSessions(filtered, page, pageSize));
   const selected = $derived(pagination.items.find((record) => record.id === selectedId));
-  const correctionKey = $derived(`${selected?.id ?? ''}:${labelKind}`);
-  const sourceText = $derived(
-    (labelKind === 'verbatim' ? selected?.rawTranscript : selected?.cleanedTranscript) ?? '',
-  );
-  const hasRawTranscript = $derived(Boolean(selected?.rawTranscript?.trim()));
-  const savedLabel = $derived(
-    (labelKind === 'verbatim' ? selected?.verifiedTranscript : selected?.correctedTranscript) ?? '',
-  );
-  const correction = $derived(corrections[correctionKey] ?? savedLabel);
-  const correctionDirty = $derived(correction !== savedLabel);
-  const labelTooLong = $derived([...correction].length > 100000);
   const approvedCount = $derived(
     records.filter((record) => record.reviewStatus === 'approved').length,
   );
@@ -99,15 +75,8 @@
   function message(cause: unknown) {
     return cause instanceof Error ? cause.message : String(cause);
   }
-  async function rateTranscript(id: string, rating: TranscriptFeedback) {
-    if (!desktop || controlsBusy) throw new Error('Wait for the current action to finish.');
-    pending = 'rating';
-    try {
-      const record = await setTranscriptFeedback(id, rating);
-      records = records.map((item) => (item.id === record.id ? record : item));
-    } finally {
-      pending = null;
-    }
+  function handleCardUpdate(updated: SessionRecord) {
+    records = records.map((item) => (item.id === updated.id ? updated : item));
   }
   async function refresh() {
     if (!desktop || pending) return;
@@ -140,60 +109,11 @@
         selectedDay = '';
         page = 1;
         selectedId = record.id;
-        labelKind = 'verbatim';
         hasLoaded = true;
         feedback = 'Audio imported. Review its transcript before exporting for training.';
       }
     } catch (cause) {
       error = `Could not import audio. ${message(cause)}`;
-    } finally {
-      pending = null;
-    }
-  }
-  async function approve() {
-    if (
-      !desktop ||
-      controlsBusy ||
-      !selected ||
-      !correction.trim() ||
-      labelTooLong ||
-      (labelKind === 'cleanup' && !hasRawTranscript)
-    )
-      return;
-    const id = selected.id;
-    const purpose = labelKind;
-    feedbackTarget = id;
-    pending = 'approving';
-    error = null;
-    feedback = null;
-    try {
-      const record =
-        purpose === 'verbatim'
-          ? await approveTranscription(id, correction)
-          : await approveCorrection(id, correction);
-      records = records.map((item) => (item.id === record.id ? record : item));
-      corrections[`${record.id}:${purpose}`] =
-        (purpose === 'verbatim' ? record.verifiedTranscript : record.correctedTranscript) ?? '';
-      feedback = purpose === 'verbatim' ? 'Reviewed transcript saved.' : 'Reviewed wording saved.';
-      await tick();
-      if (!selected) document.getElementById('history-result-count')?.focus();
-    } catch (cause) {
-      error = `Could not save the reviewed label. ${message(cause)}`;
-    } finally {
-      pending = null;
-    }
-  }
-  async function remember() {
-    if (!selected || controlsBusy || !savedLabel || correctionDirty || labelKind !== 'cleanup')
-      return;
-    feedbackTarget = selected.id;
-    pending = 'approving';
-    error = null;
-    try {
-      await rememberCleanup(selected.id);
-      feedback = 'Example remembered. Manage it in Settings → Your vocabulary and writing.';
-    } catch (cause) {
-      error = `Could not remember this example. ${message(cause)}`;
     } finally {
       pending = null;
     }
@@ -216,7 +136,6 @@
   }
   async function selectRecording(record: SessionRecord, trigger: HTMLButtonElement) {
     selectedId = view !== 'recent' && selectedId === record.id ? '' : record.id;
-    labelKind = 'verbatim';
     feedback = null;
     error = null;
     if (view === 'recent') {
@@ -237,26 +156,6 @@
       trigger.scrollIntoView({ block: 'nearest', behavior: 'instant' });
     }
   }
-  async function copyTranscript() {
-    if (!selected || copyingId) return;
-    const id = selected.id;
-    copyingId = id;
-    copiedId = '';
-    feedbackTarget = id;
-    error = null;
-    try {
-      await navigator.clipboard.writeText(transcriptPreview(selected));
-      copiedId = id;
-      if (copyTimer) clearTimeout(copyTimer);
-      copyTimer = setTimeout(() => {
-        copiedId = '';
-      }, 1800);
-    } catch (cause) {
-      error = `Could not copy the transcript. ${message(cause)}`;
-    } finally {
-      copyingId = '';
-    }
-  }
   function recordingTitle(record: SessionRecord) {
     const text = transcriptPreview(record).replace(/\s+/g, ' ');
     if (text) return text.length > 160 ? `${text.slice(0, 160).trimEnd()}…` : text;
@@ -265,14 +164,6 @@
     )
       ? 'Voice recording'
       : record.originalFilename || 'Untitled recording';
-  }
-  function hasDraft(record: SessionRecord) {
-    return (
-      (corrections[`${record.id}:verbatim`] ?? record.verifiedTranscript ?? '') !==
-        (record.verifiedTranscript ?? '') ||
-      (corrections[`${record.id}:cleanup`] ?? record.correctedTranscript ?? '') !==
-        (record.correctedTranscript ?? '')
-    );
   }
   function clearFilters() {
     calmSwap(() => {
@@ -302,10 +193,8 @@
     if (index < 0) return;
     page = Math.floor(index / pageSize) + 1;
     selectedId = id;
-    labelKind = 'verbatim';
-    reviewOpen[id] = true;
     await tick();
-    document.getElementById(`${id}-reviewed-transcript`)?.focus();
+    document.getElementById(`recording-details-${id}`)?.focus({ preventScroll: true });
   }
   async function revealPage() {
     await tick();
@@ -331,14 +220,8 @@
   $effect(() => {
     if (page !== pagination.page) page = pagination.page;
   });
-  $effect(() => {
-    if (!hasRawTranscript) labelKind = 'verbatim';
-  });
   onMount(() => {
     if (desktop) void refresh();
-    return () => {
-      if (copyTimer) clearTimeout(copyTimer);
-    };
   });
   $effect(() => {
     const nextKey = refreshKey;
@@ -379,158 +262,9 @@
     transition:historyReveal
     id={`recording-details-${record.id}`}
     aria-label="Recording details"
+    tabindex="-1"
   >
-    {#if transcriptPreview(record)}
-      <div class="section-heading transcript-heading">
-        <h3>Transcript</h3>
-        <button
-          class="quiet transcript-copy"
-          class:copy-confirmed={copiedId === record.id}
-          type="button"
-          disabled={Boolean(copyingId)}
-          aria-busy={copyingId === record.id}
-          aria-label={copiedId === record.id ? 'Transcript copied' : 'Copy transcript'}
-          title="Copy transcript"
-          onclick={copyTranscript}
-          ><CopyGlyph copied={copiedId === record.id} />{copyingId === record.id
-            ? 'Copying…'
-            : copiedId === record.id
-              ? 'Copied'
-              : 'Copy text'}</button
-        >
-      </div>
-      <p class="transcript history-transcript">{transcriptPreview(record)}</p>
-      <SpeakerTimeline timeline={record.speakerTimeline} />
-      <TranscriptFeedbackControl
-        value={record.transcriptFeedback ?? null}
-        disabled={!desktop || controlsBusy}
-        onSave={(rating) => rateTranscript(record.id, rating)}
-      />
-      <details class="original-transcript recording-disclosure">
-        <summary><span>Original model output</span><Icon name="chevron" /></summary>
-        <h3>Raw transcript</h3>
-        <p class="transcript">{record.rawTranscript?.trim() || 'No speech was transcribed.'}</p>
-        {#if record.cleanedTranscript?.trim()}<h3>Polished transcript</h3>
-          <p class="transcript">{record.cleanedTranscript}</p>{/if}
-      </details>
-    {:else}
-      <div class="history-transcript-empty">
-        <h3>
-          {recordingState(record) === 'Audio only' ? 'Audio saved' : 'No transcript was produced.'}
-        </h3>
-        <p class="note">Transcribe this file in Dictate, or add a reviewed transcript below.</p>
-      </div>
-    {/if}
-    <details class="recording-file recording-disclosure">
-      <summary><span>Audio file details</span><Icon name="chevron" /></summary>
-      <dl>
-        <div>
-          <dt>Original file</dt>
-          <dd>{record.originalFilename}</dd>
-        </div>
-        <div>
-          <dt>File size</dt>
-          <dd>
-            {(record.audioBytes / 1024 ** 2).toLocaleString(undefined, {
-              maximumFractionDigits: 2,
-            })} MiB
-          </dd>
-        </div>
-        <div>
-          <dt>Archived file</dt>
-          <dd>{record.audioRelativePath}</dd>
-        </div>
-      </dl>
-    </details>
-    <details class="history-review recording-disclosure" bind:open={reviewOpen[record.id]}>
-      <summary
-        ><span
-          >Review and remember{#if hasDraft(record)}<span class="review-draft">Unsaved draft</span
-            >{/if}</span
-        ><Icon name="chevron" /></summary
-      >
-      <div class="history-review-content">
-        <p class="note">Check the audio before saving. Unsaved edits stay in this session.</p>
-        <div class="field">
-          <label for={`${record.id}-label-kind`}>Label purpose</label>
-          <Select
-            id={`${record.id}-label-kind`}
-            bind:value={labelKind}
-            options={[
-              { value: 'verbatim', label: 'Speech to text', description: 'Exactly what was said' },
-              {
-                value: 'cleanup',
-                label: 'Polished text',
-                description: 'Reviewed, polished wording',
-                disabled: !hasRawTranscript,
-              },
-            ]}
-            disabled={controlsBusy}
-          />
-          {#if !hasRawTranscript}<p class="note">
-              Writing-model labels need a non-empty model transcript. You can still add a
-              speech-to-text label.
-            </p>{/if}
-        </div>
-        <div class="field">
-          <div class="review-label-heading">
-            <label for={`${record.id}-reviewed-transcript`}
-              >{labelKind === 'verbatim' ? 'Verbatim transcript' : 'Polished wording'}</label
-            >{#if !correction.trim() && sourceText.trim()}<button
-                class="quiet"
-                type="button"
-                disabled={controlsBusy}
-                onclick={() => {
-                  corrections[correctionKey] = sourceText;
-                  feedback = null;
-                }}>Use model text</button
-              >{/if}
-          </div>
-          <textarea
-            id={`${record.id}-reviewed-transcript`}
-            rows="5"
-            value={correction}
-            placeholder={labelKind === 'verbatim'
-              ? 'Write exactly what you hear…'
-              : 'Write the intended wording…'}
-            oninput={(event) => {
-              corrections[correctionKey] = event.currentTarget.value;
-              feedback = null;
-            }}
-            disabled={controlsBusy}
-            aria-describedby={`${record.id}-review-help ${record.id}-label-limit`}
-            aria-invalid={labelTooLong}></textarea>
-          <p id={`${record.id}-review-help`} class="note">
-            {labelKind === 'verbatim'
-              ? 'Keep the exact words, including fillers and repetitions.'
-              : 'Keep the meaning, names and numbers.'}
-          </p>
-          <p id={`${record.id}-label-limit`} class="note" class:invalid={labelTooLong}>
-            {[...correction].length.toLocaleString()} / 100,000 characters{correctionDirty
-              ? ' · Unsaved draft'
-              : ''}
-          </p>
-        </div>
-        <button
-          class="primary"
-          type="button"
-          onclick={approve}
-          disabled={controlsBusy ||
-            !correction.trim() ||
-            labelTooLong ||
-            (!correctionDirty && savedLabel !== '') ||
-            (labelKind === 'cleanup' && !hasRawTranscript)}
-          ><Icon name="check" />{pending === 'approving'
-            ? 'Saving label…'
-            : 'Save reviewed label'}</button
-        >
-        {#if labelKind === 'cleanup' && savedLabel}
-          <button type="button" onclick={remember} disabled={controlsBusy || correctionDirty}
-            >Remember this example</button
-          >
-        {/if}
-      </div>
-    </details>
+    <TranscriptCard {record} disabled={controlsBusy || !desktop} onUpdate={handleCardUpdate} />
     <LearningReview
       {record}
       disabled={controlsBusy || !desktop}
@@ -729,8 +463,7 @@
                         class="review-badge"
                         class:approved={record.reviewStatus === 'approved'}
                         >{recordingState(record)}</span
-                      >{#if hasDraft(record)}<span class="review-draft">Unsaved draft</span
-                        >{/if}</span
+                      ></span
                     >
                   </span>
                   <Icon

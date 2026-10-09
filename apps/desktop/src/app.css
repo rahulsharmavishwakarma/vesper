@@ -2299,6 +2299,7 @@ textarea:focus:enabled {
 }
 .dataset-panel[data-view='full'] .session-list > li {
   animation: section-arrive 260ms var(--ease) var(--row-enter-delay, 0ms) backwards;
+  min-width: 0;
 }
 /* Filter, search and day swaps hold row entrances for one beat so the switch
  * reads as a single motion with the gliding pill. Pagination turns keep
