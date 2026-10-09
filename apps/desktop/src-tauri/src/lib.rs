@@ -95,6 +95,16 @@ pub fn run() {
                 std::env::var_os("UKTI_MODEL_DIR"),
                 std::env::var_os("STT_MODEL_DIR").or_else(development_model_root),
             );
+            // First-run pre-check: install the bundled speaker runtime when it
+            // is missing so fresh installs can produce speaker timelines. The
+            // weights still download through the regular audio setup flow.
+            // Never fatal: without the stage the app runs normally.
+            if let Err(error) = vesper_models::diarization::ensure_bundled_runtime(
+                &model_dir,
+                &std::sync::atomic::AtomicBool::new(false),
+            ) {
+                eprintln!("speaker runtime install skipped: {error}");
+            }
             let settings = settings::SettingsStore::new(config_root.join("settings.json"));
             let shortcut = settings.startup_config();
             app.manage(AppStorage {

@@ -207,6 +207,23 @@ Its C ABI comes from NVIDIA/NeMo-Speech.cpp
 including the pinned ggml patches and SentencePiece development files. The public
 v0.1.0 ASR archive predates this model and cannot supply this stage.
 
+Application bundles ship the runtime so fresh installs can pre-check and
+install it on first run. Before building the macOS app, stage it (verified
+copy preferred; packages from source when available):
+
+```sh
+node scripts/diarization-runtime.mjs
+```
+
+`scripts/desktop.mjs` runs this automatically on Apple silicon before Tauri
+`dev` and `build` (strict for builds: a missing runtime fails loudly instead
+of shipping without timelines). The staging directory
+`.tooling/diarization-runtime/` maps into the bundle at
+`Contents/Resources/diarization-runtime/` via
+`apps/desktop/src-tauri/tauri.macos.conf.json`, and app startup installs it
+into the model directory after hash verification. Set `NEMO_SPEECH_SOURCE`
+to keep a pinned source checkout for repackaging.
+
 Package the built dependency closure on Apple silicon with Xcode tools:
 
 ```sh
