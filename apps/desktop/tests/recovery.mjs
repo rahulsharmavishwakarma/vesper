@@ -278,7 +278,7 @@ async function test(name, run) {
     await run();
     results.push({ name, passed: true });
   } catch (error) {
-    results.push({ name, passed: false, error: String(error) });
+    results.push({ name, passed: false, error: String(error?.stack ?? error) });
   } finally {
     if (component) await unmount(component);
     component = undefined;
@@ -1452,8 +1452,12 @@ await test('View transcript navigates from Settings and refreshes the latest res
   };
   await emit('show-transcript');
   await until(
-    () => target.querySelector('#raw-result')?.value === latest.rawTranscript,
+    () => target.querySelector('#final-draft')?.value === latest.rawTranscript,
     'Latest quick result did not load',
+  );
+  assert(
+    target.textContent.includes('Not saved to History.'),
+    'Unsaved quick result lost its History state',
   );
   assert(
     target.querySelector('.studio-main').dataset.view === 'dictate',
@@ -2745,7 +2749,7 @@ await test('Recent thoughts render standalone cards without list rules', async (
   assert(border('.recent-panel .session-button') === '1px', 'Recent card lost its outline');
 });
 
-await test('History feedback persists, rolls back failed saves, clears and undoes independently of reviews', async () => {
+await test('History votes approve, correct-and-learn, and undo independently', async () => {
   const original = {
     id: 'motion-record',
     createdAt: new Date().toISOString(),
@@ -2764,93 +2768,126 @@ await test('History feedback persists, rolls back failed saves, clears and undoe
     modelVersions: {},
   };
   let stored = structuredClone(original);
-  const save = deferred();
   const state = await setup({
     main: true,
     intercept: (command, state, args) => {
       if (command === 'list_sessions') return [structuredClone(stored)];
       if (command === 'set_transcript_feedback') {
-        if (state.failFeedback) throw new Error('Synthetic feedback failure');
-        return (state.counts.set_transcript_feedback === 1 ? save.promise : Promise.resolve()).then(
-          () => {
-            stored = { ...stored, transcriptFeedback: args.feedback };
-            return structuredClone(stored);
-          },
-        );
+        stored = { ...stored, transcriptFeedback: args.feedback };
+        return structuredClone(stored);
       }
+      if (command === 'approve_like') {
+        if (state.failLike) throw new Error('Synthetic like failure');
+        stored = {
+          ...stored,
+          verifiedTranscript: args.polishedText,
+          transcriptFeedback: 'like',
+          reviewStatus: 'approved',
+          reviewHistory: [
+            ...stored.reviewHistory,
+            {
+              targetKind: 'verbatim_transcription',
+              text: args.polishedText,
+              timestamp: new Date().toISOString(),
+            },
+          ],
+        };
+        return structuredClone(stored);
+      }
+      if (command === 'approve_correction_and_learn') {
+        stored = {
+          ...stored,
+          correctedTranscript: args.correctedText,
+          reviewStatus: 'approved',
+          reviewHistory: [
+            ...stored.reviewHistory,
+            {
+              targetKind: 'cleanup_correction',
+              text: args.correctedText,
+              timestamp: new Date().toISOString(),
+            },
+          ],
+        };
+        return {
+          record: structuredClone(stored),
+          learningOutcome: {
+            activated: [],
+            provisional: 0,
+            suspended: 0,
+            status: 'Learned 1 spelling correction.',
+            profileRevision: 0,
+            elapsedMicros: 0,
+          },
+        };
+      }
+      if (command === 'retract_approval') {
+        stored = {
+          ...stored,
+          verifiedTranscript: null,
+          correctedTranscript: null,
+          transcriptFeedback: null,
+          reviewStatus: 'pending',
+        };
+        return structuredClone(stored);
+      }
+      if (command === 'session_audio_data_url') return null;
     },
   });
   const button = (label) =>
     [...target.querySelectorAll('button')].find((b) => b.textContent.trim() === label);
+  const card = () => target.querySelector('[aria-label="Recording transcript card"]');
+  const voteButton = (label) => card()?.querySelector(`[aria-label="${label}"]`);
   button('History').click();
   await until(() => target.querySelector('#recording-trigger-motion-record'), 'History missing');
   target.querySelector('#recording-trigger-motion-record').click();
-  await tick();
-  const control = () => target.querySelector('.transcript-feedback');
-  const vote = (side) => control().querySelector(`[aria-label="${side} transcript"]`);
-  vote('Like').click();
-  await tick();
+  await until(
+    () => card()?.textContent.includes('Is the polished text right?'),
+    'Vote row missing',
+  );
+  state.failLike = true;
+  voteButton('Looks right').click();
+  await until(() => card()?.textContent.includes('Synthetic like failure'), 'Failed like hidden');
   assert(
-    vote('Like').getAttribute('aria-pressed') === 'true' && vote('Dislike').disabled,
-    'Pending feedback lost immediate choice or allowed duplicate requests',
+    card().textContent.includes('Is the polished text right?'),
+    'Failed like left the vote row',
   );
-  assert(control().textContent.includes('Saving feedback'), 'Pending feedback claimed success');
-  vote('Dislike').click();
-  assert(state.counts.set_transcript_feedback === 1, 'Duplicate feedback write');
-  save.resolve();
-  await until(() => !vote('Like').disabled, 'Feedback save never completed');
-  assert(
-    stored.transcriptFeedback === 'like' &&
-      stored.reviewStatus === 'pending' &&
-      !stored.reviewHistory.length,
-    'Like approved training data',
-  );
-  state.failFeedback = true;
-  vote('Dislike').click();
+  state.failLike = false;
+  voteButton('Looks right').click();
   await until(
-    () => control().textContent.includes('Synthetic feedback failure'),
-    'Feedback failure hidden',
+    () => stored.reviewStatus === 'approved' && stored.verifiedTranscript !== null,
+    'Like did not approve the polished text',
   );
-  assert(
-    vote('Like').getAttribute('aria-pressed') === 'true' && !vote('Dislike').disabled,
-    'Failed feedback did not roll back and allow retry',
-  );
-  state.failFeedback = false;
-  vote('Dislike').click();
   await until(
-    () => stored.transcriptFeedback === 'dislike' && !vote('Dislike').disabled,
-    'Feedback retry failed',
+    () => card()?.textContent.includes('Verified label'),
+    'Verified state missing after like',
   );
-  vote('Dislike').click();
+  button('Undo').click();
+  await until(() => stored.reviewStatus === 'pending', 'Undo did not return to pending');
   await until(
-    () => stored.transcriptFeedback === null && !vote('Dislike').disabled,
-    'Click selected did not clear',
+    () => card()?.textContent.includes('Is the polished text right?'),
+    'Vote row missing after undo',
   );
-  control().querySelector('.feedback-undo').click();
-  await until(
-    () => stored.transcriptFeedback === 'dislike' && !vote('Dislike').disabled,
-    'Undo did not restore prior choice',
-  );
-  const previousLoads = state.counts.list_sessions;
-  target.querySelector('[aria-label="Refresh recordings"]').click();
+  voteButton('Needs a fix').click();
+  await until(() => card()?.querySelector('textarea'), 'Correction editor missing after dislike');
+  assert(stored.transcriptFeedback === 'dislike', 'Dislike did not record feedback');
+  const editor = card().querySelector('textarea');
+  editor.value = 'Keep the recording easy to find downtown.';
+  editor.dispatchEvent(new Event('input', { bubbles: true }));
   await tick();
+  button('Save correction').click();
   await until(
-    () => state.counts.list_sessions > previousLoads && !vote('Dislike').disabled,
-    'History refresh failed',
+    () => stored.correctedTranscript === 'Keep the recording easy to find downtown.',
+    'Correction did not save',
   );
-  assert(vote('Dislike').getAttribute('aria-pressed') === 'true', 'Saved feedback lost on refresh');
-  const trigger = target.querySelector('#recording-trigger-motion-record');
-  trigger.click();
-  await tick();
-  const closing = target.querySelector('.history-reveal');
   await until(
-    () => !closing.isConnected || closing.inert,
-    'Closing review remained keyboard-accessible',
+    () => card()?.textContent.includes('Learned from your edit'),
+    'Learned state missing after correction',
   );
-  await until(() => !closing.isConnected, 'History did not finish closing');
-  trigger.click();
-  await until(() => control(), 'History did not reopen');
-  assert(vote('Dislike').getAttribute('aria-pressed') === 'true', 'Saved feedback lost on reopen');
+  button('Undo').click();
+  await until(
+    () => stored.reviewStatus === 'pending' && stored.correctedTranscript === null,
+    'Undo did not clear the correction',
+  );
 });
 
 await test('Shared selection keeps its backing during rapid changes and dropdown keyboard navigation', async () => {

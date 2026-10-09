@@ -1,4 +1,33 @@
 // Isolated visual fixtures: no microphone, filesystem, clipboard or model access.
+function mockWavDataUrl() {
+  const sampleRate = 8000;
+  const count = Math.floor(sampleRate * 0.5);
+  const buffer = new ArrayBuffer(44 + count * 2);
+  const view = new DataView(buffer);
+  const ascii = (offset, text) => {
+    for (let index = 0; index < text.length; index++)
+      view.setUint8(offset + index, text.charCodeAt(index));
+  };
+  ascii(0, 'RIFF');
+  view.setUint32(4, 36 + count * 2, true);
+  ascii(8, 'WAVE');
+  ascii(12, 'fmt ');
+  view.setUint32(16, 16, true);
+  view.setUint16(20, 1, true);
+  view.setUint16(22, 1, true);
+  view.setUint32(24, sampleRate, true);
+  view.setUint32(28, sampleRate * 2, true);
+  view.setUint16(32, 2, true);
+  view.setUint16(34, 16, true);
+  ascii(36, 'data');
+  view.setUint32(40, count * 2, true);
+  for (let index = 0; index < count; index++)
+    view.setInt16(44 + index * 2, Math.round(Math.sin((index / count) * Math.PI * 8) * 8000), true);
+  const bytes = new Uint8Array(buffer);
+  let binary = '';
+  for (const byte of bytes) binary += String.fromCharCode(byte);
+  return `data:audio/wav;base64,${btoa(binary)}`;
+}
 import { mount } from 'svelte';
 import { mockIPC, mockWindows } from '@tauri-apps/api/mocks';
 import App from '../src/App.svelte';
@@ -159,6 +188,54 @@ if (states) {
           record.transcriptFeedback = args.feedback;
           return structuredClone(record);
         }
+        case 'approve_like': {
+          const record = records.find((r) => r.id === args.id);
+          if (record.rawTranscript === args.polishedText)
+            record.verifiedTranscript = args.polishedText;
+          else record.correctedTranscript = args.polishedText;
+          record.transcriptFeedback = 'like';
+          record.reviewStatus = 'approved';
+          record.reviewHistory.push({
+            targetKind:
+              record.rawTranscript === args.polishedText
+                ? 'verbatim_transcription'
+                : 'cleanup_correction',
+            text: args.polishedText,
+            timestamp: new Date().toISOString(),
+          });
+          return structuredClone(record);
+        }
+        case 'approve_correction_and_learn': {
+          const record = records.find((r) => r.id === args.id);
+          record.correctedTranscript = args.correctedText;
+          record.reviewStatus = 'approved';
+          record.reviewHistory.push({
+            targetKind: 'cleanup_correction',
+            text: args.correctedText,
+            timestamp: new Date().toISOString(),
+          });
+          return {
+            record: structuredClone(record),
+            learningOutcome: {
+              activated: [],
+              provisional: 0,
+              suspended: 0,
+              status: 'Learned 1 spelling correction from the preview fixture.',
+              profileRevision: 0,
+              elapsedMicros: 0,
+            },
+          };
+        }
+        case 'retract_approval': {
+          const record = records.find((r) => r.id === args.id);
+          record.verifiedTranscript = null;
+          record.correctedTranscript = null;
+          record.transcriptFeedback = null;
+          record.reviewStatus = 'pending';
+          return structuredClone(record);
+        }
+        case 'session_audio_data_url':
+          return mockWavDataUrl();
         case 'plugin:dialog|open':
           if (window.previewDialogCancelled) return null;
           return args.options.directory ? '/Projects/Synthetic' : '/Applications/TextEdit.app';
