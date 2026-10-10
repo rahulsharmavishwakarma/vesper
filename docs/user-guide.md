@@ -357,8 +357,7 @@ polished text for editing and saving the correction teaches Vesper from that
 explicit edit. Approved cards show **Verified label** or **Learned from your
 edit** with **Undo**, which returns the card to needs-review and clears the
 vote without removing already taught vocabulary. **Details** lists the audio
-file facts, the project, per-recording speaker ranges when available, and a
-**Remember as writing example** action for approved corrections.
+file facts, the project, and per-recording speaker ranges when available.
 
 Manage spellings, recurring corrections and writing preferences in
 **Settings → Writing → Your vocabulary and writing**. The Vocabulary list holds

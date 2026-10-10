@@ -38,6 +38,7 @@ test('transcript card votes, correction learning, undo and details', async ({ pa
   await expect(card.getByText('Is the polished text right?')).toBeVisible();
 
   await card.getByRole('button', { name: 'Needs a fix', exact: true }).click();
+  await expect(card.getByText('Fix the wording, then save.')).toBeVisible();
   const editor = card.getByLabel('Polished · edit to teach');
   await expect(editor).toBeVisible();
   await editor.fill('The waveform should follow my voice, twice as nice.');

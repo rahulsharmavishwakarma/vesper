@@ -1,7 +1,5 @@
 <script lang="ts">
-  import Icon from './Icon.svelte';
   import CopyGlyph from './CopyGlyph.svelte';
-  import { onDestroy } from 'svelte';
   import {
     approveCorrectionAndLearn,
     approveLike,
@@ -10,7 +8,7 @@
     setTranscriptFeedback,
     type SessionRecord,
   } from '../api/dataset';
-  import { rememberCleanup } from '../api/personalization';
+  import { onDestroy, tick } from 'svelte';
 
   let {
     record,
@@ -22,10 +20,17 @@
     onUpdate: (updated: SessionRecord) => void;
   } = $props();
 
+  // Thumb, play, pause and check glyphs follow the approved history mock.
+  const THUMB =
+    'M7 11v9H4v-9zM7 11l4-8c1.5 0 2.5 1 2.5 2.5V9H19a2 2 0 0 1 2 2.3l-1.2 7A2 2 0 0 1 17.8 20H7';
+  const PLAY = 'M8 5v14l11-7z';
+  const PAUSE = 'M8 5v14M16 5v14';
+  const CHECK = 'M5 12.5l4.5 4.5L19 7';
+
   let editing = $state(false);
   let editText = $state('');
   let detailsOpen = $state(false);
-  let pending = $state<'like' | 'dislike' | 'save' | 'undo' | 'audio' | 'remember' | null>(null);
+  let pending = $state<'like' | 'dislike' | 'save' | 'undo' | 'audio' | null>(null);
   let message = $state<string | null>(null);
   let error = $state<string | null>(null);
   let audioUrl = $state<string | null>(null);
@@ -34,16 +39,11 @@
   let position = $state(0);
   let duration = $state(0);
   let speed = $state(1);
-  let copied = $state(false);
-  let remembered = $state(false);
   let audio: HTMLAudioElement | undefined = $state();
-  let copyTimer: ReturnType<typeof setTimeout> | undefined;
+  let editor: HTMLTextAreaElement | undefined = $state();
   let messageTimer: ReturnType<typeof setTimeout> | undefined;
 
-  onDestroy(() => {
-    clearTimeout(copyTimer);
-    clearTimeout(messageTimer);
-  });
+  onDestroy(() => clearTimeout(messageTimer));
 
   const heard = $derived(record.rawTranscript ?? '');
   const polished = $derived(
@@ -54,35 +54,36 @@
       '',
   );
   const hasTranscript = $derived(Boolean(heard.trim() || polished.trim()));
-  const how = $derived(
-    record.verifiedTranscript ? 'verified' : record.correctedTranscript ? 'learned' : null,
-  );
+  const approved = $derived(record.reviewStatus === 'approved');
   const editDirty = $derived(editText.trim() !== '' && editText !== polished);
   const busy = $derived(disabled || pending !== null);
   const projectName = $derived(
     record.projectSelection?.project || record.personalizationProject || 'Shared',
   );
-  const reviewTime = $derived.by(() => {
-    const items = Array.isArray(record.reviewHistory) ? record.reviewHistory : [];
-    const want = how === 'verified' ? 'verbatim_transcription' : 'cleanup_correction';
-    for (let index = items.length - 1; index >= 0; index--) {
-      const item = items[index] as { targetKind?: unknown; timestamp?: unknown };
-      if (item && item.targetKind === want && typeof item.timestamp === 'string') {
-        const time = new Date(item.timestamp);
-        if (!Number.isNaN(time.getTime()))
-          return time.toLocaleTimeString(undefined, { hour: '2-digit', minute: '2-digit' });
-      }
-    }
-    return null;
-  });
   const speakerRows = $derived(record.speakerTimeline?.segments ?? []);
+  const shownDuration = $derived(duration || (record.speakerTimeline?.durationMs ?? 0) / 1000);
+  // Waveform bars follow the mock generator so the shape matches the design.
   const barHeights = $derived.by(() => {
+    const dur = shownDuration || 5;
+    const count = Math.min(72, Math.max(30, Math.round(dur * 2) + 24));
     let seed = 0;
-    for (const char of record.id) seed = (seed * 31 + char.charCodeAt(0)) % 997;
-    return Array.from({ length: 36 }, (_, index) => {
-      seed = (seed * 37 + index * 11 + 7) % 100;
-      return 18 + ((seed * 7 + index * 13) % 82);
-    });
+    for (const char of record.id) seed = (seed * 31 + char.charCodeAt(0)) % 233280;
+    seed = (seed * 9301 + 49297) % 233280;
+    const heights: number[] = [];
+    for (let index = 0; index < count; index++) {
+      seed = (seed * 9301 + 49297) % 233280;
+      const random = seed / 233280;
+      heights.push(Math.round(16 + 74 * Math.abs(Math.sin(index * 0.37) * 0.55 + random * 0.45)));
+    }
+    return heights;
+  });
+
+  // Keep the editor in sync with the saved text whenever it is not being edited.
+  $effect(() => {
+    if (!editing) {
+      editText = polished;
+      if (editor) fitEditor();
+    }
   });
 
   function fmt(totalSeconds: number) {
@@ -94,21 +95,32 @@
     return fmt(ms / 1000);
   }
 
-  function showMessage(text: string) {
-    message = text;
+  function showToast(text: string, isError: boolean) {
+    if (isError) error = text;
+    else message = text;
     if (messageTimer) clearTimeout(messageTimer);
-    messageTimer = setTimeout(() => {
-      message = null;
-    }, 4000);
+    messageTimer = setTimeout(
+      () => {
+        message = null;
+        error = null;
+      },
+      isError ? 4000 : 1900,
+    );
   }
 
   function fail(cause: unknown, prefix: string) {
-    error = `${prefix} ${cause instanceof Error ? cause.message : String(cause)}`;
+    showToast(`${prefix} ${cause instanceof Error ? cause.message : String(cause)}`, true);
+  }
+
+  function fitEditor() {
+    if (!editor) return;
+    editor.style.height = 'auto';
+    editor.style.height = `${Math.max(140, editor.scrollHeight + 2)}px`;
   }
 
   // Words heard but missing from the polished text, matched case-insensitively
-  // as a multiset so repeated words align one-to-one.
-  function heardParts(): { text: string; changed: boolean }[] {
+  // as a multiset so repeated words align one-to-one, exactly like the mock.
+  function heardParts(): { text: string; changed: boolean; index: number }[] {
     const counts: Record<string, number> = {};
     for (const word of polished
       .toLowerCase()
@@ -116,32 +128,38 @@
       .split(/\s+/)) {
       if (word) counts[word] = (counts[word] ?? 0) + 1;
     }
+    let wordIndex = 0;
     return heard.split(/(\s+)/).map((token) => {
       const key = token.toLowerCase().replace(/[^\w']/g, '');
-      if (!key || /^\s+$/.test(token)) return { text: token, changed: false };
+      if (!key || /^\s+$/.test(token)) return { text: token, changed: false, index: -1 };
       const left = counts[key] ?? 0;
+      const index = wordIndex++;
       if (left > 0) {
         counts[key] = left - 1;
-        return { text: token, changed: false };
+        return { text: token, changed: false, index };
       }
-      return { text: token, changed: true };
+      return { text: token, changed: true, index };
     });
   }
 
-  async function ensureAudio(playAfterLoad: boolean): Promise<boolean> {
+  const wordCount = $derived(heardParts().filter((part) => part.index >= 0).length || 1);
+  const saidThrough = $derived(
+    shownDuration > 0 ? Math.floor((position / shownDuration) * wordCount) : 0,
+  );
+
+  async function ensureAudio(): Promise<boolean> {
     if (audioMissing) return false;
     if (!audioUrl && !pending) {
       pending = 'audio';
-      error = null;
       try {
         const url = await sessionAudioDataUrl(record.id);
         if (!url) {
           audioMissing = true;
-          error = 'Audio unavailable for this recording.';
+          showToast('Audio unavailable for this recording.', true);
           return false;
         }
         audioUrl = url;
-        await Promise.resolve();
+        await tick();
       } catch (cause) {
         fail(cause, 'Could not load audio.');
         return false;
@@ -150,17 +168,25 @@
       }
     }
     if (!audio || !audioUrl) return false;
-    if (playAfterLoad && audio.src !== audioUrl) audio.src = audioUrl;
+    if (audio.src !== audioUrl) audio.src = audioUrl;
     return true;
   }
 
+  function updateProgress() {
+    if (audio) position = audio.currentTime;
+  }
+
   async function togglePlay() {
-    if (busy && !playing) return;
     if (playing) {
       audio?.pause();
       return;
     }
-    if (!(await ensureAudio(true))) return;
+    if (busy) return;
+    if (!(await ensureAudio())) return;
+    if (position >= shownDuration - 0.05) {
+      position = 0;
+      if (audio) audio.currentTime = 0;
+    }
     try {
       await audio?.play();
     } catch (cause) {
@@ -169,29 +195,46 @@
   }
 
   function seekTo(fraction: number) {
-    const target = Math.min(0.999, Math.max(0, fraction)) * (duration || 0);
+    const target = Math.min(0.999, Math.max(0, fraction)) * (duration || shownDuration);
+    position = target;
     if (audio && audioUrl) {
       if (audio.src !== audioUrl) audio.src = audioUrl;
       audio.currentTime = target;
-      position = target;
       if (audio.paused) void audio.play().catch(() => {});
     } else {
-      position = target;
       void togglePlay();
     }
   }
 
-  function seekFromPointer(event: MouseEvent | KeyboardEvent, node: HTMLElement) {
-    const bounds = node.getBoundingClientRect();
-    const at = position / (duration || 1);
-    let fraction: number;
-    if (event instanceof MouseEvent) fraction = (event.clientX - bounds.left) / bounds.width;
-    else if (event.key === 'ArrowLeft') fraction = at - 0.05;
-    else if (event.key === 'ArrowRight') fraction = at + 0.05;
-    else if (event.key === 'Home') fraction = 0;
-    else if (event.key === 'End') fraction = 1;
+  function seekWord(index: number) {
+    seekTo(index / wordCount);
+  }
+
+  function sliderPointer(event: PointerEvent, node: HTMLElement) {
+    const move = (moveEvent: PointerEvent) => {
+      const bounds = node.getBoundingClientRect();
+      seekTo((moveEvent.clientX - bounds.left) / bounds.width);
+    };
+    move(event);
+    node.setPointerCapture(event.pointerId);
+    const up = () => {
+      node.removeEventListener('pointermove', move);
+      node.removeEventListener('pointerup', up);
+    };
+    node.addEventListener('pointermove', move);
+    node.addEventListener('pointerup', up);
+  }
+
+  function sliderKey(event: KeyboardEvent) {
+    const step = 5;
+    if (event.key === 'ArrowRight') seekTo((position + step) / (duration || shownDuration || 1));
+    else if (event.key === 'ArrowLeft')
+      seekTo((position - step) / (duration || shownDuration || 1));
+    else if (event.key === 'Home') seekTo(0);
+    else if (event.key === 'End') seekTo(1);
+    else if (event.key === ' ' || event.key === 'Enter') void togglePlay();
     else return;
-    seekTo(fraction);
+    event.preventDefault();
   }
 
   function cycleSpeed() {
@@ -203,14 +246,11 @@
   async function like() {
     if (busy || !polished.trim()) return;
     pending = 'like';
-    error = null;
     try {
       const updated = await approveLike(record.id, polished);
       editing = false;
       onUpdate(updated);
-      showMessage(
-        updated.verifiedTranscript ? 'Saved as a verified label' : 'Saved as a reviewed correction',
-      );
+      showToast('Saved as a verified label', false);
     } catch (cause) {
       fail(cause, 'Could not save your vote.');
     } finally {
@@ -221,12 +261,15 @@
   async function dislike() {
     if (busy) return;
     pending = 'dislike';
-    error = null;
     try {
       const updated = await setTranscriptFeedback(record.id, 'dislike');
       onUpdate(updated);
       editText = polished;
       editing = true;
+      await tick();
+      fitEditor();
+      editor?.focus();
+      editor?.setSelectionRange(editor.value.length, editor.value.length);
     } catch (cause) {
       fail(cause, 'Could not save your vote.');
     } finally {
@@ -234,25 +277,26 @@
     }
   }
 
+  function enterEdit() {
+    if (!editing) editing = true;
+  }
+
   function cancelEdit() {
     editText = polished;
     editing = false;
-    error = null;
   }
 
   async function saveCorrection() {
     if (busy || !editDirty) return;
     pending = 'save';
-    error = null;
     try {
       const { record: updated, learningOutcome } = await approveCorrectionAndLearn(
         record.id,
         editText,
       );
       editing = false;
-      editText = '';
       onUpdate(updated);
-      showMessage(learningOutcome.status || 'Vesper learned from your edit');
+      showToast(learningOutcome.status || 'Vesper learned from your edit', false);
     } catch (cause) {
       fail(cause, 'Could not save the correction.');
     } finally {
@@ -263,13 +307,11 @@
   async function undoReview() {
     if (busy) return;
     pending = 'undo';
-    error = null;
     try {
       const updated = await retractApproval(record.id);
-      editText = '';
       editing = false;
       onUpdate(updated);
-      showMessage('Review undone');
+      showToast('Review undone', false);
     } catch (cause) {
       fail(cause, 'Could not undo the review.');
     } finally {
@@ -277,47 +319,40 @@
     }
   }
 
-  async function rememberExample() {
-    if (busy || remembered) return;
-    pending = 'remember';
-    error = null;
-    try {
-      await rememberCleanup(record.id);
-      remembered = true;
-      showMessage('Example remembered. Manage it in Settings → Your vocabulary and writing.');
-    } catch (cause) {
-      fail(cause, 'Could not remember this example.');
-    } finally {
-      pending = null;
-    }
+  // The approved state mirrors the mock: a like reads as a verified label,
+  // while only an edited correction reads as learned from the edit. The
+  // backend still routes verbatim and cleanup labels to their honest
+  // training tasks regardless of this wording.
+  function stateLabel(): string | null {
+    if (!approved) return null;
+    if (record.verifiedTranscript) return 'Verified label';
+    const history = Array.isArray(record.reviewHistory) ? record.reviewHistory : [];
+    const last = history[history.length - 1] as { targetKind?: unknown } | undefined;
+    if (last?.targetKind === 'verbatim_transcription') return 'Verified label';
+    if (record.transcriptFeedback === 'like') return 'Verified label';
+    if (record.correctedTranscript) return 'Learned from your edit';
+    return 'Verified label';
   }
 
-  function copyPolished() {
-    if (!polished) return;
+  function copyText() {
+    const text = editing ? editText : polished;
+    if (!text) return;
     navigator.clipboard
-      .writeText(polished)
-      .then(() => {
-        copied = true;
-        if (copyTimer) clearTimeout(copyTimer);
-        copyTimer = setTimeout(() => {
-          copied = false;
-        }, 1800);
-      })
+      .writeText(text)
+      .then(() => showToast('Copied', false))
       .catch((cause: unknown) => fail(cause, 'Could not copy the transcript.'));
   }
 
-  const shownDuration = $derived(duration || (record.speakerTimeline?.durationMs ?? 0) / 1000);
+  const label = $derived(stateLabel());
 </script>
 
-<article class="tc-card" aria-label="Recording transcript card">
+<div class="xp" role="article" aria-label="Recording transcript card">
   <audio
     bind:this={audio}
     src={audioUrl ?? undefined}
     preload="metadata"
     hidden
-    ontimeupdate={() => {
-      if (audio) position = audio.currentTime;
-    }}
+    ontimeupdate={updateProgress}
     onloadedmetadata={() => {
       if (audio) {
         duration = Number.isFinite(audio.duration) ? audio.duration : 0;
@@ -331,17 +366,20 @@
       position = 0;
     }}
   ></audio>
-  <div class="tc-player">
+  <div class="pl" class:on={playing}>
     <button
-      class="tc-play"
-      class:playing
+      class="pp"
       type="button"
       disabled={busy && !playing}
       onclick={togglePlay}
       aria-label={playing ? 'Pause recording' : 'Play recording'}
-    ></button>
+    >
+      {#if playing}<svg viewBox="0 0 24 24" aria-hidden="true"
+          ><path d={PAUSE} stroke-width="3.2" stroke-linecap="round" /></svg
+        >{:else}<svg viewBox="0 0 24 24" aria-hidden="true"><path d={PLAY} /></svg>{/if}
+    </button>
     <div
-      class="tc-wave"
+      class="wf"
       role="slider"
       tabindex="0"
       aria-label="Seek recording"
@@ -349,13 +387,8 @@
       aria-valuemax={Math.round(shownDuration)}
       aria-valuenow={Math.floor(position)}
       aria-valuetext={`${fmt(position)} of ${fmt(shownDuration)}`}
-      onclick={(event) => seekFromPointer(event, event.currentTarget)}
-      onkeydown={(event) => {
-        if (['ArrowLeft', 'ArrowRight', 'Home', 'End'].includes(event.key)) {
-          event.preventDefault();
-          seekFromPointer(event, event.currentTarget);
-        }
-      }}
+      onpointerdown={(event) => sliderPointer(event, event.currentTarget)}
+      onkeydown={sliderKey}
     >
       {#each barHeights as height, index (index)}<i
           aria-hidden="true"
@@ -364,9 +397,9 @@
             index < Math.round((position / shownDuration) * barHeights.length)}
         ></i>{/each}
     </div>
-    <span class="tc-time">{fmt(position)} / {fmt(shownDuration)}</span>
+    <span class="tmn">{fmt(position)} / {fmt(shownDuration)}</span>
     <button
-      class="tc-speed"
+      class="sx"
       type="button"
       onclick={cycleSpeed}
       disabled={busy}
@@ -376,53 +409,68 @@
   </div>
 
   {#if !hasTranscript}
-    <p class="note">No transcript was produced for this recording.</p>
+    <p class="empty">No transcript was produced for this recording.</p>
   {:else}
-    <div class="section-heading transcript-heading">
-      <h3>Transcript</h3>
+    <div class="th">
+      <b>Transcript</b>
       <button
-        class="quiet transcript-copy"
-        class:copy-confirmed={copied}
+        class="gh"
         type="button"
-        onclick={copyPolished}
-        aria-label={copied ? 'Transcript copied' : 'Copy transcript'}
-        title="Copy transcript"><CopyGlyph {copied} />{copied ? 'Copied' : 'Copy text'}</button
+        onclick={copyText}
+        aria-label="Copy transcript"
+        title="Copy transcript"
+      >
+        <CopyGlyph copied={false} />Copy text</button
       >
     </div>
-    <div class="tc-cols">
-      <div class="tc-col">
-        <span class="tc-label">Heard</span>
-        <!-- Marks are informational; seeking stays on the slider above. -->
-        <p class="tc-heard">
-          {#each heardParts() as part, index (index)}{#if part.changed}<mark>{part.text}</mark
+    <div class="cols">
+      <div class="col">
+        <label>Heard</label>
+        <!-- Word tap seeks like the mock; the slider stays the keyboard path. -->
+        <p class="raw">
+          {#each heardParts() as part, index (index)}{#if part.changed}<span
+                class="w"
+                data-i={part.index}
+                class:said={part.index < saidThrough}
+                class:now={playing && part.index === saidThrough}
+                onclick={() => seekWord(part.index)}><mark>{part.text}</mark></span
+              >{:else if part.index >= 0}<span
+                class="w"
+                data-i={part.index}
+                class:said={part.index < saidThrough}
+                class:now={playing && part.index === saidThrough}
+                onclick={() => seekWord(part.index)}>{part.text}</span
               >{:else}{part.text}{/if}{/each}
         </p>
       </div>
-      <div class="tc-col">
-        <label class="tc-label" for={`tc-polished-${record.id}`}>Polished · edit to teach</label>
-        {#if editing}
-          <textarea
-            id={`tc-polished-${record.id}`}
-            class="tc-polished"
-            rows="4"
-            spellcheck="false"
-            value={editText}
-            oninput={(event) => {
-              editText = event.currentTarget.value;
-            }}
-            disabled={busy}></textarea>
-        {:else}
-          <p class="tc-polished-text">{polished}</p>
-        {/if}
+      <div class="col">
+        <label for={`p${record.id}`}>Polished · edit to teach</label>
+        <textarea
+          id={`p${record.id}`}
+          class="pol"
+          class:editing
+          bind:this={editor}
+          spellcheck="false"
+          value={editText}
+          oninput={(event) => {
+            editText = event.currentTarget.value;
+            enterEdit();
+            fitEditor();
+          }}
+          onfocus={enterEdit}
+          onkeydown={(event) => {
+            if (event.key === 'Escape') cancelEdit();
+          }}
+          disabled={busy}></textarea>
       </div>
     </div>
-    <div class="tc-foot">
+    <div class="tf">
       {#if editing}
         <span class="hint">Fix the wording, then save. Vesper learns from the change.</span>
-        <div class="tc-actions">
-          <button class="quiet" type="button" onclick={cancelEdit} disabled={busy}>Cancel</button>
+        <div class="acts">
+          <button class="btn" type="button" onclick={cancelEdit} disabled={busy}>Cancel</button>
           <button
-            class="primary"
+            class="btn p"
             type="button"
             onclick={saveCorrection}
             disabled={busy || !editDirty}
@@ -430,413 +478,565 @@
             {pending === 'save' ? 'Saving…' : 'Save correction'}
           </button>
         </div>
-      {:else if how}
-        <div class="tc-state">
-          <span class="tc-state-pill"
-            ><Icon name="check" />{how === 'verified'
-              ? 'Verified label'
-              : 'Learned from your edit'}{#if reviewTime}
-              · {reviewTime}{/if}</span
-          >
-          <button class="tc-undo" type="button" onclick={undoReview} disabled={busy}>Undo</button>
+      {:else if label}
+        <div class="lft">
+          <span class="state"
+            ><svg viewBox="0 0 24 24" aria-hidden="true"><path d={CHECK} /></svg>{label}</span
+          ><button class="ln" type="button" onclick={undoReview} disabled={busy}>Undo</button>
         </div>
       {:else}
-        <div class="tc-vote">
-          <div class="tc-vote-buttons">
+        <div class="lft">
+          <div class="vt">
             <button
-              class="tc-vote-button"
-              class:active={record.transcriptFeedback === 'like'}
+              class="vb"
               type="button"
               onclick={like}
               disabled={busy}
               aria-label="Looks right"
               aria-pressed={record.transcriptFeedback === 'like'}
-              title="Looks right"><Icon name="like" /></button
+              title="Looks right"
+              ><svg viewBox="0 0 24 24" aria-hidden="true"><path d={THUMB} /></svg></button
             >
             <button
-              class="tc-vote-button tc-dislike"
-              class:active={record.transcriptFeedback === 'dislike'}
+              class="vb dn"
               type="button"
               onclick={dislike}
               disabled={busy}
               aria-label="Needs a fix"
               aria-pressed={record.transcriptFeedback === 'dislike'}
-              title="Needs a fix"><Icon name="dislike" /></button
+              title="Needs a fix"
+              ><svg viewBox="0 0 24 24" aria-hidden="true"><path d={THUMB} /></svg></button
             >
           </div>
-          <span class="tc-question">Is the polished text right?</span>
+          <span class="q">Is the polished text right?</span>
         </div>
       {/if}
     </div>
   {/if}
 
-  <button
-    class="tc-details-toggle"
-    type="button"
-    onclick={() => (detailsOpen = !detailsOpen)}
-    aria-expanded={detailsOpen}
-    aria-controls={`tc-details-${record.id}`}
-    ><span>Details</span><Icon name="chevron" active={detailsOpen} /></button
-  >
-  {#if detailsOpen}
-    <div class="tc-details" id={`tc-details-${record.id}`}>
-      <dl class="tc-facts">
-        <div>
-          <dt>Original file</dt>
-          <dd>{record.originalFilename}</dd>
+  {#if record.audioRelativePath}
+    <button
+      class="dt"
+      type="button"
+      onclick={() => (detailsOpen = !detailsOpen)}
+      aria-expanded={detailsOpen}
+      aria-controls={`tc-details-${record.id}`}
+      >Details<svg class="i" viewBox="0 0 24 24" aria-hidden="true"><path d="M6 9l6 6 6-6" /></svg
+      ></button
+    >
+    {#if detailsOpen}
+      <div class="dd" id={`tc-details-${record.id}`}>
+        <div class="dl">
+          <div><small>Original file</small><span>{record.originalFilename}</span></div>
+          <div>
+            <small>File size</small><span>
+              {(record.audioBytes / 1024 ** 2).toLocaleString(undefined, {
+                maximumFractionDigits: 2,
+              })} MiB
+            </span>
+          </div>
+          <div><small>Archived file</small><span>{record.audioRelativePath}</span></div>
+          <div><small>Project</small><span>{projectName}</span></div>
         </div>
-        <div>
-          <dt>File size</dt>
-          <dd>
-            {(record.audioBytes / 1024 ** 2).toLocaleString(undefined, {
-              maximumFractionDigits: 2,
-            })} MiB
-          </dd>
-        </div>
-        <div>
-          <dt>Archived file</dt>
-          <dd>{record.audioRelativePath}</dd>
-        </div>
-        <div>
-          <dt>Project</dt>
-          <dd>{projectName}</dd>
-        </div>
-      </dl>
-      {#if speakerRows.length}
-        <p class="note">
-          Speaker numbers apply to this recording only. Overlapping ranges mean simultaneous speech.
-        </p>
-        <div class="tc-speakers" role="region" aria-label="Estimated speaker activity">
-          <table>
-            <thead
-              ><tr
-                ><th scope="col">Speaker</th><th scope="col">Start</th><th scope="col">End</th></tr
-              ></thead
-            >
-            <tbody>
-              {#each speakerRows as segment, index (index)}<tr>
-                  <td>Speaker {segment.speaker}</td>
-                  <td>{fmtMs(segment.startMs)}</td>
-                  <td>{fmtMs(segment.endMs)}</td>
-                </tr>{/each}
-            </tbody>
-          </table>
-        </div>
-      {/if}
-      {#if record.correctedTranscript && !remembered}
-        <button class="quiet" type="button" onclick={rememberExample} disabled={busy}>
-          {pending === 'remember' ? 'Remembering…' : 'Remember as writing example'}
-        </button>
-      {/if}
-    </div>
+        {#if speakerRows.length}
+          <div>
+            <p class="nt">
+              Speaker numbers apply to this recording only. Overlapping ranges mean simultaneous
+              speech.
+            </p>
+            <div class="spk" tabindex="0" aria-label="Estimated speaker activity">
+              <table>
+                <thead
+                  ><tr
+                    ><th scope="col">Speaker</th><th scope="col">Start</th><th scope="col">End</th
+                    ></tr
+                  ></thead
+                >
+                <tbody>
+                  {#each speakerRows as segment, index (index)}<tr>
+                      <td>Speaker {segment.speaker}</td>
+                      <td>{fmtMs(segment.startMs)}</td>
+                      <td>{fmtMs(segment.endMs)}</td>
+                    </tr>{/each}
+                </tbody>
+              </table>
+            </div>
+          </div>
+        {/if}
+      </div>
+    {/if}
   {/if}
-
-  <div aria-live="polite">
-    {#if error}<p class="error" role="alert">{error}</p>{/if}
-    {#if message}<p class="success">{message}</p>{/if}
-  </div>
-</article>
+  {#if message || error}<div class="toast show" role="status">{error ?? message}</div>{/if}
+</div>
 
 <style>
-  .tc-card {
-    background: var(--color-raised);
-    border: 1px solid var(--color-line);
-    border-radius: var(--radius-md);
-    padding: var(--space-4);
-    display: flex;
-    flex-direction: column;
-    gap: var(--space-3);
+  .xp {
+    padding: 4px 4px 24px;
     min-width: 0;
   }
-  /* The card lives in a grid row: let every section shrink instead of
-     forcing the whole recording list wider than the viewport. */
-  .tc-card > * {
+  /* The expanded area lives in a grid row: sections shrink instead of
+     forcing the recording list wider than the viewport. */
+  .xp > * {
     min-width: 0;
   }
-  .tc-player {
+  .pl {
     display: flex;
     align-items: center;
-    gap: var(--space-2);
+    gap: 14px;
+    padding: 8px 18px 8px 8px;
+    border: 1px solid var(--color-line);
+    border-radius: 999px;
+    margin-bottom: 22px;
+    transition: border-color 0.3s;
   }
-  .tc-play {
-    flex: none;
-    width: 44px;
-    height: 44px;
-    border-radius: 50%;
-    border: 1px solid var(--color-control-edge);
-    background: var(--color-tint);
-    cursor: pointer;
-    position: relative;
-  }
-  .tc-play::before {
-    content: '';
-    position: absolute;
-    left: 17px;
-    top: 13px;
-    border-left: 12px solid var(--color-ink);
-    border-top: 9px solid transparent;
-    border-bottom: 9px solid transparent;
-  }
-  .tc-play.playing::before {
-    content: '';
-    left: 15px;
-    top: 13px;
-    width: 5px;
-    height: 18px;
-    border: none;
-    background: var(--color-ink);
-    box-shadow: 9px 0 0 var(--color-ink);
-  }
-  .tc-play:hover:enabled {
+  .pl.on {
     border-color: var(--color-accent);
   }
-  .tc-play:focus-visible {
+  .pp {
+    width: 42px;
+    height: 42px;
+    border-radius: 50%;
+    border: 0;
+    background: var(--color-accent);
+    color: var(--color-on-accent);
+    display: grid;
+    place-items: center;
+    flex: none;
+    cursor: pointer;
+    transition: transform 0.25s var(--ease-spring);
+  }
+  .pp:hover:enabled {
+    transform: scale(1.07);
+  }
+  .pp:active:enabled {
+    transform: scale(0.94);
+  }
+  .pp:focus-visible {
     outline: 2px solid var(--color-focus);
     outline-offset: 2px;
   }
-  .tc-wave {
+  .pp svg {
+    width: 18px;
+    height: 18px;
+    fill: currentColor;
+    stroke: currentColor;
+    stroke-width: 1.5;
+    stroke-linejoin: round;
+  }
+  .wf {
     flex: 1 1 0;
     min-width: 0;
+    height: 38px;
     display: flex;
     align-items: center;
     gap: 2px;
-    height: 44px;
     cursor: pointer;
+    touch-action: none;
+    border-radius: 8px;
   }
-  .tc-wave i {
+  .wf i {
     flex: 1 1 0;
     min-width: 0;
-    background: var(--color-control-edge);
-    border-radius: 1px;
+    max-width: 5px;
+    border-radius: 2px;
+    background: var(--color-muted);
+    opacity: 0.4;
+    transition:
+      opacity 0.15s,
+      background 0.15s;
   }
-  .tc-wave i.on {
-    background: var(--color-accent-light);
+  .wf i.on {
+    background: var(--color-accent);
+    opacity: 1;
   }
-  .tc-wave:focus-visible {
+  .wf:focus-visible {
     outline: 2px solid var(--color-focus);
     outline-offset: 2px;
   }
-  .tc-time {
-    flex: none;
-    font-size: 12px;
+  .tmn {
+    font-size: 13.5px;
     color: var(--color-muted);
     font-variant-numeric: tabular-nums;
     white-space: nowrap;
-  }
-  .tc-speed {
     flex: none;
-    min-width: 44px;
-    min-height: 44px;
-    background: none;
-    border: none;
-    color: var(--color-muted);
-    font-size: 13px;
-    cursor: pointer;
-    border-radius: var(--radius-sm);
   }
-  .tc-speed:hover:enabled {
-    color: var(--color-ink);
-  }
-  .tc-cols {
-    display: grid;
-    grid-template-columns: 1fr 1fr;
-    gap: var(--space-3);
-  }
-  @media (max-width: 560px) {
-    .tc-cols {
-      grid-template-columns: 1fr;
-    }
-  }
-  .tc-label {
-    display: block;
-    font-size: 12px;
-    font-weight: 600;
-    color: var(--color-muted);
-    margin-bottom: var(--space-2);
-  }
-  .tc-heard {
-    margin: 0;
-    font-size: 14px;
-    line-height: 1.6;
-    background: var(--color-panel);
+  .sx {
     border: 1px solid var(--color-line);
-    border-radius: var(--radius-sm);
-    padding: var(--space-3);
-  }
-  .tc-heard mark {
-    background: color-mix(in srgb, var(--color-warning) 28%, transparent);
-    color: var(--color-ink);
-    border-radius: 3px;
-    padding-inline: 1px;
-  }
-  .tc-heard {
-    cursor: text;
-  }
-  .tc-polished-text {
-    margin: 0;
-    font-size: 14px;
-    line-height: 1.6;
-    padding: var(--space-3);
-    border: 1px solid transparent;
-  }
-  .tc-polished {
-    width: 100%;
-    box-sizing: border-box;
-  }
-  .tc-foot {
-    border-top: 1px solid var(--color-line);
-    padding-top: var(--space-3);
-  }
-  .tc-vote {
-    display: flex;
-    align-items: center;
-    gap: var(--space-3);
-  }
-  .tc-vote-buttons {
-    display: flex;
-    gap: var(--space-2);
-  }
-  .tc-vote-button {
-    width: 44px;
-    height: 44px;
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    border-radius: 50%;
-    border: 1px solid var(--color-control-edge);
     background: transparent;
+    border-radius: 999px;
+    padding: 3px 10px;
+    font-size: 13px;
     color: var(--color-muted);
+    min-width: 46px;
+    flex: none;
     cursor: pointer;
   }
-  .tc-vote-button :global(.icon) {
-    width: 20px;
-    height: 20px;
-  }
-  .tc-vote-button:hover:enabled {
+  .sx:hover:enabled {
     color: var(--color-ink);
     border-color: var(--color-control-hover);
   }
-  .tc-vote-button:focus-visible {
+  .th {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 14px;
+  }
+  .th b {
+    font-weight: 800;
+    font-size: 20px;
+    letter-spacing: -0.03em;
+  }
+  .gh {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    border: 0;
+    background: transparent;
+    color: var(--color-muted);
+    font-size: 14px;
+    padding: 6px 8px;
+    border-radius: 8px;
+    cursor: pointer;
+  }
+  .gh:hover:enabled {
+    color: var(--color-ink);
+    background: var(--color-tint);
+  }
+  .cols {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 16px;
+  }
+  @media (max-width: 560px) {
+    .cols {
+      grid-template-columns: 1fr;
+    }
+  }
+  .col > label {
+    display: block;
+    font-size: 12.5px;
+    color: var(--color-muted);
+    margin-bottom: 8px;
+    letter-spacing: 0.02em;
+  }
+  .col .raw,
+  .col textarea {
+    width: 100%;
+    box-sizing: border-box;
+    margin: 0;
+    padding: 16px 18px;
+    border-radius: 14px;
+    font-size: 15.5px;
+    line-height: 1.65;
+    min-height: 140px;
+  }
+  .col .raw {
+    border: 1px solid var(--color-line);
+    color: var(--color-muted);
+    white-space: pre-wrap;
+  }
+  .col .raw mark {
+    background: transparent;
+    color: var(--color-muted);
+    text-decoration: line-through;
+    text-decoration-color: var(--color-accent);
+    text-decoration-thickness: 1.5px;
+  }
+  .col textarea {
+    display: block;
+    resize: none;
+    overflow: hidden;
+    background: var(--color-raised);
+    border: 1px solid var(--color-line);
+    color: var(--color-ink);
+    outline: none;
+    transition:
+      border-color 0.2s,
+      box-shadow 0.2s;
+  }
+  .col textarea:hover:enabled {
+    border-color: var(--color-muted);
+  }
+  .col textarea:focus,
+  .col textarea.editing {
+    border-color: var(--color-accent);
+    box-shadow: 0 0 0 3px var(--color-tint);
+  }
+  .raw .w {
+    border-radius: 4px;
+    cursor: pointer;
+    transition:
+      color 0.15s,
+      background 0.15s;
+  }
+  .raw .w:hover {
+    background: var(--color-tint);
+  }
+  .raw .w.said {
+    color: var(--color-ink);
+  }
+  .raw .w.now {
+    background: var(--color-tint);
+    color: var(--color-accent);
+  }
+  .tf {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 14px;
+    flex-wrap: wrap;
+    margin-top: 16px;
+    min-height: 44px;
+  }
+  .vt {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    padding: 4px;
+    border: 1px solid var(--color-line);
+    border-radius: 999px;
+  }
+  .vb {
+    width: 38px;
+    height: 38px;
+    border-radius: 50%;
+    border: 0;
+    background: transparent;
+    color: var(--color-muted);
+    display: grid;
+    place-items: center;
+    cursor: pointer;
+    transition:
+      background 0.2s,
+      color 0.2s,
+      transform 0.3s var(--ease-spring);
+  }
+  .vb:hover:enabled {
+    background: var(--color-tint);
+    color: var(--color-accent);
+    transform: translateY(-2px);
+  }
+  .vb:active:enabled {
+    transform: scale(0.9);
+  }
+  .vb:focus-visible {
     outline: 2px solid var(--color-focus);
     outline-offset: 2px;
   }
-  .tc-vote-button:active:enabled {
-    transform: scale(0.96);
+  .vb svg {
+    width: 18px;
+    height: 18px;
+    fill: none;
+    stroke: currentColor;
+    stroke-width: 1.8;
+    stroke-linecap: round;
+    stroke-linejoin: round;
   }
-  .tc-vote-button.active {
-    color: var(--color-accent-light);
-    border-color: var(--color-accent);
-    background: var(--color-tint);
+  .vb.dn svg {
+    transform: rotate(180deg);
   }
-  .tc-vote-button:disabled {
+  .vb:disabled {
     opacity: 0.45;
     cursor: not-allowed;
   }
-  .tc-question {
-    font-size: 13px;
+  .q {
+    font-size: 14px;
     color: var(--color-muted);
   }
-  .tc-actions {
+  .lft {
     display: flex;
-    flex-wrap: wrap;
-    gap: var(--space-2);
-    margin-top: var(--space-2);
-  }
-  .hint {
-    font-size: 13px;
-    color: var(--color-muted);
-  }
-  .tc-state {
-    display: flex;
-    flex-wrap: wrap;
     align-items: center;
-    gap: var(--space-2) var(--space-3);
+    gap: 14px;
+    flex-wrap: wrap;
   }
-  .tc-state-pill {
+  .state {
     display: inline-flex;
     align-items: center;
-    gap: var(--space-2);
-    font-size: 13px;
-    font-weight: 600;
-    color: var(--color-accent-light);
+    gap: 8px;
+    padding: 7px 14px;
+    border-radius: 999px;
+    background: var(--color-tint);
+    color: var(--color-accent);
+    font-size: 14px;
+    font-weight: 500;
   }
-  .tc-state-pill :global(.icon) {
+  .state svg {
     width: 16px;
     height: 16px;
+    fill: none;
+    stroke: currentColor;
+    stroke-width: 2.2;
+    stroke-linecap: round;
+    stroke-linejoin: round;
   }
-  .tc-undo {
-    background: none;
-    border: none;
-    padding: var(--space-2);
-    min-height: 44px;
+  .ln {
+    border: 0;
+    background: transparent;
     color: var(--color-muted);
-    font-size: 13px;
+    font-size: 14px;
     text-decoration: underline;
     text-underline-offset: 3px;
+    padding: 6px;
     cursor: pointer;
   }
-  .tc-undo:hover:enabled {
+  .ln:hover:enabled {
     color: var(--color-ink);
   }
-  .tc-details-toggle {
-    display: inline-flex;
-    align-items: center;
-    gap: var(--space-2);
-    align-self: flex-start;
-    background: none;
-    border: none;
+  .hint {
+    font-size: 14px;
     color: var(--color-muted);
-    font-size: 13px;
-    min-height: 44px;
-    cursor: pointer;
-    padding: var(--space-2) 0;
+    flex: 1;
+    min-width: 200px;
   }
-  .tc-details-toggle:hover:enabled {
+  .btn {
+    height: 40px;
+    padding: 0 18px;
+    border-radius: 10px;
+    border: 1px solid var(--color-line);
+    background: transparent;
     color: var(--color-ink);
+    font-size: 14.5px;
+    cursor: pointer;
+    transition:
+      transform 0.25s var(--ease-spring),
+      border-color 0.2s;
   }
-  .tc-details {
-    border-top: 1px solid var(--color-line);
-    padding-top: var(--space-3);
+  .btn:hover:enabled {
+    border-color: var(--color-muted);
+  }
+  .btn.p {
+    background: var(--color-accent);
+    border-color: var(--color-accent);
+    color: var(--color-on-accent);
+    font-weight: 500;
+  }
+  .btn.p:hover:enabled {
+    transform: translateY(-1px);
+  }
+  .btn:disabled {
+    opacity: 0.4;
+    cursor: not-allowed;
+  }
+  .acts {
     display: flex;
-    flex-direction: column;
-    gap: var(--space-3);
+    gap: 8px;
+    flex-wrap: wrap;
   }
-  .tc-facts {
-    margin: 0;
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
-    gap: var(--space-2) var(--space-4);
-  }
-  .tc-facts dt {
-    font-size: 12px;
+  .dt {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-top: 18px;
+    border: 0;
+    background: transparent;
     color: var(--color-muted);
+    font-size: 14px;
+    padding: 6px 0;
+    cursor: pointer;
   }
-  .tc-facts dd {
-    margin: 0;
-    font-size: 13px;
+  .dt:hover:enabled {
+    color: var(--color-ink);
+  }
+  .dt svg {
+    width: 18px;
+    height: 18px;
+    fill: none;
+    stroke: currentColor;
+    stroke-width: 1.8;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+    transition: transform 0.4s var(--ease-spring);
+  }
+  .dt[aria-expanded='true'] svg {
+    transform: rotate(180deg);
+  }
+  .dd {
+    margin-top: 10px;
+    display: grid;
+    gap: 18px;
+  }
+  .dl {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 14px 24px;
+    font-size: 14px;
+  }
+  .dl small {
+    display: block;
+    color: var(--color-muted);
+    font-size: 12.5px;
+    margin-bottom: 2px;
+  }
+  .dl span {
     overflow-wrap: anywhere;
   }
-  .tc-speakers {
-    overflow-x: auto;
+  .spk {
+    max-height: 168px;
+    overflow-y: auto;
+    border: 1px solid var(--color-line);
+    border-radius: 12px;
   }
-  .tc-speakers table {
+  .spk table {
+    width: 100%;
     border-collapse: collapse;
-    font-size: 13px;
-  }
-  .tc-speakers th,
-  .tc-speakers td {
-    text-align: left;
-    padding: var(--space-1) var(--space-3) var(--space-1) 0;
+    font-size: 14px;
     font-variant-numeric: tabular-nums;
-    white-space: nowrap;
   }
-  .tc-speakers th {
-    font-weight: 600;
+  .spk th {
+    position: sticky;
+    top: 0;
+    background: var(--color-bg);
+    text-align: left;
+    font-weight: 500;
     color: var(--color-muted);
+    padding: 10px 16px;
+    border-bottom: 1px solid var(--color-line);
+  }
+  .spk td {
+    padding: 9px 16px;
+    border-top: 1px solid var(--color-line);
+  }
+  .spk tbody tr:first-child td {
+    border-top: 0;
+  }
+  .spk:focus-visible {
+    outline: 2px solid var(--color-focus);
+    outline-offset: 2px;
+  }
+  .nt {
+    margin: 0 0 6px;
+    color: var(--color-muted);
+    font-size: 13.5px;
+  }
+  .empty {
+    color: var(--color-muted);
+    margin: 6px 0 0;
+    font-size: 15.5px;
+  }
+  .toast {
+    position: fixed;
+    left: 50%;
+    bottom: 24px;
+    transform: translate(-50%, 16px);
+    background: var(--color-raised);
+    color: var(--color-ink);
+    border: 1px solid var(--color-line);
+    padding: 10px 18px;
+    border-radius: 999px;
+    font-size: 14px;
+    z-index: 20;
+    box-shadow: 0 10px 30px rgb(0 0 0 / 25%);
+    max-width: min(90vw, 560px);
+  }
+  .toast.show {
+    transform: translate(-50%, 0);
   }
   @media (prefers-reduced-motion: reduce) {
-    .tc-vote-button:active:enabled {
-      transform: none;
+    *,
+    *::before,
+    *::after {
+      animation: none !important;
+      transition: none !important;
     }
   }
 </style>
