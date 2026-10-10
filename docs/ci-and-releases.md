@@ -402,12 +402,23 @@ production collector. This repair belongs to the existing [release-policy issue 
 ## Release workflow and download URL
 
 A pushed `vX.Y.Z` or `vX.Y.Z-prerelease` tag runs the reusable test/security gates,
-verifies the synchronized application version, and builds the optimized macOS
-app plus DMG using Tauri's existing bundler. Publishing a release in GitHub's UI
-also triggers this workflow for its tag. The collected assets are:
+verifies the synchronized application version, builds the optimized macOS
+app plus DMG using Tauri's existing bundler, and stages both assets on a
+**draft** release without publishing. The collected assets are:
 
 - `vesper-macos-arm64.dmg`, containing `Vesper.app` and an Applications link;
 - `SHA256SUMS`, covering that DMG.
+
+Publication is a separate approval-gated step: the `promote` job runs only on
+explicit workflow dispatch with the tag, requires the `production` environment
+(an owner configures required reviewers under repository Settings →
+Environments), re-verifies tag/version agreement, refuses anything that is not
+a draft, and flips that exact draft to published without rebuilding. Publishing
+a release through GitHub's UI triggers only a read-only `verify` job (version
+agreement, asset presence, DMG checksum) — UI publication bypasses the approval
+gate, so the supported path is tag push followed by gated dispatch promotion.
+Draft/candidate and published/stable states stay distinct and observable in the
+workflow summaries and the release page.
 
 The version is recorded in the release tag and app bundle. The asset name stays
 constant so a website download button can link to:
@@ -438,10 +449,12 @@ replace the latest stable link; use its version-specific URL. See GitHub's
 `scripts/package-release.sh` checks the bundled version/executable, verifies the
 exact versioned DMG with `hdiutil`, then copies it to the stable filename.
 `scripts/publish-release.mjs` checks the local checksum before contacting GitHub.
-For a new or draft release it uploads all assets while the release is still a
-draft, then publishes it. Stable releases are marked latest; prereleases are
-explicitly excluded from latest. Publish stable tags in version order so an old
-newly published tag does not replace the website's latest download.
+With `RELEASE_DRAFT_ONLY=1` (the tag-push draft job) it uploads all assets
+while the release is still a draft and stops there, returning `draft-updated`.
+Without it, a draft is uploaded and then published. Stable releases are marked
+latest; prereleases are explicitly excluded from latest. Publish stable tags in
+version order so an old newly published tag does not replace the website's
+latest download.
 
 For an already-published release, the script only adds missing assets. It never
 clobbers existing public downloads. A partial-upload retry requires any existing
@@ -469,11 +482,21 @@ Release sequence:
 2. Update release notes and canonical documentation.
 3. Run `make check`; on a Mac, `CI=true make build` builds the optimized app and DMG.
 4. Inspect/install-test the local DMG before approving the source version.
-5. Merge the reviewed changes and push the matching `vX.Y.Z` tag, or publish that
-   version through GitHub Releases. These are maintainer actions, not actions
-   performed by `make version-set` or by this setup task.
-6. Wait for the Release workflow to pass and verify the attached DMG/checksum.
-7. Use the stable latest link on the launch site, or a version URL for a pinned download.
+5. Merge the reviewed changes and push the matching `vX.Y.Z` tag. This is a
+   maintainer action, not something `make version-set` performs. The tag run
+   stages a draft candidate; it never publishes.
+6. Wait for the Release workflow to pass and inspect the draft candidate and
+   its checksums.
+7. Promote with explicit approval: `gh workflow run Release --ref main -f tag=vX.Y.Z`
+   (or the Actions UI), approve the `production` environment deployment, and
+   confirm the published assets and download links in the run summary.
+8. Use the stable latest link on the launch site, or a version URL for a pinned download.
+
+Nightly builds stay expiring Actions artifacts and are never published releases
+or the website default. Roll back by shipping a higher patch version; never
+move or overwrite old tag assets, and the promote job refuses non-draft
+releases. Beta releases use SemVer prerelease tags and stay out of the stable
+`latest` pointer.
 
 Release workflows never download or bundle ASR/cleanup model weights. Model and
 runtime downloads retain their own pinned versions, licenses, sizes and hashes.
