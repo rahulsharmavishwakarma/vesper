@@ -28,8 +28,8 @@ function fixture(t, release = null, fail = () => false) {
     directory,
     digest,
     calls,
-    publish: (tag = 'v1.2.3') =>
-      publishRelease({ repository: 'example/vesper', tag, directory, run }),
+    publish: (tag = 'v1.2.3', options = {}) =>
+      publishRelease({ repository: 'example/vesper', tag, directory, run, ...options }),
   };
 }
 
@@ -120,6 +120,37 @@ test('invalid tags and mismatched checksums fail before contacting GitHub', (t) 
   fs.writeFileSync(path.join(f.directory, 'SHA256SUMS'), 'wrong digest\n');
   assert.throws(() => f.publish(), /does not match/);
   assert.equal(f.calls.length, 0);
+});
+
+test('draft-only mode stages a new candidate without publishing it', (t) => {
+  const f = fixture(t);
+  assert.equal(f.publish('v1.2.3', { publish: false }), 'draft-updated');
+  assert.deepEqual(
+    f.calls.map((args) => args.slice(0, 2)),
+    [
+      ['api', 'repos/example/vesper/releases/tags/v1.2.3'],
+      ['release', 'create'],
+      ['release', 'upload'],
+    ],
+  );
+  assert.ok(f.calls[1].includes('--draft'));
+  assert.ok(f.calls[2].includes('--clobber'));
+});
+
+test('draft-only mode refreshes an existing draft without publishing it', (t) => {
+  const f = fixture(t, { draft: true, prerelease: false, assets: [] });
+  assert.equal(f.publish('v1.2.3', { publish: false }), 'draft-updated');
+  assert.ok(f.calls[1].includes('--clobber'));
+  assert.equal(
+    f.calls.some((args) => args[1] === 'edit'),
+    false,
+  );
+});
+
+test('draft-only mode never mutates an already-published release', (t) => {
+  const f = fixture(t, { draft: false, assets: ASSET_NAMES.map((name) => ({ name })) });
+  assert.equal(f.publish('v1.2.3', { publish: false }), 'already-published');
+  assert.equal(f.calls.length, 1);
 });
 
 test('API failures are not mistaken for an absent release', (t) => {

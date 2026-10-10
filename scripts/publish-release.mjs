@@ -8,7 +8,7 @@ import { fileURLToPath } from 'node:url';
 
 export const ASSET_NAMES = ['vesper-macos-arm64.dmg', 'SHA256SUMS'];
 
-export function publishRelease({ repository, tag, directory = 'release', run }) {
+export function publishRelease({ repository, tag, directory = 'release', run, publish = true }) {
   if (!/^[\w.-]+\/[\w.-]+$/.test(repository ?? '')) throw new Error('Invalid repository');
   if (
     !/^v(0|[1-9]\d*)\.(0|[1-9]\d*)\.(0|[1-9]\d*)(?:-[0-9A-Za-z-]+(?:\.[0-9A-Za-z-]+)*)?$/.test(
@@ -80,6 +80,9 @@ export function publishRelease({ repository, tag, directory = 'release', run }) 
   }
 
   call(['release', 'upload', tag, ...files, '--repo', repository, '--clobber']);
+  // Draft-only mode stages the candidate without publishing it. Promotion to
+  // published happens separately through the approval-gated promote job.
+  if (!publish) return 'draft-updated';
   const prerelease = tag.includes('-') || release.prerelease === true;
   call([
     'release',
@@ -98,6 +101,7 @@ if (process.argv[1] && path.resolve(process.argv[1]) === fileURLToPath(import.me
   const result = publishRelease({
     repository: process.env.GITHUB_REPOSITORY,
     tag: process.env.GITHUB_REF_NAME,
+    publish: process.env.RELEASE_DRAFT_ONLY !== '1',
     run: (args) => spawnSync('gh', args, { encoding: 'utf8' }),
   });
   console.log(`Desktop release: ${result}`);
