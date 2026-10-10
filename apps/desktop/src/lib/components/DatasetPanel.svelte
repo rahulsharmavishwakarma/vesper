@@ -442,6 +442,7 @@
             data-calm={calmRows || undefined}
           >
             {#each view === 'recent' ? records.slice(0, 3) : pagination.items as record, index (record.id)}
+              {@const state = recordingState(record)}
               <li
                 class:session-expanded={view !== 'recent' && selected?.id === record.id}
                 style:--row-enter-delay={`${Math.min(index, 5) * 30}ms`}
@@ -459,11 +460,13 @@
                     <span class="session-preview">{recordingTitle(record)}</span>
                     <span class="session-meta"
                       ><time datetime={record.createdAt}>{recordingDate(record.createdAt)}</time
-                      ><span
-                        class="review-badge"
-                        class:approved={record.reviewStatus === 'approved'}
-                        >{recordingState(record)}</span
-                      ></span
+                      >{#if state === 'Reviewed'}<span class="review-ok"
+                          ><Icon name="check" />Reviewed</span
+                        >
+                      {:else if state === 'Needs review'}<span class="review-todo"
+                          ><i class="review-dot"></i>Needs review</span
+                        >
+                      {:else}<span>{state}</span>{/if}</span
                     >
                   </span>
                   <Icon

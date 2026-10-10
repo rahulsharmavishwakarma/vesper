@@ -2868,7 +2868,10 @@ await test('History votes approve, correct-and-learn, and undo independently', a
     'Vote row missing after undo',
   );
   voteButton('Needs a fix').click();
-  await until(() => card()?.querySelector('textarea'), 'Correction editor missing after dislike');
+  await until(
+    () => card()?.textContent.includes('Fix the wording, then save.'),
+    'Correction editor missing after dislike',
+  );
   assert(stored.transcriptFeedback === 'dislike', 'Dislike did not record feedback');
   const editor = card().querySelector('textarea');
   editor.value = 'Keep the recording easy to find downtown.';
