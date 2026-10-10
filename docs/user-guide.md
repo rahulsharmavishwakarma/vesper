@@ -307,6 +307,12 @@ as VS Code when you switch to them. A freshly opened editor can take a moment
 to expose its text field; if it is not ready when recording starts, that result
 remains available through **Copy**. Changing to **Keep in app** stops this
 preparation. Protected fields, Terminal, iTerm and Warp remain excluded.
+When the focused control is a wrapper around the real field — common in
+web-based editors such as Outlook's compose view — Vesper looks inside that
+control for the field you are typing in, and waits briefly once if the editor
+has not exposed its structure yet. In Excel and Numbers, selecting a cell is
+enough: pasting fills exactly that selected cell, and moving to another cell
+before delivery keeps the transcript available through **Copy** instead.
 External-app compatibility is still being qualified.
 
 All current speech adapters can show drafts in the floating recorder. Update
@@ -487,7 +493,7 @@ does not remove your downloaded models or recordings.
 | A language or live captions are unavailable | Check the selected speech model's [supported languages and modes](language-support-and-recommendations.md).                                                                                                                               |
 | A model download fails                      | Check the connection, free disk space and model-folder access, then retry ASR/writing downloads from Models. Supporting audio setup retries automatically.                                                                                |
 | A shortcut is unavailable                   | Resolve the conflict shown beside the shortcut setting or choose another combination.                                                                                                                                                     |
-| Automatic paste fails                       | Choose **Paste into the original text field**, save, and check **Ready to paste**. Keep the original field focused. A newly opened Electron editor may need a moment before the first recording; use Copy for an unavailable destination. If a password prompt, Touch ID dialog or sudo session is open anywhere, dismiss it first — secure input blocks automatic paste everywhere. |
+| Automatic paste fails                       | Choose **Paste into the original text field**, save, and check **Ready to paste**. Keep the original field focused. A newly opened Electron editor may need a moment before the first recording; use Copy for an unavailable destination. In a spreadsheet, select the destination cell first rather than opening it for editing. If a password prompt, Touch ID dialog or sudo session is open anywhere, dismiss it first — secure input blocks automatic paste everywhere. |
 | Accessibility shows on but paste stays unavailable | Local builds are ad-hoc signed, so each rebuild or reinstall is a new identity to macOS and the old grant stops matching. Remove Vesper with the minus button, reinstall that exact build, re-grant access, restart the app, and retest. |
 | A recording is missing from History         | Check whether Save recordings and transcripts was enabled for that session.                                                                                                                                                               |
 

@@ -28,6 +28,8 @@ static AXUIElementRef target;
 static pid_t targetPID;
 static CFRange targetSelection;
 static uint64_t targetToken;
+// Cells carry no text selection: the selected cell itself is the destination.
+static bool targetIsCell;
 static id pasteAccessibilityObserver;
 static NSMutableArray<NSRunningApplication *> *preparedPasteApplications;
 
@@ -197,7 +199,7 @@ void td_panel_hide(void) {
 void td_target_clear(uint64_t token) {
     if (![NSThread isMainThread] || (token && token != targetToken)) return;
     if (target) CFRelease(target);
-    target = NULL; targetToken = 0; targetPID = 0;
+    target = NULL; targetToken = 0; targetPID = 0; targetIsCell = false;
 }
 void td_panel_destroy(void) {
     if (![NSThread isMainThread]) return;
@@ -273,6 +275,61 @@ static AXUIElementRef focused(pid_t pid) {
     AXUIElementSetMessagingTimeout((AXUIElementRef)result, 0.15f);
     return (AXUIElementRef)result;
 }
+// Bounds for the focused-subtree search below. Chromium apps materialize
+// their accessibility tree lazily, so the first pass can see a wrapper with
+// no children yet; one short retry lets it settle. The budgets keep a hung
+// target app from stalling capture: every attribute read already carries a
+// 0.15s messaging timeout, and the walk stops at the first usable field.
+static const int kResolveMaxDepth = 6;
+static const int kResolveMaxNodes = 120;
+// Depth-first, tree-order walk for the field the user actually focused. The
+// search never leaves the focused element's subtree, so a compose window with
+// several fields (To, Subject, Body) can never resolve to one the user was
+// not interacting with. Returns a retained reference or NULL.
+static AXUIElementRef resolveFieldVisit(AXUIElementRef element, CFRange *selection, int depth, int *budget,
+                                       int *childrenSeen) {
+    if (!element || depth > kResolveMaxDepth || *budget <= 0) return NULL;
+    (*budget)--;
+    if (editable(element) && selectedRange(element, selection)) return (AXUIElementRef)CFRetain(element);
+    if (depth == kResolveMaxDepth) return NULL;
+    id children = attribute(element, kAXChildrenAttribute);
+    if (![children isKindOfClass:[NSArray class]]) return NULL;
+    (*childrenSeen)++;
+    for (id child in (NSArray *)children) {
+        if ((__bridge CFTypeRef)child == NULL || CFGetTypeID((__bridge CFTypeRef)child) != AXUIElementGetTypeID())
+            continue;
+        CFRange found = {0, 0};
+        AXUIElementRef match =
+            resolveFieldVisit((__bridge AXUIElementRef)child, &found, depth + 1, budget, childrenSeen);
+        if (match) { *selection = found; return match; }
+        if (*budget <= 0) return NULL;
+    }
+    return NULL;
+}
+static AXUIElementRef resolveField(AXUIElementRef root, CFRange *selection, bool patient) {
+    int budget = kResolveMaxNodes, childrenSeen = 0;
+    AXUIElementRef match = resolveFieldVisit(root, selection, 0, &budget, &childrenSeen);
+    // Retry only when the first pass saw no children at all: a populated but
+    // fieldless subtree (a toolbar, a Send button's container) is a genuine
+    // miss, while a childless wrapper may be a not-yet-materialized tree.
+    if (!match && patient && childrenSeen == 0) {
+        [NSThread sleepForTimeInterval:0.12];
+        budget = kResolveMaxNodes;
+        childrenSeen = 0;
+        match = resolveFieldVisit(root, selection, 0, &budget, &childrenSeen);
+    }
+    return match;
+}
+// Spreadsheet grids expose the selected cell — not a text field — as the
+// focused element, and Command-V fills exactly that selection. Accept cells
+// only in known spreadsheet hosts so a row selection in any other app can
+// never become a paste destination.
+static bool spreadsheetCell(AXUIElementRef element, NSString *bundleIdentifier) {
+    if (![@[@"com.microsoft.Excel", @"com.apple.iWork.Numbers"] containsObject:bundleIdentifier ?: @""])
+        return false;
+    NSString *role = attribute(element, kAXRoleAttribute);
+    return [role isEqualToString:(__bridge NSString *)kAXCellRole];
+}
 bool td_secure_input(void) {
     if (![NSThread isMainThread]) return false;
     return IsSecureEventInputEnabled();
@@ -295,20 +352,41 @@ int td_target_capture(uint64_t token) {
     // destination still uses Copy fallback for this operation.
     preparePasteApplication(front);
     AXUIElementRef element = focused(front.processIdentifier);
-    CFRange selection;
     if (!element) return -2;
-    if (!editable(element) || !selectedRange(element, &selection)) { CFRelease(element); return -2; }
-    target = element; targetPID = front.processIdentifier; targetSelection = selection; targetToken = token;
-    return 0;
+    CFRange selection = {0, 0};
+    AXUIElementRef field = resolveField(element, &selection, true);
+    if (field) {
+        target = field; targetPID = front.processIdentifier; targetSelection = selection; targetToken = token;
+        targetIsCell = false;
+        CFRelease(element);
+        return 0;
+    }
+    if (spreadsheetCell(element, front.bundleIdentifier)) {
+        target = element; targetPID = front.processIdentifier; targetSelection = selection; targetToken = token;
+        targetIsCell = true;
+        return 0;
+    }
+    CFRelease(element);
+    return -2;
 }
 static bool targetStillMatches(uint64_t token) {
     if (!target || token != targetToken || IsSecureEventInputEnabled() ||
         NSWorkspace.sharedWorkspace.frontmostApplication.processIdentifier != targetPID) return false;
     AXUIElementRef current = focused(targetPID);
     if (!current) return false;
-    CFRange selection;
-    bool same = CFEqual(current, target) && editable(current) && selectedRange(current, &selection) &&
-        selection.location == targetSelection.location && selection.length == targetSelection.length;
+    bool same = false;
+    if (targetIsCell) {
+        NSString *role = attribute(current, kAXRoleAttribute);
+        same = CFEqual(current, target) &&
+            [role isEqualToString:(__bridge NSString *)kAXCellRole];
+    } else {
+        CFRange selection = {0, 0};
+        AXUIElementRef resolved = resolveField(current, &selection, false);
+        same = resolved && CFEqual(resolved, target) && editable(resolved) &&
+            selectedRange(resolved, &selection) &&
+            selection.location == targetSelection.location && selection.length == targetSelection.length;
+        if (resolved) CFRelease(resolved);
+    }
     CFRelease(current);
     return same;
 }
