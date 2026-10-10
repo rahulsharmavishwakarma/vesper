@@ -50,6 +50,27 @@ If Projects access is unavailable, record the blocker on the tracking issue
 and reconcile its project item when access returns — never silently skip the
 project update.
 
+### Automatic project linking
+
+The `Project auto-add` workflow (`.github/workflows/project-auto-add.yml`)
+adds every newly opened or reopened issue and pull request to the project
+using [`actions/add-to-project`](https://github.com/actions/add-to-project).
+This removes the dependency on each agent remembering the manual link step;
+Status triage (Backlog/Ready/Blocked/Validation/Done) stays manual.
+
+One-time owner setup (not a repository secret value, never commit a token):
+
+1. Create a classic personal access token with `repo` and `project` scopes.
+2. Store it as the repository secret `PROJECT_AUTOMATION_PAT`
+   (`gh secret set PROJECT_AUTOMATION_PAT`).
+3. Open a test issue and confirm a project item appears; close the test issue.
+
+`GITHUB_TOKEN` cannot write to user-owned Projects, so the PAT is required.
+When the secret is absent the workflow records that in its run summary and
+succeeds without linking; linking resumes on the next opened/reopened event
+after the secret is configured. Tracked in
+[issue #122](https://github.com/rahulsharmavishwakarma/transcribe/issues/122).
+
 ## Feature branches and pull requests
 
 Use a new task-specific feature branch before editing code, documentation or

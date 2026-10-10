@@ -57,6 +57,99 @@ pub fn runtime_ready(root: &Path) -> bool {
         })
 }
 
+/// Bundled runtime source for first-run installs. Inside a packaged .app this
+/// is `Contents/Resources/diarization-runtime`; in development it is the
+/// build-time staging directory. Missing source is not an error: the install
+/// step skips and speaker timelines stay unavailable.
+pub fn bundled_runtime_directory() -> Option<PathBuf> {
+    if let Ok(executable) = std::env::current_exe() {
+        if let Some(parent) = executable
+            .parent()
+            .filter(|p| p.file_name() == Some(std::ffi::OsStr::new("MacOS")))
+        {
+            return Some(parent.join("../Resources/diarization-runtime"));
+        }
+    }
+    let staging = PathBuf::from(env!("CARGO_MANIFEST_DIR"))
+        .join("../../.tooling/diarization-runtime/nemotron-diarization-runtime");
+    staging.is_dir().then_some(staging)
+}
+
+/// First-run pre-check: install the bundled speaker runtime into the model
+/// directory when it is missing or incomplete. Returns true when the runtime
+/// is ready afterwards. Never touches an existing installation when no usable
+/// bundled source exists; verifies every installed byte before reporting
+/// success and removes a failed install rather than leaving it behind.
+pub fn ensure_bundled_runtime(root: &Path, cancelled: &AtomicBool) -> Result<bool> {
+    if !supported() {
+        return Ok(false);
+    }
+    if runtime_ready(root) {
+        return Ok(true);
+    }
+    let Some(bundled) = bundled_runtime_directory() else {
+        return Ok(false);
+    };
+    install_bundled_runtime(root, &bundled, cancelled)
+}
+
+/// Install a staged runtime bundle into the model directory. The bundled
+/// directory mirrors the model-root layout: it must contain a
+/// `<RUNTIME_REVISION>` child holding the manifest and libraries.
+pub fn install_bundled_runtime(
+    root: &Path,
+    bundled: &Path,
+    cancelled: &AtomicBool,
+) -> Result<bool> {
+    let source = bundled.join(RUNTIME_REVISION);
+    if !source.is_dir() {
+        return Ok(false);
+    }
+    let destination = root.join(runtime_relative());
+    if destination.exists() {
+        std::fs::remove_dir_all(&destination)?;
+    }
+    std::fs::create_dir_all(destination.parent().ok_or(ModelError::Integrity(
+        "diarization runtime has no parent directory".into(),
+    ))?)?;
+    let outcome = copy_runtime_tree(&source, &destination, cancelled)
+        .and_then(|_| verify_runtime_bundle(root, cancelled));
+    if outcome.is_err() && destination.exists() {
+        let _ = std::fs::remove_dir_all(&destination);
+    }
+    outcome.map(|_| true)
+}
+
+fn copy_runtime_tree(source: &Path, destination: &Path, cancelled: &AtomicBool) -> Result<()> {
+    std::fs::create_dir_all(destination)?;
+    let mut entries: Vec<_> = std::fs::read_dir(source)?.collect::<std::io::Result<_>>()?;
+    entries.sort_by_key(|entry| entry.file_name());
+    for entry in entries {
+        if cancelled.load(std::sync::atomic::Ordering::Acquire) {
+            return Err(ModelError::Cancelled);
+        }
+        let file_type = entry.file_type()?;
+        if !file_type.is_file() {
+            continue;
+        }
+        let target = destination.join(entry.file_name());
+        std::fs::copy(entry.path(), &target)?;
+        File::open(&target)?.sync_all()?;
+    }
+    Ok(())
+}
+
+/// Hash verification for the runtime bundle alone, without requiring the
+/// weight file. Used to validate a first-run install before reporting it.
+pub fn verify_runtime_bundle(root: &Path, cancelled: &AtomicBool) -> Result<()> {
+    if !supported() {
+        return Err(ModelError::Unsupported(
+            "experimental diarization requires Apple silicon macOS".into(),
+        ));
+    }
+    verify_bundle(root, cancelled)
+}
+
 #[derive(Deserialize)]
 #[serde(rename_all = "camelCase", deny_unknown_fields)]
 struct Bundle {
@@ -178,6 +271,58 @@ mod tests {
         assert!(!available(root.path(), ComputeBackend::Cpu));
     }
 
+    #[test]
+    fn first_run_install_copies_verifies_and_cleans_up() {
+        let idle = AtomicBool::new(false);
+        let staged = tempfile::tempdir().unwrap();
+        let revision = staged.path().join(RUNTIME_REVISION);
+        std::fs::create_dir_all(&revision).unwrap();
+        let mut files = Vec::new();
+        for component in COMPONENTS {
+            let name = format!("{LIBRARY_PREFIX}{component}.dylib");
+            std::fs::write(revision.join(&name), b"fixture").unwrap();
+            files.push(serde_json::json!({"name":name, "sizeBytes":7,
+                "sha256":format!("{:x}", Sha256::digest(b"fixture"))}));
+        }
+        std::fs::write(
+            revision.join("manifest.json"),
+            serde_json::to_vec(
+                &serde_json::json!({"sourceRevision":RUNTIME_REVISION,"files":files}),
+            )
+            .unwrap(),
+        )
+        .unwrap();
+        // A bundled directory without the pinned revision is a skip that
+        // leaves the model root untouched.
+        let elsewhere = tempfile::tempdir().unwrap();
+        let root = tempfile::tempdir().unwrap();
+        assert!(!install_bundled_runtime(root.path(), elsewhere.path(), &idle).unwrap());
+        assert!(!root.path().join(runtime_relative()).exists());
+        assert!(install_bundled_runtime(root.path(), staged.path(), &idle).unwrap());
+        assert_eq!(runtime_ready(root.path()), supported());
+        if supported() {
+            assert!(verify_runtime_bundle(root.path(), &idle).is_ok());
+            // A second install over a complete bundle stays ready.
+            assert!(install_bundled_runtime(root.path(), staged.path(), &idle).unwrap());
+            assert!(runtime_ready(root.path()));
+        }
+        // A tampered staged file fails closed and removes the destination.
+        std::fs::write(
+            revision.join(format!("{LIBRARY_PREFIX}api.dylib")),
+            b"tampered",
+        )
+        .unwrap();
+        let dirty = tempfile::tempdir().unwrap();
+        assert!(install_bundled_runtime(dirty.path(), staged.path(), &idle).is_err());
+        assert!(!dirty.path().join(runtime_relative()).exists());
+        // Cancellation aborts the install without reporting success.
+        let busy = AtomicBool::new(true);
+        let pending = tempfile::tempdir().unwrap();
+        assert!(matches!(
+            install_bundled_runtime(pending.path(), staged.path(), &busy),
+            Err(ModelError::Cancelled)
+        ));
+    }
     #[test]
     fn runtime_identity_and_every_byte_must_match_before_loading() {
         for damage in [

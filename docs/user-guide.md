@@ -248,12 +248,16 @@ failures use the original-audio fallback; failures are reported with a warning.
 ### Experimental speaker timelines
 
 Speaker analysis runs automatically when its local model and runtime are
-available; there is no enable switch or settings-save step. Its model downloads
-automatically once the selected speech/writing models and local speaker runtime
-are ready. This background setup has no separate Settings card.
-This experimental integration requires Apple silicon and the
-[locally built speaker runtime](development.md#experimental-speaker-runtime);
-there is no newly published runtime installer. It runs entirely on device.
+available; there is no enable switch or settings-save step. On first run the
+app pre-checks the bundled speaker runtime and installs it into the model
+directory, then its model downloads automatically once the selected
+speech/writing models are ready. This background setup has no separate
+Settings card.
+This experimental integration requires Apple silicon; the runtime ships
+inside the macOS app bundle (see
+[experimental speaker runtime](development.md#experimental-speaker-runtime)).
+It runs entirely on device. If the bundled runtime is missing, transcription
+is unaffected and no timeline appears.
 
 After ASR, **Speaker timeline** in the latest result and History shows estimated
 start/end ranges for up to eight anonymous speakers. Overlapping ranges can

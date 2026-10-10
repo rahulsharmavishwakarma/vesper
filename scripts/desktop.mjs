@@ -91,6 +91,17 @@ function main() {
       throw new Error('MLX development requires macOS 14 or newer.');
     execFileSync(process.execPath, [join(root, 'scripts/mlx-runtime.mjs')], { stdio: 'inherit' });
   }
+  // The speaker runtime ships inside the macOS bundle so fresh installs can
+  // pre-check and install it on first run. Strict for bundle builds so a
+  // missing runtime fails loudly instead of shipping without timelines.
+  if (process.platform === 'darwin' && process.arch === 'arm64') {
+    const strict = plan.args[0] === 'build';
+    execFileSync(
+      process.execPath,
+      [join(root, 'scripts/diarization-runtime.mjs'), ...(strict ? ['--strict'] : [])],
+      { stdio: 'inherit' },
+    );
+  }
   const result = spawnSync(
     process.execPath,
     [join(root, 'node_modules/@tauri-apps/cli/tauri.js'), ...plan.args],
