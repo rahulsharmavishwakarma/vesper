@@ -2354,10 +2354,19 @@ textarea:focus:enabled {
 .dataset-panel[data-view='full'] .session-button > .icon {
   transition: transform 0.4s var(--ease-spring);
 }
-/* The mock uses open full-bleed rows: no container box, transparent rows. */
+/* The mock uses open full-bleed rows: no container box, transparent rows,
+   and no background shade behind the expanded recording. */
 .dataset-panel[data-view='full'] .session-list {
   border: 0;
   border-radius: 0;
+}
+.dataset-panel[data-view='full'] .session-expanded,
+.dataset-panel[data-view='full'] .session-editor {
+  background: transparent;
+}
+.dataset-panel[data-view='full'] .session-editor {
+  border-top: 0;
+  padding: 0 0 var(--space-4);
 }
 .dataset-panel[data-view='full'] .session-button:hover:enabled,
 .dataset-panel[data-view='full'] .session-button[aria-expanded='true'] {
