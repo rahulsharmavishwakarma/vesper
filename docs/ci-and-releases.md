@@ -567,10 +567,11 @@ npx @tauri-apps/cli@2.11.4 signer generate -w ~/.tauri/vesper.key
   owner-controlled offline recovery location. The build signs
   `.app.tar.gz` → `.sig` only when the key is present; unsigned candidates
   still publish the DMG flow with a summary note instead of a manifest.
-- Put the public key in the base `tauri.conf.json` under `plugins.updater`
-  with the stable HTTPS endpoint, keeping prerelease tags on a separate beta
-  feed file. `pubkey` is mandatory in the plugin config, so the config block
-  lands together with enrollment — never with a placeholder.
+- Fill in the `plugins.updater` block in the base `tauri.conf.json` with the
+  public key and the stable HTTPS endpoint, keeping prerelease tags on a
+  separate beta feed file. The block ships with an empty key and no endpoints
+  (explicitly unenrolled — the plugin requires the block at startup but makes
+  no calls), so enrollment only fills values, never adds structure.
 - Keep `allow_downgrades` off and do not enable a custom version comparator
   ([issue #65](https://github.com/rahulsharmavishwakarma/transcribe/issues/65)).
   Rotation is one transition release that accepts the new public key before
