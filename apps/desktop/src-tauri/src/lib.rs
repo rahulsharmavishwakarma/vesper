@@ -70,6 +70,11 @@ pub fn run() {
     tauri::Builder::default()
         .plugin(tauri_plugin_dialog::init())
         .plugin(tauri_plugin_notification::init())
+        // Update backend (#65): initialized but inert. No updater endpoint or
+        // public key is configured until key enrollment, and the frontend
+        // makes no updater calls until the update UI (#66) lands.
+        .plugin(tauri_plugin_process::init())
+        .plugin(tauri_plugin_updater::Builder::new().build())
         .plugin(
             tauri_plugin_global_shortcut::Builder::new()
                 .with_handler(|app, shortcut, event| {

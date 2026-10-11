@@ -1,0 +1,7 @@
+{
+  "$schema": "../gen/schemas/desktop-schema.json",
+  "identifier": "updater",
+  "description": "In-app update permissions, granted to the main window only. The quick-capture window receives no updater authority.",
+  "windows": ["main"],
+  "permissions": ["updater:default", "process:default"]
+}
