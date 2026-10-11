@@ -3,6 +3,11 @@ name: Release
 on:
   push:
     tags: ['v*']
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: 'Draft release tag to promote to published (for example v0.2.0)'
+        required: true
   release:
     types: [published]
 
@@ -16,16 +21,19 @@ concurrency:
 jobs:
   checks:
     name: Required checks
+    if: github.event_name == 'push'
     # actionlint 1.7.12 does not yet parse the new $/ syntax.
     uses: ./.github/workflows/check.yml # zizmor: ignore[self-repository]
 
   security:
     name: Required security
+    if: github.event_name == 'push'
     # actionlint 1.7.12 does not yet parse the new $/ syntax.
     uses: ./.github/workflows/security.yml # zizmor: ignore[self-repository]
 
   desktop:
     name: Desktop package (macOS)
+    if: github.event_name == 'push'
     needs: [checks, security]
     runs-on: macos-15
     timeout-minutes: 90
@@ -76,12 +84,15 @@ jobs:
           retention-days: 14
           include-hidden-files: false
 
-  publish:
-    name: Publish desktop download
+  draft:
+    name: Stage draft candidate
+    if: github.event_name == 'push'
     needs: desktop
     timeout-minutes: 10
     runs-on: ubuntu-24.04
     permissions:
+      # Draft creation and asset upload inherently need write. Flipping a
+      # draft to published additionally requires the production environment.
       contents: write
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
@@ -99,13 +110,103 @@ jobs:
       - name: Create checksums
         working-directory: release
         run: sha256sum -- * > SHA256SUMS
-      - name: Publish the DMG and checksums as permanent release assets
+      - name: Upload assets to the draft release without publishing
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          RELEASE_DRAFT_ONLY: '1'
         run: node scripts/publish-release.mjs
+      - name: Record candidate links
+        run: |
+          {
+            echo "Draft candidate: https://github.com/$GITHUB_REPOSITORY/releases/tag/$GITHUB_REF_NAME"
+            echo "Promotion requires the approval-gated promote job (workflow dispatch with tag=$GITHUB_REF_NAME)."
+          } >> "$GITHUB_STEP_SUMMARY"
+
+  promote:
+    name: Promote draft to published
+    if: github.event_name == 'workflow_dispatch'
+    timeout-minutes: 10
+    runs-on: ubuntu-24.04
+    environment: production
+    permissions:
+      contents: write
+    env:
+      TAG: ${{ inputs.tag }}
+    steps:
+      - name: Validate tag input
+        run: |
+          if ! printf '%s' "$TAG" | grep -Eq '^v(0|[1-9][0-9]*)\.(0|[1-9][0-9]*)\.(0|[1-9][0-9]*)(-[0-9A-Za-z-]+(\.[0-9A-Za-z-]+)*)?$'; then
+            echo "Tag must be vX.Y.Z or vX.Y.Z-prerelease, got: $TAG" >&2
+            exit 1
+          fi
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          ref: ${{ inputs.tag }}
+          persist-credentials: false
+      - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
+        with:
+          node-version-file: .nvmrc
+          package-manager-cache: false
+      - name: Verify tag and application versions agree
+        run: node scripts/version.mjs check --tag="$TAG"
+      - name: Publish the verified draft without rebuilding
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          state="$(gh release view "$TAG" --repo "$GITHUB_REPOSITORY" --json isDraft,prerelease --jq '{draft: .isDraft, prerelease: .prerelease}')"
+          if [ "$(printf '%s' "$state" | grep -o '"draft":[^,]*' | cut -d: -f2)" != "true" ]; then
+            echo "Refusing to promote: $TAG is not a draft. Roll back with a higher patch version instead." >&2
+            exit 1
+          fi
+          case "$TAG" in
+            *"-"*) prerelease=true ;;
+            *)
+              if [ "$(printf '%s' "$state" | grep -o '"prerelease":[^}]*' | cut -d: -f2)" = "true" ]; then
+                prerelease=true
+              else
+                prerelease=false
+              fi
+              ;;
+          esac
+          if [ "$prerelease" = "true" ]; then latest=false; else latest=true; fi
+          gh release edit "$TAG" --repo "$GITHUB_REPOSITORY" --draft=false --prerelease="$prerelease" --latest="$latest"
       - name: Record download links
         run: |
           {
-            echo "Version download: https://github.com/$GITHUB_REPOSITORY/releases/download/$GITHUB_REF_NAME/vesper-macos-arm64.dmg"
+            echo "Version download: https://github.com/$GITHUB_REPOSITORY/releases/download/$TAG/vesper-macos-arm64.dmg"
             echo "Latest stable: https://github.com/$GITHUB_REPOSITORY/releases/latest/download/vesper-macos-arm64.dmg"
+          } >> "$GITHUB_STEP_SUMMARY"
+
+  verify:
+    name: Verify published release
+    if: github.event_name == 'release'
+    timeout-minutes: 15
+    runs-on: ubuntu-24.04
+    permissions:
+      contents: read
+    env:
+      TAG: ${{ github.event.release.tag_name }}
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          ref: ${{ github.event.release.tag_name }}
+          persist-credentials: false
+      - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
+        with:
+          node-version-file: .nvmrc
+          package-manager-cache: false
+      - name: Verify tag and application versions agree
+        run: node scripts/version.mjs check --tag="$TAG"
+      - name: Verify published DMG checksum
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          mkdir -p verify-assets
+          gh release download "$TAG" --repo "$GITHUB_REPOSITORY" --pattern 'vesper-macos-arm64.dmg' --pattern 'SHA256SUMS' --dir verify-assets
+          (cd verify-assets && sha256sum -c SHA256SUMS)
+      - name: Record verification
+        run: |
+          {
+            echo "Verified $TAG: tag/version agreement, both assets present, DMG checksum valid."
+            echo "Version download: https://github.com/$GITHUB_REPOSITORY/releases/download/$TAG/vesper-macos-arm64.dmg"
           } >> "$GITHUB_STEP_SUMMARY"
