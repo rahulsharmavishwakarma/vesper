@@ -506,9 +506,10 @@ routine debug/native PR checks.
 ## About information and updater readiness
 
 The [release roadmap #62](https://github.com/rahulsharmavishwakarma/transcribe/issues/62)
-separates policy, Apple signing, updater delivery and UI. The following is a
-proposal based on the 2026-09-19 review, not implemented updater behavior or
-approval to introduce it.
+separates policy, Apple signing, updater delivery and UI. The About/update UI
+below is a proposal based on the 2026-09-19 review, not implemented behavior;
+the updater backend itself is tracked in
+[issue #65](https://github.com/rahulsharmavishwakarma/transcribe/issues/65).
 
 ### Existing app information and proposed placement
 
@@ -547,11 +548,36 @@ The information-only section can precede the updater work in
 
 ### Updater contract and missing release gates
 
-No updater plugin, public key, endpoint, updater archive or manifest is currently
-configured. The release workflow builds DMG/checksum assets and has both tag-push
-and release-published triggers. Concurrency serializes runs; it does not establish
-build-once promotion. Protected promotion and Apple signing/notarization remain
-separate prerequisites.
+The updater and process plugins are initialized and the macOS bundle emits the
+`.app.tar.gz` archive, but no public key, endpoint or manifest is configured, so
+the updater is inert: the frontend makes no update calls and no feed exists.
+Protected promotion and Apple signing/notarization remain separate prerequisites.
+
+### Updater key ownership, enrollment and rotation
+
+One updater keypair exists per release history. The owner generates it once on a
+trusted machine and never commits the private key:
+
+```sh
+npx @tauri-apps/cli@2.11.4 signer generate -w ~/.tauri/vesper.key
+```
+
+- Store the private key and its password as `production`-environment secrets
+  (`TAURI_SIGNING_PRIVATE_KEY`, `TAURI_SIGNING_PRIVATE_KEY_PASSWORD`) and in an
+  owner-controlled offline recovery location. The build signs
+  `.app.tar.gz` → `.sig` only when the key is present; unsigned candidates
+  still publish the DMG flow with a summary note instead of a manifest.
+- Put the public key in the base `tauri.conf.json` under `plugins.updater`
+  with the stable HTTPS endpoint, keeping prerelease tags on a separate beta
+  feed file. `pubkey` is mandatory in the plugin config, so the config block
+  lands together with enrollment — never with a placeholder.
+- Keep `allow_downgrades` off and do not enable a custom version comparator
+  ([issue #65](https://github.com/rahulsharmavishwakarma/transcribe/issues/65)).
+  Rotation is one transition release that accepts the new public key before
+  later releases switch signing keys.
+- Only the `main` window holds `updater:default` and `process:default`
+  (`capabilities/updater.json`); the quick-capture window has no updater
+  authority.
 
 [Tauri's updater guide](https://v2.tauri.app/plugin/updater/) specifies signed
 macOS `.app.tar.gz` packages and platform manifests; the DMG serves manual
