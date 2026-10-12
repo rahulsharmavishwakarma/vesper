@@ -29,7 +29,7 @@
   --color-sheen: rgb(255 245 238 / 8%);
   /* Floating capture glass (vesper-floating-capture.html): translucent tones
    * over backdrop blur so the overlay blends with the desktop behind it. */
-  --color-glass: rgb(20 20 20 / 72%);
+  --color-glass: rgb(20 20 20 / 88%);
   --color-glass-line: rgb(255 255 255 / 10%);
   --color-glass-muted: rgb(255 245 238 / 62%);
   --color-glass-wash: rgb(255 255 255 / 9%);
@@ -95,7 +95,7 @@
   --color-surface-light: #f6f5f2;
   --color-overlay: rgb(18 17 15 / 40%);
   --color-sheen: rgb(255 255 255 / 8%);
-  --color-glass: rgb(255 255 255 / 72%);
+  --color-glass: rgb(255 255 255 / 88%);
   --color-glass-line: rgb(0 0 0 / 8%);
   --color-glass-muted: #6b6962;
   --color-glass-wash: rgb(0 0 0 / 6%);
