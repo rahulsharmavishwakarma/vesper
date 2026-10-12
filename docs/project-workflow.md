@@ -52,23 +52,14 @@ project update.
 
 ### Automatic project linking
 
-The `Project auto-add` workflow (`.github/workflows/project-auto-add.yml`)
-adds every newly opened or reopened issue and pull request to the project
-using [`actions/add-to-project`](https://github.com/actions/add-to-project).
-This removes the dependency on each agent remembering the manual link step;
-Status triage (Backlog/Ready/Blocked/Validation/Done) stays manual.
-
-One-time owner setup (not a repository secret value, never commit a token):
-
-1. Create a classic personal access token with `repo` and `project` scopes.
-2. Store it as the repository secret `PROJECT_AUTOMATION_PAT`
-   (`gh secret set PROJECT_AUTOMATION_PAT`).
-3. Open a test issue and confirm a project item appears; close the test issue.
-
-`GITHUB_TOKEN` cannot write to user-owned Projects, so the PAT is required.
-When the secret is absent the workflow records that in its run summary and
-succeeds without linking; linking resumes on the next opened/reopened event
-after the secret is configured. Tracked in
+Every newly opened or reopened issue and pull request is added to the project
+automatically by the project's built-in auto-add workflow (project Settings →
+Workflows → Auto-add items, filtered to this repository). This removes the
+dependency on each agent remembering the manual link step; Status triage
+(Backlog/Ready/Blocked/Validation/Done) stays manual. A repository Actions
+workflow using `actions/add-to-project` was evaluated first and removed: writes
+to user-owned Projects reject `GITHUB_TOKEN`, which would have required a
+personal access token for no additional behavior. Tracked in
 [issue #122](https://github.com/rahulsharmavishwakarma/vesper/issues/122).
 
 ## Feature branches and pull requests
