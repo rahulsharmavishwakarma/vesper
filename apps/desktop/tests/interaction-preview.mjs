@@ -121,6 +121,31 @@ if (states) {
     configSnapshot: settings,
     modelVersions: {},
   }));
+  // Long-paragraph record: the polished editor must grow to fit it (no mid-line clip).
+  records.push({
+    id: 'visual-long',
+    createdAt: new Date().toISOString(),
+    originalFilename: 'sample-long.wav',
+    audioRelativePath: 'synthetic.wav',
+    audioSha256: '',
+    audioBytes: 512000,
+    rawTranscript:
+      'Sunlit paragraphs stretch across the afternoon while the transcriber keeps pace with every clause. ' +
+      'Also, there is a very large kind of issue where see here I am transcribing very large paragraph kind of stuff. ' +
+      'You can see like I am saying anything, etc. But here you can see the right side window is not in sync with the left side. ' +
+      'That is the size is not properly in sync. So can you check and see and fix this also? ' +
+      'That is a bug actually in UI. So can you check and fix it? The quick brown fox jumps over the lazy dog near the riverbank ' +
+      'while packing boxes with five dozen liquor jugs for the evening show. Every word here should remain fully visible ' +
+      'in both the Heard pane and the Polished editor, no matter how long the paragraph grows.',
+    cleanedTranscript: null,
+    correctedTranscript: null,
+    verifiedTranscript: null,
+    reviewHistory: [],
+    reviewStatus: 'pending',
+    transcriptFeedback: null,
+    configSnapshot: settings,
+    modelVersions: {},
+  });
   window.previewCommands = [];
   window.previewPermissions = null;
   mockIPC(

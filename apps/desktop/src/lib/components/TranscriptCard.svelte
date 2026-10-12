@@ -79,10 +79,17 @@
   });
 
   // Keep the editor in sync with the saved text whenever it is not being edited.
+  // Measure after the DOM flush: reading scrollHeight synchronously sees the
+  // previous text and leaves long transcripts clipped mid-line.
   $effect(() => {
     if (!editing) {
       editText = polished;
-      if (editor) fitEditor();
+      if (editor) {
+        const target = editor;
+        tick().then(() => {
+          if (!editing && editor === target) fitEditor();
+        });
+      }
     }
   });
 
