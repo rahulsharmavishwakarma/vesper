@@ -69,7 +69,7 @@ One-time owner setup (not a repository secret value, never commit a token):
 When the secret is absent the workflow records that in its run summary and
 succeeds without linking; linking resumes on the next opened/reopened event
 after the secret is configured. Tracked in
-[issue #122](https://github.com/rahulsharmavishwakarma/transcribe/issues/122).
+[issue #122](https://github.com/rahulsharmavishwakarma/vesper/issues/122).
 
 ## Feature branches and pull requests
 
@@ -281,4 +281,4 @@ Follow [UI interaction design](ui-design.md) when adding or changing controls. F
 - Research-grounded inference work must preserve paper results, official capabilities, local measurements, and unverified hypotheses as separate evidence classes.
 - A completed code change without documentation is incomplete; a documentation update without issue status and validation is also incomplete.
 
-This workflow was formalized under [GitHub issue #44](https://github.com/rahulsharmavishwakarma/transcribe/issues/44).
+This workflow was formalized under [GitHub issue #44](https://github.com/rahulsharmavishwakarma/vesper/issues/44).

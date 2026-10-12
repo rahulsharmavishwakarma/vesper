@@ -15,7 +15,7 @@ transcription verb, third-party model names, executable identifiers or recorded
 historical names. See [product naming and compatibility](development.md#product-name-and-compatibility).
 
 **Ember** is the current Vesper identity, finalized by the owner in
-[issue #87](https://github.com/rahulsharmavishwakarma/transcribe/issues/87).
+[issue #87](https://github.com/rahulsharmavishwakarma/vesper/issues/87).
 The in-app lockup pairs the filled ember bird in
 [its own SVG](../apps/desktop/src/assets/ember-bird.svg) with a Bricolage
 Grotesque 800 wordmark, and every other application string uses the same
@@ -25,7 +25,7 @@ icons, the menu-bar template and the README banner still derive from the
 Songbird source below until a follow-up requalifies that pipeline.
 
 **A — Songbird** was the owner-selected Vesper identity, approved in
-[issue #71](https://github.com/rahulsharmavishwakarma/transcribe/issues/71),
+[issue #71](https://github.com/rahulsharmavishwakarma/vesper/issues/71),
 until Ember superseded it for in-app UI. Its selection and qualification are
 preserved here as history.
 The original bird, two call strokes and six individually drawn letter paths live
@@ -114,6 +114,10 @@ Main views start with their page heading. Do not add a workspace breadcrumb or a
 Local workspace badge: the app has no workspace navigation for those labels to
 describe. The existing sidebar selection provides navigation context; operation
 feedback and the browser-preview notice retain their own meaningful states.
+
+## Disclosure chevron convention
+
+Every `<details>`/`<summary>` disclosure (recordings, export, learning, diagnostics, and the bordered rows inside `.preference-group`/`.settings-advanced` such as Vocabulary's "How does this work?", "Advanced storage and improvement", "Advanced writing instructions", "Restore default preferences") shares one CSS-drawn chevron built from `details > summary::after` in `apps/desktop/src/app.css`. The bordered variant switches `summary` to a flex row (`display: flex; align-items: center; justify-content: space-between`) so the chevron is meant to be centered as a normal flex child; that rule must also set `position: static` on the chevron, or the `position: absolute` from the plain (unbordered) convention leaks in, pulls the chevron out of flow, and leaves it pinned near the top of the row instead of centered (issue #128). When adding a new disclosure, reuse this convention rather than a new chevron, and verify the chevron is vertically centered in a rendered screenshot, not just by reading the CSS.
 
 ## Settings section navigation
 
@@ -255,8 +259,8 @@ download controls. Update controls depend on qualified distribution. Installatio
 active work to finish, and dismissal must not imply native download cancellation.
 Keep technical signing/feed details out of the ordinary user flow. The proposed
 interaction and implementation limits are tracked in issues
-[#66](https://github.com/rahulsharmavishwakarma/transcribe/issues/66) and
-[#65](https://github.com/rahulsharmavishwakarma/transcribe/issues/65).
+[#66](https://github.com/rahulsharmavishwakarma/vesper/issues/66) and
+[#65](https://github.com/rahulsharmavishwakarma/vesper/issues/65).
 
 ## Verification
 

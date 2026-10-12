@@ -1,6 +1,6 @@
 # September 2026 RSI research for local dictation
 
-Reviewed **18 September 2026**. Main window: **1–18 September 2026**. Paper dates below are first arXiv submissions, with the inspected version stated; project announcements and code releases can have different dates. This is a targeted primary-source survey, not an exhaustive bibliography. Late-August context is explicitly separated. Issue [#34](https://github.com/rahulsharmavishwakarma/transcribe/issues/34) owns implementation proposals and approvals.
+Reviewed **18 September 2026**. Main window: **1–18 September 2026**. Paper dates below are first arXiv submissions, with the inspected version stated; project announcements and code releases can have different dates. This is a targeted primary-source survey, not an exhaustive bibliography. Late-August context is explicitly separated. Issue [#34](https://github.com/rahulsharmavishwakarma/vesper/issues/34) owns implementation proposals and approvals.
 
 The product requirement remains automatic, on-device improvement during ordinary use, with application-owned memory surviving model changes. The most applicable research changes memory, retrieval or bounded application policies while leaving weights frozen. None of the surveyed results establishes that this application's small local models can autonomously improve dictation quality. No external model API, dependency, training runner or live policy controller was introduced by this review.
 

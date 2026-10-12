@@ -81,7 +81,7 @@ tails and skipped preview windows remain present in the recorder's original audi
 
 The current accelerator scope is Apple Silicon MLX/Metal with CPU support.
 NVIDIA CUDA and AMD/Intel Vulkan/ROCm qualification is explicitly deferred to
-[the GPU roadmap issue](https://github.com/rahulsharmavishwakarma/transcribe/issues/76).
+[the GPU roadmap issue](https://github.com/rahulsharmavishwakarma/vesper/issues/76).
 Those backend paths remain available where already implemented; their unverified
 hardware coverage does not block the current Apple scope. The Apple model/language
 restrictions and remaining application-validation limits below still apply.
@@ -143,7 +143,7 @@ where required. Neither metric alone measures microphone-to-render latency.
 Use the same public held-out manifests for paired completed/live runs, retaining
 errors in aggregates. Cover short tails, window boundaries, repetition, quiet/noisy
 speech, supported languages, cancellation/restart and queue pressure. The current
-qualification and exact results are tracked in [issue #3](https://github.com/rahulsharmavishwakarma/transcribe/issues/3).
+qualification and exact results are tracked in [issue #3](https://github.com/rahulsharmavishwakarma/vesper/issues/3).
 Apple/CPU results do not qualify CUDA/Vulkan/ROCm hardware or sustained thermals.
 
 The GPU routing recheck on 26 September passed the `backend` and `automatic`

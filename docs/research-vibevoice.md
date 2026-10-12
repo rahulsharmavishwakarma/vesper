@@ -4,7 +4,7 @@ The complete Microsoft VibeVoice inventory was checked on 18 September 2026.
 **No complete ASR model in this inventory satisfies a strict limit of fewer than
 two billion total parameters.** The specifically requested Streaming-1.5B remains
 an out-of-budget reference experiment, not a production model recommendation.
-The existing [VibeVoice issue](https://github.com/rahulsharmavishwakarma/transcribe/issues/15)
+The existing [VibeVoice issue](https://github.com/rahulsharmavishwakarma/vesper/issues/15)
 tracks research and the separate, unapproved BitNet integration proposal.
 
 The [local CPU screen](validation/vibevoice-2026-09-18.md) records actual execution, quality, memory and timing limits.

@@ -6,7 +6,7 @@ The current desktop release target is macOS on Apple silicon. Browser preview
 does not provide native recording or inference; Docker/Nginx is optional preview
 tooling, not a prerequisite for the Mac app.
 
-Search [existing issues](https://github.com/rahulsharmavishwakarma/transcribe/issues)
+Search [existing issues](https://github.com/rahulsharmavishwakarma/vesper/issues)
 before reporting a problem. Use the bug template with your application version,
 operating system, selected model, and a small synthetic reproduction. Remove
 private recordings, transcript text, credentials, and identifying file paths.

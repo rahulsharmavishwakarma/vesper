@@ -1,6 +1,6 @@
 # Local dictation application: research and proposed design
 
-Current selection update (15 September 2026): [#37](https://github.com/rahulsharmavishwakarma/transcribe/issues/37) makes Cohere Transcribe plus Qwen writing cleanup the user-selected default. The earlier default/integration status below is historical; consult [application internals](internals.md) for current capabilities.
+Current selection update (15 September 2026): [#37](https://github.com/rahulsharmavishwakarma/vesper/issues/37) makes Cohere Transcribe plus Qwen writing cleanup the user-selected default. The earlier default/integration status below is historical; consult [application internals](internals.md) for current capabilities.
 
 Research date: 14 September 2026.
 

@@ -2,7 +2,7 @@
 
 The application remembers vocabulary on this device independently of the selected speech or writing model. Phase A adds automatic spelling learning from ordinary edits; no model training, cloud inference or embedding service runs in this loop. The separate [semantic shadow path](semantic-shadow.md) analyzes bounded edits locally without activating its guesses.
 
-Implementation approval: [issue #34](https://github.com/rahulsharmavishwakarma/transcribe/issues/34#issuecomment-5688739690). Decision: [ADR-0016](../adrs/0016-automatic-local-spelling-learning.md). Research and future work: [automatic-personalization research](../research-automatic-personalization.md).
+Implementation approval: [issue #34](https://github.com/rahulsharmavishwakarma/vesper/issues/34#issuecomment-5688739690). Decision: [ADR-0016](../adrs/0016-automatic-local-spelling-learning.md). Research and future work: [automatic-personalization research](../research-automatic-personalization.md).
 
 For what comes next, see [Personalization phases and remaining work](roadmap.md): phase-A qualification, semantic learning in phase B, and the gated own-model path. It separates the six capability areas from implementation phases and describes each extension's evidence and performance requirements.
 

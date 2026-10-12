@@ -1,6 +1,6 @@
 # Whisper qualification and native integration
 
-Research checked 18 September 2026. [Issue #45](https://github.com/rahulsharmavishwakarma/transcribe/issues/45) owns the investigation and approval status. One shared Whisper Small/Turbo adapter now runs through the application inference manager and verified installer under [ADR-0018](adrs/0018-shared-whisper-adapter.md). It remains unavailable in product selection because noise qualification fails. The development `whisper_probe` is a separate earlier path; its execution does not qualify an application preset. See the [adapter regression](validation/whisper-adapter-2026-09-18.md).
+Research checked 18 September 2026. [Issue #45](https://github.com/rahulsharmavishwakarma/vesper/issues/45) owns the investigation and approval status. One shared Whisper Small/Turbo adapter now runs through the application inference manager and verified installer under [ADR-0018](adrs/0018-shared-whisper-adapter.md). It remains unavailable in product selection because noise qualification fails. The development `whisper_probe` is a separate earlier path; its execution does not qualify an application preset. See the [adapter regression](validation/whisper-adapter-2026-09-18.md).
 
 The [local 213-case screen](validation/whisper-2026-09-18.md) found better natural-English WER for small/Turbo than Cohere on this sample, but failed Hindi/noise gates and could not establish an uncontended latency comparison. No preset is promoted by those results.
 

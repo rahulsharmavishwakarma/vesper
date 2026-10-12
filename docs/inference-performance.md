@@ -10,7 +10,7 @@ The per-job Nemotron CLI and per-request cleanup-model loading have been replace
 
 The current accelerator scope is Apple Silicon MLX/Metal, retaining CPU paths.
 NVIDIA CUDA and AMD/Intel Vulkan/ROCm expansion and hardware qualification are
-deferred to [issue #76](https://github.com/rahulsharmavishwakarma/transcribe/issues/76)
+deferred to [issue #76](https://github.com/rahulsharmavishwakarma/vesper/issues/76)
 in the GitHub Project backlog. Existing backend code is not hardware qualification;
 non-Apple GPU work is not a completion gate for the current Apple live-adapter
 scope. See [the current routing table](live-transcription.md#device-and-memory-behavior)
@@ -379,7 +379,7 @@ Application registration, optional cross-crate feature wiring, pinned model
 installation and packaging are a separate architectural integration. Automatic
 approval review rejected the attempted registration patch under the explicit
 approval rule in `AGENTS.md`; none of that patch was applied. The concrete scope
-was subsequently approved explicitly, as recorded in [issue #35](https://github.com/rahulsharmavishwakarma/transcribe/issues/35#issuecomment-5788299497). The historical rejection did not block the later approved implementation.
+was subsequently approved explicitly, as recorded in [issue #35](https://github.com/rahulsharmavishwakarma/vesper/issues/35#issuecomment-5788299497). The historical rejection did not block the later approved implementation.
 No MLX model becomes selectable and no default changes merely because this
 isolated bridge compiles or produces promising measurements.
 
@@ -404,7 +404,7 @@ The first two rows are existing requests for acceleration, not evidence that eve
 operator executes on the GPU. `qwen.rs` derives `initialized_provider` from the
 requested layer count and context probe. Its automatic CPU retry covers a failed
 context probe but not an earlier `load_model` error. Both execution attestation
-and the load-error boundary remain focused follow-ups under [#30](https://github.com/rahulsharmavishwakarma/transcribe/issues/30).
+and the load-error boundary remain focused follow-ups under [#30](https://github.com/rahulsharmavishwakarma/vesper/issues/30).
 An explicit backend should surface failure; an automatic fallback should report
 its reason and resulting backend. Neither should mislabel CPU work as GPU work.
 
@@ -634,7 +634,7 @@ The six synthetic cleanup cases also exposed repetition and meaning changes. An 
 ## Device and backend strategy
 
 The non-Apple GPU rows below describe deferred qualification targets tracked in
-[issue #76](https://github.com/rahulsharmavishwakarma/transcribe/issues/76).
+[issue #76](https://github.com/rahulsharmavishwakarma/vesper/issues/76).
 
 The paths below are selectable and packaged where noted, but still require successful execution and comparison against CPU on the exact target. Existing observations are single-fixture development checks, not cross-device qualification.
 

@@ -10,7 +10,7 @@
   <a href="#getting-started">Get&nbsp;started</a> ·
   <a href="docs/user-guide.md">User&nbsp;guide</a> ·
   <a href="#development">Build&nbsp;from&nbsp;source</a> ·
-  <a href="https://github.com/rahulsharmavishwakarma/transcribe/issues">Issues</a>
+  <a href="https://github.com/rahulsharmavishwakarma/vesper/issues">Issues</a>
 </p>
 
 Vesper turns microphone recordings and audio files into text using local models.
@@ -37,9 +37,9 @@ macOS DMG for Apple-silicon Macs. Intel Macs, Windows and Linux are not current
 release targets.
 
 When the first stable public release is published, the
-[Mac DMG download](https://github.com/rahulsharmavishwakarma/transcribe/releases/latest/download/vesper-macos-arm64.dmg)
+[Mac DMG download](https://github.com/rahulsharmavishwakarma/vesper/releases/latest/download/vesper-macos-arm64.dmg)
 will point to the latest version. Versioned downloads will appear on the
-[Releases page](https://github.com/rahulsharmavishwakarma/transcribe/releases).
+[Releases page](https://github.com/rahulsharmavishwakarma/vesper/releases).
 Apple Developer ID signing and notarization are still pending.
 
 For now, [run from source](#development). Packaging details are in the
@@ -82,7 +82,7 @@ The app uses Rust, Tauri, Svelte and TypeScript. Install the
 [macOS prerequisites](docs/development.md#prerequisites), then:
 
 ```sh
-git clone https://github.com/rahulsharmavishwakarma/transcribe.git
+git clone https://github.com/rahulsharmavishwakarma/vesper.git
 cd transcribe
 make setup
 make dev
@@ -110,7 +110,7 @@ guides for technical background.
 ## Contributing and support
 
 Read [Contributing](CONTRIBUTING.md) before starting work, search
-[existing issues](https://github.com/rahulsharmavishwakarma/transcribe/issues), and
+[existing issues](https://github.com/rahulsharmavishwakarma/vesper/issues), and
 follow the [Code of Conduct](CODE_OF_CONDUCT.md). Features, fixes and maintenance
 include updates to the relevant documentation.
 
@@ -119,5 +119,7 @@ For help, see [Support](SUPPORT.md). Report vulnerabilities privately using the
 
 ## License
 
-A project license has not yet been selected. Model, runtime, font and dependency
-licenses remain separate; see [model provenance](models/README.md).
+Application code is licensed under the [Apache License 2.0](LICENSE),
+Copyright 2026 Rahul Sharma. Model, runtime, font and dependency licenses
+remain separate; see [licenses and model terms](docs/licenses-and-model-terms.md)
+and [model provenance](models/README.md).

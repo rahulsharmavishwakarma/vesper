@@ -1,6 +1,6 @@
 # Bounded policy-improvement experiment
 
-This is an **offline prototype of the second learning loop**, authorized by the user's request to try and test policy improvement. It is implemented in the [Rust replay example](../../crates/vesper-data/examples/policy_learning_replay.rs), not connected to live dictation. [Issue #34](https://github.com/rahulsharmavishwakarma/transcribe/issues/34#issuecomment-5717283286) records the experiment scope. The [initial measurement report](../../benchmarks/asr/2026-09-17-policy-learning.md) and [expanded stress report](../../benchmarks/asr/2026-09-18-policy-learning-stress.md) preserve results and limitations.
+This is an **offline prototype of the second learning loop**, authorized by the user's request to try and test policy improvement. It is implemented in the [Rust replay example](../../crates/vesper-data/examples/policy_learning_replay.rs), not connected to live dictation. [Issue #34](https://github.com/rahulsharmavishwakarma/vesper/issues/34#issuecomment-5717283286) records the experiment scope. The [initial measurement report](../../benchmarks/asr/2026-09-17-policy-learning.md) and [expanded stress report](../../benchmarks/asr/2026-09-18-policy-learning-stress.md) preserve results and limitations.
 
 The prototype can change which learned memories are eligible for use, test a proposed change on subsequent feedback and return to the preceding policy. Its candidate family, scoring rules and controller are human-written and fixed. This is **bounded policy selection**, not open-ended discovery of better learning algorithms or a demonstration of unrestricted recursive self-improvement.
 
@@ -112,7 +112,7 @@ Before proposing live integration, qualify representative longitudinal feedback,
 
 ## Persistent application shadow evaluation
 
-The September 19 [approved design](https://github.com/rahulsharmavishwakarma/transcribe/issues/60#issuecomment-5742682689) is implemented separately from live memory. Ordinary non-noop in-app edits capture an immutable pre-learning snapshot. One lazy application worker holds one running job and one replaceable pending job; foreground work cancels its token. The six-policy predictor, independent-component scorer and gates are shared with this replay executable in `vesper_data::policy`.
+The September 19 [approved design](https://github.com/rahulsharmavishwakarma/vesper/issues/60#issuecomment-5742682689) is implemented separately from live memory. Ordinary non-noop in-app edits capture an immutable pre-learning snapshot. One lazy application worker holds one running job and one replaceable pending job; foreground work cancels its token. The six-policy predictor, independent-component scorer and gates are shared with this replay executable in `vesper_data::policy`.
 
 The worker freezes six word-edit scores against the explicit edited wording, not a model-generated label. It persists compact scores and source/repair identities instead of whole profiles or transcripts. Such wording is an observable correction target, not an independently reviewed verbatim audio label. Raw text equal to the target is still valid negative feedback when personalization changed it incorrectly.
 

@@ -1,6 +1,6 @@
 # Research basis for streaming inference
 
-Research updated **26 September 2026**; earlier dated reviews retain their own evidence scope. This document maps primary papers to engineering constraints for Vesper. It complements the model-specific [NVIDIA, historical Kyutai, and Moshi review](research-streaming-speech.md), the system-level [device performance plan](inference-performance.md), and the accepted resident-streaming decision in [ADR-0006](adrs/0006-resident-nemotron-streaming-worker.md). Kyutai research is retained as evidence, but [GitHub issue #48](https://github.com/rahulsharmavishwakarma/transcribe/issues/48) records its removal from current application support.
+Research updated **26 September 2026**; earlier dated reviews retain their own evidence scope. This document maps primary papers to engineering constraints for Vesper. It complements the model-specific [NVIDIA, historical Kyutai, and Moshi review](research-streaming-speech.md), the system-level [device performance plan](inference-performance.md), and the accepted resident-streaming decision in [ADR-0006](adrs/0006-resident-nemotron-streaming-worker.md). Kyutai research is retained as evidence, but [GitHub issue #48](https://github.com/rahulsharmavishwakarma/vesper/issues/48) records its removal from current application support.
 
 ## Executive conclusion
 
@@ -158,7 +158,7 @@ across 7/8/14/15-second boundaries. Exercise cancellation/restart, overflow and
 sustained memory; then measure native microphone-to-visible behavior. Record
 the full environment and failures under the metrics below. Existing Nemotron
 results do not qualify Qwen. The concrete proposal and approval status belong
-in [issue #3](https://github.com/rahulsharmavishwakarma/transcribe/issues/3).
+in [issue #3](https://github.com/rahulsharmavishwakarma/vesper/issues/3).
 
 ## Paper-to-engineering map
 
@@ -204,7 +204,7 @@ lifetime change as well as an adapter extension. Existing resident Cohere,
 Whisper, LFM and MLX owners can be reused.
 
 The full proposal, including lifecycle and scheduling changes, is recorded in
-[issue #3](https://github.com/rahulsharmavishwakarma/transcribe/issues/3).
+[issue #3](https://github.com/rahulsharmavishwakarma/vesper/issues/3).
 The [device resource boundary](inference-performance.md#resources-for-live-adapters)
 documents the implemented resource controls and remaining hardware qualification.
 All-model pre-Stop updates, final-result parity, cancellation, bounded queues,
@@ -254,7 +254,7 @@ Kyutai's [official delayed-streams implementation](https://github.com/kyutai-lab
 
 ### LFM audio and writing models up to 2B
 
-Research checked **15 September 2026**. The concrete integration scope, approval status, artifact hashes, and qualification criteria live in [issue #40](https://github.com/rahulsharmavishwakarma/transcribe/issues/40). The approved English CPU adapter is implemented in [ADR-0013](adrs/0013-lfm-audio-native-adapter.md); see [local qualification](../benchmarks/asr/2026-09-15-lfm.md). Other LFM variants remain candidates.
+Research checked **15 September 2026**. The concrete integration scope, approval status, artifact hashes, and qualification criteria live in [issue #40](https://github.com/rahulsharmavishwakarma/vesper/issues/40). The approved English CPU adapter is implemented in [ADR-0013](adrs/0013-lfm-audio-native-adapter.md); see [local qualification](../benchmarks/asr/2026-09-15-lfm.md). Other LFM variants remain candidates.
 
 | Evidence class              | Finding and engineering consequence                                                                                                                                                                                                                                                                                                                                                                                                                                                                          |
 | --------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
@@ -326,7 +326,7 @@ For Qwen, benchmark resident fresh-context inference before prefix caching, KV-c
 
 The [audio-quality investigation](research-audio-quality.md), [initial measurements](validation/audio-frontends-2026-09-16.md) and [hard regressions](validation/audio-regression-2026-09-16.md) connect the [DPDFNet paper](https://arxiv.org/abs/2512.16420v1), [CED paper](https://arxiv.org/abs/2308.11957v2), and [enhancement-artifact/ASR study](https://arxiv.org/html/2404.14860v1) to pinned `sherpa-onnx = 1.13.8` frontend APIs. The user's current shortlist requires model releases from 2025-09-16 onward and allows up to 200 MB per model, with smaller models welcome. Old Silero v4/GTCRN/CED tests are baselines, not eligible recent-checkpoint recommendations. Silero v6.2's November 2025 weight update is distinct from its 2026 packaging release. File size is not memory or latency evidence.
 
-Frozen-weight experiments compare VAD decisions, enhancement, reset, context/tail handling and waveform alignment. Noise-only metrics now avoid conventional empty-reference WER. Efficient Fourier transforms and avoiding growing VAD buffer copies are native-runtime work; artifact-aware training, distillation and personal speaker extraction require checkpoint changes. The approved [shared frontend integration](adrs/0019-shared-audio-frontend.md) now applies advisory Silero v6.2 and optional DPDFNet4/8 through one resident worker stage, with fresh recording state, deterministic framing, aligned tails and original-audio fallback. Both settings remain off by default. Its narrow native endpoint-range guard fixes invalid VAD extraction after bookkeeping flushes; it does not introduce a decoder or FFT kernel. Earlier experiment results do not qualify this application path. Ear identifies language and Uhm identifies candidate filler spans; neither supplies noise removal or persistent user intent. [Issue #42](https://github.com/rahulsharmavishwakarma/transcribe/issues/42) contains the proposal and approval status.
+Frozen-weight experiments compare VAD decisions, enhancement, reset, context/tail handling and waveform alignment. Noise-only metrics now avoid conventional empty-reference WER. Efficient Fourier transforms and avoiding growing VAD buffer copies are native-runtime work; artifact-aware training, distillation and personal speaker extraction require checkpoint changes. The approved [shared frontend integration](adrs/0019-shared-audio-frontend.md) now applies advisory Silero v6.2 and optional DPDFNet4/8 through one resident worker stage, with fresh recording state, deterministic framing, aligned tails and original-audio fallback. Both settings remain off by default. Its narrow native endpoint-range guard fixes invalid VAD extraction after bookkeeping flushes; it does not introduce a decoder or FFT kernel. Earlier experiment results do not qualify this application path. Ear identifies language and Uhm identifies candidate filler spans; neither supplies noise removal or persistent user intent. [Issue #42](https://github.com/rahulsharmavishwakarma/vesper/issues/42) contains the proposal and approval status.
 
 ## Research-based experiment plan
 
