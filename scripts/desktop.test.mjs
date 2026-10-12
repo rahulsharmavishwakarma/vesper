@@ -31,6 +31,38 @@ test('development shell uses nonempty Vesper, Transcribe, Ukti, STT model overri
 });
 
 const mac = { platform: 'darwin', arch: 'arm64', host: 'aarch64-apple-darwin' };
+test('default macOS builds need no updater key; signed and explicit configurations keep their policy', () => {
+  const override = JSON.stringify({ bundle: { createUpdaterArtifacts: false } });
+  const portable = desktopPlan(['build', '--', '--verbose'], {
+    ...mac,
+    mlx: '0',
+    updaterSigningKey: false,
+  });
+  assert.deepEqual(portable.args, ['build', '--config', override, '--', '--verbose', '--locked']);
+  const accelerated = desktopPlan(['build'], { ...mac, updaterSigningKey: false });
+  assert.ok(accelerated.args.indexOf(override) < accelerated.args.indexOf('--'));
+  for (const args of [
+    ['build', '--config', 'custom.json'],
+    ['build', '-ccustom.json'],
+    ['build', '--config=custom.json'],
+    ['dev'],
+  ])
+    assert.ok(!desktopPlan(args, { ...mac, updaterSigningKey: false }).args.includes(override));
+  assert.ok(!desktopPlan(['build'], { ...mac, updaterSigningKey: true }).args.includes(override));
+  assert.ok(
+    !desktopPlan(['build'], {
+      ...mac,
+      updaterSigningKey: false,
+      updaterPublicKey: 'enrolled-key',
+    }).args.includes(override),
+  );
+  assert.ok(
+    !desktopPlan(['build', '--target', 'aarch64-unknown-linux-gnu'], {
+      ...mac,
+      updaterSigningKey: false,
+    }).args.includes(override),
+  );
+});
 test('normal Apple Silicon dev/build adds MLX before Cargo arguments', () => {
   for (const mode of ['dev', 'build']) {
     const plan = desktopPlan([mode, '--', '--verbose'], mac);

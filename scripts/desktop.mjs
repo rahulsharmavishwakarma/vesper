@@ -13,7 +13,16 @@ export const mlxOverride = (environment = process.env) =>
 
 export function desktopPlan(
   args,
-  { platform, arch, host, environmentTarget, configuredTarget, mlx = 'auto' },
+  {
+    platform,
+    arch,
+    host,
+    environmentTarget,
+    configuredTarget,
+    mlx = 'auto',
+    updaterSigningKey = true,
+    updaterPublicKey = '',
+  },
 ) {
   const separator = args.indexOf('--');
   const head = separator < 0 ? [...args] : args.slice(0, separator);
@@ -46,6 +55,24 @@ export function desktopPlan(
   const prepareMlx =
     mlx !== '0' && platform === 'darwin' && arch === 'arm64' && target === 'aarch64-apple-darwin';
   if (prepareMlx) head.push('--config', 'src-tauri/tauri.mlx.conf.json');
+  // The default, unenrolled build produces app/DMG candidates without requiring
+  // private updater credentials. Explicit caller config keeps its own policy.
+  if (
+    head[0] === 'build' &&
+    target.endsWith('apple-darwin') &&
+    !updaterSigningKey &&
+    !updaterPublicKey &&
+    !args
+      .slice(0, separator < 0 ? undefined : separator)
+      .some(
+        (arg) =>
+          arg === '--config' ||
+          arg === '-c' ||
+          arg.startsWith('--config=') ||
+          (arg.startsWith('-c') && !arg.startsWith('--')),
+      )
+  )
+    head.push('--config', JSON.stringify({ bundle: { createUpdaterArtifacts: false } }));
   if (head[0] === 'build' && !tail.includes('--locked')) {
     if (!tail.length) tail.push('--');
     tail.push('--locked');
@@ -84,6 +111,11 @@ function main() {
     environmentTarget: process.env.CARGO_BUILD_TARGET,
     configuredTarget: !help && hasConfiguredTarget(),
     mlx: mlxOverride(),
+    updaterSigningKey: Boolean(process.env.TAURI_SIGNING_PRIVATE_KEY),
+    updaterPublicKey: help
+      ? ''
+      : JSON.parse(readFileSync(join(root, 'apps/desktop/src-tauri/tauri.conf.json'), 'utf8'))
+          .plugins?.updater?.pubkey,
   });
   if (plan.prepareMlx) {
     const version = execFileSync('sw_vers', ['-productVersion'], { encoding: 'utf8' });

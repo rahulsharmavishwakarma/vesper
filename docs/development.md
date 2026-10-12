@@ -208,21 +208,49 @@ including the pinned ggml patches and SentencePiece development files. The publi
 v0.1.0 ASR archive predates this model and cannot supply this stage.
 
 Application bundles ship the runtime so fresh installs can pre-check and
-install it on first run. Before building the macOS app, stage it (verified
-copy preferred; packages from source when available):
+install it on first run. To stage an existing verified bundle or package an
+already-built source checkout manually:
 
 ```sh
 node scripts/diarization-runtime.mjs
 ```
 
 `scripts/desktop.mjs` runs this automatically on Apple silicon before Tauri
-`dev` and `build` (strict for builds: a missing runtime fails loudly instead
-of shipping without timelines). The staging directory
+`dev` and `build`. Builds first reuse verified staging or a verified bundle
+in a model directory. If neither exists, a build prepares the pinned
+NeMo-Speech.cpp checkout in `.tooling/nemo-speech.cpp`, initializes ggml, runs
+the upstream `metal-diar` configuration and builds the runtime. SentencePiece
+0.1.99 (commit `3863f7648e5d8edb571ac592f3ac4f5f0695275a`) is built statically
+under `.tooling/diarization-build/`; no global installation or model download
+is needed. The first build requires network access, Git, CMake 3.26 or newer,
+Xcode command-line tools and the project's locked uv environment. Set
+`CMAKE_BUILD_PARALLEL_LEVEL` to a positive integer to adjust the default four
+build jobs. Later builds reuse the verified package without fetching sources.
+Development remains offline-tolerant when no source or bundle is available.
+The staging directory
 `.tooling/diarization-runtime/` maps into the bundle at
 `Contents/Resources/diarization-runtime/` via
 `apps/desktop/src-tauri/tauri.macos.conf.json`, and app startup installs it
 into the model directory after hash verification. Set `NEMO_SPEECH_SOURCE`
-to keep a pinned source checkout for repackaging.
+to use your own already-built pinned source checkout for repackaging; this
+override retains the manual native-build procedure below. Verified bundles
+take precedence over source builds. Packaging uses a temporary directory and
+replaces staging only after verification, allowing an invalid stage to be
+repaired without overwriting installed model bundles. Build failures remain
+fatal rather than shipping without timelines.
+
+`VESPER_MLX=0 make build` disables the optional MLX runtime; it still prepares
+and bundles the independent speaker runtime. Default, unenrolled macOS builds
+without `TAURI_SIGNING_PRIVATE_KEY` produce app/DMG candidates without updater artifacts;
+key-supplied builds retain updater signing. Explicit CLI configuration retains
+its own artifact policy (see [updater build policy](ci-and-releases.md#updater-contract-and-missing-release-gates)).
+If source preparation fails,
+check network access and the prerequisites above, then retry the same command.
+An existing checkout with an unexpected revision or modified tracked source
+is rejected; preserve local changes before repairing it. Do not substitute
+the older ASR release archive for the diarization runtime. The bootstrap and
+staging regression checks run with
+`node --test scripts/build-diarization-runtime.test.mjs scripts/diarization-runtime.test.mjs`.
 
 Package the built dependency closure on Apple silicon with Xcode tools:
 

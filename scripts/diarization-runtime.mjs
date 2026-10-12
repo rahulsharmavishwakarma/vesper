@@ -1,16 +1,17 @@
 #!/usr/bin/env node
 // Stage the pinned speaker (diarization) runtime for application bundles.
 // No model downloads. Sources, in order: an already-current staging
-// directory, a pinned native source checkout via the packager, or a fully
-// hash-verified copy from a local model directory. In strict mode (bundle
-// builds) every source missing is an error; otherwise the staging directory
+// directory, a fully hash-verified copy from a local model directory, or a
+// pinned native source checkout via the packager. Strict bundle builds prepare
+// the pinned source when needed; otherwise the staging directory
 // is left present but empty so development continues without the stage.
 import { execFileSync } from 'node:child_process';
 import { createHash } from 'node:crypto';
-import { cpSync, existsSync, mkdirSync, readFileSync, rmSync } from 'node:fs';
+import { cpSync, existsSync, mkdirSync, mkdtempSync, readFileSync, rmSync } from 'node:fs';
 import { homedir } from 'node:os';
 import { dirname, join, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
+import { buildDiarizationRuntime } from './build-diarization-runtime.mjs';
 
 const root = resolve(dirname(fileURLToPath(import.meta.url)), '..');
 const strict = process.argv.includes('--strict');
@@ -88,33 +89,50 @@ if (current()) {
   process.exit(0);
 }
 
-const source = nativeSource();
-if (source) {
-  execFileSync(
-    'uv',
-    [
-      'run',
-      '--locked',
-      'python',
-      join(root, 'scripts/package-nemotron-diarization.py'),
-      '--source',
-      source,
-      '--model-root',
-      join(root, '.tooling/diarization-runtime'),
-    ],
-    { cwd: root, stdio: 'inherit' },
-  );
-  if (!current()) throw new Error('Packaged diarization runtime failed verification');
-  console.log(`Packaged diarization runtime: ${join(STAGING, REVISION)}`);
-  process.exit(0);
-}
-
 for (const modelRoot of modelRoots()) {
   const candidate = join(modelRoot, 'nemotron-diarization-runtime');
   if (stageFrom(candidate)) {
     console.log(`Staged verified diarization runtime from ${candidate}`);
     process.exit(0);
   }
+}
+
+let source = nativeSource();
+if (
+  strict &&
+  !process.env.NEMO_SPEECH_SOURCE &&
+  (!source || source === join(root, '.tooling/nemo-speech.cpp'))
+) {
+  source = buildDiarizationRuntime(root, REVISION);
+}
+if (source) {
+  // Package into a fresh directory so an invalid previous stage can be repaired
+  // without replacing a developer's installed model/runtime bundle.
+  const stagingParent = join(root, '.tooling/diarization-runtime');
+  mkdirSync(stagingParent, { recursive: true });
+  const temporary = mkdtempSync(join(stagingParent, '.package-'));
+  try {
+    execFileSync(
+      'uv',
+      [
+        'run',
+        '--locked',
+        'python',
+        join(root, 'scripts/package-nemotron-diarization.py'),
+        '--source',
+        source,
+        '--model-root',
+        temporary,
+      ],
+      { cwd: root, stdio: 'inherit' },
+    );
+    if (!stageFrom(join(temporary, 'nemotron-diarization-runtime')))
+      throw new Error('Packaged diarization runtime failed verification');
+  } finally {
+    rmSync(temporary, { recursive: true, force: true });
+  }
+  console.log(`Packaged diarization runtime: ${join(STAGING, REVISION)}`);
+  process.exit(0);
 }
 
 mkdirSync(STAGING, { recursive: true });

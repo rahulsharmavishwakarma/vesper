@@ -548,9 +548,17 @@ The information-only section can precede the updater work in
 
 ### Updater contract and missing release gates
 
-The updater and process plugins are initialized and the macOS bundle emits the
-`.app.tar.gz` archive, but no public key, endpoint or manifest is configured, so
-the updater is inert: the frontend makes no update calls and no feed exists.
+The updater and process plugins are initialized, but no public key, endpoint or
+manifest is configured, so the updater is inert: the frontend makes no update
+calls and no feed exists.
+The shared launcher disables updater artifacts for default, unenrolled macOS
+builds without `TAURI_SIGNING_PRIVATE_KEY`, allowing app/DMG candidates to finish
+successfully.
+Supplying the key retains updater archive/signature creation and Tauri's signing
+checks. An explicit CLI `--config` keeps that configuration's artifact policy;
+an enrolled public key also retains the signing requirement. Requesting updater
+artifacts without a key fails. This build selection does not configure or bypass
+Apple distribution signing or notarization.
 Protected promotion and Apple signing/notarization remain separate prerequisites.
 
 ### Updater key ownership, enrollment and rotation
@@ -565,8 +573,8 @@ npx @tauri-apps/cli@2.11.4 signer generate -w ~/.tauri/vesper.key
 - Store the private key and its password as `production`-environment secrets
   (`TAURI_SIGNING_PRIVATE_KEY`, `TAURI_SIGNING_PRIVATE_KEY_PASSWORD`) and in an
   owner-controlled offline recovery location. The build signs
-  `.app.tar.gz` → `.sig` only when the key is present; unsigned candidates
-  still publish the DMG flow with a summary note instead of a manifest.
+  `.app.tar.gz` → `.sig` only when the key is present; default builds without
+  it produce app/DMG candidates without an updater archive or manifest.
 - Fill in the `plugins.updater` block in the base `tauri.conf.json` with the
   public key and the stable HTTPS endpoint, keeping prerelease tags on a
   separate beta feed file. The block ships with an empty key and no endpoints
