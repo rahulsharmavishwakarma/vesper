@@ -2992,6 +2992,7 @@ button:is(
 .settings-content details.settings-advanced > summary::after,
 .settings-content .preference-group > details > summary::after {
   content: '';
+  position: static;
   flex: none;
   width: 8px;
   height: 8px;

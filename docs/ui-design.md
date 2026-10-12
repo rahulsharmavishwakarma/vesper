@@ -115,6 +115,10 @@ Local workspace badge: the app has no workspace navigation for those labels to
 describe. The existing sidebar selection provides navigation context; operation
 feedback and the browser-preview notice retain their own meaningful states.
 
+## Disclosure chevron convention
+
+Every `<details>`/`<summary>` disclosure (recordings, export, learning, diagnostics, and the bordered rows inside `.preference-group`/`.settings-advanced` such as Vocabulary's "How does this work?", "Advanced storage and improvement", "Advanced writing instructions", "Restore default preferences") shares one CSS-drawn chevron built from `details > summary::after` in `apps/desktop/src/app.css`. The bordered variant switches `summary` to a flex row (`display: flex; align-items: center; justify-content: space-between`) so the chevron is meant to be centered as a normal flex child; that rule must also set `position: static` on the chevron, or the `position: absolute` from the plain (unbordered) convention leaks in, pulls the chevron out of flow, and leaves it pinned near the top of the row instead of centered (issue #128). When adding a new disclosure, reuse this convention rather than a new chevron, and verify the chevron is vertically centered in a rendered screenshot, not just by reading the CSS.
+
 ## Settings section navigation
 
 The selected HTML Settings study is integrated into the application: an interior
