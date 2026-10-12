@@ -375,10 +375,8 @@
     animation: capture-ring 1.6s var(--ease) infinite;
     pointer-events: none;
   }
-  .failed .quick-actions :global(.record-toggle) {
-    background: var(--color-error-tint);
-    color: var(--color-error);
-  }
+  /* Mock contract: the confirm button stays accent-filled in every state;
+   * failure is signalled by the heading and detail text, never a dark disc. */
   /* Capsule: one slim pill. */
   .capsule {
     display: flex;
