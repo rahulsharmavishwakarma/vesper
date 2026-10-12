@@ -1,6 +1,8 @@
 <script lang="ts">
   import { onDestroy, tick, untrack } from 'svelte';
   import { getAppInfo, type AppInfo } from '../api/desktop';
+  import { updateManager } from '../updatesTauri';
+  import type { UpdateState } from '../updates';
   import CopyGlyph from './CopyGlyph.svelte';
   import Icon from './Icon.svelte';
   import BrandLogo from './BrandLogo.svelte';
@@ -30,6 +32,19 @@
   let copied = $state(false);
   let copying = $state(false);
   let copyError = $state(false);
+  let updates = $state<UpdateState>(updateManager.state);
+  $effect(() => updateManager.subscribe((next) => (updates = next)));
+  const updateProgress = $derived(
+    updates.totalBytes && updates.totalBytes > 0
+      ? Math.min(100, Math.round((updates.downloadedBytes / updates.totalBytes) * 100))
+      : null,
+  );
+  const manualDownload = $derived(
+    updates.available
+      ? `https://github.com/rahulsharmavishwakarma/vesper/releases/download/v${updates.available.version}/vesper-macos-arm64.dmg`
+      : 'https://github.com/rahulsharmavishwakarma/vesper/releases/latest/download/vesper-macos-arm64.dmg',
+  );
+
   let fallback: HTMLTextAreaElement | undefined = $state();
   let opener: HTMLElement | null = null;
   let generation = 0;
@@ -164,7 +179,58 @@
     {/if}
     <section class="updates" aria-labelledby={updatesId}>
       <h3 id={updatesId}>Software updates</h3>
-      <p>Automatic updates aren’t available in this build.</p>
+      <p class="channel">Stable channel</p>
+      {#if updates.status === 'checking'}
+        <p role="status">Checking for updates…</p>
+      {:else if updates.status === 'current'}
+        <p role="status">
+          Vesper is up to date{updates.lastCheckedAt
+            ? ` (checked ${new Date(updates.lastCheckedAt).toLocaleDateString()})`
+            : ''}.
+        </p>
+      {:else if updates.status === 'available' && updates.available}
+        <p role="status">Version {updates.available.version} is available.</p>
+        {#if updates.available.notes}<p class="notes">{updates.available.notes}</p>{/if}
+        {#if updates.blockedReason}<p role="status">{updates.blockedReason}</p>{/if}
+        <p>
+          <button type="button" onclick={() => void updateManager.downloadAndInstall()}
+            >Download and install</button
+          >
+        </p>
+      {:else if updates.status === 'downloading'}
+        <p role="status">
+          Downloading update…{updateProgress !== null ? ` ${updateProgress}%` : ''}
+        </p>
+        <progress
+          value={updates.downloadedBytes}
+          max={updates.totalBytes ?? undefined}
+          aria-label="Update download progress"
+        ></progress>
+      {:else if updates.status === 'ready'}
+        <p role="status">Update installed and ready.</p>
+        {#if updates.blockedReason}<p role="status">{updates.blockedReason}</p>{/if}
+        <p>
+          <button type="button" onclick={() => void updateManager.restart()}
+            >Restart to update</button
+          >
+        </p>
+      {:else if updates.status === 'error'}
+        <p role="alert">{updates.errorMessage}</p>
+        <p>
+          <button type="button" onclick={() => void updateManager.check()}>Try again</button>
+        </p>
+      {:else}
+        <p role="status">Check for updates to see whether a newer version is ready.</p>
+        <p>
+          <button type="button" onclick={() => void updateManager.check()}>Check for updates</button
+          >
+        </p>
+      {/if}
+      <p class="manual">
+        <a href={manualDownload} target="_blank" rel="noreferrer noopener"
+          >Download the latest version manually</a
+        >
+      </p>
     </section>
   {/if}
 {/snippet}
@@ -308,7 +374,20 @@
   .updates p {
     font-size: 13px;
     color: var(--color-muted);
-    margin: 0;
+    margin: 0 0 var(--space-2);
+  }
+  .updates .notes {
+    white-space: pre-wrap;
+    max-height: 120px;
+    overflow-y: auto;
+  }
+  .updates progress {
+    display: block;
+    width: 100%;
+    margin: 0 0 var(--space-2);
+  }
+  .updates .manual {
+    margin-bottom: 0;
   }
   textarea {
     font-size: 12px;
