@@ -115,6 +115,35 @@ jobs:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           RELEASE_DRAFT_ONLY: '1'
         run: node scripts/publish-release.mjs
+      - name: Upload updater archive, signature and feed manifest
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          set -eu
+          archive=release/vesper-macos-arm64.app.tar.gz
+          sig="$archive.sig"
+          if [ ! -f "$archive" ]; then
+            echo "No updater archive in candidate; skipping feed (unsigned build)." >> "$GITHUB_STEP_SUMMARY"
+            exit 0
+          fi
+          if [ ! -f "$sig" ]; then
+            echo "Updater archive without signature; refusing." >&2
+            exit 1
+          fi
+          if [ "$(gh release view "$GITHUB_REF_NAME" --repo "$GITHUB_REPOSITORY" --json isDraft --jq .isDraft)" != "true" ]; then
+            echo "Not a draft; refusing to touch published updater assets." >&2
+            exit 1
+          fi
+          case "$GITHUB_REF_NAME" in
+            *"-"*) manifest=beta.json ;;
+            *) manifest=latest.json ;;
+          esac
+          version="${GITHUB_REF_NAME#v}"
+          notes="$(gh release view "$GITHUB_REF_NAME" --repo "$GITHUB_REPOSITORY" --json body --jq .body)"
+          url="https://github.com/$GITHUB_REPOSITORY/releases/download/$GITHUB_REF_NAME/vesper-macos-arm64.app.tar.gz"
+          node scripts/compose-updater-manifest.mjs --version="$version" --archive="$archive" --sig="$sig" --url="$url" --notes="$notes" --out="release/$manifest"
+          gh release upload "$GITHUB_REF_NAME" --repo "$GITHUB_REPOSITORY" --clobber "$archive" "$sig" "release/$manifest"
+          echo "Updater feed: https://github.com/$GITHUB_REPOSITORY/releases/download/$GITHUB_REF_NAME/$manifest" >> "$GITHUB_STEP_SUMMARY"
       - name: Record candidate links
         run: |
           {
