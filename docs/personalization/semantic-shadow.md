@@ -2,7 +2,7 @@
 
 Phase B adds automatic analysis of committed in-app draft edits using the already-resident local Qwen writer. A proposal can classify an edit/attempt relation, suggest a supported output form and identify relevant supplied vocabulary IDs. **Proposals are evaluation evidence only. They never change dictation, active vocabulary, output preferences or reviewed training labels.** The existing spelling learner continues to control production memory.
 
-The owner approved the [concrete proposal in #59](https://github.com/rahulsharmavishwakarma/transcribe/issues/59#issuecomment-5740928523); the [approval record](https://github.com/rahulsharmavishwakarma/transcribe/issues/59#issuecomment-5741340042) identifies its scope. This mechanism does not establish recursive algorithm improvement or personal efficacy.
+The owner approved the [concrete proposal in #59](https://github.com/rahulsharmavishwakarma/vesper/issues/59#issuecomment-5740928523); the [approval record](https://github.com/rahulsharmavishwakarma/vesper/issues/59#issuecomment-5741340042) identifies its scope. This mechanism does not establish recursive algorithm improvement or personal efficacy.
 
 ## Request and evidence contract
 

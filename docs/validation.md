@@ -40,13 +40,13 @@ The historical ten-second qualification statements below are superseded by
 
 ## Models, quick capture, and duration policy
 
-[Issue #26](https://github.com/rahulsharmavishwakarma/transcribe/issues/26) removes
+[Issue #26](https://github.com/rahulsharmavishwakarma/vesper/issues/26) removes
 the JSON profile import section and obsolete instructions. Saved custom profiles
 and the curated speech/writing selectors retain their existing persistence,
 validation, and explicit-download paths. The Models screenshot
 shows the resulting page.
 
-[Issue #27](https://github.com/rahulsharmavishwakarma/transcribe/issues/27) reduces
+[Issue #27](https://github.com/rahulsharmavishwakarma/vesper/issues/27) reduces
 the floating window to 440 × 96 logical pixels, replaces the large wordmark and
 completion checkmark action with status text and Record/Stop/View, adds elapsed
 time, and keeps the measured waveform in the compact signal area. View navigates
@@ -55,7 +55,7 @@ dismissal pauses while hovered or focused. State screenshots
 cover idle, hover, focus, active, recording, quiet input, disabled/processing,
 error, and completion. A disposable preview remains outside the repository.
 
-[Issue #28](https://github.com/rahulsharmavishwakarma/transcribe/issues/28) implements
+[Issue #28](https://github.com/rahulsharmavishwakarma/vesper/issues/28) implements
 [ADR-0009](adrs/0009-no-general-transcription-time-quota.md): no general recording
 or import time quota. Old saved durations are readable but ignored. The UI removes
 the duration editor and identifies the remaining Qwen3-ASR/Cohere ten-second
@@ -92,7 +92,7 @@ uncommitted.
 
 ## Qwen3-ASR and Cohere integration
 
-The approved [issue #14](https://github.com/rahulsharmavishwakarma/transcribe/issues/14) integration was qualified on Apple M5 Pro, 64 GiB RAM, macOS 26.6.2 (25G83), CPU with eight native threads. The source-pinned Sherpa 1.13.8 patch/build, artifact hashes, outputs and individual timings remain in `.cache/benchmarks/results/qwen-cohere-native/debug-summary.json`; fixture attribution and reproduction commands are in [offline ASR](offline-asr.md).
+The approved [issue #14](https://github.com/rahulsharmavishwakarma/vesper/issues/14) integration was qualified on Apple M5 Pro, 64 GiB RAM, macOS 26.6.2 (25G83), CPU with eight native threads. The source-pinned Sherpa 1.13.8 patch/build, artifact hashes, outputs and individual timings remain in `.cache/benchmarks/results/qwen-cohere-native/debug-summary.json`; fixture attribution and reproduction commands are in [offline ASR](offline-asr.md).
 
 | Adapter | Native load | Native decode | Peak process RSS | Post-stop backend pipeline |
 | --- | ---: | ---: | ---: | ---: |
@@ -270,7 +270,7 @@ and strict Clippy. The five browser results are captured in
 recovery-checks.png. `make build-debug` also
 rebuilt the then-named `target/debug/bundle/macos/transcribe.app` successfully, before the Vesper identity. Live microphone and actual
 operating-system shortcut testing remain tracked in
-[GitHub issue #7](https://github.com/rahulsharmavishwakarma/transcribe/issues/7).
+[GitHub issue #7](https://github.com/rahulsharmavishwakarma/vesper/issues/7).
 
 ## Expanded model menu validation
 
@@ -378,7 +378,7 @@ for this change; Windows/Linux native GPU execution remains unverified.
 
 ## Recorder model summary — 15 September 2026
 
-The follow-up to [issue #24](https://github.com/rahulsharmavishwakarma/transcribe/issues/24)
+The follow-up to [issue #24](https://github.com/rahulsharmavishwakarma/vesper/issues/24)
 shows both saved choices under the recorder: Speech model and Writing model.
 Writing model also replaces Cleanup model on the Models selector. When writing
 is disabled, its configured name stays visible with an Off label. Manage models
@@ -398,7 +398,7 @@ overflow. No native settings, model files or microphone were used for these chec
 
 ## Model wording and saved selections across screens
 
-[Issue #24](https://github.com/rahulsharmavishwakarma/transcribe/issues/24) now uses
+[Issue #24](https://github.com/rahulsharmavishwakarma/vesper/issues/24) now uses
 shared Speech model / Writing model role labels throughout the interface. Dictate,
 Settings and History reuse one configured-model summary; Local engine on Models
 reads the same saved settings. Settings, model imports/downloads, History review,
@@ -423,7 +423,7 @@ preferences and mocked native commands; no private recordings or live inference.
 
 ## Compact recorder layout
 
-[Issue #25](https://github.com/rahulsharmavishwakarma/transcribe/issues/25) groups
+[Issue #25](https://github.com/rahulsharmavishwakarma/vesper/issues/25) groups
 microphone selection and the recording limit in a toolbar, places Record and file
 transcription together, and pairs a clear recorder status with a smaller waveform.
 The shared model summary remains in the footer. Empty microphone selections now
@@ -449,7 +449,7 @@ dependency. No real microphone, audio files or model inference were used.
 
 The standalone library and disclosure below describe earlier UI validation. The current interface integrates download status and removal into each model card; see the follow-up validation below.
 
-[Issue #23](https://github.com/rahulsharmavishwakarma/transcribe/issues/23) puts Local engine at the top of Models and adds an inventory of known downloaded weights, including unselected shipped presets and separate Q4/Q8 packages. The model-library screenshot uses synthetic desktop responses and sizes, not a user's actual downloads.
+[Issue #23](https://github.com/rahulsharmavishwakarma/vesper/issues/23) puts Local engine at the top of Models and adds an inventory of known downloaded weights, including unselected shipped presets and separate Q4/Q8 packages. The model-library screenshot uses synthetic desktop responses and sizes, not a user's actual downloads.
 
 Validation passed: 23 `transcribe-models` tests, the desktop runtime operation-boundary regression, strict Clippy for the model and desktop crates, Svelte/TypeScript with zero errors or warnings, and 43 JavaScript/tool tests. The macOS debug app rebuilt successfully. New temporary-directory tests cover actual file-byte accounting, incomplete files, precision isolation, selected-model readiness after removal, unknown IDs/roles/precisions, stale model folders, shared weights/runtime preservation, unselected preset inventory, and symlink preflight without deleting earlier valid files. These checks do not delete or download user model weights.
 
@@ -490,7 +490,7 @@ Both explicit checks passed on an Apple M5 Pro with 64 GiB RAM, running macOS 26
 
 The pipeline smoke now requires a nonempty cleanup result, no pipeline warnings, and equality between the returned and persisted cleanup. Previously it could pass when cleanup failed and raw text survived. On this run, the raw and cleaned public-fixture transcripts were identical. Both training targets remained null in the archive export, and the archived audio matched the source bytes.
 
-These are individual test durations, including assertions, rather than latency distributions. Peak memory was not measured. The first sandboxed attempt could not create a Metal command queue; the successful run had local GPU access. No private audio or live microphone was used. Permission grant/denial, device disconnection, a real shortcut conflict, and native close/notification behavior remain manual checks in [GitHub issue #7](https://github.com/rahulsharmavishwakarma/transcribe/issues/7).
+These are individual test durations, including assertions, rather than latency distributions. Peak memory was not measured. The first sandboxed attempt could not create a Metal command queue; the successful run had local GPU access. No private audio or live microphone was used. Permission grant/denial, device disconnection, a real shortcut conflict, and native close/notification behavior remain manual checks in [GitHub issue #7](https://github.com/rahulsharmavishwakarma/vesper/issues/7).
 
 ### Individual commands
 
@@ -512,7 +512,7 @@ Download the linked fixture explicitly to `.cache/smoke/en.wav` and verify its h
 
 ## Native menu bar — 15 September 2026
 
-Historical record: [issue #29](https://github.com/rahulsharmavishwakarma/transcribe/issues/29) added a native macOS menu bar entry with the then-current `transcribe` text title. Vesper now uses the selected Songbird logo alone, with **Open Vesper** and the Vesper status tooltip, as documented in [UI design](ui-design.md#selected-identity). The menu continues to show runtime activity, Start/Stop recording, History, Models, Settings and Quit through the same quick-capture controller. Status refresh reads runtime activity every 500 ms and only changes native items when needed; it does not inspect model files or load weights. The measurements below describe the original implementation, not a new qualification run for the logo.
+Historical record: [issue #29](https://github.com/rahulsharmavishwakarma/vesper/issues/29) added a native macOS menu bar entry with the then-current `transcribe` text title. Vesper now uses the selected Songbird logo alone, with **Open Vesper** and the Vesper status tooltip, as documented in [UI design](ui-design.md#selected-identity). The menu continues to show runtime activity, Start/Stop recording, History, Models, Settings and Quit through the same quick-capture controller. Status refresh reads runtime activity every 500 ms and only changes native items when needed; it does not inspect model files or load weights. The measurements below describe the original implementation, not a new qualification run for the logo.
 
 Closing either window now hides it. Main-window drafts and ongoing work stay alive, and the macOS Dock reopen event restores the main window. Explicit Quit is disabled during active work. Cmd-Q / Dock quit also require idle and bring Dictate forward while busy; they no longer cancel a recording as a side effect. An accepted exit marks shutdown while holding the runtime state lock, preventing a new recording/download from starting between the idle check and exit.
 
@@ -522,11 +522,11 @@ Browser QA mounted the actual App against synthetic native responses. A Settings
 
 Native state tests cover Stop availability during recording, disabled capture/quit for every processing/download/removal/cancellation stage (including unknown busy stages), error recovery, stale recording-stage text after completion, menu ID isolation, and atomic idle shutdown. Quit rejection leaves busy work uncancelled and its stage unchanged; accepted idle shutdown prevents new recording or installation.
 
-macOS reported UI automation disabled (`System Events` returned false). Actual status-item rendering/clicks, menu keyboard accelerators, Dock/window reopening, and recording via the native menu remain on-device checks under [issue #7](https://github.com/rahulsharmavishwakarma/transcribe/issues/7). Browser event simulation and native unit tests are not evidence of completing those OS interactions. Linux and Windows tray behavior was not tested.
+macOS reported UI automation disabled (`System Events` returned false). Actual status-item rendering/clicks, menu keyboard accelerators, Dock/window reopening, and recording via the native menu remain on-device checks under [issue #7](https://github.com/rahulsharmavishwakarma/vesper/issues/7). Browser event simulation and native unit tests are not evidence of completing those OS interactions. Linux and Windows tray behavior was not tested.
 
 ## History pagination — 15 September 2026
 
-The pagination follow-up in [issue #12](https://github.com/rahulsharmavishwakarma/transcribe/issues/12) limits the History list to 10 rows by default, with 10/25/50 page sizes, Previous/Next, current page and an exact visible result range. Search, date/review filters, stats and export continue to use the complete loaded history. Page changes preserve review drafts. Filter and size changes/imports reset to page one; refresh and review clamp pages when results shrink.
+The pagination follow-up in [issue #12](https://github.com/rahulsharmavishwakarma/vesper/issues/12) limits the History list to 10 rows by default, with 10/25/50 page sizes, Previous/Next, current page and an exact visible result range. Search, date/review filters, stats and export continue to use the complete loaded history. Page changes preserve review drafts. Filter and size changes/imports reset to page one; refresh and review clamp pages when results shrink.
 
 Validation passed: clean Svelte/TypeScript and 52 JavaScript/tool tests, including new pagination boundary/order, empty/shrinking-input and cross-page filtering tests. The macOS debug app rebuilt successfully. No Rust data or inference changes were needed for pagination.
 
@@ -538,15 +538,15 @@ This is display pagination: the existing `list_sessions` command still loads the
 
 ## UI wording cleanup
 
-[Issue #31](https://github.com/rahulsharmavishwakarma/transcribe/issues/31) removes the waveform caption, repeated recorder/setup instructions, benchmark boilerplate and model implementation explanations from normal controls. Language guidance, writing preferences, model status, History feedback and Quick Capture now use shorter user-facing text. Local engine keeps measurement scope and timing definitions; recording constraints, download progress, errors, unsaved changes and retention information remain visible. Control behavior and stored settings are unchanged.
+[Issue #31](https://github.com/rahulsharmavishwakarma/vesper/issues/31) removes the waveform caption, repeated recorder/setup instructions, benchmark boilerplate and model implementation explanations from normal controls. Language guidance, writing preferences, model status, History feedback and Quick Capture now use shorter user-facing text. Local engine keeps measurement scope and timing definitions; recording constraints, download progress, errors, unsaved changes and retention information remain visible. Control behavior and stored settings are unchanged.
 
 Validation passed: Svelte/TypeScript with zero errors or warnings, 52 JavaScript/tool tests, all 13 existing browser regression scenarios, and the macOS debug app build. Browser preview checks covered Dictate, Models, Settings and History at 1280px and 320px without horizontal overflow. Visible controls had no missing label/description references. Quick Capture fit its 440 × 96 viewport. The Dictate and Settings screenshots use isolated browser preview preferences; regression scenarios use mocked native responses. No private audio or live inference was used.
 
-At the time of issue #31, the Qwen/Cohere ten-second guard remained in place. It is now superseded by the approved [issue #32](https://github.com/rahulsharmavishwakarma/transcribe/issues/32) implementation; see [long-audio validation](#long-qwen3-asr-and-cohere-audio).
+At the time of issue #31, the Qwen/Cohere ten-second guard remained in place. It is now superseded by the approved [issue #32](https://github.com/rahulsharmavishwakarma/vesper/issues/32) implementation; see [long-audio validation](#long-qwen3-asr-and-cohere-audio).
 
 ## Long Qwen3-ASR and Cohere audio
 
-The approved [issue #32](https://github.com/rahulsharmavishwakarma/transcribe/issues/32)
+The approved [issue #32](https://github.com/rahulsharmavishwakarma/vesper/issues/32)
 and [ADR-0011](adrs/0011-segment-long-generative-asr.md) remove the remaining
 whole-recording/import time cutoff. Qwen and Cohere now process contiguous
 bounded parts through fresh streams on one recognizer per job. No samples are
@@ -644,7 +644,7 @@ The user-selected fresh/reset defaults are Cohere Transcribe plus Qwen3.5 writin
 
 ## Native Hold/Toggle and final insertion — 16 September 2026
 
-Issue [#4](https://github.com/rahulsharmavishwakarma/transcribe/issues/4) and ADR-0014 track the approved macOS dictation integration. Existing settings migrate to Toggle and Keep in app; automatic paste is enabled explicitly in Settings → Quick capture.
+Issue [#4](https://github.com/rahulsharmavishwakarma/vesper/issues/4) and ADR-0014 track the approved macOS dictation integration. Existing settings migrate to Toggle and Keep in app; automatic paste is enabled explicitly in Settings → Quick capture.
 
 Validation completed in this workspace:
 

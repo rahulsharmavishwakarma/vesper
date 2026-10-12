@@ -1,6 +1,6 @@
 # Native learning qualification protocol
 
-[#58](https://github.com/rahulsharmavishwakarma/transcribe/issues/58) qualifies the existing automatic spelling loop. The product outcome is fewer corrections and less editing time in later independent sessions, while preserving meaning. [Evaluation](evaluation.md) owns the measured results; this page defines the protocol before scoring. No new training, semantic analysis or live policy controller is enabled.
+[#58](https://github.com/rahulsharmavishwakarma/vesper/issues/58) qualifies the existing automatic spelling loop. The product outcome is fewer corrections and less editing time in later independent sessions, while preserving meaning. [Evaluation](evaluation.md) owns the measured results; this page defines the protocol before scoring. No new training, semantic analysis or live policy controller is enabled.
 
 ## Evidence boundaries
 

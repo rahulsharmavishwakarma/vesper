@@ -15,7 +15,7 @@ transcription verb, third-party model names, executable identifiers or recorded
 historical names. See [product naming and compatibility](development.md#product-name-and-compatibility).
 
 **Ember** is the current Vesper identity, finalized by the owner in
-[issue #87](https://github.com/rahulsharmavishwakarma/transcribe/issues/87).
+[issue #87](https://github.com/rahulsharmavishwakarma/vesper/issues/87).
 The in-app lockup pairs the filled ember bird in
 [its own SVG](../apps/desktop/src/assets/ember-bird.svg) with a Bricolage
 Grotesque 800 wordmark, and every other application string uses the same
@@ -25,7 +25,7 @@ icons, the menu-bar template and the README banner still derive from the
 Songbird source below until a follow-up requalifies that pipeline.
 
 **A — Songbird** was the owner-selected Vesper identity, approved in
-[issue #71](https://github.com/rahulsharmavishwakarma/transcribe/issues/71),
+[issue #71](https://github.com/rahulsharmavishwakarma/vesper/issues/71),
 until Ember superseded it for in-app UI. Its selection and qualification are
 preserved here as history.
 The original bird, two call strokes and six individually drawn letter paths live
@@ -259,8 +259,8 @@ download controls. Update controls depend on qualified distribution. Installatio
 active work to finish, and dismissal must not imply native download cancellation.
 Keep technical signing/feed details out of the ordinary user flow. The proposed
 interaction and implementation limits are tracked in issues
-[#66](https://github.com/rahulsharmavishwakarma/transcribe/issues/66) and
-[#65](https://github.com/rahulsharmavishwakarma/transcribe/issues/65).
+[#66](https://github.com/rahulsharmavishwakarma/vesper/issues/66) and
+[#65](https://github.com/rahulsharmavishwakarma/vesper/issues/65).
 
 ## Verification
 

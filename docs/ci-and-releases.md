@@ -284,7 +284,7 @@ All manifests and lockfiles stay versioned, while `.venv` and `.cache` stay igno
 The 2026-09-19 remediation resolves 12 of the 17 inventoried Dependabot findings
 in the local dependency graph. These changes have to reach the default branch
 before GitHub can re-evaluate its alerts. No alert was dismissed, dependency
-marker removed, or advisory ignored. [Issue #57](https://github.com/rahulsharmavishwakarma/transcribe/issues/57)
+marker removed, or advisory ignored. [Issue #57](https://github.com/rahulsharmavishwakarma/vesper/issues/57)
 tracks the remaining work; this is not a claim that the repository is free of
 known advisories.
 
@@ -297,7 +297,7 @@ known advisories.
 
 The earlier compatible-only update still left Transformers 4.57.6 findings and
 GLib 0.18.5 / RUSTSEC-2024-0429 in the maintained graphs. The owner approved the
-following source-level remediation in [issue #57](https://github.com/rahulsharmavishwakarma/transcribe/issues/57).
+following source-level remediation in [issue #57](https://github.com/rahulsharmavishwakarma/vesper/issues/57).
 
 The isolated VibeVoice environment now uses Transformers 5.10.1 and Hub 1.5.0.
 A [pinned compatibility patch](../patches/vibevoice/README.md) adapts the exact
@@ -397,7 +397,7 @@ those `Cargo.lock` entries behind while the check reported success). Numeric
 prerelease identifiers with leading zeroes such as `0.1.1-01` are rejected per
 [SemVer item 9](https://semver.org/#spec-item-9). The 14 version and publisher
 tests include independent temporary-copy coverage that does not reuse the
-production collector. This repair belongs to the existing [release-policy issue #63](https://github.com/rahulsharmavishwakarma/transcribe/issues/63).
+production collector. This repair belongs to the existing [release-policy issue #63](https://github.com/rahulsharmavishwakarma/vesper/issues/63).
 
 ## Release workflow and download URL
 
@@ -424,7 +424,7 @@ The version is recorded in the release tag and app bundle. The asset name stays
 constant so a website download button can link to:
 
 ```text
-https://github.com/rahulsharmavishwakarma/transcribe/releases/latest/download/vesper-macos-arm64.dmg
+https://github.com/rahulsharmavishwakarma/vesper/releases/latest/download/vesper-macos-arm64.dmg
 ```
 
 The app bundle and new release titles use the Vesper display name. Packaging
@@ -436,7 +436,7 @@ The branding change does not publish an installer or alter release authorization
 A specific release has a permanent version URL, for example:
 
 ```text
-https://github.com/rahulsharmavishwakarma/transcribe/releases/download/v0.1.0/vesper-macos-arm64.dmg
+https://github.com/rahulsharmavishwakarma/vesper/releases/download/v0.1.0/vesper-macos-arm64.dmg
 ```
 
 These are planned endpoints until a release succeeds. At the 2026-09-19 review,
@@ -505,11 +505,11 @@ routine debug/native PR checks.
 
 ## About information and updater readiness
 
-The [release roadmap #62](https://github.com/rahulsharmavishwakarma/transcribe/issues/62)
+The [release roadmap #62](https://github.com/rahulsharmavishwakarma/vesper/issues/62)
 separates policy, Apple signing, updater delivery and UI. The About/update UI
 below is a proposal based on the 2026-09-19 review, not implemented behavior;
 the updater backend itself is tracked in
-[issue #65](https://github.com/rahulsharmavishwakarma/transcribe/issues/65).
+[issue #65](https://github.com/rahulsharmavishwakarma/vesper/issues/65).
 
 ### Existing app information and proposed placement
 
@@ -544,7 +544,7 @@ is the platform reference; [VS Code's FAQ](https://code.visualstudio.com/docs/su
 documents version information in About and a preference for automatic updates.
 These are interaction references, not a visual template.
 The information-only section can precede the updater work in
-[issue #66](https://github.com/rahulsharmavishwakarma/transcribe/issues/66).
+[issue #66](https://github.com/rahulsharmavishwakarma/vesper/issues/66).
 
 ### Updater contract and missing release gates
 
@@ -581,7 +581,7 @@ npx @tauri-apps/cli@2.11.4 signer generate -w ~/.tauri/vesper.key
   (explicitly unenrolled — the plugin requires the block at startup but makes
   no calls), so enrollment only fills values, never adds structure.
 - Keep `allow_downgrades` off and do not enable a custom version comparator
-  ([issue #65](https://github.com/rahulsharmavishwakarma/transcribe/issues/65)).
+  ([issue #65](https://github.com/rahulsharmavishwakarma/vesper/issues/65)).
   Rotation is one transition release that accepts the new public key before
   later releases switch signing keys.
 - Only the `main` window holds `updater:default` and `process:default`

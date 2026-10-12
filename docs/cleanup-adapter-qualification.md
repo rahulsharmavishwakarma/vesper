@@ -170,4 +170,4 @@ was exercised. Missing Q8 and language/duration/resource coverage also prevents
 general qualification. The next diagnostic is matched layerwise activations at
 the first divergence, using the native standalone evaluation callback; it is not
 permission to change production math. Training/promotion remains blocked in
-[#5](https://github.com/rahulsharmavishwakarma/transcribe/issues/5).
+[#5](https://github.com/rahulsharmavishwakarma/vesper/issues/5).

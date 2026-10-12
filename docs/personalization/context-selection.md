@@ -68,7 +68,7 @@ Pinned artifacts and exact native API sources are recorded in [ADR-0015](../adrs
 
 ## Automatic project routing boundary
 
-The staged extension in [#34](https://github.com/rahulsharmavishwakarma/transcribe/issues/34)
+The staged extension in [#34](https://github.com/rahulsharmavishwakarma/vesper/issues/34)
 was approved for implementation. Routing reuses the existing profile and operation
 snapshot; it does not change inference ownership or require model-specific memory.
 The resolver/storage regressions and five authored TextEdit native cases pass;

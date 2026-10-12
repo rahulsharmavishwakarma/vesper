@@ -1,6 +1,6 @@
 # Streaming speech: NVIDIA, Kyutai STT and Moshi
 
-Current selection update (18 September 2026): [GitHub issue #48](https://github.com/rahulsharmavishwakarma/transcribe/issues/48) records the removal of Kyutai from the application catalog, installer, and runtime after its local US-English CPU screen failed the declared quality and real-time gates. Kyutai and Moshi material below is retained as research history, not current application support. Consult [application internals](internals.md) for current capabilities.
+Current selection update (18 September 2026): [GitHub issue #48](https://github.com/rahulsharmavishwakarma/vesper/issues/48) records the removal of Kyutai from the application catalog, installer, and runtime after its local US-English CPU screen failed the declared quality and real-time gates. Kyutai and Moshi material below is retained as research history, not current application support. Consult [application internals](internals.md) for current capabilities.
 
 Research updated **14 September 2026**; product status updated 18 September 2026. The cross-model paper-to-engineering analysis is in [Research basis for streaming inference](research-streaming-inference-papers.md). Nemotron is the selectable multilingual/live adapter through pinned NeMo-Speech.cpp 0.1.0, with resident weights, fresh per-recording streams, partial/final events, and completed-audio inference. Cohere is the fresh-settings default for completed recordings.
 

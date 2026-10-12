@@ -1,7 +1,7 @@
 # TextEdit correction evaluation (removed)
 
 The optional TextEdit external observer was removed on 29 September 2026
-([#61](https://github.com/rahulsharmavishwakarma/transcribe/issues/61)):
+([#61](https://github.com/rahulsharmavishwakarma/vesper/issues/61)):
 dictation pastes into any application, so a TextEdit-only correction watcher
 covered almost none of real corrections, and per-application adapters do not
 scale. In-app draft-edit learning is the remaining app-agnostic path.
@@ -23,7 +23,7 @@ not be read as current behavior.
 
 ---
 
-The optional **Review corrections in TextEdit** setting enables a bounded local observer after automatic paste. It defaults off and is separate from automatic in-app spelling learning. Enabling it does not approve training labels or activate a dictionary entry. Eligible candidates appear in **Settings → Writing → Corrections from TextEdit**; each spelling requires an explicit Remember action. The September 19 design was approved in [#61](https://github.com/rahulsharmavishwakarma/transcribe/issues/61#issuecomment-5742682788).
+The optional **Review corrections in TextEdit** setting enables a bounded local observer after automatic paste. It defaults off and is separate from automatic in-app spelling learning. Enabling it does not approve training labels or activate a dictionary entry. Eligible candidates appear in **Settings → Writing → Corrections from TextEdit**; each spelling requires an explicit Remember action. The September 19 design was approved in [#61](https://github.com/rahulsharmavishwakarma/vesper/issues/61#issuecomment-5742682788).
 
 ## Supported boundary (historical)
 
