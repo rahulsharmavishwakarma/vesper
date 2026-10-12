@@ -72,9 +72,18 @@ recordings, transcripts or local paths. If clipboard access fails, the sheet
 provides selected text for manual copying. Escape or Close dismisses the native About sheet without changing settings.
 In Settings, choose another section to leave About.
 
-Automatic application updates are not connected yet. The sheet reports this
-instead of offering a check/download/restart action. Model downloads continue
-to be managed separately in **Models**.
+### Application updates
+
+Open **Settings** (or the About sheet) and use **Check for updates** on the
+software-updates panel. Vesper checks quietly at startup after the window is
+ready and stays silent when you are current. When an update is available, the
+panel shows its version and release notes; choose **Download and install** to
+fetch it — the button becomes **Restart to update** once the verified package is
+ready. Installation waits while you are recording, transcribing, cleaning up
+writing or downloading a model, and it never force-restarts. If a check or
+download fails, the panel explains what happened and links to the manual
+installer on the release download page. Model downloads continue to be managed
+separately in **Models**.
 
 ### Initial setup
 

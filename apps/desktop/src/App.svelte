@@ -6,6 +6,7 @@
   import { listen } from '@tauri-apps/api/event';
   import { invoke } from '@tauri-apps/api/core';
   import type { DictationStatus } from './lib/api/dictation';
+  import { requestQuietCheck } from './lib/updatesTauri';
   import { Autosaver } from './lib/autosave.svelte';
   import {
     getAppStatus,
@@ -456,6 +457,9 @@
   onMount(() => {
     if (quickWindow) return;
     void loadSettings();
+    // Quiet startup check (#66): fires once the main UI is ready and only
+    // surfaces in Settings > About; shows nothing extra when current.
+    requestQuietCheck();
     const removePressFeedback = installPressFeedback();
     let unlistenTranscript: (() => void) | undefined;
     let unlistenMenu: (() => void) | undefined;
