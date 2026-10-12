@@ -47,3 +47,27 @@ test ! -e "$output" || {
 mkdir "$output"
 # The version lives in the tag and bundle; this name keeps the download URL stable.
 cp "$dmg" "$output/vesper-macos-${architecture}.dmg"
+
+# Updater artifacts exist only for enrolled (signed) builds. Unsigned
+# candidates skip them; an archive without a signature fails closed so an
+# unverifiable updater package can never publish.
+updater_dir="target/release/bundle/macos"
+updater_found=""
+updater_count=0
+for candidate in "$updater_dir"/*.app.tar.gz; do
+  test -e "$candidate" || continue
+  updater_count=$((updater_count + 1))
+  updater_found="$candidate"
+done
+if [ "$updater_count" -eq 0 ]; then
+  printf '%s\n' 'no updater archive; skipping updater artifacts (unsigned candidate)' >&2
+elif [ "$updater_count" -gt 1 ]; then
+  printf '%s\n' 'multiple updater archives; refusing to choose' >&2
+  exit 1
+elif [ ! -f "$updater_found.sig" ]; then
+  printf '%s\n' "missing signature for $updater_found; refusing unsigned updater archive" >&2
+  exit 1
+else
+  cp "$updater_found" "$output/vesper-macos-${architecture}.app.tar.gz"
+  cp "$updater_found.sig" "$output/vesper-macos-${architecture}.app.tar.gz.sig"
+fi

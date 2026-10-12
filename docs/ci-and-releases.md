@@ -456,6 +456,12 @@ latest; prereleases are explicitly excluded from latest. Publish stable tags in
 version order so an old newly published tag does not replace the website's
 latest download.
 
+Enrolled (signed) candidates additionally carry `vesper-macos-arm64.app.tar.gz`,
+its `.sig`, and the feed manifest (`latest.json` for stable tags, `beta.json`
+for prereleases), uploaded to the same draft only while it is still a draft;
+unsigned candidates skip the feed. `scripts/package-release.sh` collects the
+archive pair and fails closed on a missing signature or ambiguous archives.
+
 For an already-published release, the script only adds missing assets. It never
 clobbers existing public downloads. A partial-upload retry requires any existing
 asset's server-provided SHA-256 digest to match the corresponding local file;
