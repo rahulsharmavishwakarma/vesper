@@ -1,0 +1,27 @@
+# License policy for open-source distribution. Anything outside `allow` fails
+# `cargo deny check licenses` for explicit review — do not extend this list
+# without recording the reason in the open-source tracking issue (#127).
+[licenses]
+version = 2
+allow = [
+  "Apache-2.0",
+  "MIT",
+  "BSD-2-Clause",
+  "BSD-3-Clause",
+  "ISC",
+  "Unicode-3.0",
+  "CC0-1.0",
+  "Zlib",
+  # Apache-2.0 WITH LLVM-exception (target-lexicon via system-deps/glib
+  # chain) is Apache-2.0 plus an additional linking permission.
+  # Reviewed 2026-10-12 for #127.
+  "Apache-2.0 WITH LLVM-exception",
+  # MPL-2.0 is file-level weak copyleft (cssparser/selectors via Tauri,
+  # symphonia audio codecs, dtoa-short, target-lexicon). Compatible with
+  # Apache-2.0 distribution; no reciprocal obligation beyond the MPL files,
+  # whose source remains upstream. Reviewed 2026-10-12 for #127.
+  "MPL-2.0",
+  # CDLA-Permissive-2.0 covers Mozilla root-certificate data (webpki-roots).
+  # Permissive data license, no source obligation. Reviewed 2026-10-12 for #127.
+  "CDLA-Permissive-2.0",
+]

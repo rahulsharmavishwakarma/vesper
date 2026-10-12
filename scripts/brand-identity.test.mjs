@@ -100,7 +100,11 @@ test('README opens with accessible Vesper branding without promising a release',
   assert.doesNotMatch(readme.split('## Features')[0], /\bMac(?:s|OS)?\b|Apple.silicon/i);
   assert.match(readme, /macOS DMG for Apple-silicon Macs/);
   assert.match(readme, /A public installer is not available yet/);
-  assert.match(readme, /A project license has not yet been selected/);
+  // Apache-2.0 adopted (owner-approved #127): the README must name the
+  // license and must no longer claim selection is pending.
+  assert.match(readme, /Apache License 2\.0/);
+  assert.match(readme, /docs\/licenses-and-model-terms\.md/);
+  assert.doesNotMatch(readme, /not yet been selected/);
   assert.doesNotMatch(readme, /technical identifiers retain\s+their existing names/);
 });
 
@@ -205,7 +209,8 @@ test('naming cleanup retains working technical names and historical evidence', (
   assert.match(read('pyproject.toml'), /name = "vesper-tooling"/);
   assert.match(read('.pre-commit-config.yaml'), /id: vesper-fast-check/);
   assert.match(read('.pre-commit-config.yaml'), /id: vesper-push-check/);
-  assert.match(read('README.md'), /github\.com\/rahulsharmavishwakarma\/transcribe\.git/);
+  // Canonical clone URL follows the repository rename (transcribe -> vesper).
+  assert.match(read('README.md'), /github\.com\/rahulsharmavishwakarma\/vesper\.git/);
   assert.match(read('README.md'), /download\/vesper-macos-arm64\.dmg/);
   assert.match(read('models/catalog.json'), /"name": "Cohere Transcribe"/);
   assert.match(read('apps/desktop/src/lib/config.ts'), /models\/catalog\.json/);
