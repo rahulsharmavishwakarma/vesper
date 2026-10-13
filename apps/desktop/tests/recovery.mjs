@@ -1673,8 +1673,12 @@ await test('language menus follow the writer and preserve incompatible selection
   await tick();
   await settingsSection('Recording');
   options = await openOptions('settings-language');
+  // Vendor-declared language lists change independently of this behavior:
+  // assert restoration by content (full ASR list incl. Hindi and automatic
+  // detection), never by exact count.
   assert(
-    options.length === 4 && options.some((option) => option.textContent.includes('Hindi')),
+    options.some((option) => option.textContent.includes('Hindi')) &&
+      options.some((option) => option.textContent.includes('Detect automatically')),
     'Disabling writer did not restore ASR languages',
   );
   options.find((option) => option.textContent.includes('French')).click();
@@ -1746,10 +1750,14 @@ await test('Qwen and Cohere retain language choices without a recording duration
     target.textContent.includes('Fix these settings before they can save'),
     'Cohere accepted automatic language',
   );
+  // Vendor-declared language lists change independently of this behavior:
+  // assert the guidance names the incompatible pair, never its full list.
   assert(
     target.textContent.includes(
-      'Cohere Transcribe and the selected processing device support these languages: English, French',
-    ),
+      'Cohere Transcribe and the selected processing device support these languages:',
+    ) &&
+      target.textContent.includes('English') &&
+      target.textContent.includes('French'),
     'Cohere language guidance missing',
   );
   assert(

@@ -431,12 +431,11 @@
             {/if}
           {/if}</span
         >
-        {#if option.value === value}<span class="selected-check" aria-hidden="true"
-            ><Icon name="check" /></span
-          >
-        {:else if option.status}<span class="option-status"
-            ><ModelStatus status={option.status} /></span
+        {#if option.status}<span class="option-status"><ModelStatus status={option.status} /></span
           >{/if}
+        <span class="selected-check" aria-hidden="true"
+          >{#if option.value === value}<Icon name="check" />{/if}</span
+        >
       </button>
     {/each}
     {#if visibleOptions.length === 0}
