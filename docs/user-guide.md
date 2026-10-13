@@ -265,8 +265,10 @@ Settings card.
 This experimental integration requires Apple silicon; the runtime ships
 inside the macOS app bundle (see
 [experimental speaker runtime](development.md#experimental-speaker-runtime)).
-It runs entirely on device. If the bundled runtime is missing, transcription
-is unaffected and no timeline appears.
+It runs entirely on device and needs macOS 14 or later. If the bundled runtime
+is missing or incompatible, transcription is unaffected and no timeline appears;
+the speaker model's card in Models then says the bundled speaker runtime is
+missing or incompatible. Downloading again does not fix this; reinstall Vesper.
 
 After ASR, **Speaker timeline** in the latest result and History shows estimated
 start/end ranges for up to eight anonymous speakers. Overlapping ranges can
