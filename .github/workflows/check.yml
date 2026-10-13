@@ -119,6 +119,13 @@ jobs:
           node scripts/sherpa-runtime.mjs
           printf 'SHERPA_ONNX_LIB_DIR=%s\n' "$(node scripts/sherpa-runtime.mjs --lib-dir)" >> "$GITHUB_ENV"
           make test-native-report
+      - name: Cache pinned diarization runtime staging
+        uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
+        with:
+          path: .tooling/diarization-runtime
+          key: diarization-${{ runner.os }}-${{ runner.arch }}-${{ hashFiles('scripts/diarization-runtime.mjs', 'scripts/build-diarization-runtime.mjs', 'crates/vesper-models/src/diarization.rs') }}
+      - name: Stage diarization runtime without model downloads
+        run: node scripts/diarization-runtime.mjs
       - run: npm ci
       - name: Rust formatting
         run: make fmt-rust-check
