@@ -5,6 +5,8 @@ use crate::{
 };
 use std::time::{Duration, Instant};
 
+const MAX_PREVIEW_RELOADS: usize = 1;
+
 #[allow(clippy::too_many_arguments)]
 pub(super) fn run_buffered(
     state: &mut WorkerState,
@@ -53,6 +55,8 @@ pub(super) fn run_buffered(
     let mut due = Instant::now();
     let mut memory_at = Instant::now();
     let mut failures = 0;
+    let mut incomplete_drafts = 0;
+    let mut reloads = 0;
     let mut skipped_windows = 0;
     let mut last_window: Option<u64> = None;
     let mut last_error = None;
@@ -69,6 +73,7 @@ pub(super) fn run_buffered(
                 serde_json::json!({
                     "strategy":"buffered", "authoritativeFinal":"completed-audio",
                     "previewPasses":sequence,"previewFailures":failures,"lastPreviewError":last_error,
+                    "previewIncompleteDrafts":incomplete_drafts,"previewReloads":reloads,
                     "previewWindowsSkipped":skipped_windows,"previewDecodeMs":decode_ms,
                     "pressureDeferrals":pressure_deferrals,"retainedPreviewSamples":mailbox.retained_samples(),
                     "maxPreviewSamples":256000,"memory":memory,
@@ -90,8 +95,22 @@ pub(super) fn run_buffered(
                 return Err(native("live preview", "unexpected native audio transport"))
             }
         }
-        if Instant::now() < due || state.speech.is_none() {
+        if Instant::now() < due {
             continue;
+        }
+        if state.speech.is_none() {
+            // One reload per recording after a genuine owner failure. The final
+            // pass needs the owner anyway, so this moves that cost before Stop.
+            if reloads >= MAX_PREVIEW_RELOADS {
+                continue;
+            }
+            reloads += 1;
+            if let Err(error) = state.ensure_speech(&selection.config, root, cancelled) {
+                check_cancelled(cancelled)?;
+                failures += 1;
+                last_error = Some(error.to_string());
+                continue;
+            }
         }
         if memory_at.elapsed() >= Duration::from_secs(5) {
             memory = resources::Memory::read();
@@ -164,6 +183,12 @@ pub(super) fn run_buffered(
                         .as_millis() as u64,
                     is_final: false,
                 });
+            }
+            Err(InferenceError::IncompletePreview(reason)) => {
+                // Keep the previous draft and the healthy owner; a later pass
+                // over more audio replaces this window.
+                incomplete_drafts += 1;
+                last_error = Some(reason);
             }
             Err(error) => {
                 failures += 1;

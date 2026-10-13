@@ -80,6 +80,14 @@ fn accepted_text(report: &str, text: &str, purpose: DecodePurpose) -> Result<Str
         // An unfinished speech window can legitimately exhaust its duration
         // budget. Such text is a replaceable draft, never a completed result.
         "duration_token_limit" if purpose == DecodePurpose::Preview => Ok(text.trim().to_owned()),
+        // A window cut mid-utterance can stop early for these reasons. Skip that
+        // draft without treating the resident decoder as unhealthy.
+        "max_new_tokens" | "context_limit" | "model_token_limit" | "repetition"
+        | "silence_detected" | "no_input"
+            if purpose == DecodePurpose::Preview =>
+        {
+            Err(InferenceError::IncompletePreview(report.stop_reason))
+        }
         "max_new_tokens"
         | "context_limit"
         | "duration_token_limit"
@@ -376,7 +384,10 @@ fn retain_native_health(
     healthy: &std::cell::Cell<bool>,
     cancelled: &AtomicBool,
 ) -> Result<String> {
-    if result.is_err() {
+    if result
+        .as_ref()
+        .is_err_and(|error| !matches!(error, InferenceError::IncompletePreview(_)))
+    {
         healthy.set(false);
     }
     check_cancelled(cancelled)?;
@@ -398,12 +409,22 @@ mod tests {
         for reason in [
             "context_limit",
             "repetition",
-            "error",
-            "unknown",
             "max_new_tokens",
+            "model_token_limit",
         ] {
             let report = serde_json::json!({"schemaVersion":1,"stopReason":reason,"inputContextTruncated":false}).to_string();
-            assert!(accepted_text(&report, "draft", DecodePurpose::Preview).is_err());
+            assert!(matches!(
+                accepted_text(&report, "draft", DecodePurpose::Preview),
+                Err(InferenceError::IncompletePreview(_))
+            ));
+            assert!(completed_text(&report, "draft").is_err());
+        }
+        for reason in ["error", "unknown"] {
+            let report = serde_json::json!({"schemaVersion":1,"stopReason":reason,"inputContextTruncated":false}).to_string();
+            assert!(matches!(
+                accepted_text(&report, "draft", DecodePurpose::Preview),
+                Err(InferenceError::Native { .. })
+            ));
         }
         let truncated = report.replace("false", "true");
         assert!(accepted_text(&truncated, "draft", DecodePurpose::Preview).is_err());
@@ -428,6 +449,20 @@ mod tests {
             Err(InferenceError::Cancelled)
         ));
         assert!(!healthy.get());
+    }
+
+    #[test]
+    fn incomplete_preview_keeps_native_health() {
+        let healthy = std::cell::Cell::new(true);
+        assert!(matches!(
+            retain_native_health(
+                Err(InferenceError::IncompletePreview("repetition".into())),
+                &healthy,
+                &AtomicBool::new(false)
+            ),
+            Err(InferenceError::IncompletePreview(_))
+        ));
+        assert!(healthy.get());
     }
 
     // Explicit opt-in only; these tests never fetch audio or model weights.
