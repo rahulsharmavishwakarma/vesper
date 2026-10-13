@@ -180,8 +180,11 @@
     border: 1px solid var(--color-glass-line);
     -webkit-backdrop-filter: blur(28px) saturate(1.6);
     backdrop-filter: blur(28px) saturate(1.6);
+    /* The native window leaves a 12px gutter around the card; the shadow is
+     * sized to fade inside it. A larger blur clips at the window edge and
+     * paints a hard dark band beside the pill. */
     box-shadow:
-      0 10px 28px var(--color-glass-shadow),
+      0 6px 16px var(--color-glass-shadow),
       inset 0 1px 0 rgb(255 255 255 / 8%);
   }
   .movable {

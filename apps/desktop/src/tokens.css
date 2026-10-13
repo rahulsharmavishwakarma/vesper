@@ -33,7 +33,7 @@
   --color-glass-line: rgb(255 255 255 / 10%);
   --color-glass-muted: rgb(255 245 238 / 62%);
   --color-glass-wash: rgb(255 255 255 / 9%);
-  --color-glass-shadow: rgb(0 0 0 / 50%);
+  --color-glass-shadow: rgb(0 0 0 / 38%);
   --space-1: 4px;
   --space-2: 8px;
   --space-3: 12px;
@@ -95,9 +95,9 @@
   --color-surface-light: #f6f5f2;
   --color-overlay: rgb(18 17 15 / 40%);
   --color-sheen: rgb(255 255 255 / 8%);
-  --color-glass: rgb(255 255 255 / 78%);
+  --color-glass: rgb(255 255 255 / 64%);
   --color-glass-line: rgb(0 0 0 / 8%);
   --color-glass-muted: #6b6962;
   --color-glass-wash: rgb(0 0 0 / 6%);
-  --color-glass-shadow: rgb(30 20 60 / 25%);
+  --color-glass-shadow: rgb(0 0 0 / 16%);
 }
