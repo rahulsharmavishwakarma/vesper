@@ -42,8 +42,7 @@
         · {report.undoneSessions} undone
       </p>
       <p class="note">
-        {report.reviewedSessions} reviewed of {report.inspectedSessions} recent saved recordings. Applying
-        a correction does not by itself show an accuracy gain.
+        {report.reviewedSessions} of {report.inspectedSessions} recent recordings reviewed.
       </p>
       {#if report.reviewQueue.length}
         <h3>A few useful reviews</h3>
@@ -84,17 +83,19 @@
         </div>
       {:else}
         <p class="note">
-          No eligible comparison yet. Confirm a correction, then review the exact speech in later
-          recordings to measure whether it helps.
+          No comparison yet — review a recording after confirming a correction to see if it helped.
         </p>
       {/if}
-      <p class="note">
-        Compares saved raw text with your later verbatim reviews using review-confirmed memories
-        saved before those recordings. Automatically learned spellings are not included in this
-        reviewed-source replay. Excludes source recordings, duplicate audio and unsupported lengths.
-        This checks word corrections; it does not retrain or rerun speech models. Up to 512 recent
-        recordings are inspected.
-      </p>
+      <details>
+        <summary>How this is measured</summary>
+        <p class="note">
+          Applying a correction does not by itself show an accuracy gain. This compares saved raw
+          text with your later verbatim reviews using review-confirmed memories saved before those
+          recordings. Automatically learned spellings aren't included. It excludes source
+          recordings, duplicate audio and unsupported lengths, checks word corrections only, and
+          does not retrain or rerun speech models. Up to 512 recent recordings are inspected.
+        </p>
+      </details>
     {/if}
     {#if error}<p role="alert">{error}</p>{/if}
     <button type="button" onclick={load} disabled={disabled || busy}
