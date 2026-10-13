@@ -33,3 +33,19 @@ test('updater authority stays on the main window and artifacts stay enabled', ()
   const macos = load('tauri.macos.conf.json');
   assert.equal(macos.bundle.createUpdaterArtifacts, true);
 });
+
+test('the bundled speaker runtime lands where the first-run installer looks', () => {
+  // The installer reads Resources/diarization-runtime/<revision>; mapping the
+  // parent staging directory nested the revision one level too deep.
+  const resources = load('tauri.macos.conf.json').bundle.resources;
+  const entries = Object.entries(resources).filter(([, to]) => to === 'diarization-runtime/');
+  assert.deepEqual(entries, [
+    ['../../../.tooling/diarization-runtime/nemotron-diarization-runtime/', 'diarization-runtime/'],
+  ]);
+  const rust = fs.readFileSync(
+    path.join(root, '..', '..', '..', 'crates/vesper-models/src/diarization.rs'),
+    'utf8',
+  );
+  assert.match(rust, /join\("\.\.\/Resources\/diarization-runtime"\)/);
+  assert.match(rust, /bundled\.join\(RUNTIME_REVISION\)/);
+});
