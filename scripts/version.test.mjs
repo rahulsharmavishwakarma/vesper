@@ -61,7 +61,7 @@ function lockVersions(root) {
 }
 
 test('repository application versions are synchronized', () => {
-  assert.equal(checkVersions(projectRoot, 'v0.1.0'), '0.1.0');
+  assert.equal(checkVersions(projectRoot, 'v0.1.0-rc.1'), '0.1.0-rc.1');
   assert.throws(() => checkVersions(projectRoot, 'v0.1.1'), /does not match/);
 });
 
