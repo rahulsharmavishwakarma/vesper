@@ -1,6 +1,6 @@
 # ADR-0008: Guard technical tail correction before full cleanup
 
-- Status: Accepted
+- Status: Retired on 2026-10-14 (see [Retirement](#retirement))
 - Date: 2026-09-15
 
 ## Context
@@ -22,3 +22,16 @@ Custom cleanup models retain the single full-transcript path until separately qu
 - No transcript or KV state crosses contexts, and a failed tail pass cannot erase or replace raw ASR.
 - The narrow lexical guard reduces broad rewrites but cannot establish semantic correctness. Users must still review context-corrected output.
 - Project-specific names still need a future explicit vocabulary/ASR-biasing design; this decision does not claim arbitrary error recovery.
+
+## Retirement
+
+Retired on 14 October 2026 ([issue #140](https://github.com/rahulsharmavishwakarma/vesper/issues/140)).
+The accepted regression depended on fixture-specific code: the instruction named
+`readmixt` → `README.txt`, the Balanced few-shot used the same pair, and a built-in
+`README.txt` fallback supplied the candidate whenever the model produced none.
+With those removed, the installed Qwen3.5 0.8B Q4 model returned the tail unchanged
+on the same fixture (one local CPU run), so no general correction capability was
+established. The preliminary pass, its prompts, the fixture fallback and the
+tail-only fidelity helpers were removed; Balanced cleanup is one full pass again.
+Technical-term recovery remains future vocabulary/ASR-biasing work, not a cleanup
+setting.
