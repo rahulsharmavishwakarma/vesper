@@ -1121,6 +1121,11 @@ fn run_stream(
                 )?;
                 check_cancelled(cancelled)?;
                 check_cancelled(stream_cancelled)?;
+                if let Ok(mut evidence) = evidence.lock() {
+                    if evidence["operationId"] == operation_id {
+                        evidence["live"]["droppedInputSeconds"] = stream.dropped_seconds().into();
+                    }
+                }
                 if stream.needs_completed_audio() {
                     return Ok(StreamingFinal::CompletedAudioRequired);
                 }

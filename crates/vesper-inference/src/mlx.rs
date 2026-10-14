@@ -102,6 +102,7 @@ impl Recognizer {
             rate: None,
             finished: false,
             leading_zero_samples: 0,
+            dropped_samples: 0,
             has_nonzero_input: false,
         })
     }
@@ -227,6 +228,7 @@ pub(crate) struct Live<'a> {
     finished: bool,
     leading_zero_samples: u64,
     has_nonzero_input: bool,
+    dropped_samples: u64,
 }
 
 impl Live<'_> {
@@ -256,7 +258,7 @@ impl Live<'_> {
                 continue;
             }
             self.has_nonzero_input = true;
-            self.model.feed_live(chunk).map_err(map_error)?;
+            self.dropped_samples += self.model.feed_live(chunk).map_err(map_error)?;
         }
         Ok(())
     }
@@ -272,6 +274,11 @@ impl Live<'_> {
                 + self.leading_zero_samples as f32 / 16000.0,
             is_final: false,
         }))
+    }
+
+    /// 16 kHz input the native preview skipped under decoder backlog.
+    pub fn dropped_seconds(&self) -> f32 {
+        self.dropped_samples as f32 / 16000.0
     }
 
     pub fn finish(&mut self) {
