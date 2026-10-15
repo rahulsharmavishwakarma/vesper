@@ -152,3 +152,39 @@ fn installed_live_adapters_cancel_restart_and_final_parity() {
         );
     }
 }
+
+/// #153: long completed recordings must keep every part on CPU Parakeet.
+/// Prints final text per public recording; scoring happens outside the test.
+#[test]
+#[ignore = "requires installed Parakeet artifacts and VESPER_LONG_FINAL_FIXTURES of public 16 kHz WAVs"]
+fn installed_parakeet_long_final() {
+    let root = PathBuf::from(std::env::var("VESPER_MODEL_DIR").expect("VESPER_MODEL_DIR"));
+    let manager = InferenceManager::new().unwrap();
+    let mut config = AppConfig {
+        compute_backend: ComputeBackend::Cpu,
+        language: Language::English,
+        ..Default::default()
+    };
+    config.models.asr = AsrModel::ParakeetTdt06bV3;
+    for path in std::env::var("VESPER_LONG_FINAL_FIXTURES")
+        .expect("VESPER_LONG_FINAL_FIXTURES")
+        .split(':')
+    {
+        let audio = vesper_audio::decode_file(path, 0).unwrap();
+        let started = Instant::now();
+        let text = manager
+            .transcribe(
+                &audio,
+                &config,
+                &root,
+                "long",
+                Arc::new(AtomicBool::new(false)),
+            )
+            .unwrap();
+        println!(
+            "parakeet-long-final-v1 {}",
+            serde_json::json!({"path": path, "audioSeconds": audio.duration_seconds(),
+                "ms": started.elapsed().as_millis(), "words": text.split_whitespace().count(), "text": text})
+        );
+    }
+}

@@ -111,6 +111,21 @@ Use `cohere`/`en` or `parakeet`/`en` for the other adapters. Link the same probe
 
 The non-silent boundary fixture `fleurs-en_us-padded-10s.wav` retains every original English float32 sample and appends 19,840 zero samples (1.24 seconds). Its canonical minimal RIFF/WAVE header declares format 3, one channel, 16,000 Hz, 64,000 bytes/second, four-byte block alignment and 32-bit samples, followed by a 640,000-byte data chunk. File size is 640,044 bytes; SHA-256 is `994f93a06e1e5d45b2b3bdb3e219b39e1976cba413a139b96675cc12c7f1411d`. This is an explicitly modified CC-BY-4.0 FLEURS derivative with added trailing silence, retaining the English reference and attribution above.
 
+## Parakeet completed-audio parts
+
+Parakeet TDT v3 and custom NeMo transducer profiles on CPU decode completed audio in contiguous parts of up to 30 s. Each part has a fresh stream, and progress is reported per part. Recordings of 30 s or less still use one native call. Before [#153](https://github.com/rahulsharmavishwakarma/vesper/issues/153), the whole recording went to a single `decode` call, which silently lost about half of the words on 60–120 s recordings.
+
+Local measurement, 16 October 2026 (Apple M5 Pro, CPU, resident recognizer). Public FLEURS en-US clips were concatenated into three 63–118 s recordings per lane, 608 reference words each.
+
+| Native call limit | Clean WER | 0 dB noise WER |
+| --- | ---: | ---: |
+| Whole recording (before) | 52.30% | 62.99% |
+| 10 s | 17.43% | 29.11% |
+| 20 s | 28.12% | 39.14% |
+| **30 s (selected)** | **17.27%** | **36.51%** |
+
+On the 24 individual clips (4–24 s), 30 s leaves output identical to the previous single call (15.13% clean, 25.16% at 0 dB). A 10 s limit would worsen those clips to 16.94% and 30.76%, because it cuts 10–24 s utterances mid-sentence. The 20 s result shows that a longer native call is not monotonically better for this export, so the limit is an empirical choice, not a model guarantee. The evidence covers English read speech only. Boundary words can still be misrecognized, and other languages and natural long dictation remain unmeasured. Reproduce with the ignored `installed_parakeet_long_final` test and `VESPER_LONG_FINAL_FIXTURES` set to public 16 kHz WAVs.
+
 ## Whisper extension
 
 The shared offline engine and resident Sherpa wrapper also implement the Small/Turbo Whisper evaluation adapter under [ADR-0018](adrs/0018-shared-whisper-adapter.md). Both checkpoints use one Whisper configuration/result-policy module. They share installation, recording isolation, cancellation and segmentation with existing infrastructure; Whisper's maximum segment is 29 seconds, while Qwen/Cohere retain ten seconds.
