@@ -74,16 +74,16 @@ In Settings, choose another section to leave About.
 
 ### Application updates
 
-Open **Settings** (or the About sheet) and use **Check for updates** on the
-software-updates panel. Vesper checks quietly at startup after the window is
-ready and stays silent when you are current. When an update is available, the
+Open **Settings** (or the About sheet): the software-updates panel checks
+automatically, and Vesper also checks quietly at startup after the window is
+ready, staying silent when you are current. When an update is available, the
 panel shows its version and release notes; choose **Download and install** to
 fetch it — the button becomes **Restart to update** once the verified package is
 ready. Installation waits while you are recording, transcribing, cleaning up
 writing or downloading a model, and it never force-restarts. If a check or
-download fails, the panel explains what happened and links to the manual
-installer on the release download page. Model downloads continue to be managed
-separately in **Models**.
+download fails, the panel explains what happened with a retry and links to the
+manual installer on the release download page. Model downloads continue to be
+managed separately in **Models**.
 
 ### Initial setup
 
@@ -119,10 +119,9 @@ where they are. See [cache location and behavior](internals.md#hugging-face-cach
 
 The language menu follows the selected speech model and processing device. With
 polishing enabled, it also limits choices to the writer's declared languages.
-Changing models keeps your language when the new model supports it; otherwise it
-falls back to automatic detection, then English, then the first offered
-language, so the settings always stay saveable. Turn polishing off to use the
-speech model's choices. **Detect automatically** identifies speech language; it does not
+Changing models does not silently change your language: resolve the inline
+compatibility message before saving, or turn polishing off to use the speech
+model's choices. **Detect automatically** identifies speech language; it does not
 guarantee mixed-language accuracy. Custom writing presets require an explicit
 language. An older writing profile with no language information remains readable;
 reselect its preset in **Models**, choose the built-in writer, or turn polishing
