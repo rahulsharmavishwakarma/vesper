@@ -1,6 +1,6 @@
 use super::*;
 use crate::{
-    live_preview::{Mailbox, PreviewText},
+    live_preview::{JobKind, LiveText, Mailbox, MAX_RETAINED_SAMPLES},
     resources,
 };
 use std::time::{Duration, Instant};
@@ -49,16 +49,19 @@ pub(super) fn run_buffered(
     if started.send(Ok(true)).is_err() {
         return Err(InferenceError::Cancelled);
     }
-    let mut after = 0;
+    let mut tail_after = 0;
     let mut sequence = 0;
-    let mut text = PreviewText::default();
+    let mut text = LiveText::default();
+    let mut committed_segments = 0;
+    let mut committed_failures = 0;
+    let mut tail_passes = 0;
+    let mut decoded_samples = 0_u64;
+    let mut processed_samples = 0_u64;
     let mut due = Instant::now();
     let mut memory_at = Instant::now();
     let mut failures = 0;
     let mut incomplete_drafts = 0;
     let mut reloads = 0;
-    let mut skipped_windows = 0;
-    let mut last_window: Option<u64> = None;
     let mut last_error = None;
     let mut decode_ms = 0.0;
     let mut pressure_deferrals = 0;
@@ -74,10 +77,14 @@ pub(super) fn run_buffered(
                     "strategy":"buffered", "authoritativeFinal":"completed-audio",
                     "previewPasses":sequence,"previewFailures":failures,"lastPreviewError":last_error,
                     "previewIncompleteDrafts":incomplete_drafts,"previewReloads":reloads,
-                    "previewWindowsSkipped":skipped_windows,"previewDecodeMs":decode_ms,
+                    "previewPolicy":"causal-committed-segments-v1",
+                    "committedSegments":committed_segments,"committedSegmentFailures":committed_failures,
+                    "provisionalPasses":tail_passes,"previewSegmentsDropped":mailbox.dropped_segments(),
+                    "previewDecodedAudioSeconds":decoded_samples as f64 / 16000.0,
+                    "previewDecodeMs":decode_ms,
                     "pressureDeferrals":pressure_deferrals,"retainedPreviewSamples":mailbox.retained_samples(),
-                    "maxPreviewSamples":256000,"memory":memory,
-                    "previewFrontend":"fresh-bounded-window", "selection":selection.evidence()
+                    "maxPreviewSamples":MAX_RETAINED_SAMPLES,"memory":memory,
+                    "previewFrontend":"fresh-bounded-segment", "selection":selection.evidence()
                 }),
             );
             return Ok(StreamingFinal::CompletedAudioRequired);
@@ -121,14 +128,13 @@ pub(super) fn run_buffered(
             due = Instant::now() + Duration::from_secs(2);
             continue;
         }
-        let Some(snapshot) = mailbox.snapshot(after)? else {
+        let Some(snapshot) = mailbox.snapshot(tail_after)? else {
             continue;
         };
-        if let Some(previous) = last_window {
-            skipped_windows += snapshot.index.saturating_sub(previous + 1);
+        if snapshot.kind == JobKind::Provisional {
+            tail_after = snapshot.end_sample;
         }
-        last_window = Some(snapshot.index);
-        after = snapshot.end_sample;
+        decoded_samples += snapshot.audio.samples().len() as u64;
         let begin = Instant::now();
         let result = (|| {
             let processed = prepare_audio(
@@ -160,7 +166,14 @@ pub(super) fn run_buffered(
         })();
         let elapsed = begin.elapsed();
         decode_ms += elapsed.as_secs_f64() * 1000.0;
-        due = Instant::now() + resources::preview_delay(elapsed, memory.pressured());
+        // A closed segment is decoded once and the tail follows promptly; only
+        // repeated tail passes wait for the adaptive interval.
+        due = match snapshot.kind {
+            JobKind::Committed => Instant::now(),
+            JobKind::Provisional => {
+                Instant::now() + resources::preview_delay(elapsed, memory.pressured())
+            }
+        };
         check_cancelled(cancelled)?;
         check_cancelled(stream_cancelled)?;
         // Stop suppresses an in-flight draft, including callbacks from a native
@@ -168,27 +181,15 @@ pub(super) fn run_buffered(
         if mailbox.cancelled.load(Ordering::Acquire) {
             continue;
         }
-        match result {
-            Ok(value) => {
-                sequence += 1;
-                updates(StreamingTranscript {
-                    operation_id: id.into(),
-                    sequence,
-                    committed_text: String::new(),
-                    provisional_text: text.replace(snapshot.index, value),
-                    audio_processed_seconds: after as f32 / 16000.0,
-                    emitted_at_unix_ms: SystemTime::now()
-                        .duration_since(UNIX_EPOCH)
-                        .unwrap_or_default()
-                        .as_millis() as u64,
-                    is_final: false,
-                });
-            }
+        let committed = snapshot.kind == JobKind::Committed;
+        let value = match result {
+            Ok(value) => Some(value),
             Err(InferenceError::IncompletePreview(reason)) => {
                 // Keep the previous draft and the healthy owner; a later pass
-                // over more audio replaces this window.
+                // over more audio replaces this tail.
                 incomplete_drafts += 1;
                 last_error = Some(reason);
+                None
             }
             Err(error) => {
                 failures += 1;
@@ -196,7 +197,39 @@ pub(super) fn run_buffered(
                 // Preserve recording and final retry, but never reuse an owner
                 // after a failed native/completeness/identity check.
                 state.speech = None;
+                None
             }
+        };
+        match (committed, value) {
+            (true, value) => {
+                // A closed segment gets exactly one decode. Without usable
+                // text it stays absent from the draft; the final is unaffected.
+                committed_segments += 1;
+                if value.is_none() {
+                    committed_failures += 1;
+                }
+                text.commit(value.as_deref().unwrap_or_default());
+            }
+            (false, Some(value)) => {
+                tail_passes += 1;
+                text.set_tail(value);
+            }
+            (false, None) => continue,
         }
+        sequence += 1;
+        processed_samples = processed_samples.max(snapshot.end_sample);
+        let (committed_text, provisional_text) = text.parts();
+        updates(StreamingTranscript {
+            operation_id: id.into(),
+            sequence,
+            committed_text,
+            provisional_text,
+            audio_processed_seconds: processed_samples as f32 / 16000.0,
+            emitted_at_unix_ms: SystemTime::now()
+                .duration_since(UNIX_EPOCH)
+                .unwrap_or_default()
+                .as_millis() as u64,
+            is_final: false,
+        });
     }
 }

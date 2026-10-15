@@ -152,3 +152,92 @@ fn installed_live_adapters_cancel_restart_and_final_parity() {
         );
     }
 }
+
+/// Streams a whole public recording in real time and reports draft coverage,
+/// preview compute and live evidence per adapter. Opt-in measurement only.
+#[test]
+#[ignore = "requires installed pinned ASR artifacts and VESPER_LIVE_LONG_FIXTURE public 16 kHz WAV"]
+fn installed_live_long_recording_draft_coverage() {
+    let root = PathBuf::from(std::env::var("VESPER_MODEL_DIR").expect("VESPER_MODEL_DIR"));
+    let audio = vesper_audio::decode_file(
+        std::env::var("VESPER_LIVE_LONG_FIXTURE").expect("VESPER_LIVE_LONG_FIXTURE"),
+        0,
+    )
+    .unwrap();
+    assert_eq!(audio.sample_rate(), 16000);
+    let mut paths = vec![
+        (AsrModel::CohereTranscribe, ComputeBackend::Cpu),
+        (AsrModel::Qwen3Asr06b, ComputeBackend::Cpu),
+        (AsrModel::ParakeetTdt06bV3, ComputeBackend::Cpu),
+    ];
+    if cfg!(feature = "mlx") {
+        paths.push((AsrModel::ParakeetTdt06bV3, ComputeBackend::Metal));
+    }
+    for (model, backend) in paths {
+        let manager = InferenceManager::new().unwrap();
+        let mut config = AppConfig {
+            compute_backend: backend,
+            language: Language::English,
+            ..Default::default()
+        };
+        config.models.asr = model;
+        let flag = || Arc::new(AtomicBool::new(false));
+        let seen = Arc::new(Mutex::new(Vec::new()));
+        let sink = Arc::clone(&seen);
+        let session = manager
+            .start_stream(
+                &config,
+                &root,
+                "long",
+                flag(),
+                Arc::new(move |event| sink.lock().unwrap().push(event)),
+            )
+            .unwrap();
+        let start = Instant::now();
+        for (index, chunk) in audio.samples().chunks(320).enumerate() {
+            session.push(chunk.to_vec(), 16000).unwrap();
+            std::thread::sleep(
+                (start + Duration::from_millis((index as u64 + 1) * 20))
+                    .saturating_duration_since(Instant::now()),
+            );
+        }
+        let stopped = Instant::now();
+        assert_eq!(
+            session.finish_live().unwrap(),
+            StreamingFinal::CompletedAudioRequired
+        );
+        let live = manager.execution_evidence("long")["live"].clone();
+        let final_text = manager
+            .transcribe(&audio, &config, &root, "long-final", flag())
+            .unwrap();
+        let stop_to_final_ms = stopped.elapsed().as_millis();
+        let events = seen.lock().unwrap();
+        assert!(events.windows(2).all(|w| w[0].sequence < w[1].sequence));
+        // Committed text only ever grows by appending.
+        assert!(events
+            .windows(2)
+            .all(|w| w[1].committed_text.starts_with(&w[0].committed_text)));
+        let last = events.last().expect("drafts before Stop");
+        let draft = format!("{}{}", last.committed_text, last.provisional_text);
+        let normalize = |text: &str| {
+            text.split_whitespace()
+                .map(|w| {
+                    w.trim_matches(|c: char| !c.is_alphanumeric())
+                        .to_lowercase()
+                })
+                .filter(|w| !w.is_empty())
+                .collect::<Vec<_>>()
+        };
+        let (draft_words, final_words) = (normalize(&draft), normalize(&final_text));
+        eprintln!(
+            "{}",
+            serde_json::json!({
+                "model": format!("{model:?}"), "backend": format!("{backend:?}"),
+                "audioSeconds": audio.samples().len() as f64 / 16000.0,
+                "drafts": events.len(), "lastDraftWords": draft_words.len(),
+                "finalWords": final_words.len(), "stopToFinalMs": stop_to_final_ms,
+                "lastDraft": draft, "final": final_text, "live": live,
+            })
+        );
+    }
+}

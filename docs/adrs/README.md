@@ -28,6 +28,7 @@ This directory records decisions that are expensive to rediscover or easy to acc
 | [0020](0020-optional-mlx-speech-runtime.md) | Selection/build policy superseded by ADR-0021 | Package optional MLX speech execution with verified artifacts and bounded selected-model residency |
 | [0021](0021-automatic-accelerator-artifacts.md) | Accepted | Select compatible accelerated artifacts automatically and include MLX in native Apple Silicon builds |
 | [0022](0022-local-speaker-timelines.md) | Accepted | Add experimental local speaker timelines after ASR with isolated native packaging and anonymous activity |
+| [0023](0023-causal-committed-live-segments.md) | Accepted | Commit causal segments once in buffered live previews; the completed-audio final stays authoritative |
 
 ## Convention
 
