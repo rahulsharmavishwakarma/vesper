@@ -38,10 +38,31 @@ unchanged and remains authoritative.
 ## Consequences
 
 - Committed draft text is stable and no longer cut at fixed eight-second edges.
-- Closed audio is decoded once instead of on every pass of a growing window.
+- Closed audio is decoded once, but repeated tail passes still dominate preview
+  compute, so phase A does not reduce total preview decoding (see below).
 - Segment-local decoding loses cross-segment context; committed draft wording can
   differ from the final, which still replaces the draft.
 - Stop still decodes the whole recording.
+
+## Measurement — 16 October 2026
+
+`installed_live_long_recording_draft_coverage` streamed the public 23.04 s
+`repeated-boundaries.wav` diagnostic (FLEURS clip 13297690853135603331 repeated
+three times) in real time on an Apple M5 Pro, once with the previous window policy
+and once with phase A. Single runs; few-percent differences are within noise.
+
+| Path              | Final words in last draft (old → new) | Preview decode (old → new) | Stop to final (old → new) |
+| ----------------- | ------------------------------------- | -------------------------: | ------------------------: |
+| Cohere CPU        | 41/42 → 42/42                         |              6.9 s → 7.3 s |           1.15 s → 1.24 s |
+| Qwen3-ASR CPU     | 42/42 → 42/42                         |              7.4 s → 7.5 s |           1.17 s → 1.35 s |
+| Parakeet v3 CPU   | 42/42 → 42/42                         |              3.3 s → 3.4 s |           0.40 s → 0.45 s |
+| Parakeet v3 Metal | 41/42 → 41/42                         |            1.75 s → 1.81 s |           0.12 s → 0.13 s |
+
+Both policies produced drafts on every path with no skipped windows, dropped
+segments or preview failures; this fast machine never fell behind, so the lagging
+case is not exercised. Phase A's measured effect is stable append-only committed
+text without fixed eight-second cuts, not lower compute or Stop latency. Those
+require phase B and shorter pause-closed segments.
 
 ## Deferred, requiring measurement before adoption
 
