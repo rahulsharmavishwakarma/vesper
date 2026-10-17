@@ -2,7 +2,7 @@
 
 The [native-learning cleanup follow-up](../../docs/personalization/evaluation.md#cleanup-reliability-follow-up) separately investigates instruction echoes and formatting-policy violations. Two replacement prompts were rejected as primary prompts. The [bounded recovery](../../docs/personalization/evaluation.md#bounded-formatting-recovery) retains the original first pass, restores source contractions conservatively and permits one qualified short retry; development and disjoint qualification each have 58 text cases. [Reproduction](../../docs/personalization/native-qualification.md#reproduce-the-diagnostic-runs) retains both rejected experiments and the production comparison. This does not change the prefix-cache experiment below.
 
-This development experiment preserves the sequential technical-tail and full-cleanup passes. It measures whether reusing complete immutable prompt-prefix state improves the pinned Qwen3.5 runtime. It is not an ASR benchmark, SOTA comparison, or estimate of microphone-to-visible-text latency.
+This development experiment, recorded on 15 September 2026, measured the then-sequential technical-tail and full-cleanup passes; the technical-tail pass was retired on 14 October 2026 ([ADR-0008](../../docs/adrs/0008-guarded-technical-tail-correction.md#retirement)) and the screen now measures one Balanced pass. It measures whether reusing complete immutable prompt-prefix state improves the pinned Qwen3.5 runtime. It is not an ASR benchmark, SOTA comparison, or estimate of microphone-to-visible-text latency.
 
 ## Recorded CPU result
 
@@ -13,7 +13,7 @@ The full local debug report with 60 samples and source digests remains at `.cach
 | Full prefill on each pass | 30 | 838.96 ms | 868.51 ms |
 | Reused immutable prefixes | 30 | 366.25 ms | 378.96 ms |
 
-Median reduction: **56.35%** on this single synthetic English technical-dictation fixture. All 60 outputs matched the accepted reference exactly, including `README.txt`. The cache retained 46,841,268 bytes (44.67 MiB); this is snapshot payload, not whole-process RAM.
+Median reduction: **56.35%** on this single synthetic English technical-dictation fixture. All 60 outputs matched the accepted reference exactly, including `README.txt`; that filename came from the since-removed fixture rule and fallback, not from a model capability. The cache retained 46,841,268 bytes (44.67 MiB); this is snapshot payload, not whole-process RAM.
 
 The timer surrounds `Rewriter::rewrite`, including prompt construction, both sequential model passes and fidelity checks. It excludes model loading, ASR, capture, command queue, persistence and UI. Three cached warmups precede 30 pairs with alternating order. The baseline uses the same resident weights with caching disabled. This establishes a local cache comparison, not the registry's overhead relative to its pre-refactor implementation.
 
@@ -39,3 +39,17 @@ cargo test --locked --offline -p vesper-inference \
 The test performs no model download and uses only synthetic text. Retain the JSON lines tagged `two-pass-prefix-v1`, including failures. Avoid other compute-heavy jobs during measurement. Record hardware/power, application source digest and artifact hash anew on every machine. On macOS, use an already configured and licensed developer toolchain; this test does not alter toolchain licenses.
 
 Application experimentation is explicitly enabled before model loading with `VESPER_EXPERIMENTAL_PREFIX_CACHE=1`. Omit it for the baseline. Caching is disabled by default, excludes custom templates and prompts containing retrieved private examples, and keeps fresh per-pass contexts. See [ADR-0012](../../docs/adrs/0012-adapter-registry-and-reviewed-personalization.md) for exact state ownership, memory limits and research sources.
+
+## Single-pass recheck — 14 October 2026
+
+After the technical-tail retirement, the same long Balanced fixture was screened once
+per configuration with `hybrid_prefix_cache_matches_fresh_requests_and_profile_reset`
+(same machine class, explicit CPU, debug test profile). These are single observations,
+not distributions:
+
+| Configuration | Before (two passes) | After (one pass) |
+| --- | ---: | ---: |
+| Full prefill | 0.30 s + 0.54 s = 0.84 s | 0.50 s |
+| Warm cached prefix | 0.18 s + 0.20 s = 0.38 s | 0.20 s |
+
+Fresh vs cached outputs remained identical in both runs.
