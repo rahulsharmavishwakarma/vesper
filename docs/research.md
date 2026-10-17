@@ -140,6 +140,8 @@ Create two references per recording: a verbatim transcript and a human-approved 
 | Cold load, warm latency, peak RAM | Establish actual device requirements |
 | Silence, cancellation and repeated sessions | Verify application behavior |
 
+The [16 October 2026 polishing measurement](validation/polishing-wer-2026-10-16.md) scored raw Cohere output, Minimal and Balanced cleanup against the same verbatim references on 52 public clips. Minimal left WER unchanged. Balanced fixed one recognition error but made WER slightly worse overall, so polishing is not currently an accuracy step.
+
 Compare raw NVIDIA output, punctuation-only cleanup, Qwen Q4_0 and Qwen Q8_0 using identical recordings. Consider the 2B fallback only if the smaller model fails meaningful quality requirements. For streaming, measure first partial latency and subsequent transcript revisions separately. No research result here establishes a winner on these exact recordings and builds.
 
 ## Implementation sequence
