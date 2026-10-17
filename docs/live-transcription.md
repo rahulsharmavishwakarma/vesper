@@ -102,6 +102,31 @@ flowchart LR
   C -->|no, or frontend failed| O[Final decode on original audio<br/>with warning on failure]
 ```
 
+### Live frontend reuse evidence
+
+Local measurement, 17 October 2026: Apple M5 Pro, macOS 27.0.1, release build,
+CPU ASR, Silero v6.2 + DPDFNet8. Public FLEURS en-US clips (6 clean, 6 mixed
+with noise at 0 dB, plus concatenated 63 s and 108 s recordings) were
+upsampled to 48 kHz and paced in real time in 20 ms packets, like a microphone
+(`installed_live_frontend_final_parity`). "Before" is the previous path: the
+same recording decoded through a completed-audio frontend pass.
+
+| Model (CPU) | Final text identical | Stop→final, 4.6 s clip | 23.6 s clip | 108 s recording |
+| --- | ---: | ---: | ---: | ---: |
+| Cohere Transcribe | 14/14 | 1.23 s → 0.29 s | 5.76 s → 1.45 s | 26.4 s → 6.2 s |
+| Qwen3-ASR 0.6B | 14/14 | 1.23 s → 0.29 s | 5.75 s → 1.20 s | 27.3 s → 7.2 s |
+| Parakeet TDT v3 | 14/14 | 1.04 s → 0.11 s | 5.21 s → 0.47 s | 23.3 s → 2.7 s |
+
+Every final came from the live session. Normalized final words matched the
+previous path in all 42 recordings, so this change does not alter WER on this
+set. The desktop test `live_capture_reuses_frontend_and_defers_speakers` runs
+the same paced capture through the app's capture pipeline. Warm, its Stop to
+text took 0.31–0.35 s for a 4.6 s clip and 2.5 s for a 45 s meeting clip. The
+deferred speaker timeline then took 0.11–0.13 s and 0.63–0.69 s on Metal. The
+first run after a new build took 7.1 s once (cold start). Not covered: a
+physical microphone, 44.1 kHz devices, other languages, slower Macs and MLX
+builds.
+
 ## Device and memory behavior
 
 The current accelerator scope is Apple Silicon MLX/Metal with CPU support.
