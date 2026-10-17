@@ -70,12 +70,37 @@ buffering, and exposes queued acoustic-window count. The bridge rejects excess
 backlog and joins the collector/native tasks before releasing a model. Only the
 Qwen bridge uses that patched cancellation contract.
 
-Native streams use the existing continuous audio frontend. Buffered previews
-apply the configured frontend independently to each bounded snapshot; their
-preprocessing context can differ from the full recording. The authoritative final
-uses the existing completed-audio frontend and fallback. VAD remains advisory:
-this implementation adds no silence deletion or automatic endpointing. Resampler
-tails and skipped preview windows remain present in the recorder's original audio.
+Every live recording runs the audio frontend once, continuously
+([#141](https://github.com/rahulsharmavishwakarma/vesper/issues/141)). Native
+streams process it inline on the inference worker. Buffered recordings process it
+on a per-recording `vesper-live-frontend` thread that owns its own Silero/DPDFNet
+handles; the worker releases its copy while that thread runs. The enhanced
+16 kHz PCM feeds the preview mailbox, and the whole enhanced recording is retained.
+When a final needs completed audio (buffered models and MLX Qwen), it reuses that
+retained recording instead of denoising the original again. Only the frontend
+backlog not yet processed at Stop remains on the Stop path.
+
+The final uses the retained recording only for the same operation, the same
+frontend settings and a length within 50 ms of the completed recording; a later
+lookup for that operation finds nothing. A frontend that fails during recording
+makes the final use the original recording with a warning, as for native streams,
+rather than re-running the frontend. If the live session cannot start, previews
+use original audio and the final runs the completed-audio frontend as before.
+Cancellation discards the retained audio. VAD remains advisory: this implementation adds no silence deletion
+or automatic endpointing. The recorder still retains the original audio.
+
+```mermaid
+flowchart LR
+  M[Microphone chunks] --> R[Recorder<br/>original audio]
+  M --> F[Live frontend session<br/>Silero + DPDFNet8, one per recording]
+  F -->|enhanced 16 kHz| P[Preview mailbox<br/>lossy, bounded]
+  P --> W[Inference worker<br/>preview drafts]
+  F -->|enhanced recording| E[Retained for this operation]
+  R -->|Stop: completed audio| C{Same operation,<br/>settings, length?}
+  E --> C
+  C -->|yes| D[Final decode on enhanced audio]
+  C -->|no, or frontend failed| O[Final decode on original audio<br/>with warning on failure]
+```
 
 ## Device and memory behavior
 

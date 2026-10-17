@@ -32,6 +32,9 @@ struct Input {
 pub(crate) struct Mailbox {
     input: Mutex<Input>,
     pub cancelled: AtomicBool,
+    /// Set before any audio arrives when a continuous live frontend feeds this
+    /// mailbox; snapshots then already contain enhanced 16 kHz PCM.
+    pub enhanced: AtomicBool,
 }
 
 pub(crate) struct Snapshot {

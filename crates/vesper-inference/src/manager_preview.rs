@@ -111,16 +111,26 @@ pub(super) fn run_buffered(
         last_window = Some(snapshot.index);
         after = snapshot.end_sample;
         let begin = Instant::now();
+        let live_frontend = mailbox.enhanced.load(Ordering::Acquire);
+        if live_frontend {
+            // The recording's frontend thread owns its own models; release
+            // the worker's copy instead of holding both while recording.
+            state.frontend.unload();
+        }
         let result = (|| {
-            let processed = prepare_audio(
-                &mut state.frontend,
-                &snapshot.audio,
-                &selection.config,
-                root,
-                id,
-                &mailbox.cancelled,
-                evidence,
-            )?;
+            let processed = if live_frontend {
+                None
+            } else {
+                prepare_audio(
+                    &mut state.frontend,
+                    &snapshot.audio,
+                    &selection.config,
+                    root,
+                    id,
+                    &mailbox.cancelled,
+                    evidence,
+                )?
+            };
             let model = &state
                 .speech
                 .as_ref()
