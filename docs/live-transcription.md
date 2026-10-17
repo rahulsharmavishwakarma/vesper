@@ -50,9 +50,15 @@ external insertion. This preserves the selected decoder's existing final behavio
 and completion checks; it does not guarantee error-free recognition. Finalization
 still takes the ordinary offline decode time. Sherpa
 duration-limited output from an unfinished window may appear as a provisional
-draft; it still fails completed-result validation. Missing reports, context loss,
-unknown errors and repetition stops remain rejected. A preview failure is recorded
-and cannot turn a partial prefix into a successful final transcript.
+draft; it still fails completed-result validation. An unfinished window that stops
+early (token, context or repetition limit, or text ending in detected silence)
+skips that draft only: the previous draft stays visible, the resident model stays
+healthy, and the next pass over more audio replaces the window. Evidence counts
+these as `previewIncompleteDrafts`. Missing reports, context loss and unknown
+errors still invalidate the owner; the preview loop reloads it once per recording
+(`previewReloads`) and continues drafting, and further failures leave drafts
+paused until Stop. A preview failure is recorded and cannot turn a partial prefix
+into a successful final transcript; the completed-audio final keeps its strict checks.
 
 Live drafts are never polished; the writing model runs only on the final
 transcript after Stop. How other dictation apps handle live rewriting, and the

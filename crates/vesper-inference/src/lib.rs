@@ -87,6 +87,10 @@ pub enum InferenceError {
         "the polished transcript failed the fidelity check ({0}); the raw transcript is preserved"
     )]
     Fidelity(&'static str),
+    /// A bounded live-preview window stopped before its decoder completed. The
+    /// draft is skipped; the owner stays healthy and the final is unaffected.
+    #[error("preview window stopped before completion ({0}); the draft was skipped")]
+    IncompletePreview(String),
 }
 
 pub fn transcribe(
