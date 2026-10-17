@@ -277,3 +277,187 @@ fn installed_live_long_recording_draft_coverage() {
         );
     }
 }
+
+/// Phase B gate (#139): decodes each causal committed segment plus the
+/// remaining tail separately and compares it with today's whole-recording
+/// final. Reports texts and timings only; scoring happens outside the test.
+#[test]
+#[ignore = "requires installed pinned ASR artifacts and VESPER_SEGMENTED_PARITY_MANIFEST of public 16 kHz WAVs"]
+fn installed_segmented_final_parity() {
+    use crate::live_preview::Mailbox;
+    let root = PathBuf::from(std::env::var("VESPER_MODEL_DIR").expect("VESPER_MODEL_DIR"));
+    let manifest: Vec<serde_json::Value> = serde_json::from_slice(
+        &std::fs::read(
+            std::env::var("VESPER_SEGMENTED_PARITY_MANIFEST")
+                .expect("VESPER_SEGMENTED_PARITY_MANIFEST"),
+        )
+        .unwrap(),
+    )
+    .unwrap();
+    let mut paths = vec![
+        (AsrModel::CohereTranscribe, ComputeBackend::Cpu),
+        (AsrModel::Qwen3Asr06b, ComputeBackend::Cpu),
+        (AsrModel::ParakeetTdt06bV3, ComputeBackend::Cpu),
+    ];
+    if cfg!(feature = "mlx") {
+        paths.push((AsrModel::ParakeetTdt06bV3, ComputeBackend::Metal));
+    }
+    for (model, backend) in paths {
+        let manager = InferenceManager::new().unwrap();
+        let mut config = AppConfig {
+            compute_backend: backend,
+            language: Language::English,
+            ..Default::default()
+        };
+        config.models.asr = model;
+        let flag = || Arc::new(AtomicBool::new(false));
+        for (index, recording) in manifest.iter().enumerate() {
+            let mut samples = Vec::new();
+            for file in recording["files"].as_array().unwrap() {
+                let audio = vesper_audio::decode_file(file.as_str().unwrap(), 0).unwrap();
+                assert_eq!(audio.sample_rate(), 16000);
+                samples.extend_from_slice(audio.samples());
+            }
+            // Same causal segmentation as the live mailbox, drained after
+            // every 20 ms push so no segment is dropped.
+            let mailbox = Mailbox::default();
+            let mut boundaries = vec![0_usize];
+            for chunk in samples.chunks(320) {
+                mailbox.push(chunk, 16000).unwrap();
+                while let Some(snapshot) = mailbox.snapshot(u64::MAX).unwrap() {
+                    boundaries.push(snapshot.end_sample as usize);
+                }
+            }
+            boundaries.push(samples.len());
+            let decode = |piece: &[f32], label: String| {
+                let audio = vesper_audio::MonoPcm::new(piece.to_vec(), 16000).unwrap();
+                let started = Instant::now();
+                let text = manager.transcribe(&audio, &config, &root, &label, flag());
+                (
+                    text.map_err(|e| e.to_string()),
+                    started.elapsed().as_secs_f64() * 1000.0,
+                )
+            };
+            // Warm the resident owner so neither arm pays model load.
+            let _ = decode(
+                &samples[..16000.min(samples.len())],
+                format!("warm-{index}"),
+            );
+            let (full, full_ms) = decode(&samples, format!("full-{index}"));
+            let mut pieces = Vec::new();
+            for (piece, pair) in boundaries.windows(2).enumerate() {
+                if pair[1] > pair[0] {
+                    pieces.push(decode(
+                        &samples[pair[0]..pair[1]],
+                        format!("piece-{index}-{piece}"),
+                    ));
+                }
+            }
+            // Candidate final policy: causal 10 s boundaries (quietest 100 ms in
+            // the last second) while more than 20 s remain, then today's
+            // balanced split. Everything before the last 20 s is decodable live.
+            let maximum = 10 * 16000;
+            let mut greedy = vec![0_usize];
+            let mut start = 0;
+            while start < samples.len() {
+                let end = if samples.len() - start > 2 * maximum {
+                    (0..=16000)
+                        .step_by(160)
+                        .map(|offset| start + maximum - offset)
+                        .min_by(|a, b| {
+                            let energy = |c: usize| -> f64 {
+                                samples[c - 800..c + 800]
+                                    .iter()
+                                    .map(|x| f64::from(*x).powi(2))
+                                    .sum()
+                            };
+                            energy(*a).total_cmp(&energy(*b))
+                        })
+                        .unwrap()
+                } else {
+                    vesper_audio::completed_segment_end(&samples, start, maximum)
+                };
+                greedy.push(end);
+                start = end;
+            }
+            let live_cut = greedy
+                .iter()
+                .copied()
+                .filter(|end| samples.len() - end >= 2 * maximum)
+                .max()
+                .unwrap_or(0);
+            let mut greedy_texts = Vec::new();
+            let mut stop_ms = 0.0;
+            for (piece, pair) in greedy.windows(2).enumerate() {
+                let decoded = decode(
+                    &samples[pair[0]..pair[1]],
+                    format!("greedy-{index}-{piece}"),
+                );
+                if pair[0] >= live_cut {
+                    stop_ms += decoded.1;
+                }
+                greedy_texts.push(decoded.0.unwrap_or_default());
+            }
+            let greedy_text = greedy_texts
+                .iter()
+                .map(|text| text.trim())
+                .filter(|text| !text.is_empty())
+                .collect::<Vec<_>>()
+                .join(" ");
+            // Pause-first causal policy: quietest 300 ms between 4 and 10 s,
+            // fixed once 10 s have arrived; the remainder decodes at Stop.
+            let mut pause = vec![0_usize];
+            let mut start = 0;
+            while samples.len() - start > maximum {
+                let energy = |c: usize| -> f64 {
+                    samples[c - 2400..c + 2400]
+                        .iter()
+                        .map(|x| f64::from(*x).powi(2))
+                        .sum()
+                };
+                let end = (4 * 16000..=maximum - 2400)
+                    .step_by(160)
+                    .map(|offset| start + offset)
+                    .min_by(|a, b| energy(*a).total_cmp(&energy(*b)))
+                    .unwrap();
+                pause.push(end);
+                start = end;
+            }
+            pause.push(samples.len());
+            let pause_text = pause
+                .windows(2)
+                .enumerate()
+                .filter_map(|(piece, pair)| {
+                    decode(&samples[pair[0]..pair[1]], format!("pause-{index}-{piece}"))
+                        .0
+                        .ok()
+                })
+                .map(|text| text.trim().to_owned())
+                .filter(|text| !text.is_empty())
+                .collect::<Vec<_>>()
+                .join(" ");
+            let tail_ms = pieces.last().map_or(0.0, |piece| piece.1);
+            let segmented = pieces
+                .iter()
+                .filter_map(|piece| piece.0.as_ref().ok())
+                .map(|text| text.trim())
+                .filter(|text| !text.is_empty())
+                .collect::<Vec<_>>()
+                .join(" ");
+            println!(
+                "segmented-final-parity-v1 {}",
+                serde_json::json!({
+                    "model": format!("{model:?}"), "backend": format!("{backend:?}"),
+                    "id": recording["id"], "audioSeconds": samples.len() as f64 / 16000.0,
+                    "boundaries": boundaries, "full": full, "fullMs": full_ms,
+                    "segmented": segmented, "tailMs": tail_ms,
+                    "greedyBoundaries": greedy, "greedy": greedy_text,
+                    "greedyStopMs": stop_ms, "greedyLiveCut": live_cut,
+                    "pauseBoundaries": pause, "pause": pause_text,
+                    "pieceFailures": pieces.iter().filter(|piece| piece.0.is_err()).count(),
+                    "piecesMs": pieces.iter().map(|piece| piece.1).collect::<Vec<_>>(),
+                })
+            );
+        }
+    }
+}

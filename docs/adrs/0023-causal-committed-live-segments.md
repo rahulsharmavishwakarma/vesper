@@ -64,12 +64,37 @@ case is not exercised. Phase A's measured effect is stable append-only committed
 text without fixed eight-second cuts, not lower compute or Stop latency. Those
 require phase B and shorter pause-closed segments.
 
+## Phase B parity gate (16 October 2026): not met
+
+Phase B would reuse committed segment text at Stop and decode only what remains.
+The ignored `installed_segmented_final_parity` test measures that offline. It
+concatenates public FLEURS en-US clips into three 63–118 s recordings per lane
+(608 reference words per lane, clean and 0 dB environmental noise), decodes them
+with resident CPU recognizers on an Apple M5 Pro, and compares candidate causal
+boundary policies with today's completed-audio final. Today's final already
+splits audio into balanced parts of at most 10 s, but it places boundaries
+using the total length, which is unknown during recording.
+
+| WER (clean / 0 dB) | Current final | Causal 4–8 s (phase A) | Fixed 10 s, last 20 s re-split | Pause-first 4–10 s |
+| --- | ---: | ---: | ---: | ---: |
+| Cohere CPU | 9.05% / 14.31% | 12.83% / 16.12% | 11.02% / 14.14% | 8.06% / 15.62% |
+| Qwen3-ASR CPU | 10.03% / 15.62% | 11.18% / 17.76% | 11.84% / 19.24% | 11.18% / 18.09% |
+
+No causal policy matches the current final on both lanes for both models. Every
+policy worsens Qwen3-ASR by 1.2–3.6 points. Fixing boundaries live would cut
+Stop-to-final decoding on these recordings from a median of about 5.6 s to
+about 1.1 s, but it does not pass the accuracy gate. The completed-audio final
+therefore stays authoritative. Six recordings are too few to rank policies
+reliably; a larger natural-dictation corpus is needed before trying again.
+Parakeet's whole-recording final lost words on these recordings, a separate bug
+fixed in [#153](https://github.com/rahulsharmavishwakarma/vesper/issues/153), so
+its rows are not used as a parity reference.
+
 ## Deferred, requiring measurement before adoption
 
-- Phase B: reuse committed segment text at Stop and decode only the open tail.
-  This changes final segmentation and must pass WER/CER parity against the
-  current completed-audio final on the held-out manifests before it can become
-  the default.
+- Phase B: retry only with a policy that passes the gate above on a larger
+  natural-dictation corpus. Candidates are overlapping parts with a word-level
+  merge, or per-model enablement where parity holds.
 - Closing segments early at Silero-detected pauses when the optional frontend is
   enabled.
 - LocalAgreement-style stabilisation of the provisional tail.
