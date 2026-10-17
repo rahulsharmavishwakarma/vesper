@@ -99,6 +99,15 @@ impl NativeStream<'_> {
         }
     }
 
+    /// Input a provisional native preview skipped under backlog.
+    pub fn dropped_seconds(&self) -> f32 {
+        match self {
+            Self::Nemo(_) => 0.0,
+            #[cfg(feature = "mlx")]
+            Self::Mlx(stream) => stream.dropped_seconds(),
+        }
+    }
+
     pub fn needs_completed_audio(&self) -> bool {
         match self {
             Self::Nemo(_) => false,

@@ -10,12 +10,21 @@ use std::{
 };
 use vesper_audio::{MonoPcm, StreamingResampler, ASR_SAMPLE_RATE};
 
-const WINDOW: usize = 8 * ASR_SAMPLE_RATE as usize;
-const MINIMUM: usize = 2 * ASR_SAMPLE_RATE as usize;
+const SAMPLE_RATE: usize = ASR_SAMPLE_RATE as usize;
+/// Open audio is closed into a committed segment once it reaches this length.
+const SEGMENT_MAX: usize = 8 * SAMPLE_RATE;
+/// Earliest causal boundary inside the open audio.
+const SEGMENT_MIN: usize = 4 * SAMPLE_RATE;
+/// Shortest open tail worth a provisional pass.
+const MINIMUM: usize = 2 * SAMPLE_RATE;
+/// Closed segments awaiting their single decode; older ones are dropped.
+const PENDING_LIMIT: usize = 2;
+const ENERGY_WINDOW: usize = SAMPLE_RATE / 10;
+const ENERGY_STEP: usize = SAMPLE_RATE / 100;
+pub(crate) const MAX_RETAINED_SAMPLES: usize = SEGMENT_MAX * (PENDING_LIMIT + 1);
 
-#[derive(Default)]
-struct Window {
-    index: u64,
+struct Segment {
+    start: u64,
     samples: Vec<f32>,
 }
 
@@ -23,8 +32,10 @@ struct Window {
 struct Input {
     converter: Option<StreamingResampler>,
     rate: Option<u32>,
-    windows: VecDeque<Window>,
-    total: u64,
+    open: Vec<f32>,
+    open_start: u64,
+    pending: VecDeque<Segment>,
+    dropped_segments: u64,
     finished: bool,
 }
 
@@ -37,8 +48,16 @@ pub(crate) struct Mailbox {
     pub enhanced: AtomicBool,
 }
 
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub(crate) enum JobKind {
+    /// A closed segment, decoded once; its text becomes committed.
+    Committed,
+    /// The still-open tail, re-decoded as more audio arrives.
+    Provisional,
+}
+
 pub(crate) struct Snapshot {
-    pub index: u64,
+    pub kind: JobKind,
     pub end_sample: u64,
     pub audio: MonoPcm,
 }
@@ -81,76 +100,118 @@ impl Mailbox {
         }
     }
 
-    pub fn snapshot(&self, after: u64) -> Result<Option<Snapshot>> {
-        let input = self
+    /// Closed segments first, in order; otherwise the open tail when it has
+    /// grown past `tail_after` (the end of the last provisional pass).
+    pub fn snapshot(&self, tail_after: u64) -> Result<Option<Snapshot>> {
+        let mut input = self
             .input
             .lock()
             .map_err(|_| native("live audio", "mailbox unavailable"))?;
         if input.finished {
             return Ok(None);
         }
-        Ok(input
-            .windows
-            .iter()
-            .find(|window| {
-                window.samples.len() >= MINIMUM
-                    && window.index * WINDOW as u64 + window.samples.len() as u64 > after
-            })
-            .map(|window| Snapshot {
-                index: window.index,
-                end_sample: window.index * WINDOW as u64 + window.samples.len() as u64,
-                audio: MonoPcm::new(window.samples.clone(), ASR_SAMPLE_RATE)
-                    .expect("validated PCM"),
-            }))
+        if let Some(segment) = input.pending.pop_front() {
+            return Ok(Some(Snapshot {
+                kind: JobKind::Committed,
+                end_sample: segment.start + segment.samples.len() as u64,
+                audio: MonoPcm::new(segment.samples, ASR_SAMPLE_RATE).expect("validated PCM"),
+            }));
+        }
+        let end = input.open_start + input.open.len() as u64;
+        if input.open.len() < MINIMUM || end <= tail_after {
+            return Ok(None);
+        }
+        Ok(Some(Snapshot {
+            kind: JobKind::Provisional,
+            end_sample: end,
+            audio: MonoPcm::new(input.open.clone(), ASR_SAMPLE_RATE).expect("validated PCM"),
+        }))
     }
 
     pub fn retained_samples(&self) -> usize {
         self.input.lock().map_or(0, |input| {
-            input.windows.iter().map(|w| w.samples.len()).sum()
+            input.open.len() + input.pending.iter().map(|s| s.samples.len()).sum::<usize>()
         })
     }
-}
 
-fn append(input: &mut Input, mut samples: &[f32]) {
-    while !samples.is_empty() {
-        if input
-            .windows
-            .back()
-            .is_none_or(|w| w.samples.len() == WINDOW)
-        {
-            input.windows.push_back(Window {
-                index: input.total / WINDOW as u64,
-                samples: Vec::with_capacity(WINDOW),
-            });
-            while input.windows.len() > 2 {
-                input.windows.pop_front();
-            }
-        }
-        let window = input.windows.back_mut().expect("current window");
-        let count = samples.len().min(WINDOW - window.samples.len());
-        window.samples.extend_from_slice(&samples[..count]);
-        input.total += count as u64;
-        samples = &samples[count..];
+    pub fn dropped_segments(&self) -> u64 {
+        self.input.lock().map_or(0, |input| input.dropped_segments)
     }
 }
 
-#[derive(Default)]
-pub(crate) struct PreviewText {
-    prefix: String,
-    current: String,
-    index: Option<u64>,
+fn append(input: &mut Input, samples: &[f32]) {
+    input.open.extend_from_slice(samples);
+    while input.open.len() >= SEGMENT_MAX {
+        let boundary = causal_boundary(&input.open);
+        let samples = input.open.drain(..boundary).collect::<Vec<_>>();
+        input.pending.push_back(Segment {
+            start: input.open_start,
+            samples,
+        });
+        input.open_start += boundary as u64;
+        // Bounded memory: a slow decoder loses the oldest draft segment; the
+        // recorder still retains that audio for the completed-audio final.
+        while input.pending.len() > PENDING_LIMIT {
+            input.pending.pop_front();
+            input.dropped_segments += 1;
+        }
+    }
 }
 
-impl PreviewText {
-    pub fn replace(&mut self, index: u64, text: String) -> String {
-        if self.index.is_some_and(|old| old != index) {
-            join(&mut self.prefix, &self.current);
+/// Centre of the quietest 100 ms window between `SEGMENT_MIN` and the end of
+/// the received audio, preferring later boundaries on ties. Uses only audio
+/// already received, so a closed segment never depends on future input.
+/// Energy only chooses a boundary; no audio is removed.
+fn causal_boundary(samples: &[f32]) -> usize {
+    let half = ENERGY_WINDOW / 2;
+    let mut prefix = Vec::with_capacity(samples.len() + 1);
+    prefix.push(0.0_f64);
+    for sample in samples {
+        prefix.push(prefix.last().copied().unwrap_or_default() + f64::from(*sample).powi(2));
+    }
+    let last = samples.len() - half;
+    let mut boundary = last;
+    let mut lowest = f64::INFINITY;
+    let mut center = SEGMENT_MIN;
+    while center <= last {
+        let energy = prefix[center + half] - prefix[center - half];
+        if energy <= lowest {
+            lowest = energy;
+            boundary = center;
         }
-        self.index = Some(index);
-        self.current = text;
-        let mut snapshot = self.prefix.clone();
-        join(&mut snapshot, &self.current);
-        snapshot
+        center += ENERGY_STEP;
+    }
+    boundary
+}
+
+/// Display text: committed segment text plus the latest provisional tail.
+#[derive(Default)]
+pub(crate) struct LiveText {
+    committed: String,
+    tail: String,
+}
+
+impl LiveText {
+    /// Commit a closed segment. Any provisional text covered that segment's
+    /// audio, so it is cleared until the next tail pass.
+    pub fn commit(&mut self, text: &str) {
+        join(&mut self.committed, text);
+        self.tail.clear();
+    }
+
+    pub fn set_tail(&mut self, text: String) {
+        self.tail = text.trim().to_owned();
+    }
+
+    /// `(committed, provisional)`; the provisional part carries its own
+    /// leading space because the UI concatenates both fields directly.
+    pub fn parts(&self) -> (String, String) {
+        let provisional = if self.committed.is_empty() || self.tail.is_empty() {
+            self.tail.clone()
+        } else {
+            format!(" {}", self.tail)
+        };
+        (self.committed.clone(), provisional)
     }
 }
 
@@ -168,16 +229,25 @@ fn join(left: &mut String, right: &str) {
 mod tests {
     use super::*;
 
+    fn feed(mailbox: &Mailbox, samples: &[f32]) {
+        for chunk in samples.chunks(317) {
+            mailbox.push(chunk, 16000).unwrap();
+        }
+    }
+
     #[test]
     fn producer_remains_bounded_when_decoder_never_consumes() {
         let mailbox = Mailbox::default();
         for _ in 0..120 {
             mailbox.push(&vec![0.25; 16000], 16000).unwrap();
         }
-        assert!(mailbox.retained_samples() <= 2 * WINDOW);
-        let latest = mailbox.snapshot(0).unwrap().unwrap();
-        assert!(latest.index >= 13);
-        assert!(latest.audio.samples().iter().all(|s| *s == 0.25));
+        assert!(mailbox.retained_samples() <= MAX_RETAINED_SAMPLES);
+        assert!(mailbox.dropped_segments() > 0);
+        let first = mailbox.snapshot(0).unwrap().unwrap();
+        assert_eq!(first.kind, JobKind::Committed);
+        // Only the newest closed segments survive a stalled decoder.
+        assert!(first.end_sample >= 100 * SAMPLE_RATE as u64);
+        assert!(first.audio.samples().iter().all(|s| *s == 0.25));
         mailbox.finish();
         assert!(mailbox.cancelled.load(Ordering::Acquire));
         assert!(mailbox.snapshot(0).unwrap().is_none());
@@ -185,28 +255,46 @@ mod tests {
     }
 
     #[test]
-    fn revisions_replace_without_deduplicating_real_repetitions() {
-        let mut text = PreviewText::default();
-        assert_eq!(text.replace(0, "go".into()), "go");
-        assert_eq!(text.replace(0, "go go".into()), "go go");
-        assert_eq!(text.replace(1, "go again".into()), "go go go again");
-        assert_eq!(
-            text.replace(1, "go again please".into()),
-            "go go go again please"
-        );
+    fn segments_close_causally_at_the_quietest_point_and_keep_every_sample() {
+        let mailbox = Mailbox::default();
+        // Loud audio with one quiet 200 ms gap centred at 6 s.
+        let mut audio = vec![0.5_f32; SEGMENT_MAX + MINIMUM];
+        let gap = 6 * SAMPLE_RATE;
+        audio[gap - 1600..gap + 1600].fill(0.0);
+        feed(&mailbox, &audio);
+        let committed = mailbox.snapshot(0).unwrap().unwrap();
+        assert_eq!(committed.kind, JobKind::Committed);
+        let length = committed.audio.samples().len();
+        assert!((gap - 800..=gap + 800).contains(&length), "{length}");
+        let tail = mailbox.snapshot(0).unwrap().unwrap();
+        assert_eq!(tail.kind, JobKind::Provisional);
+        assert_eq!(length + tail.audio.samples().len(), audio.len());
+        assert_eq!(tail.end_sample, audio.len() as u64);
+        // An unchanged tail is not re-decoded.
+        assert!(mailbox.snapshot(tail.end_sample).unwrap().is_none());
+        assert!(mailbox.push(&[f32::NAN], 16000).is_err());
+        assert!(mailbox.push(&[0.0], 48000).is_err());
     }
 
     #[test]
-    fn capture_packet_boundaries_preserve_window_samples() {
+    fn uniform_audio_closes_at_the_latest_boundary() {
         let mailbox = Mailbox::default();
-        for chunk in vec![0.5; WINDOW + MINIMUM].chunks(317) {
-            mailbox.push(chunk, 16000).unwrap();
-        }
-        let first = mailbox.snapshot(0).unwrap().unwrap();
-        assert_eq!(first.end_sample, WINDOW as u64);
-        let second = mailbox.snapshot(first.end_sample).unwrap().unwrap();
-        assert_eq!(second.audio.samples().len(), MINIMUM);
-        assert!(mailbox.push(&[f32::NAN], 16000).is_err());
-        assert!(mailbox.push(&[0.0], 48000).is_err());
+        feed(&mailbox, &vec![0.5; SEGMENT_MAX]);
+        let committed = mailbox.snapshot(0).unwrap().unwrap();
+        assert_eq!(committed.kind, JobKind::Committed);
+        assert!(committed.audio.samples().len() >= SEGMENT_MAX - ENERGY_WINDOW);
+    }
+
+    #[test]
+    fn committed_text_never_deduplicates_and_clears_stale_tail() {
+        let mut text = LiveText::default();
+        text.set_tail("go".into());
+        assert_eq!(text.parts(), (String::new(), "go".into()));
+        text.commit("go go");
+        assert_eq!(text.parts(), ("go go".into(), String::new()));
+        text.set_tail("go again".into());
+        assert_eq!(text.parts(), ("go go".into(), " go again".into()));
+        text.commit("");
+        assert_eq!(text.parts(), ("go go".into(), String::new()));
     }
 }

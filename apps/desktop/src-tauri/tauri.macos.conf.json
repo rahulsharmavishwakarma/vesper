@@ -10,7 +10,7 @@
       "minimumSystemVersion": "10.15"
     },
     "resources": {
-      "../../../.tooling/diarization-runtime/": "diarization-runtime/"
+      "../../../.tooling/diarization-runtime/nemotron-diarization-runtime/": "diarization-runtime/"
     }
   }
 }

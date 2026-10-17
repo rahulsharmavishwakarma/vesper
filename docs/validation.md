@@ -167,6 +167,11 @@ Exact inputs, outputs, errors, and timings are preserved in [cleanup-cases.json]
 
 ### Guarded technical-tail regression — 15 September 2026
 
+> **Historical; invalidated 14 October 2026.** This result depended on a
+> fixture-specific prompt rule and a built-in `README.txt` fallback. Without them
+> the model left the tail unchanged, and the pass was retired
+> ([ADR-0008](adrs/0008-guarded-technical-tail-correction.md#retirement)).
+
 The installed Qwen3.5 0.8B Q4 model passed the opt-in regression for a long
 synthetic dictation ending with an ASR-like misspelling of `README.txt`. Context
 correction changed only that nearby filename token and retained the trailing

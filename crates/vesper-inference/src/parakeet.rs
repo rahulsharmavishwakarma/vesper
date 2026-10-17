@@ -1,5 +1,6 @@
 use crate::{
-    check_cancelled, native, path_string, require_file, worker_threads, InferenceError, Result,
+    check_cancelled, native, path_string, require_file, segmented_audio, worker_threads,
+    InferenceError, Result, TranscriptionProgress,
 };
 use sherpa_onnx::{
     OfflineModelConfig, OfflineRecognizer, OfflineRecognizerConfig, OfflineTransducerModelConfig,
@@ -8,6 +9,12 @@ use std::path::Path;
 use std::sync::atomic::AtomicBool;
 use vesper_audio::{MonoPcm, ASR_SAMPLE_RATE};
 use vesper_core::{AppConfig, AsrModel, ModelFileRole};
+
+/// Bounds each native decode call, as every other offline adapter does. One
+/// whole-recording call silently lost about half the words of 60–120 s
+/// recordings (#153). 30 s keeps shorter recordings on a single call and
+/// matches the MLX Parakeet limit. Update provenance if this policy changes.
+pub(crate) const MAX_SEGMENT_SECONDS: usize = 30;
 
 /// Recognize mono 16 kHz PCM through NVIDIA Parakeet v3's ONNX export.
 /// Cancellation is observed around native calls; sherpa's offline decode cannot
@@ -35,7 +42,7 @@ pub fn transcribe(
             "sherpa-onnx could not create the transducer recognizer",
         )
     })?;
-    decode_with_recognizer(&recognizer, audio, cancelled)
+    decode_with_recognizer(&recognizer, audio, cancelled, &|_| {})
 }
 
 pub(crate) fn recognizer_config(
@@ -70,21 +77,31 @@ pub(crate) fn decode_with_recognizer(
     recognizer: &OfflineRecognizer,
     audio: &MonoPcm,
     cancelled: &AtomicBool,
+    progress: &dyn Fn(TranscriptionProgress),
 ) -> Result<String> {
     audio.require_sample_rate(ASR_SAMPLE_RATE)?;
     check_cancelled(cancelled)?;
     if audio.samples().is_empty() {
         return Ok(String::new());
     }
-    let stream = recognizer.create_stream();
-    stream.accept_waveform(ASR_SAMPLE_RATE as i32, audio.samples());
-    check_cancelled(cancelled)?;
-    recognizer.decode(&stream);
-    check_cancelled(cancelled)?;
-    let result = stream
-        .get_result()
-        .ok_or_else(|| native("speech decode", "no recognition result was returned"))?;
-    Ok(result.text.trim().to_owned())
+    segmented_audio::decode_segments_with_limit(
+        audio.samples(),
+        cancelled,
+        MAX_SEGMENT_SECONDS * ASR_SAMPLE_RATE as usize,
+        |samples| {
+            // Fresh stream per segment; only the recognizer weights persist.
+            let stream = recognizer.create_stream();
+            stream.accept_waveform(ASR_SAMPLE_RATE as i32, samples);
+            check_cancelled(cancelled)?;
+            recognizer.decode(&stream);
+            check_cancelled(cancelled)?;
+            let result = stream
+                .get_result()
+                .ok_or_else(|| native("speech decode", "no recognition result was returned"))?;
+            Ok(result.text.trim().to_owned())
+        },
+        progress,
+    )
 }
 
 pub(crate) fn speech_paths(config: &AppConfig, root: &Path) -> Result<[std::path::PathBuf; 4]> {

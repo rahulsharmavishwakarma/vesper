@@ -267,8 +267,10 @@ Settings card.
 This experimental integration requires Apple silicon; the runtime ships
 inside the macOS app bundle (see
 [experimental speaker runtime](development.md#experimental-speaker-runtime)).
-It runs entirely on device. If the bundled runtime is missing, transcription
-is unaffected and no timeline appears.
+It runs entirely on device and needs macOS 14 or later. If the bundled runtime
+is missing or incompatible, transcription is unaffected and no timeline appears;
+the speaker model's card in Models then says the bundled speaker runtime is
+missing or incompatible. Downloading again does not fix this; reinstall Vesper.
 
 For live recordings, speaker analysis runs after the text is delivered or
 inserted, so it never delays your text; the timeline appears shortly afterwards.

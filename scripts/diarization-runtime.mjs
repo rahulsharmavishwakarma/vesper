@@ -12,6 +12,7 @@ import { homedir } from 'node:os';
 import { dirname, join, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { buildDiarizationRuntime } from './build-diarization-runtime.mjs';
+import { loadableOn, minimumSystem } from './macho-minimum.mjs';
 
 const root = resolve(dirname(fileURLToPath(import.meta.url)), '..');
 const strict = process.argv.includes('--strict');
@@ -48,7 +49,8 @@ function verifiedBundle(directory) {
       /^[0-9a-f]{64}$/.test(f.sha256 ?? '') &&
       existsSync(join(directory, f.name)) &&
       sha256(join(directory, f.name)) === f.sha256 &&
-      readFileSync(join(directory, f.name)).length === f.sizeBytes,
+      readFileSync(join(directory, f.name)).length === f.sizeBytes &&
+      loadableOn(minimumSystem(join(directory, f.name)) ?? '0'),
   );
 }
 

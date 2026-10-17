@@ -8,7 +8,7 @@ For current work on learning from usage, see the [September 2026 RSI paper and l
 
 This report is the research snapshot written before implementation. For the current native application see [the project README](../README.md), and for actual model measurements see [validation](validation.md). The historical implementation proposals below are not current feature status.
 
-The expanded research is in the [primary-paper basis for streaming inference](research-streaming-inference-papers.md), [CPU/GPU performance across devices](inference-performance.md), [NVIDIA streaming, Kyutai STT and Moshi](research-streaming-speech.md), and [Whisper, Cohere, Microsoft and other speech models](research-speech-landscape.md). NVIDIA's official NeMo-Speech.cpp adapter is implemented with native live partials and completed-audio inference. Cohere is the current fresh-settings default; Nemotron remains the selectable multilingual/live adapter. The historical proposals below predate those changes. The application is named **Vesper**.
+The expanded research is in the [primary-paper basis for streaming inference](research-streaming-inference-papers.md), [live rewriting while the user speaks](research-live-rewrite.md), [CPU/GPU performance across devices](inference-performance.md), [NVIDIA streaming, Kyutai STT and Moshi](research-streaming-speech.md), and [Whisper, Cohere, Microsoft and other speech models](research-speech-landscape.md). NVIDIA's official NeMo-Speech.cpp adapter is implemented with native live partials and completed-audio inference. Cohere is the current fresh-settings default; Nemotron remains the selectable multilingual/live adapter. The historical proposals below predate those changes. The application is named **Vesper**.
 
 The user has selected NVIDIA for speech recognition and requested a very small second model to reconstruct dictated text. This report recommends Tauri 2, Svelte 5, TypeScript and a Rust backend, with Qwen3.5-0.8B as the first cleanup candidate. The NVIDIA checkpoint depends on language and streaming requirements.
 
@@ -139,6 +139,8 @@ Create two references per recording: a verbatim transcript and a human-approved 
 | Stop-to-final-text p50/p95 | Measure the full user-visible delay |
 | Cold load, warm latency, peak RAM | Establish actual device requirements |
 | Silence, cancellation and repeated sessions | Verify application behavior |
+
+The [16 October 2026 polishing measurement](validation/polishing-wer-2026-10-16.md) scored raw Cohere output, Minimal and Balanced cleanup against the same verbatim references on 52 public clips. Minimal left WER unchanged. Balanced fixed one recognition error but made WER slightly worse overall, so polishing is not currently an accuracy step.
 
 Compare raw NVIDIA output, punctuation-only cleanup, Qwen Q4_0 and Qwen Q8_0 using identical recordings. Consider the 2B fallback only if the smaller model fails meaningful quality requirements. For streaming, measure first partial latency and subsequent transcript revisions separately. No research result here establishes a winner on these exact recordings and builds.
 

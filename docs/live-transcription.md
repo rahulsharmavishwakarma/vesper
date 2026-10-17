@@ -26,20 +26,35 @@ preview decoder, which otherwise hallucinated words from all-zero PCM in testing
 This has no amplitude threshold and does not remove samples from final audio.
 
 CPU Qwen, Cohere, Parakeet-family profiles, Whisper and LFM, plus other qualified
-MLX paths, use buffered previews around their existing decoder. The recorder
-retains the authoritative audio independently. Preview input is converted to
-16 kHz and retains at most two eight-second windows, plus one at-most-eight-second
-snapshot being decoded (under 1.5 MiB of this PCM; frontend/model allocations are
-separate). A pass starts after at least
-two seconds of available audio. Its text replaces that window's earlier draft;
-prior-window drafts remain provisional. No overlap-string deduplication removes
-intentional repeated words. Slow inference can skip superseded preview windows;
-it does not discard the original recording.
+MLX paths, use buffered previews around their existing decoder
+([ADR-0023](adrs/0023-causal-committed-live-segments.md)). The recorder retains
+the authoritative audio independently. Preview input is converted to 16 kHz and
+accumulates in one open buffer. At eight seconds the buffer is closed at the
+quietest 100 ms point between four seconds and the received end (later point on
+ties), using only audio already received; energy chooses the boundary and removes
+nothing. Each closed segment is decoded exactly once and appended to the
+committed draft, which only grows. The open tail, once at least two seconds long,
+is re-decoded as the provisional draft. At most two closed segments wait for
+decoding; if the decoder falls behind, the oldest is dropped from the draft
+(the final still includes its audio). Retained preview PCM is bounded to three
+eight-second buffers (about 1.5 MiB; frontend/model allocations are separate).
+No overlap-string deduplication removes intentional repeated words.
+
+```mermaid
+flowchart LR
+    mic[Recorder: authoritative audio] -->|bounded copy| open[Open buffer <= 8 s]
+    open -->|close at quietest point 4-8 s| pending[Closed segments FIFO <= 2]
+    pending -->|decode once| committed[committedText - append only]
+    open -->|re-decode tail >= 2 s| provisional[provisionalText - replaced]
+    pending -. oldest dropped when decoder lags .-> dropped[previewSegmentsDropped]
+    mic -->|Stop| final[Completed-audio final - authoritative]
+    final -->|replaces draft| result[Final transcript]
+```
 
 Preview scheduling allows one running decode, bounded pending audio and coalesced
-wakeups. The interval after a pass is half its measured processing time, clamped
-to 0.5–5 seconds. These are conservative scheduling heuristics, not latency
-guarantees. Under low available-memory headroom, previews defer and the recording
+wakeups. Closed segments are decoded as soon as the decoder is free. The interval
+after a tail pass is half its measured processing time, clamped to 0.5–5 seconds.
+These are conservative scheduling heuristics, not latency guarantees. Under low available-memory headroom, previews defer and the recording
 continues. The previous visible draft can therefore lag current speech.
 
 For buffered adapters and native Qwen previews, `StreamingFinal::CompletedAudioRequired`
@@ -50,9 +65,19 @@ external insertion. This preserves the selected decoder's existing final behavio
 and completion checks; it does not guarantee error-free recognition. Finalization
 still takes the ordinary offline decode time. Sherpa
 duration-limited output from an unfinished window may appear as a provisional
-draft; it still fails completed-result validation. Missing reports, context loss,
-unknown errors and repetition stops remain rejected. A preview failure is recorded
-and cannot turn a partial prefix into a successful final transcript.
+draft; it still fails completed-result validation. An unfinished window that stops
+early (token, context or repetition limit, or text ending in detected silence)
+skips that draft only: the previous draft stays visible, the resident model stays
+healthy, and the next pass over more audio replaces the window. Evidence counts
+these as `previewIncompleteDrafts`. Missing reports, context loss and unknown
+errors still invalidate the owner; the preview loop reloads it once per recording
+(`previewReloads`) and continues drafting, and further failures leave drafts
+paused until Stop. A preview failure is recorded and cannot turn a partial prefix
+into a successful final transcript; the completed-audio final keeps its strict checks.
+
+Live drafts are never polished; the writing model runs only on the final
+transcript after Stop. How other dictation apps handle live rewriting, and the
+options for Vesper, are in [live rewriting research](research-live-rewrite.md).
 
 ## Ownership, cancellation and preprocessing
 
@@ -66,9 +91,12 @@ checks prevent unsafe owner reuse.
 Stop and cancellation bypass a full preview wakeup queue. Cancellation suppresses
 an in-flight result; synchronous Sherpa calls can finish before cancellation takes
 effect. The native MLX patch adds an awaitable cancellation operation, bounds event
-buffering, and exposes queued acoustic-window count. The bridge rejects excess
-backlog and joins the collector/native tasks before releasing a model. Only the
-Qwen bridge uses that patched cancellation contract.
+buffering, and exposes queued acoustic-window count. When more than two windows
+are queued, the bridge skips the incoming packet instead of ending the session:
+memory stays bounded, the provisional draft can miss that audio, and the recorder
+still retains it for the completed-audio final. Live evidence reports the skipped
+input as `droppedInputSeconds`. The bridge joins the collector/native tasks before
+releasing a model. Only the Qwen bridge uses that patched cancellation contract.
 
 Every live recording runs the audio frontend once, continuously
 ([#141](https://github.com/rahulsharmavishwakarma/vesper/issues/141)). Native
@@ -179,8 +207,9 @@ CPU-thread budget setting.
 
 Execution evidence distinguishes `native`, `native-mlx-preview` and `buffered`,
 and records the expected finalization path, effective backend selection and startup
-time. Buffered evidence includes preview failures, skipped windows, retained input,
-decode time and memory observations. MLX completed-audio reports include allocator
+time. Buffered evidence includes the preview policy, committed segments and their
+failures, provisional passes, dropped segments, decoded preview audio seconds,
+preview failures, retained input, decode time and memory observations. MLX completed-audio reports include allocator
 active/cache values and limits. These have different scopes from whole-process RSS
 and must not be added together as independent memory pools.
 

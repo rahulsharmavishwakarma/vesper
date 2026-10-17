@@ -1211,6 +1211,11 @@ fn run_stream(
                 )?;
                 check_cancelled(cancelled)?;
                 check_cancelled(stream_cancelled)?;
+                if let Ok(mut evidence) = evidence.lock() {
+                    if evidence["operationId"] == operation_id {
+                        evidence["live"]["droppedInputSeconds"] = stream.dropped_seconds().into();
+                    }
+                }
                 if stream.needs_completed_audio() {
                     if let (Some(samples), Some(session)) = (retained.take(), &frontend) {
                         let mut observed = session.metrics().evidence();
