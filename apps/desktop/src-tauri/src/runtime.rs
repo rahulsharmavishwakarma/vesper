@@ -330,6 +330,8 @@ mod tests {
                 inference: Arc::new(vesper_inference::InferenceManager::new().unwrap()),
                 streaming_result: Arc::default(),
                 personalization: Arc::default(),
+                defer_speakers: Default::default(),
+                pending_speakers: Default::default(),
             };
             runtime.begin("recording", "Listening").unwrap();
             runtime.set_operation_id(&context.operation_id);
@@ -566,6 +568,8 @@ mod tests {
                 inference: Arc::clone(&inference),
                 streaming_result: Arc::default(),
                 personalization: Arc::default(),
+                defer_speakers: Default::default(),
+                pending_speakers: Default::default(),
             };
             let audio = MonoPcm::new(vec![0.2 + attempt as f32 * 0.1; 1600], 16000).unwrap();
             let mut result = context
@@ -642,6 +646,8 @@ mod tests {
                 inference: Arc::new(vesper_inference::InferenceManager::new().unwrap()),
                 streaming_result: Arc::new(Mutex::new(None)),
                 personalization: Arc::default(),
+                defer_speakers: Default::default(),
+                pending_speakers: Default::default(),
             };
             context.runtime.begin("transcribing", "Working").unwrap();
             context.runtime.set_operation_id(&context.operation_id);
@@ -704,6 +710,8 @@ mod tests {
             inference: Arc::new(vesper_inference::InferenceManager::new().unwrap()),
             streaming_result: Arc::new(Mutex::new(None)),
             personalization: Arc::default(),
+            defer_speakers: Default::default(),
+            pending_speakers: Default::default(),
         };
         let make_audio = || vesper_audio::CapturedAudio::new(vec![0.25; 1600], 16000, 1).unwrap();
         context.preserve_on_close(make_audio()).unwrap();
@@ -732,6 +740,8 @@ mod tests {
             inference: Arc::new(vesper_inference::InferenceManager::new().unwrap()),
             streaming_result: Arc::new(Mutex::new(None)),
             personalization: Arc::default(),
+            defer_speakers: Default::default(),
+            pending_speakers: Default::default(),
         };
         runtime.begin("recording", "old").unwrap();
         runtime.set_recording(context("old"));
@@ -764,6 +774,8 @@ mod tests {
             inference: Arc::new(vesper_inference::InferenceManager::new().unwrap()),
             streaming_result: Arc::new(Mutex::new(None)),
             personalization: Arc::default(),
+            defer_speakers: Default::default(),
+            pending_speakers: Default::default(),
         };
         let audio = vesper_audio::CapturedAudio::new(vec![0.25; 1600], 16000, 1).unwrap();
         let error = context.archive_capture(&audio).unwrap_err();
@@ -816,6 +828,8 @@ mod tests {
                 inference: Arc::new(vesper_inference::InferenceManager::new().unwrap()),
                 streaming_result: Arc::new(Mutex::new(None)),
                 personalization: Arc::default(),
+                defer_speakers: Default::default(),
+                pending_speakers: Default::default(),
             };
             context.runtime.begin("transcribing", "test").unwrap();
             context.runtime.set_operation_id(&context.operation_id);
@@ -944,6 +958,8 @@ mod tests {
             inference: Arc::new(vesper_inference::InferenceManager::new().unwrap()),
             streaming_result: Arc::new(Mutex::new(None)),
             personalization: Arc::default(),
+            defer_speakers: Default::default(),
+            pending_speakers: Default::default(),
         };
         context.runtime.begin("transcribing", "test").unwrap();
         context
@@ -1627,6 +1643,9 @@ pub struct WorkContext {
     pub(crate) streaming_result: Arc<Mutex<Option<StreamingResultReceiver>>>,
     pub(crate) personalization:
         Arc<std::sync::OnceLock<Result<vesper_data::DictationPersonalizationSnapshot, String>>>,
+    /// Live recordings defer speaker analysis until after insertion (#141).
+    pub(crate) defer_speakers: Arc<std::sync::atomic::AtomicBool>,
+    pub(crate) pending_speakers: Arc<Mutex<Option<MonoPcm>>>,
 }
 
 type StreamingResultReceiver = mpsc::Receiver<Result<vesper_inference::StreamingFinal, String>>;
@@ -1893,6 +1912,93 @@ impl WorkContext {
         result
     }
 
+    /// Speaker annotation on the original recording. Only cancellation is an
+    /// error; any other failure keeps the transcript with a warning.
+    fn annotate_speakers(
+        &self,
+        audio: &MonoPcm,
+        session: &mut Option<SessionRecord>,
+        result: &mut PipelineResult,
+    ) -> Result<(), String> {
+        if !vesper_models::diarization::available(&self.model_root, self.config.compute_backend) {
+            return Ok(());
+        }
+        self.runtime
+            .progress("identifying_speakers", "Identifying speakers locally…");
+        match self.inference.analyze_speakers(
+            audio,
+            &self.config,
+            &self.model_root,
+            &self.operation_id,
+            Arc::clone(&self.runtime.cancelled),
+        ) {
+            Ok(timeline) => {
+                if timeline.clipped_segments > 0 {
+                    self.event(
+                        session,
+                        "speaker_boundary_adjusted",
+                        "Speaker frame padding was clipped to the recording's exact duration.",
+                    );
+                }
+                if let Some(record) = session.as_ref() {
+                    match DatasetStore::open(self.dataset_root.clone()).and_then(|store| {
+                        store.complete_speaker_timeline(&record.id, timeline.clone())
+                    }) {
+                        Ok(updated) => *session = Some(updated),
+                        Err(error) => result
+                            .warnings
+                            .push(format!("Speaker timeline could not be saved: {error}")),
+                    }
+                }
+                result.speaker_timeline = Some(timeline);
+            }
+            Err(vesper_inference::InferenceError::Cancelled) => {
+                return Err("Transcription cancelled.".into())
+            }
+            Err(error) => {
+                self.event(session, "speaker_analysis_failed", &error.to_string());
+                result.warnings.push(format!(
+                    "Transcript retained. Speaker analysis did not finish: {error}"
+                ));
+            }
+        }
+        result.session = session.clone();
+        self.runtime.publish(result.clone());
+        Ok(())
+    }
+
+    /// Runs speaker annotation deferred by a live recording after its text was
+    /// delivered, then republishes the result. Cancellation keeps the text.
+    pub(crate) fn complete_deferred_speakers(&self, result: &mut Result<PipelineResult, String>) {
+        let Some(audio) = self.pending_speakers.lock().ok().and_then(|mut p| p.take()) else {
+            return;
+        };
+        let Ok(result) = result else { return };
+        if self.runtime.cancelled.load(Ordering::Relaxed) {
+            return;
+        }
+        let mut session = result.session.clone();
+        if self
+            .annotate_speakers(&audio, &mut session, result)
+            .is_err()
+        {
+            result
+                .warnings
+                .push("Speaker analysis was cancelled; the transcript is unchanged.".into());
+            self.runtime.publish(result.clone());
+        }
+    }
+
+    /// Live recordings: process the capture now and defer speaker annotation
+    /// to `complete_deferred_speakers` after insertion.
+    pub fn process_capture_deferring_speakers(
+        &self,
+        audio: vesper_audio::CapturedAudio,
+    ) -> Result<PipelineResult, String> {
+        self.defer_speakers.store(true, Ordering::Relaxed);
+        self.process_capture(audio)
+    }
+
     fn complete_raw(
         &self,
         audio: &MonoPcm,
@@ -1946,48 +2052,16 @@ impl WorkContext {
         self.runtime.publish(result.clone());
         self.runtime
             .publish_transcript_preview(&self.operation_id, &result);
-        if vesper_models::diarization::available(&self.model_root, self.config.compute_backend) {
-            self.runtime
-                .progress("identifying_speakers", "Identifying speakers locally…");
-            match self.inference.analyze_speakers(
-                audio,
-                &self.config,
-                &self.model_root,
-                &self.operation_id,
-                Arc::clone(&self.runtime.cancelled),
-            ) {
-                Ok(timeline) => {
-                    if timeline.clipped_segments > 0 {
-                        self.event(
-                            session,
-                            "speaker_boundary_adjusted",
-                            "Speaker frame padding was clipped to the recording's exact duration.",
-                        );
-                    }
-                    if let Some(record) = session.as_ref() {
-                        match DatasetStore::open(self.dataset_root.clone()).and_then(|store| {
-                            store.complete_speaker_timeline(&record.id, timeline.clone())
-                        }) {
-                            Ok(updated) => *session = Some(updated),
-                            Err(error) => result
-                                .warnings
-                                .push(format!("Speaker timeline could not be saved: {error}")),
-                        }
-                    }
-                    result.speaker_timeline = Some(timeline);
-                }
-                Err(vesper_inference::InferenceError::Cancelled) => {
-                    return Err("Transcription cancelled.".into())
-                }
-                Err(error) => {
-                    self.event(session, "speaker_analysis_failed", &error.to_string());
-                    result.warnings.push(format!(
-                        "Transcript retained. Speaker analysis did not finish: {error}"
-                    ));
+        if self.defer_speakers.load(Ordering::Relaxed) {
+            // Text insertion must not wait for speaker annotation.
+            if vesper_models::diarization::available(&self.model_root, self.config.compute_backend)
+            {
+                if let Ok(mut pending) = self.pending_speakers.lock() {
+                    *pending = Some(audio.clone());
                 }
             }
-            result.session = session.clone();
-            self.runtime.publish(result.clone());
+        } else {
+            self.annotate_speakers(audio, session, &mut result)?;
         }
         // Freeze eligibility from the raw hypothesis. Cleanup cannot generate its own cues.
         let post_asr_profile = self

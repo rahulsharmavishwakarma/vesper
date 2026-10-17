@@ -246,7 +246,10 @@ also resumes setup. It always waits for recording and settings edits to finish.
 ASR and writing
 weights still use **Save & download**.
 
-Noise reduction applies to live transcription and completed recordings. It can
+Noise reduction applies to live transcription and completed recordings. During a
+live recording it runs once, while you speak, and the final transcript reuses that
+processed audio, so stopping does not wait for the whole recording to be processed
+again. It can
 reduce transcription accuracy, especially for quiet speech; the existing
 [denoising comparisons](validation/denoising-followup-2026-09-19.md) remain mixed.
 This fixed product choice is not a claim of improved accuracy for every ASR model
@@ -266,6 +269,10 @@ inside the macOS app bundle (see
 [experimental speaker runtime](development.md#experimental-speaker-runtime)).
 It runs entirely on device. If the bundled runtime is missing, transcription
 is unaffected and no timeline appears.
+
+For live recordings, speaker analysis runs after the text is delivered or
+inserted, so it never delays your text; the timeline appears shortly afterwards.
+Imported files are analyzed before the result is shown.
 
 After ASR, **Speaker timeline** in the latest result and History shows estimated
 start/end ranges for up to eight anonymous speakers. Overlapping ranges can

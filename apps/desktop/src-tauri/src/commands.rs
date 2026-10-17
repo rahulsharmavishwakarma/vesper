@@ -764,6 +764,8 @@ fn work_context(storage: &AppStorage) -> Result<WorkContext, String> {
         inference: Arc::clone(&storage.inference),
         streaming_result: Arc::new(std::sync::Mutex::new(None)),
         personalization: Arc::default(),
+        defer_speakers: Default::default(),
+        pending_speakers: Default::default(),
     })
 }
 
@@ -1147,15 +1149,17 @@ pub(crate) async fn start_recording_inner(
                 } else {
                     runtime.progress("transcribing", "Recording finished. Processing audio…");
                     let operation_id = context.operation_id.clone();
-                    let result = recorder
+                    let mut result = recorder
                         .stop()
                         .map_err(|e| e.to_string())
-                        .and_then(|audio| context.process_capture(audio));
+                        .and_then(|audio| context.process_capture_deferring_speakers(audio));
                     tauri::async_runtime::block_on(crate::dictation::completed(
                         &app,
                         &operation_id,
                         &result,
                     ));
+                    // Text has been delivered; speaker annotation may follow.
+                    context.complete_deferred_speakers(&mut result);
                     runtime.finish(&result);
                     notify_transcription(&app, notifications_enabled, &result);
                 }
@@ -1223,16 +1227,26 @@ pub(crate) async fn stop_recording_inner(
     let notifications_enabled = context.config.notifications_enabled;
     let operation_id = context.operation_id.clone();
     runtime.progress("transcribing", "Finishing recording…");
+    let worker = context.clone();
     let result = tauri::async_runtime::spawn_blocking(move || {
         recorder
             .stop()
             .map_err(|e| e.to_string())
-            .and_then(|audio| context.process_capture(audio))
+            .and_then(|audio| worker.process_capture_deferring_speakers(audio))
     })
     .await
     .map_err(|e| e.to_string())
     .and_then(|result| result);
     crate::dictation::completed(&app, &operation_id, &result).await;
+    // Text has been delivered; speaker annotation may follow.
+    let result = tauri::async_runtime::spawn_blocking(move || {
+        let mut result = result;
+        context.complete_deferred_speakers(&mut result);
+        result
+    })
+    .await
+    .map_err(|e| e.to_string())
+    .and_then(|result| result);
     runtime.finish(&result);
     notify_transcription(&app, notifications_enabled, &result);
     result
