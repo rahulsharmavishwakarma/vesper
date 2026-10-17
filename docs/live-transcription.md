@@ -54,6 +54,10 @@ draft; it still fails completed-result validation. Missing reports, context loss
 unknown errors and repetition stops remain rejected. A preview failure is recorded
 and cannot turn a partial prefix into a successful final transcript.
 
+Live drafts are never polished; the writing model runs only on the final
+transcript after Stop. How other dictation apps handle live rewriting, and the
+options for Vesper, are in [live rewriting research](research-live-rewrite.md).
+
 ## Ownership, cancellation and preprocessing
 
 The same worker owns native models throughout use and teardown. CPU Qwen and
