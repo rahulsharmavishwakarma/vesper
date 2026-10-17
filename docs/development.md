@@ -248,9 +248,18 @@ If source preparation fails,
 check network access and the prerequisites above, then retry the same command.
 An existing checkout with an unexpected revision or modified tracked source
 is rejected; preserve local changes before repairing it. Do not substitute
-the older ASR release archive for the diarization runtime. The bootstrap and
-staging regression checks run with
-`node --test scripts/build-diarization-runtime.test.mjs scripts/diarization-runtime.test.mjs`.
+the older ASR release archive for the diarization runtime.
+
+The bootstrap builds with `CMAKE_OSX_DEPLOYMENT_TARGET=14.0` and
+`GGML_NATIVE=OFF`, so the libraries load on macOS 14+ and on every Apple chip
+rather than only on the build machine's macOS and CPU. Staging rejects any
+library whose Mach-O `minos` is newer than 14.0 (`scripts/macho-minimum.mjs`);
+older stages built without the target are therefore rebuilt by a strict build.
+The app bundle maps `.tooling/diarization-runtime/nemotron-diarization-runtime/`
+to `Contents/Resources/diarization-runtime/`, which is where the first-run
+installer looks for `<revision>/`. The bootstrap, staging and bundle-layout
+regression checks run with
+`node --test scripts/build-diarization-runtime.test.mjs scripts/diarization-runtime.test.mjs scripts/macho-minimum.test.mjs scripts/tauri-config.test.mjs`.
 
 Package the built dependency closure on Apple silicon with Xcode tools:
 

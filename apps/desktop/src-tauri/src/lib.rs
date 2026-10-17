@@ -104,11 +104,16 @@ pub fn run() {
             // is missing so fresh installs can produce speaker timelines. The
             // weights still download through the regular audio setup flow.
             // Never fatal: without the stage the app runs normally.
-            if let Err(error) = vesper_models::diarization::ensure_bundled_runtime(
+            match vesper_models::diarization::ensure_bundled_runtime(
                 &model_dir,
                 &std::sync::atomic::AtomicBool::new(false),
             ) {
-                eprintln!("speaker runtime install skipped: {error}");
+                Ok(true) => {}
+                Ok(false) if vesper_models::diarization::supported() => {
+                    eprintln!("speaker runtime unavailable: no bundled runtime for this build")
+                }
+                Ok(false) => {}
+                Err(error) => eprintln!("speaker runtime install failed: {error}"),
             }
             let settings = settings::SettingsStore::new(config_root.join("settings.json"));
             let shortcut = settings.startup_config();
