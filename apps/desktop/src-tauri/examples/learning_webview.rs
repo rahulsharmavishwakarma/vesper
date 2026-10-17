@@ -114,6 +114,8 @@ mod probe {
             inference: Arc::clone(&state.inference),
             streaming_result: Arc::default(),
             personalization: Arc::default(),
+            defer_speakers: Default::default(),
+            pending_speakers: Default::default(),
         };
         if arm == 0 {
             let store = DatasetStore::open(root).map_err(|e| e.to_string())?;

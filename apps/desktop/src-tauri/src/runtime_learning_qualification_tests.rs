@@ -61,6 +61,8 @@ fn context(
         inference: Arc::clone(inference),
         streaming_result: Arc::default(),
         personalization: Arc::default(),
+        defer_speakers: Default::default(),
+        pending_speakers: Default::default(),
     }
 }
 

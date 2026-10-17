@@ -15,6 +15,8 @@ fn context(root: &Path, model_root: PathBuf) -> WorkContext {
         inference: Arc::new(vesper_inference::InferenceManager::new().unwrap()),
         streaming_result: Arc::new(Mutex::new(None)),
         personalization: Arc::default(),
+        defer_speakers: Default::default(),
+        pending_speakers: Default::default(),
     }
 }
 
@@ -248,4 +250,91 @@ fn real_asr_speaker_pipeline_persists_and_exports_without_changing_words() {
     assert!(cleaned.warnings.is_empty(), "{:?}", cleaned.warnings);
     assert!(cleaned.session.is_none());
     assert_no_recordings(&unsaved.dataset_root);
+}
+
+/// #141: the desktop live path. A paced 48 kHz capture streams through the
+/// continuous frontend; the final reuses its enhanced audio, the text is
+/// available before speaker analysis, and the deferred timeline is persisted.
+#[test]
+#[ignore = "requires installed Cohere ASR, audio frontend, local diarization runtime and public meeting samples"]
+fn live_capture_reuses_frontend_and_defers_speakers() {
+    let models = PathBuf::from(
+        vesper_core::environment::var_os("VESPER_DIAR_MODELS").expect("VESPER_DIAR_MODELS"),
+    );
+    let corpus = PathBuf::from(
+        vesper_core::environment::var_os("VESPER_DIAR_CORPUS").expect("VESPER_DIAR_CORPUS"),
+    );
+    for sample in ["fleurs-single.wav", "ami-600-645.wav", "fleurs-single.wav"] {
+        let dir = tempfile::tempdir().unwrap();
+        let mut ctx = context(dir.path(), models.clone());
+        ctx.config = crate::settings::managed_audio(AppConfig {
+            compute_backend: vesper_core::ComputeBackend::Auto,
+            language: vesper_core::Language::English,
+            ..ctx.config.clone()
+        });
+        let source = vesper_audio::decode_file(corpus.join(sample), 0).unwrap();
+        let samples = source.samples();
+        let mic: Vec<f32> = (0..samples.len() * 3)
+            .map(|i| {
+                let (a, f) = (i / 3, (i % 3) as f32 / 3.0);
+                let b = samples.get(a + 1).copied().unwrap_or(samples[a]);
+                samples[a] * (1.0 - f) + b * f
+            })
+            .collect();
+        ctx.runtime.begin("transcribing", "test").unwrap();
+        ctx.runtime.set_operation_id(&ctx.operation_id);
+        let stream = ctx
+            .inference
+            .start_stream(
+                &ctx.config,
+                &ctx.model_root,
+                &ctx.operation_id,
+                Arc::clone(&ctx.runtime.cancelled),
+                Arc::new(|_| {}),
+            )
+            .unwrap();
+        let start = Instant::now();
+        for (index, chunk) in mic.chunks(960).enumerate() {
+            stream.push(chunk.to_vec(), 48000).unwrap();
+            std::thread::sleep(
+                (start + std::time::Duration::from_millis((index as u64 + 1) * 20))
+                    .saturating_duration_since(Instant::now()),
+            );
+        }
+        let stopped = Instant::now();
+        let (sender, receiver) = mpsc::sync_channel(1);
+        sender
+            .send(stream.finish_live().map_err(|e| e.to_string()))
+            .unwrap();
+        ctx.set_streaming_result(receiver);
+        let captured = vesper_audio::CapturedAudio::new(mic, 48000, 1).unwrap();
+        let mut result = ctx.process_capture_deferring_speakers(captured);
+        let text_ms = stopped.elapsed().as_millis();
+        let evidence = ctx.inference.execution_evidence(&ctx.operation_id);
+        assert_eq!(evidence["audioFrontend"]["source"], "live-session");
+        let before = result.as_ref().unwrap().clone();
+        assert!(before.speaker_timeline.is_none());
+        assert!(!before.raw_transcript.trim().is_empty());
+        let speakers = Instant::now();
+        ctx.complete_deferred_speakers(&mut result);
+        let speaker_ms = speakers.elapsed().as_millis();
+        let after = result.unwrap();
+        assert_eq!(after.raw_transcript, before.raw_transcript);
+        let timeline = after.speaker_timeline.as_ref().expect("deferred timeline");
+        let store = DatasetStore::open(ctx.dataset_root.clone()).unwrap();
+        let stored = store
+            .list_sessions()
+            .unwrap()
+            .into_iter()
+            .find(|s| Some(&s.id) == after.session.as_ref().map(|s| &s.id));
+        if let Some(stored) = stored {
+            assert!(stored.speaker_timeline.is_some());
+        }
+        println!(
+            "live-desktop-v1 {}",
+            serde_json::json!({"sample": sample, "audioSeconds": source.duration_seconds(),
+                "stopToTextMs": text_ms, "deferredSpeakerMs": speaker_ms,
+                "speakerSegments": timeline.segments.len(), "provider": timeline.provider, "warnings": after.warnings})
+        );
+    }
 }

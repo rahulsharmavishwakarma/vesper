@@ -461,3 +461,88 @@ fn installed_segmented_final_parity() {
         }
     }
 }
+
+/// #141: a buffered recording's final reuses its live frontend session. Input is
+/// upsampled to 48 kHz and paced in real time like a microphone; the final gets
+/// the same capture through the app's completed-audio resampler. Compares that
+/// final with the previous path (frontend re-run on the completed audio).
+/// Prints texts and timings; scoring happens outside the test.
+#[test]
+#[ignore = "requires installed ASR and audio-frontend artifacts and VESPER_FRONTEND_PARITY_FIXTURES of public WAVs"]
+fn installed_live_frontend_final_parity() {
+    let root = PathBuf::from(std::env::var("VESPER_MODEL_DIR").expect("VESPER_MODEL_DIR"));
+    let fixtures = std::env::var("VESPER_FRONTEND_PARITY_FIXTURES").expect("fixtures");
+    let models = std::env::var("VESPER_FRONTEND_PARITY_MODELS").unwrap_or_default();
+    for model in [
+        AsrModel::CohereTranscribe,
+        AsrModel::Qwen3Asr06b,
+        AsrModel::ParakeetTdt06bV3,
+    ]
+    .into_iter()
+    .filter(|model| models.is_empty() || models.split(',').any(|m| m == model.id()))
+    {
+        let manager = InferenceManager::new().unwrap();
+        let mut config = AppConfig {
+            compute_backend: ComputeBackend::Cpu,
+            language: Language::English,
+            audio_frontend: vesper_core::AudioFrontendConfig {
+                vad_enabled: true,
+                auto_level_enabled: false,
+                noise_reduction: vesper_core::NoiseReduction::Dpdfnet8,
+            },
+            ..Default::default()
+        };
+        config.models.asr = model;
+        let flag = || Arc::new(AtomicBool::new(false));
+        for (index, path) in fixtures.split(':').enumerate() {
+            let source = vesper_audio::decode_file(path, 0).unwrap();
+            // Linear 3x upsampling: a synthetic 48 kHz microphone capture.
+            let samples = source.samples();
+            let mic: Vec<f32> = (0..samples.len() * 3)
+                .map(|i| {
+                    let (a, f) = (i / 3, (i % 3) as f32 / 3.0);
+                    let b = samples.get(a + 1).copied().unwrap_or(samples[a]);
+                    samples[a] * (1.0 - f) + b * f
+                })
+                .collect();
+            let audio = vesper_audio::CapturedAudio::new(mic.clone(), 48000, 1)
+                .unwrap()
+                .as_mono_16k()
+                .unwrap();
+            let id = format!("live-{index}");
+            let session = manager
+                .start_stream(&config, &root, &id, flag(), Arc::new(|_| {}))
+                .unwrap();
+            let start = Instant::now();
+            for (chunk_index, chunk) in mic.chunks(960).enumerate() {
+                session.push(chunk.to_vec(), 48000).unwrap();
+                std::thread::sleep(
+                    (start + Duration::from_millis((chunk_index as u64 + 1) * 20))
+                        .saturating_duration_since(Instant::now()),
+                );
+            }
+            let stopped = Instant::now();
+            assert_eq!(
+                session.finish_live().unwrap(),
+                StreamingFinal::CompletedAudioRequired
+            );
+            let live = manager
+                .transcribe(&audio, &config, &root, &id, flag())
+                .unwrap();
+            let live_ms = stopped.elapsed().as_millis();
+            let source = manager.execution_evidence(&id)["audioFrontend"]["source"].clone();
+            let started = Instant::now();
+            let old = manager
+                .transcribe(&audio, &config, &root, &format!("old-{index}"), flag())
+                .unwrap();
+            let old_ms = started.elapsed().as_millis();
+            println!(
+                "live-frontend-parity-v1 {}",
+                serde_json::json!({"model": format!("{model:?}"), "path": path,
+                    "audioSeconds": audio.duration_seconds(), "source": source,
+                    "liveFinal": live, "liveStopToFinalMs": live_ms,
+                    "oldFinal": old, "oldFinalMs": old_ms})
+            );
+        }
+    }
+}

@@ -39,6 +39,8 @@ fn automatic_project_completion_and_delayed_edits_keep_receiving_scope_after_set
         inference: Arc::new(vesper_inference::InferenceManager::new().unwrap()),
         streaming_result: Arc::default(),
         personalization: Arc::default(),
+        defer_speakers: Default::default(),
+        pending_speakers: Default::default(),
     };
     context.personalization.set(Ok(snapshot)).unwrap();
     let mut changed = store.personalization().unwrap();
@@ -95,6 +97,8 @@ fn automatic_app_context_guard_applies_to_later_raw_context_and_freezes_per_oper
         inference: Arc::new(vesper_inference::InferenceManager::new().unwrap()),
         streaming_result: Arc::default(),
         personalization: Arc::default(),
+        defer_speakers: Default::default(),
+        pending_speakers: Default::default(),
     };
     assert!(frozen.personalization().unwrap().vocabulary.is_empty());
     let heard = "Open read me for deployment";
@@ -236,6 +240,8 @@ fn complete(
         inference: Arc::new(vesper_inference::InferenceManager::new().unwrap()),
         streaming_result: Arc::default(),
         personalization: Arc::default(),
+        defer_speakers: Default::default(),
+        pending_speakers: Default::default(),
     };
     let audio = MonoPcm::new(vec![f32::from(source) / 100.0; 1600], 16000).unwrap();
     let mut result = context

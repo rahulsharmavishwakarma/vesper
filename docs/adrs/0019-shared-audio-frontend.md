@@ -94,3 +94,19 @@ Artifact identities are canonical in [the production manifest](../../models/arti
 Enhancement consumes CPU and introduces buffering; advisory VAD does not reduce ASR decoder work. Original-audio retention supports recovery but retains its memory cost. Process RAM is not model download size. Current native calls are synchronous; cancellation is checked between calls, and arbitrary internal C++ exceptions are not promised recoverable.
 
 Require packet-schedule equivalence, exact output lengths, finite PCM, onset/Stop retention, 44.1/48 kHz conversion, A/B/A reset, cancellation/drop/unload and bounded long-recording state. Compare the same frozen original/advisory/enhanced inputs through actual ASR and writing models, preserving errors and unsupported-mode exclusions. Keep full-file throughput, paced replay, physical microphone delivery and user-visible latency distinct. Opt-in correctness does not establish default-quality promotion or SOTA CPU/edge latency. See [the research and qualification contract](../research-audio-quality.md).
+
+## Amendment, 17 October 2026: one live session per recording
+
+Approved by the owner in [#141](https://github.com/rahulsharmavishwakarma/vesper/issues/141).
+Buffered previews now exist for completed-only models, and the desktop always
+enables Silero and DPDFNet8. Re-running the frontend over the completed recording
+at Stop therefore repeated work already done during recording. DPDFNet8 costs
+about 0.19× the recording length on one CPU thread (20.1 s for a 108 s recording
+on an Apple M5 Pro), and more ONNX Runtime threads did not reduce it.
+
+Live recordings now run one continuous frontend session. Its enhanced recording is
+reused by the completed-audio final when operation, settings and length match.
+The completed-recording path above still applies to imported files, to a
+mismatch, and to any recording without a retained session. A failed live session
+uses the original recording with a warning instead of a second frontend pass.
+Measurements and parity evidence are in [live transcription](../live-transcription.md#live-frontend-reuse-evidence).

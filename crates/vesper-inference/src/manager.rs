@@ -25,6 +25,9 @@ use semantic::SemanticQueue;
 #[path = "manager_preview.rs"]
 mod preview_worker;
 use preview_worker::run_buffered;
+#[path = "live_frontend.rs"]
+mod live_frontend;
+use live_frontend::{EnhancedStore, LiveFrontend};
 
 pub type StreamingUpdateSink = Arc<dyn Fn(StreamingTranscript) + Send + Sync + 'static>;
 
@@ -119,6 +122,7 @@ pub struct InferenceManager {
     worker: Mutex<Option<JoinHandle<()>>>,
     evidence: Arc<Mutex<serde_json::Value>>,
     semantic: Arc<Mutex<SemanticQueue>>,
+    enhanced: Arc<EnhancedStore>,
 }
 
 impl InferenceManager {
@@ -149,14 +153,19 @@ impl InferenceManager {
         let worker_evidence = Arc::clone(&evidence);
         let semantic = Arc::new(Mutex::new(SemanticQueue::default()));
         let worker_semantic = Arc::clone(&semantic);
+        let enhanced = Arc::new(EnhancedStore::default());
+        let worker_enhanced = Arc::clone(&enhanced);
         let worker = thread::Builder::new()
             .name("vesper-inference".into())
-            .spawn(move || worker_loop(receiver, worker_evidence, worker_semantic))?;
+            .spawn(move || {
+                worker_loop(receiver, worker_evidence, worker_semantic, worker_enhanced)
+            })?;
         Ok(Self {
             sender,
             worker: Mutex::new(Some(worker)),
             evidence,
             semantic,
+            enhanced,
         })
     }
 
@@ -309,6 +318,8 @@ impl InferenceManager {
             .validate()
             .map_err(|e| native("personalization", e))?;
         config.validate()?;
+        // A new recording supersedes any unclaimed enhanced recording.
+        self.enhanced.put(None);
         let preview = Some(Arc::new(crate::live_preview::Mailbox::default()));
         let (input_sender, input) = mpsc::sync_channel(STREAM_QUEUE);
         let (started_sender, started) = mpsc::sync_channel(1);
@@ -328,6 +339,27 @@ impl InferenceManager {
             completed,
         })?;
         let buffered = started.recv().map_err(worker_unavailable)??;
+        // Buffered recordings run one continuous frontend session off the
+        // worker; native streams already process their frontend inline.
+        let frontend = match (&preview, buffered && config.audio_frontend.enabled()) {
+            (Some(mailbox), true) => {
+                mailbox.enhanced.store(true, Ordering::Release);
+                match LiveFrontend::spawn(
+                    config,
+                    model_root.to_owned(),
+                    operation_id,
+                    Arc::clone(mailbox),
+                    input_sender.clone(),
+                ) {
+                    Ok(frontend) => Some(frontend),
+                    Err(_) => {
+                        mailbox.enhanced.store(false, Ordering::Release);
+                        None
+                    }
+                }
+            }
+            _ => None,
+        };
         record_evidence(
             &self.evidence,
             operation_id,
@@ -335,7 +367,7 @@ impl InferenceManager {
             serde_json::json!({
                 "milliseconds":startup.elapsed().as_secs_f64()*1000.0,
                 "includesModelLoading":true,
-                "frontendInitialization":if buffered { "first-preview" } else { "startup" },
+                "frontendInitialization":if frontend.is_some() { "live-session-thread" } else if buffered { "first-preview" } else { "startup" },
             }),
         );
         Ok(StreamingSession {
@@ -344,6 +376,10 @@ impl InferenceManager {
             finished: false,
             cancelled: stream_cancelled,
             preview: if buffered { preview } else { None },
+            frontend,
+            enhanced: Arc::clone(&self.enhanced),
+            evidence: Arc::clone(&self.evidence),
+            operation_id: operation_id.to_owned(),
         })
     }
 
@@ -400,11 +436,19 @@ pub struct StreamingSession {
     // Independent of application cancellation: cancelling partials must still
     // permit complete-audio fallback with the caller's original operation flag.
     cancelled: Arc<AtomicBool>,
+    frontend: Option<LiveFrontend>,
+    enhanced: Arc<EnhancedStore>,
+    evidence: Arc<Mutex<serde_json::Value>>,
+    operation_id: String,
 }
 
 impl StreamingSession {
     pub fn push(&self, samples: Vec<f32>, sample_rate: u32) -> Result<()> {
         check_cancelled(&self.cancelled)?;
+        if let Some(frontend) = &self.frontend {
+            // The frontend thread feeds the mailbox and wakes the worker.
+            return frontend.push(samples, sample_rate);
+        }
         if let Some(preview) = &self.preview {
             preview.push(&samples, sample_rate)?;
             // The bounded mailbox already owns the newest input. Wake tokens
@@ -438,6 +482,20 @@ impl StreamingSession {
         if let Some(preview) = &self.preview {
             preview.finish();
             let _ = self.sender.try_send(StreamInput::Finish);
+            if let Some(frontend) = self.frontend.take() {
+                // Only the not-yet-processed backlog remains on the Stop path.
+                let (enhanced, observed) = frontend.finish();
+                if enhanced.is_none() {
+                    // Mirrors native streams: never re-run a failed frontend.
+                    record_evidence(
+                        &self.evidence,
+                        &self.operation_id,
+                        "audioFrontend",
+                        observed,
+                    );
+                }
+                self.enhanced.put(enhanced);
+            }
         } else {
             self.sender
                 .send(StreamInput::Finish)
@@ -490,6 +548,7 @@ struct WorkerState {
     rewriter: Option<(qwen::RewriterKey, adapters::TextModel)>,
     sherpa_load_count: u64,
     frontend: crate::audio_frontend::FrontendCache,
+    enhanced: Arc<EnhancedStore>,
     automatic_fallback: crate::automatic::InitializationFallback,
 }
 
@@ -500,6 +559,7 @@ impl WorkerState {
             rewriter: None,
             sherpa_load_count: 0,
             frontend: Default::default(),
+            enhanced: Default::default(),
             automatic_fallback: Default::default(),
         }
     }
@@ -671,10 +731,9 @@ fn prepare_audio(
             record_evidence(evidence, id, "audioFrontend", metrics.evidence());
             Ok(Some(pcm))
         }
-        Err(InferenceError::Cancelled) => {
-            cache.unload();
-            Err(InferenceError::Cancelled)
-        }
+        // The next session resets model state; reloading would only add
+        // verification and initialization to the following (final) pass.
+        Err(InferenceError::Cancelled) => Err(InferenceError::Cancelled),
         Err(error) => {
             cache.unload();
             check_cancelled(cancelled)?;
@@ -694,8 +753,10 @@ fn worker_loop(
     receiver: mpsc::Receiver<Command>,
     evidence: Arc<Mutex<serde_json::Value>>,
     semantic: Arc<Mutex<SemanticQueue>>,
+    enhanced: Arc<EnhancedStore>,
 ) {
     let mut state = WorkerState::new();
+    state.enhanced = enhanced;
     loop {
         // Park indefinitely without background work. Only a pending request
         // needs the idle interval; foreground commands interrupt that interval.
@@ -754,15 +815,35 @@ fn worker_loop(
                 progress,
                 reply,
             } => {
-                let prepared = prepare_audio(
-                    &mut state.frontend,
-                    &audio,
-                    &config,
-                    &model_root,
-                    &operation_id,
-                    &cancelled,
-                    &evidence,
-                );
+                let live = config
+                    .audio_frontend
+                    .enabled()
+                    .then(|| {
+                        state.enhanced.take(
+                            &operation_id,
+                            &config.audio_frontend,
+                            audio.samples().len(),
+                        )
+                    })
+                    .flatten();
+                let prepared = match live {
+                    // The recording's live session already enhanced this audio.
+                    Some(live) => {
+                        record_evidence(&evidence, &operation_id, "audioFrontend", live.evidence);
+                        MonoPcm::new(live.samples, vesper_audio::ASR_SAMPLE_RATE)
+                            .map(Some)
+                            .map_err(|e| native("live audio frontend", e))
+                    }
+                    None => prepare_audio(
+                        &mut state.frontend,
+                        &audio,
+                        &config,
+                        &model_root,
+                        &operation_id,
+                        &cancelled,
+                        &evidence,
+                    ),
+                };
                 let result = prepared.and_then(|processed| {
                     let audio = processed.as_ref().unwrap_or(&audio);
                     check_cancelled(&cancelled)?;
@@ -1019,6 +1100,7 @@ fn run_stream(
         let _ = started.send(Err(error));
         return Err(InferenceError::Cancelled);
     }
+    let state_enhanced = Arc::clone(&state.enhanced);
     let recognizer = &state.speech.as_ref().expect("initialized speech model").1;
     record_evidence(
         evidence,
@@ -1039,6 +1121,8 @@ fn run_stream(
     }
     let mut sequence = 0_u64;
     let mut final_text = None;
+    // Completed-audio finals (MLX) reuse this session's enhanced PCM.
+    let mut retained = (frontend.is_some() && stream.needs_completed_audio()).then(Vec::new);
     record_evidence(
         evidence,
         operation_id,
@@ -1075,6 +1159,9 @@ fn run_stream(
                     Some(session) => Some(session.push(&samples, sample_rate, cancelled)?),
                     None => None,
                 };
+                if let (Some(retained), Some(processed)) = (&mut retained, &processed) {
+                    retained.extend_from_slice(processed);
+                }
                 let (samples, sample_rate) = processed
                     .as_ref()
                     .map_or((samples.as_slice(), sample_rate), |p| (p.as_slice(), 16000));
@@ -1099,6 +1186,9 @@ fn run_stream(
                 if let Some(session) = &mut frontend {
                     let tail = session.finish(cancelled)?;
                     check_cancelled(stream_cancelled)?;
+                    if let Some(retained) = &mut retained {
+                        retained.extend_from_slice(&tail);
+                    }
                     if !tail.is_empty() {
                         stream
                             .push(&tail, 16000)
@@ -1127,6 +1217,16 @@ fn run_stream(
                     }
                 }
                 if stream.needs_completed_audio() {
+                    if let (Some(samples), Some(session)) = (retained.take(), &frontend) {
+                        let mut observed = session.metrics().evidence();
+                        observed["source"] = "live-session".into();
+                        state_enhanced.put(Some(live_frontend::LiveEnhanced {
+                            operation_id: operation_id.to_owned(),
+                            settings: config.audio_frontend.clone(),
+                            samples,
+                            evidence: observed,
+                        }));
+                    }
                     return Ok(StreamingFinal::CompletedAudioRequired);
                 }
                 return final_text
@@ -1390,6 +1490,10 @@ mod tests {
                 completion: Some(completion),
                 finished: false,
                 cancelled: Arc::clone(&cancelled),
+                frontend: None,
+                enhanced: Default::default(),
+                evidence: Default::default(),
+                operation_id: String::new(),
             };
             if explicit {
                 session.cancel().unwrap();
@@ -1419,6 +1523,10 @@ mod tests {
             preview: Some(Arc::clone(&preview)),
             finished: false,
             cancelled: Arc::new(AtomicBool::new(false)),
+            frontend: None,
+            enhanced: Default::default(),
+            evidence: Default::default(),
+            operation_id: String::new(),
         };
         assert_eq!(
             session.finish_live().unwrap(),
@@ -1528,6 +1636,10 @@ mod tests {
                 completion: Some(completion),
                 finished: false,
                 cancelled,
+                frontend: None,
+                enhanced: Default::default(),
+                evidence: Default::default(),
+                operation_id: String::new(),
             };
             if explicit {
                 session.cancel().unwrap();
@@ -1573,6 +1685,10 @@ mod tests {
             completion: Some(completion),
             finished: false,
             cancelled: Arc::clone(&cancelled),
+            frontend: None,
+            enhanced: Default::default(),
+            evidence: Default::default(),
+            operation_id: String::new(),
         };
         session.push(vec![0.25], 16000).unwrap();
         session.push(vec![0.5], 16000).unwrap();
