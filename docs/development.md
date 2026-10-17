@@ -248,9 +248,18 @@ If source preparation fails,
 check network access and the prerequisites above, then retry the same command.
 An existing checkout with an unexpected revision or modified tracked source
 is rejected; preserve local changes before repairing it. Do not substitute
-the older ASR release archive for the diarization runtime. The bootstrap and
-staging regression checks run with
-`node --test scripts/build-diarization-runtime.test.mjs scripts/diarization-runtime.test.mjs`.
+the older ASR release archive for the diarization runtime.
+
+The bootstrap builds with `CMAKE_OSX_DEPLOYMENT_TARGET=14.0` and
+`GGML_NATIVE=OFF`, so the libraries load on macOS 14+ and on every Apple chip
+rather than only on the build machine's macOS and CPU. Staging rejects any
+library whose Mach-O `minos` is newer than 14.0 (`scripts/macho-minimum.mjs`);
+older stages built without the target are therefore rebuilt by a strict build.
+The app bundle maps `.tooling/diarization-runtime/nemotron-diarization-runtime/`
+to `Contents/Resources/diarization-runtime/`, which is where the first-run
+installer looks for `<revision>/`. The bootstrap, staging and bundle-layout
+regression checks run with
+`node --test scripts/build-diarization-runtime.test.mjs scripts/diarization-runtime.test.mjs scripts/macho-minimum.test.mjs scripts/tauri-config.test.mjs`.
 
 Package the built dependency closure on Apple silicon with Xcode tools:
 
@@ -531,7 +540,7 @@ The persisted JSON uses camelCase fields:
 | `cleanupEnabled`                   | `true`                                    | Enable or disable the cleanup stage                                                                                               |
 | `language`                         | `en`                                      | `auto` plus the selected model's vendor-declared codes (`models/languages.json`); the adapter rejects undeclared combinations                                |
 | `computeBackend`                   | `auto`                                    | `auto`, `cpu`, `metal`, `cuda`, `vulkan`, or `rocm`; unsupported platform/model pairs are rejected                                |
-| `cleanupPreset`                    | `minimal`                                 | `minimal` preserves words; built-in Qwen `balanced` may add a guarded 24-word technical tail pass before full cleanup             |
+| `cleanupPreset`                    | `minimal`                                 | `minimal` preserves words; `balanced` allows broader guarded edits in one full cleanup pass                                     |
 | `customCleanupInstruction`         | Empty string                              | At most 4,000 characters; nonblank text replaces the preset instruction, otherwise the preset applies                             |
 | `rewriteQuantization`              | `q4_0`                                    | `q4_0` or `q8_0`                                                                                                                  |
 | `maxRecordingSeconds`              | `0`                                       | Legacy unsigned integer, retained but ignored; no general time quota                                                              |

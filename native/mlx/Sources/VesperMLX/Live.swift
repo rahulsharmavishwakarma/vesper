@@ -9,6 +9,7 @@ final class LiveHandle: @unchecked Sendable {
   let lock = NSLock()
   var latest: String?
   var samples: Int64 = 0
+  var droppedSamples: Int64 = 0
   var collector: Task<Void, Never>?
 
   init(_ owner: ModelHandle, model: Qwen3ASRModel) {
@@ -56,12 +57,15 @@ public func liveFeed(_ opaque: UnsafeMutableRawPointer?, _ samples: UnsafePointe
     let handle = Unmanaged<LiveHandle>.fromOpaque(opaque).takeUnretainedValue()
     let audio = Array(UnsafeBufferPointer(start: samples, count: Int(count)))
     guard audio.allSatisfy({ $0.isFinite }) else { throw fail("Non-finite live PCM") }
-    // On overload the caller retains the original recording for its final pass.
-    // Never allow an unbounded queue of completed acoustic windows.
-    guard handle.session.bufferedWindows <= 2 else { throw fail("Native live decoder backlog exceeded") }
-    handle.session.feedAudio(samples: audio)
+    // Never allow an unbounded queue of completed acoustic windows. Under
+    // backlog, skip this packet instead of ending the session: the draft may
+    // miss that audio, while the recorder retains it for the final pass.
     handle.samples += count
-    guard handle.session.bufferedWindows <= 2 else { throw fail("Native live decoder backlog exceeded") }
+    guard handle.session.bufferedWindows <= 2 else {
+      handle.droppedSamples += count
+      return jsonString(["ok": true, "droppedSamples": count])
+    }
+    handle.session.feedAudio(samples: audio)
     return jsonString(["ok": true])
   } catch { return jsonString(["error": error.localizedDescription]) }
 }
@@ -71,7 +75,8 @@ public func livePoll(_ opaque: UnsafeMutableRawPointer?) -> UnsafeMutablePointer
   guard let opaque else { return jsonString(["error": "Missing live session"]) }
   let handle = Unmanaged<LiveHandle>.fromOpaque(opaque).takeUnretainedValue()
   let text = handle.lock.withLock { let text = handle.latest; handle.latest = nil; return text }
-  return jsonString(["text": text as Any? ?? NSNull(), "inputSeconds": Double(handle.samples) / 16000])
+  return jsonString(["text": text as Any? ?? NSNull(), "inputSeconds": Double(handle.samples) / 16000,
+    "droppedSeconds": Double(handle.droppedSamples) / 16000])
 }
 
 @_cdecl("vesper_mlx_live_close")

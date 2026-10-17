@@ -44,8 +44,12 @@ test('fresh bootstrap fetches immutable sources and statically builds only the s
   const configure = calls.find((c) => c.command === 'bash');
   assert.ok(configure.args.includes('metal-diar'));
   assert.ok(configure.args.includes('-DNEMO_SPEECH_BUILD_MIC_CAPTURE=OFF'));
+  // Portable binaries: loadable on the bundle minimum and on every Apple chip.
+  assert.ok(configure.args.includes('-DCMAKE_OSX_DEPLOYMENT_TARGET=14.0'));
+  assert.ok(configure.args.includes('-DGGML_NATIVE=OFF'));
   const dependency = calls.find((c) => c.command === 'cmake' && c.args[0] === '-S');
   assert.ok(dependency.args.includes('-DSPM_ENABLE_SHARED=OFF'));
+  assert.ok(dependency.args.includes('-DCMAKE_OSX_DEPLOYMENT_TARGET=14.0'));
   assert.ok(dependency.args.includes('-DSPM_ENABLE_TCMALLOC=OFF'));
   assert.equal(calls.filter((c) => c.args[0] === '--build').length, 2);
   assert.ok(calls.filter((c) => c.args[0] === '--build').every((c) => c.args.at(-1) === '4'));

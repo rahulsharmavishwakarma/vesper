@@ -194,13 +194,9 @@ impl Recognizer {
         let started = Instant::now();
         self.requests.set(self.requests.get() + 1);
         let result = if config.speech_adapter().kind == AdapterKind::SherpaTransducer {
-            let result = crate::parakeet::decode_with_recognizer(&self.model, audio, cancelled);
-            if result.is_ok() {
-                progress(TranscriptionProgress {
-                    processed_samples: audio.samples().len(),
-                    total_samples: audio.samples().len(),
-                });
-            } else if !matches!(result, Err(crate::InferenceError::Cancelled)) {
+            let result =
+                crate::parakeet::decode_with_recognizer(&self.model, audio, cancelled, progress);
+            if result.is_err() && !matches!(result, Err(crate::InferenceError::Cancelled)) {
                 self.healthy.set(false);
             }
             result

@@ -75,6 +75,10 @@ errors still invalidate the owner; the preview loop reloads it once per recordin
 paused until Stop. A preview failure is recorded and cannot turn a partial prefix
 into a successful final transcript; the completed-audio final keeps its strict checks.
 
+Live drafts are never polished; the writing model runs only on the final
+transcript after Stop. How other dictation apps handle live rewriting, and the
+options for Vesper, are in [live rewriting research](research-live-rewrite.md).
+
 ## Ownership, cancellation and preprocessing
 
 The same worker owns native models throughout use and teardown. CPU Qwen and
@@ -87,9 +91,12 @@ checks prevent unsafe owner reuse.
 Stop and cancellation bypass a full preview wakeup queue. Cancellation suppresses
 an in-flight result; synchronous Sherpa calls can finish before cancellation takes
 effect. The native MLX patch adds an awaitable cancellation operation, bounds event
-buffering, and exposes queued acoustic-window count. The bridge rejects excess
-backlog and joins the collector/native tasks before releasing a model. Only the
-Qwen bridge uses that patched cancellation contract.
+buffering, and exposes queued acoustic-window count. When more than two windows
+are queued, the bridge skips the incoming packet instead of ending the session:
+memory stays bounded, the provisional draft can miss that audio, and the recorder
+still retains it for the completed-audio final. Live evidence reports the skipped
+input as `droppedInputSeconds`. The bridge joins the collector/native tasks before
+releasing a model. Only the Qwen bridge uses that patched cancellation contract.
 
 Native streams use the existing continuous audio frontend. Buffered previews
 apply the configured frontend independently to each closed segment and tail snapshot; their

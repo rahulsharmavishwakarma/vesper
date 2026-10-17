@@ -18,6 +18,10 @@ function fixture(t) {
     new URL('./diarization-runtime.mjs', import.meta.url),
     join(root, 'scripts/diarization-runtime.mjs'),
   );
+  copyFileSync(
+    new URL('./macho-minimum.mjs', import.meta.url),
+    join(root, 'scripts/macho-minimum.mjs'),
+  );
   writeFileSync(
     join(root, 'crates/vesper-models/src/diarization.rs'),
     `RUNTIME_REVISION: &str = "${revision}"`,

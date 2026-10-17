@@ -1,7 +1,7 @@
 <script lang="ts">
   import { onDestroy, tick, untrack } from 'svelte';
   import { getAppInfo, type AppInfo } from '../api/desktop';
-  import { updateManager } from '../updatesTauri';
+  import { updateBackend, updateManager } from '../updatesTauri';
   import type { UpdateState } from '../updates';
   import CopyGlyph from './CopyGlyph.svelte';
   import Icon from './Icon.svelte';
@@ -33,7 +33,17 @@
   let copying = $state(false);
   let copyError = $state(false);
   let updates = $state<UpdateState>(updateManager.state);
-  $effect(() => updateManager.subscribe((next) => (updates = next)));
+  // Check on first view so the panel always shows a live result; the quiet
+  // startup check usually already settled this before the user arrives.
+  function ensureChecked() {
+    if (updateBackend.enabled && updateManager.state.status === 'idle') {
+      void updateManager.check();
+    }
+  }
+  $effect(() => {
+    ensureChecked();
+    return updateManager.subscribe((next) => (updates = next));
+  });
   const updateProgress = $derived(
     updates.totalBytes && updates.totalBytes > 0
       ? Math.min(100, Math.round((updates.downloadedBytes / updates.totalBytes) * 100))
@@ -84,6 +94,7 @@
   }
   export function open() {
     if (inline || dialog?.open) return;
+    ensureChecked();
     opener = document.activeElement instanceof HTMLElement ? document.activeElement : null;
     copied = false;
     copyError = false;
@@ -179,8 +190,12 @@
     {/if}
     <section class="updates" aria-labelledby={updatesId}>
       <h3 id={updatesId}>Software updates</h3>
-      <p class="channel">Stable channel</p>
-      {#if updates.status === 'checking'}
+      {#if info && info.version.includes('-')}
+        <p class="channel">Beta channel</p>
+      {/if}
+      {#if !updateBackend.enabled}
+        <p>Automatic updates are not available in this build.</p>
+      {:else if updates.status === 'checking' || updates.status === 'idle'}
         <p role="status">Checking for updates…</p>
       {:else if updates.status === 'current'}
         <p role="status">
@@ -218,12 +233,6 @@
         <p role="alert">{updates.errorMessage}</p>
         <p>
           <button type="button" onclick={() => void updateManager.check()}>Try again</button>
-        </p>
-      {:else}
-        <p role="status">Check for updates to see whether a newer version is ready.</p>
-        <p>
-          <button type="button" onclick={() => void updateManager.check()}>Check for updates</button
-          >
         </p>
       {/if}
       <p class="manual">

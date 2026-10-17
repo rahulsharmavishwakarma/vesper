@@ -95,6 +95,9 @@ struct LiveState {
 pub struct LiveUpdate {
     pub text: Option<String>,
     pub input_seconds: f32,
+    /// Input skipped under decoder backlog; absent from older bridges.
+    #[serde(default)]
+    pub dropped_seconds: f32,
 }
 
 pub struct Model {
@@ -277,9 +280,10 @@ impl Model {
         Ok(())
     }
 
-    pub fn feed_live(&mut self, samples: &[f32]) -> Result<()> {
+    /// Returns the number of samples the native session skipped under backlog.
+    pub fn feed_live(&mut self, samples: &[f32]) -> Result<u64> {
         if samples.is_empty() {
-            return Ok(());
+            return Ok(0);
         }
         if samples.len() > 16000 || samples.iter().any(|s| !s.is_finite()) {
             return Err(Error::Input("invalid live PCM packet"));
@@ -291,7 +295,8 @@ impl Model {
         // SAFETY: Swift copies the finite slice during this synchronous call.
         let response =
             unsafe { (live.feed)(live.handle.as_ptr(), samples.as_ptr(), samples.len() as i64) };
-        self.live_response(response).map(|_| ())
+        self.live_response(response)
+            .map(|value| value["droppedSamples"].as_u64().unwrap_or(0))
     }
 
     pub fn poll_live(&mut self) -> Result<LiveUpdate> {

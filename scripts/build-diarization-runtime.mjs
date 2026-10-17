@@ -3,6 +3,7 @@
 import { execFileSync } from 'node:child_process';
 import { existsSync, mkdirSync } from 'node:fs';
 import { join } from 'node:path';
+import { DEPLOYMENT_TARGET } from './macho-minimum.mjs';
 
 const sentencepieceRevision = '3863f7648e5d8edb571ac592f3ac4f5f0695275a'; // v0.1.99
 
@@ -58,6 +59,7 @@ export function buildDiarizationRuntime(
     '-DCMAKE_BUILD_TYPE=Release',
     '-DCMAKE_POLICY_VERSION_MINIMUM=3.5',
     '-DCMAKE_OSX_ARCHITECTURES=arm64',
+    `-DCMAKE_OSX_DEPLOYMENT_TARGET=${DEPLOYMENT_TARGET}`,
     '-DCMAKE_POSITION_INDEPENDENT_CODE=ON',
     '-DSPM_ENABLE_SHARED=OFF',
     '-DSPM_BUILD_TEST=OFF',
@@ -80,6 +82,9 @@ export function buildDiarizationRuntime(
       'Unix Makefiles',
       '-DNEMO_SPEECH_BUILD_MIC_CAPTURE=OFF',
       '-DCMAKE_OSX_ARCHITECTURES=arm64',
+      `-DCMAKE_OSX_DEPLOYMENT_TARGET=${DEPLOYMENT_TARGET}`,
+      // Portable CPU code: a native build targets the build machine's chip.
+      '-DGGML_NATIVE=OFF',
       `-DSENTENCEPIECE_LIB=${join(dependencyBuild, 'src/libsentencepiece.a')}`,
       `-DSENTENCEPIECE_INCLUDE_DIR=${join(dependency, 'src')}`,
     ],

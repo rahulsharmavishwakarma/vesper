@@ -796,6 +796,9 @@ fn inspect_model_spec(spec: &ModelInstallSpec, root: &Path) -> ModelInstallation
         error.clone()
     } else if !artifacts_installed {
         "Download this model's pinned files to install it locally.".into()
+    } else if !runtime_ready && spec.model_id == diarization::MODEL_ID {
+        // Downloading again cannot fix this; the runtime ships inside the app.
+        "Speaker model files are installed, but the bundled speaker runtime is missing or incompatible with this Mac. Reinstall Vesper to restore it.".into()
     } else if !runtime_ready {
         "Model files are installed, but the selected native runtime is not ready.".into()
     } else {

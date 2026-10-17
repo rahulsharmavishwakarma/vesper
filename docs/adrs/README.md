@@ -13,7 +13,7 @@ This directory records decisions that are expensive to rediscover or easy to acc
 | [0005](0005-rust-orchestration-with-native-accelerators.md) | Accepted | Keep orchestration in Rust and use native C/C++ runtimes for accelerated kernels |
 | [0006](0006-resident-nemotron-streaming-worker.md) | Accepted | Retain Nemotron/Qwen weights while isolating per-recording stream/context state |
 | [0007](0007-report-native-asr-completion.md) | Superseded by ADR-0011 | Require native completion reports for bounded Qwen3-ASR/Cohere decoding |
-| [0008](0008-guarded-technical-tail-correction.md) | Accepted | Guard one technical tail correction before full Qwen cleanup |
+| [0008](0008-guarded-technical-tail-correction.md) | Retired 2026-10-14 | Guard one technical tail correction before full Qwen cleanup (removed; depended on a fixture fallback) |
 | [0009](0009-no-general-transcription-time-quota.md) | Superseded by ADR-0011 | Remove general transcription time quotas while retaining adapter and resource checks |
 | [0010](0010-evidence-gated-asr-recommendations.md) | Accepted | Qualify and recommend ASR models only through compatible local evidence |
 | [0011](0011-segment-long-generative-asr.md) | Accepted | Remove the remaining whole-audio cutoff through bounded Qwen/Cohere segments with completion checks |

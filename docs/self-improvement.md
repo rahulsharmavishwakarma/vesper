@@ -80,9 +80,9 @@ Deleting a source session should remove it from future dataset snapshots. Alread
 This is a proposed sequence, not an executable feature. Keep application memory
 and feedback portable across models, while binding trained adapters to their
 exact base checkpoint. Start with the normal full-cleanup pass of the built-in
-Qwen3.5-0.8B writer. Keep its technical-tail pass on base weights and preserve
-the existing two-pass routing, fidelity checks and raw fallback. An ordinary
-custom-writer profile is not equivalent: that route skips built-in tail behavior.
+Qwen3.5-0.8B writer. Preserve the existing fidelity checks and raw fallback.
+The earlier technical-tail pass was retired on 14 October 2026 (ADR-0008); an
+ordinary custom-writer profile still uses its own single-pass route.
 
 ```mermaid
 flowchart TD
