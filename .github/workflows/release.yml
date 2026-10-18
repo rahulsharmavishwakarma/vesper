@@ -188,7 +188,7 @@ jobs:
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
-          state="$(gh release view "$TAG" --repo "$GITHUB_REPOSITORY" --json isDraft,prerelease --jq '{draft: .isDraft, prerelease: .prerelease}')"
+          state="$(gh release view "$TAG" --repo "$GITHUB_REPOSITORY" --json isDraft,isPrerelease --jq '{draft: .isDraft, prerelease: .isPrerelease}')"
           if [ "$(printf '%s' "$state" | grep -o '"draft":[^,]*' | cut -d: -f2)" != "true" ]; then
             echo "Refusing to promote: $TAG is not a draft. Roll back with a higher patch version instead." >&2
             exit 1
