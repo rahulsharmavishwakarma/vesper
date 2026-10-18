@@ -121,8 +121,56 @@ for (const name of readdirSync(products).filter(
   cpSync(join(products, name), join(destination, name), { recursive: true });
 const metal = join(products, 'mlx-swift_Cmlx.bundle/Contents/Resources/default.metallib');
 const flatMetal = join(products, 'mlx-swift_Cmlx.bundle/default.metallib');
-const metalSource = [metal, flatMetal].find(existsSync);
-if (!metalSource) throw new Error('Missing MLX Metal kernels');
+// SwiftPM's native build system (the default before Swift 6.4, e.g. CI's Xcode
+// 26) does not compile Metal shaders, as mlx-swift's README notes. Compile the
+// package's precompiled-kernel sources the way MLX's CMake build does; the
+// remaining kernels are JIT-compiled at runtime by MLX.
+const compileMetalKernels = () => {
+  const sources = join(scratch, 'checkouts/mlx-swift/Source/Cmlx/mlx-generated/metal');
+  const kernels = execFileSync('find', [sources, '-name', '*.metal'], { encoding: 'utf8' })
+    .trim()
+    .split('\n')
+    .filter(Boolean)
+    .sort();
+  if (!kernels.length) throw new Error('Missing MLX Metal kernel sources');
+  const air = mkdtempSync(join(tmpdir(), 'vesper-mlx-air-'));
+  try {
+    const objects = kernels.map((source, index) => {
+      const object = join(air, `${index}.air`);
+      run('xcrun', [
+        '-sdk',
+        'macosx',
+        'metal',
+        '-x',
+        'metal',
+        '-Wall',
+        '-Wextra',
+        '-fno-fast-math',
+        '-Wno-c++17-extensions',
+        '-Wno-c++20-extensions',
+        '-mmacosx-version-min=14.0',
+        '-c',
+        source,
+        `-I${sources}`,
+        '-o',
+        object,
+      ]);
+      return object;
+    });
+    const library = join(air, 'default.metallib');
+    run('xcrun', ['-sdk', 'macosx', 'metallib', ...objects, '-o', library]);
+    const output = join(scratch, 'compiled-metal');
+    mkdirSync(output, { recursive: true });
+    cpSync(library, join(output, 'default.metallib'));
+    console.log(`Compiled ${kernels.length} MLX Metal kernel sources outside SwiftPM.`);
+    return join(output, 'default.metallib');
+  } finally {
+    rmSync(air, { recursive: true, force: true });
+  }
+};
+const metalSource =
+  (process.env.VESPER_MLX_COMPILE_METAL !== '1' && [metal, flatMetal].find(existsSync)) ||
+  compileMetalKernels();
 // MLX searches relative to its native image as well as SwiftPM bundles.
 cpSync(metalSource, join(destination, 'mlx.metallib'));
 const hash = (path) => createHash('sha256').update(readFileSync(path)).digest('hex');

@@ -448,6 +448,18 @@ The generated library is `libVesperMLX.dylib`; its real source, patch and
 binary hashes are checked before packaging. `VESPER_MLX_BUILD_DIRECTORY` is
 injected by the Rust build script, not a user override.
 
+SwiftPM's native build system (the default before Swift 6.4, including CI's
+Xcode 26) does not compile Metal shaders, as the mlx-swift README notes;
+upstream mlx-swift and mlx-audio-swift CI use `xcodebuild` on macOS instead.
+When `swift build` leaves no `default.metallib`, `scripts/mlx-runtime.mjs`
+compiles the nine precompiled-kernel sources in
+`mlx-swift/Source/Cmlx/mlx-generated/metal` with the flags of MLX's own CMake
+build (`xcrun metal -x metal -Wall -Wextra -fno-fast-math`, macOS 14 minimum)
+and links them with `xcrun metallib`. MLX JIT-compiles its other kernels at
+runtime and loads the colocated `mlx.metallib` before any SwiftPM bundle. Set
+`VESPER_MLX_COMPILE_METAL=1` to force this path locally. The Metal Toolchain
+component must be installed (`xcodebuild -downloadComponent MetalToolchain`).
+
 An existing Swift scratch checkout may contain the previous exact reporting
 patch. The integrity check intentionally refuses to overwrite a modified
 checkout. To upgrade such a cache, stop builds, move `.tooling/mlx-build` to a
