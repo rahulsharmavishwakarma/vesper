@@ -1538,6 +1538,67 @@ mod tests {
     }
 
     #[test]
+    fn zip_runtime_archive_extracts_files_and_rejects_traversal() {
+        use std::io::Write;
+        let write_zip = |path: &Path, entries: &[(&str, &[u8])]| {
+            let mut zip = zip::ZipWriter::new(File::create(path).unwrap());
+            for (name, bytes) in entries {
+                zip.start_file(*name, zip::write::SimpleFileOptions::default())
+                    .unwrap();
+                zip.write_all(bytes).unwrap();
+            }
+            zip.finish().unwrap();
+        };
+        let artifact = |name: &str| Artifact {
+            name: name.into(),
+            relative_path: name.into(),
+            url: format!("https://example.invalid/{name}"),
+            revision: "a".repeat(40),
+            sha256: String::new(),
+            size_bytes: 0,
+            role: "asr_runtime".into(),
+            model_id: Some(AsrModel::Nemotron35AsrStreaming06b.id().into()),
+            platform: target_platform().map(str::to_owned),
+            backend: Some("cpu".into()),
+            archive: Some("zip".into()),
+            quantization: None,
+            license: "fixture".into(),
+        };
+        let root = tempfile::tempdir().unwrap();
+        let library = nemo_speech_library_in_runtime(Path::new("nemo-speech"));
+        let library = library.to_str().unwrap().replace('\\', "/");
+        let binary = if cfg!(windows) {
+            "nemo-speech/bin/nemo-speech.exe"
+        } else {
+            "nemo-speech/bin/nemo-speech"
+        };
+        write_zip(
+            &root.path().join("good.zip"),
+            &[(binary, b"exe"), (library.as_str(), b"lib")],
+        );
+        install_runtime_archive(root.path(), &artifact("good.zip")).unwrap();
+        let installed = root
+            .path()
+            .join("nemo-speech-runtime")
+            .join(NEMO_SPEECH_VERSION)
+            .join("nemo-speech");
+        assert_eq!(
+            std::fs::read(installed.join(&binary[12..])).unwrap(),
+            b"exe"
+        );
+        write_zip(
+            &root.path().join("evil.zip"),
+            &[("../escaped", b"x"), (binary, b"exe")],
+        );
+        assert!(matches!(
+            install_runtime_archive(root.path(), &artifact("evil.zip")),
+            Err(ModelError::InvalidArchive(_))
+        ));
+        assert!(!root.path().join("nemo-speech-runtime/escaped").exists());
+        assert!(!root.path().join("escaped").exists());
+    }
+
+    #[test]
     fn artifact_and_runtime_readiness_are_reported_independently() {
         let root = tempfile::tempdir().unwrap();
         let artifact = Artifact {

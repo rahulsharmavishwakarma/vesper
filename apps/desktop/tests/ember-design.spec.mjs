@@ -218,13 +218,27 @@ test('Segmented pill lands exactly on the pressed segment', async ({ page }) => 
         th: pressed.offsetHeight,
       };
     });
-  // A slow switch morphs size through scale, then settles exactly.
+  // A slow switch morphs size through scale, then settles exactly. Record the
+  // largest scale deviation over every frame instead of sampling one instant,
+  // which raced the animation on slower CI runners.
+  const morph = group.evaluate(
+    (host) =>
+      new Promise((resolve) => {
+        const started = performance.now();
+        let deviation = 0;
+        const frame = () => {
+          const matrix = new DOMMatrix(getComputedStyle(host, '::before').transform);
+          deviation = Math.max(deviation, Math.abs(matrix.a - 1));
+          if (performance.now() - started < 600) requestAnimationFrame(frame);
+          else resolve(deviation);
+        };
+        requestAnimationFrame(frame);
+      }),
+  );
   await group.getByRole('button', { name: 'Needs review' }).click();
-  await page.waitForTimeout(120);
   const midflight = await geometry();
   expect(midflight.width).toBeCloseTo(midflight.tw, 0);
-  expect(Math.abs(midflight.scaleX - 1)).toBeGreaterThan(0.03);
-  await page.waitForTimeout(500);
+  expect(await morph).toBeGreaterThan(0.03);
   let settled = await geometry();
   expect(settled.scaleX).toBeCloseTo(1, 1);
   expect(settled.scaleY).toBeCloseTo(1, 1);

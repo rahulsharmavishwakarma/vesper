@@ -418,8 +418,9 @@ generates `menu-bar-template.svg` and its transparent black
 36 × 36 PNG from the same unchanged bird and call paths, without the tile or
 wordmark. Tauri 2.11.5's locked tray-icon 0.24.2 macOS backend sizes this image
 to 18 × 18 logical points, giving a 2× backing image with transparent padding.
-The template viewBox frames the mark ink bounds so the bird fills the frame
-width (about 17.5 × 12 pt at menu-bar scale); the roomier 96-unit frame left
+The template viewBox frames the mark ink bounds, keeping one transparent pixel
+at each edge of the 36 px template, so the bird fills the frame
+width (about 17 × 12 pt at menu-bar scale); the roomier 96-unit frame left
 it at ~9 pt tall against ~18 pt neighbours.
 The native regression checks its decoded pixels, padding and antialiasing;
 the source regression guards icon-only/template wiring and the retained tooltip.
