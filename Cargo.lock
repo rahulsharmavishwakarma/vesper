@@ -5725,7 +5725,7 @@ checksum = "0b928f33d975fc6ad9f86c8f283853ad26bdd5b10b7f1542aa2fa15e2289105a"
 
 [[package]]
 name = "vesper-audio"
-version = "0.1.0-rc.1"
+version = "0.1.0-rc.2"
 dependencies = [
  "cpal",
  "hound",
@@ -5739,7 +5739,7 @@ dependencies = [
 
 [[package]]
 name = "vesper-core"
-version = "0.1.0-rc.1"
+version = "0.1.0-rc.2"
 dependencies = [
  "serde",
  "serde_json",
@@ -5748,7 +5748,7 @@ dependencies = [
 
 [[package]]
 name = "vesper-data"
-version = "0.1.0-rc.1"
+version = "0.1.0-rc.2"
 dependencies = [
  "chrono",
  "rusqlite",
@@ -5763,7 +5763,7 @@ dependencies = [
 
 [[package]]
 name = "vesper-desktop"
-version = "0.1.0-rc.1"
+version = "0.1.0-rc.2"
 dependencies = [
  "base64 0.22.1",
  "serde",
@@ -5789,7 +5789,7 @@ dependencies = [
 
 [[package]]
 name = "vesper-desktop-platform"
-version = "0.1.0-rc.1"
+version = "0.1.0-rc.2"
 dependencies = [
  "cc",
  "raw-window-handle",
@@ -5797,7 +5797,7 @@ dependencies = [
 
 [[package]]
 name = "vesper-eval"
-version = "0.1.0-rc.1"
+version = "0.1.0-rc.2"
 dependencies = [
  "chrono",
  "encoding_rs",
@@ -5817,7 +5817,7 @@ dependencies = [
 
 [[package]]
 name = "vesper-inference"
-version = "0.1.0-rc.1"
+version = "0.1.0-rc.2"
 dependencies = [
  "encoding_rs",
  "llama-cpp-2",
@@ -5838,7 +5838,7 @@ dependencies = [
 
 [[package]]
 name = "vesper-mlx"
-version = "0.1.0-rc.1"
+version = "0.1.0-rc.2"
 dependencies = [
  "libloading 0.8.9",
  "serde",
@@ -5850,7 +5850,7 @@ dependencies = [
 
 [[package]]
 name = "vesper-models"
-version = "0.1.0-rc.1"
+version = "0.1.0-rc.2"
 dependencies = [
  "flate2",
  "fs2",
@@ -5870,7 +5870,7 @@ dependencies = [
 
 [[package]]
 name = "vesper-nemo"
-version = "0.1.0-rc.1"
+version = "0.1.0-rc.2"
 dependencies = [
  "libloading 0.8.9",
  "thiserror 2.0.20",
