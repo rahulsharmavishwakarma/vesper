@@ -25,6 +25,9 @@ use vesper_core::{
 
 #[path = "qwen_semantic.rs"]
 mod semantic;
+#[cfg(test)]
+#[path = "qwen_spec_spike.rs"]
+mod spec_spike;
 #[path = "qwen_writing.rs"]
 mod writing;
 
