@@ -798,6 +798,51 @@ mod tests {
             Some("output-limit")
         );
     }
+    /// #141: prints the production cleanup result and pass timings per public
+    /// transcript, so a decoder change can be compared word for word against a
+    /// saved baseline from the previous revision.
+    #[test]
+    #[ignore = "installed Qwen3.5 Q4 and VESPER_WRITER_INPUTS JSON array of public transcripts"]
+    fn dump_cleanup_outputs() {
+        let root = PathBuf::from(
+            vesper_core::environment::var_os("VESPER_SMOKE_MODELS").expect("VESPER_SMOKE_MODELS"),
+        );
+        let inputs: Vec<String> = serde_json::from_slice(
+            &std::fs::read(std::env::var("VESPER_WRITER_INPUTS").expect("inputs")).unwrap(),
+        )
+        .unwrap();
+        let cancelled = AtomicBool::new(false);
+        for backend in [ComputeBackend::Cpu, ComputeBackend::Auto] {
+            for preset in [CleanupPreset::Minimal, CleanupPreset::Balanced] {
+                let config = AppConfig {
+                    compute_backend: backend,
+                    cleanup_preset: preset,
+                    ..Default::default()
+                };
+                let mut model = Rewriter::load(&config, &root, &cancelled).unwrap();
+                for cached in [false, true] {
+                    model.prefix_cache_enabled = cached;
+                    for (index, raw) in inputs.iter().enumerate() {
+                        let started = Instant::now();
+                        let result = model
+                            .rewrite(raw, &config, &cancelled)
+                            .map_err(|e| e.to_string());
+                        let passes = model.metrics.borrow().passes.clone();
+                        let sum = |f: fn(&PassMetrics) -> u64| passes.iter().map(f).sum::<u64>();
+                        println!(
+                            "cleanup-output-v1 {}",
+                            serde_json::json!({"backend": format!("{backend:?}"), "preset": format!("{preset:?}"),
+                                "cached": cached, "index": index, "result": result, "rewriteUs": micros(started),
+                                "contextUs": sum(|p| p.context_us), "prefillUs": sum(|p| p.prefill_us),
+                                "generationUs": sum(|p| p.generation_us),
+                                "generatedTokens": passes.iter().map(|p| p.generated_tokens).sum::<usize>()})
+                        );
+                    }
+                }
+            }
+        }
+    }
+
     /// #141: cached vs fresh-prefill cleanup on many public transcripts. Every
     /// cached output must equal its uncached output; prints per-pass timings.
     #[test]

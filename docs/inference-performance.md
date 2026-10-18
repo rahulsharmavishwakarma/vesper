@@ -68,6 +68,21 @@ transcript and does not retry. In 416 measured rewrites of 52 public
 transcripts (CPU and Metal, both presets) the slowest pass took 1.0 s, so the
 limit only stops runaway generations.
 
+**Prompt-lookup speculative decoding: measured, not adopted (19 October 2026, #141).**
+The cleanup output is mostly a copy of the transcript, so tokens following the
+latest output n-gram can be verified in one batch. llama-cpp-sys-2 0.1.156 can
+roll back Qwen3.5's recurrent state through the experimental `n_rs_seq` context
+setting (`llama.h`, `llm_arch_supports_rs_rollback`). A decode-only spike on the
+52 public transcripts accepted 98% of drafts and halved generation time. In the
+production writer, however, setting `n_rs_seq = 8` on the whole context raised
+context creation from about 6 to 38 ms and uncached CPU prefill from about 243
+to 650 ms; it also slowed each verification decode. Median CPU rewrite became
+412 → 958 ms uncached and 201 → 375 ms cached. 6 of 416 Balanced outputs
+changed through different rounding. The change was reverted. Reconsider it only
+if a runtime allows rollback without slowing prefill, for example a separate
+verification context or a per-batch rollback setting. Compare candidates with
+the ignored `dump_cleanup_outputs` test against a saved baseline.
+
 Qwen's complete-prefix state cache is **on by default** since 18 October 2026
 ([#141](https://github.com/rahulsharmavishwakarma/vesper/issues/141)).
 `VESPER_PREFIX_CACHE=0`, or the older `VESPER_EXPERIMENTAL_PREFIX_CACHE=0`,
