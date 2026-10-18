@@ -625,7 +625,14 @@ fn install_runtime_archive(root: &Path, artifact: &Artifact) -> Result<()> {
                 let relative = entry
                     .enclosed_name()
                     .map(|path| path.to_owned())
-                    .ok_or_else(|| ModelError::InvalidArchive(entry.name().into()))?;
+                    .ok_or_else(|| {
+                        ModelError::InvalidArchive(
+                            entry
+                                .name()
+                                .map(|name| name.into_owned())
+                                .unwrap_or_else(|_| "archive entry".into()),
+                        )
+                    })?;
                 let destination = staging.path().join(relative);
                 if entry.is_dir() {
                     std::fs::create_dir_all(&destination)?;
