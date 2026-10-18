@@ -448,13 +448,6 @@ The generated library is `libVesperMLX.dylib`; its real source, patch and
 binary hashes are checked before packaging. `VESPER_MLX_BUILD_DIRECTORY` is
 injected by the Rust build script, not a user override.
 
-`scripts/mlx-runtime.mjs` builds with `swift build --build-system swiftbuild`.
-Only the Swift Build engine compiles MLX's Metal kernels into `mlx.metallib`; it
-is the default from Swift 6.4, while older toolchains such as CI's Xcode 26
-fall back to the native build system and produce no kernels. The Metal
-Toolchain component must be installed (`xcodebuild -downloadComponent
-MetalToolchain`).
-
 An existing Swift scratch checkout may contain the previous exact reporting
 patch. The integrity check intentionally refuses to overwrite a modified
 checkout. To upgrade such a cache, stop builds, move `.tooling/mlx-build` to a

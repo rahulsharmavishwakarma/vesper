@@ -94,10 +94,6 @@ try {
 run('swift', [
   'build',
   ...args,
-  // Only the Swift Build engine compiles MLX's Metal kernels. It is the
-  // default from Swift 6.4; older toolchains (CI's Xcode 26) need it named.
-  '--build-system',
-  'swiftbuild',
   '--force-resolved-versions',
   '-c',
   'release',
@@ -107,8 +103,6 @@ run('swift', [
 run('swift', [
   'build',
   ...args,
-  '--build-system',
-  'swiftbuild',
   '--force-resolved-versions',
   '-c',
   'release',
