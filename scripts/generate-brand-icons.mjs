@@ -63,10 +63,10 @@ function canonicalMark(svg) {
 
 export function menuBarIconSource(svg) {
   // The viewBox frames the mark ink bounds (x 4.9-72.1, y 8-53.4) with
-  // antialias-safe padding, so the bird fills the frame width. macOS scales
+  // at least one transparent pixel at 36 px, so the bird fills the frame width. macOS scales
   // the 36px template to 18pt; a full 96-unit frame left the bird at ~9pt
   // tall against ~18pt neighbours.
-  return `<svg xmlns="http://www.w3.org/2000/svg" width="36" height="36" viewBox="3 6 71 50">
+  return `<svg xmlns="http://www.w3.org/2000/svg" width="36" height="36" viewBox="2 6 73 50">
   <!-- Generated from src/assets/ember-bird.svg; transparent macOS template, no tile or lettering. -->
   <g fill="#000000">
     ${canonicalMark(svg)}
