@@ -17,6 +17,10 @@ const SEGMENT_MAX: usize = 8 * SAMPLE_RATE;
 const SEGMENT_MIN: usize = 4 * SAMPLE_RATE;
 /// Shortest open tail worth a provisional pass.
 const MINIMUM: usize = 2 * SAMPLE_RATE;
+/// A detected pause closes the open audio once it holds at least this much.
+const PAUSE_MIN: usize = 2 * SAMPLE_RATE;
+/// Cut this far into the detected silence, never past received audio.
+const PAUSE_OFFSET: usize = SAMPLE_RATE / 10;
 /// Closed segments awaiting their single decode; older ones are dropped.
 const PENDING_LIMIT: usize = 2;
 const ENERGY_WINDOW: usize = SAMPLE_RATE / 10;
@@ -36,6 +40,9 @@ struct Input {
     open_start: u64,
     pending: VecDeque<Segment>,
     dropped_segments: u64,
+    /// Ends of detected speech, in received-sample positions, not yet used.
+    pauses: VecDeque<u64>,
+    pause_segments: u64,
     finished: bool,
 }
 
@@ -128,6 +135,22 @@ impl Mailbox {
         }))
     }
 
+    /// Speech ended at `speech_end` (Silero, after its minimum silence). Close
+    /// the open audio there when it is long enough (#139); energy cuts remain
+    /// the fallback for continuous speech.
+    pub fn mark_pause(&self, speech_end: u64) {
+        if let Ok(mut input) = self.input.lock() {
+            if !input.finished {
+                input.pauses.push_back(speech_end);
+                close_at_pauses(&mut input);
+            }
+        }
+    }
+
+    pub fn pause_segments(&self) -> u64 {
+        self.input.lock().map_or(0, |input| input.pause_segments)
+    }
+
     pub fn retained_samples(&self) -> usize {
         self.input.lock().map_or(0, |input| {
             input.open.len() + input.pending.iter().map(|s| s.samples.len()).sum::<usize>()
@@ -141,20 +164,42 @@ impl Mailbox {
 
 fn append(input: &mut Input, samples: &[f32]) {
     input.open.extend_from_slice(samples);
+    close_at_pauses(input);
     while input.open.len() >= SEGMENT_MAX {
         let boundary = causal_boundary(&input.open);
-        let samples = input.open.drain(..boundary).collect::<Vec<_>>();
-        input.pending.push_back(Segment {
-            start: input.open_start,
-            samples,
-        });
-        input.open_start += boundary as u64;
-        // Bounded memory: a slow decoder loses the oldest draft segment; the
-        // recorder still retains that audio for the completed-audio final.
-        while input.pending.len() > PENDING_LIMIT {
-            input.pending.pop_front();
-            input.dropped_segments += 1;
+        close(input, boundary);
+    }
+}
+
+/// Close open audio at the earliest usable pause; a pause too close to the
+/// segment start is discarded, one not yet covered by audio waits.
+fn close_at_pauses(input: &mut Input) {
+    while let Some(&pause) = input.pauses.front() {
+        let cut = pause + PAUSE_OFFSET as u64;
+        let end = input.open_start + input.open.len() as u64;
+        if cut > end {
+            return;
         }
+        input.pauses.pop_front();
+        if cut >= input.open_start + PAUSE_MIN as u64 {
+            close(input, (cut - input.open_start) as usize);
+            input.pause_segments += 1;
+        }
+    }
+}
+
+fn close(input: &mut Input, boundary: usize) {
+    let samples = input.open.drain(..boundary).collect::<Vec<_>>();
+    input.pending.push_back(Segment {
+        start: input.open_start,
+        samples,
+    });
+    input.open_start += boundary as u64;
+    // Bounded memory: a slow decoder loses the oldest draft segment; the
+    // recorder still retains that audio for the completed-audio final.
+    while input.pending.len() > PENDING_LIMIT {
+        input.pending.pop_front();
+        input.dropped_segments += 1;
     }
 }
 
@@ -283,6 +328,32 @@ mod tests {
         let committed = mailbox.snapshot(0).unwrap().unwrap();
         assert_eq!(committed.kind, JobKind::Committed);
         assert!(committed.audio.samples().len() >= SEGMENT_MAX - ENERGY_WINDOW);
+    }
+
+    #[test]
+    fn detected_pauses_close_segments_early_but_not_too_short() {
+        let mailbox = Mailbox::default();
+        feed(&mailbox, &vec![0.5; 3 * SAMPLE_RATE]);
+        // Too early: under PAUSE_MIN of open audio, the pause is discarded.
+        mailbox.mark_pause(SAMPLE_RATE as u64);
+        assert!(mailbox.snapshot(u64::MAX).unwrap().is_none());
+        // A later pause closes at its offset into the silence.
+        mailbox.mark_pause(2 * SAMPLE_RATE as u64 + 5_000);
+        let closed = mailbox.snapshot(u64::MAX).unwrap().unwrap();
+        assert_eq!(closed.kind, JobKind::Committed);
+        assert_eq!(
+            closed.end_sample,
+            (2 * SAMPLE_RATE + 5_000 + PAUSE_OFFSET) as u64
+        );
+        assert_eq!(mailbox.pause_segments(), 1);
+        // A pause beyond received audio waits for that audio.
+        mailbox.mark_pause(5 * SAMPLE_RATE as u64);
+        assert!(mailbox.snapshot(u64::MAX).unwrap().is_none());
+        feed(&mailbox, &vec![0.5; 3 * SAMPLE_RATE]);
+        let closed = mailbox.snapshot(u64::MAX).unwrap().unwrap();
+        assert_eq!(closed.end_sample, (5 * SAMPLE_RATE + PAUSE_OFFSET) as u64);
+        // Every sample is still delivered exactly once.
+        assert_eq!(mailbox.pause_segments(), 2);
     }
 
     #[test]

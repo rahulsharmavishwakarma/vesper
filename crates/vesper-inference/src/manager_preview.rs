@@ -79,7 +79,7 @@ pub(super) fn run_buffered(
                     "previewIncompleteDrafts":incomplete_drafts,"previewReloads":reloads,
                     "previewPolicy":"causal-committed-segments-v1",
                     "committedSegments":committed_segments,"committedSegmentFailures":committed_failures,
-                    "provisionalPasses":tail_passes,"previewSegmentsDropped":mailbox.dropped_segments(),
+                    "provisionalPasses":tail_passes,"previewSegmentsDropped":mailbox.dropped_segments(),"pauseClosedSegments":mailbox.pause_segments(),
                     "previewDecodedAudioSeconds":decoded_samples as f64 / 16000.0,
                     "previewDecodeMs":decode_ms,
                     "pressureDeferrals":pressure_deferrals,"retainedPreviewSamples":mailbox.retained_samples(),
