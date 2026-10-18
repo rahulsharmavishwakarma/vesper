@@ -429,6 +429,18 @@ gate, so the supported path is tag push followed by gated dispatch promotion.
 Draft/candidate and published/stable states stay distinct and observable in the
 workflow summaries and the release page.
 
+The `v0.1.0-rc.2` dry run (18 October 2026) surfaced three first-run defects,
+all fixed before publication: the desktop job never installed `uv` (now
+mirrored from `check.yml`), the MLX bundle step needed an explicit metallib
+fallback on Xcode 26.3 (see [issue #165](https://github.com/rahulsharmavishwakarma/vesper/issues/165)),
+and the promote state query used a nonexistent
+`prerelease` field (it is `isPrerelease`). An unpublished prerelease tag with
+no release attached may be moved to a fix commit rather than minting a new
+version; the move is recorded on the release-policy issue. Note that
+promotion publishes with `GITHUB_TOKEN`, which suppresses the `release`
+event, so the `verify` job does not fire on that path — verification was run
+manually for rc.2 and the automation gap is tracked in [issue #172](https://github.com/rahulsharmavishwakarma/vesper/issues/172).
+
 The version is recorded in the release tag and app bundle. The asset name stays
 constant so a website download button can link to:
 
