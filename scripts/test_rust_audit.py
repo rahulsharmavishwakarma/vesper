@@ -134,6 +134,14 @@ class RustAuditTests(unittest.TestCase):
         self.assertTrue(observed)
         self.assertFalse(observed[0].exists())
 
+    def test_run_audit_rejects_unscoped_zip_before_auditing(self):
+        lock = self.root / "Cargo.lock"
+        lock.write_text(lock.read_text() + '\n[[package]]\nname = "zip"\nversion = "3.0.0"\n')
+        with patch.object(AUDIT.subprocess, "run") as run:
+            with self.assertRaises(ValueError):
+                AUDIT.run_audit(self.root)
+        run.assert_not_called()
+
     def test_zip_exceptions_accept_only_the_reviewed_pins(self):
         def lock_with(zip_versions, dependents):
             packages = [{"name": "zip", "version": version} for version in zip_versions]

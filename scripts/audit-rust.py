@@ -161,6 +161,9 @@ def registry_audit_lock(lock_text):
 
 
 def run_audit(root):
+    # The ignores below are only valid for the reviewed pins; refuse to
+    # apply them to any other lockfile shape.
+    verify_zip_exceptions(tomllib.loads((root / "Cargo.lock").read_text()))
     with tempfile.TemporaryDirectory(prefix="vesper-rust-audit-") as directory:
         shadow = Path(directory) / "Cargo.lock"
         shadow.write_text(registry_audit_lock((root / "Cargo.lock").read_text()))
@@ -189,7 +192,6 @@ def main():
         text=True,
     )
     verify_resolution(ROOT, json.loads(result.stdout))
-    verify_zip_exceptions(tomllib.loads((ROOT / "Cargo.lock").read_text()))
     print(f"Verified GLib 0.18.5 source backport for {ADVISORY}", flush=True)
     if not args.verify_only:
         run_audit(ROOT)
