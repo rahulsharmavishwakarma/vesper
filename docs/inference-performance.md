@@ -61,11 +61,39 @@ The user-selected default is Cohere Transcribe INT8 through sherpa-onnx 1.13.8, 
 
 These observations come from [Nemotron inference](../crates/vesper-inference/src/nemotron.rs), [cleanup inference](../crates/vesper-inference/src/qwen.rs), [model/runtime selection](../crates/vesper-models/src/lib.rs), and [desktop orchestration](../apps/desktop/src-tauri/src/runtime.rs).
 
-Qwen's complete-prefix state experiment is **off by default**. `VESPER_EXPERIMENTAL_PREFIX_CACHE=1` enables it (`TRANSCRIBE_EXPERIMENTAL_PREFIX_CACHE` remains a fallback when the Vesper variable is absent); normal cleanup retains weights and creates fresh contexts. Its hybrid recurrent state and full-attention KV state require the exact runtime's complete-state API. A capability flag is not evidence that prefix reuse executes on default requests.
+Qwen's complete-prefix state cache is **on by default** since 18 October 2026
+([#141](https://github.com/rahulsharmavishwakarma/vesper/issues/141)).
+`VESPER_PREFIX_CACHE=0`, or the older `VESPER_EXPERIMENTAL_PREFIX_CACHE=0`,
+disables it. Normal cleanup retains weights and creates fresh contexts. Its
+hybrid recurrent state and full-attention KV state require the exact runtime's
+complete-state API. The prompt is always prefilled in two batches split at the
+immutable prefix boundary, whether or not the cache is enabled. A restored
+snapshot is therefore the same state as fresh prefill. Without that split, a
+single-batch prefill changed one greedy Balanced output through
+floating-point accumulation order.
+
+Local measurement on 52 public Cohere transcripts from the
+[polishing study](validation/polishing-wer-2026-10-16.md) (Apple M5 Pro,
+Qwen3.5-0.8B Q4_0, warm resident weights, alternating order). Cached output
+equals uncached output in all 208 pairs, and every cached request restored
+the prefix.
+
+| Backend, preset | Median rewrite, uncached → cached | P90 | Median prefill |
+| --- | ---: | ---: | ---: |
+| CPU, Minimal (default) | 412 → 201 ms | 587 → 371 ms | 243 → 41 ms |
+| CPU, Balanced | 549 → 218 ms | 730 → 398 ms | 368 → 42 ms |
+| Metal, Minimal | 194 → 155 ms | 324 → 286 ms | 55 → 16 ms |
+| Metal, Balanced | 222 → 167 ms | 375 → 317 ms | 72 → 16 ms |
+
+Generation time is unchanged; the gain is prompt prefill only. Prompts that
+contain retrieved personal examples and custom GGUF templates still bypass the
+cache. Reproduce with the ignored `measure_prefix_cache_on_transcripts` test
+and `VESPER_WRITER_INPUTS` (a JSON array of public transcripts).
 
 Current supported-request, Cohere-residency, application-SHA and Whisper
 qualification runners strip both Vesper and legacy Transcribe process overrides
-before applying their explicit `VESPER_EXPERIMENTAL_PREFIX_CACHE=0` baseline.
+before applying their explicit `VESPER_EXPERIMENTAL_PREFIX_CACHE=0` baseline,
+which still disables the cache.
 Frozen reports retain the environment names actually used for those runs.
 The denoising, accent and frontend-integration runners also write Vesper
 baseline overrides. Where a runner sanitizes inherited settings it removes

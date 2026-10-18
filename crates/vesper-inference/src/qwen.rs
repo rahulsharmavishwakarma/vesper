@@ -143,9 +143,11 @@ impl Rewriter {
             fallback_reason,
             metrics: RefCell::default(),
             prefix_states: RefCell::default(),
-            prefix_cache_enabled: vesper_core::environment::var("VESPER_EXPERIMENTAL_PREFIX_CACHE")
-                .as_deref()
-                == Ok("1"),
+            // On by default (#141). `VESPER_PREFIX_CACHE=0` disables it; the
+            // older experiment flag set to 0 still selects the baseline.
+            prefix_cache_enabled: ["VESPER_PREFIX_CACHE", "VESPER_EXPERIMENTAL_PREFIX_CACHE"]
+                .iter()
+                .all(|name| vesper_core::environment::var(name).as_deref() != Ok("0")),
         })
     }
 
@@ -415,7 +417,10 @@ impl Rewriter {
             )
             .map_err(|error| native("writing model context creation", error))?;
         metrics.context_us = micros(context_started);
-        let prefix_tokens = if self.prefix_cache_enabled && cache_allowed && !custom {
+        // The prompt is always split at the immutable prefix boundary, cached or
+        // not, so a restored snapshot equals freshly prefilled state and the
+        // cache cannot change greedy output through different batching (#141).
+        let prefix_tokens = if cache_allowed && !custom {
             prompt
                 .find("<|im_start|>user\n")
                 .and_then(|end| model.str_to_token(&prompt[..end], AddBos::Never).ok())
@@ -429,7 +434,7 @@ impl Rewriter {
         let revision = self.metrics.borrow().personalization.profile_revision;
         let mut offset = 0;
         let mut restore_failed = false;
-        if !prefix_tokens.is_empty() {
+        if self.prefix_cache_enabled && !prefix_tokens.is_empty() {
             let cache = self.prefix_states.borrow();
             if let Some(entry) = cache.iter().find(|e| {
                 e.context_tokens == context_tokens
@@ -482,7 +487,7 @@ impl Rewriter {
                 .map_err(|error| native("writing model prompt evaluation", error))?;
             metrics.prefilled_tokens += end - offset;
             offset = end;
-            if offset == prefix_tokens.len() && !metrics.prefix_hit {
+            if self.prefix_cache_enabled && offset == prefix_tokens.len() && !metrics.prefix_hit {
                 let snapshot_started = Instant::now();
                 let flags = LlamaStateSeqFlags::empty(); // includes attention AND recurrent state
                 let size = context.state_seq_get_size_ext(0, flags);
@@ -777,6 +782,71 @@ mod tests {
             Some("output-limit")
         );
     }
+    /// #141: cached vs fresh-prefill cleanup on many public transcripts. Every
+    /// cached output must equal its uncached output; prints per-pass timings.
+    #[test]
+    #[ignore = "installed Qwen3.5 Q4 and VESPER_WRITER_INPUTS JSON array of public transcripts"]
+    fn measure_prefix_cache_on_transcripts() {
+        let root = PathBuf::from(
+            vesper_core::environment::var_os("VESPER_SMOKE_MODELS").expect("VESPER_SMOKE_MODELS"),
+        );
+        let inputs: Vec<String> = serde_json::from_slice(
+            &std::fs::read(std::env::var("VESPER_WRITER_INPUTS").expect("inputs")).unwrap(),
+        )
+        .unwrap();
+        let cancelled = AtomicBool::new(false);
+        for backend in [ComputeBackend::Cpu, ComputeBackend::Auto] {
+            for preset in [CleanupPreset::Minimal, CleanupPreset::Balanced] {
+                let config = AppConfig {
+                    compute_backend: backend,
+                    cleanup_preset: preset,
+                    ..Default::default()
+                };
+                let mut model = Rewriter::load(&config, &root, &cancelled).unwrap();
+                // Warm both paths once so neither pays first-use costs.
+                for cached in [false, true] {
+                    model.prefix_cache_enabled = cached;
+                    let _ = model.rewrite(&inputs[0], &config, &cancelled);
+                }
+                for (index, raw) in inputs.iter().enumerate() {
+                    let mut outputs = Vec::new();
+                    // Alternate order so drift does not favour one arm.
+                    let order = if index % 2 == 0 {
+                        [false, true]
+                    } else {
+                        [true, false]
+                    };
+                    for cached in order {
+                        model.prefix_cache_enabled = cached;
+                        let started = Instant::now();
+                        let result = model
+                            .rewrite(raw, &config, &cancelled)
+                            .map_err(|e| e.to_string());
+                        let elapsed = micros(started);
+                        let metrics = model.metrics.borrow().clone();
+                        println!(
+                            "writer-prefix-v1 {}",
+                            serde_json::json!({"backend": format!("{backend:?}"), "provider": model.initialized_provider,
+                                "preset": format!("{preset:?}"), "index": index, "cached": cached,
+                                "rewriteUs": elapsed, "ok": result.is_ok(),
+                                "passes": metrics.passes.iter().map(|p| serde_json::json!({
+                                    "prefixHit": p.prefix_hit, "promptTokens": p.prompt_tokens,
+                                    "prefilledTokens": p.prefilled_tokens, "generatedTokens": p.generated_tokens,
+                                    "contextUs": p.context_us, "prefillUs": p.prefill_us,
+                                    "firstTokenUs": p.first_token_us, "generationUs": p.generation_us,
+                                    "totalUs": p.total_us})).collect::<Vec<_>>()})
+                        );
+                        outputs.push(result);
+                    }
+                    assert_eq!(
+                        outputs[0], outputs[1],
+                        "cache changed output for input {index}"
+                    );
+                }
+            }
+        }
+    }
+
     #[test]
     #[ignore = "30 paired resident CPU runs; installed Qwen3.5 Q4 required"]
     fn measure_balanced_prefix_reuse() {

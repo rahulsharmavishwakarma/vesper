@@ -38,7 +38,7 @@ cargo test --locked --offline -p vesper-inference \
 
 The test performs no model download and uses only synthetic text. Retain the JSON lines tagged `two-pass-prefix-v1`, including failures. Avoid other compute-heavy jobs during measurement. Record hardware/power, application source digest and artifact hash anew on every machine. On macOS, use an already configured and licensed developer toolchain; this test does not alter toolchain licenses.
 
-Application experimentation is explicitly enabled before model loading with `VESPER_EXPERIMENTAL_PREFIX_CACHE=1`. Omit it for the baseline. Caching is disabled by default, excludes custom templates and prompts containing retrieved private examples, and keeps fresh per-pass contexts. See [ADR-0012](../../docs/adrs/0012-adapter-registry-and-reviewed-personalization.md) for exact state ownership, memory limits and research sources.
+Since 18 October 2026 the cache is enabled by default ([measurement](../../docs/inference-performance.md)); set `VESPER_PREFIX_CACHE=0` (or the older `VESPER_EXPERIMENTAL_PREFIX_CACHE=0`) before model loading for the baseline. The cache excludes custom templates and prompts containing retrieved private examples, and keeps fresh per-pass contexts. See [ADR-0012](../../docs/adrs/0012-adapter-registry-and-reviewed-personalization.md) for exact state ownership, memory limits and research sources.
 
 ## Single-pass recheck — 14 October 2026
 
