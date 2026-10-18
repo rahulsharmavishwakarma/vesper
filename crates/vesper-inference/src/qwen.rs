@@ -77,6 +77,14 @@ pub const CONTEXT_TOKENS: u32 = 4096;
 pub const MAX_OUTPUT_TOKENS: usize = 2048;
 const BATCH_TOKENS: usize = 512;
 const MAX_TEXT_BYTES: usize = 64_000;
+
+/// Wall-clock limit for one cleanup pass (#141). About ten times the measured
+/// warm CPU cost (Apple M5 Pro: ~6 ms per generated token, output about as long
+/// as the input), so it only stops runaway generations; the raw transcript is
+/// kept. Slower devices keep a wide margin.
+fn pass_time_limit(raw_tokens: usize) -> std::time::Duration {
+    std::time::Duration::from_millis(5_000 + 50 * raw_tokens as u64)
+}
 // The existing generation formula then permits at most 512 retry tokens.
 const FORMATTING_RETRY_INPUT_TOKENS: usize = 240;
 
@@ -540,8 +548,12 @@ impl Rewriter {
         };
         let mut decoder = encoding_rs::UTF_8.new_decoder();
         let mut output = String::new();
+        let limit = pass_time_limit(raw_tokens);
         for generated in 0..output_limit {
             check_cancelled(cancelled)?;
+            if started.elapsed() > limit {
+                return Err(InferenceError::TimeLimit(limit.as_secs()));
+            }
             let token = sampler.sample(&context, batch.n_tokens() - 1);
             if generated == 0 {
                 metrics.first_token_us = micros(started);
@@ -774,9 +786,13 @@ mod tests {
                 stage: "test",
                 message: "failed context".into(),
             },
+            // A retry would double an already exceeded time limit.
+            InferenceError::TimeLimit(5),
         ] {
             assert!(formatting_failure(&error).is_none());
         }
+        assert_eq!(pass_time_limit(0).as_millis(), 5_000);
+        assert_eq!(pass_time_limit(200).as_millis(), 15_000);
         assert_eq!(
             formatting_failure(&InferenceError::OutputLimit),
             Some("output-limit")

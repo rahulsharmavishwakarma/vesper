@@ -83,6 +83,8 @@ pub enum InferenceError {
     OutputLimit,
     #[error("the writing model returned no usable text")]
     EmptyRewrite,
+    #[error("polishing took longer than {0} seconds; the raw transcript is preserved")]
+    TimeLimit(u64),
     #[error(
         "the polished transcript failed the fidelity check ({0}); the raw transcript is preserved"
     )]
