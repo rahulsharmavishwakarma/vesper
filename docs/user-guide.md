@@ -216,6 +216,9 @@ With default Qwen formatting-only cleanup, the app preserves dictated
 contractions and can automatically retry a failed short cleanup once. A retry
 can add processing time. If the result still fails the checks, the original
 transcript remains available. This recovery needs no setting or per-word setup.
+Polishing also stops if a pass takes far longer than normal (5 seconds plus a
+little more for long transcripts, about ten times the usual time); the original
+transcript is kept and a message explains why.
 
 ### Experimental audio processing
 

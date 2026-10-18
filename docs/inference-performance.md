@@ -61,6 +61,13 @@ The user-selected default is Cohere Transcribe INT8 through sherpa-onnx 1.13.8, 
 
 These observations come from [Nemotron inference](../crates/vesper-inference/src/nemotron.rs), [cleanup inference](../crates/vesper-inference/src/qwen.rs), [model/runtime selection](../crates/vesper-models/src/lib.rs), and [desktop orchestration](../apps/desktop/src-tauri/src/runtime.rs).
 
+Each cleanup pass has a wall-clock limit of 5 s plus 50 ms per input token
+([#141](https://github.com/rahulsharmavishwakarma/vesper/issues/141)), about ten
+times the measured warm cost. Exceeding it returns `TimeLimit`, keeps the raw
+transcript and does not retry. In 416 measured rewrites of 52 public
+transcripts (CPU and Metal, both presets) the slowest pass took 1.0 s, so the
+limit only stops runaway generations.
+
 Qwen's complete-prefix state cache is **on by default** since 18 October 2026
 ([#141](https://github.com/rahulsharmavishwakarma/vesper/issues/141)).
 `VESPER_PREFIX_CACHE=0`, or the older `VESPER_EXPERIMENTAL_PREFIX_CACHE=0`,
