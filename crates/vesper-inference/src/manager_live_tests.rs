@@ -546,3 +546,73 @@ fn installed_live_frontend_final_parity() {
         }
     }
 }
+
+/// #139: how quickly live text becomes committed with the managed frontend
+/// (Silero + DPDFNet8). Streams public WAVs at 48 kHz in real time and prints
+/// every draft's committed and provisional word counts with its wall time.
+#[test]
+#[ignore = "requires installed Cohere ASR and audio-frontend artifacts and VESPER_COMMIT_FIXTURES of public WAVs"]
+fn installed_live_commit_timing() {
+    let root = PathBuf::from(std::env::var("VESPER_MODEL_DIR").expect("VESPER_MODEL_DIR"));
+    let config = AppConfig {
+        compute_backend: ComputeBackend::Cpu,
+        language: Language::English,
+        audio_frontend: vesper_core::AudioFrontendConfig {
+            vad_enabled: true,
+            auto_level_enabled: false,
+            noise_reduction: vesper_core::NoiseReduction::Dpdfnet8,
+        },
+        ..Default::default()
+    };
+    let manager = InferenceManager::new().unwrap();
+    for (index, path) in std::env::var("VESPER_COMMIT_FIXTURES")
+        .expect("fixtures")
+        .split(':')
+        .enumerate()
+    {
+        let source = vesper_audio::decode_file(path, 0).unwrap();
+        let samples = source.samples();
+        let mic: Vec<f32> = (0..samples.len() * 3)
+            .map(|i| {
+                let (a, f) = (i / 3, (i % 3) as f32 / 3.0);
+                let b = samples.get(a + 1).copied().unwrap_or(samples[a]);
+                samples[a] * (1.0 - f) + b * f
+            })
+            .collect();
+        let start = Instant::now();
+        let seen = Arc::new(Mutex::new(Vec::new()));
+        let sink = Arc::clone(&seen);
+        let id = format!("commit-{index}");
+        let session = manager
+            .start_stream(
+                &config,
+                &root,
+                &id,
+                Arc::new(AtomicBool::new(false)),
+                Arc::new(move |event: StreamingTranscript| {
+                    sink.lock().unwrap().push((
+                        start.elapsed().as_secs_f64(),
+                        event.committed_text.split_whitespace().count(),
+                        event.provisional_text.split_whitespace().count(),
+                    ))
+                }),
+            )
+            .unwrap();
+        let start = Instant::now();
+        for (chunk_index, chunk) in mic.chunks(960).enumerate() {
+            session.push(chunk.to_vec(), 48000).unwrap();
+            std::thread::sleep(
+                (start + Duration::from_millis((chunk_index as u64 + 1) * 20))
+                    .saturating_duration_since(Instant::now()),
+            );
+        }
+        session.finish_live().unwrap();
+        let live = manager.execution_evidence(&id)["live"].clone();
+        println!(
+            "live-commit-timing-v1 {}",
+            serde_json::json!({"path": path, "audioSeconds": source.duration_seconds(),
+                "events": *seen.lock().unwrap(), "pauseClosedSegments": live["pauseClosedSegments"],
+                "committedSegments": live["committedSegments"]})
+        );
+    }
+}

@@ -164,6 +164,7 @@ fn run(
         }
     };
     let mut retained = Vec::new();
+    let mut announced_intervals = 0;
     let mut fallback: Option<StreamingResampler> = None;
     let mut failure = None;
     loop {
@@ -198,6 +199,17 @@ fn run(
                     },
                 };
                 feed(&mailbox, &wake, &preview);
+                // Real end-of-speech points close live segments at pauses
+                // (#139). Bookkeeping flushes split intervals artificially.
+                if let Some(live) = &session {
+                    let intervals = &live.metrics().speech_intervals;
+                    for interval in &intervals[announced_intervals..] {
+                        if !interval.bookkeeping_split {
+                            mailbox.mark_pause(interval.end_sample as u64);
+                        }
+                    }
+                    announced_intervals = intervals.len();
+                }
             }
             Message::Finish => break,
         }

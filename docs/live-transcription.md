@@ -32,7 +32,12 @@ the authoritative audio independently. Preview input is converted to 16 kHz and
 accumulates in one open buffer. At eight seconds the buffer is closed at the
 quietest 100 ms point between four seconds and the received end (later point on
 ties), using only audio already received; energy chooses the boundary and removes
-nothing. Each closed segment is decoded exactly once and appended to the
+nothing. When the live audio frontend runs (the desktop default), Silero's
+end-of-speech points close the buffer earlier: once it holds at least two
+seconds, a detected pause closes it 100 ms into the silence (#139). Intervals cut
+by Silero's periodic bookkeeping flush are ignored. The eight-second energy cut
+remains the fallback for continuous speech. VAD still never deletes audio and
+never affects the completed-audio final. Each closed segment is decoded exactly once and appended to the
 committed draft, which only grows. The open tail, once at least two seconds long,
 is re-decoded as the provisional draft. At most two closed segments wait for
 decoding; if the decoder falls behind, the oldest is dropped from the draft
@@ -43,7 +48,8 @@ No overlap-string deduplication removes intentional repeated words.
 ```mermaid
 flowchart LR
     mic[Recorder: authoritative audio] -->|bounded copy| open[Open buffer <= 8 s]
-    open -->|close at quietest point 4-8 s| pending[Closed segments FIFO <= 2]
+    vad[Silero end of speech, frontend thread] -.->|pause after >= 2 s| open
+    open -->|close at pause, or quietest point 4-8 s| pending[Closed segments FIFO <= 2]
     pending -->|decode once| committed[committedText - append only]
     open -->|re-decode tail >= 2 s| provisional[provisionalText - replaced]
     pending -. oldest dropped when decoder lags .-> dropped[previewSegmentsDropped]
@@ -154,6 +160,23 @@ deferred speaker timeline then took 0.11–0.13 s and 0.63–0.69 s on Metal. Th
 first run after a new build took 7.1 s once (cold start). Not covered: a
 physical microphone, 44.1 kHz devices, other languages, slower Macs and MLX
 builds.
+
+### Pause-closed segment evidence
+
+Local measurement, 19 October 2026 (Apple M5 Pro, CPU Cohere, Silero v6.2 +
+DPDFNet8, public audio upsampled to 48 kHz and streamed in real time, single runs;
+`installed_live_commit_timing`). Main without pause commits is compared with
+pause-closed segments.
+
+| Recording | First committed text | Mean committed words over time | Committed words at Stop | Segments (pause-closed) |
+| --- | ---: | ---: | ---: | ---: |
+| FLEURS clean, 63 s | 11.1 → 7.8 s | 60.0 → 65.8 | 142 → 150 | 10 → 12 (12) |
+| FLEURS 0 dB noise, 108 s | 8.9 → 5.2 s | 102.5 → 112.2 | 206 → 213 | 17 → 21 (14) |
+| AMI meeting, 45 s | 9.2 → 2.8 s | 35.8 → 44.2 | 83 → 97 | 7 → 10 (8) |
+
+Committed text appears sooner and breaks at speech pauses. The completed-audio
+final is unchanged. Physical microphones, other languages and slower Macs are not
+yet measured.
 
 ## Device and memory behavior
 

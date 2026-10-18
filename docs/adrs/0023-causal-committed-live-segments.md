@@ -24,8 +24,11 @@ unchanged and remains authoritative.
   eight seconds, it is closed at the centre of the quietest 100 ms window between
   four seconds and the received end, preferring the later point on ties. The
   boundary depends only on audio already received. Energy only selects the
-  boundary; no audio is removed and Silero VAD is not used, so ADR-0019's
-  advisory VAD contract is unchanged.
+  boundary; no audio is removed. Since 19 October 2026, when the live frontend
+  runs, a Silero end-of-speech point closes the buffer earlier once it holds two
+  seconds (100 ms into the silence). VAD only chooses boundaries for drafts; it
+  deletes no audio and does not affect the final, so ADR-0019's advisory VAD
+  contract is unchanged.
 - Closed segments wait in a FIFO of at most two. Each is decoded exactly once and
   its text is appended to `committedText`, which only grows. When the decoder
   falls behind, the oldest waiting segment is dropped and counted; the recorder
@@ -95,6 +98,4 @@ its rows are not used as a parity reference.
 - Phase B: retry only with a policy that passes the gate above on a larger
   natural-dictation corpus. Candidates are overlapping parts with a word-level
   merge, or per-model enablement where parity holds.
-- Closing segments early at Silero-detected pauses when the optional frontend is
-  enabled.
 - LocalAgreement-style stabilisation of the provisional tail.
