@@ -673,6 +673,43 @@ fn language_name(value: Language) -> &'static str {
         Language::English => "en",
         Language::French => "fr",
         Language::Hindi => "hi",
+        Language::Bulgarian => "bg",
+        Language::Croatian => "hr",
+        Language::Czech => "cs",
+        Language::Danish => "da",
+        Language::Dutch => "nl",
+        Language::Estonian => "et",
+        Language::Finnish => "fi",
+        Language::German => "de",
+        Language::Greek => "el",
+        Language::Hungarian => "hu",
+        Language::Italian => "it",
+        Language::Latvian => "lv",
+        Language::Lithuanian => "lt",
+        Language::Maltese => "mt",
+        Language::Polish => "pl",
+        Language::Portuguese => "pt",
+        Language::Romanian => "ro",
+        Language::Slovak => "sk",
+        Language::Slovenian => "sl",
+        Language::Spanish => "es",
+        Language::Swedish => "sv",
+        Language::Russian => "ru",
+        Language::Ukrainian => "uk",
+        Language::Arabic => "ar",
+        Language::Japanese => "ja",
+        Language::Korean => "ko",
+        Language::Vietnamese => "vi",
+        Language::Chinese => "zh",
+        Language::Turkish => "tr",
+        Language::Indonesian => "id",
+        Language::Malay => "ms",
+        Language::Thai => "th",
+        Language::Persian => "fa",
+        Language::Macedonian => "mk",
+        Language::Cantonese => "yue",
+        Language::Filipino => "fil",
+        Language::NorwegianBokmal => "nb",
     }
 }
 
@@ -718,6 +755,20 @@ mod tests {
         assert_eq!(options.audio_frontend.model_ids(), ["silero-v6.2"]);
     }
     use super::*;
+
+    #[test]
+    fn language_names_match_core_codes_for_every_mode() {
+        assert_eq!(language_name(Language::Auto), "auto");
+        for language in [
+            Language::English,
+            Language::Bulgarian,
+            Language::Cantonese,
+            Language::Filipino,
+            Language::NorwegianBokmal,
+        ] {
+            assert_eq!(language_name(language), language.code().unwrap());
+        }
+    }
 
     #[test]
     fn benchmark_language_profiles_map_to_application_prompts() {
