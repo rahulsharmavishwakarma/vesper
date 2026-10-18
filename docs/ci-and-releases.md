@@ -330,6 +330,15 @@ all other vulnerabilities and unsoundness findings remain fatal. Direct
 cargo-audit omits both source verification and GLib registry-advisory coverage
 and is not a substitute for this wrapper.
 
+The wrapper also carries owner-approved scoped ignores for the three zip
+extraction advisories (RUSTSEC-2026-0367/0368/0369), patched only in zip 9.
+They cover exactly two pinned instances the resolver cannot move: zip 2.6.1
+as a sherpa-onnx-sys build dependency, and zip 4.6.1 under
+tauri-plugin-updater's Windows-only update path. Before auditing, the wrapper
+verifies the lockfile still contains only those instances with only those
+dependents; any other zip below 9 fails the job. Remove the ignores when both
+parents resolve zip 9 or drop it (issue #161).
+
 The end-of-file formatter excludes only GLib's upstream `LICENSE` and
 `.cargo_vcs_info.json`, preserving their original end-of-file whitespace. Their hashes
 remain enforced by the source guard; secret and dependency scans still include

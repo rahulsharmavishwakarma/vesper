@@ -112,7 +112,12 @@ class RustAuditTests(unittest.TestCase):
 
         def fail_audit(command, **kwargs):
             self.assertEqual(command[:3], ["cargo", "audit", "--file"])
-            self.assertEqual(command[4:], ["--deny", "unsound", "--ignore", AUDIT.ADVISORY])
+            expected_ignores = [
+                argument
+                for advisory in (AUDIT.ADVISORY, *AUDIT.ZIP_ADVISORIES)
+                for argument in ("--ignore", advisory)
+            ]
+            self.assertEqual(command[4:], ["--deny", "unsound", *expected_ignores])
             self.assertTrue(kwargs["check"])
             shadow = Path(command[3])
             observed.append(shadow)
@@ -128,6 +133,47 @@ class RustAuditTests(unittest.TestCase):
         self.assertEqual((self.root / "Cargo.lock").read_bytes(), original)
         self.assertTrue(observed)
         self.assertFalse(observed[0].exists())
+
+    def test_run_audit_rejects_unscoped_zip_before_auditing(self):
+        lock = self.root / "Cargo.lock"
+        lock.write_text(lock.read_text() + '\n[[package]]\nname = "zip"\nversion = "3.0.0"\n')
+        with patch.object(AUDIT.subprocess, "run") as run:
+            with self.assertRaises(ValueError):
+                AUDIT.run_audit(self.root)
+        run.assert_not_called()
+
+    def test_zip_exceptions_accept_only_the_reviewed_pins(self):
+        def lock_with(zip_versions, dependents):
+            packages = [{"name": "zip", "version": version} for version in zip_versions]
+            for dependent, version in dependents:
+                packages.append(
+                    {"name": dependent, "version": "1.0.0", "dependencies": [f"zip {version}"]}
+                )
+            return {"package": packages}
+
+        AUDIT.verify_zip_exceptions(
+            lock_with(
+                ["2.6.1", "4.6.1", "9.0.5"],
+                [
+                    ("sherpa-onnx-sys", "2.6.1"),
+                    ("tauri-plugin-updater", "4.6.1"),
+                    ("vesper-models", "9.0.5"),
+                ],
+            )
+        )
+        for bad in (
+            # A version bump under a pin must be re-reviewed.
+            lock_with(["2.7.0"], [("sherpa-onnx-sys", "2.7.0")]),
+            # A new dependent on a pinned version widens the exception.
+            lock_with(
+                ["2.6.1"],
+                [("sherpa-onnx-sys", "2.6.1"), ("vesper-models", "2.6.1")],
+            ),
+            # An unreviewed old zip anywhere else is fatal.
+            lock_with(["4.6.1"], [("some-other-crate", "4.6.1")]),
+        ):
+            with self.assertRaises(ValueError):
+                AUDIT.verify_zip_exceptions(bad)
 
     @unittest.skipUnless(
         shutil.which("cargo-audit"), "cargo-audit is installed in the security job"
