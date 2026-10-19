@@ -398,7 +398,9 @@ impl FrontendSession<'_> {
             if self.level.is_some() {
                 self.pending_level.extend_from_slice(block);
                 while self.pending_level.len() >= level::FRAME {
-                    let frame: Vec<_> = self.pending_level.drain(..level::FRAME).collect();
+                    let mut frame = [0.0; level::FRAME];
+                    frame.copy_from_slice(&self.pending_level[..level::FRAME]);
+                    self.pending_level.drain(..level::FRAME);
                     out.extend(self.level_frame(&frame, cancelled)?);
                 }
                 continue;
@@ -406,7 +408,9 @@ impl FrontendSession<'_> {
             if self.models.is_some_and(|m| m.vad.is_some()) {
                 self.pending_vad.extend_from_slice(block);
                 while self.pending_vad.len() >= VAD_FRAME {
-                    let frame: Vec<_> = self.pending_vad.drain(..VAD_FRAME).collect();
+                    let mut frame = [0.0; VAD_FRAME];
+                    frame.copy_from_slice(&self.pending_vad[..VAD_FRAME]);
+                    self.pending_vad.drain(..VAD_FRAME);
                     self.vad_frame(&frame, cancelled)?;
                 }
             }
