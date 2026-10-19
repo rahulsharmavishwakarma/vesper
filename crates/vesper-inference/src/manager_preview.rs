@@ -84,7 +84,8 @@ pub(super) fn run_buffered(
                     "previewDecodeMs":decode_ms,
                     "pressureDeferrals":pressure_deferrals,"retainedPreviewSamples":mailbox.retained_samples(),
                     "maxPreviewSamples":MAX_RETAINED_SAMPLES,"memory":memory,
-                    "previewFrontend":"fresh-bounded-segment", "selection":selection.evidence()
+                    "previewFrontend":if mailbox.enhanced.load(Ordering::Acquire) {"live-frontend"} else {"fresh-bounded-segment"},
+                    "selection":selection.evidence()
                 }),
             );
             return Ok(StreamingFinal::CompletedAudioRequired);
