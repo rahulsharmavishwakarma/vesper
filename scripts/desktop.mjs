@@ -21,7 +21,6 @@ export function desktopPlan(
     configuredTarget,
     mlx = 'auto',
     updaterSigningKey = true,
-    updaterPublicKey = '',
   },
 ) {
   const separator = args.indexOf('--');
@@ -55,13 +54,13 @@ export function desktopPlan(
   const prepareMlx =
     mlx !== '0' && platform === 'darwin' && arch === 'arm64' && target === 'aarch64-apple-darwin';
   if (prepareMlx) head.push('--config', 'src-tauri/tauri.mlx.conf.json');
-  // The default, unenrolled build produces app/DMG candidates without requiring
-  // private updater credentials. Explicit caller config keeps its own policy.
+  // Builds without the private signing key skip updater artifacts even though
+  // the app keeps its enrolled public key for verifying future updates.
+  // Explicit caller config keeps its own policy.
   if (
     head[0] === 'build' &&
     target.endsWith('apple-darwin') &&
     !updaterSigningKey &&
-    !updaterPublicKey &&
     !args
       .slice(0, separator < 0 ? undefined : separator)
       .some(
@@ -112,10 +111,6 @@ function main() {
     configuredTarget: !help && hasConfiguredTarget(),
     mlx: mlxOverride(),
     updaterSigningKey: Boolean(process.env.TAURI_SIGNING_PRIVATE_KEY),
-    updaterPublicKey: help
-      ? ''
-      : JSON.parse(readFileSync(join(root, 'apps/desktop/src-tauri/tauri.conf.json'), 'utf8'))
-          .plugins?.updater?.pubkey,
   });
   if (plan.prepareMlx) {
     const version = execFileSync('sw_vers', ['-productVersion'], { encoding: 'utf8' });
