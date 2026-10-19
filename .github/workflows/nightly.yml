@@ -1,0 +1,172 @@
+name: Nightly
+
+# Builds the default branch daily into a rolling `nightly` prerelease (Refs #205).
+# Nightly is unsigned, installs beside stable under its own app identity, never
+# touches the version files, creates no vX.Y.Z tag, and never moves the `latest`
+# release or the stable/beta update feeds. Download-only for now; the in-app
+# nightly feed is a later step.
+
+on:
+  schedule:
+    - cron: '17 2 * * *'
+  workflow_dispatch:
+    inputs:
+      force:
+        description: 'Build even if main has not changed since the last nightly'
+        type: boolean
+        default: false
+
+permissions:
+  contents: read
+
+concurrency:
+  group: nightly
+  cancel-in-progress: false
+
+jobs:
+  plan:
+    name: Decide whether to build
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    permissions:
+      contents: read
+      actions: read
+    outputs:
+      build: ${{ steps.decide.outputs.build }}
+      version: ${{ steps.decide.outputs.version }}
+      sha: ${{ steps.decide.outputs.sha }}
+    env:
+      FORCE: ${{ inputs.force }}
+      GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
+        with:
+          node-version-file: .nvmrc
+          package-manager-cache: false
+      - name: Skip unchanged or unverified commits
+        id: decide
+        run: |
+          set -eu
+          sha="$GITHUB_SHA"
+          date="$(date -u +%Y%m%d)"
+          version="$(node scripts/nightly.mjs version "$date")"
+          {
+            echo "sha=$sha"
+            echo "version=$version"
+          } >> "$GITHUB_OUTPUT"
+          last="$(gh api "repos/$GITHUB_REPOSITORY/git/ref/tags/nightly" --jq .object.sha 2>/dev/null || true)"
+          if [ "$FORCE" != "true" ] && [ "$last" = "$sha" ]; then
+            echo "main is unchanged since the last nightly ($sha); skipping." >> "$GITHUB_STEP_SUMMARY"
+            echo "build=false" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+          # Never publish a build of a commit whose own checks did not pass.
+          checks="$(gh run list --repo "$GITHUB_REPOSITORY" --workflow check.yml --commit "$sha" --json conclusion --jq '[.[]|.conclusion]|if length==0 then "none" elif all(.=="success") then "success" else "other" end')"
+          if [ "$checks" != "success" ]; then
+            echo "Check workflow for $sha is '$checks', not success; skipping." >> "$GITHUB_STEP_SUMMARY"
+            echo "build=false" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+          echo "build=true" >> "$GITHUB_OUTPUT"
+
+  desktop:
+    name: Desktop package (macOS)
+    needs: plan
+    if: needs.plan.outputs.build == 'true'
+    runs-on: macos-15
+    timeout-minutes: 90
+    permissions:
+      contents: read
+    env:
+      CMAKE_BUILD_PARALLEL_LEVEL: '2'
+      DEVELOPER_DIR: /Applications/Xcode_26.3.app/Contents/Developer
+      VERSION: ${{ needs.plan.outputs.version }}
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          ref: ${{ needs.plan.outputs.sha }}
+          persist-credentials: false
+      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
+        with:
+          node-version-file: .nvmrc
+          package-manager-cache: false
+      - uses: astral-sh/setup-uv@1c37ad07a6a961277cf70c0d37d6f313000f5884 # v10.3.0
+        with:
+          version: '0.12.15'
+          python-version: '3.12'
+          enable-cache: false
+      - name: Install Rust
+        run: rustup show active-toolchain
+      - name: Check macOS native prerequisites
+        run: |
+          if ! command -v cmake >/dev/null; then brew install cmake; fi
+          cmake --version
+          xcrun --find clang
+          xcrun --find clang++
+          test -d "$DEVELOPER_DIR"
+          xcodebuild -version
+          xcrun swift --version
+          if ! xcrun metal --version; then
+            xcodebuild -downloadComponent metalToolchain
+          fi
+          xcrun metal --version
+      - name: Build pinned native ASR runtime
+        run: |
+          node scripts/sherpa-runtime.mjs
+          printf 'SHERPA_ONNX_LIB_DIR=%s\n' "$(node scripts/sherpa-runtime.mjs --lib-dir)" >> "$GITHUB_ENV"
+      - run: npm ci
+      - name: Apply the nightly identity and version (not committed)
+        run: node scripts/nightly.mjs apply "$VERSION"
+      - name: Build desktop bundles
+        run: npm run desktop:build
+      - name: Collect nightly artifact
+        run: sh scripts/package-release.sh "$VERSION"
+      - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        with:
+          name: nightly-${{ runner.os }}-${{ runner.arch }}
+          path: release/vesper-macos-arm64.dmg
+          if-no-files-found: error
+          retention-days: 7
+          include-hidden-files: false
+
+  publish:
+    name: Replace the rolling nightly prerelease
+    needs: [plan, desktop]
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    permissions:
+      contents: write
+    env:
+      GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      SHA: ${{ needs.plan.outputs.sha }}
+      VERSION: ${{ needs.plan.outputs.version }}
+    steps:
+      - uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333 # v8.0.2
+        with:
+          pattern: nightly-*
+          path: dmg
+          merge-multiple: true
+      - name: Publish the nightly prerelease
+        run: |
+          set -eu
+          mkdir assets
+          cp dmg/vesper-macos-arm64.dmg assets/vesper-nightly-macos-arm64.dmg
+          (cd assets && sha256sum -- * > SHA256SUMS)
+          notes="Unsigned nightly build of main at ${SHA}, version ${VERSION}. Installs beside the stable app with its own settings and models. Not for production use; the Gatekeeper steps in the user guide apply."
+          # Only the rolling nightly release and tag are replaced, never a
+          # vX.Y.Z tag; a release that is not a prerelease is never touched.
+          if existing="$(gh release view nightly --repo "$GITHUB_REPOSITORY" --json isPrerelease --jq .isPrerelease 2>/dev/null)"; then
+            if [ "$existing" != "true" ]; then
+              echo "Release 'nightly' exists and is not a prerelease; refusing to replace it." >&2
+              exit 1
+            fi
+            gh release delete nightly --repo "$GITHUB_REPOSITORY" --cleanup-tag --yes
+          fi
+          gh release create nightly --repo "$GITHUB_REPOSITORY" --target "$SHA" \
+            --prerelease --latest=false \
+            --title "Vesper Nightly ${VERSION}" --notes "$notes" \
+            assets/vesper-nightly-macos-arm64.dmg assets/SHA256SUMS
+          echo "Nightly ${VERSION}: https://github.com/$GITHUB_REPOSITORY/releases/tag/nightly" >> "$GITHUB_STEP_SUMMARY"
