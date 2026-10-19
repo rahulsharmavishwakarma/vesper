@@ -85,6 +85,16 @@ download fails, the panel explains what happened with a retry and links to the
 manual installer on the release download page. Model downloads continue to be
 managed separately in **Models**.
 
+Every update package is signature-checked against Vesper's enrolled update
+key before it installs; a package with a missing, corrupt, or wrong-key
+signature is refused and the working installation is left untouched. The app
+follows the stable feed only. If the update key ever changes, one transition
+release accepts the new key first, so no working install is stranded. Update
+signing (which proves a package came from Vesper) is separate from Apple
+notarization (which proves macOS trusts it to run silently): unsigned builds
+still verify and install through the app, but macOS may ask for confirmation
+on first launch.
+
 ### Initial setup
 
 1. Open **Models** and select speech and writing models. The writing model is

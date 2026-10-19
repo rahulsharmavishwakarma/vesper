@@ -42,6 +42,10 @@ jobs:
     env:
       CMAKE_BUILD_PARALLEL_LEVEL: '2'
       DEVELOPER_DIR: /Applications/Xcode_26.3.app/Contents/Developer
+      # Enrolled updater key (Refs #65). Absent on forks: the build then
+      # produces no signed updater archive and packaging skips the feed.
+      TAURI_SIGNING_PRIVATE_KEY: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY }}
+      TAURI_SIGNING_PRIVATE_KEY_PASSWORD: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY_PASSWORD }}
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:

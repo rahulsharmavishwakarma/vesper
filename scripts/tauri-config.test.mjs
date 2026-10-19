@@ -25,6 +25,22 @@ test('the updater plugin config block exists so startup deserialization succeeds
   }
 });
 
+test('the updater key is enrolled with the stable feed only', () => {
+  // Enrollment guard: an empty pubkey or endpoint list silently disables
+  // update discovery. Only the stable feed is enrolled (Refs #65).
+  const updater = load('tauri.conf.json').plugins?.updater;
+  assert.ok(updater.pubkey.length > 0, 'updater pubkey must be enrolled');
+  const decoded = Buffer.from(updater.pubkey, 'base64').toString('utf8');
+  assert.match(
+    decoded,
+    /^untrusted comment: minisign public key: [0-9A-F]+\n/,
+    'pubkey must be minisign format',
+  );
+  assert.deepEqual(updater.endpoints, [
+    'https://github.com/rahulsharmavishwakarma/vesper/releases/latest/download/latest.json',
+  ]);
+});
+
 test('updater authority stays on the main window and artifacts stay enabled', () => {
   const capability = load('capabilities/updater.json');
   assert.deepEqual(capability.windows, ['main']);
