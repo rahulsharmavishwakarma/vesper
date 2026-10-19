@@ -67,7 +67,7 @@ Dictate and Settings bind to one persisted transcription-language field. The fro
 
 ## Execution and cancellation
 
-Only a Record request starts capture. Device enumeration and app startup do not record. CPAL's callback performs bounded sample conversion/ring writes; its owning worker drains buffers, mixes 20 ms native-rate mono chunks into a bounded 32-item queue, and separately retains native-rate/channel samples for archival. NeMo performs input resampling. Native device errors retain usable complete frames with a warning. Inference and all channel waits run outside the UI/audio callback.
+Only a Record request starts capture. Device enumeration and app startup do not record. CPAL's callback performs bounded sample conversion/ring writes; its owning worker drains buffers, mixes 20 ms native-rate mono chunks into a bounded 32-item queue, and separately retains native-rate/channel samples for archival. NeMo performs input resampling. Native device errors retain usable complete frames with a warning. If the worker stalls long enough to fill the 2-second ring, the callback skips whole buffers, counts the skipped samples, and keeps recording; the finished recording carries a warning naming the skipped duration. Inference and all channel waits run outside the UI/audio callback.
 
 The application allows one recording, transcription, or model installation at a time. A gate serializes settings changes with the config snapshot and job start. The entire recording uses that saved snapshot. Each recording watcher is bound to its operation identifier, preventing an old watcher from stopping a newer recording.
 

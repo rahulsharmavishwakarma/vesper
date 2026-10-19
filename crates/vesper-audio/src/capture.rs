@@ -286,6 +286,8 @@ struct CallbackState {
     limit_reached: AtomicBool,
     error_code: AtomicUsize,
     captured_samples: AtomicUsize,
+    // Samples discarded because the worker fell behind and the ring was full.
+    dropped_samples: AtomicUsize,
     level: Arc<AtomicU32>,
 }
 
@@ -388,11 +390,6 @@ impl Session {
             self.error = Some(message);
         }
         match self.state.error_code.load(Ordering::Acquire) {
-            1 => {
-                self.error = Some(
-                    "microphone buffer overflowed; close busy applications and try again".into(),
-                )
-            }
             2 => self.error = Some("microphone supplied non-finite audio samples".into()),
             3 if self.error.is_none() => {
                 self.error = Some(
@@ -423,6 +420,14 @@ impl Session {
         let complete_samples =
             self.samples.len() / usize::from(self.channels) * usize::from(self.channels);
         self.samples.truncate(complete_samples);
+        let dropped = self.state.dropped_samples.load(Ordering::Acquire);
+        if dropped > 0 && self.error.is_none() {
+            // Reported only at the end: a status error would stop the recording.
+            let seconds = dropped as f64 / f64::from(self.channels) / f64::from(self.sample_rate);
+            self.error = Some(format!(
+                "The system was busy and {seconds:.1} s of microphone audio was skipped. The rest of the recording was kept."
+            ));
+        }
         if self.samples.is_empty() {
             return Err(audio_error(
                 "microphone",
@@ -791,8 +796,16 @@ fn capture_samples<T>(
         return;
     }
     let mut count = state.captured_samples.load(Ordering::Relaxed);
+    let accepted = data.len().min(max_samples.saturating_sub(count));
+    if producer.slots() < accepted {
+        // The worker stalled. Skip this whole callback buffer, which keeps
+        // interleaved frames aligned, and keep recording.
+        state.dropped_samples.fetch_add(accepted, Ordering::AcqRel);
+        state.level.store(0, Ordering::Relaxed);
+        return;
+    }
     let mut metered_samples = 0_usize;
-    for &sample in data.iter().take(max_samples.saturating_sub(count)) {
+    for &sample in &data[..accepted] {
         let sample = sample.to_sample::<f32>();
         if !sample.is_finite() {
             state.error_code.store(2, Ordering::Release);
@@ -800,8 +813,6 @@ fn capture_samples<T>(
             break;
         }
         if producer.push(sample).is_err() {
-            state.error_code.store(1, Ordering::Release);
-            state.halted.store(true, Ordering::Release);
             break;
         }
         meter.push(sample);
@@ -892,7 +903,7 @@ mod tests {
     }
 
     #[test]
-    fn callback_limits_samples_and_reports_overflow_without_silent_loss() {
+    fn callback_limits_samples_and_counts_overflow_without_stopping() {
         let (mut producer, mut consumer) = RingBuffer::new(8);
         let state = CallbackState::default();
         let mut meter = RmsMeter::new(50, 1); // Two-sample window for these callback boundary fixtures.
@@ -916,13 +927,55 @@ mod tests {
         assert_eq!(captured[1], 0.0);
         assert!((captured[2] - 1.0).abs() < 0.0001);
 
-        let (mut producer, _consumer) = RingBuffer::new(1);
+        let (mut producer, mut consumer) = RingBuffer::new(3);
         let state = CallbackState::default();
         let mut meter = RmsMeter::new(50, 1); // Two-sample window for these callback boundary fixtures.
         capture_samples(&[0.5_f32, 0.5], &mut producer, &state, 10, &mut meter);
-        assert_eq!(state.error_code.load(Ordering::Acquire), 1);
-        assert!(state.halted.load(Ordering::Acquire));
+        // A full ring skips the whole buffer rather than part of a frame.
+        capture_samples(&[0.25_f32, 0.25], &mut producer, &state, 10, &mut meter);
+        assert_eq!(state.dropped_samples.load(Ordering::Acquire), 2);
+        assert_eq!(state.error_code.load(Ordering::Acquire), 0);
+        assert!(!state.halted.load(Ordering::Acquire));
         assert_eq!(state.level.load(Ordering::Relaxed), 0);
+        assert_eq!(consumer.pop().unwrap(), 0.5);
+        assert_eq!(consumer.pop().unwrap(), 0.5);
+        // Recording continues once the worker catches up.
+        capture_samples(&[0.75_f32, 0.75], &mut producer, &state, 10, &mut meter);
+        assert_eq!(consumer.pop().unwrap(), 0.75);
+        assert_eq!(consumer.pop().unwrap(), 0.75);
+        assert_eq!(state.captured_samples.load(Ordering::Acquire), 4);
+    }
+
+    #[test]
+    fn skipped_audio_is_reported_when_the_recording_finishes() {
+        let (mut producer, consumer) = RingBuffer::new(8);
+        for sample in [0.25, -0.5] {
+            producer.push(sample).unwrap();
+        }
+        let state = Arc::new(CallbackState::default());
+        state.dropped_samples.store(96_000, Ordering::Release);
+        let (_sender, errors) = mpsc::channel();
+        let mut session = Session {
+            stream: None,
+            consumer,
+            state,
+            errors,
+            samples: Vec::new(),
+            chunk_sender: None,
+            chunk_interrupted: None,
+            chunk_pending: Vec::new(),
+            chunk_mixer: crate::pcm::ChannelMixer::new(2, 48_000),
+            sample_rate: 48_000,
+            channels: 2,
+            started: Instant::now(),
+            max_duration: None,
+            error: None,
+        };
+        // While recording, skipped audio must not surface as a stopping error.
+        assert!(session.refresh().error.is_none());
+        let audio = session.finish().unwrap();
+        assert_eq!(audio.samples(), &[0.25, -0.5]);
+        assert!(audio.capture_warning().unwrap().contains("1.0 s"));
     }
 
     #[test]
@@ -980,7 +1033,7 @@ mod tests {
         let state = Arc::new(CallbackState::default());
         state.level.store(0.5_f32.to_bits(), Ordering::Relaxed);
         let meter = Arc::clone(&state.level);
-        state.error_code.store(1, Ordering::Release);
+        state.error_code.store(3, Ordering::Release);
         let (_sender, errors) = mpsc::channel();
         let session = Session {
             stream: None,
@@ -1003,7 +1056,7 @@ mod tests {
         assert_eq!(audio.samples(), &[0.25, -0.5]);
         assert_eq!(audio.channels(), 2);
         assert_eq!(audio.sample_rate(), 48_000);
-        assert!(audio.capture_warning().unwrap().contains("overflowed"));
+        assert!(audio.capture_warning().unwrap().contains("stream failed"));
         assert_eq!(audio.duration_seconds(), 1.0 / 48_000.0);
     }
 
