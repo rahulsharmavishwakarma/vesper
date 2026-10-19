@@ -123,7 +123,7 @@ pub fn decode_file(path: impl AsRef<Path>, max_seconds: u32) -> Result<MonoPcm> 
             }
             mono.push(
                 mixer
-                    .get_or_insert_with(|| ChannelMixer::new(channels, spec.rate))
+                    .get_or_insert_with(|| ChannelMixer::new(channels, rate))
                     .mix(frame),
             );
         }
