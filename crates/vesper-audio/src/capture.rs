@@ -291,6 +291,8 @@ struct Session {
     chunk_sender: Option<mpsc::SyncSender<AudioChunk>>,
     chunk_interrupted: Option<Arc<AtomicBool>>,
     chunk_pending: Vec<f32>,
+    // Same mixer state as the completed recording's `as_mono_16k`.
+    chunk_mixer: crate::pcm::ChannelMixer,
     sample_rate: u32,
     channels: u16,
     started: Instant,
@@ -323,12 +325,10 @@ impl Session {
             } else {
                 break;
             };
+            let mixer = &mut self.chunk_mixer;
             let samples = self.chunk_pending[..count]
                 .chunks_exact(channels)
-                .map(|frame| {
-                    (frame.iter().map(|&sample| f64::from(sample)).sum::<f64>() / channels as f64)
-                        as f32
-                })
+                .map(|frame| mixer.mix(frame))
                 .collect();
             self.chunk_pending.drain(..count);
             let chunk = AudioChunk {
@@ -715,6 +715,7 @@ fn start_session(
         chunk_sender,
         chunk_interrupted,
         chunk_pending: Vec::with_capacity(ring_capacity.min(rate as usize)),
+        chunk_mixer: crate::pcm::ChannelMixer::new(usize::from(channels), rate),
         sample_rate: rate,
         channels,
         started: Instant::now(),
@@ -939,6 +940,7 @@ mod tests {
             chunk_sender: None,
             chunk_interrupted: None,
             chunk_pending: Vec::new(),
+            chunk_mixer: crate::pcm::ChannelMixer::new(2, 48_000),
             sample_rate: 48_000,
             channels: 2,
             started: Instant::now() - Duration::from_secs(601),
@@ -981,6 +983,7 @@ mod tests {
             chunk_sender: None,
             chunk_interrupted: None,
             chunk_pending: Vec::new(),
+            chunk_mixer: crate::pcm::ChannelMixer::new(2, 48_000),
             sample_rate: 48_000,
             channels: 2,
             started: Instant::now(),
@@ -1014,6 +1017,7 @@ mod tests {
             chunk_sender: Some(chunk_sender),
             chunk_interrupted: Some(Arc::clone(&interrupted)),
             chunk_pending: Vec::new(),
+            chunk_mixer: crate::pcm::ChannelMixer::new(2, 100),
             sample_rate: 100,
             channels: 2,
             started: Instant::now(),
@@ -1048,6 +1052,7 @@ mod tests {
             chunk_sender: Some(chunk_sender),
             chunk_interrupted: Some(Arc::clone(&interrupted)),
             chunk_pending: Vec::new(),
+            chunk_mixer: crate::pcm::ChannelMixer::new(1, 100),
             sample_rate: 100,
             channels: 1,
             started: Instant::now(),

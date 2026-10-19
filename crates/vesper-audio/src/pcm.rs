@@ -80,10 +80,11 @@ impl CapturedAudio {
     }
 
     pub fn as_mono_16k(&self) -> Result<MonoPcm> {
+        let mut mixer = ChannelMixer::new(usize::from(self.channels), self.sample_rate);
         let mono: Vec<f32> = self
             .samples
             .chunks_exact(usize::from(self.channels))
-            .map(mix_frame)
+            .map(|frame| mixer.mix(frame))
             .collect();
         if self.sample_rate == ASR_SAMPLE_RATE {
             return MonoPcm::new(mono, ASR_SAMPLE_RATE);
@@ -101,9 +102,46 @@ pub(crate) fn validate_format(sample_rate: u32, channels: usize) -> Result<()> {
     Ok(())
 }
 
-pub(crate) fn mix_frame(frame: &[f32]) -> f32 {
-    // Accumulate in f64 so even finite, out-of-range float PCM cannot overflow a sum.
-    (frame.iter().map(|&sample| f64::from(sample)).sum::<f64>() / frame.len() as f64) as f32
+/// Mixes interleaved frames to mono without attenuating one live input on a
+/// multichannel device (#142). Plain averaging lowered a single active mic on
+/// an N-channel interface by 20·log10(N) dB (−18 dB for 8 channels). Channels
+/// whose smoothed power (≈0.2 s) is more than 30 dB below the loudest are left
+/// out; the rest are averaged, so mono and matched stereo are unchanged. The
+/// mixer is causal and deterministic: live chunks and the completed recording,
+/// mixed in the same order from the first frame, produce identical samples.
+pub struct ChannelMixer {
+    power: Vec<f64>,
+    smoothing: f64,
+}
+
+impl ChannelMixer {
+    pub fn new(channels: usize, sample_rate: u32) -> Self {
+        Self {
+            power: vec![0.0; channels],
+            smoothing: 1.0 - (-1.0 / (0.2 * f64::from(sample_rate.max(1)))).exp(),
+        }
+    }
+
+    pub fn mix(&mut self, frame: &[f32]) -> f32 {
+        if frame.len() == 1 {
+            return frame[0];
+        }
+        let mut loudest = 0.0_f64;
+        for (power, &sample) in self.power.iter_mut().zip(frame) {
+            *power += self.smoothing * (f64::from(sample).powi(2) - *power);
+            loudest = loudest.max(*power);
+        }
+        let floor = loudest * 1e-3;
+        // Accumulate in f64 so even finite, out-of-range float PCM cannot overflow a sum.
+        let (sum, count) = frame
+            .iter()
+            .zip(&self.power)
+            .filter(|(_, power)| **power >= floor)
+            .fold((0.0_f64, 0_u32), |(sum, count), (&sample, _)| {
+                (sum + f64::from(sample), count + 1)
+            });
+        (sum / f64::from(count.max(1))) as f32
+    }
 }
 
 /// One recording's converter. Packet boundaries never restart the FFT filter.
@@ -253,6 +291,74 @@ pub(crate) fn resample_mono(samples: &[f32], source_rate: u32) -> Result<MonoPcm
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    fn tone(frames: usize, rate: f32) -> Vec<f32> {
+        (0..frames)
+            .map(|i| 0.3 * (i as f32 * 440.0 * std::f32::consts::TAU / rate).sin())
+            .collect()
+    }
+
+    #[test]
+    fn one_live_channel_of_eight_keeps_its_level() {
+        let voice = tone(16_000, 16_000.0);
+        let interleaved: Vec<f32> = voice
+            .iter()
+            .flat_map(|&s| std::iter::once(s).chain(std::iter::repeat_n(0.0, 7)))
+            .collect();
+        let mono = CapturedAudio::new(interleaved, 16_000, 8)
+            .unwrap()
+            .as_mono_16k()
+            .unwrap();
+        // After the first smoothing interval the live channel passes unattenuated
+        // (plain averaging returned one eighth, −18 dB).
+        let settled = &mono.samples()[8_000..];
+        assert!(settled
+            .iter()
+            .zip(&voice[8_000..])
+            .all(|(a, b)| (a - b).abs() < 1e-6));
+    }
+
+    #[test]
+    fn matched_stereo_and_mono_are_unchanged() {
+        let voice = tone(4_800, 48_000.0);
+        let mut mixer = ChannelMixer::new(2, 48_000);
+        for &s in &voice {
+            assert_eq!(mixer.mix(&[s, s]), s);
+        }
+        let mut mono = ChannelMixer::new(1, 48_000);
+        assert_eq!(mono.mix(&[0.25]), 0.25);
+        // Two different live microphones within 30 dB are still averaged.
+        let mut pair = ChannelMixer::new(2, 48_000);
+        let mixed: Vec<f32> = voice.iter().map(|&s| pair.mix(&[s, 0.5 * s])).collect();
+        assert!((mixed[4_000] - 0.75 * voice[4_000]).abs() < 1e-6);
+    }
+
+    #[test]
+    fn chunked_live_mixing_matches_the_completed_recording() {
+        let frames = 16_000;
+        let interleaved: Vec<f32> = (0..frames * 4)
+            .map(|i| match i % 4 {
+                0 => 0.2 * ((i / 4) as f32 * 0.05).sin(),
+                2 => 0.001 * ((i / 4) as f32 * 0.3).cos(),
+                _ => 0.0,
+            })
+            .collect();
+        let whole = CapturedAudio::new(interleaved.clone(), 16_000, 4)
+            .unwrap()
+            .as_mono_16k()
+            .unwrap();
+        let mut mixer = ChannelMixer::new(4, 16_000);
+        let chunked: Vec<f32> = interleaved
+            .chunks(4 * 320)
+            .flat_map(|chunk| {
+                chunk
+                    .chunks_exact(4)
+                    .map(|f| mixer.mix(f))
+                    .collect::<Vec<_>>()
+            })
+            .collect();
+        assert_eq!(whole.samples(), chunked.as_slice());
+    }
 
     #[test]
     fn arbitrary_packets_preserve_full_conversion_and_final_boundaries() {
