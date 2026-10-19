@@ -104,7 +104,7 @@ make check
 
 For builds, formatting, tests and release commands, see the
 [development guide](docs/development.md) and [CI documentation](docs/ci-and-releases.md).
-See the [architecture](docs/architecture.md) and [research](docs/research.md)
+See the [architecture](docs/architecture.md), [inference backend architecture](docs/inference-architecture.md) and [research](docs/research.md)
 guides for technical background.
 
 ## Contributing and support

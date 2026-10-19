@@ -236,7 +236,7 @@ Documentation should explain what future users and maintainers need to know afte
 | Change area | Typical canonical documentation |
 | --- | --- |
 | User-visible behavior | `docs/user-guide.md`, owning feature guide, relevant README overview/setup changes, and limitations |
-| Architecture or data flow | `docs/architecture.md`, `docs/internals.md`, and an ADR when required |
+| Architecture or data flow | `docs/architecture.md`, `docs/inference-architecture.md` (inference backend diagrams), `docs/internals.md`, and an ADR when required |
 | Model/runtime behavior | Model guide, inference-performance evidence, benchmark contract, and provenance |
 | Bug fix | Owning behavior page plus regression/validation evidence |
 | Testing or CI | `docs/development.md`, `docs/validation.md`, or `docs/ci-and-releases.md` |
