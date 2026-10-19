@@ -441,6 +441,18 @@ promotion publishes with `GITHUB_TOKEN`, which suppresses the `release`
 event, so the `verify` job does not fire on that path — verification was run
 manually for rc.2 and the automation gap is tracked in [issue #172](https://github.com/rahulsharmavishwakarma/vesper/issues/172).
 
+The first `v0.1.0` tag run (19 October 2026) failed at the release link of
+`vesper-desktop` with an undefined `___isPlatformVersionAtLeast`, referenced from
+ggml's Metal objects. `llama-cpp-sys-2` 0.1.160 stopped emitting the macOS
+`clang_rt.osx` link that 0.1.156 had, and ggml's Objective-C `@available` checks
+need that compiler-rt builtin. The desktop build script now links it from the
+active toolchain ([issue #203](https://github.com/rahulsharmavishwakarma/vesper/issues/203)).
+The routine macOS Check builds only the debug bundle and did not exercise this
+link, so a release-profile link regression is caught only by a tag run. It
+reproduces locally with `MACOSX_DEPLOYMENT_TARGET=14.0 cargo build --release -p
+vesper-desktop` (the MLX bundle minimum Tauri applies); a default-target local
+build links without the fix.
+
 The version is recorded in the release tag and app bundle. The asset name stays
 constant so a website download button can link to:
 
