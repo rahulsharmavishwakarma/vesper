@@ -70,3 +70,6 @@ docs/validation/whisper-2026-09-18.json:generic-api-key:22129
 # Public source/native-library SHA-256 provenance, not credentials.
 docs/validation/whisper-adapter-2026-09-18.json:generic-api-key:36348
 docs/validation/whisper-adapter-2026-09-18.json:generic-api-key:55066
+
+# Synthetic minisign-secret fixture in the no-private-keys guard test, not a key.
+scripts/no-private-keys.test.mjs:private-key:20

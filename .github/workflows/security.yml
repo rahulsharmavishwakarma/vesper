@@ -62,6 +62,10 @@ jobs:
         with:
           node-version-file: .nvmrc
           package-manager-cache: false
+      # Minisign secret keys and key/password filenames evade gitleaks and
+      # detect-private-key; the enrolled public key stays allowed (Refs #65).
+      - name: Refuse private signing keys in the tree
+        run: node scripts/check-no-private-keys.mjs
       - name: Audit locked npm dependencies including build tools
         run: |
           npm ci --ignore-scripts

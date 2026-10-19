@@ -20,6 +20,10 @@ repos:
       - id: check-merge-conflict
       - id: check-symlinks
       - id: detect-private-key
+        # The no-private-keys guard and its test quote synthetic fixtures by
+        # design. Real keys anywhere else are still refused by that guard
+        # (unit tested); these two files stay covered by gitleaks and trivy.
+        exclude: ^scripts/(check-no-private-keys|no-private-keys\.test)\.mjs$
       - id: check-toml
       - id: check-yaml
       - id: destroyed-symlinks
@@ -52,6 +56,11 @@ repos:
 
   - repo: local
     hooks:
+      - id: no-private-keys
+        name: Refuse private signing keys
+        entry: node scripts/check-no-private-keys.mjs
+        language: system
+        pass_filenames: true
       - id: vesper-fast-check
         name: Vesper Python locks, format, language lint, types and Node tests
         entry: make check-fast
