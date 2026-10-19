@@ -1,3 +1,4 @@
+use crate::llama_runtime::{AddBos, ModelText};
 use crate::{
     check_cancelled, native, require_file, rewrite_filename, worker_threads, InferenceError, Result,
 };
@@ -6,7 +7,7 @@ use llama_cpp_2::llama_backend::LlamaBackend;
 use llama_cpp_2::llama_batch::LlamaBatch;
 #[cfg(test)]
 use llama_cpp_2::model::params::LlamaModelParams;
-use llama_cpp_2::model::{AddBos, LlamaChatMessage, LlamaModel};
+use llama_cpp_2::model::{LlamaChatMessage, LlamaModel};
 use llama_cpp_2::sampling::LlamaSampler;
 use llama_cpp_2::token_type::LlamaTokenAttr;
 use llama_cpp_2::{

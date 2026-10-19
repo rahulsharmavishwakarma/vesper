@@ -31,7 +31,7 @@ tempfile = "3"
 uuid = { version = "1", features = ["v4", "serde"] }
 chrono = { version = "0.4", features = ["serde"] }
 sha2 = "0.10"
-rusqlite = { version = "0.37", features = ["bundled"] }
+rusqlite = { version = "0.40", features = ["bundled"] }
 vesper-core = { path = "crates/vesper-core" }
 vesper-audio = { path = "crates/vesper-audio" }
 vesper-inference = { path = "crates/vesper-inference" }

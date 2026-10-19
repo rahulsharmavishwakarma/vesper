@@ -9,11 +9,11 @@ publish.workspace = true
 [dependencies]
 vesper-core.workspace = true
 serde.workspace = true
-cpal = "0.16"
+cpal = "0.18"
 hound = "3.5"
-rubato = "0.16.2"
-rtrb = "0.3"
-symphonia = { version = "0.5.5", features = ["all"] }
+rubato = "5.0.1"
+rtrb = "0.4"
+symphonia = { version = "0.6.1", features = ["all"] }
 
 [dev-dependencies]
 tempfile.workspace = true

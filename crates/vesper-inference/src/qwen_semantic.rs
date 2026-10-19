@@ -26,7 +26,7 @@ impl Rewriter {
         let started = Instant::now();
         let mut report = SemanticAnalysisReport::empty(SemanticStatus::Failed);
         report.provenance = serde_json::json!({
-            "modelId":config.models.rewriter.id(), "runtime":"llama-cpp-2", "runtimeVersion":"0.1.156",
+            "modelId":config.models.rewriter.id(), "runtime":"llama-cpp-2", "runtimeVersion":"0.1.159",
             "runtimeRevision":config.text_adapter().runtime_revision, "initializedProvider":self.initialized_provider,
             "artifacts":vesper_models::selected(config).unwrap_or_default().into_iter().filter(|a| a.role == "rewriter").collect::<Vec<_>>(),
             "promptVersion":2, "freshContext":true, "threads":worker_threads(), "softDeadlineMs":2000

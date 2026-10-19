@@ -1,5 +1,6 @@
 //! LFM2.5 Audio ASR via pinned llama.cpp/mtmd. See ADR-0013 and issue #40.
 //! Frozen resident weights, fresh hybrid state for every completed-audio segment.
+use crate::llama_runtime::{AddBos, ModelText};
 use crate::{
     check_cancelled, llama_runtime, native, path_string, require_file, segmented_audio,
     worker_threads, InferenceError, Result, TranscriptionProgress,
@@ -8,7 +9,7 @@ use llama_cpp_2::{
     context::params::LlamaContextParams,
     llama_backend::LlamaBackend,
     llama_batch::LlamaBatch,
-    model::{AddBos, LlamaModel},
+    model::LlamaModel,
     mtmd::{mtmd_default_marker, MtmdBitmap, MtmdContext, MtmdContextParams, MtmdInputText},
     sampling::LlamaSampler,
     token::LlamaToken,
@@ -81,7 +82,8 @@ pub(crate) struct Metrics {
 pub(crate) struct Recognizer {
     // Declaration order is significant: mtmd retains the model vocabulary.
     // Drop the projector BEFORE the backbone. Contexts below are scoped locals.
-    projector: MtmdContext,
+    // llama-cpp-2 0.1.159 evaluates chunks through `&mut MtmdContext`.
+    projector: RefCell<MtmdContext>,
     model: LlamaModel,
     backend: &'static LlamaBackend,
     end_turn: LlamaToken,
@@ -192,7 +194,7 @@ impl Recognizer {
         };
         check_cancelled(cancelled)?;
         let recognizer = Self {
-            projector,
+            projector: RefCell::new(projector),
             model,
             backend,
             end_turn: *end_turn,
@@ -260,6 +262,7 @@ impl Recognizer {
             MtmdBitmap::from_audio_data(samples).map_err(|e| native("LFM audio input", e))?;
         let chunks = self
             .projector
+            .borrow()
             .tokenize(asr_prompt(), &[&bitmap])
             .map_err(|e| native("LFM audio frontend", e))?;
         self.metrics.borrow_mut().frontend_us += micros(started);
@@ -278,7 +281,14 @@ impl Recognizer {
         check_cancelled(cancelled)?;
         let started = Instant::now();
         let position = chunks
-            .eval_chunks(&self.projector, &context, 0, 0, BATCH_TOKENS as i32, true)
+            .eval_chunks(
+                &mut self.projector.borrow_mut(),
+                &mut context,
+                0,
+                0,
+                BATCH_TOKENS as i32,
+                true,
+            )
             .map_err(|e| native("LFM audio encode and prefill", e))?;
         // Fetching logits synchronizes evaluation. mtmd bypasses the Rust
         // initialized_logits bookkeeping: get_logits_ith would panic here.

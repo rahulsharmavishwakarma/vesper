@@ -1153,7 +1153,7 @@ pub fn provenance(config: &AppConfig) -> serde_json::Value {
         "asrRuntime": asr_runtime,
         "selectionError": preferred.as_ref().err().map(ToString::to_string),
         "selectionKind": "preferred-download; actual execution is recorded per request",
-        "rewriterRuntime": if config.cleanup_enabled { Some("llama-cpp-2 0.1.156") } else { None },
+        "rewriterRuntime": if config.cleanup_enabled { Some("llama-cpp-2 0.1.159") } else { None },
         "applicationVersion": env!("CARGO_PKG_VERSION")
     })
 }

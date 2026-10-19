@@ -68,7 +68,7 @@ def main():
                 "threads": 8,
                 "applicationRevision": (ROOT / "source-revision.txt").read_text().strip()
                 + "+frozen-source-snapshot",
-                "runtimeRevision": f"Sherpa1.13.8 {runtime['revision']}; build {runtime['buildId']}; NeMo-Speech.cpp0.1.0; llama-cpp-2 0.1.156",
+                "runtimeRevision": f"Sherpa1.13.8 {runtime['revision']}; build {runtime['buildId']}; NeMo-Speech.cpp0.1.0; llama-cpp-2 0.1.159",
                 "driver": "CPU; no accelerator driver",
                 "notes": "Frontend1thread; ASR8/Nemo4; fixed half-original blend; quality preprocessed separately; stream bounded observer and nominal-end Stop timestamp; no microphone/edge qualification",
             },
