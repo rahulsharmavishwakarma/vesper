@@ -7,15 +7,15 @@ dependencies = []
 
 [dependency-groups]
 dev = [
-    "pre-commit==4.6.1",
+    "pre-commit==4.6.2",
     "pip-audit==2.10.1",
-    "numpy==2.5.3",
+    "numpy==2.5.4",
     "soundfile==0.14.0",
-    "ruff==0.16.8",
+    "ruff==0.17.0",
     "shellcheck-py==0.11.0.1",
     "shfmt-py==4.2.0",
 ]
-benchmark = ["pyarrow==25.0.1"]
+benchmark = ["pyarrow==26.0.0"]
 
 [tool.uv]
 package = false
