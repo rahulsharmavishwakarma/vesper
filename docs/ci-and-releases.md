@@ -419,15 +419,17 @@ app plus DMG using Tauri's existing bundler, and stages both assets on a
 - `SHA256SUMS`, covering that DMG.
 
 Publication is a separate approval-gated step: the `promote` job runs only on
-explicit workflow dispatch with the tag, requires the `production` environment
-(an owner configures required reviewers under repository Settings →
-Environments), re-verifies tag/version agreement, refuses anything that is not
-a draft, and flips that exact draft to published without rebuilding. Publishing
-a release through GitHub's UI triggers only a read-only `verify` job (version
-agreement, asset presence, DMG checksum) — UI publication bypasses the approval
-gate, so the supported path is tag push followed by gated dispatch promotion.
-Draft/candidate and published/stable states stay distinct and observable in the
-workflow summaries and the release page.
+workflow dispatch with the tag, requires the `production` environment (an owner
+configures required reviewers under repository Settings → Environments),
+re-verifies tag/version agreement, refuses anything that is not a draft, and
+flips that exact draft to published without rebuilding. The draft job requests
+that dispatch automatically, so a run waits for approval instead of needing a
+manual command. The read-only `verify` job (version agreement, asset presence,
+DMG checksum) runs in the same promote run after publication. Publishing a
+release through GitHub's UI bypasses the approval gate and no longer starts
+`verify`; the supported path is the gated promote run. Draft/candidate and
+published/stable states stay distinct and observable in the workflow summaries
+and the release page.
 
 The `v0.1.0-rc.2` dry run (18 October 2026) surfaced three first-run defects,
 all fixed before publication: the desktop job never installed `uv` (now
@@ -436,10 +438,11 @@ fallback on Xcode 26.3 (see [issue #165](https://github.com/rahulsharmavishwakar
 and the promote state query used a nonexistent
 `prerelease` field (it is `isPrerelease`). An unpublished prerelease tag with
 no release attached may be moved to a fix commit rather than minting a new
-version; the move is recorded on the release-policy issue. Note that
-promotion publishes with `GITHUB_TOKEN`, which suppresses the `release`
-event, so the `verify` job does not fire on that path — verification was run
-manually for rc.2 and the automation gap is tracked in [issue #172](https://github.com/rahulsharmavishwakarma/vesper/issues/172).
+version; the move is recorded on the release-policy issue. Promotion
+publishes with `GITHUB_TOKEN`, which suppresses the `release` event, so `verify`
+could not listen for it; it now runs inside the promote run
+([issue #172](https://github.com/rahulsharmavishwakarma/vesper/issues/172)).
+Verification of rc.2 was run manually.
 
 The first `v0.1.0` tag run (19 October 2026) failed at the release link of
 `vesper-desktop` with an undefined `___isPlatformVersionAtLeast`, referenced from
@@ -515,7 +518,53 @@ Apple credentials. Intel Mac packaging is also outside the current target.
 Tauri's [DMG guidance](https://v2.tauri.app/distribute/dmg/) documents the standard
 app/Applications layout and the limits on customized icon positioning in CI.
 
-Release sequence:
+### Release bot ([issue #199](https://github.com/rahulsharmavishwakarma/vesper/issues/199))
+
+Status: implemented on a branch, **not yet exercised**. It needs the release
+GitHub App configured and a prerelease dry run before it replaces the manual
+sequence below.
+
+1. Run the **Prepare release** workflow with `bump` (`patch`, `minor`, `major`,
+   `prerelease`, or `release` to promote a candidate) or an explicit `version`.
+   `scripts/release-plan.mjs` computes the version and a changelog from commit
+   subjects since the last tag; `scripts/version.mjs set` updates every pin; the
+   bot opens a `release/vX.Y.Z` pull request titled `Release vX.Y.Z`.
+2. Review, run the normal checks and squash-merge it. The commit subject must
+   keep the `Release vX.Y.Z` prefix.
+3. The `tag` job re-checks versions, refuses an existing tag and pushes
+   `vX.Y.Z`, which starts the Release workflow and stages the draft.
+4. The draft job dispatches `promote`; approve the `production` deployment.
+   Verification follows in the same run.
+
+The bot authenticates as a GitHub App (repository variable `RELEASE_BOT_APP_ID`,
+secret `RELEASE_BOT_PRIVATE_KEY`) because pushes and pull requests made with
+`GITHUB_TOKEN` do not trigger workflows. Tokens are minted per run with only
+contents and pull-requests write. Limitations: the bot's tag is lightweight, not
+the GPG-signed annotated tag that [issue #62](https://github.com/rahulsharmavishwakarma/vesper/issues/62)
+describes; the changelog lists commit subjects, and the published release notes
+still come from GitHub's generated notes; nightly builds are out of scope.
+
+```mermaid
+sequenceDiagram
+    actor Maintainer
+    participant Prep as Prepare release (App token)
+    participant PR as Release PR
+    participant Main as main
+    participant Rel as Release workflow
+    participant Prod as production environment
+    Maintainer->>Prep: dispatch bump or version
+    Prep->>PR: set version, open release/vX.Y.Z
+    Maintainer->>PR: review checks, squash-merge
+    PR->>Main: "Release vX.Y.Z"
+    Main->>Prep: push event, tag job
+    Prep->>Rel: push tag vX.Y.Z (build, draft)
+    Rel->>Prod: dispatch promote, waits for approval
+    Maintainer->>Prod: approve
+    Prod->>Rel: publish draft, then verify
+    Note over Prep,Rel: Mismatched version, existing tag, or unmerged PR means no tag
+```
+
+### Manual release sequence (fallback)
 
 1. Run `make version-set VERSION=X.Y.Z` on a dedicated branch.
 2. Update release notes and canonical documentation.
@@ -523,12 +572,12 @@ Release sequence:
 4. Inspect/install-test the local DMG before approving the source version.
 5. Merge the reviewed changes and push the matching `vX.Y.Z` tag. This is a
    maintainer action, not something `make version-set` performs. The tag run
-   stages a draft candidate; it never publishes.
+   stages a draft candidate and requests a promote run; it never publishes.
 6. Wait for the Release workflow to pass and inspect the draft candidate and
    its checksums.
-7. Promote with explicit approval: `gh workflow run Release --ref main -f tag=vX.Y.Z`
-   (or the Actions UI), approve the `production` environment deployment, and
-   confirm the published assets and download links in the run summary.
+7. Approve the `production` deployment of the requested promote run (or start one
+   with `gh workflow run Release --ref main -f tag=vX.Y.Z`), and confirm the
+   published assets and download links in the run summary.
 8. Use the stable latest link on the launch site, or a version URL for a pinned download.
 
 Nightly builds stay expiring Actions artifacts and are never published releases
