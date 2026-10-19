@@ -78,7 +78,7 @@ def main():
         env.update(
             label="frontend-integration-2026-09-18",
             powerMode="See per-process powerAtStart; no sustained power or temperature telemetry",
-            runtimeRevision=f"sherpa-onnx1.13.8 {runtime['revision']}; build {runtime['buildId']}; NeMo-Speech.cpp0.1.0; llama-cpp-2 0.1.156",
+            runtimeRevision=f"sherpa-onnx1.13.8 {runtime['revision']}; build {runtime['buildId']}; NeMo-Speech.cpp0.1.0; llama-cpp-2 0.1.159",
             precision="Pinned Silero/DPDF ONNX; Cohere/Whisper INT8; Nemotron Q8_0; writer Q4_0",
             notes="Production manager; frontend1thread, Sherpa ASR<=8, NeMo4; no affinity; record competition and RSS; microphone/edge/word-aligned emission/power watts unmeasured; no endpoint-based Stop",
         )

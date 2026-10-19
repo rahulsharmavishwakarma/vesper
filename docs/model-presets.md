@@ -185,10 +185,10 @@ maps the four-language checkpoint to the selected transducer files. The
 provides the selected non-streaming export. These presets run through the app's
 existing CPU adapter and finalize completed recordings.
 
-Cleanup uses llama-cpp-2/llama-cpp-sys-2 0.1.156, bundling llama.cpp revision
-`e79e4bf660e19f2ad851e06c6913f7a8c5852621`. The
-[architecture table](https://github.com/ggml-org/llama.cpp/blob/e79e4bf660e19f2ad851e06c6913f7a8c5852621/src/llama-arch.cpp)
-and [template formatter](https://github.com/ggml-org/llama.cpp/blob/e79e4bf660e19f2ad851e06c6913f7a8c5852621/src/llama-chat.cpp)
+Cleanup uses llama-cpp-2 0.1.159 / llama-cpp-sys-2 0.1.160, bundling llama.cpp revision
+`d81235049384534c167caea52b85a694f6103d14`. The
+[architecture table](https://github.com/ggml-org/llama.cpp/blob/d81235049384534c167caea52b85a694f6103d14/src/llama-arch.cpp)
+and [template formatter](https://github.com/ggml-org/llama.cpp/blob/d81235049384534c167caea52b85a694f6103d14/src/llama-chat.cpp)
 support the Qwen2, Llama/SmolLM2, and Gemma3 paths used here. A small probe compiled
 that exact formatter and confirmed that the Hub-reported templates retain both
 the synthetic system instruction and user text. This checks prompt formatting;

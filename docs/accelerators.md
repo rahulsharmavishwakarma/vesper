@@ -29,7 +29,7 @@ while the fallback choices remain usable.
 
 ## Scope and implementation
 
-The existing `llama-cpp-2 = 0.1.156` dependency exposes
+The existing `llama-cpp-2 = 0.1.159` dependency exposes
 `list_llama_ggml_backend_devices()`. The app calls it once on a background worker
 and caches the result for the process lifetime. It maps MTL/CUDA/Vulkan/ROCm registry
 names to the existing preferences, retaining GPU/integrated-GPU records with a
@@ -94,7 +94,7 @@ Primary sources: binding revision
 [`63e549708237b16b39018288582655539e0a9d5b`](https://github.com/utilityai/llama-cpp-rs/blob/63e549708237b16b39018288582655539e0a9d5b/llama-cpp-2/src/lib.rs),
 its [backend initialization guard](https://github.com/utilityai/llama-cpp-rs/blob/63e549708237b16b39018288582655539e0a9d5b/llama-cpp-2/src/llama_backend.rs),
 and bundled llama.cpp revision
-[`e79e4bf660e19f2ad851e06c6913f7a8c5852621`](https://github.com/ggml-org/llama.cpp/blob/e79e4bf660e19f2ad851e06c6913f7a8c5852621/ggml/src/ggml-backend-reg.cpp).
+[`d81235049384534c167caea52b85a694f6103d14`](https://github.com/ggml-org/llama.cpp/blob/d81235049384534c167caea52b85a694f6103d14/ggml/src/ggml-backend-reg.cpp).
 
 ## Validation
 
