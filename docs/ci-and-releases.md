@@ -427,7 +427,10 @@ that dispatch automatically, so a run waits for approval instead of needing a
 manual command. The read-only `verify` job (version agreement, asset presence,
 DMG checksum) runs in the same promote run after publication. Publishing a
 release through GitHub's UI bypasses the approval gate and no longer starts
-`verify`; the supported path is the gated promote run. Draft/candidate and
+`verify`; the supported path is the gated promote run. A `guard` job at the
+start of the tag run fails fast when a public release already exists for the
+tag (the sign of a UI-created release), before any build time is spent; an
+existing draft, for example on a re-run, is allowed. Draft/candidate and
 published/stable states stay distinct and observable in the workflow summaries
 and the release page.
 
