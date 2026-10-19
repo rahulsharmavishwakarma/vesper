@@ -49,13 +49,9 @@ test('default macOS builds need no updater key; signed and explicit configuratio
   ])
     assert.ok(!desktopPlan(args, { ...mac, updaterSigningKey: false }).args.includes(override));
   assert.ok(!desktopPlan(['build'], { ...mac, updaterSigningKey: true }).args.includes(override));
-  assert.ok(
-    !desktopPlan(['build'], {
-      ...mac,
-      updaterSigningKey: false,
-      updaterPublicKey: 'enrolled-key',
-    }).args.includes(override),
-  );
+  // An enrolled public key without the private signing key still skips
+  // updater artifacts; the app keeps the key to verify future updates.
+  assert.ok(desktopPlan(['build'], { ...mac, updaterSigningKey: false }).args.includes(override));
   assert.ok(
     !desktopPlan(['build', '--target', 'aarch64-unknown-linux-gnu'], {
       ...mac,

@@ -95,3 +95,11 @@ test('does not treat other filesystem errors as missing cache directories', (t) 
   assert.equal(readlinkSync(cache), cache);
   assert.deepEqual(readdirSync(join(root, '.tooling')), ['swift-cache']);
 });
+
+test('resolves a linked .tooling folder to its canonical path', (t) => {
+  const shared = fixture(t);
+  const worktree = mkdtempSync(join(tmpdir(), 'mlx-directories-worktree-'));
+  t.after(() => rmSync(worktree, { recursive: true, force: true }));
+  symlinkSync(join(shared, '.tooling'), join(worktree, '.tooling'), 'dir');
+  assert.deepEqual(prepareMlxBuildDirectories(worktree), prepareMlxBuildDirectories(shared));
+});

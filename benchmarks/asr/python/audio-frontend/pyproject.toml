@@ -4,10 +4,10 @@ version = "0.0.0"
 description = "Isolated development probe; not part of the desktop runtime"
 requires-python = ">=3.12,<3.13"
 dependencies = [
-    "numpy==2.5.3",
+    "numpy==2.5.4",
     "soundfile==0.14.0",
-    "onnxruntime==1.30.0",
-    "ai-edge-litert==2.2.0",
+    "onnxruntime==1.31.0",
+    "ai-edge-litert==2.3.0",
 ]
 
 [tool.uv]
