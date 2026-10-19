@@ -158,3 +158,13 @@ For macOS, microphone capture needs the usage-description entry and consent; rel
 Handy is a useful MIT-licensed architecture reference and already supports post-processing; its Rust sources demonstrate capture, resampling and model lifecycle. Murmure is another relevant Parakeet/local-LLM precedent, with AGPL licensing. These are references for implementation decisions, not claims of original product functionality. Sources: [Handy](https://github.com/cjpais/Handy), [Handy dependencies](https://github.com/cjpais/Handy/blob/main/src-tauri/Cargo.toml), [Murmure](https://github.com/Kieirra/murmure).
 
 The next decisions requiring user preferences are the target OS, supported speech languages and whether live partial text is needed in version one. Hardware measurements and real dictation examples will determine performance limits.
+
+## Further research
+
+Focused research pages that are not part of the sequence above:
+
+- [Audio frontends for dictation quality](research-audio-quality.md)
+- [Automatic personalization from dictation usage](research-automatic-personalization.md)
+- [Personal dictation that improves with use](research-personal-dictation.md)
+- [VibeVoice variants, streaming contract, and CPU qualification](research-vibevoice.md)
+- [Whisper qualification and native integration](research-whisper.md)
