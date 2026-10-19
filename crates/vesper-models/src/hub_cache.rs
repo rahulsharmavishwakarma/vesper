@@ -308,6 +308,8 @@ impl HubCache {
                     download_artifact(blob.parent().unwrap(), artifact, http, cancelled, report)?;
                 if etag.len() == 40 {
                     let mut file = File::open(staging.path())?;
+                    // sha1 0.11 implements digest 0.11; sha2 0.10 keeps digest 0.10.
+                    use sha1::Digest as _;
                     let mut hash = sha1::Sha1::new();
                     hash.update(format!("blob {}\0", artifact.size_bytes));
                     let mut buffer = [0; 128 * 1024];
@@ -319,7 +321,13 @@ impl HubCache {
                         }
                         hash.update(&buffer[..count]);
                     }
-                    if format!("{:x}", hash.finalize()) != etag {
+                    if hash
+                        .finalize()
+                        .iter()
+                        .map(|b| format!("{b:02x}"))
+                        .collect::<String>()
+                        != etag
+                    {
                         return Err(ModelError::Integrity(artifact.name.clone()));
                     }
                 }

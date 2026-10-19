@@ -275,11 +275,16 @@ fn git_etag_uses_git_blob_hash_and_rejects_incorrect_metadata() {
             root: temp.path().join("hub"),
         };
         let a = fixture();
+        // sha1 0.11 implements digest 0.11; sha2 0.10 keeps digest 0.10.
+        use sha1::Digest as _;
         let mut git = sha1::Sha1::new();
         git.update(format!("blob {}\0", DATA.len()));
         git.update(DATA);
         let etag = if valid {
-            format!("{:x}", git.finalize())
+            git.finalize()
+                .iter()
+                .map(|b| format!("{b:02x}"))
+                .collect::<String>()
         } else {
             "0".repeat(40)
         };

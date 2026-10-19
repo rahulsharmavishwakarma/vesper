@@ -21,7 +21,7 @@ impl DatasetStore {
             "DELETE FROM semantic_shadow WHERE created_at <= ?1",
             [chrono::Utc::now().timestamp() - RETENTION_SECONDS],
         )?;
-        self.connection.execute("DELETE FROM semantic_shadow WHERE result_id IN (SELECT result_id FROM semantic_shadow ORDER BY created_at DESC, rowid DESC LIMIT -1 OFFSET ?1)", [MAX_PROPOSALS])?;
+        self.connection.execute("DELETE FROM semantic_shadow WHERE result_id IN (SELECT result_id FROM semantic_shadow ORDER BY created_at DESC, rowid DESC LIMIT -1 OFFSET ?1)", [MAX_PROPOSALS as i64])?;
         Ok(())
     }
 
