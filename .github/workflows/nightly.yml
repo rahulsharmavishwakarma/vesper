@@ -155,7 +155,7 @@ jobs:
           mkdir assets
           cp dmg/vesper-macos-arm64.dmg assets/vesper-nightly-macos-arm64.dmg
           (cd assets && sha256sum -- * > SHA256SUMS)
-          notes="Unsigned nightly build of main at ${SHA}, version ${VERSION}. Installs beside the stable app with its own settings and models. Not for production use; the Gatekeeper steps in the user guide apply."
+          notes="Unsigned nightly build of main at ${SHA}, version ${VERSION}. Installs beside the stable app with its own settings and models. Not for production use. It is unsigned, so macOS may require opening it with right-click, then Open."
           # Only the rolling nightly release and tag are replaced, never a
           # vX.Y.Z tag; a release that is not a prerelease is never touched.
           if existing="$(gh release view nightly --repo "$GITHUB_REPOSITORY" --json isPrerelease --jq .isPrerelease 2>/dev/null)"; then
