@@ -448,6 +448,12 @@ The generated library is `libVesperMLX.dylib`; its real source, patch and
 binary hashes are checked before packaging. `VESPER_MLX_BUILD_DIRECTORY` is
 injected by the Rust build script, not a user override.
 
+`scripts/mlx-build-directories.mjs` resolves `.tooling` to its real path, so a
+worktree whose `.tooling` links to the shared folder records the same absolute
+Swift Build paths as the main checkout. Otherwise the next build from the other
+path prints many harmless `Stale file ... outside of the allowed root paths`
+warnings (once).
+
 SwiftPM's native build system (the default before Swift 6.4, including CI's
 Xcode 26) does not compile Metal shaders, as the mlx-swift README notes;
 upstream mlx-swift and mlx-audio-swift CI use `xcodebuild` on macOS instead.
