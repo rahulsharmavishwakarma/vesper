@@ -26,6 +26,7 @@
     visible = false,
   }: { fallbackFocus?: () => void; inline?: boolean; visible?: boolean } = $props();
   const headingId = $derived(inline ? 'inline-about-heading' : 'about-heading');
+  const prefId = $derived(inline ? 'inline-about' : 'about');
   $effect(() => {
     if (!inline) return;
     identityMotion = visible;
@@ -41,11 +42,11 @@
   let loading = $state(false);
   let error = $state<string | null>(null);
   let updates = $state<UpdateState>(updateManager.state);
-  // Check on first view so the panel always shows a live result; the quiet
-  // startup check usually already settled this before the user arrives.
+  // Check on first view so the panel shows a live result (unless automatic
+  // checks are off); the quiet startup check usually settled this already.
   function ensureChecked() {
     if (updateBackend.enabled && updateManager.state.status === 'idle') {
-      void updateManager.check();
+      void updateManager.automaticCheck();
     }
   }
   $effect(() => {
@@ -125,6 +126,16 @@
               : updateManager.check()),
           title: updates.errorMessage ?? undefined,
         };
+      case 'idle':
+        if (!updates.autoCheck) {
+          return {
+            kind: 'ok',
+            icon: 'refresh',
+            label: 'Check for updates',
+            action: () => void updateManager.check(),
+          };
+        }
+        return { kind: 'busy', icon: 'refresh', label: 'Checking…', spin: true };
       default:
         return { kind: 'busy', icon: 'refresh', label: 'Checking…', spin: true };
     }
@@ -219,7 +230,7 @@
     </div>
     {#if info}
       <div class="update" role="group" aria-label="Software updates">
-        {#key `${updateBackend.enabled}:${updates.status}:${updates.errorPhase}`}
+        {#key `${updateBackend.enabled}:${updates.status}:${updates.errorPhase}:${updates.autoCheck}`}
           {#if pill.kind === 'static'}
             <span class="pill" data-kind="static" title={pill.title}>{@render pillBody(pill)}</span>
           {:else}
@@ -240,6 +251,33 @@
       </div>
     {/if}
   </div>
+  {#if info && updateBackend.enabled}
+    <div class="switches">
+      <div class="setting-toggle">
+        <label class="checkbox-field" for="{prefId}-auto-check"
+          ><input
+            id="{prefId}-auto-check"
+            type="checkbox"
+            checked={updates.autoCheck}
+            onchange={(event) =>
+              updateManager.setPreferences({ autoCheck: event.currentTarget.checked })}
+          /><span><Icon name="refresh" />Check for updates automatically</span></label
+        >
+      </div>
+      <div class="setting-toggle">
+        <label class="checkbox-field" for="{prefId}-auto-install"
+          ><input
+            id="{prefId}-auto-install"
+            type="checkbox"
+            checked={updates.autoInstall}
+            disabled={!updates.autoCheck}
+            onchange={(event) =>
+              updateManager.setPreferences({ autoInstall: event.currentTarget.checked })}
+          /><span><Icon name="download" />Download and install automatically</span></label
+        >
+      </div>
+    </div>
+  {/if}
   {#if loading}
     <p class="metadata-loading" role="status">Loading app information…</p>
   {:else if error}
@@ -356,6 +394,35 @@
     width: 16px;
     height: 16px;
     color: var(--color-accent);
+  }
+  .switches {
+    margin-top: var(--space-4);
+    border-top: 1px solid var(--color-line);
+  }
+  .switches :global(.setting-toggle .checkbox-field) {
+    flex-direction: row;
+    width: 100%;
+  }
+  .switches :global(.setting-toggle .checkbox-field input[type='checkbox']) {
+    order: 3;
+    margin-left: auto;
+  }
+  .switches :global(.setting-toggle .checkbox-field > span) {
+    order: 1;
+  }
+  .switches :global(.checkbox-field span) {
+    display: inline-flex;
+    align-items: center;
+    gap: var(--space-3);
+    transition: opacity var(--duration-state) var(--ease-out);
+  }
+  .switches :global(.checkbox-field .icon) {
+    width: 18px;
+    height: 18px;
+    color: var(--color-accent);
+  }
+  .switches :global(input:disabled ~ span) {
+    opacity: 0.45;
   }
   .metadata-loading {
     margin-top: var(--space-6);

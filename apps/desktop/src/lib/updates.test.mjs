@@ -147,3 +147,90 @@ test('operation stages get plain-language labels', () => {
   assert.equal(busyLabel('installing'), 'A model download is in progress');
   assert.equal(busyLabel('mystery'), 'Another operation is in progress');
 });
+
+const memoryStore = (initial = null) => {
+  let saved = initial;
+  return {
+    saves: [],
+    load: () => saved,
+    save(preferences) {
+      saved = preferences;
+      this.saves.push(preferences);
+    },
+  };
+};
+
+test('preferences default to check on, install off, and normalize stored values', () => {
+  const fresh = new UpdateManager(fakeBackend());
+  assert.equal(fresh.state.autoCheck, true);
+  assert.equal(fresh.state.autoInstall, false);
+  const stored = new UpdateManager(
+    fakeBackend(),
+    memoryStore({ autoCheck: false, autoInstall: true }),
+  );
+  assert.equal(stored.state.autoCheck, false);
+  assert.equal(stored.state.autoInstall, false, 'install needs automatic checks');
+  const junk = new UpdateManager(fakeBackend(), memoryStore({ autoCheck: 'yes' }));
+  assert.equal(junk.state.autoCheck, true);
+});
+
+test('setPreferences persists, notifies, and turning checks off turns install off', () => {
+  const store = memoryStore();
+  const updates = new UpdateManager(fakeBackend(), store);
+  const seen = [];
+  updates.subscribe((state) => seen.push([state.autoCheck, state.autoInstall]));
+  updates.setPreferences({ autoInstall: true });
+  assert.deepEqual(store.saves.at(-1), { autoCheck: true, autoInstall: true });
+  updates.setPreferences({ autoCheck: false });
+  assert.deepEqual(store.saves.at(-1), { autoCheck: false, autoInstall: false });
+  assert.deepEqual(seen, [
+    [true, true],
+    [false, false],
+  ]);
+});
+
+test('automatic check honors its preference while a manual check still works', async () => {
+  const backend = fakeBackend();
+  const updates = new UpdateManager(backend, memoryStore({ autoCheck: false }));
+  await updates.automaticCheck();
+  assert.deepEqual(backend.calls, []);
+  assert.equal(updates.state.status, 'idle');
+  await updates.check();
+  assert.deepEqual(backend.calls, ['check']);
+  assert.equal(updates.state.status, 'available');
+  const on = fakeBackend();
+  await new UpdateManager(on).automaticCheck();
+  assert.deepEqual(on.calls, ['check']);
+});
+
+test('automatic install downloads and installs a found release but never restarts', async () => {
+  const backend = fakeBackend();
+  const updates = new UpdateManager(backend, memoryStore({ autoCheck: true, autoInstall: true }));
+  await updates.automaticCheck();
+  assert.deepEqual(backend.calls, ['check', 'download', 'install']);
+  assert.equal(updates.state.status, 'ready');
+  assert.ok(!backend.calls.includes('relaunch'));
+});
+
+test('automatic install waits for active work and is retried by the next check', async () => {
+  const backend = fakeBackend({ busy: { busy: true, stage: 'recording' } });
+  const updates = new UpdateManager(backend, memoryStore({ autoCheck: true, autoInstall: true }));
+  await updates.automaticCheck();
+  assert.deepEqual(backend.calls, ['check']);
+  assert.equal(updates.state.status, 'available');
+  assert.match(updates.state.blockedReason, /Recording is in progress/);
+  backend.busy = { busy: false, stage: '' };
+  await updates.automaticCheck();
+  assert.equal(updates.state.status, 'ready');
+});
+
+test('enabling automatic install installs a release that is already waiting', async () => {
+  const backend = fakeBackend();
+  const updates = new UpdateManager(backend, memoryStore());
+  await updates.check();
+  assert.equal(updates.state.status, 'available');
+  updates.setPreferences({ autoInstall: true });
+  await new Promise((resolve) => setTimeout(resolve, 0));
+  assert.equal(updates.state.status, 'ready');
+  assert.deepEqual(backend.calls, ['check', 'download', 'install']);
+});

@@ -246,3 +246,62 @@ test('Granted paste access shows the Ember ready status', async ({ page }) => {
   await expect(state.getByRole('button', { name: 'Allow access' })).toHaveCount(0);
   await expect(state.getByRole('button', { name: 'Check access' })).toHaveCount(0);
 });
+
+test('About update preferences persist, gate install and skip the automatic check when off', async ({
+  page,
+}) => {
+  await page.addInitScript(() => {
+    window.isTauri = true;
+    window.updaterChecks = 0;
+    let real;
+    const internals = {};
+    Object.defineProperty(internals, 'invoke', {
+      configurable: true,
+      get: () => async (command, args, options) => {
+        if (command === 'plugin:updater|check') {
+          window.updaterChecks += 1;
+          return null;
+        }
+        return real(command, args, options);
+      },
+      set: (fn) => {
+        real = fn;
+      },
+    });
+    Object.defineProperty(window, '__TAURI_INTERNALS__', {
+      configurable: true,
+      get: () => internals,
+      set: (value) => {
+        if (value?.invoke) real = value.invoke;
+        Object.assign(internals, { ...value, invoke: undefined });
+      },
+    });
+  });
+  const openAbout = async () => {
+    await openSettings(page);
+    await section(page, 'About').click();
+  };
+  const check = () => page.locator('#inline-about-auto-check');
+  const install = () => page.locator('#inline-about-auto-install');
+  await openAbout();
+  await expect(check()).toBeChecked();
+  await expect(install()).not.toBeChecked();
+  await expect(page.locator('.about-inline .pill .lab.rest')).toHaveText('Up to date');
+  await expect.poll(() => page.evaluate(() => window.updaterChecks)).toBeGreaterThan(0);
+
+  await page.locator('label[for="inline-about-auto-install"]').click();
+  await expect(install()).toBeChecked();
+  await page.locator('label[for="inline-about-auto-check"]').click();
+  await expect(check()).not.toBeChecked();
+  await expect(install()).not.toBeChecked();
+  await expect(install()).toBeDisabled();
+
+  await openAbout();
+  await expect(check()).not.toBeChecked();
+  await expect(page.locator('.about-inline .pill .lab.rest')).toHaveText('Check for updates');
+  await page.waitForTimeout(500);
+  expect(await page.evaluate(() => window.updaterChecks)).toBe(0);
+  await page.locator('.about-inline .pill').click();
+  await expect(page.locator('.about-inline .pill .lab.rest')).toHaveText('Up to date');
+  expect(await page.evaluate(() => window.updaterChecks)).toBe(1);
+});

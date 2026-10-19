@@ -278,9 +278,13 @@ spin, arrow loop, flash and fills but keeps every label and state.
 
 The earlier manual-download link was removed: it was the only unstyled `<a>`
 (raw browser blue and underline) and the in-app updater is the supported path.
-Automatic check/install switches were designed in the study but are a proposal
-pending owner approval, since they need a saved setting and a background install
-that waits for active work; they are not implemented.
+Two switch rows sit under the version, each with its `Icon.svelte` glyph (`refresh`,
+`download`) and the switch on the right using the shared switch skin: **Check for
+updates automatically** (default on) and **Download and install automatically**
+(default off, disabled and dimmed while checking is off). They are hidden when the
+build has no updater. Installing automatically never restarts the app and reuses
+`downloadAndInstall`'s signature check and wait for active work (issue #195).
+With checking off, the idle pill becomes a manual **Check for updates** action.
 
 ## Verification
 

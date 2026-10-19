@@ -624,6 +624,11 @@ installation. Updater signatures and [Apple distribution signing](https://v2.tau
 have different purposes. Publish both formats from the same qualified app.
 Use immutable version-specific archive URLs, an HTTPS feed, and separate stable
 and beta routes. Do not enable automatic checks before a trusted release exists.
+The About switches (issue #195) store two device-local preferences,
+`autoCheck` (default on: startup and first-About-view checks) and `autoInstall`
+(default off, requires `autoCheck`), under the `vesper.updatePreferences`
+`localStorage` key; they are not part of the settings file. Automatic install calls
+the same download-verify-install path and never relaunches the app.
 
 The official updater **v2.11.0** source establishes these API limits; this is
 upstream source evidence, not a tested project integration or a dependency choice:

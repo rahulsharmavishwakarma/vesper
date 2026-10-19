@@ -84,7 +84,18 @@ downloading a model, and it never force-restarts; the reason appears below the
 pill. If a check, download or install fails, the pill shows **Couldn't check**,
 **Download failed**, **Install failed** or **Restart failed**; hover it for
 **Retry**. In a build without an enrolled updater it reads **Updates
-unavailable**. Model downloads continue to be managed separately in **Models**.
+unavailable** and the switches below are hidden. Model downloads continue to be
+managed separately in **Models**.
+
+Two switches under the version control the automation. **Check for updates
+automatically** (on by default) makes the startup check and the check when About
+first opens; turn it off and the pill offers **Check for updates** instead.
+**Download and install automatically** (off by default, and unavailable while
+checking is off) downloads and installs a release as soon as one is found, using
+the same signature check and the same wait for active work; it never restarts
+for you, so the pill ends at **Restart to update**. If work is in progress the
+install waits and is retried at the next check. Both choices are remembered on
+this device.
 
 Every update package is signature-checked against Vesper's enrolled update
 key before it installs; a package with a missing, corrupt, or wrong-key

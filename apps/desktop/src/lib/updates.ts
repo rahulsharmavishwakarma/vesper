@@ -40,9 +40,44 @@ export interface UpdateState {
   errorPhase: 'check' | 'download' | 'install' | 'restart' | null;
   errorMessage: string | null;
   blockedReason: string | null;
+  /** Check at startup and when About opens (default on). */
+  autoCheck: boolean;
+  /** Download and install a found release without a click (default off). */
+  autoInstall: boolean;
 }
 
-export function initialUpdateState(): UpdateState {
+export interface UpdatePreferences {
+  autoCheck: boolean;
+  autoInstall: boolean;
+}
+
+/** Where the two preferences persist; injected so the manager stays pure. */
+export interface UpdatePreferenceStore {
+  load(): Partial<UpdatePreferences> | null;
+  save(preferences: UpdatePreferences): void;
+}
+
+export const DEFAULT_UPDATE_PREFERENCES: UpdatePreferences = {
+  autoCheck: true,
+  autoInstall: false,
+};
+
+/** Installing automatically is meaningless without checking automatically. */
+export function normalizeUpdatePreferences(
+  value: Partial<UpdatePreferences> | null | undefined,
+): UpdatePreferences {
+  const autoCheck =
+    typeof value?.autoCheck === 'boolean' ? value.autoCheck : DEFAULT_UPDATE_PREFERENCES.autoCheck;
+  const autoInstall =
+    typeof value?.autoInstall === 'boolean'
+      ? value.autoInstall
+      : DEFAULT_UPDATE_PREFERENCES.autoInstall;
+  return { autoCheck, autoInstall: autoCheck && autoInstall };
+}
+
+export function initialUpdateState(
+  preferences: UpdatePreferences = DEFAULT_UPDATE_PREFERENCES,
+): UpdateState {
   return {
     status: 'idle',
     available: null,
@@ -52,6 +87,8 @@ export function initialUpdateState(): UpdateState {
     errorPhase: null,
     errorMessage: null,
     blockedReason: null,
+    autoCheck: preferences.autoCheck,
+    autoInstall: preferences.autoInstall,
   };
 }
 
@@ -74,13 +111,34 @@ export function busyLabel(stage: string): string {
 }
 
 export class UpdateManager {
-  state: UpdateState = initialUpdateState();
+  state: UpdateState;
   private listeners = new Set<(state: UpdateState) => void>();
   private inFlight = false;
   private backend: UpdateBackend;
+  private store: UpdatePreferenceStore | null;
 
-  constructor(backend: UpdateBackend) {
+  constructor(backend: UpdateBackend, store: UpdatePreferenceStore | null = null) {
     this.backend = backend;
+    this.store = store;
+    this.state = initialUpdateState(normalizeUpdatePreferences(store?.load()));
+  }
+
+  /** Change either preference; persists, notifies, and installs a waiting release when enabled. */
+  setPreferences(change: Partial<UpdatePreferences>): void {
+    const next = normalizeUpdatePreferences({
+      autoCheck: this.state.autoCheck,
+      autoInstall: this.state.autoInstall,
+      ...change,
+    });
+    this.store?.save(next);
+    this.set(next);
+    if (next.autoInstall && this.state.status === 'available') void this.downloadAndInstall();
+  }
+
+  /** The quiet startup / first-view check, honoring the automatic-check preference. */
+  async automaticCheck(): Promise<void> {
+    if (!this.state.autoCheck) return;
+    await this.check();
   }
 
   subscribe(listener: (state: UpdateState) => void): () => void {
@@ -106,12 +164,14 @@ export class UpdateManager {
       return;
     }
     this.inFlight = true;
+    let install = false;
     this.set({ status: 'checking', errorPhase: null, errorMessage: null, blockedReason: null });
     try {
       const update = await this.backend.check();
       const checkedAt = new Date().toISOString();
       if (update) {
         this.set({ status: 'available', available: update, lastCheckedAt: checkedAt });
+        install = this.state.autoInstall;
       } else {
         this.set({ status: 'current', available: null, lastCheckedAt: checkedAt });
       }
@@ -124,6 +184,7 @@ export class UpdateManager {
     } finally {
       this.inFlight = false;
     }
+    if (install) await this.downloadAndInstall();
   }
 
   async downloadAndInstall(): Promise<void> {
@@ -206,5 +267,5 @@ function describeError(error: unknown): string {
   if (/offline|network|fetch|connect/i.test(message)) return 'Check your connection and try again.';
   if (/signature|verify/i.test(message))
     return 'The download could not be verified, so nothing was installed.';
-  return 'You can try again, or install the update manually from the download page.';
+  return 'You can try again.';
 }
