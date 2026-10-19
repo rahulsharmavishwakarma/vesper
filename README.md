@@ -61,7 +61,7 @@ Default shortcuts while the app is running:
 | Hold to talk | `⌥ Shift D` |
 | Start / stop recording | `⌘ Shift Space` |
 
-Change these in **Settings → Quick capture**. Pasting into the original text
+Change these in **Settings → Shortcuts**. Pasting into the original text
 field is optional and requires macOS Accessibility permission; Copy remains
 available. See [quick capture and permissions](docs/user-guide.md#quick-capture).
 
@@ -83,7 +83,7 @@ The app uses Rust, Tauri, Svelte and TypeScript. Install the
 
 ```sh
 git clone https://github.com/rahulsharmavishwakarma/vesper.git
-cd transcribe
+cd vesper
 make setup
 make dev
 ```
@@ -92,7 +92,7 @@ Repository access is required while the project is private. Model downloads
 happen separately in the app. The native app does not require Python;
 contributor checks use Python 3.12 or newer.
 
-The repository URL still uses `transcribe` until the repository is renamed.
+The GitHub repository is named `vesper`; a local checkout directory may have any name.
 The app and project-owned packages use Vesper; see
 [product naming and compatibility](docs/development.md#product-name-and-compatibility).
 

@@ -4,7 +4,7 @@
 # Field names and values match the core configuration's JSON schema.
 schemaVersion = 1
 cleanupEnabled = true
-language = "en" # Cohere requires en or fr. Auto/hi require another compatible ASR.
+language = "en" # Cohere supports 14 explicit languages. Auto/hi require another compatible ASR.
 computeBackend = "auto" # auto, cpu, metal, cuda, vulkan, or rocm
 
 # Models always resolve to the default directory; there is no folder override.

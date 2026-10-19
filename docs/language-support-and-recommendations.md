@@ -129,7 +129,7 @@ Coverage remains narrower when filtered by language: Nemotron and Qwen3-ASR have
 
 | User need | Candidate models before benchmarking | Required benchmark lane | Current recommendation state |
 | --- | --- | --- | --- |
-| US/general English | All five built-ins plus the three ASR profiles, subject to their picker restrictions | `en-US`; explicit English and, where supported, Automatic kept separate | All eight current choices have one comparable explicit-English CPU screen; the small reused pack does not establish a broad or cross-device winner |
+| US/general English | All seven built-ins plus the three ASR profiles, subject to their picker restrictions | `en-US`; explicit English and, where supported, Automatic kept separate | All eight current choices have one comparable explicit-English CPU screen; the small reused pack does not establish a broad or cross-device winner |
 | Indian English | Same English-compatible candidates | `en-IN`, kept separate from `en-US` | A 48-recording Svarah CPU screen measured Nemotron and Cohere; it belongs to a personalization experiment envelope and is excluded from automatic base-model recommendation aggregation |
 | Hindi | Nemotron and Qwen3-ASR | `hi-IN`; explicit Hindi and Automatic separate | Both have local CPU screening; broader device/noise coverage remains |
 | Hinglish/code switching | Qwen3-ASR advertises code switching; Nemotron is retained as an Automatic Hindi/English research comparator but its capability flag does not claim code switching | `hi+en`, mixed-script scoring plus qualitative review | No qualified model under the current phase-one quality ceiling |
@@ -173,7 +173,7 @@ Installation must remain explicit. A recommendation may explain the expected dow
 
 - Run a clean base-model Indian-English matrix across valid models; retain the existing 48-recording Svarah personalization screen as separate evidence.
 - Add a held-out French pack and comparable explicit/Automatic runs.
-- Run all five built-ins and three profiles on every compatible CPU lane.
+- Run all seven built-ins and three profiles on every compatible CPU lane.
 - Qualify Metal, CUDA, Vulkan, and the AMD application profile on named hardware without pooling them with CPU.
 - Add representative noise, silence, accents, long-form, cancellation/reset, memory, power, and sustained-thermal cases.
 - Keep live Nemotron measurements separate from completed-audio models and report first partial, endpoint/stop-to-final, partial stability, queue drops, and final accepted-text latency.

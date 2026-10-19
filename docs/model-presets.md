@@ -38,7 +38,7 @@ every capability of an upstream architecture or checkpoint.
 | Qwen3-ASR 0.6B                                                    | Yes                  | Native MLX drafts for English/Metal; buffered CPU drafts; completed-audio final |
 | Liquid LFM2.5 Audio 1.5B                                          | Yes                  | Buffered drafts through its current CPU/GPU runtime                             |
 | Parakeet TDT v2, Parakeet Unified, FastConformer European presets | Yes                  | Buffered drafts with the selected transducer export                             |
-| Whisper Small / Turbo (not in the desktop picker)                 | Yes                  | Buffered drafts; catalog quality restrictions remain                            |
+| Whisper Small / Turbo                                             | Yes                  | Buffered drafts; English/French only; quality gates failed (see language guide)  |
 | Imported custom ASR profiles                                      | Yes                  | Buffered drafts for compatible validated transducer profiles                    |
 
 The common live interface selects native sessions or buffered previews after

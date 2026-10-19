@@ -34,6 +34,6 @@ independently of this repository.
 ## Fonts and native runtimes
 
 Bundled fonts and the pinned native runtimes (sherpa-onnx, NeMo speech builds)
-follow their own licenses. The tracked `inter.ttf` ships with unverified terms
+follow their own licenses. The tracked `apps/desktop/src/assets/bricolage-grotesque.ttf` ships with terms that are not yet verified
 and must be resolved before the repository goes public
 ([issue #127](https://github.com/rahulsharmavishwakarma/vesper/issues/127)).
