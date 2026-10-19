@@ -72,20 +72,28 @@ const STREAM_QUEUE_CHUNKS: usize = 32;
 // Leave room for the WAV header within the existing 512 MiB archival limit.
 const CAPTURE_BUFFER_SAMPLES: usize = (512 * 1024 * 1024 - 4096) / std::mem::size_of::<f32>();
 
+/// The device's human-readable name. cpal 0.18 replaced `Device::name` with
+/// `description()`; on macOS both read the same CoreAudio device name, so
+/// stored microphone selections keep matching.
+fn device_name(device: &cpal::Device) -> std::result::Result<String, cpal::Error> {
+    device
+        .description()
+        .map(|description| description.name().to_owned())
+}
+
 pub fn list_input_devices() -> Result<Vec<InputDevice>> {
     let host = cpal::default_host();
     let default_name = host
         .default_input_device()
-        .and_then(|device| device.name().ok());
+        .and_then(|device| device_name(&device).ok());
     let devices = host
         .input_devices()
         .map_err(|err| audio_error("microphone", format!("cannot list input devices: {err}")))?;
     devices
         .enumerate()
         .map(|(index, device)| {
-            let name = device
-                .name()
-                .map_err(|err| audio_error("microphone", err.to_string()))?;
+            let name =
+                device_name(&device).map_err(|err| audio_error("microphone", err.to_string()))?;
             Ok(InputDevice {
                 id: device_id(index, &name),
                 is_default: default_name.as_ref() == Some(&name),
@@ -566,7 +574,7 @@ fn start_session(
             .map_err(|err| audio_error("microphone", err.to_string()))?
             .enumerate()
             .find_map(|(index, device)| {
-                let name = device.name().ok()?;
+                let name = device_name(&device).ok()?;
                 (device_id(index, &name) == selected).then_some(device)
             })
             .ok_or_else(|| {
@@ -585,8 +593,8 @@ fn start_session(
             format!("cannot open microphone; check input device and microphone permission: {err}"),
         )
     })?;
-    let config: cpal::StreamConfig = supported.clone().into();
-    let rate = config.sample_rate.0;
+    let config: cpal::StreamConfig = supported.into();
+    let rate = config.sample_rate;
     let channels = config.channels;
     validate_format(rate, usize::from(channels))?;
     let max_samples = if max_seconds == 0 {
@@ -737,10 +745,10 @@ where
 {
     let callback_state = Arc::clone(state);
     let error_state = Arc::clone(state);
-    let mut meter = RmsMeter::new(config.sample_rate.0, config.channels);
+    let mut meter = RmsMeter::new(config.sample_rate, config.channels);
     device
         .build_input_stream(
-            config,
+            *config,
             move |data: &[T], _: &cpal::InputCallbackInfo| {
                 capture_samples(
                     data,

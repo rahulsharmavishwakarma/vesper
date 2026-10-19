@@ -1,8 +1,11 @@
 use std::{fs::File, io::ErrorKind, path::Path};
 
 use symphonia::core::{
-    audio::SampleBuffer, codecs::DecoderOptions, errors::Error as DecodeError,
-    formats::FormatOptions, io::MediaSourceStream, meta::MetadataOptions, probe::Hint,
+    codecs::audio::AudioDecoderOptions,
+    errors::Error as DecodeError,
+    formats::{probe::Hint, FormatOptions, TrackType},
+    io::MediaSourceStream,
+    meta::MetadataOptions,
 };
 use vesper_core::Result;
 
@@ -36,45 +39,52 @@ pub fn decode_file(path: impl AsRef<Path>, max_seconds: u32) -> Result<MonoPcm> 
         hint.with_extension(extension);
     }
     let source = MediaSourceStream::new(Box::new(file), Default::default());
-    let options = FormatOptions {
-        enable_gapless: true,
-        ..Default::default()
-    };
-    let probed = symphonia::default::get_probe()
-        .format(&hint, source, &options, &MetadataOptions::default())
+    let mut format = symphonia::default::get_probe()
+        .probe(
+            &hint,
+            source,
+            FormatOptions::default(),
+            MetadataOptions::default(),
+        )
         .map_err(|err| {
             audio_error(
                 "audio decoding",
                 format!("cannot open this audio format: {err}"),
             )
         })?;
-    let mut format = probed.format;
+    // Gapless trimming moved from the format to the decoder options in
+    // symphonia 0.6 (enabled by default); keep it explicit.
+    let options = AudioDecoderOptions::default().gapless(true);
     // MP4/WebM can place a video track first. Prefer the container default, then
     // the first track for which an audio decoder actually exists.
-    let (track_id, mut decoder) = format.default_track().into_iter()
+    let (track_id, mut decoder) = format.default_track(TrackType::Audio).into_iter()
         .chain(format.tracks().iter())
-        .find_map(|track| symphonia::default::get_codecs()
-            .make(&track.codec_params, &DecoderOptions::default()).ok()
-            .map(|decoder| (track.id, decoder)))
+        .find_map(|track| {
+            let params = track.codec_params.as_ref()?.audio()?;
+            symphonia::default::get_codecs()
+                .make_audio_decoder(params, &options).ok()
+                .map(|decoder| (track.id, decoder))
+        })
         .ok_or_else(|| audio_error("audio decoding", "file contains no supported audio codec (Opus is not supported); convert it to WAV or FLAC first"))?;
     let mut source_format = None;
     let mut mono = Vec::new();
     loop {
         let packet = match format.next_packet() {
-            Ok(packet) => packet,
+            Ok(Some(packet)) => packet,
+            Ok(None) => break,
             Err(DecodeError::IoError(err)) if err.kind() == ErrorKind::UnexpectedEof => break,
             Err(err) => return Err(audio_error("audio decoding", err.to_string())),
         };
-        if packet.track_id() != track_id {
+        if packet.track_id != track_id {
             continue;
         }
         let decoded = decoder
             .decode(&packet)
             .map_err(|err| audio_error("audio decoding", format!("invalid audio packet: {err}")))?;
-        let spec = *decoded.spec();
-        let channels = spec.channels.count();
-        validate_format(spec.rate, channels)?;
-        let current = (spec.rate, channels);
+        let rate = decoded.spec().rate();
+        let channels = decoded.spec().channels().count();
+        validate_format(rate, channels)?;
+        let current = (rate, channels);
         if let Some(previous) = source_format {
             if previous != current {
                 return Err(audio_error("audio decoding", "sample rate or channels change within this file; convert it to a single-format WAV first"));
@@ -82,7 +92,7 @@ pub fn decode_file(path: impl AsRef<Path>, max_seconds: u32) -> Result<MonoPcm> 
         } else {
             source_format = Some(current);
         }
-        let max_frames = u64::from(spec.rate) * u64::from(max_seconds);
+        let max_frames = u64::from(rate) * u64::from(max_seconds);
         if max_seconds > 0 && mono.len() as u64 + decoded.frames() as u64 > max_frames {
             return Err(audio_error(
                 "audio decoding",
@@ -101,9 +111,9 @@ pub fn decode_file(path: impl AsRef<Path>, max_seconds: u32) -> Result<MonoPcm> 
                 format!("cannot allocate decoded audio buffer: {err}"),
             )
         })?;
-        let mut buffer = SampleBuffer::<f32>::new(decoded.capacity() as u64, spec);
-        buffer.copy_interleaved_ref(decoded);
-        for frame in buffer.samples().chunks_exact(channels) {
+        let mut buffer = Vec::<f32>::new();
+        decoded.copy_to_vec_interleaved(&mut buffer);
+        for frame in buffer.chunks_exact(channels) {
             if frame.iter().any(|sample| !sample.is_finite()) {
                 return Err(audio_error(
                     "audio decoding",

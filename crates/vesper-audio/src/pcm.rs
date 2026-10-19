@@ -1,6 +1,7 @@
 use std::path::Path;
 
-use rubato::{FftFixedIn, Resampler};
+use rubato::audioadapter_buffers::direct::InterleavedSlice;
+use rubato::{Fft, FixedSync, Indexing, Resampler, WindowFunction};
 use vesper_core::Result;
 
 use crate::{audio_error, MonoPcm, ASR_SAMPLE_RATE};
@@ -92,6 +93,22 @@ impl CapturedAudio {
     }
 }
 
+/// One mono resampler call. `partial` marks a final chunk shorter than the
+/// filter's input size (or an empty flush), which rubato pads with silence.
+fn run_block(filter: &mut Fft<f32>, input: &[f32], partial: Option<usize>) -> Result<Vec<f32>> {
+    let error = |err: &dyn std::fmt::Display| audio_error("audio resampling", err.to_string());
+    let source = InterleavedSlice::new(input, 1, input.len()).map_err(|e| error(&e))?;
+    let mut out = vec![0.0_f32; filter.output_frames_next()];
+    let frames_out = out.len();
+    let mut target = InterleavedSlice::new_mut(&mut out, 1, frames_out).map_err(|e| error(&e))?;
+    let indexing = partial.map(|frames| Indexing::new().partial_len(frames));
+    let (_, written) = filter
+        .process_into_buffer(&source, &mut target, indexing.as_ref())
+        .map_err(|e| error(&e))?;
+    out.truncate(written);
+    Ok(out)
+}
+
 pub(crate) fn validate_format(sample_rate: u32, channels: usize) -> Result<()> {
     if sample_rate == 0 || sample_rate > 384_000 || channels == 0 || channels > 32 {
         return Err(audio_error("audio", format!(
@@ -110,7 +127,7 @@ pub(crate) fn mix_frame(frame: &[f32]) -> f32 {
 /// The same converter is used by full-file conversion and live frontends.
 pub struct StreamingResampler {
     source_rate: u32,
-    filter: Option<FftFixedIn<f32>>,
+    filter: Option<Fft<f32>>,
     pending: Vec<f32>,
     delay_remaining: usize,
     input_samples: u64,
@@ -125,8 +142,18 @@ impl StreamingResampler {
             None
         } else {
             Some(
-                FftFixedIn::<f32>::new(source_rate as usize, ASR_SAMPLE_RATE as usize, 1024, 2, 1)
-                    .map_err(|err| audio_error("audio resampling", err.to_string()))?,
+                // Same filter as rubato 0.16's FftFixedIn(1024, 2 sub-chunks):
+                // fixed input chunks, Blackman-Harris² anti-aliasing window.
+                Fft::<f32>::new_custom(
+                    source_rate as usize,
+                    ASR_SAMPLE_RATE as usize,
+                    1024,
+                    2,
+                    1,
+                    WindowFunction::BlackmanHarris2,
+                    FixedSync::Input,
+                )
+                .map_err(|err| audio_error("audio resampling", err.to_string()))?,
             )
         };
         Ok(Self {
@@ -170,10 +197,7 @@ impl StreamingResampler {
             self.pending.extend_from_slice(&rest[..take]);
             rest = &rest[take..];
             if self.pending.len() == filter.input_frames_next() {
-                let block = filter
-                    .process(&[self.pending.as_slice()], None)
-                    .map_err(|err| audio_error("audio resampling", err.to_string()))?;
-                out.extend_from_slice(&block[0]);
+                out.extend(run_block(filter, &self.pending, None)?);
                 self.pending.clear();
             }
         }
@@ -204,23 +228,18 @@ impl StreamingResampler {
         };
         let mut out = Vec::new();
         if !self.pending.is_empty() {
-            let block = filter
-                .process_partial(Some(&[self.pending.as_slice()]), None)
-                .map_err(|err| audio_error("audio resampling", err.to_string()))?;
-            out.extend_from_slice(&block[0]);
+            out.extend(run_block(filter, &self.pending, Some(self.pending.len()))?);
             self.pending.clear();
         }
         while out.len() < remaining + self.delay_remaining {
-            let block = filter
-                .process_partial::<&[f32]>(None, None)
-                .map_err(|err| audio_error("audio resampling", err.to_string()))?;
-            if block[0].is_empty() {
+            let block = run_block(filter, &[], Some(0))?;
+            if block.is_empty() {
                 return Err(audio_error(
                     "audio resampling",
                     "resampler could not flush its final samples",
                 ));
             }
-            out.extend_from_slice(&block[0]);
+            out.extend_from_slice(&block);
         }
         self.accept_output(out, Some(remaining))
     }
