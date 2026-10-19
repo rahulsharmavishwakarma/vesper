@@ -65,25 +65,26 @@ The Ember logo pairs the ember bird with a Bricolage wordmark in the sidebar and
 About sheet; the app icon still uses the Songbird bird alone. The bird's call marks breathe with
 an idle motion and tilt on hover; opening About replays the motion. The bird body
 and wordmark stay still, and Reduce Motion disables that decoration.
-It shows the compiled application version, development/release build type and
-platform. The copy icon beside those details (tooltip: **Copy app info**) copies
-them for sharing in a bug report; it does not include
-recordings, transcripts or local paths. If clipboard access fails, the sheet
-provides selected text for manual copying. Escape or Close dismisses the native About sheet without changing settings.
-In Settings, choose another section to leave About.
+It shows the compiled application version and one update control (see below);
+it does not show a build type, platform or copy button, and includes no
+recordings, transcripts or local paths. Escape or Close dismisses the native About
+sheet without changing settings. In Settings, choose another section to leave About.
 
 ### Application updates
 
-Open **Settings** (or the About sheet): the software-updates panel checks
-automatically, and Vesper also checks quietly at startup after the window is
-ready, staying silent when you are current. When an update is available, the
-panel shows its version and release notes; choose **Download and install** to
-fetch it — the button becomes **Restart to update** once the verified package is
-ready. Installation waits while you are recording, transcribing, cleaning up
-writing or downloading a model, and it never force-restarts. If a check or
-download fails, the panel explains what happened with a retry and links to the
-manual installer on the release download page. Model downloads continue to be
-managed separately in **Models**.
+Open **Settings → About** (or the About sheet): one update pill beside the
+version reports the state and offers the next step. It checks automatically, and
+Vesper also checks quietly at startup after the window is ready, staying silent
+when you are current. The pill reads **Checking…** with a turning arrow, then
+**Up to date** (hover it for **Check now**), **Install 0.2.0** when an update is
+available (its release notes appear below), **Downloading** with a progress fill
+and percentage, and **Restart to update** once the verified package is ready.
+Installation waits while you are recording, transcribing, cleaning up writing or
+downloading a model, and it never force-restarts; the reason appears below the
+pill. If a check, download or install fails, the pill shows **Couldn't check**,
+**Download failed**, **Install failed** or **Restart failed**; hover it for
+**Retry**. In a build without an enrolled updater it reads **Updates
+unavailable**. Model downloads continue to be managed separately in **Models**.
 
 Every update package is signature-checked against Vesper's enrolled update
 key before it installs; a package with a missing, corrupt, or wrong-key

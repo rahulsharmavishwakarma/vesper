@@ -237,17 +237,15 @@ proposed layouts: A01 Quiet settings, A02 Split view and A03 About sheet. See th
 [preview guide](design/about-updates/README.md) for the interactive states and
 selection export. These are local review artifacts in the ignored `docs/design/`
 directory, consistent with the repository's treatment of exploratory studies.
-Settings → About shows app identity/version, platform details, a copy icon and a
-compact update status in the content panel. Native About menu entries open the
+Settings → About shows the logo, the installed version and one update pill in the
+content panel (no tagline, platform, build type or copy button; this is a
+macOS-only app, issue #181). Native About menu entries open the
 **A03 About sheet**, reusing the same content. Both preserve shared controls and
 error recovery. Metadata comes from `get_app_info` independently of model/settings
 readiness. A release build is not labeled as a verified stable release channel.
 
-Group version, build type and platform together. Copy uses the shared icon-button
-control with a tooltip and accessible name, a check on success, and selected text
-for clipboard failure recovery. Keep normal-state action wording out of the
-visible layout. The unavailable-update notice is one sentence below Software
-updates, without a large warning headline or repeated explanation.
+Keep normal-state action wording out of the visible layout: the update state and
+its next action live in one pill, not a headline plus a button.
 
 Keep About outside the main application sidebar and editable forms. Its Settings
 section preserves unsaved drafts; native About remains available when settings
@@ -263,6 +261,26 @@ Keep technical signing/feed details out of the ordinary user flow. The proposed
 interaction and implementation limits are tracked in issues
 [#66](https://github.com/rahulsharmavishwakarma/vesper/issues/66) and
 [#65](https://github.com/rahulsharmavishwakarma/vesper/issues/65).
+
+The update pill (`AboutSheet.svelte`, issue #181) is one control for status and
+action, using only `Icon.svelte` glyphs and the app's motion tokens. Its states:
+`refresh` turning while checking; `check` with a one-time ring flash when current,
+swapping on hover to `refresh` and **Check now**; `download` on the accent
+**Install x.y.z**; the new `downloading` glyph (the arrow drops into a fixed
+tray) with a GPU-scaled progress fill, a soft leading edge and a fixed-width
+percentage so the pill never changes size mid-download; `refresh` on the accent
+**Restart to update**; `warning` on a danger-tinted **Couldn't check** (or
+**Download/Install/Restart failed**) that swaps to **Retry** on hover; and a
+static **Updates unavailable** when the build has no updater. A hover swap only
+arms after the pointer leaves, so a result that lands under a resting pointer
+stays readable instead of reverting to its action. Reduced motion removes the
+spin, arrow loop, flash and fills but keeps every label and state.
+
+The earlier manual-download link was removed: it was the only unstyled `<a>`
+(raw browser blue and underline) and the in-app updater is the supported path.
+Automatic check/install switches were designed in the study but are a proposal
+pending owner approval, since they need a saved setting and a background install
+that waits for active work; they are not implemented.
 
 ## Verification
 

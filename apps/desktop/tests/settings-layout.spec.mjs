@@ -48,8 +48,8 @@ test('Settings sections autosave application and vocabulary drafts', async ({ pa
   await expect(page.locator('#floating-bar')).not.toBeChecked();
   await section(page, 'About').click();
   await expect(page.locator('.about-inline .version')).toContainText('0.1.0');
-  await page.getByRole('button', { name: 'Copy app info', exact: true }).click();
-  await expect.poll(() => page.evaluate(() => window.previewClipboard)).toContain('Version: 0.1.0');
+  await expect(page.locator('.about-inline .pill')).toBeVisible();
+  await expect(page.getByRole('button', { name: 'Copy app info' })).toHaveCount(0);
 });
 
 test('Models view offers no Model folder override', async ({ page }) => {

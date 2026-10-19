@@ -1,11 +1,24 @@
 <script lang="ts">
-  import { onDestroy, tick, untrack } from 'svelte';
+  import { onDestroy, untrack } from 'svelte';
   import { getAppInfo, type AppInfo } from '../api/desktop';
   import { updateBackend, updateManager } from '../updatesTauri';
   import type { UpdateState } from '../updates';
-  import CopyGlyph from './CopyGlyph.svelte';
   import Icon from './Icon.svelte';
   import BrandLogo from './BrandLogo.svelte';
+
+  type PillIcon = 'check' | 'refresh' | 'download' | 'downloading' | 'unavailable' | 'warning';
+  interface Pill {
+    kind: 'ok' | 'busy' | 'primary' | 'danger' | 'static';
+    icon: PillIcon;
+    label: string;
+    spin?: boolean;
+    flash?: boolean;
+    progress?: number | null;
+    hoverIcon?: PillIcon;
+    hoverLabel?: string;
+    action?: () => void;
+    title?: string;
+  }
 
   let {
     fallbackFocus,
@@ -13,8 +26,6 @@
     visible = false,
   }: { fallbackFocus?: () => void; inline?: boolean; visible?: boolean } = $props();
   const headingId = $derived(inline ? 'inline-about-heading' : 'about-heading');
-  const updatesId = $derived(inline ? 'inline-about-updates-heading' : 'about-updates-heading');
-  const copyFieldId = $derived(inline ? 'inline-about-copy-fallback' : 'about-copy-fallback');
   $effect(() => {
     if (!inline) return;
     identityMotion = visible;
@@ -29,9 +40,6 @@
   let info = $state<AppInfo | null>(null);
   let loading = $state(false);
   let error = $state<string | null>(null);
-  let copied = $state(false);
-  let copying = $state(false);
-  let copyError = $state(false);
   let updates = $state<UpdateState>(updateManager.state);
   // Check on first view so the panel always shows a live result; the quiet
   // startup check usually already settled this before the user arrives.
@@ -49,35 +57,103 @@
       ? Math.min(100, Math.round((updates.downloadedBytes / updates.totalBytes) * 100))
       : null,
   );
-  const manualDownload = $derived(
-    updates.available
-      ? `https://github.com/rahulsharmavishwakarma/vesper/releases/download/v${updates.available.version}/vesper-macos-arm64.dmg`
-      : 'https://github.com/rahulsharmavishwakarma/vesper/releases/latest/download/vesper-macos-arm64.dmg',
+  const errorLabel = $derived(
+    updates.errorPhase === 'download'
+      ? 'Download failed'
+      : updates.errorPhase === 'install'
+        ? 'Install failed'
+        : updates.errorPhase === 'restart'
+          ? 'Restart failed'
+          : 'Couldn’t check',
   );
+  // One control carries both the update status and its next action.
+  const pill = $derived.by((): Pill => {
+    if (!updateBackend.enabled) {
+      return {
+        kind: 'static',
+        icon: 'unavailable',
+        label: 'Updates unavailable',
+        title: 'Automatic updates are not available in this build.',
+      };
+    }
+    switch (updates.status) {
+      case 'current':
+        return {
+          kind: 'ok',
+          icon: 'check',
+          label: 'Up to date',
+          flash: true,
+          hoverIcon: 'refresh',
+          hoverLabel: 'Check now',
+          action: () => void updateManager.check(),
+          title: updates.lastCheckedAt
+            ? `Checked ${new Date(updates.lastCheckedAt).toLocaleString()}`
+            : undefined,
+        };
+      case 'available':
+        return {
+          kind: 'primary',
+          icon: 'download',
+          label: updates.available ? `Install ${updates.available.version}` : 'Install update',
+          action: () => void updateManager.downloadAndInstall(),
+        };
+      case 'downloading':
+        return {
+          kind: 'busy',
+          icon: 'downloading',
+          label: 'Downloading',
+          progress: updateProgress,
+        };
+      case 'ready':
+        return {
+          kind: 'primary',
+          icon: 'refresh',
+          label: 'Restart to update',
+          flash: true,
+          action: () => void updateManager.restart(),
+        };
+      case 'error':
+        return {
+          kind: 'danger',
+          icon: 'warning',
+          label: errorLabel,
+          hoverIcon: 'refresh',
+          hoverLabel: 'Retry',
+          action: () =>
+            void (updates.errorPhase === 'restart'
+              ? updateManager.restart()
+              : updateManager.check()),
+          title: updates.errorMessage ?? undefined,
+        };
+      default:
+        return { kind: 'busy', icon: 'refresh', label: 'Checking…', spin: true };
+    }
+  });
+  // A result that lands under a resting pointer must stay readable: the
+  // hover swap (for example Check now) only arms once the pointer has left.
+  function armHover(node: HTMLElement) {
+    const timer = setTimeout(() => {
+      if (node.matches(':hover')) {
+        node.addEventListener(
+          'pointerleave',
+          () => {
+            node.dataset.hover = '1';
+          },
+          { once: true },
+        );
+      } else {
+        node.dataset.hover = '1';
+      }
+    }, 80);
+    return {
+      destroy() {
+        clearTimeout(timer);
+      },
+    };
+  }
 
-  let fallback: HTMLTextAreaElement | undefined = $state();
-  let opener: HTMLElement | null = null;
   let generation = 0;
-  let copyTimer: ReturnType<typeof setTimeout> | undefined;
-  const buildLabel = $derived(
-    info?.buildType === 'browser-preview'
-      ? 'Browser preview'
-      : info?.buildType === 'development'
-        ? 'Development build'
-        : 'Release build',
-  );
-  const platform = $derived(
-    !info
-      ? ''
-      : info.os === 'browser'
-        ? 'Web browser'
-        : `${({ macos: 'macOS', windows: 'Windows', linux: 'Linux' } as Record<string, string>)[info.os] ?? info.os} · ${info.os === 'macos' && info.arch === 'aarch64' ? 'Apple silicon' : info.arch}`,
-  );
-  const copyText = $derived(
-    info
-      ? `${info.name}\nVersion: ${info.version}\nBuild: ${buildLabel}\nPlatform: ${platform}`
-      : '',
-  );
+  let opener: HTMLElement | null = null;
 
   async function load() {
     const request = ++generation;
@@ -96,9 +172,6 @@
     if (inline || dialog?.open) return;
     ensureChecked();
     opener = document.activeElement instanceof HTMLElement ? document.activeElement : null;
-    copied = false;
-    copyError = false;
-    copying = false;
     info = null;
     void load();
     dialog?.showModal();
@@ -107,41 +180,28 @@
   function close() {
     identityMotion = false;
     generation += 1;
-    clearTimeout(copyTimer);
     dialog?.close();
-  }
-  async function copy() {
-    if (!info || copying) return;
-    const request = generation;
-    copying = true;
-    copyError = false;
-    try {
-      await navigator.clipboard.writeText(copyText);
-      if (request !== generation) return;
-      copied = true;
-      clearTimeout(copyTimer);
-      copyTimer = setTimeout(() => {
-        copied = false;
-      }, 2000);
-    } catch {
-      if (request !== generation) return;
-      copyError = true;
-      await tick();
-      fallback?.focus();
-      fallback?.select();
-    } finally {
-      if (request === generation) copying = false;
-    }
   }
   onDestroy(() => {
     generation += 1;
-    clearTimeout(copyTimer);
   });
 </script>
 
+{#snippet pillBody(item: Pill)}
+  <span class="ico rest" class:spin={item.spin}><Icon name={item.icon} /></span>
+  <span class="lab-wrap">
+    <span class="lab rest" role="status"
+      >{item.label}{#if item.progress != null}<span class="pct">{item.progress}%</span>{/if}</span
+    >
+    {#if item.hoverLabel}<span class="lab hov" aria-hidden="true">{item.hoverLabel}</span>{/if}
+  </span>
+  {#if item.hoverIcon}<span class="ico hov" aria-hidden="true"><Icon name={item.hoverIcon} /></span
+    >{/if}
+{/snippet}
+
 {#snippet aboutContent()}
   <header>
-    <h2 id={headingId}>About Vesper</h2>
+    <h2 id={headingId} class:visually-hidden={inline}>About Vesper</h2>
     {#if !inline}<button
         type="button"
         class="quiet icon-button close"
@@ -150,11 +210,35 @@
       >
     {/if}
   </header>
-  <div class="identity">
-    <div>
+  <div class="top">
+    <div class="identity">
       <h3><BrandLogo animate={identityMotion} large /></h3>
-      <p>On-device voice to text</p>
+      {#if info}
+        <p class="version"><Icon name="history" />Version <b>{info.version}</b></p>
+      {/if}
     </div>
+    {#if info}
+      <div class="update" role="group" aria-label="Software updates">
+        {#key `${updateBackend.enabled}:${updates.status}:${updates.errorPhase}`}
+          {#if pill.kind === 'static'}
+            <span class="pill" data-kind="static" title={pill.title}>{@render pillBody(pill)}</span>
+          {:else}
+            <button
+              type="button"
+              class="pill"
+              data-kind={pill.kind}
+              data-flash={pill.flash ? '' : undefined}
+              data-progress={pill.progress != null ? '' : undefined}
+              style:--pr={pill.progress != null ? pill.progress / 100 : undefined}
+              disabled={pill.kind === 'busy'}
+              title={pill.title}
+              onclick={pill.action}
+              use:armHover>{@render pillBody(pill)}</button
+            >
+          {/if}
+        {/key}
+      </div>
+    {/if}
   </div>
   {#if loading}
     <p class="metadata-loading" role="status">Loading app information…</p>
@@ -162,85 +246,12 @@
     <p class="error" role="alert">{error}</p>
     <button type="button" onclick={load}>Try again</button>
   {:else if info}
-    <div class="app-info">
-      <div class="metadata">
-        <p><span class="version">Version {info.version}</span> · {buildLabel}</p>
-        <p class="platform">{platform}</p>
-      </div>
-      <button
-        type="button"
-        class="quiet icon-button copy"
-        onclick={copy}
-        disabled={copying}
-        aria-busy={copying}
-        aria-label={copying ? 'Copying app info' : copied ? 'Copied' : 'Copy app info'}
-        title={copying ? 'Copying…' : copied ? 'Copied' : 'Copy app info'}
-      >
-        <CopyGlyph {copied} />
-      </button>
-    </div>
-    {#if copyError}
-      <p class="note" role="status">
-        Copy is unavailable. Select the app information below to copy it.
-      </p>
-      <label class="visually-hidden" for={copyFieldId}>App information</label>
-      <textarea bind:this={fallback} id={copyFieldId} readonly value={copyText} rows="4"></textarea>
-    {:else}
-      <span class="visually-hidden" role="status">{copied ? 'App information copied.' : ''}</span>
+    {#if updates.status === 'available' && updates.available?.notes}
+      <p class="update-note notes">{updates.available.notes}</p>
     {/if}
-    <section class="updates" aria-labelledby={updatesId}>
-      <h3 id={updatesId}>Software updates</h3>
-      {#if info && info.version.includes('-')}
-        <p class="channel">Beta channel</p>
-      {/if}
-      {#if !updateBackend.enabled}
-        <p>Automatic updates are not available in this build.</p>
-      {:else if updates.status === 'checking' || updates.status === 'idle'}
-        <p role="status">Checking for updates…</p>
-      {:else if updates.status === 'current'}
-        <p role="status">
-          Vesper is up to date{updates.lastCheckedAt
-            ? ` (checked ${new Date(updates.lastCheckedAt).toLocaleDateString()})`
-            : ''}.
-        </p>
-      {:else if updates.status === 'available' && updates.available}
-        <p role="status">Version {updates.available.version} is available.</p>
-        {#if updates.available.notes}<p class="notes">{updates.available.notes}</p>{/if}
-        {#if updates.blockedReason}<p role="status">{updates.blockedReason}</p>{/if}
-        <p>
-          <button type="button" onclick={() => void updateManager.downloadAndInstall()}
-            >Download and install</button
-          >
-        </p>
-      {:else if updates.status === 'downloading'}
-        <p role="status">
-          Downloading update…{updateProgress !== null ? ` ${updateProgress}%` : ''}
-        </p>
-        <progress
-          value={updates.downloadedBytes}
-          max={updates.totalBytes ?? undefined}
-          aria-label="Update download progress"
-        ></progress>
-      {:else if updates.status === 'ready'}
-        <p role="status">Update installed and ready.</p>
-        {#if updates.blockedReason}<p role="status">{updates.blockedReason}</p>{/if}
-        <p>
-          <button type="button" onclick={() => void updateManager.restart()}
-            >Restart to update</button
-          >
-        </p>
-      {:else if updates.status === 'error'}
-        <p role="alert">{updates.errorMessage}</p>
-        <p>
-          <button type="button" onclick={() => void updateManager.check()}>Try again</button>
-        </p>
-      {/if}
-      <p class="manual">
-        <a href={manualDownload} target="_blank" rel="noreferrer noopener"
-          >Download the latest version manually</a
-        >
-      </p>
-    </section>
+    {#if (updates.status === 'available' || updates.status === 'ready') && updates.blockedReason}
+      <p class="update-note" role="status">{updates.blockedReason}</p>
+    {/if}
   {/if}
 {/snippet}
 {#if inline}
@@ -253,7 +264,6 @@
     oncancel={() => {
       identityMotion = false;
       generation += 1;
-      clearTimeout(copyTimer);
     }}
     onclose={() => {
       identityMotion = false;
@@ -284,19 +294,7 @@
     min-width: 0;
   }
   .about-inline header {
-    margin-bottom: var(--space-8);
-  }
-  .about-inline header h2 {
-    font-size: 20px;
-    line-height: 1.4;
-    letter-spacing: normal;
-  }
-  .about-inline .identity {
-    margin-bottom: var(--space-8);
-  }
-  .about-inline .app-info {
-    border-top: 1px solid var(--color-line);
-    padding-top: var(--space-5);
+    margin: 0;
   }
   .about-sheet {
     width: min(520px, calc(100% - 32px));
@@ -327,10 +325,12 @@
     font-size: 15px;
     font-weight: 500;
   }
-  .identity {
+  .top {
     display: flex;
+    flex-wrap: wrap;
     align-items: center;
-    gap: var(--space-4);
+    justify-content: space-between;
+    gap: var(--space-4) var(--space-6);
   }
   .identity h3 {
     margin: 0;
@@ -338,69 +338,233 @@
     letter-spacing: -0.05em;
     line-height: 1.2;
   }
-  .identity p {
-    margin: var(--space-1) 0 0;
-    font-size: 13px;
-    color: var(--color-muted);
-  }
-  .app-info {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    gap: var(--space-4);
-    margin: var(--space-6) 0;
-    color: var(--color-muted);
-    font-size: 13px;
-  }
-  .metadata {
-    min-width: 0;
-    overflow-wrap: anywhere;
-  }
-  .metadata p {
-    margin: 0;
-  }
-  .metadata .platform {
-    margin-top: var(--space-1);
-  }
   .version {
+    display: inline-flex;
+    align-items: center;
+    gap: var(--space-2);
+    /* Lines up with the bird's visible edge, not the lockup's padding. */
+    margin: var(--space-3) 0 0 4px;
+    font-size: 13px;
+    color: var(--color-muted);
     font-variant-numeric: tabular-nums;
+  }
+  .version b {
+    font-weight: 500;
+    color: var(--color-ink);
+  }
+  .version :global(.icon) {
+    width: 16px;
+    height: 16px;
+    color: var(--color-accent);
   }
   .metadata-loading {
     margin-top: var(--space-6);
     font-size: 13px;
     color: var(--color-muted);
   }
-  .updates {
-    border-top: 1px solid var(--color-line);
-    padding-top: var(--space-6);
-  }
-  .updates h3 {
-    font-size: 14px;
-    font-weight: 500;
-    line-height: 1.35;
-    margin: 0 0 var(--space-2);
-  }
-  .updates p {
+  .update-note {
+    margin: var(--space-4) 0 0;
     font-size: 13px;
     color: var(--color-muted);
-    margin: 0 0 var(--space-2);
   }
-  .updates .notes {
+  .notes {
     white-space: pre-wrap;
     max-height: 120px;
     overflow-y: auto;
   }
-  .updates progress {
-    display: block;
-    width: 100%;
-    margin: 0 0 var(--space-2);
+
+  /* The update pill: one control for status and the next action. */
+  .pill {
+    --pr: 0;
+    position: relative;
+    display: inline-grid;
+    grid-template-columns: 18px auto;
+    align-items: center;
+    column-gap: var(--space-2);
+    min-height: 44px;
+    padding: 0 var(--space-4) 0 var(--space-3);
+    border: 1px solid var(--color-line);
+    border-radius: var(--radius-pill);
+    background: var(--color-bg);
+    color: var(--color-ink);
+    font-size: 14px;
+    max-width: 100%;
+    white-space: nowrap;
+    overflow: hidden;
+    animation: pill-in 420ms var(--ease-spring) backwards;
   }
-  .updates .manual {
-    margin-bottom: 0;
+  .pill:disabled {
+    opacity: 1;
   }
-  textarea {
-    font-size: 12px;
-    margin-bottom: var(--space-5);
+  .ico {
+    grid-area: 1 / 1;
+    position: relative;
+    z-index: 1;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 18px;
+    height: 18px;
+    color: var(--color-muted);
+    transition:
+      opacity 160ms var(--ease-out),
+      transform 220ms var(--ease-out);
+  }
+  .ico :global(.icon) {
+    width: 18px;
+    height: 18px;
+  }
+  .lab-wrap {
+    min-width: 0;
+    grid-column: 2;
+    position: relative;
+    z-index: 1;
+    display: inline-grid;
+  }
+  .lab {
+    grid-area: 1 / 1;
+    transition:
+      opacity 160ms var(--ease-out),
+      transform 220ms var(--ease-out);
+  }
+  .hov {
+    opacity: 0;
+    transform: translateY(6px);
+  }
+  .ico.hov {
+    transform: rotate(-90deg) scale(0.6);
+  }
+  .pill:global([data-hover='1']):hover:enabled .rest,
+  .pill:global([data-hover='1']):focus-visible .rest {
+    opacity: 0;
+    transform: translateY(-6px);
+  }
+  .pill:global([data-hover='1']):hover:enabled .ico.rest,
+  .pill:global([data-hover='1']):focus-visible .ico.rest {
+    transform: rotate(90deg) scale(0.6);
+  }
+  .pill:global([data-hover='1']):hover:enabled .hov,
+  .pill:global([data-hover='1']):focus-visible .hov {
+    opacity: 1;
+    transform: none;
+  }
+  .pill:global([data-hover='1']):hover:enabled {
+    background: var(--color-raised);
+    border-color: var(--color-control-edge);
+  }
+  .pill[data-kind='ok'] .ico.rest,
+  .pill[data-kind='busy'] .ico.rest {
+    color: var(--color-accent);
+  }
+  .pill[data-kind='primary'] {
+    background: var(--color-accent);
+    border-color: var(--color-accent);
+    color: var(--color-on-accent);
+    font-weight: 600;
+  }
+  .pill[data-kind='primary'] .ico {
+    color: var(--color-on-accent);
+  }
+  .pill[data-kind='primary']:hover:enabled {
+    background: var(--color-accent-hover);
+    border-color: var(--color-accent-hover);
+  }
+  .pill[data-kind='danger'] {
+    border-color: color-mix(in srgb, var(--color-danger) 50%, var(--color-line));
+    background: var(--color-error-tint);
+  }
+  .pill[data-kind='danger'] .ico.rest {
+    color: var(--color-danger);
+  }
+  .pill[data-kind='busy'] {
+    cursor: progress;
+    border-color: color-mix(in srgb, var(--color-accent) 40%, var(--color-line));
+  }
+  .pill[data-kind='static'] {
+    cursor: default;
+    color: var(--color-muted);
+  }
+  .spin {
+    animation: pill-spin 1s linear infinite;
+  }
+  .pct {
+    display: inline-block;
+    min-width: 3.2ch;
+    margin-left: var(--space-2);
+    text-align: right;
+    font-variant-numeric: tabular-nums;
+    color: var(--color-muted);
+  }
+  /* Download progress: a GPU-scaled fill with a soft leading edge. */
+  .pill[data-progress]::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    z-index: 0;
+    background: linear-gradient(
+      90deg,
+      color-mix(in srgb, var(--color-accent) 10%, var(--color-tint)),
+      color-mix(in srgb, var(--color-accent) 26%, var(--color-tint))
+    );
+    transform: scaleX(var(--pr));
+    transform-origin: left center;
+    box-shadow: 3px 0 10px -2px color-mix(in srgb, var(--color-accent) 55%, transparent);
+    transition: transform 140ms linear;
+    will-change: transform;
+  }
+  .pill[data-flash]::before {
+    content: '';
+    position: absolute;
+    inset: -1px;
+    border-radius: inherit;
+    border: 1.5px solid var(--color-accent);
+    opacity: 0;
+    pointer-events: none;
+    animation: pill-flash 700ms var(--ease-out) 1;
+  }
+  .pill :global(.arr) {
+    transform-box: fill-box;
+    transform-origin: center;
+    animation: pill-arrow 1.3s cubic-bezier(0.45, 0, 0.25, 1) infinite;
+  }
+  @keyframes pill-in {
+    from {
+      transform: scale(0.94);
+      opacity: 0.6;
+    }
+  }
+  @keyframes pill-spin {
+    to {
+      transform: rotate(360deg);
+    }
+  }
+  @keyframes pill-flash {
+    0% {
+      opacity: 0.7;
+      transform: scale(1);
+    }
+    100% {
+      opacity: 0;
+      transform: scale(1.08, 1.35);
+    }
+  }
+  @keyframes pill-arrow {
+    0% {
+      transform: translateY(-5px);
+      opacity: 0;
+    }
+    35% {
+      transform: translateY(0);
+      opacity: 1;
+    }
+    75% {
+      transform: translateY(0);
+      opacity: 1;
+    }
+    100% {
+      transform: translateY(3px);
+      opacity: 0;
+    }
   }
   @keyframes about-enter {
     from {
@@ -413,8 +577,17 @@
     }
   }
   @media (prefers-reduced-motion: reduce) {
-    .about-sheet[open] {
+    .about-sheet[open],
+    .pill,
+    .spin,
+    .pill[data-flash]::before,
+    .pill :global(.arr) {
       animation: none;
+    }
+    .pill::after,
+    .ico,
+    .lab {
+      transition: none;
     }
   }
 </style>

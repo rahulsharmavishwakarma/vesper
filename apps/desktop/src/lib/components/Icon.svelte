@@ -28,6 +28,7 @@
     | 'models'
     | 'settings'
     | 'upload'
+    | 'downloading'
     | 'arrow'
     | 'check'
     | 'spark'
@@ -324,6 +325,11 @@
     /><circle class="k2 nav-detail" cx="16" cy="17" r="2.4" fill="currentColor" />
   {:else if name === 'upload'}
     <path d="M5 15v4h14v-4" /><g class="a nav-detail"><path d="M12 15V4M8 8l4-4 4 4" /></g>
+  {:else if name === 'downloading'}
+    <path d="M4 16v4a1 1 0 0 0 1 1h14a1 1 0 0 0 1-1v-4" /><path
+      class="arr"
+      d="M12 3v13m-5-5 5 5 5-5"
+    />
   {:else if name === 'arrow'}
     <g class="a nav-detail"><path d="M5 12h14M13 6l6 6-6 6" /></g>
   {:else if name === 'check'}

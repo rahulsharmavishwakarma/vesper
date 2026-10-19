@@ -546,16 +546,19 @@ browser preview reads the desktop npm manifest and identifies itself as a
 preview. Both currently report `0.1.0`. The selected A03 About sheet is available
 from the final row in Settings and native About menus. Build revision and release
 channel are not supplied by this metadata contract; a release build is not
-proof of stable-channel publication. The copy icon includes only displayed
-metadata. The updater section states that automatic updates are unavailable.
+proof of stable-channel publication. The About page itself shows only the logo,
+the installed version and the update control; build type and platform are still
+returned by `get_app_info` but not displayed in this macOS-only app, and there is
+no copy control (issue #181).
 
 The remaining About/update proposal builds on that sheet:
 
-- App name, installed version, build type/channel and OS/architecture. Use
+- Installed version. Any future build type or channel label must come from
   explicit build metadata for Development, Beta and Stable; a version without
-  a prerelease suffix does not establish that a local build is a stable release.
-- **Copy app info** for version, build revision when available, and platform.
-  Exclude transcripts, recordings, local paths and credentials.
+  a prerelease suffix does not establish that a local build is a stable release,
+  and the app follows the stable feed only, so it does not claim a Beta channel.
+  The earlier proposals for platform details and a **Copy app info** control were
+  dropped by the owner (issue #181).
 - Release notes and support links only when their destinations are accessible
   to the intended user. Keep model selection on Models and resource readings
   in Application status.
