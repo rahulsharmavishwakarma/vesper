@@ -2,7 +2,7 @@
 
 The Tauri application runs native inference from Rust and renders Svelte 5 in the system WebView. The selected speech adapter always runs locally: all current ASR adapters expose recording previews through a common session. Nemotron uses native cache-aware streaming; English/Metal Qwen uses native MLX previews; completed-audio adapters use bounded buffered previews followed by an authoritative full-recording pass. See [live adapters](live-transcription.md). Python is not in the runtime dependency path.
 
-Accepted decisions are indexed in [Architecture Decision Records](adrs/README.md). Exact database, filesystem, settings, model-storage, privacy, and failure semantics live in the canonical [Application internals](internals.md) document.
+The [backend inference architecture](inference-architecture.md) gives the detailed component diagrams: worker ownership, adapters and backends, live pipeline, audio frontend, writer, diarization, model installation and failure policy. Accepted decisions are indexed in [Architecture Decision Records](adrs/README.md). Exact database, filesystem, settings, model-storage, privacy, and failure semantics live in the canonical [Application internals](internals.md) document.
 
 ```mermaid
 flowchart LR

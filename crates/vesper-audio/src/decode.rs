@@ -11,7 +11,7 @@ use vesper_core::Result;
 
 use crate::{
     audio_error,
-    pcm::{mix_frame, resample_mono, validate_format},
+    pcm::{resample_mono, validate_format, ChannelMixer},
     validate_limit, MonoPcm,
 };
 
@@ -67,6 +67,7 @@ pub fn decode_file(path: impl AsRef<Path>, max_seconds: u32) -> Result<MonoPcm> 
         })
         .ok_or_else(|| audio_error("audio decoding", "file contains no supported audio codec (Opus is not supported); convert it to WAV or FLAC first"))?;
     let mut source_format = None;
+    let mut mixer = None;
     let mut mono = Vec::new();
     loop {
         let packet = match format.next_packet() {
@@ -120,7 +121,11 @@ pub fn decode_file(path: impl AsRef<Path>, max_seconds: u32) -> Result<MonoPcm> 
                     "decoded audio contains non-finite samples",
                 ));
             }
-            mono.push(mix_frame(frame));
+            mono.push(
+                mixer
+                    .get_or_insert_with(|| ChannelMixer::new(channels, spec.rate))
+                    .mix(frame),
+            );
         }
     }
     if mono.is_empty() {
