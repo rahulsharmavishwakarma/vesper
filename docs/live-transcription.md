@@ -69,7 +69,10 @@ completed-recording pipeline on all original audio. The final transcript replace
 the draft, and only that final enters writing cleanup, storage, learning and
 external insertion. This preserves the selected decoder's existing final behavior
 and completion checks; it does not guarantee error-free recognition. Finalization
-still takes the ordinary offline decode time. Sherpa
+still takes the ordinary offline decode time. During it the last draft stays
+visible as provisional; when the completed decode publishes its raw transcript,
+the runtime replaces the draft text with it. A failed handoff still invalidates
+the draft. Sherpa
 duration-limited output from an unfinished window may appear as a provisional
 draft; it still fails completed-result validation. An unfinished window that stops
 early (token, context or repetition limit, or text ending in detected silence)

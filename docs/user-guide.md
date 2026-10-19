@@ -210,7 +210,8 @@ Drafts can change as more speech arrives. Some models update more frequently
 than others, especially on slower devices or under memory pressure. Very short
 recordings may finish before the first draft. After **Stop**, most models perform
 a final pass over the full recording, so the finished text can differ from the
-live draft. A moving waveform indicates microphone activity, not completed
+live draft. The last draft stays on screen, dimmed and labelled **Finalizing**,
+until the finished text replaces it. A moving waveform indicates microphone activity, not completed
 recognition. See the [per-model behavior](model-presets.md#live-transcription-support).
 
 Writing cleanup and the final paste into another application happen after the

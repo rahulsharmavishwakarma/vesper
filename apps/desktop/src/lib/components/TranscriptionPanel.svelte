@@ -968,9 +968,9 @@
     <div class="live-transcript" aria-live="polite" aria-atomic="true">
       <div class="section-heading">
         <h2>Live transcript</h2>
-        <span class="note">{liveTranscript.isFinal ? 'Finalizing' : 'Draft'}</span>
+        <span class="note">{liveTranscript.isFinal || !recording ? 'Finalizing' : 'Draft'}</span>
       </div>
-      <p>
+      <p class:provisional={!recording && !liveTranscript.isFinal}>
         <span>{liveTranscript.committedText}</span><span class="provisional"
           >{liveTranscript.provisionalText}</span
         >
