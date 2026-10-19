@@ -17,15 +17,41 @@ concurrency:
   cancel-in-progress: false
 
 jobs:
+  guard:
+    name: Refuse already-published tag
+    if: github.event_name == 'push'
+    runs-on: ubuntu-24.04
+    timeout-minutes: 5
+    permissions:
+      contents: read
+    steps:
+      # Publishing a release in the GitHub UI creates the tag and starts this run
+      # with a public, asset-less release and no approval gate. Stop before the
+      # long build; the supported path stages a draft and promotes it.
+      - name: Fail when a public release already exists for this tag
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          set -eu
+          if state="$(gh release view "$GITHUB_REF_NAME" --repo "$GITHUB_REPOSITORY" --json isDraft --jq .isDraft 2>/dev/null)"; then
+            if [ "$state" != "true" ]; then
+              echo "Release $GITHUB_REF_NAME is already public (likely created in the GitHub UI)." >&2
+              echo "Delete it and the tag, then use the Prepare release workflow so a draft is staged and promoted behind approval." >&2
+              exit 1
+            fi
+          fi
+
   checks:
     name: Required checks
     if: github.event_name == 'push'
+    needs: guard
     # actionlint 1.7.12 does not yet parse the new $/ syntax.
     uses: ./.github/workflows/check.yml # zizmor: ignore[self-repository]
 
   security:
     name: Required security
     if: github.event_name == 'push'
+    needs: guard
     # actionlint 1.7.12 does not yet parse the new $/ syntax.
     uses: ./.github/workflows/security.yml # zizmor: ignore[self-repository]
 
