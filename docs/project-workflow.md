@@ -50,6 +50,50 @@ If Projects access is unavailable, record the blocker on the tracking issue
 and reconcile its project item when access returns — never silently skip the
 project update.
 
+### Keeping Status and Area current
+
+The board is a user-owned project, so only its built-in rules can act without a
+personal token, and those set Status alone. In practice:
+
+| Field | How it changes |
+|-------|----------------|
+| Item exists | Automatic (built-in auto-add) |
+| Status = Done | Automatic when a pull request merges; set it by hand when an issue closes without one |
+| Area | **Manual**: set it when the item is created |
+| Status = In progress | **Manual**: set it when work starts or the first PR opens |
+| Status = Validation, Blocked, Backlog | **Manual**: follow the semantics above |
+
+Agents set these at each lifecycle point (start, PR opened, blocked, merged,
+closed) with names rather than hard-coded option IDs, and read the result back
+before reporting it. Define the helper once per shell:
+
+```sh
+OWNER=rahulsharmavishwakarma; PROJECT=2; PID=PVT_kwHOBZEJlc4Bj9iY
+field_id() { gh project field-list "$PROJECT" --owner "$OWNER" --format json --jq ".fields[]|select(.name==\"$1\")|.id"; }
+option_id() { gh project field-list "$PROJECT" --owner "$OWNER" --format json --jq ".fields[]|select(.name==\"$1\")|.options[]|select(.name==\"$2\")|.id"; }
+item_id() { gh project item-list "$PROJECT" --owner "$OWNER" --limit 400 --format json --jq ".items[]|select(.content.number==$1)|.id"; }
+set_field() { # usage: set_field <issue-or-pr-number> <Status|Area> "<option name>"
+  item=$(item_id "$1"); [ -n "$item" ] || { echo "no project item for #$1" >&2; return 1; }
+  gh project item-edit --id "$item" --project-id "$PID" --field-id "$(field_id "$2")" \
+    --single-select-option-id "$(option_id "$2" "$3")"
+}
+```
+
+Then, for example:
+
+```sh
+set_field 199 Status "In progress"
+set_field 199 Area "CI & releases"
+gh project item-list 2 --owner rahulsharmavishwakarma --limit 400 --format json \
+  --jq '.items[]|select(.content.number==199)|"\(.status) / \(.area)"'
+```
+
+A missing item returns a non-zero exit and a message; add it with `gh project
+item-add` first. Do not parse `item-list` JSON with a strict JSON parser
+outside `gh --jq`: item titles can contain control characters. Never report a
+project update as done without the read-back. A personal access token for an
+Actions workflow was declined (see below), so Area and In progress stay manual.
+
 ### Automatic project linking
 
 Every newly opened or reopened issue and pull request is added to the project
