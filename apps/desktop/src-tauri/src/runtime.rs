@@ -313,8 +313,8 @@ mod tests {
     }
 
     #[test]
-    fn live_handoff_invalidates_draft_even_if_completed_pass_fails() {
-        for handoff in 0..3 {
+    fn failed_live_handoff_invalidates_draft_even_if_completed_pass_fails() {
+        for handoff in 0..2 {
             let directory = tempfile::tempdir().unwrap();
             let runtime = Arc::new(Runtime::default());
             let context = WorkContext {
@@ -354,10 +354,6 @@ mod tests {
                 sender
                     .send(Err("injected frontend failure".into()))
                     .unwrap();
-            } else if handoff == 2 {
-                sender
-                    .send(Ok(vesper_inference::StreamingFinal::CompletedAudioRequired))
-                    .unwrap();
             }
             drop(sender);
             // Exercise the real fallback. Missing ASR files must not restore the draft.
@@ -386,6 +382,45 @@ mod tests {
                 .partial_invalidated_for
                 .is_none());
         }
+    }
+
+    #[test]
+    fn completed_audio_handoff_keeps_the_draft_until_the_raw_text_replaces_it() {
+        let runtime = Runtime::default();
+        runtime.begin("recording", "Listening").unwrap();
+        runtime.set_operation_id("buffered");
+        let draft = vesper_inference::StreamingTranscript {
+            operation_id: "buffered".into(),
+            sequence: 3,
+            committed_text: "draft words".into(),
+            provisional_text: " tail".into(),
+            audio_processed_seconds: 1.0,
+            emitted_at_unix_ms: 1,
+            is_final: false,
+        };
+        runtime.state.lock().unwrap().partial = Some(draft);
+        // A raw result for another operation leaves this draft alone.
+        let profile = vesper_core::PersonalizationProfile::default();
+        runtime.publish_transcript_preview("other", &editable_result(&profile, "r0"));
+        assert_eq!(
+            runtime
+                .state
+                .lock()
+                .unwrap()
+                .partial
+                .as_ref()
+                .unwrap()
+                .sequence,
+            3
+        );
+        runtime.publish_transcript_preview("buffered", &editable_result(&profile, "r1"));
+        let state = runtime.state.lock().unwrap();
+        let partial = state.partial.as_ref().unwrap();
+        assert_eq!(partial.sequence, 4);
+        assert_eq!(partial.committed_text, "Open read me in the repo");
+        assert!(partial.provisional_text.is_empty());
+        assert!(partial.is_final);
+        assert!(state.partial_invalidated_for.is_none());
     }
 
     #[test]
@@ -1444,6 +1479,17 @@ impl Runtime {
                     result_id: result.result_id.clone(),
                     raw_transcript: result.raw_transcript.clone(),
                 });
+                // The final raw text replaces any live draft still on screen.
+                if let Some(partial) = state
+                    .partial
+                    .as_mut()
+                    .filter(|partial| partial.operation_id == operation_id)
+                {
+                    partial.sequence += 1;
+                    partial.committed_text = result.raw_transcript.clone();
+                    partial.provisional_text.clear();
+                    partial.is_final = true;
+                }
             }
         }
     }
@@ -1759,7 +1805,7 @@ impl WorkContext {
                             self.process_raw(&mono, session, raw)?
                         }
                         Ok(vesper_inference::StreamingFinal::CompletedAudioRequired) => {
-                            self.runtime.invalidate_partial(&self.operation_id);
+                            // The draft stays visible until the completed decode replaces it.
                             self.process(&mono, session)?
                         }
                         Err(error) if self.runtime.cancelled.load(Ordering::Relaxed) => {

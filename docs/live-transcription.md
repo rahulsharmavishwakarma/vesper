@@ -69,13 +69,18 @@ completed-recording pipeline on all original audio. The final transcript replace
 the draft, and only that final enters writing cleanup, storage, learning and
 external insertion. This preserves the selected decoder's existing final behavior
 and completion checks; it does not guarantee error-free recognition. Finalization
-still takes the ordinary offline decode time. Sherpa
+still takes the ordinary offline decode time. During it the last draft stays
+visible as provisional; when the completed decode publishes its raw transcript,
+the runtime replaces the draft text with it. A failed handoff still invalidates
+the draft. Sherpa
 duration-limited output from an unfinished window may appear as a provisional
 draft; it still fails completed-result validation. An unfinished window that stops
 early (token, context or repetition limit, or text ending in detected silence)
 skips that draft only: the previous draft stays visible, the resident model stays
 healthy, and the next pass over more audio replaces the window. Evidence counts
-these as `previewIncompleteDrafts`. Missing reports, context loss and unknown
+these as `previewIncompleteDrafts`; `previewFrontend` is `live-frontend` when
+previews read the recording's frontend thread output and `fresh-bounded-segment`
+when each snapshot was processed separately. Missing reports, context loss and unknown
 errors still invalidate the owner; the preview loop reloads it once per recording
 (`previewReloads`) and continues drafting, and further failures leave drafts
 paused until Stop. A preview failure is recorded and cannot turn a partial prefix

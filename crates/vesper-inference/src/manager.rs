@@ -687,6 +687,19 @@ impl WorkerState {
     }
 }
 
+/// Idle writer weights need not compete with capture and ASR under memory
+/// pressure. The writer is re-created by its identity-checked loader.
+fn release_writer_under_pressure(
+    state: &mut WorkerState,
+    pressured: bool,
+    evidence: &Mutex<serde_json::Value>,
+    id: &str,
+) {
+    if pressured && state.rewriter.take().is_some() {
+        record_evidence(evidence, id, "writerReleasedForMemory", true.into());
+    }
+}
+
 fn record_evidence(
     evidence: &Mutex<serde_json::Value>,
     id: &str,
@@ -994,9 +1007,12 @@ fn run_recording(
 ) -> Result<StreamingFinal> {
     let initialized = (|| {
         check_cancelled(cancelled)?;
-        if crate::resources::Memory::read().pressured() {
-            state.rewriter = None;
-        }
+        release_writer_under_pressure(
+            state,
+            crate::resources::Memory::read().pressured(),
+            evidence,
+            id,
+        );
         let mut selection = vesper_models::resolve_speech(config, root)
             .map_err(crate::resident_sherpa::verification_error)?;
         let mut fallback = std::mem::take(&mut state.automatic_fallback);

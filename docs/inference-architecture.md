@@ -181,7 +181,9 @@ flowchart LR
   next request reloads it with full verification.
 - **Memory pressure** (`resources.rs`) means available memory is below
   max(5% of RAM, 256 MiB). Under pressure the idle writer is released before
-  recording, and buffered previews back off by 0.5–5 s.
+  recording (recorded as `writerReleasedForMemory` in the operation's
+  evidence), and buffered previews back off by 0.5–5 s. The writer then reloads
+  when the final transcript is polished, which adds its load time before paste.
 - **Zero-sample shortcut:** an exactly silent recording on MLX, Cohere, Whisper
   or Qwen-ASR returns empty text after verification, without loading weights.
 
