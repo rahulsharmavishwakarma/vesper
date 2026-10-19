@@ -6,7 +6,7 @@ use llama_cpp_2::{
     },
     llama_backend::LlamaBackend,
     llama_batch::LlamaBatch,
-    model::{params::LlamaModelParams, AddBos, LlamaModel},
+    model::{params::LlamaModelParams, LlamaModel},
     token::LlamaToken,
 };
 use sha2::{Digest, Sha256};
@@ -98,7 +98,7 @@ fn main() -> Result<(), Box<dyn Error>> {
         vec![]
     };
     let started = Instant::now();
-    let model = LlamaModel::load_from_file(
+    let mut model = LlamaModel::load_from_file(
         &backend,
         &args[0],
         &LlamaModelParams::default()
@@ -130,7 +130,8 @@ fn main() -> Result<(), Box<dyn Error>> {
     .iter()
     .enumerate()
     {
-        let tokens = model.str_to_token(prompt, AddBos::Never)?;
+        // add_special = false, parse_special = true: the former AddBos::Never.
+        let tokens = model.vocab().tokenize(prompt.as_bytes(), false, true);
         let mut context = model.new_context(&backend, params.clone())?;
         let started = Instant::now();
         let baseline = logits(&mut context, &tokens)?;

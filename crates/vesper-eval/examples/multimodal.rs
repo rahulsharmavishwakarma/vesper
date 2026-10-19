@@ -4,7 +4,7 @@ use llama_cpp_2::{
     context::params::LlamaContextParams,
     llama_backend::LlamaBackend,
     llama_batch::LlamaBatch,
-    model::{params::LlamaModelParams, AddBos, LlamaModel},
+    model::{params::LlamaModelParams, LlamaModel},
     mtmd::{mtmd_default_marker, MtmdBitmap, MtmdContext, MtmdContextParams, MtmdInputText},
     sampling::LlamaSampler,
     token_type::LlamaTokenAttr,
@@ -22,7 +22,7 @@ const OUTPUT: usize = 1024;
 const BATCH: u32 = 512;
 const THREADS: i32 = 8;
 const DEADLINE_SECONDS: u64 = 120;
-const RUNTIME: &str = "llama-cpp-2 0.1.156; llama.cpp e79e4bf660e19f2ad851e06c6913f7a8c5852621";
+const RUNTIME: &str = "llama-cpp-2 0.1.159; llama.cpp d81235049384534c167caea52b85a694f6103d14";
 
 #[derive(Clone, Copy, Debug, Serialize)]
 #[serde(rename_all = "snake_case")]
@@ -159,7 +159,7 @@ struct Metrics {
 
 // Field order: projector borrows native vocabulary. Backend outlives this owner.
 struct Resident<'a> {
-    projector: MtmdContext,
+    projector: std::cell::RefCell<MtmdContext>,
     model: LlamaModel,
     backend: &'a LlamaBackend,
     ubatch: u32,
@@ -187,6 +187,7 @@ impl Resident<'_> {
         let bitmap = MtmdBitmap::from_audio_data(samples)?;
         let chunks = self
             .projector
+            .borrow()
             .tokenize(architecture.prompt(mode), &[&bitmap])?;
         metrics.frontend_ms = ms(started);
         let positions = chunks.total_positions();
@@ -206,7 +207,14 @@ impl Resident<'_> {
         let mut context = self.model.new_context(self.backend, params)?;
         metrics.context_ms = ms(started);
         let started = Instant::now();
-        let position = chunks.eval_chunks(&self.projector, &context, 0, 0, BATCH as i32, true)?;
+        let position = chunks.eval_chunks(
+            &mut self.projector.borrow_mut(),
+            &mut context,
+            0,
+            0,
+            BATCH as i32,
+            true,
+        )?;
         // This synchronizes native evaluation; mtmd does not initialize the
         // wrapper's get_logits_ith bookkeeping. Keep per-chunk causal handling.
         validate_logits(context.get_logits())?;
@@ -218,7 +226,7 @@ impl Resident<'_> {
             .end_tokens()
             .iter()
             .map(|s| {
-                let tokens = self.model.str_to_token(s, AddBos::Never)?;
+                let tokens = self.model.vocab().tokenize(s.as_bytes(), false, true);
                 if tokens.len() != 1 {
                     return Err("stop marker is not one token".into());
                 }
@@ -250,15 +258,22 @@ impl Resident<'_> {
                     metrics.stop_token = Some((*marker).to_owned());
                     return Ok(());
                 }
-                if self.model.is_eog_token(token)
+                if self.model.vocab().is_eog(token)
                     || self
                         .model
-                        .token_attr(token)
+                        .vocab()
+                        .attr(token)
                         .contains(LlamaTokenAttr::Control)
                 {
                     return Err(format!("unexpected control/modality token {token:?}").into());
                 }
-                let piece = self.model.token_to_piece(token, &mut decoder, true, None)?;
+                let bytes = self.model.vocab().token_to_piece(token, true, None);
+                let mut piece = String::with_capacity(
+                    decoder
+                        .max_utf8_buffer_length(bytes.len())
+                        .ok_or("token too large")?,
+                );
+                let _ = decoder.decode_to_string(&bytes, &mut piece, false);
                 if metrics.first_text_ms.is_none() && !piece.trim().is_empty() {
                     metrics.first_text_ms = Some(ms(request) + metrics.audio_decode_ms);
                 }
@@ -368,7 +383,7 @@ fn main() -> Result<()> {
         return Err("projector does not implement expected 16kHz audio".into());
     }
     let resident = Resident {
-        projector,
+        projector: std::cell::RefCell::new(projector),
         model,
         backend: &backend,
         ubatch,
