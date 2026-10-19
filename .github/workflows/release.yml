@@ -123,7 +123,9 @@ jobs:
           merge-multiple: true
       - name: Create checksums
         working-directory: release
-        run: sha256sum -- * > SHA256SUMS
+        # publish-release.mjs requires SHA256SUMS to hold exactly the DMG
+        # line; the updater archive is covered by its minisign signature.
+        run: sha256sum vesper-macos-arm64.dmg > SHA256SUMS
       - name: Upload assets to the draft release without publishing
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
