@@ -67,9 +67,13 @@ test('minimum window shows Settings controls and preserves drafts, menus and dia
   await expect(page.locator('.about-inline .version')).toContainText('0.1.0');
   for (const width of [700, 320, 360]) {
     await page.setViewportSize({ width, height: 480 });
-    const copy = page.getByRole('button', { name: 'Copy app info', exact: true });
-    await copy.scrollIntoViewIfNeeded();
-    await expectInsideWindow(page, copy);
+    for (const part of [
+      page.locator('.about-inline .version'),
+      page.locator('.about-inline .pill'),
+    ]) {
+      await part.evaluate((element) => element.scrollIntoView({ block: 'center' }));
+      await expectInsideWindow(page, part);
+    }
   }
   await about.focus();
   await page.keyboard.press('Enter');

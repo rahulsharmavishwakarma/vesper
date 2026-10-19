@@ -16,11 +16,11 @@ certifi==2026.7.22 ; platform_machine == 'arm64' and sys_platform == 'darwin' \
     #   httpx
     #   requests
     #   vesper-vibevoice-probe
-charset-normalizer==3.5.1 ; platform_machine == 'arm64' and sys_platform == 'darwin' \
-    --hash=sha256:41876ee62a3dddf48ff1121ad8f0798032aa03f2fd35f21f34a4cab14f18d8d2 \
-    --hash=sha256:5b6d1386bf0096d26d3a863dc0a487a5b4eb9aa93cf5ba69683d29dde6b9d60f \
-    --hash=sha256:6117b84ea48435e5356dc737f5121485c30920ba43375fa7b434fd753df0eac3 \
-    --hash=sha256:6df0ec430f9a831772c23ca5a224cba36517a58a84bb32c32bb59a9fa67c47f6
+charset-normalizer==3.5.2 ; platform_machine == 'arm64' and sys_platform == 'darwin' \
+    --hash=sha256:39de2a259fc954455c57274dc94c79d5842774e1247a016aff30bc0efed0f4ef \
+    --hash=sha256:4275811936e2f06feff5e598fb42a1b7ae852da8e39605211892b56b81a34efd \
+    --hash=sha256:b6b751274acb69d77b3323d6b7dbaa3c7fdfc1eb829b7eb61d262f32e1af9685 \
+    --hash=sha256:ed2a239c0ea213acc1908150a3037257083c7c083128f1a4cec2ec4b97dca491
     # via
     #   requests
     #   vesper-vibevoice-probe
@@ -28,17 +28,17 @@ diffusers==0.38.0 ; platform_machine == 'arm64' and sys_platform == 'darwin' \
     --hash=sha256:18e53f9e539096320470f62c6360a6fd5727ff28cffda566265316e13fcdb612 \
     --hash=sha256:1e094ec5c16f18c42fb89d37f07a94cf9aab3ebbe527ab059c609597b8857626
     # via vesper-vibevoice-probe
-filelock==4.0.0 ; platform_machine == 'arm64' and sys_platform == 'darwin' \
-    --hash=sha256:3611eca5d818ca9b00ec3cc7db1dcfe1e2aafc8d44fb4920d8cf60ad1f6bfda6 \
-    --hash=sha256:a850aa9ec2acba8db9ca2e9fcf8a327fbc2f85e432725715b37bd76b7dd1f798
+filelock==4.1.1 ; platform_machine == 'arm64' and sys_platform == 'darwin' \
+    --hash=sha256:3f4a557945a7b0f95efeb1f432267affe5d45ac8ddde2aed1b97ebb62382c089 \
+    --hash=sha256:7ba0927482c5a814b0a7f391d029ccdb8010f576f0a74c0dcde1811e8bc4c1b6
     # via
     #   diffusers
     #   huggingface-hub
     #   torch
     #   vesper-vibevoice-probe
-fsspec==2026.7.0 ; platform_machine == 'arm64' and sys_platform == 'darwin' \
-    --hash=sha256:b57ddbafedfaef7018c1ecab32aa200a9d7ca26b77965f64e48b70061249d279 \
-    --hash=sha256:c803c40f4cf860b49dea58ee3e1c33cb9c790520e233537e1340049f89b82a88
+fsspec==2026.9.0 ; platform_machine == 'arm64' and sys_platform == 'darwin' \
+    --hash=sha256:0f08147951c8cb31d844c3547d631053b127863b60be04cf06e121333ee0e2fe \
+    --hash=sha256:8dd6e646e99ea382bd85f97a45e6b526a442d79423a7dc673f1e2756d05fcb5f
     # via
     #   huggingface-hub
     #   torch
@@ -47,9 +47,9 @@ h11==0.16.0 ; platform_machine == 'arm64' and sys_platform == 'darwin' \
     --hash=sha256:4e35b956cf45792e4caa5885e69fba00bdbc6ffafbfa020300e549b208ee5ff1 \
     --hash=sha256:63cf8bbe7522de3bf65932fda1d9c2772064ffb3dae62d55932da54b31cb6c86
     # via httpcore
-hf-xet==1.6.0 ; platform_machine == 'arm64' and sys_platform == 'darwin' \
-    --hash=sha256:2e58454a340b3556dfa4972d5451aff4fba8dd42a236600ba1a1d2b1514f0fef \
-    --hash=sha256:f0906082d9932ae0c0057fa194041c22b4e2cdb46b2592ef3b91f020d62a081a
+hf-xet==1.7.0 ; platform_machine == 'arm64' and sys_platform == 'darwin' \
+    --hash=sha256:59fba37039233c7fcbe196817d6cdcf1b40dfb17b410f229d85b0cf0a1848da4 \
+    --hash=sha256:d406ec79053c0871817f700c2ac8c36ba0d87f9c34b7458b0f0063bb218b0466
     # via
     #   huggingface-hub
     #   vesper-vibevoice-probe
@@ -95,9 +95,9 @@ markdown-it-py==4.2.0 ; platform_machine == 'arm64' and sys_platform == 'darwin'
     --hash=sha256:04a21681d6fbb623de53f6f364d352309d4094dd4194040a10fd51833e418d49 \
     --hash=sha256:9f7ebbcd14fe59494226453aed97c1070d83f8d24b6fc3a3bcf9a38092641c4a
     # via rich
-markupsafe==3.0.3 ; platform_machine == 'arm64' and sys_platform == 'darwin' \
-    --hash=sha256:1872df69a4de6aead3491198eaf13810b565bdbeec3ae2dc8780f14458ec73ce \
-    --hash=sha256:722695808f4b6457b320fdc131280796bdceb04ab50fe1795cd540799ebe1698
+markupsafe==3.0.4 ; platform_machine == 'arm64' and sys_platform == 'darwin' \
+    --hash=sha256:0930db9bdc62d22944e10b066448bb65dc9abe9112880c7cab8da54db4284d5f \
+    --hash=sha256:2e9ad7dd851bf45fab9f75cbff4cb493fee9979e8d8c7c9c3ee119022518edd6
     # via
     #   jinja2
     #   vesper-vibevoice-probe
@@ -111,16 +111,16 @@ mpmath==1.3.0 ; platform_machine == 'arm64' and sys_platform == 'darwin' \
     # via
     #   sympy
     #   vesper-vibevoice-probe
-networkx==3.6.1 ; platform_machine == 'arm64' and sys_platform == 'darwin' \
-    --hash=sha256:26b7c357accc0c8cde558ad486283728b65b6a95d85ee1cd66bafab4c8168509 \
-    --hash=sha256:d47fbf302e7d9cbbb9e2555a0d267983d2aa476bac30e90dfbe5669bd57f3762
+networkx==3.7 ; platform_machine == 'arm64' and sys_platform == 'darwin' \
+    --hash=sha256:e3fd2c13a7814cee3746340d8d7f8598a67f16a58bf47fb7f8793fab6efca1b0 \
+    --hash=sha256:fd77a511bd90f39f3d016351345b52cf5319b813bdca01de3f755d3cca62e96a
     # via
     #   torch
     #   vesper-vibevoice-probe
-numpy==2.2.6 ; platform_machine == 'arm64' and sys_platform == 'darwin' \
-    --hash=sha256:894b3a42502226a1cac872f840030665f33326fc3dac8e57c607905773cdcde3 \
-    --hash=sha256:de749064336d37e340f640b05f24e9e3dd678c57318c7289d222a8a2f543e90c \
-    --hash=sha256:e29554e2bef54a90aa5cc07da6ce955accb83f21ab5de01a62c8478897b264fd
+numpy==2.5.4 ; platform_machine == 'arm64' and sys_platform == 'darwin' \
+    --hash=sha256:9a94cf751c9ad8ebaa835bcd3d40dacf8534ad086b88c38029b65123c7999d2a \
+    --hash=sha256:9cb18a327b49c5c337f972b03682f6a49855525faaf3c0d3e9c96cd0fd8880a8 \
+    --hash=sha256:b11e8fda06a7d69f15ebf542660b74466c2e51094800c1fb794f47ad4faeef17
     # via
     #   diffusers
     #   transformers
@@ -153,10 +153,10 @@ pyyaml==6.0.3 ; platform_machine == 'arm64' and sys_platform == 'darwin' \
     #   huggingface-hub
     #   transformers
     #   vesper-vibevoice-probe
-regex==2026.9.10 ; platform_machine == 'arm64' and sys_platform == 'darwin' \
-    --hash=sha256:1e321e2c84f0e52c457f5ea5944f796d6e8e09cb99738ea98dcc1bfe402a128d \
-    --hash=sha256:866de9f98df0611d7b62b3a8729d3284a64c0cc6edd90bb95a533e443a4939cb \
-    --hash=sha256:880ac684c27176464c00c3fdc456116364f5ebc70da07aad0c2d4a7ba45e98db
+regex==2026.9.29 ; platform_machine == 'arm64' and sys_platform == 'darwin' \
+    --hash=sha256:8b5fcc4771732191b2b7d1dd68d8f0353f47f8d90b6150f6dce58bf1112442cb \
+    --hash=sha256:dc79d36d0618752265f0d575915bdc5c5130ecb9c9f6b3bcefeae32e4bdfafcf \
+    --hash=sha256:f57dc6b8fef170f105d2cf5cdce254f47b137d7755086cf7050f47e16582abba
     # via
     #   diffusers
     #   transformers
@@ -200,12 +200,12 @@ tokenizers==0.22.2 ; platform_machine == 'arm64' and sys_platform == 'darwin' \
     # via
     #   transformers
     #   vesper-vibevoice-probe
-torch==2.13.0 ; platform_machine == 'arm64' and sys_platform == 'darwin' \
-    --hash=sha256:2fe228aba290d14b9f31b049be550dbd469c3fd3013d7a19705b30454da97027
+torch==2.14.1 ; platform_machine == 'arm64' and sys_platform == 'darwin' \
+    --hash=sha256:420dbf314c180ee4b86e9bc00aee5746a7d6e5bacdd7df925af671ed393f0b2e
     # via vesper-vibevoice-probe
-tqdm==4.67.1 ; platform_machine == 'arm64' and sys_platform == 'darwin' \
-    --hash=sha256:26445eca388f82e72884e0d580d5464cd801a3ea01e63e5601bdff9ba6a48de2 \
-    --hash=sha256:f8aef9c52c08c13a65f30ea34f4e5aac3fd1a34959879d7e59e63027286627f2
+tqdm==4.70.1 ; platform_machine == 'arm64' and sys_platform == 'darwin' \
+    --hash=sha256:c293e525e6fef9c20e8728fd4612df02a0aa31bb5fe91ecd93e123b1b7bffa73 \
+    --hash=sha256:cefd0eca11b2a37a3aee776544d4f4ae913f02688135b5556b8788dfa474afc4
     # via
     #   huggingface-hub
     #   transformers
@@ -234,9 +234,9 @@ urllib3==2.8.0 ; platform_machine == 'arm64' and sys_platform == 'darwin' \
     # via
     #   requests
     #   vesper-vibevoice-probe
-zipp==4.1.0 ; platform_machine == 'arm64' and sys_platform == 'darwin' \
-    --hash=sha256:25ad4e16390cd314347dd8f1de67a2ac538ae658ed4ab9db16029c07c188e97f \
-    --hash=sha256:4cb57381f544315db7688e976e922a2b18cdb513d21cc194eb42232ba2a3e602
+zipp==4.1.1 ; platform_machine == 'arm64' and sys_platform == 'darwin' \
+    --hash=sha256:7ebb7a44c021b29fd8dbd7cce6812d0d7b5b454521f93cc71af6ccd155aaa70b \
+    --hash=sha256:8979f52d874162f485ff2981e3891f3a3317b7a3dd43ff1e1775b9304f307a9c
     # via
     #   importlib-metadata
     #   vesper-vibevoice-probe

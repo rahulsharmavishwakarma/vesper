@@ -3575,7 +3575,7 @@ await test('Ember lockup keeps the bird body and wordmark still', async () => {
   );
 });
 
-await test('About sheet uses native metadata, copies only app info and restores focus', async () => {
+await test('About sheet uses native metadata, offers no copy control and restores focus', async () => {
   const state = await setup({ main: true });
   assert(
     !/Your workspace|Local workspace/.test(target.textContent),
@@ -3608,48 +3608,18 @@ await test('About sheet uses native metadata, copies only app info and restores 
     'Used frontend package version instead of native metadata',
   );
   assert(
-    sheet.textContent.includes('Release build') && !sheet.textContent.includes('Stable'),
-    'Build type was mislabeled as a stable channel',
+    !sheet.textContent.includes('Stable') && !sheet.textContent.includes('Release build'),
+    'Build type was shown or mislabeled as a stable channel',
   );
-  assert(sheet.textContent.includes('macOS · Apple silicon'), 'Native platform not shown');
-  const copyButton = sheet.querySelector('.copy');
-  assert(
-    copyButton.getAttribute('aria-label') === 'Copy app info' &&
-      copyButton.title === 'Copy app info',
-    'Copy icon is missing its accessible name or tooltip',
-  );
+  assert(!sheet.textContent.includes('Apple silicon'), 'Platform was shown in a macOS-only app');
+  assert(!sheet.querySelector('.copy, textarea'), 'About still offers a copy control');
   assert(
     ![...sheet.querySelectorAll('button')].some((button) =>
-      /update|restart/i.test(button.textContent),
+      /update|restart|install/i.test(button.textContent),
     ),
     'Unavailable updater has an actionable control',
   );
   assert(!state.counts.start_recording, 'About started recording');
-  const descriptor = Object.getOwnPropertyDescriptor(navigator, 'clipboard');
-  let copied;
-  try {
-    Object.defineProperty(navigator, 'clipboard', {
-      configurable: true,
-      value: {
-        writeText: async (text) => {
-          copied = text;
-        },
-      },
-    });
-    copyButton.click();
-    await until(
-      () => sheet.textContent.includes('App information copied.'),
-      'Copy feedback missing',
-    );
-    assert(copyButton.getAttribute('aria-label') === 'Copied', 'Copy success name missing');
-    assert(
-      copied === 'Vesper\nVersion: 9.8.7\nBuild: Release build\nPlatform: macOS · Apple silicon',
-      'Copy included unrelated data or incorrect metadata',
-    );
-  } finally {
-    if (descriptor) Object.defineProperty(navigator, 'clipboard', descriptor);
-    else delete navigator.clipboard;
-  }
   sheet.querySelector('.close').click();
   await until(
     () => !sheet.open && document.activeElement === opener,
@@ -3666,7 +3636,7 @@ await test('About sheet uses native metadata, copies only app info and restores 
   );
 });
 
-await test('About remains accessible when metadata fails and offers clipboard recovery', async () => {
+await test('About remains accessible when metadata fails and can retry', async () => {
   let fail = true;
   await setup({
     main: true,
@@ -3686,28 +3656,8 @@ await test('About remains accessible when metadata fails and offers clipboard re
   [...sheet.querySelectorAll('button')]
     .find((button) => button.textContent === 'Try again')
     .click();
-  await until(() => sheet.querySelector('.copy'), 'Retry did not recover metadata');
-  const descriptor = Object.getOwnPropertyDescriptor(navigator, 'clipboard');
-  try {
-    Object.defineProperty(navigator, 'clipboard', {
-      configurable: true,
-      value: {
-        writeText: async () => {
-          throw new Error('Clipboard denied');
-        },
-      },
-    });
-    sheet.querySelector('.copy').click();
-    await until(() => sheet.querySelector('textarea'), 'Clipboard fallback missing');
-    const fallback = sheet.querySelector('textarea');
-    assert(
-      fallback.value.includes('9.8.7') && fallback.selectionEnd === fallback.value.length,
-      'Fallback app information was not selected',
-    );
-  } finally {
-    if (descriptor) Object.defineProperty(navigator, 'clipboard', descriptor);
-    else delete navigator.clipboard;
-  }
+  await until(() => sheet.querySelector('.version'), 'Retry did not recover metadata');
+  assert(sheet.textContent.includes('9.8.7'), 'Recovered metadata lacks the native version');
 });
 
 await test('Native About menu request opens the shared sheet after startup', async () => {
