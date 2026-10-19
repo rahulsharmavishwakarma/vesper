@@ -37,6 +37,10 @@ jobs:
     needs: [checks, security]
     runs-on: macos-15
     timeout-minutes: 90
+    # The updater signing key lives in the production environment; without
+    # this the secrets resolve empty and the build silently skips the
+    # signed updater archive and feed (Refs #206).
+    environment: production
     permissions:
       contents: read
     env:
