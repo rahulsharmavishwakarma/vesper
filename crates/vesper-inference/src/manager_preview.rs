@@ -23,11 +23,7 @@ pub(super) fn run_buffered(
     mailbox: Arc<Mailbox>,
 ) -> Result<StreamingFinal> {
     let mut memory = resources::Memory::read();
-    // Idle writer weights need not compete with capture/ASR under pressure.
-    // The writer will be re-created by its existing identity-checked loader.
-    if memory.pressured() {
-        state.rewriter = None;
-    }
+    release_writer_under_pressure(state, memory.pressured(), evidence, id);
     let initialized = (|| {
         let mut selection = vesper_models::resolve_speech(config, root)
             .map_err(crate::resident_sherpa::verification_error)?;
