@@ -35,7 +35,7 @@ export function composeManifest({ version, notes, pubDate, signature, url }) {
 if (process.argv[1] && path.resolve(process.argv[1]) === fileURLToPath(import.meta.url)) {
   const args = Object.fromEntries(
     process.argv.slice(2).map((arg) => {
-      const match = /^--([^=]+)=(.*)$/.exec(arg);
+      const match = /^--([^=]+)=(.*)$/s.exec(arg);
       if (!match) throw new Error(`Expected --key=value, got: ${arg}`);
       return [match[1], match[2]];
     }),
