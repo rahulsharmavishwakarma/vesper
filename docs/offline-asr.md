@@ -4,10 +4,10 @@ The application has dedicated CPU adapters for Qwen3-ASR 0.6B and Cohere Transcr
 
 | Model | App language choices | Pinned download |
 | --- | --- | ---: |
-| Qwen3-ASR 0.6B INT8 | Automatic, English, French, Hindi | 987,015,347 bytes |
-| Cohere Transcribe INT8 | Explicit English or French | 2,888,052,036 bytes |
+| Qwen3-ASR 0.6B INT8 | Automatic plus 30 declared languages | 987,015,347 bytes |
+| Cohere Transcribe INT8 | 14 declared languages, explicit only | 2,888,052,036 bytes |
 
-Cohere has no automatic language detection or Hindi support in this adapter. Broader language-picker expansion is separate work. Both adapters accept Automatic/CPU compute settings. Qwen3-ASR is a speech model, separate from the Qwen cleanup model. Their files cannot be imported as a four-file NeMo transducer profile.
+Cohere has no automatic language detection or Hindi support in this adapter. The picker follows `models/languages.json`. Both adapters accept Automatic/CPU compute settings. Qwen3-ASR is a speech model, separate from the Qwen cleanup model. Their files cannot be imported as a four-file NeMo transducer profile.
 
 ## Completion contract
 
@@ -128,8 +128,8 @@ On the 24 individual clips (4–24 s), 30 s leaves output identical to the previ
 
 ## Whisper extension
 
-The shared offline engine and resident Sherpa wrapper also implement the Small/Turbo Whisper evaluation adapter under [ADR-0018](adrs/0018-shared-whisper-adapter.md). Both checkpoints use one Whisper configuration/result-policy module. They share installation, recording isolation, cancellation and segmentation with existing infrastructure; Whisper's maximum segment is 29 seconds, while Qwen/Cohere retain ten seconds.
+The shared offline engine and resident Sherpa wrapper also implement the Small/Turbo Whisper adapter under [ADR-0018](adrs/0018-shared-whisper-adapter.md). Both checkpoints use one Whisper configuration/result-policy module. They share installation, recording isolation, cancellation and segmentation with existing infrastructure; Whisper's maximum segment is 29 seconds, while Qwen/Cohere retain ten seconds.
 
 The native patch additionally reports Whisper confidence and detected language using separate stream options, rejects oversized native input, and replaces the six-tokens-per-second heuristic with the half-context text-token allowance and fixed KV bounds. Actual EOS is required before applying the joint no-speech/log-probability policy. These Whisper changes do not alter Cohere's decoder policy or add attention/KV kernels.
 
-The installed adapter can be exercised through `vesper-eval --model openai/whisper-small` or `openai/whisper-large-v3-turbo` with CPU completed audio. Product selection stays disabled: noise and repetition quality gates have failed, and Hindi/code-switching/singing/live streaming are unqualified. See the [dated adapter validation](validation/whisper-adapter-2026-09-18.md), which keeps source capability, actual execution, and release qualification separate.
+The installed adapter can be exercised through `vesper-eval --model openai/whisper-small` or `openai/whisper-large-v3-turbo` with CPU completed audio. The picker offers Small and Turbo by owner decision (2026-10-07) although the noise and repetition quality gates have failed; Hindi, code-switching and singing remain unqualified. See the [dated adapter validation](validation/whisper-adapter-2026-09-18.md), which keeps source capability, actual execution, and release qualification separate.

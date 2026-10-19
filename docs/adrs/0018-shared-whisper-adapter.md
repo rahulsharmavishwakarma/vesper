@@ -40,3 +40,7 @@ Pins: Sherpa 1.13.8 revision `11afbd009a7f8c08f4bcf2fc1b265d0df4670fbf`, local b
 ## Consequences
 
 Shared ownership removes duplicated lifecycle logic while preserving incompatible native decoder contracts. Resident weights consume idle RAM, larger output allowance may increase ambiguous-audio latency, and segmented offline inference provides no live partials. The fixed confidence policy is insufficient on the current environmental noise cases. Threshold tuning on those observed cases would contaminate evaluation; any future policy needs separate development and held-out recordings plus quiet-speech false-rejection checks. A new VAD subsystem, native backend or live-streaming algorithm requires a separate bounded proposal and approval.
+
+## Update 2026-10-07
+
+The owner decided to offer Whisper Small and Turbo in the desktop picker although the noise and repetition quality gates still fail. The decision above to keep product selection disabled until the gates pass was superseded; the catalog marks both models optional and the quality restrictions remain documented in the language matrix.

@@ -48,7 +48,7 @@ flowchart TB
     sherpa[sherpa-onnx 1.13.8]
     nemo[NeMo-Speech.cpp C ABI via vesper-nemo]
     mlx[MLX Swift bridge via vesper-mlx]
-    llama[llama.cpp via llama-cpp-2 0.1.156 + mtmd]
+    llama[llama.cpp via llama-cpp-2 0.1.159 + mtmd]
   end
   subgraph Store["Local storage"]
     models[(Model root: weights + runtimes)]

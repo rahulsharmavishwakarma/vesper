@@ -121,8 +121,9 @@ alone does not qualify a candidate. No learned model is active.
 
 The proposed training source is
 `Qwen/Qwen3.5-0.8B@2fc06364715b967f1860aea9cf38778875588b17`; native qualification
-uses the currently pinned Q4/Q8 artifacts and `llama-cpp-2 0.1.156` /
-`llama.cpp e79e4bf660e19f2ad851e06c6913f7a8c5852621`. These identify the experiment,
+uses the Q4/Q8 artifacts and `llama-cpp-2 0.1.156` /
+`llama.cpp e79e4bf660e19f2ad851e06c6913f7a8c5852621` that the 27 September experiment
+ran on (the application now pins 0.1.159 / `d8123504`; re-run the probe before relying on it). These identify the experiment,
 not a verified export path. [LoRA](https://arxiv.org/abs/2106.09685) supports the
 adaptation method; it supplies no measured quality or speedup for this app.
 

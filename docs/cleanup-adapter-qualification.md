@@ -20,7 +20,7 @@ training/checkpoint change, still gated here.
 | Public base source | `Qwen/Qwen3.5-0.8B@2fc06364715b967f1860aea9cf38778875588b17` |
 | MLX-LM | `0.31.3`, source `ed1fca4cef15a824c5f1702c80f70b4cffc8e4dd` |
 | MLX / MLX Metal | `0.32.2` |
-| Native binding | `llama-cpp-2 0.1.156` |
+| Native binding | `llama-cpp-2 0.1.156` (27 September experiment; the application now pins 0.1.159 / llama.cpp `d8123504`) |
 | Native source/converter | `llama.cpp e79e4bf660e19f2ad851e06c6913f7a8c5852621` |
 | Converter environment | Python 3.12, Torch 2.13.0, Transformers 5.17.0, NumPy 2.5.3, safetensors 0.8.0, protobuf 7.36.2, sentencepiece 0.2.2; full lock in `training/cleanup/uv.lock` |
 | Native fixture | Apple M5 Pro, macOS 27.0 (26A428), CPU or Metal, 4 CPU threads, context 512, batch/microbatch 128 |
