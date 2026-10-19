@@ -4,7 +4,12 @@ import { check as tauriCheck, type Update } from '@tauri-apps/plugin-updater';
 import { relaunch } from '@tauri-apps/plugin-process';
 import { isTauri } from '@tauri-apps/api/core';
 import { getEngineDiagnostics } from './api/desktop';
-import { UpdateManager, type UpdateBackend, type UpdateInfo } from './updates';
+import {
+  UpdateManager,
+  type UpdateBackend,
+  type UpdateInfo,
+  type UpdatePreferenceStore,
+} from './updates';
 
 let pending: Update | null = null;
 
@@ -53,7 +58,29 @@ export const updateBackend: UpdateBackend = {
   },
 };
 
-export const updateManager = new UpdateManager(updateBackend);
+const PREFERENCES_KEY = 'vesper.updatePreferences';
+
+// A small frontend preference, kept beside the manager rather than in the
+// settings file; storage can be unavailable, so every access is guarded.
+const preferenceStore: UpdatePreferenceStore = {
+  load() {
+    try {
+      const raw = localStorage.getItem(PREFERENCES_KEY);
+      return raw ? (JSON.parse(raw) as Record<string, unknown>) : null;
+    } catch {
+      return null;
+    }
+  },
+  save(preferences) {
+    try {
+      localStorage.setItem(PREFERENCES_KEY, JSON.stringify(preferences));
+    } catch {
+      // Not persisted this time; the in-memory choice still applies.
+    }
+  },
+};
+
+export const updateManager = new UpdateManager(updateBackend, preferenceStore);
 
 let quietCheckFired = false;
 
@@ -61,5 +88,5 @@ let quietCheckFired = false;
 export function requestQuietCheck(): void {
   if (quietCheckFired) return;
   quietCheckFired = true;
-  if (isTauri()) void updateManager.check();
+  if (isTauri()) void updateManager.automaticCheck();
 }
