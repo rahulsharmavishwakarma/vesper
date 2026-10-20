@@ -195,6 +195,12 @@ jobs:
           test -x "$app/Contents/MacOS/$executable"
           # An unsealed bundle downloads as "damaged" on other Macs (#239).
           codesign --verify --deep --strict --verbose=2 "$app"
+          # The hardened runtime enforces library validation, which rejects the
+          # ad hoc MLX library: Parakeet then shows "dlopen failed" (#245).
+          if codesign -dvv "$app" 2>&1 | grep -q 'flags=.*runtime'; then
+            echo "App carries the hardened runtime flag; it cannot load the ad hoc MLX library." >&2
+            exit 1
+          fi
           if [ "$(uname -m)" = arm64 ]; then
             test -s "$app/Contents/Resources/mlx-runtime/libVesperMLX.dylib"
             test -s "$app/Contents/Resources/mlx-runtime/mlx.metallib"

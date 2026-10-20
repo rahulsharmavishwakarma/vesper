@@ -666,7 +666,16 @@ prompt; `xattr -cr /Applications/Vesper.app` is the workaround for that download
 The base macOS bundle config now sets `signingIdentity` to `-`, so Tauri signs
 the whole bundle ad hoc and seals its resources, and two gates fail the build if it
 does not: the `Rust (macOS)` job runs `codesign --verify --deep --strict` on the
-debug bundle, and `scripts/package-release.sh` runs it on the release app. Ad hoc
+debug bundle, and `scripts/package-release.sh` runs it on the release app. The bundle must not
+carry the hardened runtime (`bundle.macOS.hardenedRuntime` is `false`): it enforces
+library validation, so macOS refuses the ad hoc `libVesperMLX.dylib` (`code
+signature ... not valid for use in process: mapping process and mapped file
+(non-platform) have different Team IDs`) and Parakeet shows "MLX runtime: dlopen
+failed" ([issue #245](https://github.com/rahulsharmavishwakarma/vesper/issues/245);
+`v0.1.1-rc.2` shipped with it on). Both gates reject a `runtime` flag. Workaround for
+an installed rc.2: `codesign --force --sign - /Applications/Vesper.app` (no `--deep`,
+no `--options runtime`). Revisit when Developer ID signing and notarization make the
+hardened runtime necessary. Ad hoc
 signing needs no Apple account but is not notarization: macOS still warns, and
 Open Anyway applies. Developer ID signing and notarization remain
 [issue #64](https://github.com/rahulsharmavishwakarma/vesper/issues/64). Verified
