@@ -475,9 +475,10 @@ manually (the `verify` job limitation in
 [issue #172](https://github.com/rahulsharmavishwakarma/vesper/issues/172) still
 applies). Installing the previous build and applying the in-app update remains
 the outstanding end-to-end updater proof. The release bot
-(`prepare-release.yml`) is scaffolded but not yet enrolled: its GitHub App
-variable and private-key secret are unset, so version bumps and tagging are
-still driven manually as above.
+(`prepare-release.yml`) was merged afterwards: its GitHub App
+(`RELEASE_BOT_APP_ID` variable, `RELEASE_BOT_PRIVATE_KEY` secret) was enrolled on
+20 October 2026, but it has not run yet. The first dry run on a prerelease is the
+validation, so version bumps and tagging stay manual until then.
 
 The version is recorded in the release tag and app bundle. The asset name stays
 constant so a website download button can link to:
@@ -631,7 +632,7 @@ expiring artifact only" policy (2026-10-20) and chose download-only first.
   any offline check and can never reach the stable feed. Channel visibility
   rules (a stable app never sees nightly) and the beta-feed decision are
   proposals on #66 and #205.
-- Limitations: nightly is unsigned, so macOS may need right-click, then Open;
+- Limitations: nightly is unsigned, so macOS asks you to allow it under System Settings → Privacy & Security → Open Anyway;
   only the latest nightly is kept; a nightly can lag main by a day, and a
   failed or running `Check` on the newest commit skips that night.
 
@@ -697,8 +698,9 @@ The information-only section can precede the updater work in
 The updater and process plugins are initialized, and the base `tauri.conf.json`
 enrolls the updater public key and the stable feed endpoint
 (`releases/latest/download/latest.json`). Feed manifests are published only by
-signed tag-run candidates; v0.1.0 is not yet published, so no feed exists yet and
-an update check finds nothing.
+signed tag-run candidates. `v0.1.0` (stable, 20 October 2026) carries the first
+`latest.json`, but no higher version exists yet, so an update check finds nothing
+to install.
 The shared launcher disables updater artifacts for default, unenrolled macOS
 builds without `TAURI_SIGNING_PRIVATE_KEY`, allowing app/DMG candidates to finish
 successfully.
@@ -810,7 +812,7 @@ fixtures remain versioned and tested.
 
 Historical: at the 2026-09-19 review GitHub listed no workflows. Workflows now
 run on GitHub (the rc.2 dry run and the v0.1.0 tag run are described above);
-v0.1.0 is a draft and is not yet published. Configuring files, installing local
+`v0.1.0` is published as a stable release. Configuring files, installing local
 hooks and recording local commits does not by itself activate hosted CI.
 The owner has authorized small local commits with issue references; see the
 [commit convention](project-workflow.md#local-commit-convention). A push still

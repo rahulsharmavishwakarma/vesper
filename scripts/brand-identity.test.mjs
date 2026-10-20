@@ -99,7 +99,11 @@ test('README opens with accessible Vesper branding without promising a release',
   assert.match(readme, /<p align="center">Local models · Early&nbsp;development<\/p>/);
   assert.doesNotMatch(readme.split('## Features')[0], /\bMac(?:s|OS)?\b|Apple.silicon/i);
   assert.match(readme, /macOS DMG for Apple-silicon Macs/);
-  assert.match(readme, /A public installer is not available yet/);
+  // v0.1.0 is published (20 October 2026): the README links the stable asset
+  // and states that the build is unsigned instead of denying availability.
+  assert.match(readme, /releases\/latest\/download\/vesper-macos-arm64\.dmg/);
+  assert.doesNotMatch(readme, /not available yet/);
+  assert.match(readme, /not yet signed or notarized/);
   // Apache-2.0 adopted (owner-approved #127): the README must name the
   // license and must no longer claim selection is pending.
   assert.match(readme, /Apache License 2\.0/);
