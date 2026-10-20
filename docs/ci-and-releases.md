@@ -602,10 +602,43 @@ sequenceDiagram
    published assets and download links in the run summary.
 8. Use the stable latest link on the launch site, or a version URL for a pinned download.
 
-Nightly builds stay expiring Actions artifacts and are never published releases
-or the website default. Roll back by shipping a higher patch version; never
-move or overwrite old tag assets, and the promote job refuses non-draft
-releases. Beta releases use SemVer prerelease tags and stay out of the stable
+### Nightly builds ([issue #205](https://github.com/rahulsharmavishwakarma/vesper/issues/205))
+
+Status: implemented on a branch, **not yet exercised**; the first scheduled or
+dispatched run is the validation. The owner reversed the earlier "nightly is an
+expiring artifact only" policy (2026-10-20) and chose download-only first.
+
+- `nightly.yml` runs daily (02:17 UTC) and on dispatch. It builds the default
+  branch only when it changed since the last nightly (the commit the `nightly`
+  tag points at) and only when that commit's own `Check` run succeeded; a
+  forced dispatch skips the first rule.
+- The build is unsigned and uses the release desktop steps. Before building,
+  `scripts/nightly.mjs apply` rewrites the runner's checkout (never committed):
+  version `X.Y.Z-nightly.YYYYMMDD` (next patch after a stable release, the
+  candidate's own version after an rc), product name `Vesper Nightly`, and
+  identifier `com.vesper.desktop.nightly`. Tauri derives the data and config
+  directories from the identifier and the legacy-store fallback only applies to
+  `com.vesper.desktop`, so a nightly keeps separate settings and models and
+  installs beside stable.
+- Publication replaces the single rolling `nightly` **prerelease** (DMG named
+  `vesper-nightly-macos-arm64.dmg`, plus `SHA256SUMS`), deleting the old
+  release and its tag first. It refuses to touch a `nightly` release that is not
+  a prerelease, never creates or moves a `vX.Y.Z` tag, never becomes `latest`,
+  and never touches `latest.json`, `beta.json` or the website default. The
+  release workflow's tag trigger is `v*`, so the `nightly` tag starts nothing.
+- No nightly update feed exists yet. The nightly build's updater endpoint
+  points at the future `nightly.json` address, so its update checks fail like
+  any offline check and can never reach the stable feed. Channel visibility
+  rules (a stable app never sees nightly) and the beta-feed decision are
+  proposals on #66 and #205.
+- Limitations: nightly is unsigned, so macOS may need right-click, then Open;
+  only the latest nightly is kept; a nightly can lag main by a day, and a
+  failed or running `Check` on the newest commit skips that night.
+
+Roll back by shipping a higher patch version; never move or overwrite old
+`vX.Y.Z` tag assets, and the promote job refuses non-draft releases. The
+`nightly` tag is the single exception, because it is a moving pointer, not a
+version. Beta releases use SemVer prerelease tags and stay out of the stable
 `latest` pointer.
 
 Release workflows never download or bundle ASR/cleanup model weights. Model and
