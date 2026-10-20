@@ -33,6 +33,18 @@ exports. CI installs uv 0.12.15 through a SHA-pinned action and selects Python
 3.12. The frontend job caches downloads under `.cache/uv`, keyed by lockfiles;
 only pushes to `main` save that cache. Security jobs disable cache reuse.
 
+The `Rust (macOS)` job (the slowest check, about 25 minutes cold) restores a
+`Swatinem/rust-cache` of the Cargo registry and dependency builds, saved only from
+pushes to `main` so pull requests never churn the shared repository cache (10 GB
+limit). It builds with `CARGO_INCREMENTAL=0` and
+`CARGO_PROFILE_DEV_DEBUG=line-tables-only` because CI never debugs these
+artifacts. On a pull request that changes only `docs/**` or Markdown files, a
+first step detects that and every later step is skipped, so the required check
+still reports success within seconds; pushes to `main` and release tag runs
+always build everything. The MLX Swift build and the macOS bundle build are not
+cached or parallelized yet ([issue #228](https://github.com/rahulsharmavishwakarma/vesper/issues/228));
+measured effect is recorded there, not assumed here.
+
 Native-protocol tests in `scripts/test-vibevoice-bitnet.py` launch synthetic
 children through the real resource wrapper. It uses BSD `/usr/bin/time -l` on
 macOS and GNU `/usr/bin/time -f` on the Ubuntu portable runner. GNU peak RSS is
