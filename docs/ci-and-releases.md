@@ -453,6 +453,26 @@ reproduces locally with `MACOSX_DEPLOYMENT_TARGET=14.0 cargo build --release -p
 vesper-desktop` (the MLX bundle minimum Tauri applies); a default-target local
 build links without the fix.
 
+`v0.1.0` stable was published on 20 October 2026 after three further first-run
+defects, each fixed forward and re-verified with a fresh tag run: the desktop
+job did not declare the `production` environment, so the updater signing key
+resolved empty and signed artifacts were silently skipped
+([issue #206](https://github.com/rahulsharmavishwakarma/vesper/issues/206)); the
+draft checksum step hashed every file in `release/` while the publish script
+requires exactly the DMG line
+([issue #216](https://github.com/rahulsharmavishwakarma/vesper/issues/216)); and
+the updater manifest CLI rejected multi-line release notes
+([issue #218](https://github.com/rahulsharmavishwakarma/vesper/issues/218)).
+The published release carries the DMG, its `SHA256SUMS`, the signed updater
+archive and signature, and `latest.json`; the checksum and feed were verified
+manually (the `verify` job limitation in
+[issue #172](https://github.com/rahulsharmavishwakarma/vesper/issues/172) still
+applies). Installing the previous build and applying the in-app update remains
+the outstanding end-to-end updater proof. The release bot
+(`prepare-release.yml`) is scaffolded but not yet enrolled: its GitHub App
+variable and private-key secret are unset, so version bumps and tagging are
+still driven manually as above.
+
 The version is recorded in the release tag and app bundle. The asset name stays
 constant so a website download button can link to:
 
@@ -472,10 +492,9 @@ A specific release has a permanent version URL, for example:
 https://github.com/rahulsharmavishwakarma/vesper/releases/download/v0.1.0/vesper-macos-arm64.dmg
 ```
 
-These are planned endpoints until a release succeeds. At the 2026-09-19 review,
-the repository is private and has no published releases. The repository hosting
-release assets must be public for anonymous downloads; this can be a separate
-distribution repository while source remains private. A prerelease does not
+These endpoints are live: the repository is public and `v0.1.0` is the latest
+stable release. (At the 2026-09-19 review the repository was private with no
+published releases.) A prerelease does not
 replace the latest stable link; use its version-specific URL. See GitHub's
 [release-link documentation](https://docs.github.com/en/repositories/releasing-projects-on-github/linking-to-releases).
 
