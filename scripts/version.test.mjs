@@ -61,8 +61,11 @@ function lockVersions(root) {
 }
 
 test('repository application versions are synchronized', () => {
-  assert.equal(checkVersions(projectRoot, 'v0.1.0'), '0.1.0');
-  assert.throws(() => checkVersions(projectRoot, 'v0.1.1'), /does not match/);
+  // Read the declared version instead of pinning it: every release pull request
+  // (including the release bot's) changes it, and must not need a test edit.
+  const version = checkVersions(projectRoot);
+  assert.equal(checkVersions(projectRoot, `v${version}`), version);
+  assert.throws(() => checkVersions(projectRoot, 'v999.0.0'), /does not match/);
 });
 
 test('workspace discovery covers every version-inheriting member', () => {
