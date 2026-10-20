@@ -812,16 +812,26 @@ mod tests {
             &std::fs::read(std::env::var("VESPER_WRITER_INPUTS").expect("inputs")).unwrap(),
         )
         .unwrap();
+        // Optional `VESPER_CUSTOM_WRITER_PROFILE`: a profile JSON from
+        // models/presets.json, to qualify a catalog writer (#236).
+        let custom: Option<vesper_core::HuggingFaceProfile> =
+            std::env::var("VESPER_CUSTOM_WRITER_PROFILE")
+                .ok()
+                .map(|path| serde_json::from_slice(&std::fs::read(path).unwrap()).unwrap());
         let cancelled = AtomicBool::new(false);
         for backend in [ComputeBackend::Cpu, ComputeBackend::Auto] {
             for preset in [CleanupPreset::Minimal, CleanupPreset::Balanced] {
-                let config = AppConfig {
+                let mut config = AppConfig {
                     compute_backend: backend,
                     cleanup_preset: preset,
                     ..Default::default()
                 };
+                config.models.custom_rewriter = custom.clone();
                 let mut model = Rewriter::load(&config, &root, &cancelled).unwrap();
                 for cached in [false, true] {
+                    if cached && custom.is_some() {
+                        continue;
+                    }
                     model.prefix_cache_enabled = cached;
                     for (index, raw) in inputs.iter().enumerate() {
                         let started = Instant::now();
@@ -832,7 +842,8 @@ mod tests {
                         let sum = |f: fn(&PassMetrics) -> u64| passes.iter().map(f).sum::<u64>();
                         println!(
                             "cleanup-output-v1 {}",
-                            serde_json::json!({"backend": format!("{backend:?}"), "preset": format!("{preset:?}"),
+                            serde_json::json!({"writer": custom.as_ref().map(|p| p.id.clone()),
+                                "backend": format!("{backend:?}"), "preset": format!("{preset:?}"),
                                 "cached": cached, "index": index, "result": result, "rewriteUs": micros(started),
                                 "contextUs": sum(|p| p.context_us), "prefillUs": sum(|p| p.prefill_us),
                                 "generationUs": sum(|p| p.generation_us),
