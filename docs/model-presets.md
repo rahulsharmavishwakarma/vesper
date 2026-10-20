@@ -230,6 +230,15 @@ same catalog through the actual settings and installer contract. The browser
 page `/tests/recovery.html` tests explicit save/download and reopening with
 synthetic native commands. See [validation instructions](validation.md).
 
+Before adding a writing preset, run it through the production custom-writer
+path with `VESPER_CUSTOM_WRITER_PROFILE=<profile.json>` and the ignored
+`qwen::tests::dump_cleanup_outputs` test (`VESPER_SMOKE_MODELS`,
+`VESPER_WRITER_INPUTS`). Compare its fidelity rejections with the built-in
+writer. LFM2.5-230M/350M, Granite 4.0 350M and Qwen3-0.6B were evaluated on
+20 October 2026 and **not added**: each was rejected far more often than
+Qwen3.5-0.8B, and Qwen3-0.6B never completed. See the
+[small writing-model record](validation/small-writing-presets-2026-10-20.md).
+
 ## Automatic audio setup validation
 
 The browser regression page exercises ordered downloads, installed-file reuse,
