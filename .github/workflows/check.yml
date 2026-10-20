@@ -193,6 +193,8 @@ jobs:
           app="target/debug/bundle/macos/$product_name.app"
           executable=$(/usr/libexec/PlistBuddy -c 'Print :CFBundleExecutable' "$app/Contents/Info.plist")
           test -x "$app/Contents/MacOS/$executable"
+          # An unsealed bundle downloads as "damaged" on other Macs (#239).
+          codesign --verify --deep --strict --verbose=2 "$app"
           if [ "$(uname -m)" = arm64 ]; then
             test -s "$app/Contents/Resources/mlx-runtime/libVesperMLX.dylib"
             test -s "$app/Contents/Resources/mlx-runtime/mlx.metallib"

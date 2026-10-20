@@ -56,10 +56,14 @@ Versioned downloads and their `SHA256SUMS` are on the
 [Releases page](https://github.com/rahulsharmavishwakarma/vesper/releases).
 Intel Macs, Windows and Linux are not current release targets.
 
-The app is **not yet signed or notarized** with an Apple Developer ID, so macOS
-blocks the first launch. After dragging Vesper to Applications and trying to open
-it once, go to **System Settings → Privacy & Security** and choose **Open
-Anyway**. Verify the download against `SHA256SUMS` if you want to confirm it.
+The app is **not yet notarized** with an Apple Developer ID, so macOS warns on
+the first launch. Drag Vesper to Applications and open it; if macOS says it cannot
+verify the app, go to **System Settings → Privacy & Security** and choose **Open
+Anyway**. If it instead says **"Vesper" is damaged and can't be opened** (the
+0.1.0 download, which is only partly signed), run
+`xattr -cr /Applications/Vesper.app` in Terminal and open it again. Later releases
+seal the whole app, so they show the normal warning. Verify the download against
+`SHA256SUMS` if you want to confirm it.
 Signing and notarization are tracked in
 [issue #64](https://github.com/rahulsharmavishwakarma/vesper/issues/64).
 
