@@ -2,11 +2,11 @@
 
 ## Application code
 
-Vesper's application code is licensed under the [Apache License 2.0](../../LICENSE):
+Vesper's application code is licensed under the [Apache License 2.0](../LICENSE):
 
 Copyright 2026 Rahul Sharma
 
-See [LICENSE](../../LICENSE) for the full text. The choice and its rationale are
+See [LICENSE](../LICENSE) for the full text. The choice and its rationale are
 recorded in [issue #127](https://github.com/rahulsharmavishwakarma/vesper/issues/127).
 This is not legal advice.
 
@@ -14,8 +14,8 @@ This is not legal advice.
 
 Model checkpoints, runtimes and fonts are **not** covered by the license above.
 Each follows its publisher's terms. The app downloads them from their recorded
-upstream sources; the inventory lives in [models/catalog.json](../../models/catalog.json)
-and [models/presets.json](../../models/presets.json).
+upstream sources; the inventory lives in [models/catalog.json](../models/catalog.json)
+and [models/presets.json](../models/presets.json).
 
 | Publisher | Examples in the catalog | Terms |
 | --- | --- | --- |
@@ -34,6 +34,6 @@ independently of this repository.
 ## Fonts and native runtimes
 
 Bundled fonts and the pinned native runtimes (sherpa-onnx, NeMo speech builds)
-follow their own licenses. The tracked `inter.ttf` ships with unverified terms
+follow their own licenses. The tracked `apps/desktop/src/assets/bricolage-grotesque.ttf` ships with terms that are not yet verified
 and must be resolved before the repository goes public
 ([issue #127](https://github.com/rahulsharmavishwakarma/vesper/issues/127)).

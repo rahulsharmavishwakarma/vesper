@@ -21,10 +21,10 @@ format. Python is not required for this runtime.
 ## Select a profile
 
 The Models menus offer [pinned presets](model-presets.md) for speech and writing.
-Choose a model, then use **Save & download** to save and install it, or **Save
-changes** to save without downloading. Download controls and file status appear
-with each model selector. **Install selected pipeline** fetches both selected
-stages when writing is enabled.
+Choose a model; settings save automatically. Use **Download** (shown as **Save &
+download** when the selection has unsaved edits) to install it, or **Verify
+files** to repair an installed one. Download controls and file status appear
+with each model selector, and only the selected model's files are fetched.
 
 Previously saved custom profiles remain selectable and use the same validation
 and runtime paths. New supported choices should be added through the
@@ -190,7 +190,7 @@ and [Rust chat template API](https://docs.rs/llama-cpp-2/0.1.159/llama_cpp_2/mod
 
 ## Generate a profile without Python
 
-Use Node 20 or later to obtain pinned file metadata for a catalog candidate:
+Use the repository's supported Node version (22.13+ or 24+) to obtain pinned file metadata for a catalog candidate:
 
 The Makefile shortcut for a writing model is `make model-profile HF_REPO=owner/repository HF_WEIGHTS=model.gguf HF_LANGUAGES=en`. Both speech and writing profile generation require declared languages (`--languages` in the script). Use the exact checkpoint's official evidence, not its runtime or family name. It writes `models/custom-profile.json`; use `HF_OUTPUT` or `HF_REVISION` to override the output path or source revision. Review the generated profile using the catalog maintenance process before adding it to `models/presets.json`. Generation alone does not add a menu entry. The script form below also supports speech bundles and additional metadata.
 

@@ -8,7 +8,7 @@ Start at the [product README](../README.md) for download status or follow the
 [development guide](development.md) to run from source. The public DMG and Apple
 Developer ID signing/notarization are not available yet. Once a release is
 available, open `vesper-macos-arm64.dmg` and drag `Vesper.app` to Applications.
-The repository still uses `transcribe`. Existing settings, models and history
+The GitHub repository is named `vesper`; a local checkout may still be called `transcribe`. Existing settings, models and history
 are reused in place when no Vesper store exists; nothing is moved, merged or reset.
 The new application identifier may require granting macOS microphone,
 Accessibility or notification permissions again. Browser preview reads older
@@ -171,9 +171,9 @@ See [performance evidence](inference-performance.md)
 for tested combinations and remaining limits.
 
 New installations use Cohere Transcribe with optional Qwen writing cleanup and
-English selected. The current Cohere adapter supports English and French for
-completed recordings; it does not provide automatic language detection, Hindi
-or live captions. Other models have different capabilities. Use the
+English selected. The current Cohere adapter supports 14 explicit languages for
+completed recordings (see the language guide); it has no automatic language
+detection or Hindi, and its live words are buffered drafts. Other models have different capabilities. Use the
 [language compatibility guide](language-support-and-recommendations.md) when
 changing models rather than assuming every model supports every mode.
 
@@ -463,7 +463,7 @@ does not count as independent support. A manually added term
 needs a **Heard as** alias to replace a recurring mistake after recognition;
 listing its preferred spelling alone does not create that replacement.
 
-If learning appears inactive, inspect **Automatic learning evidence**. No recent
+If learning appears inactive, open **Learning on this device** (History). No recent
 in-app corrections means Vesper has not received the relevant feedback: edit
 **Your text** and leave the field or copy to save it. Dictation frequency, Copy,
 and corrections made in another app do not verify spellings. Candidate messages
@@ -475,10 +475,11 @@ background semantic/policy evaluation does not currently activate new preference
 or train models.
 
 Ordinary recordings also collect conspicuous technical terms automatically as
-observed candidates (up to 8 per result, bounded storage). They appear directly
-under **Automatic learning evidence** with their observation count, project and
-language, and never activate correction rules. The full candidate history
-remains under **Inspect recent candidates**.
+observed candidates (up to 8 per result, bounded storage). They appear in the
+**Vocabulary** list (Settings → Writing → Your vocabulary and writing) as
+suggested words with their observation count, project and language, and never
+activate correction rules until you confirm them with the tick. Use the
+filter pills to show only suggested words.
 
 Settings no longer offers the inactive **Improvement policy / Automatic
 activation** selector. Its stored compatibility value does not enable a trainer,
@@ -538,7 +539,7 @@ does not remove your downloaded models or recordings.
 | ------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | Waveform does not match the microphone      | Confirm the selected input device. After a native audio update, quit the running app and open the newly built version; a page reload does not update the audio code. Background sound can still register.                                 |
 | Recording will not start                    | Confirm microphone permission, selected input device and model download status. Wait for Listening.                                                                                                                                       |
-| Warning that microphone audio was skipped   | The Mac was too busy to keep up with the microphone for at least two seconds. Vesper skipped that audio and kept recording. Close heavy applications and record the missing part again. |
+| Warning that microphone audio was skipped   | The Mac was too busy to keep up with the microphone; the warning shows how many seconds of audio were skipped. Vesper skipped that audio and kept recording. Close heavy applications and record the missing part again. |
 | Multichannel audio interface sounds quiet   | Vesper uses only the channels that carry sound, so one microphone on a multichannel interface keeps its full level. Unused inputs on the interface do not need to be disabled.                                                              |
 | A language or live captions are unavailable | Check the selected speech model's [supported languages and modes](language-support-and-recommendations.md).                                                                                                                               |
 | A model download fails                      | Check the connection, free disk space and model-folder access, then retry ASR/writing downloads from Models. Supporting audio setup retries automatically.                                                                                |
@@ -555,7 +556,7 @@ include private audio, transcripts or credentials.
 
 When you save a correction inside Vesper, the app also attempts a small local analysis while idle, using the writing model only if it is already loaded. Recording interrupts this work. This experimental analysis helps evaluate intent and context; its guesses do not yet change your words or preferences. Automatic spelling learning continues as before.
 
-The app may retain bounded before/after text and one recent attempt locally for up to 30 days, even when saving audio for training is off. At most 256 results are retained, with expiry applied when the store is next accessed. Undo learning removes that result’s analysis; Forget learned words also removes all of this analysis. No audio or training labels are created by it. See [semantic personalization](personalization/semantic-shadow.md) for details and current evidence.
+The app may retain bounded before/after text and one recent attempt locally for up to 30 days, even when saving audio for training is off. At most 256 results are retained, with expiry applied when the store is next accessed. Undo learning removes that result’s analysis; Forget automatic learning also removes all of this analysis. No audio or training labels are created by it. See [semantic personalization](personalization/semantic-shadow.md) for details and current evidence.
 
 ### Corrections in other applications
 

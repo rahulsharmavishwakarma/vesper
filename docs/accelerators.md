@@ -11,7 +11,7 @@ and platform rules permit it.
 
 | Choice   | Device/build evidence required                      | Existing model limits                                                                                                 |
 | -------- | --------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------- |
-| Metal    | Apple Silicon macOS build with a detected Metal GPU | Native LFM and Nemotron paths are available; Apple Silicon builds also support English Parakeet/Qwen-ASR through MLX; Whisper Small remains evaluation-only |
+| Metal    | Apple Silicon macOS build with a detected Metal GPU | Native LFM and Nemotron paths are available; Apple Silicon builds also support English Parakeet/Qwen-ASR through MLX; Whisper Small can also use MLX (offered in the picker by owner decision 2026-10-07) |
 | CUDA     | Windows/Linux GPU build with a detected CUDA device | Model-specific restrictions still apply                                                                               |
 | Vulkan   | Windows/Linux Vulkan build with a detected GPU      | Model-specific restrictions still apply                                                                               |
 | AMD ROCm | Windows/Linux ROCm build with a detected GPU        | Nemotron's existing profile uses Vulkan for speech; its package requires x86-64                                       |
@@ -63,7 +63,7 @@ proof that every operator executes there; reports retain unknown placement.
 The [measured Metal screen](inference-performance.md#native-gpu-implementation-and-screening--23-september-2026)
 records exact models, runtime pins, accuracy, cold/resident timings and limits.
 
-The MLX application path shares the existing worker and architecture contracts. [ADR-0021](adrs/0021-automatic-accelerator-artifacts.md) extends ADR-0020: Automatic prefers the qualified English Parakeet/Qwen-ASR MLX exports when the application runtime verifies and its Metal device probe succeeds. Whisper Small uses this policy in evaluation; its desktop picker remains gated. CPU remains an explicit override. This does not change the default model. Cohere and Whisper Turbo remain on CPU because their MLX screens included quality regressions. MLX is a runtime; Metal is its backend. CUDA support for the four Sherpa speech
+The MLX application path shares the existing worker and architecture contracts. [ADR-0021](adrs/0021-automatic-accelerator-artifacts.md) extends ADR-0020: Automatic prefers the qualified English Parakeet/Qwen-ASR MLX exports when the application runtime verifies and its Metal device probe succeeds. Whisper Small uses this policy and is offered in the desktop picker by owner decision (2026-10-07) despite failed quality gates. CPU remains an explicit override. This does not change the default model. Cohere and Whisper Turbo remain on CPU because their MLX screens included quality regressions. MLX is a runtime; Metal is its backend. CUDA support for the four Sherpa speech
 families is also not established by the llama.cpp Cargo feature; it needs a
 compatible Sherpa/ONNX Runtime build and model-specific operator evidence.
 

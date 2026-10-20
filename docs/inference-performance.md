@@ -2,7 +2,7 @@
 
 The separate whisper.cpp path remains a candidate: the [18 September native screen](validation/whisper-2026-09-18.md) records quality gains on its English sample, Hindi/noise failures, and provisional CPU timings affected by other workloads. It does not qualify that runtime for production. The existing shared Sherpa Whisper adapter is a different implementation.
 
-Updated 26 September 2026. The primary-paper basis and standardized streaming metrics are in [Research basis for streaming inference](research-streaming-inference-papers.md). Packaged accelerator selection and selected resident adapters are implemented; the default Cohere speech adapter now retains its recognizer in the existing worker with fresh segment streams (ADR-0017). Performance claims require measurements on each named device. Recommendations below are engineering proposals unless explicitly identified as observations.
+Updated 19 October 2026 (the llama.cpp pin and later measurements; earlier sections keep their dated evidence). The primary-paper basis and standardized streaming metrics are in [Research basis for streaming inference](research-streaming-inference-papers.md). Packaged accelerator selection and selected resident adapters are implemented; the default Cohere speech adapter now retains its recognizer in the existing worker with fresh segment streams (ADR-0017). Performance claims require measurements on each named device. Recommendations below are engineering proposals unless explicitly identified as observations.
 
 The per-job Nemotron CLI and per-request cleanup-model loading have been replaced. CPU Qwen3-ASR and Parakeet now retain their verified ONNX recognizers on the existing owner, with fresh request streams, alongside the previously resident adapters. The next priorities are to instrument the complete live path, run the lifecycle/corpus gates, tune CPU budgets, and benchmark each packaged accelerator. Speech and cleanup ultimately need independent device controls. A GPU being present, a backend compiling, and the exact model running efficiently are three separate checks.
 
@@ -48,7 +48,7 @@ for current measurements and their scope.
 
 ## What this application does today
 
-The user-selected default is Cohere Transcribe INT8 through sherpa-onnx 1.13.8, with completed-recording CPU inference and Qwen writing cleanup. This preference is not a fastest-model claim. Selectable Nemotron 3.5 Q8 uses the official NeMo-Speech.cpp 0.1.0 C ABI and supports live partials. Parakeet v3 INT8 through `sherpa-onnx = 1.13.8` remains an offline CPU fallback. Cleanup uses Qwen3.5-0.8B Q4_0/Q8_0 through `llama-cpp-2 = 0.1.156`. Hugging Face profile selection changes compatible artifacts; it does not make an arbitrary architecture compatible with these runtimes.
+The user-selected default is Cohere Transcribe INT8 through sherpa-onnx 1.13.8, with completed-recording CPU inference and Qwen writing cleanup. This preference is not a fastest-model claim. Selectable Nemotron 3.5 Q8 uses the official NeMo-Speech.cpp 0.1.0 C ABI and supports live partials. Parakeet v3 INT8 through `sherpa-onnx = 1.13.8` remains an offline CPU fallback. Cleanup uses Qwen3.5-0.8B Q4_0/Q8_0 through `llama-cpp-2 = 0.1.159`. Hugging Face profile selection changes compatible artifacts; it does not make an arbitrary architecture compatible with these runtimes.
 
 | Component       | Current behavior                                                                                                                                         | Consequence                                                                                                                                                                                                                                            |
 | --------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
@@ -124,7 +124,7 @@ Automatic-level qualification writes the same Vesper baseline switch. The
 VibeVoice benchmark emits `VESPER_PEAK_RSS_KIB` on Linux and still recognizes
 the prior `TRANSCRIBE_PEAK_RSS_KIB` marker when reading older timing output.
 
-One build detail matters: `default-features = false` does **not** mean Metal is absent. The pinned `llama-cpp-2` manifest has an Apple ARM target dependency enabling `metal`. Application features forward `cuda`, `rocm`, and `vulkan`; there is no direct `sycl` feature in this release. Explicitly selecting an unavailable backend fails with a device-selection error. Automatic selection uses a detected native GPU or CPU; failed GPU initialization retries CPU and records its reason. [Pinned Rust binding manifest](https://docs.rs/crate/llama-cpp-2/0.1.156/source/Cargo.toml).
+One build detail matters: `default-features = false` does **not** mean Metal is absent. The `llama-cpp-2` manifest had an Apple ARM target dependency enabling `metal` as reviewed for 0.1.156; not re-checked for the pinned 0.1.159. Application features forward `cuda`, `rocm`, and `vulkan`; there is no direct `sycl` feature in this release. Explicitly selecting an unavailable backend fails with a device-selection error. Automatic selection uses a detected native GPU or CPU; failed GPU initialization retries CPU and records its reason. [Pinned Rust binding manifest](https://docs.rs/crate/llama-cpp-2/0.1.156/source/Cargo.toml).
 
 NeMo-Speech.cpp 0.1.0 publishes CPU, CUDA, Vulkan, and Metal release packages. Vesper pins their bytes and hashes rather than treating a requested device string as evidence of availability. NVIDIA does not publish an MLX or ROCm Nemotron package: Apple uses Metal; the AMD profile uses Vulkan for speech and can use ROCm/HIP for Qwen cleanup.
 
@@ -485,8 +485,8 @@ failed its quality gate on both providers.
 #### Exact native boundaries
 
 The current pins are Sherpa 1.13.8/source
-`11afbd009a7f8c08f4bcf2fc1b265d0df4670fbf`, llama-cpp-2 0.1.156/native
-`e79e4bf660e19f2ad851e06c6913f7a8c5852621`, and NeMo-Speech.cpp 0.1.0/source
+`11afbd009a7f8c08f4bcf2fc1b265d0df4670fbf`, llama-cpp-2 0.1.159 / llama-cpp-sys-2 0.1.160 (llama.cpp
+`d8123504`), and NeMo-Speech.cpp 0.1.0/source
 `4f9676226f667d14608487df744f375db87127f8` (ggml
 `c03b4e2bcece5134827881af90242086daf75be5`). Model revisions and complete hashes
 remain owned by [the artifact registry](../models/artifacts.json).

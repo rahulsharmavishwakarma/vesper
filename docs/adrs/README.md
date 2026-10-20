@@ -23,7 +23,7 @@ This directory records decisions that are expensive to rediscover or easy to acc
 | [0015](0015-model-independent-local-memory.md) | Superseded by ADR-0016 | Keep reviewed correction, context, intent and pronunciation-confusion memory on device across model changes |
 | [0016](0016-automatic-local-spelling-learning.md) | Accepted | Add optional automatic spelling learning from ordinary local edits with separate evidence and reversible activation |
 | [0017](0017-resident-cohere-recognizer.md) | Accepted | Retain selected Cohere sessions with verified load, observed-file invalidation and fresh segment streams |
-| [0018](0018-shared-whisper-adapter.md) | Accepted | Share Whisper checkpoint configuration and selected Sherpa ownership; gate product selection on qualification |
+| [0018](0018-shared-whisper-adapter.md) | Accepted | Share Whisper checkpoint configuration and selected Sherpa ownership; gate product selection on qualification (selection later offered by owner decision, 2026-10-07) |
 | [0019](0019-shared-audio-frontend.md) | Accepted | Share advisory Silero and opt-in DPDFNet processing across live and completed recordings |
 | [0020](0020-optional-mlx-speech-runtime.md) | Selection/build policy superseded by ADR-0021 | Package optional MLX speech execution with verified artifacts and bounded selected-model residency |
 | [0021](0021-automatic-accelerator-artifacts.md) | Accepted | Select compatible accelerated artifacts automatically and include MLX in native Apple Silicon builds |

@@ -94,9 +94,9 @@ Python inference/benchmark entrypoints are parsed/linted/formatted without
 executing their downloads or importing optional model runtimes. Python static
 type checking is not claimed; most tooling is unannotated.
 
-Direct development versions are pinned in npm/Python manifests: ESLint 10.10.0,
-typescript-eslint 8.70.0, eslint-plugin-svelte 3.23.0, Prettier 3.9.8 with
-prettier-plugin-svelte 4.1.1, Ruff 0.16.8, ShellCheck 0.11.0 via shellcheck-py
+Direct development versions are pinned in npm/Python manifests: ESLint 10.12.0,
+typescript-eslint 8.71.1, eslint-plugin-svelte 3.23.1, Prettier 3.9.10 with
+prettier-plugin-svelte 4.1.1, Ruff 0.17.0, ShellCheck 0.11.0 via shellcheck-py
 0.11.0.1, and shfmt 3.14.1 via shfmt-py 4.2.0. Node 24 is used in CI; the lint
 toolchain requires at least Node 22.13 in the supported 22.x line. ESLint permits
 intentionally unused underscore-prefixed callback arguments; Svelte TypeScript
@@ -124,7 +124,7 @@ rulesets. Those controls are available for public repositories on GitHub Free,
 but private repositories require GitHub Pro, Team, or Enterprise. This private
 repository's rulesets API returned HTTP 403 during the 2026-09-19 review. Workflow
 files can be prepared locally, but the current plan cannot enforce these rules. After changing
-visibility or plan, protect `main`, require a pull request, require the five exact
+visibility or plan, protect `main`, require a pull request, require the seven exact
 checks above, require branches to be up to date, dismiss stale approvals, and
 require conversation resolution. See GitHub's [ruleset availability](https://docs.github.com/en/repositories/configuring-branches-and-merges-in-your-repository/managing-rulesets/about-rulesets).
 
@@ -475,9 +475,10 @@ manually (the `verify` job limitation in
 [issue #172](https://github.com/rahulsharmavishwakarma/vesper/issues/172) still
 applies). Installing the previous build and applying the in-app update remains
 the outstanding end-to-end updater proof. The release bot
-(`prepare-release.yml`) is scaffolded but not yet enrolled: its GitHub App
-variable and private-key secret are unset, so version bumps and tagging are
-still driven manually as above.
+(`prepare-release.yml`) was merged afterwards: its GitHub App
+(`RELEASE_BOT_APP_ID` variable, `RELEASE_BOT_PRIVATE_KEY` secret) was enrolled on
+20 October 2026, but it has not run yet. The first dry run on a prerelease is the
+validation, so version bumps and tagging stay manual until then.
 
 The version is recorded in the release tag and app bundle. The asset name stays
 constant so a website download button can link to:
@@ -631,7 +632,7 @@ expiring artifact only" policy (2026-10-20) and chose download-only first.
   any offline check and can never reach the stable feed. Channel visibility
   rules (a stable app never sees nightly) and the beta-feed decision are
   proposals on #66 and #205.
-- Limitations: nightly is unsigned, so macOS may need right-click, then Open;
+- Limitations: nightly is unsigned, so macOS asks you to allow it under System Settings → Privacy & Security → Open Anyway;
   only the latest nightly is kept; a nightly can lag main by a day, and a
   failed or running `Check` on the newest commit skips that night.
 
@@ -694,9 +695,12 @@ The information-only section can precede the updater work in
 
 ### Updater contract and missing release gates
 
-The updater and process plugins are initialized, but no public key, endpoint or
-manifest is configured, so the updater is inert: the frontend makes no update
-calls and no feed exists.
+The updater and process plugins are initialized, and the base `tauri.conf.json`
+enrolls the updater public key and the stable feed endpoint
+(`releases/latest/download/latest.json`). Feed manifests are published only by
+signed tag-run candidates. `v0.1.0` (stable, 20 October 2026) carries the first
+`latest.json`, but no higher version exists yet, so an update check finds nothing
+to install.
 The shared launcher disables updater artifacts for default, unenrolled macOS
 builds without `TAURI_SIGNING_PRIVATE_KEY`, allowing app/DMG candidates to finish
 successfully.
@@ -713,7 +717,7 @@ One updater keypair exists per release history. The owner generates it once on a
 trusted machine and never commits the private key:
 
 ```sh
-npx @tauri-apps/cli@2.11.4 signer generate -w ~/.tauri/vesper.key
+npm exec tauri -- signer generate -w ~/.tauri/vesper.key
 ```
 
 - Store the private key and its password as `production`-environment secrets
@@ -721,11 +725,10 @@ npx @tauri-apps/cli@2.11.4 signer generate -w ~/.tauri/vesper.key
   owner-controlled offline recovery location. The build signs
   `.app.tar.gz` → `.sig` only when the key is present; default builds without
   it produce app/DMG candidates without an updater archive or manifest.
-- Fill in the `plugins.updater` block in the base `tauri.conf.json` with the
-  public key and the stable HTTPS endpoint, keeping prerelease tags on a
-  separate beta feed file. The block ships with an empty key and no endpoints
-  (explicitly unenrolled — the plugin requires the block at startup but makes
-  no calls), so enrollment only fills values, never adds structure.
+- The `plugins.updater` block in the base `tauri.conf.json` carries the enrolled
+  public key and the stable HTTPS endpoint. Prerelease tags are routed to a
+  separate feed by the manifest name (`beta.json`) chosen in the release
+  workflow; the app does not read a beta feed yet (proposal on issue #66).
 - Keep `allow_downgrades` off and do not enable a custom version comparator
   ([issue #65](https://github.com/rahulsharmavishwakarma/vesper/issues/65)).
   Rotation is one transition release that accepts the new public key before
@@ -746,8 +749,9 @@ The About switches (issue #195) store two device-local preferences,
 `localStorage` key; they are not part of the settings file. Automatic install calls
 the same download-verify-install path and never relaunches the app.
 
-The official updater **v2.11.0** source establishes these API limits; this is
-upstream source evidence, not a tested project integration or a dependency choice:
+The official updater **v2.11.0** source establishes these API limits; they were
+not re-verified against the pinned 2.13.3 plugin. This is upstream source
+evidence, not a tested project integration or a dependency choice:
 
 | Planned behavior | Verified limit and design consequence |
 | --- | --- |
@@ -806,8 +810,10 @@ fixtures remain versioned and tested.
 
 ## Activation and open-source readiness
 
-As of the 2026-09-19 review, GitHub lists no workflows. Configuring files,
-installing local hooks and recording local commits does not activate hosted CI.
+Historical: at the 2026-09-19 review GitHub listed no workflows. Workflows now
+run on GitHub (the rc.2 dry run and the v0.1.0 tag run are described above);
+`v0.1.0` is published as a stable release. Configuring files, installing local
+hooks and recording local commits does not by itself activate hosted CI.
 The owner has authorized small local commits with issue references; see the
 [commit convention](project-workflow.md#local-commit-convention). A push still
 requires separate authorization. No hosted run, optional container execution,
@@ -825,10 +831,11 @@ to make a security feature available.
 
 `CODEOWNERS`, contribution/support/conduct/security guidance and bug/feature/task
 issue templates establish the contributor workflow. A CODEOWNERS file requests
-review; it does not enforce it without branch rules. The owner has not yet selected
-a project license. Do not advertise the repository as open-source licensed or
-redistribute third-party model/runtime assets under a project license by assumption.
-Choose a license explicitly and preserve each dependency's own license/notices.
+review; it does not enforce it without branch rules. The project is licensed under
+Apache-2.0 (see [LICENSE](../LICENSE) and
+[licenses and model terms](licenses-and-model-terms.md)). Do not redistribute
+third-party model/runtime assets under that license by assumption, and preserve
+each dependency's own license/notices.
 
 ## Local verification baseline
 

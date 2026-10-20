@@ -2,8 +2,7 @@
 
 Every current speech adapter participates in the same recording interface. Model,
 language and backend compatibility still comes from the existing catalog; this
-does not make arbitrary downloaded architectures executable or expose withheld
-Whisper choices in the desktop picker. See [the support table](model-presets.md#live-transcription-support)
+does not make arbitrary downloaded architectures executable. See [the support table](model-presets.md#live-transcription-support)
 and [research evidence](research-streaming-inference-papers.md#native-live-input-feasibility-by-adapter).
 
 ## Recording and final results

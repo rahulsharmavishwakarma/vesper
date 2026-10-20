@@ -56,9 +56,8 @@ counter reset, or failed reading. No resource history, transcript, or raw proces
 metadata is written by the monitor. Timing guards use monotonic clocks and operation
 IDs so older stage results cannot replace a newer operation.
 
-The dependency is pinned to `sysinfo = 0.36.1`, with default features disabled and
-only `system` enabled. This release declares Rust 1.75 compatibility, fitting the
-project's declared 1.85 minimum. The sampler selects the current PID and requests
+The dependency is pinned to `sysinfo = 0.39.6`, with default features disabled and
+only `system` enabled. Its Rust-version declaration and the source links below were reviewed for 0.36.1 and not re-verified for 0.39.6. The sampler selects the current PID and requests
 CPU/memory, with Linux task enumeration disabled. The library internally enumerates
 OS process identifiers/metadata and, on macOS, transiently reads the current
 process's argument/environment buffer. Those fields are not retained by the chosen

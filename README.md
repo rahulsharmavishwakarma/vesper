@@ -32,17 +32,20 @@ See the [user guide](docs/user-guide.md) for daily use and the
 
 ## Download
 
-**A public installer is not available yet.** The current distribution target is a
-macOS DMG for Apple-silicon Macs. Intel Macs, Windows and Linux are not current
-release targets.
-
-When the first stable public release is published, the
-[Mac DMG download](https://github.com/rahulsharmavishwakarma/vesper/releases/latest/download/vesper-macos-arm64.dmg)
-will point to the latest version. Versioned downloads will appear on the
+Vesper **0.1.0** is available as a macOS DMG for Apple-silicon Macs:
+[download the latest Mac DMG](https://github.com/rahulsharmavishwakarma/vesper/releases/latest/download/vesper-macos-arm64.dmg).
+Versioned downloads and their `SHA256SUMS` are on the
 [Releases page](https://github.com/rahulsharmavishwakarma/vesper/releases).
-Apple Developer ID signing and notarization are still pending.
+Intel Macs, Windows and Linux are not current release targets.
 
-For now, [run from source](#development). Packaging details are in the
+The app is **not yet signed or notarized** with an Apple Developer ID, so macOS
+blocks the first launch. After dragging Vesper to Applications and trying to open
+it once, go to **System Settings → Privacy & Security** and choose **Open
+Anyway**. Verify the download against `SHA256SUMS` if you want to confirm it.
+Signing and notarization are tracked in
+[issue #64](https://github.com/rahulsharmavishwakarma/vesper/issues/64).
+
+You can also [run from source](#development). Packaging details are in the
 [release guide](docs/ci-and-releases.md#release-workflow-and-download-url).
 
 ## Getting started
@@ -61,7 +64,7 @@ Default shortcuts while the app is running:
 | Hold to talk | `⌥ Shift D` |
 | Start / stop recording | `⌘ Shift Space` |
 
-Change these in **Settings → Quick capture**. Pasting into the original text
+Change these in **Settings → Shortcuts**. Pasting into the original text
 field is optional and requires macOS Accessibility permission; Copy remains
 available. See [quick capture and permissions](docs/user-guide.md#quick-capture).
 
@@ -83,16 +86,15 @@ The app uses Rust, Tauri, Svelte and TypeScript. Install the
 
 ```sh
 git clone https://github.com/rahulsharmavishwakarma/vesper.git
-cd transcribe
+cd vesper
 make setup
 make dev
 ```
 
-Repository access is required while the project is private. Model downloads
-happen separately in the app. The native app does not require Python;
+Model downloads happen separately in the app. The native app does not require Python;
 contributor checks use Python 3.12 or newer.
 
-The repository URL still uses `transcribe` until the repository is renamed.
+The GitHub repository is named `vesper`; a local checkout directory may have any name.
 The app and project-owned packages use Vesper; see
 [product naming and compatibility](docs/development.md#product-name-and-compatibility).
 
