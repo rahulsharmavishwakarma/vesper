@@ -85,19 +85,21 @@ jobs:
           # the API by the GitHub App is signed by GitHub, unlike a plain
           # `git commit` on the runner.
           gh api "repos/$GITHUB_REPOSITORY/git/refs" -f ref="refs/heads/$branch" -f sha="$base" >/dev/null
-          additions="$(git diff --name-only | while IFS= read -r file; do
+          # Contents go through files: Cargo.lock is too large for argv.
+          git diff --name-only | while IFS= read -r file; do
             jq -n --arg path "$file" --rawfile content "$file" '{path: $path, contents: ($content | @base64)}'
-          done | jq -s .)"
-          if [ "$(printf '%s' "$additions" | jq length)" -eq 0 ]; then
+          done | jq -s . > "$RUNNER_TEMP/additions.json"
+          if [ "$(jq length "$RUNNER_TEMP/additions.json")" -eq 0 ]; then
             echo "No version files changed; nothing to commit." >&2
             exit 1
           fi
           jq -n --arg repo "$GITHUB_REPOSITORY" --arg branch "$branch" --arg head "$base" \
-            --arg headline "Release v$VERSION" --argjson additions "$additions" \
+            --arg headline "Release v$VERSION" --slurpfile additions "$RUNNER_TEMP/additions.json" \
             '{query: "mutation($input: CreateCommitOnBranchInput!) { createCommitOnBranch(input: $input) { commit { oid } } }",
               variables: {input: {branch: {repositoryNameWithOwner: $repo, branchName: $branch},
                 message: {headline: $headline}, expectedHeadOid: $head,
-                fileChanges: {additions: $additions}}}}' | gh api graphql --input - >/dev/null
+                fileChanges: {additions: $additions[0]}}}}' > "$RUNNER_TEMP/commit.json"
+          gh api graphql --input "$RUNNER_TEMP/commit.json" >/dev/null
           {
             cat "$RUNNER_TEMP/notes.md"
             printf '\nMerging this pull request tags v%s, which starts the Release workflow and stages a draft. Promotion still needs approval in the production environment.\n' "$VERSION"
