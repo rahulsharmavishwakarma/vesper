@@ -76,8 +76,11 @@ duration-limited output from an unfinished window may appear as a provisional
 draft; it still fails completed-result validation. An unfinished window that stops
 early (token, context or repetition limit, or text ending in detected silence)
 skips that draft only: the previous draft stays visible, the resident model stays
-healthy, and the next pass over more audio replaces the window. Evidence counts
-these as `previewIncompleteDrafts`; `previewFrontend` is `live-frontend` when
+healthy, and the next pass over more audio replaces the window. This also holds
+when the adapter decodes the window in parts. Before 20 October 2026 the
+part-splitting layer wrapped the incomplete result as an ordinary failure, so a
+repetitive window cost a reload and then ended drafting. Evidence counts these
+as `previewIncompleteDrafts`; `previewFrontend` is `live-frontend` when
 previews read the recording's frontend thread output and `fresh-bounded-segment`
 when each snapshot was processed separately. Missing reports, context loss and unknown
 errors still invalidate the owner; the preview loop reloads it once per recording
@@ -105,8 +108,12 @@ buffering, and exposes queued acoustic-window count. When more than two windows
 are queued, the bridge skips the incoming packet instead of ending the session:
 memory stays bounded, the provisional draft can miss that audio, and the recorder
 still retains it for the completed-audio final. Live evidence reports the skipped
-input as `droppedInputSeconds`. The bridge joins the collector/native tasks before
-releasing a model. Only the Qwen bridge uses that patched cancellation contract.
+input as `droppedInputSeconds`. On an Apple M5 Pro this skip was not reached on
+20 October 2026: a 108 s recording, paced with ten concurrent sessions or fed
+unpaced, reported `droppedInputSeconds: 0` with drafts throughout. The pinned
+session encodes windows synchronously and each decode drains all completed
+windows. Slower Macs remain unmeasured. The bridge joins the collector/native
+tasks before releasing a model. Only the Qwen bridge uses that patched cancellation contract.
 
 Every live recording runs the audio frontend once, continuously
 ([#141](https://github.com/rahulsharmavishwakarma/vesper/issues/141)). Native
@@ -164,6 +171,42 @@ deferred speaker timeline then took 0.11–0.13 s and 0.63–0.69 s on Metal. Th
 first run after a new build took 7.1 s once (cold start). Not covered: a
 physical microphone, 44.1 kHz devices, other languages, slower Macs and MLX
 builds.
+
+The **Automatic backend** (the app default) was measured on 20 October 2026
+with the same harness, fixtures and frontend at `63b689d`. Setup: Apple M5 Pro,
+macOS 27.0.1, release build with MLX, on battery power. Set
+`VESPER_FRONTEND_PARITY_BACKEND=auto`. Parakeet and Qwen resolved to MLX/Metal;
+Cohere has no Metal path and ran on CPU. All 42 finals were identical to the
+previous path.
+
+| Model (Automatic) | Executed | Stop→final, 3.8–10.9 s clips | 63 s recording | 108 s recording (0 dB noise) |
+| --- | --- | ---: | ---: | ---: |
+| Parakeet TDT v3 | Metal | 0.06–0.18 s (was 1.6–4.3 s) | 0.39 s (was 23.3 s) | 0.53 s (was 28.2 s) |
+| Qwen3-ASR 0.6B | Metal | 0.14–0.35 s (was 1.3–4.0 s) | 1.5 s (was 21.7 s) | 3.3 s (was 40.4 s) |
+| Cohere Transcribe | CPU | 0.32–1.04 s (was 1.6–4.8 s) | 3.7 s (was 15.5 s) | 9.5 s (was 39.4 s) |
+
+The first clip per model (4.6 s) was a warm-up outlier at 0.6–1.1 s and is
+excluded from the ranges. Physical-microphone recordings on 20 October (Parakeet
+Automatic) also reported `previewFrontend: live-frontend` with the final reusing
+`live-session` audio. Slower Macs remain unmeasured.
+
+On a 108 s recording with 0 dB noise, paced in real time
+(`installed_live_long_recording_draft_coverage`), every buffered path drafted
+throughout with no preview failures, incomplete drafts or reloads:
+- Cohere, Qwen and Parakeet on CPU: 137–175 drafts.
+- Parakeet on Metal: 191 drafts.
+- Qwen on Metal (native): 421 drafts.
+
+A 57 s synthetic clip (macOS speech synthesis) with 9 s silences and 70
+repeated words was also tested:
+- Qwen CPU previews stopped on repetition three times. With the part-splitting
+  fix they were skipped (`previewIncompleteDrafts: 3`, 75 drafts, no reload).
+  Before it, the same clip recorded two failures and a reload, and drafting
+  stopped after 28 drafts.
+- **Limitation:** the completed-audio final for that clip was rejected by
+  Cohere and Qwen (CPU `duration_token_limit`, MLX incomplete) because finals
+  must reach a real end of sequence. Parakeet transcribed it. Long runs of one
+  repeated word can therefore fail on those models.
 
 ### Pause-closed segment evidence
 
