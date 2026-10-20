@@ -132,7 +132,7 @@ use crate::generated::{
     WHISPER_LANGUAGES,
 };
 const SHERPA: &str = "11afbd009a7f8c08f4bcf2fc1b265d0df4670fbf";
-const LLAMA: &str = "e79e4bf660e19f2ad851e06c6913f7a8c5852621";
+const LLAMA: &str = "d81235049384534c167caea52b85a694f6103d14";
 const SPEECH: ModelRole = ModelRole::SpeechRecognition;
 const TEXT: ModelRole = ModelRole::TextReconstruction;
 pub const MLX_RUNTIME: &str = "MLX-Audio-Swift";

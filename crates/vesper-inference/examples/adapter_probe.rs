@@ -165,7 +165,7 @@ fn main() -> Result<(), Box<dyn Error>> {
             return Err("Native adapter parity/control gate failed".into());
         }
     }
-    let report = serde_json::json!({"schemaVersion":1,"artifacts":artifacts,"backend":if gpu {"metal"} else {"cpu"},"kvCache":if args[3] == "cpu-f32-cache" {"f32"} else {"f16"},"threads":4,"nativeRevision":"e79e4bf660e19f2ad851e06c6913f7a8c5852621","contextTokens":512,"batchTokens":128,"loadMs":load_ms,"toleranceMaxAbs":0.0005,"prompts":records,"passed":true});
+    let report = serde_json::json!({"schemaVersion":1,"artifacts":artifacts,"backend":if gpu {"metal"} else {"cpu"},"kvCache":if args[3] == "cpu-f32-cache" {"f32"} else {"f16"},"threads":4,"nativeRevision":"d81235049384534c167caea52b85a694f6103d14","contextTokens":512,"batchTokens":128,"loadMs":load_ms,"toleranceMaxAbs":0.0005,"prompts":records,"passed":true});
     std::fs::write(
         output.join("report.json"),
         serde_json::to_vec_pretty(&report)?,

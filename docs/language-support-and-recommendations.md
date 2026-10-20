@@ -105,7 +105,8 @@ This is a frozen-weight application configuration change, not a decoder/kernel
 or training technique. Runtime pins remain sherpa-onnx
 `11afbd009a7f8c08f4bcf2fc1b265d0df4670fbf` with the existing completion patch,
 MLX-Audio-Swift `d302a5c6080d2bb97bae38c7418f82abb76013b6`, and llama.cpp
-`e79e4bf660e19f2ad851e06c6913f7a8c5852621`; model hashes are unchanged.
+`d81235049384534c167caea52b85a694f6103d14` (it was `e79e4bf6` until the 0.1.159 upgrade, so sessions saved
+earlier record that revision); model hashes are unchanged.
 Contract tests cover language menus, backend boundaries, legacy recovery and
 pre-load rejection. These are local software checks, not multilingual inference
 measurements. Official coverage, paper results, local quality measurements and
