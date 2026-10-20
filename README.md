@@ -7,6 +7,18 @@
 <p align="center">Local models · Early&nbsp;development</p>
 
 <p align="center">
+  <a href="https://github.com/rahulsharmavishwakarma/vesper/releases/latest"><img alt="Download the latest stable release" src="https://img.shields.io/badge/Download-latest%20stable-ff6b3d?style=for-the-badge"></a>
+</p>
+
+<p align="center">
+  <a href="https://github.com/rahulsharmavishwakarma/vesper/releases/latest"><img alt="Latest stable release" src="https://img.shields.io/github/v/release/rahulsharmavishwakarma/vesper?label=stable&color=ff6b3d"></a>
+  <a href="https://github.com/rahulsharmavishwakarma/vesper/releases"><img alt="Latest release including prereleases" src="https://img.shields.io/github/v/release/rahulsharmavishwakarma/vesper?include_prereleases&label=latest&color=lightgrey"></a>
+  <a href="https://github.com/rahulsharmavishwakarma/vesper/actions/workflows/check.yml"><img alt="Checks on main" src="https://img.shields.io/github/actions/workflow/status/rahulsharmavishwakarma/vesper/check.yml?branch=main&label=checks"></a>
+  <a href="LICENSE"><img alt="License: Apache 2.0" src="https://img.shields.io/github/license/rahulsharmavishwakarma/vesper"></a>
+</p>
+
+<p align="center">
+  <a href="#download">Download</a> ·
   <a href="#getting-started">Get&nbsp;started</a> ·
   <a href="docs/user-guide.md">User&nbsp;guide</a> ·
   <a href="#development">Build&nbsp;from&nbsp;source</a> ·
@@ -32,8 +44,14 @@ See the [user guide](docs/user-guide.md) for daily use and the
 
 ## Download
 
-Vesper **0.1.0** is available as a macOS DMG for Apple-silicon Macs:
-[download the latest Mac DMG](https://github.com/rahulsharmavishwakarma/vesper/releases/latest/download/vesper-macos-arm64.dmg).
+Vesper is available as a macOS DMG for Apple-silicon Macs. The badges above show
+the latest stable version and the latest release including prereleases.
+
+<p align="center">
+  <a href="https://github.com/rahulsharmavishwakarma/vesper/releases/latest/download/vesper-macos-arm64.dmg"><img alt="Download the latest Mac DMG" src="https://img.shields.io/badge/Download-latest%20Mac%20DMG-ff6b3d?style=for-the-badge&logo=apple&logoColor=white"></a>
+</p>
+
+[Download the latest Mac DMG](https://github.com/rahulsharmavishwakarma/vesper/releases/latest/download/vesper-macos-arm64.dmg).
 Versioned downloads and their `SHA256SUMS` are on the
 [Releases page](https://github.com/rahulsharmavishwakarma/vesper/releases).
 Intel Macs, Windows and Linux are not current release targets.
