@@ -420,6 +420,43 @@ prerelease identifiers with leading zeroes such as `0.1.1-01` are rejected per
 tests include independent temporary-copy coverage that does not reuse the
 production collector. This repair belongs to the existing [release-policy issue #63](https://github.com/rahulsharmavishwakarma/vesper/issues/63).
 
+## DMG installer window
+
+Tauri's DMG settings in `apps/desktop/src-tauri/tauri.macos.conf.json` open the
+mounted volume as a 660 × 428 pt window: a 660 × 400 pt background plus Finder's
+28 pt title bar, so the whole image shows. `Vesper.app` sits at 180,214 and the
+Applications link at 480,214 (icon centres, content coordinates), on either side
+of the in-app waveform; the headline, hint and privacy line are part of the image.
+Finder draws the icons and their names itself.
+
+The image is generated, not hand-drawn. `scripts/generate-dmg-background.mjs`
+writes `apps/desktop/src-tauri/dmg/background.svg` from the Ember bird, the
+brand tokens in `apps/desktop/src/tokens.css` and the waveform shape in
+`voiceWaveform.ts`. `--render` rasterises it with the bundled Bricolage
+Grotesque to `background.png` at 1320 × 800 and tags it 144 dpi so Finder draws
+it sharp on Retina displays:
+
+```sh
+node scripts/generate-dmg-background.mjs --render
+node scripts/generate-dmg-background.mjs --check
+node --test scripts/generate-dmg-background.test.mjs
+```
+
+`--check` and the tests compare the SVG with its generator and verify the PNG's
+size and dpi, and that the Tauri icon positions match the artwork. The PNG
+depends on the local Chromium, so it is regenerated and reviewed on request
+rather than compared byte for byte. Release, nightly and local DMGs share this
+window; filenames, checksums and updater artifacts are unchanged.
+
+**Limitation.** Finder prints icon names in white in dark appearance and black in
+light appearance, whatever the background is. The near-black background keeps
+names readable in dark appearance but not in light appearance (about 1.1:1).
+This was an accepted trade-off for the brand look; a mid-tone background would
+read in both and is the fallback if it is reported as a problem (issue #238).
+Qualification so far: a DMG built with the Tauri bundler script and a placeholder
+app opened at the expected size with both icons at the configured positions. A
+full release-build install check with light and dark Finder is still pending.
+
 ## Release workflow and download URL
 
 A pushed `vX.Y.Z` or `vX.Y.Z-prerelease` tag runs the reusable test/security gates,
@@ -427,7 +464,8 @@ verifies the synchronized application version, builds the optimized macOS
 app plus DMG using Tauri's existing bundler, and stages both assets on a
 **draft** release without publishing. The collected assets are:
 
-- `vesper-macos-arm64.dmg`, containing `Vesper.app` and an Applications link;
+- `vesper-macos-arm64.dmg`, containing `Vesper.app` and an Applications link, shown in a
+  branded installer window (see [DMG installer window](#dmg-installer-window));
 - `SHA256SUMS`, covering that DMG.
 
 Publication is a separate approval-gated step: the `promote` job runs only on
