@@ -1,0 +1,137 @@
+name: Prepare release
+
+# Opens the version-bump pull request, then tags the merge commit so the
+# existing Release workflow stages the draft. Pushes and pull requests made
+# with GITHUB_TOKEN never trigger workflows, so both jobs authenticate as the
+# release GitHub App (vars.RELEASE_BOT_APP_ID, secrets.RELEASE_BOT_PRIVATE_KEY).
+# Publication stays in release.yml behind the production environment approval.
+
+on:
+  workflow_dispatch:
+    inputs:
+      bump:
+        description: 'Version bump'
+        required: true
+        type: choice
+        options: [patch, minor, major, prerelease, release]
+      version:
+        description: 'Optional explicit version X.Y.Z or X.Y.Z-rc.N (overrides bump)'
+        required: false
+        type: string
+  push:
+    branches: [main]
+
+permissions:
+  contents: read
+
+concurrency:
+  group: prepare-release
+  cancel-in-progress: false
+
+jobs:
+  prepare:
+    name: Open release pull request
+    if: github.event_name == 'workflow_dispatch'
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    env:
+      BUMP: ${{ inputs.bump }}
+      EXPLICIT_VERSION: ${{ inputs.version }}
+    steps:
+      - uses: actions/create-github-app-token@64ab729a6294000f5aa4a4bc0b73d1f32bc45510 # v3.3.0
+        id: app
+        with:
+          app-id: ${{ vars.RELEASE_BOT_APP_ID }}
+          private-key: ${{ secrets.RELEASE_BOT_PRIVATE_KEY }}
+          permission-contents: write
+          permission-pull-requests: write
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          ref: main
+          fetch-depth: 0
+          fetch-tags: true
+          persist-credentials: false
+      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
+        with:
+          node-version-file: .nvmrc
+          package-manager-cache: false
+      - name: Compute version and notes
+        run: |
+          set -eu
+          current="$(node scripts/version.mjs show)"
+          if [ -n "$EXPLICIT_VERSION" ]; then
+            version="$EXPLICIT_VERSION"
+          else
+            version="$(node scripts/release-plan.mjs next "$current" "$BUMP")"
+          fi
+          if git rev-parse -q --verify "refs/tags/v$version" >/dev/null; then
+            echo "Tag v$version already exists." >&2
+            exit 1
+          fi
+          last="$(git describe --tags --abbrev=0 --match 'v*' 2>/dev/null || true)"
+          range="${last:+$last..}HEAD"
+          git log "$range" --pretty=%s | node scripts/release-plan.mjs notes "$version" > "$RUNNER_TEMP/notes.md"
+          printf 'VERSION=%s\n' "$version" >> "$GITHUB_ENV"
+      - name: Apply version
+        run: node scripts/version.mjs set "$VERSION"
+      - name: Push branch and open pull request
+        env:
+          GH_TOKEN: ${{ steps.app.outputs.token }}
+        run: |
+          set -eu
+          branch="release/v$VERSION"
+          git config user.name "vesper-release-bot"
+          git config user.email "vesper-release-bot@users.noreply.github.com"
+          git switch -c "$branch"
+          git add -A
+          git commit -m "Release v$VERSION"
+          git push "https://x-access-token:${GH_TOKEN}@github.com/${GITHUB_REPOSITORY}.git" "$branch"
+          {
+            cat "$RUNNER_TEMP/notes.md"
+            printf '\nMerging this pull request tags v%s, which starts the Release workflow and stages a draft. Promotion still needs approval in the production environment.\n' "$VERSION"
+          } > "$RUNNER_TEMP/body.md"
+          gh pr create --repo "$GITHUB_REPOSITORY" --base main --head "$branch" \
+            --title "Release v$VERSION" --body-file "$RUNNER_TEMP/body.md"
+
+  tag:
+    name: Tag merged release
+    # Squash-merging a release pull request yields "Release vX.Y.Z (#N)".
+    if: github.event_name == 'push' && startsWith(github.event.head_commit.message, 'Release v')
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    steps:
+      - uses: actions/create-github-app-token@64ab729a6294000f5aa4a4bc0b73d1f32bc45510 # v3.3.0
+        id: app
+        with:
+          app-id: ${{ vars.RELEASE_BOT_APP_ID }}
+          private-key: ${{ secrets.RELEASE_BOT_PRIVATE_KEY }}
+          permission-contents: write
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
+        with:
+          node-version-file: .nvmrc
+          package-manager-cache: false
+      - name: Push the tag for the merged version
+        env:
+          GH_TOKEN: ${{ steps.app.outputs.token }}
+        run: |
+          set -eu
+          version="$(node scripts/version.mjs show)"
+          subject="$(git log -1 --pretty=%s)"
+          case "$subject" in
+            "Release v$version"*) ;;
+            *)
+              echo "Commit subject '$subject' does not match version $version; not tagging." >&2
+              exit 1
+              ;;
+          esac
+          node scripts/version.mjs check --tag="v$version"
+          if git ls-remote --exit-code --tags origin "refs/tags/v$version" >/dev/null 2>&1; then
+            echo "Tag v$version already exists; not tagging." >&2
+            exit 1
+          fi
+          git tag "v$version"
+          git push "https://x-access-token:${GH_TOKEN}@github.com/${GITHUB_REPOSITORY}.git" "refs/tags/v$version"
+          echo "Tagged v$version; the Release workflow stages the draft." >> "$GITHUB_STEP_SUMMARY"

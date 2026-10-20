@@ -8,8 +8,6 @@ on:
       tag:
         description: 'Draft release tag to promote to published (for example v0.2.0)'
         required: true
-  release:
-    types: [published]
 
 permissions:
   contents: read
@@ -19,15 +17,41 @@ concurrency:
   cancel-in-progress: false
 
 jobs:
+  guard:
+    name: Refuse already-published tag
+    if: github.event_name == 'push'
+    runs-on: ubuntu-24.04
+    timeout-minutes: 5
+    permissions:
+      contents: read
+    steps:
+      # Publishing a release in the GitHub UI creates the tag and starts this run
+      # with a public, asset-less release and no approval gate. Stop before the
+      # long build; the supported path stages a draft and promotes it.
+      - name: Fail when a public release already exists for this tag
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          set -eu
+          if state="$(gh release view "$GITHUB_REF_NAME" --repo "$GITHUB_REPOSITORY" --json isDraft --jq .isDraft 2>/dev/null)"; then
+            if [ "$state" != "true" ]; then
+              echo "Release $GITHUB_REF_NAME is already public (likely created in the GitHub UI)." >&2
+              echo "Delete it and the tag, then use the Prepare release workflow so a draft is staged and promoted behind approval." >&2
+              exit 1
+            fi
+          fi
+
   checks:
     name: Required checks
     if: github.event_name == 'push'
+    needs: guard
     # actionlint 1.7.12 does not yet parse the new $/ syntax.
     uses: ./.github/workflows/check.yml # zizmor: ignore[self-repository]
 
   security:
     name: Required security
     if: github.event_name == 'push'
+    needs: guard
     # actionlint 1.7.12 does not yet parse the new $/ syntax.
     uses: ./.github/workflows/security.yml # zizmor: ignore[self-repository]
 
@@ -108,6 +132,9 @@ jobs:
       # Draft creation and asset upload inherently need write. Flipping a
       # draft to published additionally requires the production environment.
       contents: write
+      # Dispatching promote with GITHUB_TOKEN is allowed and starts a run that
+      # waits for the production environment approval.
+      actions: write
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
@@ -160,11 +187,15 @@ jobs:
           node scripts/compose-updater-manifest.mjs --version="$version" --archive="$archive" --sig="$sig" --url="$url" --notes="$notes" --out="release/$manifest"
           gh release upload "$GITHUB_REF_NAME" --repo "$GITHUB_REPOSITORY" --clobber "$archive" "$sig" "release/$manifest"
           echo "Updater feed: https://github.com/$GITHUB_REPOSITORY/releases/download/$GITHUB_REF_NAME/$manifest" >> "$GITHUB_STEP_SUMMARY"
+      - name: Request approval-gated promotion
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: gh workflow run release.yml --repo "$GITHUB_REPOSITORY" --ref main -f tag="$GITHUB_REF_NAME"
       - name: Record candidate links
         run: |
           {
             echo "Draft candidate: https://github.com/$GITHUB_REPOSITORY/releases/tag/$GITHUB_REF_NAME"
-            echo "Promotion requires the approval-gated promote job (workflow dispatch with tag=$GITHUB_REF_NAME)."
+            echo "A promote run for $GITHUB_REF_NAME was requested and waits for production environment approval."
           } >> "$GITHUB_STEP_SUMMARY"
 
   promote:
@@ -224,17 +255,20 @@ jobs:
 
   verify:
     name: Verify published release
-    if: github.event_name == 'release'
+    # Runs in the promote run: publishing with GITHUB_TOKEN never emits a
+    # release event that could start a separate workflow (Refs #172).
+    if: github.event_name == 'workflow_dispatch'
+    needs: promote
     timeout-minutes: 15
     runs-on: ubuntu-24.04
     permissions:
       contents: read
     env:
-      TAG: ${{ github.event.release.tag_name }}
+      TAG: ${{ inputs.tag }}
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
-          ref: ${{ github.event.release.tag_name }}
+          ref: ${{ inputs.tag }}
           persist-credentials: false
       - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
         with:
