@@ -551,7 +551,10 @@ sequence below.
    `prerelease`, or `release` to promote a candidate) or an explicit `version`.
    `scripts/release-plan.mjs` computes the version and a changelog from commit
    subjects since the last tag; `scripts/version.mjs set` updates every pin; the
-   bot opens a `release/vX.Y.Z` pull request titled `Release vX.Y.Z`.
+   bot creates the `release/vX.Y.Z` branch and its commit through the GitHub API
+   (so GitHub signs the commit, as the repository's verified-signature rule
+   requires; a plain `git commit` on the runner was rejected in the first dry
+   run) and opens a pull request titled `Release vX.Y.Z`.
 2. Review, run the normal checks and squash-merge it. The commit subject must
    keep the `Release vX.Y.Z` prefix.
 3. The `tag` job re-checks versions, refuses an existing tag and pushes
