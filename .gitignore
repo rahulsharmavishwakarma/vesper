@@ -1,5 +1,7 @@
 # Rust and frontend build artifacts
 /target/
+# Extra Cargo build directories from dependency-upgrade work (generated output).
+/target-deps*/
 /tests/glib-backport/target/
 node_modules/
 build/
