@@ -53,7 +53,9 @@ pub(crate) fn decode_segments_with_limit(
         // The exact-zero safeguard also applies to silence between speech segments.
         if input.iter().any(|sample| *sample != 0.0) {
             let text = decode(input).map_err(|error| match error {
-                InferenceError::Cancelled => error,
+                // The preview loop must still see an incomplete window as a
+                // skippable draft (#136), not as an owner failure.
+                InferenceError::Cancelled | InferenceError::IncompletePreview(_) => error,
                 _ => native(
                     "speech transcription",
                     format!("part {segment} could not be completed: {error}"),
@@ -85,6 +87,27 @@ pub(crate) fn decode_segments_with_limit(
 mod tests {
     use super::*;
     use std::cell::RefCell;
+
+    #[test]
+    fn incomplete_preview_and_cancellation_are_not_wrapped() {
+        let samples = vec![0.1; 12 * ASR_SAMPLE_RATE as usize];
+        let flag = AtomicBool::new(false);
+        let incomplete = decode_segments(
+            &samples,
+            &flag,
+            |_| Err(InferenceError::IncompletePreview("repetition".into())),
+            &|_| {},
+        );
+        assert!(matches!(
+            incomplete,
+            Err(InferenceError::IncompletePreview(reason)) if reason == "repetition"
+        ));
+        let failed = decode_segments(&samples, &flag, |_| Err(native("x", "boom")), &|_| {});
+        assert!(failed
+            .unwrap_err()
+            .to_string()
+            .contains("part 1 could not be completed"));
+    }
 
     #[test]
     fn architecture_limits_preserve_all_samples_and_balance_tails() {

@@ -208,7 +208,16 @@ fn installed_live_long_recording_draft_coverage() {
     ];
     if cfg!(feature = "mlx") {
         paths.push((AsrModel::ParakeetTdt06bV3, ComputeBackend::Metal));
+        paths.push((AsrModel::Qwen3Asr06b, ComputeBackend::Metal));
     }
+    // Optional `Model:Backend` filter, for example `Qwen3Asr06b:Metal`.
+    let only = std::env::var("VESPER_LIVE_LONG_PATHS").unwrap_or_default();
+    paths.retain(|(model, backend)| {
+        only.is_empty()
+            || only
+                .split(',')
+                .any(|p| p == format!("{model:?}:{backend:?}"))
+    });
     for (model, backend) in paths {
         let manager = InferenceManager::new().unwrap();
         let mut config = AppConfig {
@@ -230,8 +239,14 @@ fn installed_live_long_recording_draft_coverage() {
             )
             .unwrap();
         let start = Instant::now();
+        // `VESPER_LIVE_LONG_UNPACED=1` feeds faster than real time to force a
+        // decoder backlog (#137) instead of pacing like a microphone.
+        let paced = std::env::var_os("VESPER_LIVE_LONG_UNPACED").is_none();
         for (index, chunk) in audio.samples().chunks(320).enumerate() {
             session.push(chunk.to_vec(), 16000).unwrap();
+            if !paced {
+                continue;
+            }
             std::thread::sleep(
                 (start + Duration::from_millis((index as u64 + 1) * 20))
                     .saturating_duration_since(Instant::now()),
@@ -243,9 +258,11 @@ fn installed_live_long_recording_draft_coverage() {
             StreamingFinal::CompletedAudioRequired
         );
         let live = manager.execution_evidence("long")["live"].clone();
+        // Report a rejected final (for example a decoder limit on synthetic
+        // repetition) instead of aborting before the live evidence prints.
         let final_text = manager
             .transcribe(&audio, &config, &root, "long-final", flag())
-            .unwrap();
+            .unwrap_or_else(|error| format!("FINAL ERROR: {error}"));
         let stop_to_final_ms = stopped.elapsed().as_millis();
         let events = seen.lock().unwrap();
         assert!(events.windows(2).all(|w| w[0].sequence < w[1].sequence));
@@ -473,6 +490,13 @@ fn installed_live_frontend_final_parity() {
     let root = PathBuf::from(std::env::var("VESPER_MODEL_DIR").expect("VESPER_MODEL_DIR"));
     let fixtures = std::env::var("VESPER_FRONTEND_PARITY_FIXTURES").expect("fixtures");
     let models = std::env::var("VESPER_FRONTEND_PARITY_MODELS").unwrap_or_default();
+    // CPU by default, matching the 17 October evidence; `auto` measures the
+    // app's default path (MLX/Metal where installed).
+    let backend = match std::env::var("VESPER_FRONTEND_PARITY_BACKEND").as_deref() {
+        Ok("auto") => ComputeBackend::Auto,
+        Ok("metal") => ComputeBackend::Metal,
+        _ => ComputeBackend::Cpu,
+    };
     for model in [
         AsrModel::CohereTranscribe,
         AsrModel::Qwen3Asr06b,
@@ -483,7 +507,7 @@ fn installed_live_frontend_final_parity() {
     {
         let manager = InferenceManager::new().unwrap();
         let mut config = AppConfig {
-            compute_backend: ComputeBackend::Cpu,
+            compute_backend: backend,
             language: Language::English,
             audio_frontend: vesper_core::AudioFrontendConfig {
                 vad_enabled: true,
@@ -530,7 +554,9 @@ fn installed_live_frontend_final_parity() {
                 .transcribe(&audio, &config, &root, &id, flag())
                 .unwrap();
             let live_ms = stopped.elapsed().as_millis();
-            let source = manager.execution_evidence(&id)["audioFrontend"]["source"].clone();
+            let evidence = manager.execution_evidence(&id);
+            let source = evidence["audioFrontend"]["source"].clone();
+            let resolved = evidence["asr"]["selection"]["resolvedBackend"].clone();
             let started = Instant::now();
             let old = manager
                 .transcribe(&audio, &config, &root, &format!("old-{index}"), flag())
@@ -538,7 +564,9 @@ fn installed_live_frontend_final_parity() {
             let old_ms = started.elapsed().as_millis();
             println!(
                 "live-frontend-parity-v1 {}",
-                serde_json::json!({"model": format!("{model:?}"), "path": path,
+                serde_json::json!({"model": format!("{model:?}"), "backend": format!("{backend:?}"),
+                    "resolved": resolved,
+                    "path": path,
                     "audioSeconds": audio.duration_seconds(), "source": source,
                     "liveFinal": live, "liveStopToFinalMs": live_ms,
                     "oldFinal": old, "oldFinalMs": old_ms})
