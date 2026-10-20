@@ -386,6 +386,10 @@ node scripts/generate-readme-banner.mjs --check
 node --test scripts/brand-identity.test.mjs
 ```
 
+The DMG installer window's background is generated the same way; see
+[DMG installer window](ci-and-releases.md#dmg-installer-window) for its commands
+and the Finder label-colour limitation.
+
 The banner and generator retain only project-relevant provenance comments.
 Design-tool caches, prompts and self-assessment stamps are not product assets;
 keep them out of tracked source. The local `.hallmark/` cache is Git-ignored and
