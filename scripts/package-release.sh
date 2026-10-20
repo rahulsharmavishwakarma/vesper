@@ -26,6 +26,11 @@ test "$bundle_version" = "$version" || {
   printf '%s\n' 'bundle version does not match release version' >&2
   exit 1
 }
+# A bundle whose signature does not seal its resources downloads as "damaged".
+codesign --verify --deep --strict "$app" || {
+  printf '%s\n' 'bundle signature is invalid or does not seal its resources' >&2
+  exit 1
+}
 executable=$(/usr/libexec/PlistBuddy -c 'Print :CFBundleExecutable' "$app/Contents/Info.plist")
 test -x "$app/Contents/MacOS/$executable" || {
   printf '%s\n' 'bundle executable is missing' >&2

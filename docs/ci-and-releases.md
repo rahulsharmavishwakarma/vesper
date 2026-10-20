@@ -618,6 +618,24 @@ sequenceDiagram
    published assets and download links in the run summary.
 8. Use the stable latest link on the launch site, or a version URL for a pinned download.
 
+### First-launch signing ([issue #239](https://github.com/rahulsharmavishwakarma/vesper/issues/239))
+
+The `v0.1.0` app was signed only by the linker on its main executable (ad hoc,
+`Info.plist=not bound`, `Sealed Resources=none`), so `codesign --verify --deep
+--strict` fails. A quarantined download of such a bundle shows "damaged and can't
+be opened" on Apple-silicon Macs instead of the normal unidentified-developer
+prompt; `xattr -cr /Applications/Vesper.app` is the workaround for that download.
+The base macOS bundle config now sets `signingIdentity` to `-`, so Tauri signs
+the whole bundle ad hoc and seals its resources, and two gates fail the build if it
+does not: the `Rust (macOS)` job runs `codesign --verify --deep --strict` on the
+debug bundle, and `scripts/package-release.sh` runs it on the release app. Ad hoc
+signing needs no Apple account but is not notarization: macOS still warns, and
+Open Anyway applies. Developer ID signing and notarization remain
+[issue #64](https://github.com/rahulsharmavishwakarma/vesper/issues/64). Verified
+on a copy of the published app: after `codesign --force --deep --sign -` the
+signature is valid and `spctl` reports `rejected`, the expected unidentified-developer
+state. A clean second-Mac download test of the next candidate is still required.
+
 ### Nightly builds ([issue #205](https://github.com/rahulsharmavishwakarma/vesper/issues/205))
 
 Status: implemented on a branch, **not yet exercised**; the first scheduled or

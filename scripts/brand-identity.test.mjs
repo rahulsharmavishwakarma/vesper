@@ -103,7 +103,10 @@ test('README opens with accessible Vesper branding without promising a release',
   // and states that the build is unsigned instead of denying availability.
   assert.match(readme, /releases\/latest\/download\/vesper-macos-arm64\.dmg/);
   assert.doesNotMatch(readme, /not available yet/);
-  assert.match(readme, /not yet signed or notarized/);
+  // The first-launch guidance covers both prompts: the normal warning and the
+  // "damaged" message that the partly signed 0.1.0 download shows.
+  assert.match(readme, /not yet notarized/);
+  assert.match(readme, /xattr -cr \/Applications\/Vesper\.app/);
   // Apache-2.0 adopted (owner-approved #127): the README must name the
   // license and must no longer claim selection is pending.
   assert.match(readme, /Apache License 2\.0/);
