@@ -120,6 +120,17 @@ fn resolve_with_preferred(
             );
         }
     }
+    #[cfg(feature = "mlx")]
+    if selection.fallback_reason.is_none()
+        && automatic_candidate(config)
+        && selection.config.compute_backend == ComputeBackend::Cpu
+    {
+        if let Some(reason) = mlx::load_failure() {
+            selection.fallback_reason = Some(format!(
+                "The GPU runtime could not be loaded ({reason}); using the CPU model."
+            ));
+        }
+    }
     Ok(selection)
 }
 

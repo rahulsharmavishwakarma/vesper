@@ -31,15 +31,38 @@ pub fn runtime_ready() -> bool {
 pub(super) fn available() -> Result<bool> {
     static DEVICE: OnceLock<std::result::Result<bool, String>> = OnceLock::new();
     // Feature-off builds never enter here. A feature-on package missing or
-    // altering its own code is a broken installation, not a CPU fallback signal.
+    // altering its own code is a broken installation and stays a hard error.
+    // The operating system refusing to load or probe the intact library (for
+    // example library validation under the hardened runtime, #245) is an
+    // environment problem: the GPU path is unavailable, the reason is kept, and
+    // the same model runs on its CPU export.
     DEVICE
         .get_or_init(|| {
             verify_runtime(&AtomicBool::new(false)).map_err(|e| e.to_string())?;
-            vesper_mlx::device_available(&runtime_directory().join("libVesperMLX.dylib"))
-                .map_err(|e| e.to_string())
+            let (available, failure) = probe_outcome(vesper_mlx::device_available(
+                &runtime_directory().join("libVesperMLX.dylib"),
+            ));
+            if let Some(reason) = failure {
+                let _ = LOAD_FAILURE.set(reason);
+            }
+            Ok(available)
         })
         .clone()
         .map_err(ModelError::RuntimeUnavailable)
+}
+
+static LOAD_FAILURE: OnceLock<String> = OnceLock::new();
+
+/// The full operating-system reason the GPU library could not be loaded, if any.
+pub(super) fn load_failure() -> Option<String> {
+    LOAD_FAILURE.get().cloned()
+}
+
+fn probe_outcome(probe: std::result::Result<bool, vesper_mlx::Error>) -> (bool, Option<String>) {
+    match probe {
+        Ok(available) => (available, None),
+        Err(error) => (false, Some(error.to_string())),
+    }
 }
 
 pub fn verify_runtime(cancelled: &AtomicBool) -> Result<()> {
@@ -150,6 +173,18 @@ pub(super) fn verify_directory(config: &AppConfig, root: &Path) -> Result<()> {
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    #[test]
+    fn a_refused_library_load_degrades_to_cpu_with_the_reason() {
+        let (available, reason) = probe_outcome(Err(vesper_mlx::Error::Runtime(
+            "dlopen failed: different Team IDs".into(),
+        )));
+        assert!(!available);
+        assert!(reason.unwrap().contains("different Team IDs"));
+        assert_eq!(probe_outcome(Ok(true)), (true, None));
+        assert_eq!(probe_outcome(Ok(false)), (false, None));
+    }
+
     #[test]
     fn unexpected_weight_shards_are_rejected_before_native_loading() {
         let root = tempfile::tempdir().unwrap();
