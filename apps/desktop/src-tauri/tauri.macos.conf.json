@@ -8,7 +8,22 @@
     ],
     "macOS": {
       "minimumSystemVersion": "10.15",
-      "signingIdentity": "-"
+      "signingIdentity": "-",
+      "dmg": {
+        "background": "dmg/background.png",
+        "windowSize": {
+          "width": 660,
+          "height": 428
+        },
+        "appPosition": {
+          "x": 180,
+          "y": 214
+        },
+        "applicationFolderPosition": {
+          "x": 480,
+          "y": 214
+        }
+      }
     },
     "resources": {
       "../../../.tooling/diarization-runtime/nemotron-diarization-runtime/": "diarization-runtime/"
