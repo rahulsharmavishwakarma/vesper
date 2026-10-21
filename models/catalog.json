@@ -326,6 +326,33 @@
       "artifact_notes": "Unmodified files from IBM's repository; exact executable metadata is in mlx-artifacts.json. See docs/offline-asr.md.",
       "creator": "IBM",
       "picker_blurb": "7 languages · Apple GPU only · fast"
+    },
+    {
+      "id": "FermionResearch/Phonon-2",
+      "name": "Fermion Phonon-2 (English)",
+      "role": "speech_recognition",
+      "status": "optional",
+      "description": "Small English model (about 351 MB) for Apple silicon: a compressed Parakeet TDT v3. Less accurate than Parakeet or Granite, more accurate than Moonshine. Runs only on the Apple GPU; there is no CPU version.",
+      "source_url": "https://huggingface.co/FermionResearch/Phonon-2",
+      "license": "CC-BY-4.0 (derived from NVIDIA Parakeet TDT 0.6B v3; MLX conversion by mlx-community)",
+      "proposed_runtime": "Vesper's Swift port of the Phonon-2 packed layer on the pinned MLX Parakeet TDT graph",
+      "runtime_integrated": true,
+      "artifact_revision": "1f228c19b37231d6ef8d839f8648bd4172bb097c",
+      "artifacts": [
+        {
+          "filename": "config.json",
+          "size_bytes": 350782,
+          "sha256": "9f5008fb231f7d6d95deff0e979fc582654dde0dbecf7d41018c50609fe86027"
+        },
+        {
+          "filename": "model.safetensors",
+          "size_bytes": 350075442,
+          "sha256": "0cd065ad3dd96f899dc3d8ce9abd768e352e2ccb3c72e9064424bb4ee2550249"
+        }
+      ],
+      "artifact_notes": "Unmodified files from mlx-community/Phonon-2; exact executable metadata is in mlx-artifacts.json. See docs/offline-asr.md.",
+      "creator": "Fermion Research",
+      "picker_blurb": "English only · Apple GPU only · small"
     }
   ]
 }

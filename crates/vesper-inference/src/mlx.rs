@@ -74,7 +74,7 @@ pub(crate) fn maximum_samples(model: AsrModel) -> usize {
     (match model {
         AsrModel::WhisperSmall => 29,
         // Block attention is local to 1.28 s windows, so 30 s parts stay exact.
-        AsrModel::ParakeetTdt06bV3 | AsrModel::GraniteSpeech5TurboCtc => 30,
+        AsrModel::ParakeetTdt06bV3 | AsrModel::GraniteSpeech5TurboCtc | AsrModel::Phonon2 => 30,
         _ => 10,
     }) * ASR_SAMPLE_RATE as usize
 }
@@ -120,6 +120,7 @@ impl Recognizer {
             AsrModel::Qwen3Asr06b => "qwen3_asr",
             AsrModel::WhisperSmall => "whisper",
             AsrModel::GraniteSpeech5TurboCtc => "granite_speech5_ctc",
+            AsrModel::Phonon2 => "phonon2",
             _ => unreachable!(),
         };
         let directory = root.join(

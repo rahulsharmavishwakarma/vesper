@@ -42,8 +42,8 @@ const revision = run('git', ['rev-parse', 'HEAD'], {
 }).trim();
 if (revision !== 'd302a5c6080d2bb97bae38c7418f82abb76013b6')
   throw new Error('Unexpected MLX Audio revision');
-const patches = ['completion-report.patch', 'live-session.patch'].map((name) =>
-  join(root, 'patches/mlx-audio-swift', name),
+const patches = ['completion-report.patch', 'live-session.patch', 'parakeet-load-hook.patch'].map(
+  (name) => join(root, 'patches/mlx-audio-swift', name),
 );
 for (const patch of patches) {
   try {
@@ -183,9 +183,11 @@ writeFileSync(
       packageLockSha256: hash(join(root, 'native/mlx/Package.resolved')),
       patchSha256: hash(patches[0]),
       livePatchSha256: hash(patches[1]),
+      loadHookPatchSha256: hash(patches[2]),
       bridgeSha256: hash(join(root, 'native/mlx/Sources/VesperMLX/Bridge.swift')),
       liveBridgeSha256: hash(join(root, 'native/mlx/Sources/VesperMLX/Live.swift')),
       graniteBridgeSha256: hash(join(root, 'native/mlx/Sources/VesperMLX/GraniteSpeech5CTC.swift')),
+      phonon2BridgeSha256: hash(join(root, 'native/mlx/Sources/VesperMLX/Phonon2.swift')),
       librarySha256: hash(join(destination, 'libVesperMLX.dylib')),
       metalSha256: hash(join(destination, 'mlx.metallib')),
       tokenizerToolSha256: hash(join(destination, 'prepare-qwen-tokenizer')),

@@ -1,0 +1,26 @@
+--- a/Sources/MLXAudioSTT/Models/Parakeet/ParakeetModel.swift
++++ b/Sources/MLXAudioSTT/Models/Parakeet/ParakeetModel.swift
+@@ -947,9 +947,12 @@
+         return Data(text.utf8)
+     }
+ 
++    /// Pinned Vesper patch: `prepare` may replace modules and return the
++    /// matching weights before strict verification. It is nil for stock models.
+     static func fromDirectory(
+         _ modelDir: URL,
+-        computeDType: DType = .bfloat16
++        computeDType: DType = .bfloat16,
++        prepare: ((ParakeetModel, [String: MLXArray]) throws -> [String: MLXArray])? = nil
+     ) throws -> ParakeetModel {
+         let configURL = modelDir.appendingPathComponent("config.json")
+         let rawConfigData = try Data(contentsOf: configURL)
+@@ -1022,7 +1025,8 @@
+             weights.merge(shard) { _, new in new }
+         }
+ 
+-        let sanitized = sanitize(weights: weights, variant: model.variant)
++        var sanitized = sanitize(weights: weights, variant: model.variant)
++        if let prepare { sanitized = try prepare(model, sanitized) }
+ 
+         if let perLayerQuant = quantConfig.perLayerQuantization {
+             quantize(model: model) { path, _ in

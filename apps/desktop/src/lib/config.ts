@@ -1,3 +1,4 @@
+import { APPLE_GPU_ONLY_SPEECH_MODELS } from './accelerators.ts';
 import { sameShortcut, shortcutIdentity } from './recording-shortcuts.ts';
 import languageManifest from '../../../../models/languages.json' with { type: 'json' };
 import modelCatalog from '../../../../models/catalog.json' with { type: 'json' };
@@ -666,7 +667,7 @@ export function validateSettings(value: unknown, checkWriterLanguage = true): st
     }
     if (
       value.models.customAsr === null &&
-      value.models.asr === 'ibm-granite/granite-speech-5.0-470m-turboctc' &&
+      APPLE_GPU_ONLY_SPEECH_MODELS.includes(String(value.models.asr)) &&
       value.computeBackend !== 'auto' &&
       value.computeBackend !== 'metal'
     ) {

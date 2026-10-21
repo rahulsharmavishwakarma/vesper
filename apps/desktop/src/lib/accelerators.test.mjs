@@ -122,3 +122,13 @@ test('Apple-GPU-only speech models offer Automatic and Metal for every declared 
   assert.deepEqual(enabled(config, unpackaged), ['auto']);
   assert.deepEqual(enabled(config, device('linux', 'x86_64', 'cuda')), ['auto']);
 });
+
+test('Phonon-2 is English-only and offered only on a packaged Apple GPU', () => {
+  const phonon = 'FermionResearch/Phonon-2';
+  const config = defaultSettings();
+  config.models.asr = phonon;
+  config.language = 'en';
+  const packaged = { ...device('macos', 'aarch64', 'metal'), speechMetalModels: [phonon] };
+  assert.deepEqual(enabled(config, packaged), ['auto', 'metal']);
+  assert.deepEqual(enabled(config, device('windows', 'x86_64', 'cuda')), ['auto']);
+});

@@ -159,6 +159,29 @@ vs 5.25%) at 22 ms vs 48 ms median per clip. It also matches or beats Parakeet
 on noise, quiet, German and long-form lanes. See the
 [adapter record](validation/granite-speech5-turboctc-2026-10-21.md).
 
+## Phonon-2 (Apple GPU)
+
+Phonon-2 is a compressed Parakeet TDT v3. Vesper runs the unmodified
+`mlx-community/Phonon-2` files on the pinned MLX Parakeet TDT graph. Its 264
+encoder projections are replaced with a Swift packed five-value layer
+(`Phonon2.swift`, architecture `phonon2`).
+
+- **Packed layers:** each projection runs as two native MLX 2-bit affine
+  matmuls with float32 scales derived from the fp16 row palettes. This matches
+  the mlx-audio reference exactly.
+- **Load hook:** a pinned MLX-Audio-Swift patch lets the layers be swapped in
+  before strict weight verification. Stock Parakeet loading is unchanged.
+- **Digit-spacing repair** (a Vesper adaptation): the model often emits digits
+  without a word boundary ("about70 km", "800 ."). The adapter restores those
+  boundaries and leaves acronyms, ordinals and plurals alone. This took unseen
+  FLEURS WER from 9.00% to 7.43%, with no clip made worse.
+- **Backends:** Automatic and Metal only, in 30 s parts; never a default.
+
+It is the smallest Apple GPU option: ~351 MB download and 0.86 GB GPU memory.
+It is less accurate than Parakeet v3 (unseen FLEURS 7.43% vs 5.68%; quiet
+speech 8.88% vs 6.91%) and not faster. See the
+[adapter record](validation/phonon2-2026-10-21.md).
+
 ## Parakeet CPU precision
 
 The built-in Parakeet TDT v3 CPU path installs 4-bit weight-only artifacts

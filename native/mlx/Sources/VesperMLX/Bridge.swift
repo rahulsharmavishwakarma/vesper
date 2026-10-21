@@ -76,7 +76,7 @@ public func loadModel(
       ["config.json"]
       + (kind == "cohere"
         ? ["tokenizer.model", "tokenizer_config.json"]
-        : kind == "parakeet" ? [] : ["tokenizer.json", "tokenizer_config.json"])
+        : ["parakeet", "phonon2"].contains(kind) ? [] : ["tokenizer.json", "tokenizer_config.json"])
     for name in required
     where !FileManager.default.fileExists(atPath: directory.appendingPathComponent(name).path) {
       throw fail("Missing verified local file: \(name)")
@@ -89,6 +89,7 @@ public func loadModel(
         case "whisper": model = try await WhisperModel.fromDirectory(directory)
         case "qwen3_asr": model = try await Qwen3ASRModel.fromModelDirectory(directory)
         case "parakeet": model = try ParakeetModel.fromDirectory(directory)
+        case "phonon2": model = Phonon2Model(try Phonon2.fromDirectory(directory))
         case "granite_speech5_ctc": model = try GraniteSpeech5CTCModel.fromDirectory(directory)
         default: throw fail("Unsupported compiled speech architecture")
         }

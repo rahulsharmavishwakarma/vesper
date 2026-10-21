@@ -1416,6 +1416,7 @@ mod tests {
             vesper_core::AsrModel::Qwen3Asr06b,
             vesper_core::AsrModel::WhisperSmall,
             vesper_core::AsrModel::GraniteSpeech5TurboCtc,
+            vesper_core::AsrModel::Phonon2,
         ] {
             config.models.asr = model;
             for sample in [f32::MIN_POSITIVE, -f32::MIN_POSITIVE, 0.000_001, -0.000_001] {

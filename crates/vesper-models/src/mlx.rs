@@ -83,6 +83,7 @@ pub fn model_subdirectory(model: AsrModel) -> Result<&'static str> {
         AsrModel::Qwen3Asr06b => Ok("mlx/qwen"),
         AsrModel::WhisperSmall => Ok("mlx/whisper-small"),
         AsrModel::GraniteSpeech5TurboCtc => Ok("mlx/granite-speech-5.0-turboctc"),
+        AsrModel::Phonon2 => Ok("mlx/phonon-2"),
         _ => Err(ModelError::Unsupported(
             "this MLX variant has not passed qualification".into(),
         )),

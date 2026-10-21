@@ -74,6 +74,7 @@ const TABLES: &[(&str, &str)] = &[
         "ibm-granite/granite-speech-5.0-470m-turboctc",
         "GRANITE_LANGUAGES",
     ),
+    ("FermionResearch/Phonon-2", "PHONON2_LANGUAGES"),
 ];
 
 fn variant(code: &str) -> &str {

@@ -205,6 +205,7 @@ flowchart LR
     lfm[LFM2.5 Audio]
     moo[Moonshine Base]
     gra[Granite Speech 5.0 TurboCTC]
+    pho[Phonon-2]
     cus[Custom NeMo transducer profile]
   end
   subgraph Kinds["AdapterKind"]
@@ -216,11 +217,12 @@ flowchart LR
     k6[LfmAudio]
     k7[MoonshineAsr]
     k8[GraniteCtc: Apple GPU only]
+    k9[PackedTdt: Apple GPU only]
   end
   subgraph Runtime["Runtime"]
     r1[NeMo-Speech.cpp: CPU / Metal / CUDA / Vulkan]
     r2[sherpa-onnx: CPU only]
-    r3[MLX Swift: Metal; English for shared models,<br/>7 languages for Granite]
+    r3[MLX Swift: Metal; English except<br/>Granite's 7 languages]
     r4[llama.cpp mtmd: CPU / GPU]
   end
   nem --> k1 --> r1
@@ -232,6 +234,7 @@ flowchart LR
   moo --> k7
   k2 & k3 & k4 & k5 & k7 --> r2
   gra --> k8 --> r3
+  pho --> k9 --> r3
   par -. "MLX registration" .-> r3
   qwa -. "MLX registration, native live preview" .-> r3
   whi -. "WhisperSmall MLX registration" .-> r3
@@ -243,7 +246,7 @@ flowchart TB
   req[Requested backend: Auto / Cpu / Metal / Cuda / Vulkan / Rocm]
   req --> auto{Auto?}
   auto -->|no| exact[Use the explicit backend; error if unavailable]
-  auto -->|yes| gpuonly{Apple-GPU-only model<br/>Granite, MLX build?}
+  auto -->|yes| gpuonly{Apple-GPU-only model<br/>Granite or Phonon-2, MLX build?}
   gpuonly -->|yes| gpusel[Select MLX / Metal artifacts,<br/>any declared language]
   gpusel --> gload[Load on Metal]
   gload -->|AcceleratorInitialization| gerr[Error: no CPU version;<br/>never another model]

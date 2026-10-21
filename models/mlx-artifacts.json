@@ -320,5 +320,33 @@
     "backend": "metal",
     "quantization": "bfloat16",
     "license": "apache-2.0"
+  },
+  {
+    "name": "mlx-phonon-2-config.json",
+    "relativePath": "mlx/phonon-2/config.json",
+    "url": "https://huggingface.co/mlx-community/Phonon-2/resolve/1f228c19b37231d6ef8d839f8648bd4172bb097c/config.json",
+    "revision": "1f228c19b37231d6ef8d839f8648bd4172bb097c",
+    "sha256": "9f5008fb231f7d6d95deff0e979fc582654dde0dbecf7d41018c50609fe86027",
+    "sizeBytes": 350782,
+    "role": "asr",
+    "modelId": "FermionResearch/Phonon-2",
+    "platform": "macos-aarch64",
+    "backend": "metal",
+    "quantization": "five-value-packed",
+    "license": "cc-by-4.0"
+  },
+  {
+    "name": "mlx-phonon-2-model.safetensors",
+    "relativePath": "mlx/phonon-2/model.safetensors",
+    "url": "https://huggingface.co/mlx-community/Phonon-2/resolve/1f228c19b37231d6ef8d839f8648bd4172bb097c/model.safetensors",
+    "revision": "1f228c19b37231d6ef8d839f8648bd4172bb097c",
+    "sha256": "0cd065ad3dd96f899dc3d8ce9abd768e352e2ccb3c72e9064424bb4ee2550249",
+    "sizeBytes": 350075442,
+    "role": "asr",
+    "modelId": "FermionResearch/Phonon-2",
+    "platform": "macos-aarch64",
+    "backend": "metal",
+    "quantization": "five-value-packed",
+    "license": "cc-by-4.0"
   }
 ]
