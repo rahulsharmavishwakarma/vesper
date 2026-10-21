@@ -712,13 +712,14 @@ state. A clean second-Mac download test of the next candidate is still required.
 
 ### Nightly builds ([issue #205](https://github.com/rahulsharmavishwakarma/vesper/issues/205))
 
-Status: implemented on a branch, **not yet exercised**; the first scheduled or
-dispatched run is the validation. The owner reversed the earlier "nightly is an
+Status: running. The first scheduled build published on 21 October 2026. The
+publisher then failed under immutable releases (below) and was reworked
+([issue #254](https://github.com/rahulsharmavishwakarma/vesper/issues/254)). The owner reversed the earlier "nightly is an
 expiring artifact only" policy (2026-10-20) and chose download-only first.
 
 - `nightly.yml` runs daily (02:17 UTC) and on dispatch. It builds the default
-  branch only when it changed since the last nightly (the commit the `nightly`
-  tag points at) and only when that commit's own `Check` run succeeded; a
+  branch only when it changed since the last nightly (the short commit id in the
+  newest `nightly-*` release tag) and only when that commit's own `Check` run succeeded; a
   forced dispatch skips the first rule.
 - The build is unsigned and uses the release desktop steps. Before building,
   `scripts/nightly.mjs apply` rewrites the runner's checkout (never committed):
@@ -728,32 +729,40 @@ expiring artifact only" policy (2026-10-20) and chose download-only first.
   directories from the identifier and the legacy-store fallback only applies to
   `com.vesper.desktop`, so a nightly keeps separate settings and models and
   installs beside stable.
-- Publication replaces the single rolling `nightly` **prerelease** (DMG named
-  `vesper-nightly-macos-arm64.dmg`, plus `SHA256SUMS`), deleting the old
-  release and its tag first. It refuses to touch a `nightly` release that is not
-  a prerelease, never creates or moves a `vX.Y.Z` tag, never becomes `latest`,
-  and never touches `latest.json`, `beta.json` or the website default. The
-  release workflow's tag trigger is `v*`, so the `nightly` tag starts nothing.
+- **Immutable releases.** The repository has immutable releases enabled
+  (`immutable: true` on every published release): a published release cannot be
+  edited, and its tag name is never reusable, even after the release is deleted.
+  A rolling `nightly` tag that is deleted and recreated is therefore impossible,
+  and the first design deleted the old release before creating the new one, which
+  left no nightly after the failed run. Each nightly now gets its own tag,
+  `nightly-YYYYMMDD-<short sha>`, which does not match the `v*` release trigger;
+  the new prerelease (DMG named `vesper-nightly-macos-arm64.dmg`, plus
+  `SHA256SUMS`) is created first, and older `nightly-*` releases are deleted only
+  afterwards. Deleting an immutable release is allowed but its tag stays, so one
+  tag accumulates per nightly that builds. It never creates or moves a `vX.Y.Z`
+  tag, never becomes `latest`, and never touches `latest.json`, `beta.json` or the
+  website default.
 - The branded DMG window (#240) needs the `.DS_Store` file that Tauri writes by
   running AppleScript against Finder, a step it skips whenever `CI` is set, so CI
   DMGs contained the background image but opened as a plain window
-  ([issue #252](https://github.com/rahulsharmavishwakarma/vesper/issues/252)). The
-  nightly build sets `TAURI_BUNDLER_DMG_IGNORE_CI` as a trial and records in its step
-  summary whether the DMG carries `.DS_Store`; the release workflow is unchanged
-  until that trial is observed to work and not to hang.
+  ([issue #252](https://github.com/rahulsharmavishwakarma/vesper/issues/252)).
+  `TAURI_BUNDLER_DMG_IGNORE_CI` runs it anyway. A forced nightly built with it in
+  23 minutes without hanging, and the DMG carried a 10 KB `.DS_Store` and
+  `.background/background.png`. The nightly and release desktop jobs now set it,
+  and `scripts/package-release.sh` mounts the DMG and fails the build if either
+  file is missing.
 - No nightly update feed exists yet. The nightly build's updater endpoint
   points at the future `nightly.json` address, so its update checks fail like
   any offline check and can never reach the stable feed. Channel visibility
   rules (a stable app never sees nightly) and the beta-feed decision are
   proposals on #66 and #205.
 - Limitations: nightly is unsigned, so macOS asks you to allow it under System Settings → Privacy & Security → Open Anyway;
-  only the latest nightly is kept; a nightly can lag main by a day, and a
+  only the latest nightly release is kept (its tag stays reserved); a nightly can lag main by a day, and a
   failed or running `Check` on the newest commit skips that night.
 
 Roll back by shipping a higher patch version; never move or overwrite old
 `vX.Y.Z` tag assets, and the promote job refuses non-draft releases. The
-`nightly` tag is the single exception, because it is a moving pointer, not a
-version. Beta releases use SemVer prerelease tags and stay out of the stable
+immutable-release rule applies to nightlies too: each has a unique tag. Beta releases use SemVer prerelease tags and stay out of the stable
 `latest` pointer.
 
 Release workflows never download or bundle ASR/cleanup model weights. Model and

@@ -57,8 +57,11 @@ jobs:
             echo "sha=$sha"
             echo "version=$version"
           } >> "$GITHUB_OUTPUT"
-          last="$(gh api "repos/$GITHUB_REPOSITORY/git/ref/tags/nightly" --jq .object.sha 2>/dev/null || true)"
-          if [ "$FORCE" != "true" ] && [ "$last" = "$sha" ]; then
+          # Releases are immutable, so every nightly has its own tag,
+          # nightly-YYYYMMDD-<short sha>; the newest one names the last build.
+          last_tag="$(gh api "repos/$GITHUB_REPOSITORY/releases?per_page=100" --jq '[.[]|select(.tag_name|startswith("nightly-"))][0].tag_name // ""' 2>/dev/null || true)"
+          last="${last_tag##*-}"
+          if [ "$FORCE" != "true" ] && [ -n "$last" ] && [ "$last" = "${sha:0:7}" ]; then
             echo "main is unchanged since the last nightly ($sha); skipping." >> "$GITHUB_STEP_SUMMARY"
             echo "build=false" >> "$GITHUB_OUTPUT"
             exit 0
@@ -85,7 +88,7 @@ jobs:
       DEVELOPER_DIR: /Applications/Xcode_26.3.app/Contents/Developer
       # Tauri skips the Finder step that writes the DMG window layout (.DS_Store)
       # whenever CI is set, so published DMGs opened as a plain window (#252).
-      # Trial here first: running Finder on a runner can fail or hang.
+      # package-release.sh fails a DMG without that layout.
       TAURI_BUNDLER_DMG_IGNORE_CI: 'true'
       VERSION: ${{ needs.plan.outputs.version }}
     steps:
@@ -128,18 +131,6 @@ jobs:
         run: npm run desktop:build
       - name: Collect nightly artifact
         run: sh scripts/package-release.sh "$VERSION"
-      # Non-blocking: records whether the trial produced the branded window.
-      - name: Report the DMG window layout
-        run: |
-          set -eu
-          mount="$(mktemp -d)"
-          hdiutil attach -nobrowse -readonly -noautoopen -mountpoint "$mount" release/vesper-macos-arm64.dmg >/dev/null
-          layout=missing
-          background=missing
-          [ -s "$mount/.DS_Store" ] && layout=present
-          [ -s "$mount/.background/background.png" ] && background=present
-          hdiutil detach "$mount" -quiet || true
-          echo "DMG window layout (.DS_Store): $layout; background image: $background" | tee -a "$GITHUB_STEP_SUMMARY"
       - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
         with:
           name: nightly-${{ runner.os }}-${{ runner.arch }}
@@ -149,7 +140,7 @@ jobs:
           include-hidden-files: false
 
   publish:
-    name: Replace the rolling nightly prerelease
+    name: Publish the nightly prerelease
     needs: [plan, desktop]
     runs-on: ubuntu-24.04
     timeout-minutes: 10
@@ -168,21 +159,26 @@ jobs:
       - name: Publish the nightly prerelease
         run: |
           set -eu
+          # Immutable releases cannot be edited and their tag names are never
+          # reusable, so each nightly gets its own tag and the previous nightly
+          # is removed only after the new one exists.
+          tag="nightly-${VERSION##*.}-${SHA:0:7}"
+          if gh release view "$tag" --repo "$GITHUB_REPOSITORY" >/dev/null 2>&1; then
+            echo "Release $tag already exists; nothing to publish." | tee -a "$GITHUB_STEP_SUMMARY"
+            exit 0
+          fi
           mkdir assets
           cp dmg/vesper-macos-arm64.dmg assets/vesper-nightly-macos-arm64.dmg
           (cd assets && sha256sum -- * > SHA256SUMS)
-          notes="Unsigned nightly build of main at ${SHA}, version ${VERSION}. Installs beside the stable app with its own settings and models. Not for production use. It is unsigned, so macOS may require opening it with right-click, then Open."
-          # Only the rolling nightly release and tag are replaced, never a
-          # vX.Y.Z tag; a release that is not a prerelease is never touched.
-          if existing="$(gh release view nightly --repo "$GITHUB_REPOSITORY" --json isPrerelease --jq .isPrerelease 2>/dev/null)"; then
-            if [ "$existing" != "true" ]; then
-              echo "Release 'nightly' exists and is not a prerelease; refusing to replace it." >&2
-              exit 1
-            fi
-            gh release delete nightly --repo "$GITHUB_REPOSITORY" --cleanup-tag --yes
-          fi
-          gh release create nightly --repo "$GITHUB_REPOSITORY" --target "$SHA" \
+          notes="Unsigned nightly build of main at ${SHA}, version ${VERSION}. Installs beside the stable app with its own settings and models. Not for production use. It is unsigned and not notarized: macOS asks you to allow it under System Settings, Privacy & Security, Open Anyway."
+          gh release create "$tag" --repo "$GITHUB_REPOSITORY" --target "$SHA" \
             --prerelease --latest=false \
             --title "Vesper Nightly ${VERSION}" --notes "$notes" \
             assets/vesper-nightly-macos-arm64.dmg assets/SHA256SUMS
-          echo "Nightly ${VERSION}: https://github.com/$GITHUB_REPOSITORY/releases/tag/nightly" >> "$GITHUB_STEP_SUMMARY"
+          # Keep only the newest nightly. Deleting an immutable release is
+          # allowed; its tag stays reserved, which is why tags are never reused.
+          gh release list --repo "$GITHUB_REPOSITORY" --limit 100 --json tagName --jq '.[].tagName | select(startswith("nightly-"))' |
+            while IFS= read -r old; do
+              [ "$old" = "$tag" ] || gh release delete "$old" --repo "$GITHUB_REPOSITORY" --yes
+            done
+          echo "Nightly ${VERSION}: https://github.com/$GITHUB_REPOSITORY/releases/tag/$tag" >> "$GITHUB_STEP_SUMMARY"

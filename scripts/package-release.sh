@@ -49,6 +49,19 @@ test -f "$dmg" || {
 }
 hdiutil verify "$dmg"
 
+# Tauri writes the Finder window layout (.DS_Store) only when its AppleScript
+# step runs, which it skips under CI unless TAURI_BUNDLER_DMG_IGNORE_CI is set.
+# Without it the DMG opens as a plain window (#252).
+mount=$(mktemp -d)
+hdiutil attach -nobrowse -readonly -noautoopen -mountpoint "$mount" "$dmg" >/dev/null
+layout=0
+if [ -s "$mount/.DS_Store" ] && [ -s "$mount/.background/background.png" ]; then layout=1; fi
+hdiutil detach "$mount" -quiet || true
+test "$layout" = 1 || {
+  printf '%s\n' 'DMG has no window layout (.DS_Store or .background missing)' >&2
+  exit 1
+}
+
 output=release
 test ! -e "$output" || {
   printf '%s\n' "$output already exists" >&2
