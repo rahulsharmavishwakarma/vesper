@@ -73,6 +73,10 @@ pub struct Artifact {
     pub backend: Option<String>,
     #[serde(default)]
     pub archive: Option<String>,
+    /// Native engine for a model with more than one; `nemo_gguf` marks the
+    /// one-file NeMo-Speech.cpp export. Absent means the standard export.
+    #[serde(default)]
+    pub engine: Option<String>,
     pub quantization: Option<String>,
     pub license: String,
 }
@@ -258,6 +262,15 @@ pub fn resolved_nemo_backend(config: &AppConfig) -> Result<&'static str> {
     Ok(backend)
 }
 
+/// `engine` value of the one-file NeMo-Speech.cpp GGUF export in the manifest.
+pub const NEMO_GGUF_ENGINE: &str = "nemo_gguf";
+
+/// The selected built-in speech model runs on the bundled NeMo-Speech.cpp runtime.
+pub fn uses_nemo_runtime(config: &AppConfig) -> bool {
+    config.models.custom_asr.is_none()
+        && (config.models.asr == AsrModel::Nemotron35AsrStreaming06b || config.uses_nemo_gguf())
+}
+
 pub fn selected(config: &AppConfig) -> Result<Vec<Artifact>> {
     selected_exact(&preferred_speech_config(config)?)
 }
@@ -265,10 +278,8 @@ pub fn selected(config: &AppConfig) -> Result<Vec<Artifact>> {
 fn selected_exact(config: &AppConfig) -> Result<Vec<Artifact>> {
     config.validate()?;
     let platform = target_platform();
-    if config.models.custom_asr.is_none()
-        && config.models.asr == AsrModel::Nemotron35AsrStreaming06b
-        && platform.is_none()
-    {
+    let nemo = uses_nemo_runtime(config);
+    if nemo && platform.is_none() {
         return Err(ModelError::Unsupported(format!(
             "{}-{}",
             std::env::consts::OS,
@@ -277,13 +288,12 @@ fn selected_exact(config: &AppConfig) -> Result<Vec<Artifact>> {
     }
     let backend = if config.uses_mlx_speech() {
         Some("metal")
-    } else if config.models.custom_asr.is_none()
-        && config.models.asr == AsrModel::Nemotron35AsrStreaming06b
-    {
+    } else if nemo {
         Some(resolved_nemo_backend(config)?)
     } else {
         None
     };
+    let engine = config.uses_nemo_gguf().then_some(NEMO_GGUF_ENGINE);
     let quantization = match config.rewrite_quantization {
         RewriteQuantization::Q4_0 => "q4_0",
         RewriteQuantization::Q8_0 => "q8_0",
@@ -292,8 +302,11 @@ fn selected_exact(config: &AppConfig) -> Result<Vec<Artifact>> {
         .into_iter()
         .filter(|file| {
             (config.models.custom_asr.is_none()
-                && matches!(file.role.as_str(), "asr" | "asr_runtime")
-                && file.model_id.as_deref() == Some(config.models.asr.id())
+                && ((file.role == "asr"
+                    && file.model_id.as_deref() == Some(config.models.asr.id())
+                    && file.engine.as_deref() == engine)
+                    // NeMo runtime packages are shared by every model they run.
+                    || (file.role == "asr_runtime" && nemo))
                 && file
                     .platform
                     .as_deref()
@@ -344,6 +357,10 @@ struct ModelInstallSpec {
 fn built_in_asr_spec(config: &AppConfig, model: AsrModel) -> ModelInstallSpec {
     let mut target = config.clone();
     target.models.asr = model;
+    // The engine choice belongs to the model that offers it.
+    if !vesper_core::nemo_gguf_supported(model) {
+        target.models.asr_engine = vesper_core::AsrEngine::Standard;
+    }
     target.models.custom_asr = None;
     target.models.custom_rewriter = None;
     target.cleanup_enabled = false;
@@ -549,6 +566,7 @@ fn profile_artifacts(profile: &HuggingFaceProfile, role: &str) -> Vec<Artifact> 
             platform: None,
             backend: None,
             archive: None,
+            engine: None,
             quantization: None,
             license: profile.license.clone(),
         })
@@ -1146,9 +1164,7 @@ pub fn provenance(config: &AppConfig) -> serde_json::Value {
     let effective = preferred.as_ref().unwrap_or(config);
     let asr_runtime = if effective.uses_mlx_speech() {
         vesper_core::MLX_RUNTIME
-    } else if config.models.custom_asr.is_none()
-        && config.models.asr == AsrModel::Nemotron35AsrStreaming06b
-    {
+    } else if uses_nemo_runtime(config) {
         "NeMo-Speech.cpp 0.1.0"
     } else {
         "sherpa-onnx 1.13.8"
@@ -1409,6 +1425,42 @@ mod tests {
         ));
     }
     #[test]
+    fn unified_gguf_selects_one_parakeet_file_plus_the_shared_nemo_runtime() {
+        let mut config = AppConfig {
+            cleanup_enabled: false,
+            ..Default::default()
+        };
+        config.models.asr = AsrModel::ParakeetTdt06bV3;
+        config.models.asr_engine = vesper_core::AsrEngine::UnifiedGguf;
+        config.language = Language::German;
+        for backend in [ComputeBackend::Cpu, ComputeBackend::Auto] {
+            config.compute_backend = backend;
+            let files = selected(&config).unwrap();
+            let asr: Vec<_> = files.iter().filter(|f| f.role == "asr").collect();
+            assert_eq!(asr.len(), 1, "{backend:?}");
+            assert_eq!(asr[0].engine.as_deref(), Some(NEMO_GGUF_ENGINE));
+            assert!(asr[0].relative_path.ends_with(".q8_0.gguf"));
+            let runtime: Vec<_> = files.iter().filter(|f| f.role == "asr_runtime").collect();
+            assert_eq!(runtime.len(), 1, "{backend:?}");
+            assert_eq!(
+                runtime[0].backend.as_deref(),
+                Some(resolved_nemo_backend(&config).unwrap())
+            );
+        }
+        // The standard engine never downloads the GGUF, and other models ignore the setting.
+        config.models.asr_engine = vesper_core::AsrEngine::Standard;
+        config.compute_backend = ComputeBackend::Cpu;
+        assert!(selected(&config)
+            .unwrap()
+            .iter()
+            .all(|f| f.engine.is_none() && f.role != "asr_runtime"));
+        config.models.asr_engine = vesper_core::AsrEngine::UnifiedGguf;
+        let spec = built_in_asr_spec(&config, AsrModel::CohereTranscribe);
+        assert!(spec.support_error.is_none(), "{:?}", spec.support_error);
+        assert!(spec.artifacts.iter().all(|f| f.engine.is_none()));
+    }
+
+    #[test]
     fn pinned_inventory_selects_only_needed_files() {
         let mut config = AppConfig::default();
         assert_eq!(config.models.asr, AsrModel::CohereTranscribe);
@@ -1575,6 +1627,7 @@ mod tests {
             platform: target_platform().map(str::to_owned),
             backend: Some("cpu".into()),
             archive: Some("zip".into()),
+            engine: None,
             quantization: None,
             license: "fixture".into(),
         };
@@ -1627,6 +1680,7 @@ mod tests {
             platform: target_platform().map(str::to_owned),
             backend: Some("cpu".into()),
             archive: Some("tar_gz".into()),
+            engine: None,
             quantization: None,
             license: "fixture".into(),
         };
@@ -1801,6 +1855,7 @@ mod tests {
                 platform: None,
                 backend: None,
                 archive: None,
+                engine: None,
                 quantization: None,
                 license: String::new(),
             };
@@ -1880,6 +1935,7 @@ mod tests {
             platform: None,
             backend: None,
             archive: None,
+            engine: None,
             quantization: None,
             license: String::new(),
         };
@@ -1925,6 +1981,7 @@ mod tests {
                 platform: None,
                 backend: None,
                 archive: None,
+                engine: None,
                 quantization: None,
                 license: String::new(),
             };

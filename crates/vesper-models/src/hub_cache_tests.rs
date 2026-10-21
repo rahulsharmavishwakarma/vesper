@@ -22,6 +22,7 @@ fn fixture() -> Artifact {
         platform: None,
         backend: None,
         archive: None,
+        engine: None,
         quantization: None,
         license: "fixture".into(),
     }

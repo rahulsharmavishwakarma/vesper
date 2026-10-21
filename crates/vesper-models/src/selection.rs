@@ -56,6 +56,8 @@ fn automatic_candidate(config: &AppConfig) -> bool {
         && config.models.custom_asr.is_none()
         && config.language == Language::English
         && vesper_core::mlx_speech_supported(config.models.asr)
+        // The unified GGUF picks its own device through NeMo-Speech.cpp.
+        && !config.uses_nemo_gguf()
 }
 
 fn preferred_with_availability(config: &AppConfig, available: bool) -> AppConfig {
@@ -187,6 +189,20 @@ mod tests {
                 .cpu_fallback(root.path(), "fixture".into())
                 .unwrap_err();
             assert!(error.to_string().contains("no CPU version"), "{error}");
+        }
+    }
+
+    #[test]
+    fn unified_gguf_automatic_is_left_to_the_nemo_runtime() {
+        let mut config = AppConfig::default();
+        config.models.asr = AsrModel::ParakeetTdt06bV3;
+        config.models.asr_engine = vesper_core::AsrEngine::UnifiedGguf;
+        config.compute_backend = ComputeBackend::Auto;
+        config.language = Language::English;
+        for available in [false, true] {
+            let preferred = preferred_with_availability(&config, available);
+            assert_eq!(preferred.compute_backend, ComputeBackend::Auto);
+            assert!(!preferred.uses_mlx_speech());
         }
     }
 
