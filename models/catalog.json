@@ -257,6 +257,38 @@
       "validation": "docs/validation/whisper-adapter-2026-09-18.md",
       "creator": "OpenAI",
       "picker_blurb": "English and French · INT8 · larger encoder"
+    },
+    {
+      "id": "moonshine-ai/moonshine-base",
+      "name": "Moonshine Base (English)",
+      "role": "speech_recognition",
+      "status": "optional",
+      "description": "Small, fast English-only CPU model (about 141 MB) for low-end or non-Apple-silicon machines. Completed audio is decoded in parts of at most 9 seconds; less accurate than Parakeet or Cohere.",
+      "source_url": "https://huggingface.co/moonshine-ai/moonshine-base",
+      "license": "MIT (English Moonshine models; files unchanged from the sherpa-onnx package)",
+      "proposed_runtime": "sherpa-onnx 1.13.8 Moonshine v2 with application completion-reporting patch",
+      "runtime_integrated": true,
+      "artifact_revision": "577269bb93e5cb0f92c01bd4444d93f9a9203805",
+      "artifacts": [
+        {
+          "filename": "encoder_model.ort",
+          "size_bytes": 31326816,
+          "sha256": "7c66495948d0d08ec1af454cd4b5514862ae6511e94712a60e6d83eaec8dc8cf"
+        },
+        {
+          "filename": "decoder_model_merged.ort",
+          "size_bytes": 109424400,
+          "sha256": "d9d7b333af34bc552580576ddcf248a1c6c839e0d3b43b09afb9376ed009899d"
+        },
+        {
+          "filename": "tokens.txt",
+          "size_bytes": 549350,
+          "sha256": "2870d843e14c1e187bf1913a521562a63b53933814bd7f2145120468f494a049"
+        }
+      ],
+      "artifact_notes": "Exact executable metadata is in artifacts.json; see docs/offline-asr.md.",
+      "creator": "Moonshine AI",
+      "picker_blurb": "English only · small and fast"
     }
   ]
 }
