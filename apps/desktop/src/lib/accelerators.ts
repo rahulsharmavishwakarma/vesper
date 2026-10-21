@@ -24,6 +24,7 @@ const gpuBackends: ComputeBackend[] = ['metal', 'cuda', 'vulkan', 'rocm'];
 /** Built-in speech models whose only engine is the Apple GPU (no CPU version). */
 export const APPLE_GPU_ONLY_SPEECH_MODELS: readonly string[] = [
   'ibm-granite/granite-speech-5.0-470m-turboctc',
+  'FermionResearch/Phonon-2',
 ];
 const appleGpuOnly = (config: AppConfig) =>
   !config.models.customAsr && APPLE_GPU_ONLY_SPEECH_MODELS.includes(config.models.asr);
