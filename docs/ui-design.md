@@ -328,6 +328,22 @@ first-run state is pending. It is off for users (`FIRST_RUN_ENABLED` in
   saves the choice, starts the download in the background and moves on; a chip
   at the bottom of the rail shows progress, then **Models ready**, or **Download
   stopped** with **Try again**.
+- **Access** shows the microphone and Accessibility. **Open System Settings**
+  asks macOS and opens the Accessibility pane, then notices the moment access
+  is granted (a second request finishes event posting or clipboard access when
+  only those are missing). Granting access turns on typing into apps. After
+  eight seconds of waiting it offers **Restart Vesper** (setup resumes here) and
+  **Keep text in Vesper**, an explicit outcome that keeps words in the app,
+  ready to copy, so nobody is trapped.
+- **Shortcut** reuses the Settings recorder for Hold to talk and Press to
+  toggle: activate the field, press the keys, Escape cancels.
+- **Your words** previews one sample sentence as said and as written. **As I
+  said it** and **Polished** are the Formatting-only and fuller cleanup
+  presets; with Tidy my text off they are disabled with the reason. Words added
+  here are saved to Your vocabulary as words you added. Changing the style
+  re-writes the sentence with a soft blur while the bird tilts and chirps;
+  adding a word sends it as a chip into its place in the sentence, where the
+  bird chirps. Automatic learning is explained, not switched (it is always on).
 - **Reduced motion** shows Welcome at once and changes step without the flight.
 
 ## Busy and locked controls
