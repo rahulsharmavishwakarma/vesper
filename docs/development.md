@@ -555,6 +555,11 @@ Use `make check-portable` for frontend/Node/Python/shell checks, or targets such
 while developing. The [CI language matrix](ci-and-releases.md#language-coverage)
 describes exact coverage, pinned tools and model/hardware exclusions.
 
+To keep a separate build apart from `target/` (for example against a patched
+native runtime), set `CARGO_TARGET_DIR=target-<name>`. Git ignores `/target-*/`;
+delete the folder when the work merges, because Cargo caches grow to tens of
+thousands of files.
+
 The npm build creates frontend assets; it does not package a desktop installer. CI runs Rust checks and desktop linking on macOS, with portable tooling checks on Ubuntu. Tests exercise audio decoding/resampling, capture-buffer behavior without opening a microphone, configuration, model manifests, and dataset invariants. They do not download model weights or measure model accuracy. Synthetic compressed fixtures are checked in, so tests do not invoke FFmpeg. Report any checks skipped because a toolchain or dependency is unavailable.
 
 ## Configuration and models
