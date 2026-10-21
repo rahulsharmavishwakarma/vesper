@@ -39,8 +39,16 @@ fn main() {
             "graniteBridgeSha256",
         ),
         (
+            "native/mlx/Sources/VesperMLX/Phonon2.swift",
+            "phonon2BridgeSha256",
+        ),
+        (
             "patches/mlx-audio-swift/live-session.patch",
             "livePatchSha256",
+        ),
+        (
+            "patches/mlx-audio-swift/parakeet-load-hook.patch",
+            "loadHookPatchSha256",
         ),
         (
             "native/mlx/Sources/PrepareTokenizer/main.swift",
