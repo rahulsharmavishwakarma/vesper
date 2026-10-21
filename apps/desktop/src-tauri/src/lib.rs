@@ -6,6 +6,7 @@ mod onboarding;
 mod resources;
 mod runtime;
 mod settings;
+mod setup;
 mod shortcuts;
 mod storage;
 mod updates;
@@ -194,6 +195,11 @@ pub fn run() {
             onboarding::get_onboarding,
             onboarding::save_onboarding_step,
             onboarding::complete_onboarding,
+            setup::get_device_profile,
+            setup::microphone_access,
+            setup::open_privacy_settings,
+            setup::start_microphone_check,
+            setup::stop_microphone_check,
             commands::get_app_info,
             commands::read_project_application,
             commands::resolve_project_folder,
