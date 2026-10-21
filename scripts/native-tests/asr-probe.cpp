@@ -11,10 +11,12 @@ int main(int argc, char **argv) {
   }
   const std::string mode = argv[1], root = argv[2];
   const std::string folder = root + (mode == "qwen" ? "/qwen3-asr-0.6b/" :
-      mode == "cohere" ? "/cohere-transcribe/" : "/parakeet-tdt-0.6b-v3/");
-  const std::string encoder = folder + "encoder.int8.onnx";
-  const std::string decoder = folder + "decoder.int8.onnx";
-  const std::string joiner = folder + "joiner.int8.onnx";
+      mode == "cohere" ? "/cohere-transcribe/" : "/parakeet-tdt-0.6b-v3-wo4/");
+  // Built-in Parakeet uses 4-bit weight-only files without the .int8 suffix.
+  const std::string suffix = mode == "parakeet" ? ".onnx" : ".int8.onnx";
+  const std::string encoder = folder + "encoder" + suffix;
+  const std::string decoder = folder + "decoder" + suffix;
+  const std::string joiner = folder + "joiner" + suffix;
   const std::string tokens = folder + "tokens.txt";
   const std::string frontend = folder + "conv_frontend.onnx";
   const std::string tokenizer = folder + "tokenizer";

@@ -232,12 +232,12 @@ pub fn model_versions(config: &AppConfig) -> Value {
                 json!({"modelId": config.models.asr.id(), "runtime":"NeMo-Speech.cpp", "runtimeVersion":"0.1.0", "interface":"versioned-c-abi", "provider":provider, "languageMode":"prompted-or-automatic", "streamingMode":"native-live-microphone-and-offline-file", "modelLifetime":"resident-until-selection-change-or-exit", "artifactFiles":[nemotron::MODEL_FILENAME]})
             }
             AdapterKind::SherpaTransducer => {
-                json!({"modelId": config.models.asr.id(), "runtime":"sherpa-onnx", "runtimeVersion":"1.13.8", "provider":"cpu", "languageMode":"automatic", "segmentation":{"policy":"balanced-low-energy-v1", "maxSegmentSeconds":parakeet::MAX_SEGMENT_SECONDS, "boundaryLookbackMs":1000, "energyWindowMs":100, "boundaryStepMs":10, "overlapSamples":0, "streamLifetime":"per-segment"}, "artifactFiles":["encoder.int8.onnx","decoder.int8.onnx","joiner.int8.onnx","tokens.txt"]})
+                json!({"modelId": config.models.asr.id(), "runtime":"sherpa-onnx", "runtimeVersion":"1.13.8", "provider":"cpu", "languageMode":"automatic", "segmentation":{"policy":"balanced-low-energy-v1", "maxSegmentSeconds":parakeet::MAX_SEGMENT_SECONDS, "boundaryLookbackMs":1000, "energyWindowMs":100, "boundaryStepMs":10, "overlapSamples":0, "streamLifetime":"per-segment"}, "artifactFiles":parakeet::BUILTIN_FILES})
             }
             _ => unreachable!("speech task registration"),
         }
     } else {
-        json!({"modelId": config.models.asr.id(), "runtime":"sherpa-onnx", "runtimeVersion":"1.13.8", "provider":"cpu", "languageMode":"automatic", "segmentation":{"policy":"balanced-low-energy-v1", "maxSegmentSeconds":parakeet::MAX_SEGMENT_SECONDS, "boundaryLookbackMs":1000, "energyWindowMs":100, "boundaryStepMs":10, "overlapSamples":0, "streamLifetime":"per-segment"}, "artifactFiles":["encoder.int8.onnx","decoder.int8.onnx","joiner.int8.onnx","tokens.txt"]})
+        json!({"modelId": config.models.asr.id(), "runtime":"sherpa-onnx", "runtimeVersion":"1.13.8", "provider":"cpu", "languageMode":"automatic", "segmentation":{"policy":"balanced-low-energy-v1", "maxSegmentSeconds":parakeet::MAX_SEGMENT_SECONDS, "boundaryLookbackMs":1000, "energyWindowMs":100, "boundaryStepMs":10, "overlapSamples":0, "streamLifetime":"per-segment"}, "artifactFiles":parakeet::BUILTIN_FILES})
     };
     let speech_registration = config.speech_adapter();
     let config = requested;

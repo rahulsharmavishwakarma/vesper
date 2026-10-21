@@ -104,6 +104,12 @@ pub(crate) fn decode_with_recognizer(
     )
 }
 
+/// Built-in Parakeet v3 CPU artifacts: 4-bit weight-only (MatMulNBits) exports.
+/// Dynamic INT8 lost accuracy on held-out FLEURS (#251).
+pub(crate) const BUILTIN_DIRECTORY: &str = "parakeet-tdt-0.6b-v3-wo4";
+pub(crate) const BUILTIN_FILES: [&str; 4] =
+    ["encoder.onnx", "decoder.onnx", "joiner.onnx", "tokens.txt"];
+
 pub(crate) fn speech_paths(config: &AppConfig, root: &Path) -> Result<[std::path::PathBuf; 4]> {
     config.validate()?;
     let roles = [
@@ -117,13 +123,7 @@ pub(crate) fn speech_paths(config: &AppConfig, root: &Path) -> Result<[std::path
             root.join(profile.relative_path(profile.file(role).expect("validated profile roles")))
         }))
     } else {
-        Ok([
-            "encoder.int8.onnx",
-            "decoder.int8.onnx",
-            "joiner.int8.onnx",
-            "tokens.txt",
-        ]
-        .map(|file| root.join("parakeet-tdt-0.6b-v3").join(file)))
+        Ok(BUILTIN_FILES.map(|file| root.join(BUILTIN_DIRECTORY).join(file)))
     }
 }
 
