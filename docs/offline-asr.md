@@ -130,6 +130,35 @@ Moonshine v2 recognizer (`encoder_model.ort` plus `decoder_model_merged.ort`).
 Held-out FLEURS en-US WER is 10.11% at a median of 86 ms per clip on CPU. See
 the [adapter record](validation/moonshine-base-2026-10-21.md).
 
+## Granite Speech 5.0 TurboCTC (Apple GPU)
+
+Granite runs in Vesper's own Swift port inside the MLX bridge
+(`GraniteSpeech5CTC.swift`, architecture `granite_speech5_ctc`). It uses IBM's
+unmodified BF16 files. It is not a sherpa-onnx model and has no CPU path.
+
+- **Following the reference:**
+  - IBM's log-mel and delta frontend with two-frame stacking.
+  - 128-frame block attention with Shaw relative positions.
+  - Two stride-2 convolution layers and middle-layer self-conditioning.
+  - Greedy CTC with a byte-fallback BPE detokenizer.
+- **Parts of at most 30 s:** attention never spans more than 1.28 s, so parts
+  lose no context.
+- **Input leveling** (a Vesper adaptation): quiet input is boosted toward
+  −23 dBFS RMS, capped at +40 dB and a 0.9 peak. The features have no
+  per-utterance normalization, and this took the −30 dB lane from 20.9% to
+  5.6% WER.
+- **Backends:**
+  - Automatic and Metal both run it; CPU, CUDA, Vulkan and ROCm are refused.
+  - A GPU initialization failure is reported, never answered with a CPU model.
+  - Builds without the MLX bridge do not offer the model.
+- **Scope:** seven vendor-declared languages, explicit selection only; never a
+  default.
+
+Through the application it ties Parakeet v3 on held-out FLEURS en-US (5.30%
+vs 5.25%) at 22 ms vs 48 ms median per clip. It also matches or beats Parakeet
+on noise, quiet, German and long-form lanes. See the
+[adapter record](validation/granite-speech5-turboctc-2026-10-21.md).
+
 ## Parakeet CPU precision
 
 The built-in Parakeet TDT v3 CPU path installs 4-bit weight-only artifacts
