@@ -36,3 +36,30 @@ export function saveOnboardingStep(step: number): Promise<OnboardingState> {
 export function completeOnboarding(): Promise<OnboardingState> {
   return invoke<OnboardingState>('complete_onboarding');
 }
+
+export interface DeviceProfile {
+  os: string;
+  arch: string;
+  chip: string | null;
+  memoryBytes: number | null;
+  /** Free space on the volume that holds the model folder. */
+  freeBytes: number | null;
+}
+export type MicrophoneAccess = 'not_asked' | 'restricted' | 'denied' | 'allowed' | 'asking';
+
+export function getDeviceProfile(): Promise<DeviceProfile> {
+  return invoke<DeviceProfile>('get_device_profile');
+}
+/** `request` shows the macOS prompt only when the user has not been asked. */
+export function microphoneAccess(request = false): Promise<MicrophoneAccess> {
+  return invoke<MicrophoneAccess>('microphone_access', { request });
+}
+export function openPrivacySettings(pane: 'microphone' | 'accessibility'): Promise<void> {
+  return invoke<void>('open_privacy_settings', { pane });
+}
+export function startMicrophoneCheck(deviceId: string | null): Promise<void> {
+  return invoke<void>('start_microphone_check', { deviceId });
+}
+export function stopMicrophoneCheck(): Promise<void> {
+  return invoke<void>('stop_microphone_check');
+}

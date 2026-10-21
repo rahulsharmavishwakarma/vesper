@@ -35,3 +35,44 @@ test('previews open setup with ?first-run', () => {
   assert.equal(firstRunRequested('?first-run=1&x=2'), true);
   assert.equal(firstRunRequested('?other'), false);
 });
+
+test('the recommended speech model follows the language', async () => {
+  const { recommendedSpeechModel, COHERE, QWEN_ASR, SETUP_LANGUAGES, SETUP_SPEECH_MODELS } =
+    await import('./firstRun.ts');
+  assert.deepEqual(
+    SETUP_LANGUAGES.map((l) => l.value),
+    ['en', 'fr', 'hi'],
+  );
+  assert.equal(recommendedSpeechModel('en'), COHERE);
+  assert.equal(recommendedSpeechModel('fr'), COHERE);
+  assert.equal(recommendedSpeechModel('hi'), QWEN_ASR);
+  assert.ok(SETUP_SPEECH_MODELS.some((m) => m.id === COHERE));
+});
+
+test('download size counts only missing files and needs a quarter more space', async () => {
+  const { remainingBytes, spaceNeeded, formatBytes } = await import('./firstRun.ts');
+  const catalog = [
+    {
+      modelId: 'a',
+      quantization: null,
+      files: [
+        { installed: true, sizeBytes: 500 },
+        { installed: false, sizeBytes: 1000 },
+      ],
+    },
+    { modelId: 'w', quantization: 'q4_0', files: [{ installed: false, sizeBytes: 2000 }] },
+    { modelId: 'w', quantization: 'q8_0', files: [{ installed: false, sizeBytes: 9000 }] },
+  ];
+  assert.equal(
+    remainingBytes(catalog, [
+      { modelId: 'a', quantization: null },
+      { modelId: 'w', quantization: 'q4_0' },
+    ]),
+    3000,
+  );
+  assert.equal(remainingBytes(catalog, [{ modelId: 'missing', quantization: null }]), 0);
+  assert.equal(spaceNeeded(4000), 5000);
+  assert.equal(formatBytes(4_313_000_000), '4.3 GB');
+  assert.equal(formatBytes(28_000_000), '28 MB');
+  assert.equal(formatBytes(214_000_000_000), '214 GB');
+});
