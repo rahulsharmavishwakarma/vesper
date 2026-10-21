@@ -75,3 +75,17 @@ uses the ordinary full-recording decode with strict termination checks. English
 and Metal remain the qualified selection boundary. The build verifies exact
 patched bytes and records hashes of both patches and both bridge sources. See
 [live adapters](../../docs/live-transcription.md) for lifecycle and validation.
+
+## Parakeet load hook
+
+`parakeet-load-hook.patch` adds an optional `prepare` closure to
+`ParakeetModel.fromDirectory`. The closure receives the constructed model and
+its sanitized weights before strict verification. It may replace modules and
+must return weights that match them. Stock Parakeet passes nil and loads
+exactly as before.
+
+VesperMLX uses the hook for Phonon-2: it replaces the 264 encoder projections
+with packed five-value layers and derives their float32 scales from the fp16
+row palettes before the loader casts float parameters. The hook adds no kernel
+and does not change upstream decoding. See
+[the Phonon-2 adapter](../../docs/offline-asr.md#phonon-2-apple-gpu).
