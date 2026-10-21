@@ -57,6 +57,14 @@
   import { installPressFeedback } from './lib/actions/pressFeedback';
   import { finishEntranceAnimations } from './lib/actions/entranceMotion';
   import QuickCapture from './lib/components/QuickCapture.svelte';
+  import FirstRun from './lib/components/FirstRun.svelte';
+  import { getOnboarding } from './lib/api/onboarding';
+  import {
+    FIRST_RUN_ENABLED,
+    firstRunRequested,
+    resumeStep,
+    shouldShowFirstRun,
+  } from './lib/firstRun';
   import CaptureDesignPicker from './lib/components/CaptureDesignPicker.svelte';
   import DictationPreferences from './lib/components/DictationPreferences.svelte';
   import ApplicationStatus from './lib/components/ApplicationStatus.svelte';
@@ -462,8 +470,28 @@
     feedback = null;
     error = null;
   }
+  // First run (issue #270): decided once per profile by the backend and never
+  // shown again after it is finished, including across updates.
+  let firstRun = $state<{ show: boolean; step: number; persist: boolean } | null>(null);
+  async function checkFirstRun() {
+    const requested = firstRunRequested(location.search);
+    if (!FIRST_RUN_ENABLED && !requested) {
+      firstRun = { show: false, step: 0, persist: false };
+      return;
+    }
+    const state =
+      environment === 'browser-preview' && requested
+        ? ({ status: 'pending', step: 0 } as const)
+        : await getOnboarding();
+    firstRun = {
+      show: shouldShowFirstRun(state, FIRST_RUN_ENABLED, requested),
+      step: resumeStep(state.step),
+      persist: environment === 'desktop',
+    };
+  }
   onMount(() => {
     if (quickWindow) return;
+    void checkFirstRun();
     void loadSettings();
     // Quiet startup check (#66): fires once the main UI is ready and only
     // surfaces in Settings > About; shows nothing extra when current.
@@ -538,6 +566,16 @@
 {#if quickWindow}
   <QuickCapture preview={environment === 'browser-preview'} />
 {:else}
+  {#if firstRun?.show}
+    <FirstRun
+      settings={engineSettings}
+      initialStep={firstRun.step}
+      persist={firstRun.persist}
+      onDone={() => {
+        if (firstRun) firstRun = { ...firstRun, show: false };
+      }}
+    />
+  {/if}
   <div class="app-shell" class:settings-rail={activeView === 'settings'}>
     <aside class="sidebar">
       <button

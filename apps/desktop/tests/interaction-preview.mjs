@@ -146,6 +146,16 @@ if (states) {
     configSnapshot: settings,
     modelVersions: {},
   });
+  // First run: pending only when the page asks for it (?first-run), resuming
+  // at ?first-run-step=N when given; otherwise this profile already finished.
+  const firstRunParams = new URLSearchParams(location.search);
+  const onboarding = {
+    version: 1,
+    status: firstRunParams.has('first-run') ? 'pending' : 'completed',
+    step: Number(firstRunParams.get('first-run-step') ?? 0),
+    reason: null,
+    completedAt: null,
+  };
   window.previewCommands = [];
   window.previewPermissions = null;
   mockIPC(
@@ -209,6 +219,19 @@ if (states) {
         case 'reset_settings':
           settings = defaultSettings();
           return settings;
+        case 'get_onboarding':
+          return { ...onboarding };
+        case 'save_onboarding_step':
+          if (onboarding.status === 'pending') onboarding.step = args.step;
+          return { ...onboarding };
+        case 'complete_onboarding':
+          Object.assign(onboarding, {
+            status: 'completed',
+            step: 7,
+            reason: 'finished',
+            completedAt: 1,
+          });
+          return { ...onboarding };
         case 'get_runtime_status':
           return { ...runtime };
         case 'get_app_status':
