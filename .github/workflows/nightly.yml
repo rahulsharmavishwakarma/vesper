@@ -83,6 +83,10 @@ jobs:
     env:
       CMAKE_BUILD_PARALLEL_LEVEL: '2'
       DEVELOPER_DIR: /Applications/Xcode_26.3.app/Contents/Developer
+      # Tauri skips the Finder step that writes the DMG window layout (.DS_Store)
+      # whenever CI is set, so published DMGs opened as a plain window (#252).
+      # Trial here first: running Finder on a runner can fail or hang.
+      TAURI_BUNDLER_DMG_IGNORE_CI: 'true'
       VERSION: ${{ needs.plan.outputs.version }}
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
@@ -124,6 +128,18 @@ jobs:
         run: npm run desktop:build
       - name: Collect nightly artifact
         run: sh scripts/package-release.sh "$VERSION"
+      # Non-blocking: records whether the trial produced the branded window.
+      - name: Report the DMG window layout
+        run: |
+          set -eu
+          mount="$(mktemp -d)"
+          hdiutil attach -nobrowse -readonly -noautoopen -mountpoint "$mount" release/vesper-macos-arm64.dmg >/dev/null
+          layout=missing
+          background=missing
+          [ -s "$mount/.DS_Store" ] && layout=present
+          [ -s "$mount/.background/background.png" ] && background=present
+          hdiutil detach "$mount" -quiet || true
+          echo "DMG window layout (.DS_Store): $layout; background image: $background" | tee -a "$GITHUB_STEP_SUMMARY"
       - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
         with:
           name: nightly-${{ runner.os }}-${{ runner.arch }}

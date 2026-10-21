@@ -734,6 +734,13 @@ expiring artifact only" policy (2026-10-20) and chose download-only first.
   a prerelease, never creates or moves a `vX.Y.Z` tag, never becomes `latest`,
   and never touches `latest.json`, `beta.json` or the website default. The
   release workflow's tag trigger is `v*`, so the `nightly` tag starts nothing.
+- The branded DMG window (#240) needs the `.DS_Store` file that Tauri writes by
+  running AppleScript against Finder, a step it skips whenever `CI` is set, so CI
+  DMGs contained the background image but opened as a plain window
+  ([issue #252](https://github.com/rahulsharmavishwakarma/vesper/issues/252)). The
+  nightly build sets `TAURI_BUNDLER_DMG_IGNORE_CI` as a trial and records in its step
+  summary whether the DMG carries `.DS_Store`; the release workflow is unchanged
+  until that trial is observed to work and not to hang.
 - No nightly update feed exists yet. The nightly build's updater endpoint
   points at the future `nightly.json` address, so its update checks fail like
   any offline check and can never reach the stable feed. Channel visibility
