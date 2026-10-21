@@ -348,5 +348,33 @@
     "backend": "metal",
     "quantization": "five-value-packed",
     "license": "cc-by-4.0"
+  },
+  {
+    "name": "mlx-parakeet-redux-config.json",
+    "relativePath": "mlx/parakeet-redux/config.json",
+    "url": "https://huggingface.co/rahulsharmavishwakarma/vesper-parakeet-redux-mlx/resolve/47de12f261ab05fe19dd211c0c98812eab46139e/config.json",
+    "revision": "47de12f261ab05fe19dd211c0c98812eab46139e",
+    "sha256": "8461d1419e710bdc9f7bdb9be0a3f1da5d989f4c8fc656c276a370b63bc19bda",
+    "sizeBytes": 351148,
+    "role": "asr",
+    "modelId": "moondream/parakeet-redux",
+    "platform": "macos-aarch64",
+    "backend": "metal",
+    "quantization": "ternary-2bit",
+    "license": "cc-by-4.0"
+  },
+  {
+    "name": "mlx-parakeet-redux-model.safetensors",
+    "relativePath": "mlx/parakeet-redux/model.safetensors",
+    "url": "https://huggingface.co/rahulsharmavishwakarma/vesper-parakeet-redux-mlx/resolve/47de12f261ab05fe19dd211c0c98812eab46139e/model.safetensors",
+    "revision": "47de12f261ab05fe19dd211c0c98812eab46139e",
+    "sha256": "40f4451e324b1e14e0a0254d02b5a91e01c006974b9f540b8619500ac8a8d1cf",
+    "sizeBytes": 216875637,
+    "role": "asr",
+    "modelId": "moondream/parakeet-redux",
+    "platform": "macos-aarch64",
+    "backend": "metal",
+    "quantization": "ternary-2bit",
+    "license": "cc-by-4.0"
   }
 ]
