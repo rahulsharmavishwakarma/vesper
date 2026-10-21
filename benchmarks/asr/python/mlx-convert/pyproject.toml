@@ -1,0 +1,12 @@
+[project]
+name = "vesper-mlx-convert"
+version = "0.0.0"
+description = "Isolated conversion tooling for published MLX speech artifacts; not part of the desktop runtime"
+requires-python = ">=3.12,<3.13"
+dependencies = [
+    "huggingface-hub==1.5.0",
+    "mlx-audio==0.6.1",
+]
+
+[tool.uv]
+package = false
