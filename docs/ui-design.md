@@ -278,11 +278,15 @@ spin, arrow loop, flash and fills but keeps every label and state.
 
 The earlier manual-download link was removed: it was the only unstyled `<a>`
 (raw browser blue and underline) and the in-app updater is the supported path.
-Two switch rows sit under the version, each with its `Icon.svelte` glyph (`refresh`,
-`download`) and the switch on the right using the shared switch skin: **Check for
-updates automatically** (default on) and **Download and install automatically**
-(default off, disabled and dimmed while checking is off). They are hidden when the
-build has no updater. Installing automatically never restarts the app and reuses
+Three switch rows sit under the version, each with its `Icon.svelte` glyph (`refresh`,
+`download`, `spark`) and the switch on the right using the shared switch skin:
+**Check for updates automatically** (default on), **Download and install
+automatically** (default off, disabled and dimmed while checking is off) and
+**Include beta and pre-release builds** (default off, with a one-line `.note`
+beneath it saying that off shows only the latest stable release, on also offers
+release candidates that may be less stable; issue #277). They are hidden when the
+build has no updater, and the third is also hidden on nightly builds, which follow
+their own feed. Installing automatically never restarts the app and reuses
 `downloadAndInstall`'s signature check and wait for active work (issue #195).
 With checking off, the idle pill becomes a manual **Check for updates** action.
 

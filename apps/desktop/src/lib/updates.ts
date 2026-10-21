@@ -18,7 +18,8 @@ export interface BusyState {
 /** Native surface, implemented once with the Tauri plugins. */
 export interface UpdateBackend {
   enabled: boolean;
-  check(): Promise<UpdateInfo | null>;
+  /** `includePrereleases` also checks the beta/pre-release feed (#277). */
+  check(options: { includePrereleases: boolean }): Promise<UpdateInfo | null>;
   download(
     update: UpdateInfo,
     onProgress: (downloadedBytes: number, totalBytes: number | null) => void,
@@ -44,11 +45,14 @@ export interface UpdateState {
   autoCheck: boolean;
   /** Download and install a found release without a click (default off). */
   autoInstall: boolean;
+  /** Also offer beta and pre-release builds (default off: stable only). */
+  includePrereleases: boolean;
 }
 
 export interface UpdatePreferences {
   autoCheck: boolean;
   autoInstall: boolean;
+  includePrereleases: boolean;
 }
 
 /** Where the two preferences persist; injected so the manager stays pure. */
@@ -60,6 +64,7 @@ export interface UpdatePreferenceStore {
 export const DEFAULT_UPDATE_PREFERENCES: UpdatePreferences = {
   autoCheck: true,
   autoInstall: false,
+  includePrereleases: false,
 };
 
 /** Installing automatically is meaningless without checking automatically. */
@@ -72,7 +77,78 @@ export function normalizeUpdatePreferences(
     typeof value?.autoInstall === 'boolean'
       ? value.autoInstall
       : DEFAULT_UPDATE_PREFERENCES.autoInstall;
-  return { autoCheck, autoInstall: autoCheck && autoInstall };
+  const includePrereleases =
+    typeof value?.includePrereleases === 'boolean'
+      ? value.includePrereleases
+      : DEFAULT_UPDATE_PREFERENCES.includePrereleases;
+  return { autoCheck, autoInstall: autoCheck && autoInstall, includePrereleases };
+}
+
+function versionParts(version: string): { core: number[]; pre: string[] } {
+  const bare = version.trim().replace(/^v/, '').split('+')[0];
+  const dash = bare.indexOf('-');
+  const core = (dash < 0 ? bare : bare.slice(0, dash)).split('.').map((part) => Number(part) || 0);
+  const pre = dash < 0 ? [] : bare.slice(dash + 1).split('.');
+  return { core, pre };
+}
+
+/** SemVer precedence (spec item 11): a pre-release sorts below its release. */
+export function compareVersions(a: string, b: string): number {
+  const left = versionParts(a);
+  const right = versionParts(b);
+  for (let index = 0; index < Math.max(left.core.length, right.core.length); index += 1) {
+    const difference = (left.core[index] ?? 0) - (right.core[index] ?? 0);
+    if (difference !== 0) return difference < 0 ? -1 : 1;
+  }
+  if (!left.pre.length || !right.pre.length) {
+    return left.pre.length === right.pre.length ? 0 : left.pre.length ? -1 : 1;
+  }
+  for (let index = 0; index < Math.max(left.pre.length, right.pre.length); index += 1) {
+    const x = left.pre[index];
+    const y = right.pre[index];
+    if (x === undefined) return -1;
+    if (y === undefined) return 1;
+    const xNumeric = /^\d+$/.test(x);
+    const yNumeric = /^\d+$/.test(y);
+    if (xNumeric && yNumeric) {
+      if (Number(x) !== Number(y)) return Number(x) < Number(y) ? -1 : 1;
+    } else if (xNumeric !== yNumeric) {
+      return xNumeric ? -1 : 1;
+    } else if (x !== y) {
+      return x < y ? -1 : 1;
+    }
+  }
+  return 0;
+}
+
+export interface CheckOutcome<T> {
+  value: T | null;
+  error: unknown;
+}
+
+/**
+ * Combine the stable feed with the optional pre-release feed. Each feed only
+ * reports a version newer than the installed one, so the higher of the two wins
+ * (a tester moves to a stable release once it overtakes the last rc). Only when
+ * every consulted feed failed is the check an error; a failing pre-release feed
+ * never hides a working stable answer.
+ */
+export function selectCandidate<T extends { version: string }>(
+  stable: CheckOutcome<T>,
+  prerelease: CheckOutcome<T> | null,
+): { chosen: T | null; error: unknown } {
+  const consulted = prerelease ? [stable, prerelease] : [stable];
+  if (consulted.every((outcome) => outcome.error != null)) {
+    return { chosen: null, error: stable.error };
+  }
+  let chosen: T | null = null;
+  for (const outcome of consulted) {
+    const candidate = outcome.error == null ? outcome.value : null;
+    if (candidate && (!chosen || compareVersions(candidate.version, chosen.version) > 0)) {
+      chosen = candidate;
+    }
+  }
+  return { chosen, error: null };
 }
 
 export function initialUpdateState(
@@ -89,6 +165,7 @@ export function initialUpdateState(
     blockedReason: null,
     autoCheck: preferences.autoCheck,
     autoInstall: preferences.autoInstall,
+    includePrereleases: preferences.includePrereleases,
   };
 }
 
@@ -123,15 +200,33 @@ export class UpdateManager {
     this.state = initialUpdateState(normalizeUpdatePreferences(store?.load()));
   }
 
-  /** Change either preference; persists, notifies, and installs a waiting release when enabled. */
+  /** Change a preference; persists, notifies, and installs a waiting release when enabled. */
   setPreferences(change: Partial<UpdatePreferences>): void {
+    const channelBefore = this.state.includePrereleases;
     const next = normalizeUpdatePreferences({
       autoCheck: this.state.autoCheck,
       autoInstall: this.state.autoInstall,
+      includePrereleases: this.state.includePrereleases,
       ...change,
     });
     this.store?.save(next);
     this.set(next);
+    if (next.includePrereleases !== channelBefore) {
+      // A stale answer from the other channel must not stay on offer. Leave a
+      // download or installed update alone; the choice applies to the next check.
+      const settled = ['idle', 'current', 'available', 'error'].includes(this.state.status);
+      if (settled && !this.inFlight) {
+        this.set({
+          status: 'idle',
+          available: null,
+          errorPhase: null,
+          errorMessage: null,
+          blockedReason: null,
+        });
+        if (next.autoCheck) void this.check();
+      }
+      return;
+    }
     if (next.autoInstall && this.state.status === 'available') void this.downloadAndInstall();
   }
 
@@ -167,7 +262,9 @@ export class UpdateManager {
     let install = false;
     this.set({ status: 'checking', errorPhase: null, errorMessage: null, blockedReason: null });
     try {
-      const update = await this.backend.check();
+      const update = await this.backend.check({
+        includePrereleases: this.state.includePrereleases,
+      });
       const checkedAt = new Date().toISOString();
       if (update) {
         this.set({ status: 'available', available: update, lastCheckedAt: checkedAt });

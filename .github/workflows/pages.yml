@@ -51,6 +51,14 @@ jobs:
             gh release download "$tag" --repo "$GITHUB_REPOSITORY" --pattern nightly.json --dir _site \
               || echo "Release $tag has no nightly.json; no nightly feed published." | tee -a "$GITHUB_STEP_SUMMARY"
           fi
+          # The newest published pre-release carries the beta feed that stable
+          # builds check when the user opts in to beta and pre-release updates
+          # (#277). Nightlies have their own tags and feed.
+          beta_tag="$(gh api "repos/$GITHUB_REPOSITORY/releases?per_page=100" --jq '[.[]|select((.draft|not) and .prerelease and (.tag_name|startswith("v")))][0].tag_name // ""')"
+          if [ -n "$beta_tag" ]; then
+            gh release download "$beta_tag" --repo "$GITHUB_REPOSITORY" --pattern beta.json --dir _site \
+              || echo "Release $beta_tag has no beta.json; no beta feed published." | tee -a "$GITHUB_STEP_SUMMARY"
+          fi
           # Never publish a feed that is not valid JSON.
           for feed in _site/*.json; do
             [ -e "$feed" ] || continue

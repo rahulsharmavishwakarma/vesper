@@ -276,6 +276,24 @@
           /><span><Icon name="download" />Download and install automatically</span></label
         >
       </div>
+      {#if !info.version.includes('-nightly.')}
+        <div class="setting-toggle">
+          <label class="checkbox-field" for="{prefId}-prereleases"
+            ><input
+              id="{prefId}-prereleases"
+              type="checkbox"
+              checked={updates.includePrereleases}
+              aria-describedby="{prefId}-prereleases-note"
+              onchange={(event) =>
+                updateManager.setPreferences({ includePrereleases: event.currentTarget.checked })}
+            /><span><Icon name="spark" />Include beta and pre-release builds</span></label
+          >
+          <p class="note" id="{prefId}-prereleases-note">
+            Off shows only the latest stable release. On also offers release candidates, which may
+            be less stable.
+          </p>
+        </div>
+      {/if}
     </div>
   {/if}
   {#if loading}

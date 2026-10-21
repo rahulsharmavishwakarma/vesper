@@ -94,7 +94,16 @@ first opens; turn it off and the pill offers **Check for updates** instead.
 checking is off) downloads and installs a release as soon as one is found, using
 the same signature check and the same wait for active work; it never restarts
 for you, so the pill ends at **Restart to update**. If work is in progress the
-install waits and is retried at the next check. Both choices are remembered on
+install waits and is retried at the next check. A third switch,
+**Include beta and pre-release builds** (off by default), decides which releases
+are offered. Off, only the latest stable release is offered. On, Vesper also looks
+at release candidates and betas and offers whichever is the newest build that is
+newer than the one you run, so a tester moves to the stable release once it
+overtakes the last candidate. Pre-release builds may be less stable. Turning the
+switch changes the offer at once: a candidate that was on offer disappears when you
+turn it off, and a new check runs when automatic checks are on. If the pre-release
+feed cannot be reached, you still get the stable answer. Nightly builds do not show
+this switch; they follow their own feed. All three choices are remembered on
 this device.
 
 Every update package is signature-checked against Vesper's enrolled update

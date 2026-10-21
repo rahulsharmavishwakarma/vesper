@@ -7,6 +7,7 @@ mod runtime;
 mod settings;
 mod shortcuts;
 mod storage;
+mod updates;
 
 use std::path::PathBuf;
 use std::sync::Arc;
@@ -168,6 +169,7 @@ pub fn run() {
             }
         })
         .invoke_handler(tauri::generate_handler![
+            updates::check_prerelease_update,
             dictation::get_dictation_status,
             dictation::dictation_permissions,
             dictation::toggle_dictation,
