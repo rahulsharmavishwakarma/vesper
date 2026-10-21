@@ -179,7 +179,9 @@ encoder projections are replaced with a Swift packed five-value layer
 
 It is the smallest Apple GPU option: ~351 MB download and 0.86 GB GPU memory.
 It is less accurate than Parakeet v3 (unseen FLEURS 7.43% vs 5.68%; quiet
-speech 8.88% vs 6.91%) and not faster. See the
+speech 8.88% vs 6.91%) and slightly slower (43.9 vs 40.8 ms median per
+held-out clip, both with
+[blocked TDT decoding](inference-performance.md#blocked-tdt-decoding-on-metal--22-october-2026)). See the
 [adapter record](validation/phonon2-2026-10-21.md).
 
 ## Parakeet Redux (Apple GPU)

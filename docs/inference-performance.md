@@ -433,6 +433,55 @@ was subsequently approved explicitly, as recorded in [issue #35](https://github.
 No MLX model becomes selectable and no default changes merely because this
 isolated bridge compiles or produces promising measurements.
 
+### Blocked TDT decoding on Metal — 22 October 2026
+
+[#286](https://github.com/rahulsharmavishwakarma/vesper/issues/286) profiled
+Vesper's MLX speech adapters on a 12.6 s FLEURS clip (release build, warm, M5
+Pro). For the three Parakeet TDT models, features took under 0.5 ms. Decoding
+took roughly 45% of each request:
+
+| Model | Total | Encoder | Decode steps | Decode per step |
+| --- | --- | --- | --- | --- |
+| Parakeet v3 | 65 ms | 36 ms | 92 | 0.33 ms |
+| Phonon-2 | 75 ms | 36 ms | 116 | 0.34 ms |
+| Parakeet Redux (float32) | 78 ms | 26 ms | 109 | 0.48 ms |
+
+Each greedy TDT step does about 12M multiply-adds. The upstream serial loop
+waited for the GPU after every step to read the token and duration, so
+synchronization rather than arithmetic set the cost.
+
+The pinned patch `patches/mlx-audio-swift/parakeet-blocked-tdt.patch` keeps the
+loop state on the GPU: frame index, symbol count, last token and LSTM state. It
+fuses the step with the serial loop's reductions into one compiled call and
+reads back 16 steps per synchronization. The arithmetic and its order are
+unchanged.
+
+`ParakeetBlockedDecodeTests` shows the decode trace of every step is identical
+to the serial loop for Parakeet v3, Phonon-2 and Redux on 31 clips. Through the
+application on the 94-clip FLEURS en-US held-out set, transcripts were identical
+on 94/94 for each model:
+
+| Model | Median before → after | p95 before → after |
+| --- | --- | --- |
+| Parakeet v3 | 48.2 → 40.8 ms | 70.5 → 63.1 ms |
+| Phonon-2 | 54.5 → 43.9 ms | 86.3 → 68.0 ms |
+| Parakeet Redux | 51.4 → 43.7 ms | 79.7 → 68.4 ms |
+
+Longer recordings gain more: 24–27% on the 12.6 s profiling clip.
+
+Block sizes of 8, 16 and 32 performed alike; 16 is used. Three experiments were
+not adopted:
+
+- **Decoding on the CPU** was 2× slower for the bf16 models, because bf16 math
+  on the CPU is slow.
+- **Stacking Phonon-2's two code planes** into one matmul left its encoder
+  unchanged at about 37 ms. Five-value weights inherently cost two 2-bit planes
+  of work, while Redux's ternary weights cost one.
+- **MLX's fused attention for Granite** (26.7 → 26.3 ms, identical text) is
+  within noise. Granite's time is in its dense encoder layers.
+
+These are single-machine measurements on battery power, not general claims.
+
 ### Historical Mac GPU audit — 22 September 2026
 
 Source audit of the pre-change application `c8358b4061876f1bb3bafed39a8694afb5bc9e6c`; the implementation above supersedes its LFM and writer-fallback findings.
