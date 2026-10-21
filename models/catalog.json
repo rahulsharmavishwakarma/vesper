@@ -17,34 +17,34 @@
       "license": "CC-BY-4.0",
       "proposed_runtime": "sherpa-onnx official Rust API with a compatible ONNX export",
       "runtime_integrated": true,
-      "artifact_revision": "2bda32ec70b097a55adaa07d9a7173915b43cc78",
+      "artifact_revision": "8e178c8a971286a2d849196e47da4e776c82d43b",
       "artifacts": [
         {
-          "filename": "decoder.int8.onnx",
-          "size_bytes": 11845275,
-          "sha256": "179e50c43d1a9de79c8a24149a2f9bac6eb5981823f2a2ed88d655b24248db4e",
-          "url": "https://huggingface.co/csukuangfj/sherpa-onnx-nemo-parakeet-tdt-0.6b-v3-int8/resolve/2bda32ec70b097a55adaa07d9a7173915b43cc78/decoder.int8.onnx",
+          "filename": "decoder.onnx",
+          "size_bytes": 47233762,
+          "sha256": "40f66847170c4054fb6fae21e5ea71220b0bea02234d5a944e16d6ef50992eca",
+          "url": "https://huggingface.co/rahulsharmavishwakarma/vesper-parakeet-tdt-0.6b-v3-sherpa-onnx-wo4/resolve/8e178c8a971286a2d849196e47da4e776c82d43b/decoder.onnx",
           "quantization": null
         },
         {
-          "filename": "encoder.int8.onnx",
-          "size_bytes": 652184281,
-          "sha256": "acfc2b4456377e15d04f0243af540b7fe7c992f8d898d751cf134c3a55fd2247",
-          "url": "https://huggingface.co/csukuangfj/sherpa-onnx-nemo-parakeet-tdt-0.6b-v3-int8/resolve/2bda32ec70b097a55adaa07d9a7173915b43cc78/encoder.int8.onnx",
+          "filename": "encoder.onnx",
+          "size_bytes": 679397339,
+          "sha256": "dbaf21273c52f4b6c836abca6a8f1f386fa362c4f61316b89c25505ce600fd33",
+          "url": "https://huggingface.co/rahulsharmavishwakarma/vesper-parakeet-tdt-0.6b-v3-sherpa-onnx-wo4/resolve/8e178c8a971286a2d849196e47da4e776c82d43b/encoder.onnx",
           "quantization": null
         },
         {
-          "filename": "joiner.int8.onnx",
-          "size_bytes": 6355277,
-          "sha256": "3164c13fc2821009440d20fcb5fdc78bff28b4db2f8d0f0b329101719c0948b3",
-          "url": "https://huggingface.co/csukuangfj/sherpa-onnx-nemo-parakeet-tdt-0.6b-v3-int8/resolve/2bda32ec70b097a55adaa07d9a7173915b43cc78/joiner.int8.onnx",
+          "filename": "joiner.onnx",
+          "size_bytes": 3984870,
+          "sha256": "b95616818246060ed3d5cc048154fe4d88b03ead636372bd58a3f267f68b6a6e",
+          "url": "https://huggingface.co/rahulsharmavishwakarma/vesper-parakeet-tdt-0.6b-v3-sherpa-onnx-wo4/resolve/8e178c8a971286a2d849196e47da4e776c82d43b/joiner.onnx",
           "quantization": null
         },
         {
           "filename": "tokens.txt",
           "size_bytes": 93939,
           "sha256": "d58544679ea4bc6ac563d1f545eb7d474bd6cfa467f0a6e2c1dc1c7d37e3c35d",
-          "url": "https://huggingface.co/csukuangfj/sherpa-onnx-nemo-parakeet-tdt-0.6b-v3-int8/resolve/2bda32ec70b097a55adaa07d9a7173915b43cc78/tokens.txt",
+          "url": "https://huggingface.co/rahulsharmavishwakarma/vesper-parakeet-tdt-0.6b-v3-sherpa-onnx-wo4/resolve/8e178c8a971286a2d849196e47da4e776c82d43b/tokens.txt",
           "quantization": null
         }
       ],

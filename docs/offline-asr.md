@@ -111,6 +111,37 @@ Use `cohere`/`en` or `parakeet`/`en` for the other adapters. Link the same probe
 
 The non-silent boundary fixture `fleurs-en_us-padded-10s.wav` retains every original English float32 sample and appends 19,840 zero samples (1.24 seconds). Its canonical minimal RIFF/WAVE header declares format 3, one channel, 16,000 Hz, 64,000 bytes/second, four-byte block alignment and 32-bit samples, followed by a 640,000-byte data chunk. File size is 640,044 bytes; SHA-256 is `994f93a06e1e5d45b2b3bdb3e219b39e1976cba413a139b96675cc12c7f1411d`. This is an explicitly modified CC-BY-4.0 FLEURS derivative with added trailing silence, retaining the English reference and attribution above.
 
+## Parakeet CPU precision
+
+The built-in Parakeet TDT v3 CPU path installs 4-bit weight-only artifacts
+(`parakeet-tdt-0.6b-v3-wo4/`): ONNX Runtime `MatMulNBits`, block 32, with FP32
+activations. They are converted from the official sherpa-onnx FP32 export and
+hosted at
+[`rahulsharmavishwakarma/vesper-parakeet-tdt-0.6b-v3-sherpa-onnx-wo4`](https://huggingface.co/rahulsharmavishwakarma/vesper-parakeet-tdt-0.6b-v3-sherpa-onnx-wo4).
+
+The previous dynamic INT8 export quantized activations at run time. Held-out
+WER on read speech:
+
+| Language | INT8 | 4-bit weight-only |
+| --- | ---: | ---: |
+| English (FLEURS) | 7.70% | 5.95% |
+| German (FLEURS) | 8.23% | 6.62% |
+
+The download size is about the same; CPU decoding is roughly 1.5× slower.
+See the [precision record](validation/parakeet-weight-only-2026-10-21.md). The
+scores in the next section were measured on the previous INT8 export. Other
+sherpa presets and Cohere still use dynamic INT8.
+
+Reproduce a conversion with:
+
+```sh
+uv run --locked --project benchmarks/asr/python/onnx-quantize \
+  python scripts/quantize-onnx-weight-only.py \
+  --repo csukuangfj/sherpa-onnx-nemo-parakeet-tdt-0.6b-v3 \
+  --revision 1a468a35cbba69418f126de829e75261dea4a4e4 \
+  --source-model nvidia/parakeet-tdt-0.6b-v3 --out OUTPUT_DIR
+```
+
 ## Parakeet completed-audio parts
 
 Parakeet TDT v3 and custom NeMo transducer profiles on CPU decode completed audio in contiguous parts of up to 30 s. Each part has a fresh stream, and progress is reported per part. Recordings of 30 s or less still use one native call. Before [#153](https://github.com/rahulsharmavishwakarma/vesper/issues/153), the whole recording went to a single `decode` call, which silently lost about half of the words on 60–120 s recordings.

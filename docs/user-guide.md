@@ -564,4 +564,8 @@ Vesper does not watch text you edit outside the app. A former TextEdit-only corr
 
 Apple Silicon builds can run **Parakeet** and **Qwen ASR** on the GPU automatically for **English**. Keep **Automatic**, save your model selection, and choose **Download**. Compatible GPU files can use more disk space than CPU files. Existing CPU downloads stay usable until the update is prepared; **Ready · update available** means you can transcribe now or download the optimized package. Removing a model removes its CPU and GPU exports. Full recordings and imported files share this pipeline; live partial transcription still requires Nemotron. Other languages and automatic language detection use their supported paths and may need a separate download. CPU remains an advanced override. See [accelerator setup](accelerators.md#building-the-apple-silicon-application).
 
+Parakeet's CPU files were replaced in October 2026 by a more accurate build of
+the same model (about 730 MB; [details](offline-asr.md#parakeet-cpu-precision)).
+If you use Parakeet on CPU, choose **Download** once to fetch the new files.
+
 For these optional GPU models, a recording containing only exact digital zeros returns empty text after file verification without first loading the speech model. Quiet speech and ordinary microphone background noise still follow normal transcription.
