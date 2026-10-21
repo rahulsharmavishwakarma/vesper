@@ -202,7 +202,117 @@
     return null;
   });
 
+  // Welcome background: a fine dot field that answers the bird. Each call
+  // sends a soft ripple out from its beak; dots near the pointer brighten and
+  // drift aside. Only the bird's body stays clear, so dots never show through
+  // its eye or wing. Reduced motion draws one still frame.
+  let dotCanvas: HTMLCanvasElement | undefined = $state();
+  let ripple: () => void = () => {};
+  function startDots(): () => void {
+    const canvas = dotCanvas;
+    const context = canvas?.getContext('2d');
+    if (!canvas || !context) return () => {};
+    const [r, g, b] = (getComputedStyle(canvas).color.match(/\d+/g) ?? ['255', '107', '61']).map(
+      Number,
+    );
+    const still = reducedMotion();
+    let width = 0;
+    let height = 0;
+    let bird = { x: 0, y: 0, w: 0, h: 0 };
+    const measure = () => {
+      const ratio = Math.min(2, devicePixelRatio || 1);
+      width = canvas.clientWidth;
+      height = canvas.clientHeight;
+      canvas.width = Math.round(width * ratio);
+      canvas.height = Math.round(height * ratio);
+      context.setTransform(ratio, 0, 0, ratio, 0, 0);
+      const box = canvas.getBoundingClientRect();
+      const mark = heroBird?.getBoundingClientRect();
+      if (mark)
+        bird = { x: mark.left - box.left, y: mark.top - box.top, w: mark.width, h: mark.height };
+    };
+    const observer = new ResizeObserver(measure);
+    observer.observe(canvas);
+    measure();
+    const ripples: { start: number; x: number; y: number }[] = [];
+    ripple = () => {
+      measure();
+      ripples.push({
+        start: performance.now(),
+        x: bird.x + bird.w * 0.82,
+        y: bird.y + bird.h * 0.4,
+      });
+    };
+    let pointer = { x: -1e4, y: -1e4 };
+    let eased = { x: -1e4, y: -1e4 };
+    const host = canvas.parentElement!;
+    const move = (event: PointerEvent) => {
+      const box = canvas.getBoundingClientRect();
+      pointer = { x: event.clientX - box.left, y: event.clientY - box.top };
+      if (eased.x < -1e3) eased = { ...pointer };
+    };
+    const leave = () => (pointer = { x: -1e4, y: -1e4 });
+    host.addEventListener('pointermove', move);
+    host.addEventListener('pointerleave', leave);
+    const GAP = 24;
+    let raf = 0;
+    let running = true;
+    const draw = (now: number) => {
+      // The pointer highlight eases after the cursor instead of snapping.
+      if (pointer.x > -1e3) {
+        eased = {
+          x: eased.x + (pointer.x - eased.x) * 0.12,
+          y: eased.y + (pointer.y - eased.y) * 0.12,
+        };
+      } else eased = { x: -1e4, y: -1e4 };
+      while (ripples.length && now - ripples[0].start > 3200) ripples.shift();
+      context.clearRect(0, 0, width, height);
+      context.fillStyle = `rgb(${r},${g},${b})`;
+      const cx = bird.x + bird.w * 0.42;
+      const cy = bird.y + bird.h * 0.55;
+      const keep = bird.h * 0.42;
+      for (let y = GAP / 2; y < height; y += GAP)
+        for (let x = GAP / 2; x < width; x += GAP) {
+          let wave = 0;
+          for (const item of ripples) {
+            const seconds = (now - item.start) / 1000;
+            const distance = Math.hypot(x - item.x, y - item.y);
+            wave +=
+              Math.exp(-(((distance - seconds * 230) / 46) ** 2)) *
+              0.42 *
+              Math.max(0, 1 - seconds / 3) *
+              Math.max(0.25, 1 - distance / 900);
+          }
+          const dx = x - eased.x;
+          const dy = y - eased.y;
+          const reach = Math.hypot(dx, dy);
+          const near = reach < 150 ? (1 - reach / 150) ** 2 : 0;
+          const shift = near && reach > 0 ? (near * 5) / reach : 0;
+          const edge = Math.max(0, Math.min(1, (Math.hypot(x - cx, y - cy) - keep) / 14));
+          const alpha = (0.1 + wave + near * 0.5) * edge * edge * (3 - 2 * edge);
+          if (alpha < 0.02) continue;
+          context.globalAlpha = Math.min(0.75, alpha);
+          context.beginPath();
+          context.arc(x + dx * shift, y + dy * shift, 1 + near * 0.5 + wave * 0.6, 0, Math.PI * 2);
+          context.fill();
+        }
+      if (running && !still) raf = requestAnimationFrame(draw);
+    };
+    raf = requestAnimationFrame(draw);
+    // The bird calls every few seconds on Welcome, and the dots answer it.
+    const talk = still ? undefined : setInterval(() => birdIn && chirp(), 5200);
+    return () => {
+      running = false;
+      cancelAnimationFrame(raf);
+      clearInterval(talk);
+      observer.disconnect();
+      host.removeEventListener('pointermove', move);
+      host.removeEventListener('pointerleave', leave);
+    };
+  }
+
   function chirp() {
+    ripple();
     chirping = false;
     void tick().then(() => (chirping = true));
     timers.push(setTimeout(() => (chirping = false), 1200));
@@ -336,10 +446,18 @@
     }
   }
 
+  let stopDots: () => void = () => {};
   onMount(() => {
-    if (phase === 'welcome') playWelcome();
+    if (phase === 'welcome') {
+      playWelcome();
+      stopDots = startDots();
+    }
+  });
+  $effect(() => {
+    if (phase === 'steps') stopDots();
   });
   onDestroy(() => {
+    stopDots();
     cancelAnimationFrame(frame);
     timers.forEach(clearTimeout);
   });
@@ -544,12 +662,8 @@
     </div>
   {/if}
   {#if phase === 'welcome' || phase === 'leaving'}
-    <section
-      class="hello"
-      class:leaving={phase === 'leaving'}
-      class:lit={birdIn}
-      aria-labelledby="hello-title"
-    >
+    <section class="hello" class:leaving={phase === 'leaving'} aria-labelledby="hello-title">
+      <canvas class="hello-dots" bind:this={dotCanvas} aria-hidden="true"></canvas>
       <div class="hello-mark">
         <svg class="reed" viewBox="0 0 320 100" preserveAspectRatio="none" aria-hidden="true"
           ><path bind:this={reedPath} d="" /></svg
@@ -606,25 +720,17 @@
     padding: 40px 24px;
     background: var(--color-bg);
   }
-  .hello::before {
-    content: '';
+  .hello-dots {
     position: absolute;
-    left: 50%;
-    top: 38%;
-    width: 560px;
-    height: 560px;
-    transform: translate(-50%, -50%);
-    background: radial-gradient(
-      closest-side,
-      color-mix(in srgb, var(--color-accent) 9%, transparent),
-      transparent
-    );
-    opacity: 0;
-    transition: opacity 1.6s var(--ease-out);
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    color: var(--color-accent);
     pointer-events: none;
+    animation: fade-in 2s var(--ease-out) both;
   }
-  .hello.lit::before {
-    opacity: 1;
+  .hello > :not(.hello-dots) {
+    position: relative;
   }
   .hello.leaving {
     pointer-events: none;
