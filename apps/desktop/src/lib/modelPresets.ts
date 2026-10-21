@@ -37,6 +37,7 @@ const MODEL_CREATORS: Record<string, string> = {
   'moonshine-ai/moonshine-base': 'Moonshine AI',
   'ibm-granite/granite-speech-5.0-470m-turboctc': 'IBM',
   'FermionResearch/Phonon-2': 'Fermion Research',
+  'moondream/parakeet-redux': 'Moondream',
   'Qwen/Qwen3.5-0.8B': 'Qwen · Alibaba',
   'nvidia/parakeet-tdt-0.6b-v2': 'NVIDIA',
   'nvidia/parakeet-unified-en-0.6b': 'NVIDIA',

@@ -132,3 +132,14 @@ test('Phonon-2 is English-only and offered only on a packaged Apple GPU', () => 
   assert.deepEqual(enabled(config, packaged), ['auto', 'metal']);
   assert.deepEqual(enabled(config, device('windows', 'x86_64', 'cuda')), ['auto']);
 });
+
+test('Parakeet Redux offers Automatic and Metal for automatic detection and its languages', () => {
+  const redux = 'moondream/parakeet-redux';
+  const config = defaultSettings();
+  config.models.asr = redux;
+  const packaged = { ...device('macos', 'aarch64', 'metal'), speechMetalModels: [redux] };
+  for (const language of ['auto', 'en', 'de']) {
+    config.language = language;
+    assert.deepEqual(enabled(config, packaged), ['auto', 'metal']);
+  }
+});
