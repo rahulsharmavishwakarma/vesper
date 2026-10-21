@@ -91,6 +91,24 @@ The rewrite converted 48 of the 50 pointwise convolutions; the other 2 did not m
 padding, group 1) and were left as they were. The 8-thread encoder timings are omitted: the same file measured 646 ms and
 839 ms in one run, so differences there are noise on a shared machine.
 
+### Published research build
+
+The script now has `--rewrite-pointwise-conv`. Without it, it reproduced all four published files of the current app
+build byte for byte; with it, two runs produced byte-identical files. The result, with the decoder and joiner quantized as
+in the app build, is published for research as
+[`rahulsharmavishwakarma/vesper-parakeet-tdt-0.6b-v3-sherpa-onnx-wo4-pointwise@d2cd9553`](https://huggingface.co/rahulsharmavishwakarma/vesper-parakeet-tdt-0.6b-v3-sherpa-onnx-wo4-pointwise/tree/d2cd9553882a740b9a21234c3daff4407e0a7821)
+(encoder `a49c2769…`, 424,616,107 bytes). Uploaded file hashes were checked against the local build.
+
+That exact artifact, scored with the same 100 clips on the Apple M5 Pro (sherpa-onnx 1.13.8 wheel, 4 threads):
+
+| Build | WER | Difference from FP32 [95% CI] | Median decode per clip |
+| --- | ---: | --- | ---: |
+| FP32 export | 5.82% | — | 149 ms |
+| Current app build | 5.91% | +0.09 [−0.50, +0.73] | 381 ms |
+| Published rewrite build | 5.77% | −0.05 [−0.72, +0.65] | 435 ms |
+
+On this Mac it decoded about 14% slower than the current build, while the Colab AMD runs showed about equal encoder time.
+
 ## Limitations
 
 - 100 English read-speech clips only. No noise, quiet, German, Hindi, long-form, entity or number checks, which the
@@ -103,10 +121,9 @@ padding, group 1) and were left as they were. The 8-thread encoder timings are o
 - Two Colab runtimes were recycled mid-run (about an hour after SSH-started jobs began). The reported 02 and 03 results
   come from one uninterrupted run on the High-RAM runtime.
 
-## Next steps (not started)
+## Next steps
 
-1. Add the rewrite to `scripts/quantize-onnx-weight-only.py` behind an explicit option and build a complete encoder,
-   decoder and joiner artifact with provenance.
+1. Done: the rewrite is an explicit script option and the full artifact is published (above).
 2. Qualify it through `vesper-eval` on the #251 held-out manifests (94 en-US, 50 de-DE, noise and quiet lanes) on the
    desktop, against the current build, including RAM and latency.
 3. Check `accuracy_level=4` per platform before using it, since its speed effect depends on the CPU.

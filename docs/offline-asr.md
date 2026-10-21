@@ -245,6 +245,16 @@ uv run --locked --project benchmarks/asr/python/onnx-quantize \
   --source-model nvidia/parakeet-tdt-0.6b-v3 --out OUTPUT_DIR
 ```
 
+`--rewrite-pointwise-conv` first rewrites the encoder's pointwise (1x1)
+convolutions as `MatMul`, which `MatMulNBits` otherwise leaves FP32, and
+`--self-test` checks that rewrite on a synthetic graph. Without the option the
+script still reproduces the shipped files byte for byte. The rewritten v3 build
+is published for research as
+[`rahulsharmavishwakarma/vesper-parakeet-tdt-0.6b-v3-sherpa-onnx-wo4-pointwise@d2cd9553`](https://huggingface.co/rahulsharmavishwakarma/vesper-parakeet-tdt-0.6b-v3-sherpa-onnx-wo4-pointwise/tree/d2cd9553882a740b9a21234c3daff4407e0a7821).
+Its encoder is 425 MB instead of 679 MB, with WER unchanged within noise on 100
+English clips, but it is not offered in the app until it passes the held-out
+lanes above. See the [rewrite record](validation/parakeet-conv-rewrite-2026-10-22.md).
+
 `moondream/parakeet-ultra`, a post-trained v3, was converted exactly for both
 engines and measured on 21 October 2026. It did not beat v3 (Metal 5.10% vs 5.25%;
 CPU FP32 9.27% vs 8.28%), so it is not offered. See the
