@@ -75,6 +75,7 @@ const TABLES: &[(&str, &str)] = &[
         "GRANITE_LANGUAGES",
     ),
     ("FermionResearch/Phonon-2", "PHONON2_LANGUAGES"),
+    ("moondream/parakeet-redux", "REDUX_LANGUAGES"),
 ];
 
 fn variant(code: &str) -> &str {
