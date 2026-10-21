@@ -10,10 +10,17 @@ import { collectVersions, setVersion } from './version.mjs';
 // gives nightly its own settings and models.
 export const NIGHTLY_PRODUCT_NAME = 'Vesper Nightly';
 export const NIGHTLY_IDENTIFIER = 'com.vesper.desktop.nightly';
-// Future in-app nightly feed. Nothing publishes it yet, so update checks in a
-// nightly build fail like any offline check and never reach the stable feed.
-export const NIGHTLY_FEED =
-  'https://github.com/rahulsharmavishwakarma/vesper/releases/download/nightly/nightly.json';
+// In-app nightly update feed, published by pages.yml from the newest nightly
+// release (issue #262). It lives on GitHub Pages because immutable releases give
+// every nightly its own tag, so no fixed release URL can name "the newest".
+export const NIGHTLY_FEED = 'https://rahulsharmavishwakarma.github.io/vesper/nightly.json';
+// Public half of the nightly-only updater key pair. The private key and its
+// password are secrets of the main-only `nightly` environment; stable builds
+// keep the stable key, so they never trust a nightly signature and nightly
+// builds never trust a stable one. Rotate by replacing this value and both
+// secrets together.
+export const NIGHTLY_PUBKEY =
+  'dW50cnVzdGVkIGNvbW1lbnQ6IG1pbmlzaWduIHB1YmxpYyBrZXk6IDc5QTlFMEE4RDE1Qjg4NkYKUldSdmlGdlJxT0NwZVl2ckZvT3cvdEVQNDY1RndUamFCVXdvWU1yajFhUnU2NjJwODZCazVTcncK';
 
 const SEMVER_BASE = /^(\d+)\.(\d+)\.(\d+)(-.+)?$/;
 
@@ -41,6 +48,7 @@ export function applyNightly(root, version) {
   config.productName = NIGHTLY_PRODUCT_NAME;
   config.identifier = NIGHTLY_IDENTIFIER;
   config.plugins.updater.endpoints = [NIGHTLY_FEED];
+  config.plugins.updater.pubkey = NIGHTLY_PUBKEY;
   fs.writeFileSync(file, `${JSON.stringify(config, null, 2)}\n`);
 }
 

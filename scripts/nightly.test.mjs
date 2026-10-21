@@ -7,6 +7,7 @@ import {
   applyNightly,
   nightlyVersion,
   NIGHTLY_FEED,
+  NIGHTLY_PUBKEY,
   NIGHTLY_IDENTIFIER,
   NIGHTLY_PRODUCT_NAME,
 } from './nightly.mjs';
@@ -58,6 +59,13 @@ test('applyNightly gives a separate identity and a nightly-only update feed', (t
   assert.equal(config.identifier, NIGHTLY_IDENTIFIER);
   assert.notEqual(config.identifier, 'com.vesper.desktop');
   assert.deepEqual(config.plugins.updater.endpoints, [NIGHTLY_FEED]);
+  // Nightly trusts only its own key, never the stable one.
+  assert.equal(config.plugins.updater.pubkey, NIGHTLY_PUBKEY);
+  const stable = JSON.parse(
+    fs.readFileSync(path.join(projectRoot, 'apps/desktop/src-tauri/tauri.conf.json'), 'utf8'),
+  );
+  assert.notEqual(NIGHTLY_PUBKEY, stable.plugins.updater.pubkey);
+  assert.match(NIGHTLY_FEED, /^https:\/\/[^/]+\.github\.io\/vesper\/nightly\.json$/);
   // The stable feed must be unreachable from a nightly build.
   assert.ok(!JSON.stringify(config).includes('releases/latest/download'));
 });

@@ -751,11 +751,34 @@ expiring artifact only" policy (2026-10-20) and chose download-only first.
   `.background/background.png`. The nightly and release desktop jobs now set it,
   and `scripts/package-release.sh` mounts the DMG and fails the build if either
   file is missing.
-- No nightly update feed exists yet. The nightly build's updater endpoint
-  points at the future `nightly.json` address, so its update checks fail like
-  any offline check and can never reach the stable feed. Channel visibility
-  rules (a stable app never sees nightly) and the beta-feed decision are
-  proposals on #66 and #205.
+- **In-app nightly updates** ([issue #262](https://github.com/rahulsharmavishwakarma/vesper/issues/262)).
+  The Tauri updater needs one fixed address, and immutable releases give every
+  nightly its own tag, so the feed lives on GitHub Pages at
+  `https://rahulsharmavishwakarma.github.io/vesper/nightly.json` (Pages is enabled
+  with the GitHub Actions source). Nightly builds trust a **separate nightly
+  updater key pair**: the public key is `NIGHTLY_PUBKEY` in `scripts/nightly.mjs`
+  and is applied only to the runner's checkout, the private key and its password
+  are secrets of the `nightly` environment, whose deployment policy allows only
+  `main`, so pull-request branches cannot read them. Stable builds keep the stable
+  key, so a stable app never trusts a nightly signature and a nightly never trusts
+  a stable one. The nightly desktop job signs `Vesper Nightly.app.tar.gz`; the
+  publish job attaches `vesper-nightly-macos-arm64.app.tar.gz`, its `.sig` and a
+  `nightly.json` (built by `scripts/compose-updater-manifest.mjs`, version
+  `X.Y.Z-nightly.YYYYMMDD`, a URL into that release) to the release, then
+  dispatches `pages.yml`, which republishes the site plus the newest nightly feed.
+  A build without the key skips the archive and the feed instead of failing. A
+  nightly built before this change carries the stable key and the dead feed
+  address, so it cannot update: install the first signed nightly by hand once.
+  Rotate by replacing `NIGHTLY_PUBKEY` and both environment secrets together; the
+  private key and password are backed up offline in `~/.tauri` (not in the
+  repository, and never in production).
+- **GitHub Pages** (`pages.yml`): `site/` holds a bare placeholder root page; the
+  landing, download and versions pages are deferred
+  ([issue #67](https://github.com/rahulsharmavishwakarma/vesper/issues/67)). The
+  workflow assembles `site/` plus the newest nightly feed, validates every JSON
+  feed, and deploys with GitHub's `upload-pages-artifact` and `deploy-pages`
+  actions (no branch push, no ruleset bypass). The stable and beta feeds are
+  unchanged: stable apps still read `releases/latest/download/latest.json`.
 - Limitations: nightly is unsigned, so macOS asks you to allow it under System Settings → Privacy & Security → Open Anyway;
   only the latest nightly release is kept (its tag stays reserved); a nightly can lag main by a day, and a
   failed or running `Check` on the newest commit skips that night.
