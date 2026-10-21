@@ -36,7 +36,11 @@ versioned `uv.lock`. Optional model/inference projects are kept separate.
 `make python-lock-check` checks all Python lockfiles and generated benchmark
 exports. CI installs uv 0.12.15 through a SHA-pinned action and selects Python
 3.12. The frontend job caches downloads under `.cache/uv`, keyed by lockfiles;
-only pushes to `main` save that cache. Security jobs disable cache reuse.
+only pushes to `main` save that cache. It also restores pre-commit's hook
+environments (`~/.cache/pre-commit`, keyed on `.pre-commit-config.yaml` and saved
+only from `main`): installing them, including Go builds of gitleaks and
+actionlint, took about 2.5 of the job's 3.2 minutes. Security jobs disable cache
+reuse.
 
 The `Rust (macOS)` job (the slowest check, about 25 minutes cold) restores a
 `Swatinem/rust-cache` of the Cargo registry and dependency builds, saved only from

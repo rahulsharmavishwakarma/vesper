@@ -63,11 +63,26 @@ jobs:
           cache-dependency-glob: '**/uv.lock'
       - run: uv sync --locked
       - run: make python-lock-check
+      # Installing the hook environments (gitleaks and actionlint compile from
+      # Go source) takes about 2.5 minutes; the hooks themselves take seconds.
+      # Keyed on the pinned hook config and saved only from main, like uv's cache.
+      - name: Restore pre-commit hook environments
+        id: hooks-cache
+        uses: actions/cache/restore@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
+        with:
+          path: ~/.cache/pre-commit
+          key: pre-commit-${{ runner.os }}-${{ hashFiles('.pre-commit-config.yaml') }}
       - name: Check repository hygiene
         env:
           SKIP: vesper-fast-check
         run: |
           uv run --locked pre-commit run --all-files --show-diff-on-failure
+      - name: Save pre-commit hook environments from main
+        if: github.event_name == 'push' && github.ref == 'refs/heads/main' && steps.hooks-cache.outputs.cache-hit != 'true'
+        uses: actions/cache/save@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
+        with:
+          path: ~/.cache/pre-commit
+          key: ${{ steps.hooks-cache.outputs.cache-primary-key }}
       - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
         with:
           node-version-file: .nvmrc
