@@ -577,3 +577,14 @@ test('a custom writing profile validates per declared language', () => {
     );
   }
 });
+
+test('the unified Parakeet GGUF keeps every declared language on Metal', () => {
+  const settings = defaultSettings();
+  assert.equal(settings.models.asrEngine, 'standard');
+  settings.models.asr = 'nvidia/parakeet-tdt-0.6b-v3';
+  const metal = (models) => transcriptionLanguageOptions(models, 'metal').map((o) => o.value);
+  assert.deepEqual(metal(settings.models), ['en']);
+  settings.models.asrEngine = 'unified_gguf';
+  assert.ok(metal(settings.models).includes('de'));
+  assert.ok(metal(settings.models).includes('auto'));
+});

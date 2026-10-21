@@ -20,6 +20,9 @@
   } from './lib/api/desktop';
   import {
     MODEL_ROLE_LABELS,
+    ASR_ENGINE_OPTIONS,
+    UNIFIED_GGUF_MODELS,
+    usesUnifiedGguf,
     CLEANUP_QUANTIZATION_OPTIONS,
     defaultSettings,
     effectiveRecordingSeconds,
@@ -998,6 +1001,23 @@
                   aria-labelledby="model-device-heading"
                 >
                   <h2 id="model-device-heading">Device and storage</h2>
+                  {#if !draft.models.customAsr && UNIFIED_GGUF_MODELS.includes(draft.models.asr)}
+                    <div class="field">
+                      <label for="asr-engine">Speech engine</label>
+                      <Select
+                        id="asr-engine"
+                        bind:value={draft.models.asrEngine}
+                        options={ASR_ENGINE_OPTIONS}
+                        disabled={modelChoicesLocked}
+                        describedBy="asr-engine-help"
+                      />
+                      <p id="asr-engine-help" class="note">
+                        {#if usesUnifiedGguf(draft.models)}One 714 MB file runs this model on CPU
+                          and on every supported GPU.{:else}Uses the CPU file, or the Apple GPU file
+                          for English.{/if}
+                      </p>
+                    </div>
+                  {/if}
                   <div class="field">
                     <label for="compute-backend">Processing device</label>
                     <Select
@@ -1031,7 +1051,7 @@
                     </div>
                     <p id="compute-backend-help" class="note">
                       Automatic chooses a supported device and can fall back to CPU. {#if draft.models.customAsr}Speech
-                        uses CPU; this preference applies to the writing model.{:else if requiresCompletionReport(draft.models) || draft.models.asr === 'LiquidAI/LFM2.5-Audio-1.5B' || draft.models.asr === 'nvidia/parakeet-tdt-0.6b-v3'}This
+                        uses CPU; this preference applies to the writing model.{:else if requiresCompletionReport(draft.models) || draft.models.asr === 'LiquidAI/LFM2.5-Audio-1.5B' || (draft.models.asr === 'nvidia/parakeet-tdt-0.6b-v3' && !usesUnifiedGguf(draft.models))}This
                         speech model supports Automatic and CPU.{:else if draft.computeBackend === 'rocm'}Speech
                         uses Vulkan; writing uses ROCm.{/if}
                     </p>

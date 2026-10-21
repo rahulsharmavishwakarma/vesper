@@ -143,3 +143,23 @@ test('Parakeet Redux offers Automatic and Metal for automatic detection and its 
     assert.deepEqual(enabled(config, packaged), ['auto', 'metal']);
   }
 });
+
+test('the unified Parakeet GGUF offers every NeMo device, the standard engine stays CPU or English Metal', () => {
+  const config = defaultSettings();
+  config.models.asr = 'nvidia/parakeet-tdt-0.6b-v3';
+  config.language = 'de';
+  const mac = { ...device('macos', 'aarch64', 'metal'), speechMetalModels: [] };
+  assert.deepEqual(enabled(config, device('windows', 'x86_64', 'cuda', 'vulkan')), ['auto', 'cpu']);
+  assert.deepEqual(enabled(config, mac), ['auto', 'cpu']);
+  config.models.asrEngine = 'unified_gguf';
+  assert.deepEqual(enabled(config, device('windows', 'x86_64', 'cuda', 'vulkan')), [
+    'auto',
+    'cpu',
+    'cuda',
+    'vulkan',
+  ]);
+  assert.deepEqual(enabled(config, mac), ['auto', 'cpu', 'metal']);
+  // Another model ignores a leftover engine setting.
+  config.models.asr = 'Qwen/Qwen3-ASR-0.6B';
+  assert.deepEqual(enabled(config, device('windows', 'x86_64', 'cuda')), ['auto', 'cpu']);
+});

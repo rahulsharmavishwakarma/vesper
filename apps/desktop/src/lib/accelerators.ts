@@ -1,4 +1,4 @@
-import type { AppConfig, ComputeBackend } from './config';
+import type { AppConfig, AsrEngine, ComputeBackend } from './config';
 
 export interface AcceleratorCapabilities {
   os: string;
@@ -22,6 +22,22 @@ export const acceleratorLabels: Record<ComputeBackend, string> = {
 };
 const gpuBackends: ComputeBackend[] = ['metal', 'cuda', 'vulkan', 'rocm'];
 /** Built-in speech models whose only engine is the Apple GPU (no CPU version). */
+/** Models with a pinned one-file NeMo-Speech.cpp GGUF for every device. */
+export const UNIFIED_GGUF_MODELS: readonly string[] = ['nvidia/parakeet-tdt-0.6b-v3'];
+
+/** The selected built-in speech model runs as one GGUF on every device. */
+export function usesUnifiedGguf(models: {
+  asr: string;
+  asrEngine?: AsrEngine;
+  customAsr?: unknown;
+}): boolean {
+  return (
+    !models.customAsr &&
+    models.asrEngine === 'unified_gguf' &&
+    UNIFIED_GGUF_MODELS.includes(models.asr)
+  );
+}
+
 export const APPLE_GPU_ONLY_SPEECH_MODELS: readonly string[] = [
   'ibm-granite/granite-speech-5.0-470m-turboctc',
   'FermionResearch/Phonon-2',
@@ -60,6 +76,7 @@ export function acceleratorReason(
       return 'This speech model is not included in this app build.';
   } else {
     if (
+      !usesUnifiedGguf(config.models) &&
       [
         'nvidia/parakeet-tdt-0.6b-v3',
         'Qwen/Qwen3-ASR-0.6B',
