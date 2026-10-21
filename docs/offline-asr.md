@@ -208,6 +208,24 @@ Measured through the application against Parakeet v3:
 Long-form was 8.97% vs 10.50% (within noise). See the
 [Redux record](validation/parakeet-redux-2026-10-21.md).
 
+## Parakeet unified GGUF engine
+
+**Models > Device and storage > Speech engine** chooses how Parakeet v3 runs.
+**Current** (the default) keeps the CPU ONNX files and, for English, the Apple
+GPU files. **Unified GGUF** downloads one file, NVIDIA's
+`parakeet-tdt-0.6b-v3.q8_0.gguf` at `541d1f99` (713,975,456 bytes), and runs it
+through the bundled NeMo-Speech.cpp 0.1.0 runtime on CPU, Metal, CUDA or Vulkan
+for every declared Parakeet language ([ADR-0024](adrs/0024-unified-gguf-speech-engine.md)).
+
+The unified engine processes completed audio in parts of at most 30 seconds with
+automatic language detection; live dictation shows buffered drafts and the
+completed-audio pass stays authoritative. It does not use personal vocabulary
+phrase boosting. On the #251 held-out sets it scored 4.86% WER in English and
+5.99% in German on both CPU and Metal, against 5.86% and 6.62% for the current
+engine ([qualification record](validation/parakeet-unified-gguf-2026-10-22.md)).
+Noise, quiet speech, the other languages, CUDA and Vulkan are not yet qualified,
+so **Current** remains the default.
+
 ## Parakeet MLX precision
 
 On the Apple GPU, the pinned Parakeet loader casts every float32 weight of

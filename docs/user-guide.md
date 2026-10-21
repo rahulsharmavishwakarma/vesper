@@ -168,6 +168,11 @@ replacements for missing or damaged files. Repairs need internet only when a
 verified replacement is not already cached. They start from this action, not
 automatically during transcription.
 
+For Parakeet v3, **Speech engine** under **Device and storage** chooses between
+**Current** (separate CPU and Apple GPU files) and **Unified GGUF**, one 714 MB
+file that runs on CPU and on every supported GPU in every Parakeet language. See
+[Parakeet unified GGUF engine](offline-asr.md#parakeet-unified-gguf-engine).
+
 **Automatic** uses a compatible detected accelerator where the selected runtime
 supports it. LFM Audio and the writing model share native GPU selection; on Apple
 Silicon this can use Metal. If GPU initialization fails in Automatic mode, the
