@@ -19,20 +19,21 @@ final class GraniteSpeech5Tests: XCTestCase {
   }
 
   func testFrontendMatchesReferenceFeatureExtractor() throws {
-    // Expected values from mlx-audio 0.6.1 `granite_speech5_ctc.compute_features`,
-    // which follows transformers' GraniteSpeech5FeatureExtractor.
+    // Expected values from a float64 NumPy evaluation of the published feature
+    // extractor (periodic Hann, centred reflect STFT, HTK mel, log10 floor,
+    // replicate deltas, stacking). The MLX Python reference differs by up to
+    // 1.6e-4 with a -4e-5 mean bias; this port stays within 5.2e-5.
     let features = try GraniteSpeech5Frontend.features(signal(21_937))[0].asType(.float32)
     XCTAssertEqual(features.shape, [69, 320])
     let values = features.asArray(Float.self)
-    // Every element agreed within 1.6e-4 of the reference when this was written.
-    XCTAssertEqual(values.reduce(0) { $0 + Double($1) }, 6440.525, accuracy: 1.5)
+    XCTAssertEqual(values.reduce(0) { $0 + Double($1) }, 6441.405, accuracy: 0.05)
     let expected: [(Int, Int, Float)] = [
-      (0, 0, 0.254156), (0, 79, -0.252761), (0, 80, -0.261689), (0, 159, 0.041275),
-      (0, 160, -0.269222), (0, 319, 0.102752), (5, 17, 0.234332), (33, 200, 0.717445),
-      (68, 3, 0.597438), (68, 319, 0.002401), (40, 100, 0.074019), (20, 250, 0.022129),
+      (0, 0, 0.254212), (0, 79, -0.252689), (0, 80, -0.261658), (0, 159, 0.041271),
+      (0, 160, -0.269104), (0, 319, 0.102750), (5, 17, 0.234413), (33, 200, 0.717510),
+      (68, 3, 0.597478), (68, 319, 0.002396), (40, 100, 0.074001), (20, 250, 0.022164),
     ]
     for (row, column, value) in expected {
-      XCTAssertEqual(values[row * 320 + column], value, accuracy: 2e-4, "(\(row), \(column))")
+      XCTAssertEqual(values[row * 320 + column], value, accuracy: 1e-4, "(\(row), \(column))")
     }
   }
 
