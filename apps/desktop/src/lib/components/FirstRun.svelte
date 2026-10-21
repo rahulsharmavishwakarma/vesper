@@ -5,6 +5,9 @@
   import Icon from './Icon.svelte';
   import FirstRunVoice from './FirstRunVoice.svelte';
   import FirstRunModels from './FirstRunModels.svelte';
+  import FirstRunAccess from './FirstRunAccess.svelte';
+  import FirstRunShortcut from './FirstRunShortcut.svelte';
+  import FirstRunWords from './FirstRunWords.svelte';
   import { installModel, type InstallProgress } from '../api/runtime';
   import type { DownloadTarget } from '../modelDownloads';
   import { completeOnboarding, saveOnboardingStep } from '../api/onboarding';
@@ -101,6 +104,8 @@
     isSetupLanguage(settings?.language) ? settings.language : 'en',
   );
   let voiceReady = $state(false);
+  let accessReady = $state(false);
+  let words = $state<string[]>([]);
   let models:
     | {
         plan: () => { settings: AppConfig; targets: DownloadTarget[]; bytes: number };
@@ -192,6 +197,7 @@
   /** Why Continue is not available on this step, if anything. */
   const waiting = $derived.by(() => {
     if (step === 1 && !voiceReady) return 'Allow the microphone and say a few words.';
+    if (step === 3 && !accessReady) return 'Turn on Accessibility, or keep your text in Vesper.';
     if (step === 2 && install.status === 'idle') return models?.blocker() ?? null;
     return null;
   });
@@ -420,6 +426,24 @@
                     </dd>
                   </div>
                 {/each}
+                {#if settings}<div>
+                    <dt>Your words</dt>
+                    <dd>
+                      {settings.cleanupEnabled
+                        ? settings.cleanupPreset === 'balanced'
+                          ? 'Polished'
+                          : 'As I said it'
+                        : 'Exactly as heard'}{words.length ? ` · ${words.join(', ')}` : ''}
+                    </dd>
+                  </div>
+                  <div>
+                    <dt>Typing into apps</dt>
+                    <dd>
+                      {settings.dictationOutput === 'paste'
+                        ? 'On'
+                        : 'Kept in Vesper, ready to copy'}
+                    </dd>
+                  </div>{/if}
                 {#if shortcuts}<div>
                     <dt>Hold to talk</dt>
                     <dd><kbd>{shortcutLabel(shortcuts.hold)}</kbd></dd>
@@ -450,6 +474,22 @@
                     started={install.status !== 'idle'}
                     preview={!persist}
                   />{:else}<p class="lede">Loading your settings…</p>{/if}
+              {:else if step === 3 && settings}
+                <FirstRunAccess
+                  {settings}
+                  preview={!persist}
+                  {onSaveSettings}
+                  onReady={(ready) => (accessReady = ready)}
+                />
+              {:else if step === 4 && settings}
+                <FirstRunShortcut {settings} {onSaveSettings} />
+              {:else if step === 5 && settings}
+                <FirstRunWords
+                  {settings}
+                  preview={!persist}
+                  {onSaveSettings}
+                  onWords={(next) => (words = next)}
+                />
               {:else}
                 <div class="placeholder">This step arrives in the next setup build.</div>
               {/if}
