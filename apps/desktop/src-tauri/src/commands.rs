@@ -427,9 +427,18 @@ pub fn retry_global_shortcut(
     storage: tauri::State<'_, AppStorage>,
 ) -> Result<(), String> {
     let _gate = storage.operation_gate.lock().map_err(|e| e.to_string())?;
-    storage.runtime.require_idle()?;
+    storage.runtime.require_idle_or_download()?;
     let shortcut = storage.settings.load()?;
     replace_global_shortcut(&app, Some(&shortcut), &shortcut)
+}
+
+/// Settings that decide which model files a download needs. They stay fixed
+/// while a download runs; everything else can be saved meanwhile.
+fn model_files_changed(previous: &AppConfig, next: &AppConfig) -> bool {
+    previous.models != next.models
+        || previous.rewrite_quantization != next.rewrite_quantization
+        || previous.compute_backend != next.compute_backend
+        || previous.audio_frontend != next.audio_frontend
 }
 
 #[tauri::command]
@@ -439,9 +448,15 @@ pub fn save_settings(
     storage: tauri::State<'_, AppStorage>,
 ) -> Result<AppConfig, String> {
     let _gate = storage.operation_gate.lock().map_err(|e| e.to_string())?;
-    storage.runtime.require_idle()?;
+    let downloading = storage.runtime.require_idle_or_download()?;
     settings.validate().map_err(|e| e.to_string())?;
     let previous = storage.settings.load()?;
+    if downloading && model_files_changed(&previous, &settings) {
+        return Err(
+            "A model is downloading. Wait for it to finish before changing models or the processing device."
+                .into(),
+        );
+    }
     replace_global_shortcut(&app, Some(&previous), &settings)?;
     match storage.settings.save(&settings) {
         Ok(saved) => {
@@ -1300,6 +1315,25 @@ mod settings_tests {
     use super::*;
     use crate::settings::SettingsStore;
     use std::fs;
+
+    #[test]
+    fn only_model_file_settings_are_held_during_a_download() {
+        let base = AppConfig::default();
+        let mut unrelated = base.clone();
+        unrelated.notifications_enabled = !base.notifications_enabled;
+        unrelated.floating_bar_enabled = !base.floating_bar_enabled;
+        unrelated.cleanup_enabled = !base.cleanup_enabled;
+        unrelated.collect_training_data = !base.collect_training_data;
+        assert!(!model_files_changed(&base, &unrelated));
+
+        let mut speech = base.clone();
+        speech.models.asr = vesper_core::AsrModel::Qwen3Asr06b;
+        assert!(model_files_changed(&base, &speech));
+
+        let mut device = base.clone();
+        device.compute_backend = vesper_core::ComputeBackend::Cpu;
+        assert!(model_files_changed(&base, &device));
+    }
 
     #[test]
     fn explicit_reset_repairs_corruption_even_when_default_shortcut_is_unavailable() {

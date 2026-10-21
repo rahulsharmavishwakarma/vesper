@@ -157,7 +157,52 @@ if (states) {
           return null;
         case 'get_settings':
           return structuredClone(settings);
+        case 'install_models':
+        case 'install_model': {
+          // A controllable download: it holds the backend's single operation
+          // slot until the test calls window.previewFinishDownload().
+          Object.assign(runtime, {
+            busy: true,
+            stage: 'installing',
+            operationId: 'preview-download',
+            message: 'Downloading',
+            download: {
+              operationId: 'preview-download',
+              modelId: args?.modelId ?? null,
+              quantization: null,
+              progress: {
+                phase: 'downloading',
+                fileName: 'model.gguf',
+                fileIndex: 1,
+                fileCount: 1,
+                completedBytes: 250,
+                totalBytes: 1000,
+              },
+            },
+          });
+          await new Promise((resolve) => {
+            window.previewFinishDownload = resolve;
+          });
+          Object.assign(runtime, { busy: false, stage: 'idle', operationId: null, download: null });
+          return args?.modelId ? structuredClone(catalog[0]) : { ready: true, message: '' };
+        }
         case 'save_settings':
+          // Mirrors the backend: while a download runs, settings save unless
+          // they change which model files are needed.
+          if (
+            runtime.busy &&
+            JSON.stringify([
+              args.settings.models,
+              args.settings.rewriteQuantization,
+              args.settings.computeBackend,
+            ]) !==
+              JSON.stringify([
+                settings.models,
+                settings.rewriteQuantization,
+                settings.computeBackend,
+              ])
+          )
+            throw 'A model is downloading. Wait for it to finish before changing models or the processing device.';
           await new Promise((r) => setTimeout(r, 450));
           settings = JSON.parse(JSON.stringify(args.settings));
           return settings;

@@ -286,6 +286,22 @@ build has no updater. Installing automatically never restarts the app and reuses
 `downloadAndInstall`'s signature check and wait for active work (issue #195).
 With checking off, the idle pill becomes a manual **Check for updates** action.
 
+## Busy and locked controls
+
+The backend runs one operation at a time, so a model download holds the same slot
+as recording and transcription, but it does not touch recordings, transcripts or
+ordinary settings. The interface keeps the two apart. `TranscriptionPanel`
+reports `working` (recording, transcription, removal) and `downloading`
+separately: `App.svelte` disables the settings form and History only for
+`working`, and locks the model, precision, device, removal and Restore defaults
+controls for `working || downloading`. A locked control carries a visible reason
+(for example, "Model and device choices unlock when the download finishes").
+Recording and transcription still wait for a download. The backend mirrors the
+split: `save_settings` and `retry_global_shortcut` accept a running download, and
+`save_settings` rejects changes to the model, precision, device or audio frontend
+while one runs. Do not gate a control on the combined busy flag unless it truly
+conflicts with the running operation (issue #273).
+
 ## Verification
 
 Exercise the whole task with pointer and keyboard input: initial value, entering edit mode, valid and invalid input, cancellation, focus movement, saving, failure/retry, and reloading. Include slow asynchronous setup and navigation while work is pending. Check narrow and desktop layouts using the rendered component; do not rely solely on a screenshot or a synthetic event pass. Reduced motion must preserve the same state and feedback. Keep real OS shortcut and permission qualification separate from browser mocks.

@@ -559,6 +559,24 @@ mod tests {
         );
     }
     #[test]
+    fn settings_may_change_during_a_download_but_not_other_operations() {
+        let runtime = Runtime::default();
+        assert_eq!(runtime.require_idle_or_download(), Ok(false));
+        runtime.begin("installing", "Preparing").unwrap();
+        assert_eq!(runtime.require_idle_or_download(), Ok(true));
+        assert!(runtime.require_idle().is_err());
+        runtime.begin_download("op", None, None);
+        assert_eq!(runtime.require_idle_or_download(), Ok(true));
+        runtime.finish(&Ok::<(), String>(()));
+        assert_eq!(runtime.require_idle_or_download(), Ok(false));
+        runtime.begin("removing", "Removing files").unwrap();
+        assert!(runtime.require_idle_or_download().is_err());
+        runtime.finish(&Ok::<(), String>(()));
+        runtime.begin("recording", "Listening").unwrap();
+        assert!(runtime.require_idle_or_download().is_err());
+    }
+
+    #[test]
     fn operations_exclude_each_other_and_idle_cancel_is_a_noop() {
         let runtime = Runtime::default();
         assert!(!runtime.cancel_and_take_recording().unwrap().0);
@@ -1201,6 +1219,23 @@ impl Runtime {
             Err("Wait for the current operation before changing settings.".into())
         } else {
             Ok(())
+        }
+    }
+    /// Like `require_idle`, but a running model download does not refuse the
+    /// call. Returns `true` when a download is the only active operation, so
+    /// settings that do not change which model files are needed can be saved
+    /// while it runs. Recording, transcription and removal still refuse.
+    pub fn require_idle_or_download(&self) -> Result<bool, String> {
+        let state = self.state.lock().map_err(|e| e.to_string())?;
+        if !state.busy {
+            return Ok(false);
+        }
+        // `begin("installing")` runs just before `begin_download`, so the stage
+        // covers that gap; cancelling a download keeps its status in place.
+        if state.download.is_some() || state.stage == "installing" {
+            Ok(true)
+        } else {
+            Err("Wait for the current operation before changing settings.".into())
         }
     }
     pub fn prepare_exit(&self) -> Result<(), String> {

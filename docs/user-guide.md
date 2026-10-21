@@ -258,8 +258,13 @@ Once your selected speech and enabled writing models are ready, the desktop app
 downloads missing, supported audio packages automatically, one at a time. It waits
 while you are recording, transcribing, downloading another model or editing settings.
 Download progress and **Cancel download** are visible even outside Models. Setup
-uses the existing installation operation, so recording waits during an active
-download; cancellation lets you continue with original-audio fallback. Files are
+uses the existing installation operation, so recording and transcription wait
+during an active download; cancellation lets you continue with original-audio
+fallback. Only choices that conflict with a download are locked while it runs:
+speech and writing model, model precision, the processing device, removing models
+and Restore defaults, each with a note saying why. Everything else stays usable,
+including History (browse, import, export, review), the language and microphone,
+Appearance, Shortcuts, Writing preferences and other settings, which save as usual. Files are
 verified against pinned hashes. Downloads require internet access; transcription
 and audio processing run entirely on device after setup.
 
