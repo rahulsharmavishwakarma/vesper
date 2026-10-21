@@ -18,6 +18,27 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
+  scope:
+    name: Decide which audits this change needs
+    runs-on: ubuntu-24.04
+    timeout-minutes: 5
+    outputs:
+      python: ${{ steps.decide.outputs.python }}
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+          fetch-depth: 2
+      - name: Classify changed paths
+        id: decide
+        run: |
+          set -eu
+          if [ "$GITHUB_EVENT_NAME" = pull_request ]; then
+            git diff --name-only HEAD^1 HEAD | node scripts/ci-scope.mjs | tee -a "$GITHUB_OUTPUT"
+          else
+            node scripts/ci-scope.mjs < /dev/null | tee -a "$GITHUB_OUTPUT"
+          fi
+
   secrets:
     name: Secrets
     runs-on: ubuntu-24.04
@@ -81,8 +102,22 @@ jobs:
         run: |
           uv sync --locked
           make audit-python
+      # The upstream release binary, checked against its recorded SHA-256,
+      # replaces a 3-minute source build; security jobs reuse no caches.
       - name: Install pinned RustSec client
-        run: cargo install cargo-audit --version 0.22.2 --locked
+        env:
+          CARGO_AUDIT_VERSION: 0.22.2
+          CARGO_AUDIT_SHA256: ab28a1bdb54db4d5d8ad5981cf1f959410370b3d28250dbd35f6a44248620e39
+        run: |
+          set -eu
+          name="cargo-audit-x86_64-unknown-linux-gnu-v$CARGO_AUDIT_VERSION"
+          curl --fail --silent --show-error --location --proto '=https' --tlsv1.2 \
+            --output "$RUNNER_TEMP/$name.tgz" \
+            "https://github.com/rustsec/rustsec/releases/download/cargo-audit%2Fv$CARGO_AUDIT_VERSION/$name.tgz"
+          echo "$CARGO_AUDIT_SHA256  $RUNNER_TEMP/$name.tgz" | sha256sum --check --strict
+          tar -xzf "$RUNNER_TEMP/$name.tgz" -C "$RUNNER_TEMP"
+          install -m 0755 "$RUNNER_TEMP/$name/cargo-audit" "$HOME/.cargo/bin/cargo-audit"
+          cargo audit --version
       - name: Test the maintained GLib backport with optimizations enabled
         run: |
           sudo apt-get update
@@ -93,6 +128,10 @@ jobs:
 
   python-benchmarks:
     name: Python benchmarks (${{ matrix.project }})
+    needs: scope
+    # Pull requests that touch no benchmark lock or audit tooling skip these
+    # macOS jobs; a failed scope job runs them rather than skipping.
+    if: ${{ !cancelled() && needs.scope.outputs.python != 'false' }}
     runs-on: macos-15
     timeout-minutes: 15
     strategy:

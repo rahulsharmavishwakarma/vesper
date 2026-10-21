@@ -303,7 +303,9 @@ rules; a synthetic API-key control was separately confirmed to fail the scanner.
 
 The dependency job installs packages without lifecycle scripts, runs `npm audit`
 against production **and development** dependencies, runs `make audit-python`,
-and runs the verified-source `make audit-rust` wrapper with cargo-audit 0.22.2 against RustSec with
+and runs the verified-source `make audit-rust` wrapper with cargo-audit 0.22.2 (the
+upstream Linux release binary, checked against its SHA-256 in `security.yml`
+rather than compiled on every run) against RustSec with
 known vulnerabilities and `unsound` advisories denied. Maintenance warnings stay
 visible for dependency-upgrade planning without broad ignores. Separate
 Apple-silicon macOS matrix jobs audit both isolated Python benchmark graphs;
