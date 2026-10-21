@@ -149,6 +149,9 @@ if (states) {
   // First run: pending only when the page asks for it (?first-run), resuming
   // at ?first-run-step=N when given; otherwise this profile already finished.
   const firstRunParams = new URLSearchParams(location.search);
+  // Setup mocks: the microphone has not been asked yet, and with
+  // ?first-run-download the selected speech model still needs its files.
+  const setup = { microphone: firstRunParams.get('first-run-mic') ?? 'not_asked' };
   const onboarding = {
     version: 1,
     status: firstRunParams.has('first-run') ? 'pending' : 'completed',
@@ -219,6 +222,26 @@ if (states) {
         case 'reset_settings':
           settings = defaultSettings();
           return settings;
+        case 'microphone_access':
+          if (args.request && setup.microphone === 'not_asked') setup.microphone = 'allowed';
+          return setup.microphone;
+        case 'get_device_profile':
+          return {
+            os: 'macos',
+            arch: 'aarch64',
+            chip: 'Apple M3',
+            memoryBytes: 16e9,
+            freeBytes: firstRunParams.get('first-run-disk') === 'low' ? 3.1e9 : 214e9,
+          };
+        case 'start_microphone_check':
+          window.previewCommands.push(`mic:${args.deviceId}`);
+          runtime.audioLevel = 0.05;
+          return null;
+        case 'stop_microphone_check':
+          runtime.audioLevel = 0;
+          return null;
+        case 'open_privacy_settings':
+          return null;
         case 'get_onboarding':
           return { ...onboarding };
         case 'save_onboarding_step':
@@ -273,6 +296,17 @@ if (states) {
             message: 'Synthetic model installation',
           };
         case 'list_model_installations':
+          if (firstRunParams.has('first-run-download'))
+            return structuredClone(catalog).map((entry) => ({
+              ...entry,
+              files: [
+                {
+                  name: 'model.bin',
+                  installed: false,
+                  sizeBytes: entry.role === 'speech_recognition' ? 2.9e9 : 1.4e9,
+                },
+              ],
+            }));
           return structuredClone(catalog);
         case 'list_sessions':
           return structuredClone(records);
