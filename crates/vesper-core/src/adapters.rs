@@ -1,12 +1,13 @@
 //! Compiled architecture contracts. Model repositories supply data, never code.
 //! Resolve at request/load boundaries; native runtimes own all frame/token kernels.
-use crate::{AppConfig, AsrModel, ComputeBackend, Language, ModelRole};
+use crate::{AppConfig, AsrEngine, AsrModel, ComputeBackend, Language, ModelRole};
 use serde::Serialize;
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize)]
 #[serde(rename_all = "snake_case")]
 pub enum AdapterKind {
     NemoRnnt,
+    NemoTdt,
     SherpaTransducer,
     QwenAsr,
     CohereAsr,
@@ -163,6 +164,11 @@ pub const fn mlx_speech_only(model: AsrModel) -> bool {
     )
 }
 
+/// Models with a pinned NeMo-Speech.cpp GGUF that one file serves on every backend.
+pub const fn nemo_gguf_supported(model: AsrModel) -> bool {
+    matches!(model, AsrModel::ParakeetTdt06bV3)
+}
+
 /// Qualified completed-audio English variants. The models crate resolves saved
 /// Automatic preferences against runtime/device availability and installed files.
 pub fn mlx_speech_supported(model: AsrModel) -> bool {
@@ -226,6 +232,19 @@ pub const ADAPTERS: &[AdapterRegistration] = &[
             contextual_phrases: true,
             resident_weights: true,
             ..caps(CacheState::Rnnt, NEMOTRON_LANGUAGES, ALL_BACKENDS)
+        },
+    },
+    // Parakeet TDT as one GGUF on every backend; completed audio only, since the
+    // pinned runtime rejects Parakeet v3 streaming. Live drafts stay buffered.
+    AdapterRegistration {
+        kind: AdapterKind::NemoTdt,
+        task: SPEECH,
+        architecture: "nemo_fastconformer_tdt",
+        runtime: "NeMo-Speech.cpp",
+        runtime_revision: "4f9676226f667d14608487df744f375db87127f8",
+        capabilities: AdapterCapabilities {
+            resident_weights: true,
+            ..caps(CacheState::Rnnt, PARAKEET_LANGUAGES, ALL_BACKENDS)
         },
     },
     AdapterRegistration {
@@ -417,14 +436,24 @@ impl AsrModel {
 }
 
 impl AppConfig {
+    /// The selected speech model runs as one GGUF through NeMo-Speech.cpp.
+    pub fn uses_nemo_gguf(&self) -> bool {
+        self.models.custom_asr.is_none()
+            && self.models.asr_engine == AsrEngine::UnifiedGguf
+            && nemo_gguf_supported(self.models.asr)
+    }
     pub fn uses_mlx_speech(&self) -> bool {
         self.models.custom_asr.is_none()
+            && !self.uses_nemo_gguf()
             && mlx_speech_supported(self.models.asr)
             && (self.compute_backend == ComputeBackend::Metal
                 || (self.compute_backend == ComputeBackend::Auto
                     && mlx_speech_only(self.models.asr)))
     }
     pub fn speech_adapter(&self) -> &'static AdapterRegistration {
+        if self.uses_nemo_gguf() {
+            return adapter(AdapterKind::NemoTdt);
+        }
         if self.uses_mlx_speech() {
             return resolve_adapter(
                 SPEECH,
@@ -695,5 +724,63 @@ mod tests {
         assert_eq!(default.language, Language::English);
         assert!(default.cleanup_enabled);
         assert!(!default.speech_adapter().capabilities.native_streaming);
+    }
+
+    #[test]
+    fn unified_gguf_runs_parakeet_on_every_backend_and_language() {
+        let mut config = AppConfig::default();
+        config.models.asr = AsrModel::ParakeetTdt06bV3;
+        config.models.asr_engine = AsrEngine::UnifiedGguf;
+        for backend in [
+            ComputeBackend::Auto,
+            ComputeBackend::Cpu,
+            ComputeBackend::Metal,
+            ComputeBackend::Cuda,
+            ComputeBackend::Vulkan,
+        ] {
+            config.compute_backend = backend;
+            for language in [Language::Auto, Language::English, Language::German] {
+                config.language = language;
+                assert!(config.uses_nemo_gguf());
+                assert!(!config.uses_mlx_speech(), "{backend:?}");
+                assert_eq!(config.speech_adapter().kind, AdapterKind::NemoTdt);
+                config
+                    .validate()
+                    .unwrap_or_else(|e| panic!("{backend:?} {language:?}: {e}"));
+            }
+        }
+        // Same declared languages as the standard engine; live drafts stay buffered.
+        assert_eq!(
+            adapter(AdapterKind::NemoTdt).capabilities.languages,
+            adapter(AdapterKind::SherpaTransducer)
+                .capabilities
+                .languages
+        );
+        assert_eq!(
+            adapter(AdapterKind::NemoTdt).live_mode(),
+            LiveMode::Buffered
+        );
+    }
+
+    #[test]
+    fn unified_gguf_is_rejected_for_models_without_a_pinned_gguf() {
+        let mut config = AppConfig::default();
+        config.models.asr = AsrModel::CohereTranscribe;
+        config.models.asr_engine = AsrEngine::UnifiedGguf;
+        assert!(!config.uses_nemo_gguf());
+        let error = config.validate().unwrap_err().to_string();
+        assert!(error.contains("models.asrEngine"), "{error}");
+    }
+
+    #[test]
+    fn standard_engine_keeps_parakeet_on_its_existing_adapters() {
+        let mut config = AppConfig::default();
+        config.models.asr = AsrModel::ParakeetTdt06bV3;
+        config.compute_backend = ComputeBackend::Cpu;
+        config.language = Language::German;
+        assert!(!config.uses_nemo_gguf());
+        assert_eq!(config.speech_adapter().kind, AdapterKind::SherpaTransducer);
+        config.compute_backend = ComputeBackend::Cuda;
+        assert!(config.validate().is_err());
     }
 }

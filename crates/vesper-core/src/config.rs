@@ -244,6 +244,18 @@ pub enum ComputeBackend {
     Rocm,
 }
 
+/// Which native engine runs a speech model that has more than one. `Standard`
+/// keeps each model's established exports (for Parakeet v3: ONNX on CPU, MLX on
+/// Apple GPU). `UnifiedGguf` runs one GGUF file through NeMo-Speech.cpp on every
+/// backend; only models with a pinned NeMo GGUF accept it.
+#[derive(Debug, Clone, Copy, Default, PartialEq, Eq, Serialize, Deserialize)]
+#[serde(rename_all = "snake_case")]
+pub enum AsrEngine {
+    #[default]
+    Standard,
+    UnifiedGguf,
+}
+
 /// Policy for future model improvements. Selecting a mode does not run training.
 #[derive(Debug, Clone, Copy, Default, PartialEq, Eq, Serialize, Deserialize)]
 #[serde(rename_all = "snake_case")]
@@ -296,6 +308,7 @@ impl AudioFrontendConfig {
 #[serde(default, rename_all = "camelCase")]
 pub struct ModelSelection {
     pub asr: AsrModel,
+    pub asr_engine: AsrEngine,
     pub rewriter: RewriteModel,
     pub custom_asr: Option<HuggingFaceProfile>,
     pub custom_rewriter: Option<HuggingFaceProfile>,
@@ -424,6 +437,17 @@ impl AppConfig {
                             .into(),
                 });
             }
+        }
+        if self.models.custom_asr.is_none()
+            && self.models.asr_engine == AsrEngine::UnifiedGguf
+            && !crate::nemo_gguf_supported(self.models.asr)
+        {
+            return Err(Error::InvalidConfig {
+                field: "models.asrEngine",
+                message:
+                    "the unified GGUF engine is available only for models with a pinned NeMo GGUF"
+                        .into(),
+            });
         }
         let speech = self.speech_adapter();
         if self.models.custom_asr.is_none()
