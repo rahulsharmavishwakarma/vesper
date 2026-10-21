@@ -42,9 +42,12 @@ const revision = run('git', ['rev-parse', 'HEAD'], {
 }).trim();
 if (revision !== 'd302a5c6080d2bb97bae38c7418f82abb76013b6')
   throw new Error('Unexpected MLX Audio revision');
-const patches = ['completion-report.patch', 'live-session.patch', 'parakeet-load-hook.patch'].map(
-  (name) => join(root, 'patches/mlx-audio-swift', name),
-);
+const patches = [
+  'completion-report.patch',
+  'live-session.patch',
+  'parakeet-load-hook.patch',
+  'parakeet-blocked-tdt.patch',
+].map((name) => join(root, 'patches/mlx-audio-swift', name));
 for (const patch of patches) {
   try {
     run('git', ['apply', '--reverse', '--check', patch], { cwd: checkout, stdio: 'pipe' });
@@ -184,6 +187,7 @@ writeFileSync(
       patchSha256: hash(patches[0]),
       livePatchSha256: hash(patches[1]),
       loadHookPatchSha256: hash(patches[2]),
+      blockedTdtPatchSha256: hash(patches[3]),
       bridgeSha256: hash(join(root, 'native/mlx/Sources/VesperMLX/Bridge.swift')),
       liveBridgeSha256: hash(join(root, 'native/mlx/Sources/VesperMLX/Live.swift')),
       graniteBridgeSha256: hash(join(root, 'native/mlx/Sources/VesperMLX/GraniteSpeech5CTC.swift')),

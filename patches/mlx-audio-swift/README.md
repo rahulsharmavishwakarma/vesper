@@ -91,3 +91,21 @@ scales are taken from the fp16 file values before the loader casts float
 parameters. The hook adds no kernel and does not change upstream decoding. See
 [Phonon-2](../../docs/offline-asr.md#phonon-2-apple-gpu) and
 [Parakeet Redux](../../docs/offline-asr.md#parakeet-redux-apple-gpu).
+
+## Blocked TDT decoding
+
+`parakeet-blocked-tdt.patch` adds a `.blocked` TDT decoder implementation and
+makes it the default for single-recording decoding.
+
+- It runs the same compiled step as the serial loop. The serial loop's
+  reductions (duration jump, the zero-duration symbol cap and the state commit
+  on non-blank tokens) move into the same compiled call.
+- Frame index, symbol count, last token and LSTM state stay on the device.
+- The host reads 16 step records per synchronization. Steps past the end are
+  masked and leave the state unchanged.
+- The serial and hybrid implementations remain selectable. Trace output is
+  preserved.
+
+Tokens, durations, timings and text match the serial loop exactly; see
+`ParakeetBlockedDecodeTests` and
+[inference performance](../../docs/inference-performance.md#blocked-tdt-decoding-on-metal--22-october-2026).
