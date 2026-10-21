@@ -73,6 +73,7 @@ Use uv and the versioned `pyproject.toml` / `uv.lock` for each environment:
 | Repository root, `benchmark` group | PyArrow corpus preparation | Python 3.12+ |
 | `benchmarks/asr/python/audio-frontend` | ONNX Runtime and LiteRT frontend probes | Python 3.12, macOS Apple silicon |
 | `benchmarks/asr/python/vibevoice` | Frozen Torch/Transformers reference probe | Python 3.12, macOS Apple silicon |
+| `benchmarks/asr/python/onnx-quantize` | Weight-only conversion of published sherpa-onnx exports | Python 3.12, macOS Apple silicon |
 
 Run scripts from the repository root with `uv run --locked python scripts/SCRIPT.py`,
 adding `--group benchmark` for PyArrow or `--project` for an isolated probe.
