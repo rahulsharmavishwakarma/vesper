@@ -124,7 +124,15 @@ impl Model {
                 "missing colocated mlx.metallib; rebuild the native runtime",
             ));
         }
-        if !["cohere", "whisper", "qwen3_asr", "parakeet"].contains(&architecture) {
+        if ![
+            "cohere",
+            "whisper",
+            "qwen3_asr",
+            "parakeet",
+            "granite_speech5_ctc",
+        ]
+        .contains(&architecture)
+        {
             return Err(Error::Input("unsupported architecture"));
         }
         let path = CString::new(directory.to_str().ok_or(Error::Input("non-UTF-8 path"))?)
@@ -429,7 +437,8 @@ mod tests {
                 .text,
             first
         );
-        if architecture != "parakeet" {
+        // Non-autoregressive decoders consume the whole input without a token budget.
+        if !["parakeet", "granite_speech5_ctc"].contains(&architecture.as_str()) {
             assert!(matches!(
                 model.transcribe(a.samples(), Some(&language), 1, &flag),
                 Err(Error::Incomplete(_))

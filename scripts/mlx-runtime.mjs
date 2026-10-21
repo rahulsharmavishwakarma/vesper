@@ -185,6 +185,7 @@ writeFileSync(
       livePatchSha256: hash(patches[1]),
       bridgeSha256: hash(join(root, 'native/mlx/Sources/VesperMLX/Bridge.swift')),
       liveBridgeSha256: hash(join(root, 'native/mlx/Sources/VesperMLX/Live.swift')),
+      graniteBridgeSha256: hash(join(root, 'native/mlx/Sources/VesperMLX/GraniteSpeech5CTC.swift')),
       librarySha256: hash(join(destination, 'libVesperMLX.dylib')),
       metalSha256: hash(join(destination, 'mlx.metallib')),
       tokenizerToolSha256: hash(join(destination, 'prepare-qwen-tokenizer')),

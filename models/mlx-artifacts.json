@@ -264,5 +264,61 @@
     "backend": "metal",
     "quantization": "8bit",
     "license": "apache-2.0"
+  },
+  {
+    "name": "mlx-granite-speech5-config.json",
+    "relativePath": "mlx/granite-speech-5.0-turboctc/config.json",
+    "url": "https://huggingface.co/ibm-granite/granite-speech-5.0-470m-turboctc/resolve/7171e21e921e39d62fdc42016e58d8fa10ad01c8/config.json",
+    "revision": "7171e21e921e39d62fdc42016e58d8fa10ad01c8",
+    "sha256": "aabd64a2da736a1a1c21237c896b71628f6dd7364f1f5ec8a77f5e04b3ef1011",
+    "sizeBytes": 921,
+    "role": "asr",
+    "modelId": "ibm-granite/granite-speech-5.0-470m-turboctc",
+    "platform": "macos-aarch64",
+    "backend": "metal",
+    "quantization": "bfloat16",
+    "license": "apache-2.0"
+  },
+  {
+    "name": "mlx-granite-speech5-model.safetensors",
+    "relativePath": "mlx/granite-speech-5.0-turboctc/model.safetensors",
+    "url": "https://huggingface.co/ibm-granite/granite-speech-5.0-470m-turboctc/resolve/7171e21e921e39d62fdc42016e58d8fa10ad01c8/model.safetensors",
+    "revision": "7171e21e921e39d62fdc42016e58d8fa10ad01c8",
+    "sha256": "5b569c3744c42a9172ac976881539926b66176d03fbaaa3c51b5d2960067f6fc",
+    "sizeBytes": 946311576,
+    "role": "asr",
+    "modelId": "ibm-granite/granite-speech-5.0-470m-turboctc",
+    "platform": "macos-aarch64",
+    "backend": "metal",
+    "quantization": "bfloat16",
+    "license": "apache-2.0"
+  },
+  {
+    "name": "mlx-granite-speech5-tokenizer.json",
+    "relativePath": "mlx/granite-speech-5.0-turboctc/tokenizer.json",
+    "url": "https://huggingface.co/ibm-granite/granite-speech-5.0-470m-turboctc/resolve/7171e21e921e39d62fdc42016e58d8fa10ad01c8/tokenizer.json",
+    "revision": "7171e21e921e39d62fdc42016e58d8fa10ad01c8",
+    "sha256": "a1c3ca763ce0690faf0df3456365358547acfdf766122c9e4a69be8e8708042e",
+    "sizeBytes": 1699784,
+    "role": "asr",
+    "modelId": "ibm-granite/granite-speech-5.0-470m-turboctc",
+    "platform": "macos-aarch64",
+    "backend": "metal",
+    "quantization": "bfloat16",
+    "license": "apache-2.0"
+  },
+  {
+    "name": "mlx-granite-speech5-tokenizer_config.json",
+    "relativePath": "mlx/granite-speech-5.0-turboctc/tokenizer_config.json",
+    "url": "https://huggingface.co/ibm-granite/granite-speech-5.0-470m-turboctc/resolve/7171e21e921e39d62fdc42016e58d8fa10ad01c8/tokenizer_config.json",
+    "revision": "7171e21e921e39d62fdc42016e58d8fa10ad01c8",
+    "sha256": "2f61ece3468bf7ca7a1b6dd3fd5b809814315bea9c298feea035fda4931b9f02",
+    "sizeBytes": 223,
+    "role": "asr",
+    "modelId": "ibm-granite/granite-speech-5.0-470m-turboctc",
+    "platform": "macos-aarch64",
+    "backend": "metal",
+    "quantization": "bfloat16",
+    "license": "apache-2.0"
   }
 ]

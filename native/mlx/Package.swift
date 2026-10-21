@@ -19,6 +19,7 @@ let package = Package(
     .testTarget(
       name: "VesperMLXTests",
       dependencies: [
+        "VesperMLX",
         .product(name: "MLXAudioSTT", package: "mlx-audio-swift"),
         .product(name: "MLX", package: "mlx-swift"),
       ]),
@@ -32,6 +33,8 @@ let package = Package(
       dependencies: [
         .product(name: "MLXAudioSTT", package: "mlx-audio-swift"),
         .product(name: "MLX", package: "mlx-swift"),
+        .product(name: "MLXFFT", package: "mlx-swift"),
+        .product(name: "MLXNN", package: "mlx-swift"),
       ]),
   ]
 )

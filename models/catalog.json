@@ -289,6 +289,43 @@
       "artifact_notes": "Exact executable metadata is in artifacts.json; see docs/offline-asr.md.",
       "creator": "Moonshine AI",
       "picker_blurb": "English only · small and fast"
+    },
+    {
+      "id": "ibm-granite/granite-speech-5.0-470m-turboctc",
+      "name": "IBM Granite Speech 5.0 TurboCTC",
+      "role": "speech_recognition",
+      "status": "optional",
+      "description": "Fast Apple-silicon model (about 948 MB) with punctuation for English, French, German, Spanish, Portuguese, Italian and Japanese. Runs only on the Apple GPU; there is no CPU version.",
+      "source_url": "https://huggingface.co/ibm-granite/granite-speech-5.0-470m-turboctc",
+      "license": "Apache-2.0",
+      "proposed_runtime": "Vesper's Swift port of the transformers granite_speech5 reference in the pinned MLX bridge",
+      "runtime_integrated": true,
+      "artifact_revision": "7171e21e921e39d62fdc42016e58d8fa10ad01c8",
+      "artifacts": [
+        {
+          "filename": "config.json",
+          "size_bytes": 921,
+          "sha256": "aabd64a2da736a1a1c21237c896b71628f6dd7364f1f5ec8a77f5e04b3ef1011"
+        },
+        {
+          "filename": "model.safetensors",
+          "size_bytes": 946311576,
+          "sha256": "5b569c3744c42a9172ac976881539926b66176d03fbaaa3c51b5d2960067f6fc"
+        },
+        {
+          "filename": "tokenizer.json",
+          "size_bytes": 1699784,
+          "sha256": "a1c3ca763ce0690faf0df3456365358547acfdf766122c9e4a69be8e8708042e"
+        },
+        {
+          "filename": "tokenizer_config.json",
+          "size_bytes": 223,
+          "sha256": "2f61ece3468bf7ca7a1b6dd3fd5b809814315bea9c298feea035fda4931b9f02"
+        }
+      ],
+      "artifact_notes": "Unmodified files from IBM's repository; exact executable metadata is in mlx-artifacts.json. See docs/offline-asr.md.",
+      "creator": "IBM",
+      "picker_blurb": "7 languages · Apple GPU only · fast"
     }
   ]
 }

@@ -21,6 +21,12 @@ export const acceleratorLabels: Record<ComputeBackend, string> = {
   rocm: 'AMD ROCm',
 };
 const gpuBackends: ComputeBackend[] = ['metal', 'cuda', 'vulkan', 'rocm'];
+/** Built-in speech models whose only engine is the Apple GPU (no CPU version). */
+export const APPLE_GPU_ONLY_SPEECH_MODELS: readonly string[] = [
+  'ibm-granite/granite-speech-5.0-470m-turboctc',
+];
+const appleGpuOnly = (config: AppConfig) =>
+  !config.models.customAsr && APPLE_GPU_ONLY_SPEECH_MODELS.includes(config.models.asr);
 
 export function deviceLabel(capabilities: AcceleratorCapabilities): string {
   const os =
@@ -34,7 +40,10 @@ export function acceleratorReason(
   capabilities: AcceleratorCapabilities | null,
   backend: ComputeBackend,
 ): string | null {
-  if (backend === 'auto' || backend === 'cpu') return null;
+  if (backend === 'auto') return null;
+  if (appleGpuOnly(config) && backend !== 'metal')
+    return 'This speech model runs only on the Apple GPU; it has no CPU version.';
+  if (backend === 'cpu') return null;
   if (!capabilities) return 'Device detection is unavailable. Choose Automatic or CPU.';
   const { os, arch } = capabilities;
   if (backend === 'metal' && (os !== 'macos' || arch !== 'aarch64'))
@@ -44,6 +53,9 @@ export function acceleratorReason(
   if (config.models.customAsr) {
     if (!config.cleanupEnabled)
       return 'This speech profile runs on CPU and the writing model is off.';
+  } else if (appleGpuOnly(config)) {
+    if (!capabilities.speechMetalModels?.includes(config.models.asr))
+      return 'This speech model is not included in this app build.';
   } else {
     if (
       [
@@ -79,9 +91,21 @@ export function acceleratorOptions(
   config: AppConfig,
   capabilities: AcceleratorCapabilities | null,
 ): AcceleratorOption[] {
+  const cpuReason = acceleratorReason(config, capabilities, 'cpu');
   const options: AcceleratorOption[] = [
-    { value: 'auto', label: 'Automatic', description: 'Choose automatically, with CPU fallback' },
-    { value: 'cpu', label: 'CPU', description: 'Run on the processor' },
+    {
+      value: 'auto',
+      label: 'Automatic',
+      description: appleGpuOnly(config)
+        ? 'Use the Apple GPU'
+        : 'Choose automatically, with CPU fallback',
+    },
+    {
+      value: 'cpu',
+      label: cpuReason ? 'CPU · unavailable' : 'CPU',
+      description: cpuReason ?? 'Run on the processor',
+      disabled: Boolean(cpuReason),
+    },
   ];
   for (const backend of gpuBackends) {
     const reason = acceleratorReason(config, capabilities, backend);

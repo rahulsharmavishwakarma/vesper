@@ -70,6 +70,10 @@ const TABLES: &[(&str, &str)] = &[
     ("openai/whisper-large-v3-turbo", "WHISPER_LANGUAGES"),
     ("LiquidAI/LFM2.5-Audio-1.5B", "LFM_LANGUAGES"),
     ("moonshine-ai/moonshine-base", "MOONSHINE_LANGUAGES"),
+    (
+        "ibm-granite/granite-speech-5.0-470m-turboctc",
+        "GRANITE_LANGUAGES",
+    ),
 ];
 
 fn variant(code: &str) -> &str {

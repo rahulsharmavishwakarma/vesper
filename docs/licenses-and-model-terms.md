@@ -24,6 +24,7 @@ and [models/presets.json](../models/presets.json).
 | CohereLabs | Cohere Transcribe | Upstream Cohere terms apply |
 | LiquidAI | LFM Audio | Upstream Liquid AI terms apply |
 | OpenAI | Whisper Small / Large Turbo | Upstream OpenAI terms apply |
+| IBM | Granite Speech 5.0 TurboCTC | Apache-2.0; files are installed unmodified from IBM's repository |
 | Moonshine AI | Moonshine Base (English) | MIT for the English model. Non-English Moonshine models use the Moonshine Community License and are not offered |
 | Google | Gemma 3 presets | Upstream Gemma terms apply |
 | HuggingFaceTB | SmolLM2 presets | Upstream SmolLM terms apply |

@@ -104,3 +104,21 @@ test('MLX is explicit, packaged, English-only and model-qualified', () => {
   config.models.asr = 'CohereLabs/cohere-transcribe-03-2026';
   assert.deepEqual(enabled(config, caps), ['auto', 'cpu']);
 });
+
+test('Apple-GPU-only speech models offer Automatic and Metal for every declared language', () => {
+  const granite = 'ibm-granite/granite-speech-5.0-470m-turboctc';
+  const config = defaultSettings();
+  config.models.asr = granite;
+  const packaged = { ...device('macos', 'aarch64', 'metal'), speechMetalModels: [granite] };
+  for (const language of ['en', 'de', 'ja']) {
+    config.language = language;
+    assert.deepEqual(enabled(config, packaged), ['auto', 'metal']);
+  }
+  assert.match(acceleratorReason(config, packaged, 'cpu'), /only on the Apple GPU/);
+  const cpu = acceleratorOptions(config, packaged).find((option) => option.value === 'cpu');
+  assert.equal(cpu.label, 'CPU · unavailable');
+  assert.equal(acceleratorOptions(config, packaged)[0].description, 'Use the Apple GPU');
+  const unpackaged = { ...device('macos', 'aarch64', 'metal'), speechMetalModels: [] };
+  assert.deepEqual(enabled(config, unpackaged), ['auto']);
+  assert.deepEqual(enabled(config, device('linux', 'x86_64', 'cuda')), ['auto']);
+});

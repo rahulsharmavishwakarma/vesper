@@ -664,6 +664,14 @@ export function validateSettings(value: unknown, checkWriterLanguage = true): st
     ) {
       errors.push('The selected speech model supports Automatic and CPU only.');
     }
+    if (
+      value.models.customAsr === null &&
+      value.models.asr === 'ibm-granite/granite-speech-5.0-470m-turboctc' &&
+      value.computeBackend !== 'auto' &&
+      value.computeBackend !== 'metal'
+    ) {
+      errors.push('The selected speech model runs only on the Apple GPU (Automatic or Metal).');
+    }
   }
 
   if (

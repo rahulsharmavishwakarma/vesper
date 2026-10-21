@@ -35,6 +35,10 @@ fn main() {
             "liveBridgeSha256",
         ),
         (
+            "native/mlx/Sources/VesperMLX/GraniteSpeech5CTC.swift",
+            "graniteBridgeSha256",
+        ),
+        (
             "patches/mlx-audio-swift/live-session.patch",
             "livePatchSha256",
         ),
