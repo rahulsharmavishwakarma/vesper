@@ -311,6 +311,23 @@ first-run state is pending. It is off for users (`FIRST_RUN_ENABLED` in
 - **Steps** keep the setup rail (completed steps are buttons for going back;
   later steps are not interactive) and one Continue per step. There is no
   Skip. Progress is saved after every step so a quit resumes where it stopped.
+- **Voice** offers English, French and Hindi (other languages stay in
+  Settings). Choosing a language the current speech model cannot hear also
+  selects the recommended model for it, so saved settings stay valid. The
+  microphone prompt appears only from **Allow microphone**; a denial names the
+  exact System Settings path and is noticed as soon as access is turned on. A
+  live waveform (the app's reed shape, from the real input level) confirms
+  "Heard you", and Continue waits for it.
+- **Models** shows this Mac in one line (chip, memory, free space), then one
+  recommended setup: the speech model for the chosen language and the writing
+  model behind **Tidy my text**, with the remaining download size from the
+  catalog. Until peak memory per model is measured, the recommendation follows
+  the language only (ADR-0010); memory is shown but does not change the pick.
+  Free space must cover the download plus a quarter, and being offline blocks
+  the download, each with its reason in the footer. **Download and set up**
+  saves the choice, starts the download in the background and moves on; a chip
+  at the bottom of the rail shows progress, then **Models ready**, or **Download
+  stopped** with **Try again**.
 - **Reduced motion** shows Welcome at once and changes step without the flight.
 
 ## Busy and locked controls
