@@ -571,6 +571,12 @@
       settings={engineSettings}
       initialStep={firstRun.step}
       persist={firstRun.persist}
+      progress={downloads.details}
+      onSaveSettings={async (next) => {
+        const saved = await saveSettings(next);
+        acceptSettings(saved);
+        return saved;
+      }}
       onDone={() => {
         if (firstRun) firstRun = { ...firstRun, show: false };
       }}

@@ -3,9 +3,25 @@
   import artwork from '../../assets/ember-bird.svg?raw';
   import BrandLogo from './BrandLogo.svelte';
   import Icon from './Icon.svelte';
+  import FirstRunVoice from './FirstRunVoice.svelte';
+  import FirstRunModels from './FirstRunModels.svelte';
+  import { installModel, type InstallProgress } from '../api/runtime';
+  import type { DownloadTarget } from '../modelDownloads';
   import { completeOnboarding, saveOnboardingStep } from '../api/onboarding';
-  import { FIRST_RUN_STEPS, READY_STEP, resumeStep } from '../firstRun';
-  import { MODEL_ROLE_LABELS, recordingShortcuts, type AppConfig } from '../config';
+  import {
+    FIRST_RUN_STEPS,
+    READY_STEP,
+    SETUP_LANGUAGES,
+    recommendedSpeechModel,
+    resumeStep,
+    type SetupLanguage,
+  } from '../firstRun';
+  import {
+    MODEL_ROLE_LABELS,
+    recordingShortcuts,
+    transcriptionLanguageOptions,
+    type AppConfig,
+  } from '../config';
   import { downloadTarget } from '../modelDownloads';
   import { shortcutLabel } from '../recording-shortcuts';
 
@@ -13,12 +29,18 @@
     settings,
     initialStep = 0,
     persist = true,
+    progress = null,
+    onSaveSettings,
     onDone,
   }: {
     settings: AppConfig | null;
     initialStep?: number;
     /** False in previews: nothing is saved. */
     persist?: boolean;
+    /** Progress of the model download that is running, if any. */
+    progress?: InstallProgress | null;
+    /** Save settings through the app, so the rest of the app sees them. */
+    onSaveSettings: (next: AppConfig) => Promise<AppConfig>;
     onDone: () => void;
   } = $props();
 
@@ -70,6 +92,109 @@
   const reducedMotion = () => matchMedia('(prefers-reduced-motion: reduce)').matches;
 
   const shortcuts = $derived(settings ? recordingShortcuts(settings) : null);
+
+  // Voice and Models (phase 2).
+  const isSetupLanguage = (value: unknown): value is SetupLanguage =>
+    SETUP_LANGUAGES.some((option) => option.value === value);
+  // svelte-ignore state_referenced_locally
+  let language = $state<SetupLanguage>(
+    isSetupLanguage(settings?.language) ? settings.language : 'en',
+  );
+  let voiceReady = $state(false);
+  let models:
+    | {
+        plan: () => { settings: AppConfig; targets: DownloadTarget[]; bytes: number };
+        blocker: () => string | null;
+      }
+    | undefined = $state();
+  let install = $state<{
+    status: 'idle' | 'running' | 'done' | 'error';
+    total: number;
+    done: number;
+    error: string | null;
+  }>({ status: 'idle', total: 0, done: 0, error: null });
+  let lastPlan: { settings: AppConfig; targets: DownloadTarget[]; bytes: number } | null = null;
+
+  async function chooseLanguage(next: SetupLanguage) {
+    language = next;
+    if (!settings) return;
+    // Keep the saved settings valid: a language the speech model cannot hear
+    // switches to the recommended model for it.
+    const supported = transcriptionLanguageOptions(settings.models, settings.computeBackend).some(
+      (option) => option.value === next,
+    );
+    try {
+      await onSaveSettings({
+        ...settings,
+        language: next,
+        models: supported
+          ? settings.models
+          : {
+              ...settings.models,
+              asr: recommendedSpeechModel(next) as AppConfig['models']['asr'],
+              customAsr: null,
+            },
+      });
+    } catch (cause) {
+      error = `Could not save the language. ${String(cause)}`;
+    }
+  }
+
+  /** Save the chosen setup, then download it in the background while the
+   * person carries on. Each model downloads in turn. */
+  async function startInstall(plan = models?.plan() ?? lastPlan) {
+    if (!plan || install.status === 'running') return;
+    lastPlan = plan;
+    error = null;
+    try {
+      await onSaveSettings(plan.settings);
+    } catch (cause) {
+      error = `Could not save your models. ${String(cause)}`;
+      return;
+    }
+    const pending = plan.bytes > 0 ? plan.targets : [];
+    install = {
+      status: pending.length ? 'running' : 'done',
+      total: pending.length,
+      done: 0,
+      error: null,
+    };
+    // Downloads continue in the background; setup moves on straight away.
+    if (pending.length) void download(pending);
+  }
+
+  async function download(pending: DownloadTarget[]) {
+    for (const target of pending) {
+      try {
+        await installModel(target.modelId, target.quantization);
+        install.done += 1;
+      } catch (cause) {
+        install = { ...install, status: 'error', error: String(cause) };
+        return;
+      }
+    }
+    install.status = 'done';
+  }
+
+  const percent = $derived.by(() => {
+    if (install.status === 'done') return 100;
+    if (!install.total) return 0;
+    const file =
+      progress && progress.fileCount
+        ? (progress.fileIndex -
+            1 +
+            (progress.totalBytes ? progress.completedBytes / progress.totalBytes : 0)) /
+          progress.fileCount
+        : 0;
+    return Math.min(99, Math.floor(((install.done + file) / install.total) * 100));
+  });
+
+  /** Why Continue is not available on this step, if anything. */
+  const waiting = $derived.by(() => {
+    if (step === 1 && !voiceReady) return 'Allow the microphone and say a few words.';
+    if (step === 2 && install.status === 'idle') return models?.blocker() ?? null;
+    return null;
+  });
 
   function chirp() {
     chirping = false;
@@ -241,6 +366,40 @@
             </li>
           {/each}
         </ol>
+        {#if install.status !== 'idle'}
+          <div class="fr-chip" class:error={install.status === 'error'} role="status">
+            <p>
+              <Icon
+                name={install.status === 'done'
+                  ? 'downloaded'
+                  : install.status === 'error'
+                    ? 'warning'
+                    : 'downloading'}
+              />
+              {install.status === 'done'
+                ? 'Models ready'
+                : install.status === 'error'
+                  ? 'Download stopped'
+                  : 'Setting up models'}
+              {#if install.status === 'running'}<span class="pct">{percent}%</span>{/if}
+            </p>
+            {#if install.status === 'running'}<div
+                class="track"
+                role="progressbar"
+                aria-label="Model download"
+                aria-valuemin="0"
+                aria-valuemax="100"
+                aria-valuenow={percent}
+              >
+                <span style:transform={`scaleX(${percent / 100})`}></span>
+              </div>{/if}
+            {#if install.status === 'error'}<button
+                type="button"
+                class="quiet"
+                onclick={() => void startInstall(lastPlan)}>Try again</button
+              >{/if}
+          </div>
+        {/if}
       </aside>
       <div class="fr-main">
         <div class="fr-scroll">
@@ -276,7 +435,24 @@
               <p class="step-count">Step {step + 1} of {FIRST_RUN_STEPS.length}</p>
               <h1 id="fr-title" tabindex="-1">{copy?.title}</h1>
               <p class="lede">{copy?.lede}</p>
-              <div class="placeholder">This step arrives in the next setup build.</div>
+              {#if step === 1}
+                <FirstRunVoice
+                  {language}
+                  preview={!persist}
+                  onLanguage={(next) => void chooseLanguage(next)}
+                  onReady={(ready) => (voiceReady = ready)}
+                />
+              {:else if step === 2}
+                {#if settings}<FirstRunModels
+                    bind:this={models}
+                    {settings}
+                    {language}
+                    started={install.status !== 'idle'}
+                    preview={!persist}
+                  />{:else}<p class="lede">Loading your settings…</p>{/if}
+              {:else}
+                <div class="placeholder">This step arrives in the next setup build.</div>
+              {/if}
             </section>
           {/if}
         </div>
@@ -286,13 +462,29 @@
               class="quiet"
               onclick={() => go(step - 1)}>Back</button
             >{/if}
-          {#if error}<p class="error" role="alert">{error}</p>{/if}
+          {#if error}<p class="error" role="alert">{error}</p>
+          {:else if waiting}<p class="why" role="status">{waiting}</p>{/if}
           {#if step === READY_STEP}
             <button type="button" class="primary go" onclick={finish} disabled={finishing}
               >{finishing ? 'Finishing…' : 'Start dictating'}</button
             >
+          {:else if step === 2 && install.status === 'idle'}
+            <button
+              type="button"
+              class="primary go"
+              disabled={!settings || Boolean(waiting)}
+              onclick={async () => {
+                await startInstall();
+                if (install.status !== 'idle' && !error) go(3);
+              }}>Download and set up</button
+            >
           {:else}
-            <button type="button" class="primary go" onclick={() => go(step + 1)}>Continue</button>
+            <button
+              type="button"
+              class="primary go"
+              disabled={Boolean(waiting)}
+              onclick={() => go(step + 1)}>Continue</button
+            >
           {/if}
         </footer>
       </div>
@@ -598,6 +790,60 @@
     background: var(--color-accent);
     border-color: var(--color-accent);
     color: var(--color-on-accent);
+  }
+  .fr-chip {
+    margin-top: auto;
+    padding: 12px 14px;
+    border: 1px solid var(--color-line);
+    border-radius: 14px;
+    background: var(--color-raised);
+    font-size: 13px;
+  }
+  .fr-chip.error {
+    border-color: var(--color-error);
+  }
+  .fr-chip p {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin: 0;
+    font-weight: 500;
+  }
+  .fr-chip :global(svg) {
+    width: 18px;
+    height: 18px;
+    color: var(--color-accent);
+  }
+  .fr-chip.error :global(svg) {
+    color: var(--color-error);
+  }
+  .fr-chip .pct {
+    margin-left: auto;
+    color: var(--color-accent);
+    font-weight: 600;
+    font-variant-numeric: tabular-nums;
+  }
+  .fr-chip .track {
+    height: 4px;
+    margin-top: 10px;
+    border-radius: 99px;
+    background: var(--color-line);
+    overflow: hidden;
+  }
+  .fr-chip .track span {
+    display: block;
+    height: 100%;
+    background: var(--color-accent);
+    transform-origin: left;
+    transition: transform 180ms var(--ease);
+  }
+  .fr-foot .why {
+    margin: 0 0 0 auto;
+    font-size: 13px;
+    color: var(--color-muted);
+  }
+  .fr-foot .why + .go {
+    margin-left: 0;
   }
   .fr-main {
     display: flex;
