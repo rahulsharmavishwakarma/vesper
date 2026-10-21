@@ -114,7 +114,7 @@ class RustAuditTests(unittest.TestCase):
             self.assertEqual(command[:3], ["cargo", "audit", "--file"])
             expected_ignores = [
                 argument
-                for advisory in (AUDIT.ADVISORY, *AUDIT.ZIP_ADVISORIES)
+                for advisory in (AUDIT.ADVISORY, *AUDIT.ZIP_ADVISORIES, AUDIT.WEBPKI_ADVISORY)
                 for argument in ("--ignore", advisory)
             ]
             self.assertEqual(command[4:], ["--deny", "unsound", *expected_ignores])
@@ -174,6 +174,52 @@ class RustAuditTests(unittest.TestCase):
         ):
             with self.assertRaises(ValueError):
                 AUDIT.verify_zip_exceptions(bad)
+
+    def test_webpki_exception_accepts_only_the_reviewed_shape(self):
+        def lock_with(roots, ureq_dependents=(("sherpa-onnx-sys", "1.13.8"),), edges=None):
+            packages = [{"name": "webpki-roots", "version": version} for version in roots]
+            packages.append({"name": "ureq", "version": "2.12.1"})
+            edges = edges if edges is not None else [("ureq", "2.12.1", "webpki-roots 0.26.11")]
+            for name, version, dependency in edges:
+                packages.append({"name": name, "version": version, "dependencies": [dependency]})
+            for name, version in ureq_dependents:
+                packages.append({"name": name, "version": version, "dependencies": ["ureq"]})
+            return {"package": packages}
+
+        # The reviewed shape, plus a patched instance that needs no exception.
+        AUDIT.verify_webpki_exception(lock_with(["0.26.11", "1.0.10"]))
+        AUDIT.verify_webpki_exception(lock_with(["1.0.10"], edges=[]))
+        for bad in (
+            # An unpatched 1.x copy is a runtime exposure, never excepted.
+            lock_with(["0.26.11", "1.0.9"]),
+            # A version bump under the pin must be re-reviewed.
+            lock_with(["0.26.12"], edges=[("ureq", "2.12.1", "webpki-roots 0.26.12")]),
+            # A new dependent of the old webpki-roots widens the exception.
+            lock_with(
+                ["0.26.11"],
+                edges=[
+                    ("ureq", "2.12.1", "webpki-roots 0.26.11"),
+                    ("reqwest", "0.12.28", "webpki-roots 0.26.11"),
+                ],
+            ),
+            # ureq reached from anywhere but sherpa-onnx-sys is no longer build-only.
+            lock_with(
+                ["0.26.11"],
+                ureq_dependents=(("sherpa-onnx-sys", "1.13.8"), ("vesper-models", "0.1.0")),
+            ),
+        ):
+            with self.assertRaises(ValueError):
+                AUDIT.verify_webpki_exception(bad)
+
+    def test_run_audit_rejects_unscoped_webpki_before_auditing(self):
+        lock = self.root / "Cargo.lock"
+        lock.write_text(
+            lock.read_text() + '\n[[package]]\nname = "webpki-roots"\nversion = "0.25.4"\n'
+        )
+        with patch.object(AUDIT.subprocess, "run") as run:
+            with self.assertRaises(ValueError):
+                AUDIT.run_audit(self.root)
+        run.assert_not_called()
 
     @unittest.skipUnless(
         shutil.which("cargo-audit"), "cargo-audit is installed in the security job"

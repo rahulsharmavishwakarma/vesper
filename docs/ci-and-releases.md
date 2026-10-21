@@ -288,6 +288,18 @@ versions. `make audit-python-audio-frontend` and `make audit-python-vibevoice`
 use the same auditor against fresh exports of their owning locks. They require
 Apple-silicon macOS: running these exports through a Linux auditor would skip
 their platform-marked dependencies and could produce an empty, misleading pass.
+
+Advisories published after a lock was written fail these audits on every pull
+request until the lock moves, even on unrelated changes. On 20 October 2026 that
+happened twice: `pillow` 12.3.0 (eight CVEs, fixed in 13.0.0, VibeVoice lock) and
+`certifi` 2026.7.22 (GHSA-6q48-6c7w-9gw2, fixed in 2026.10.19; root, cleanup and
+VibeVoice locks). The fix is `uv lock --upgrade-package` for exactly those
+packages (the VibeVoice `pyproject.toml` pins both directly), regeneration of
+`benchmarks/asr/vibevoice-reference-requirements.txt` with the same
+`uv export ... --output-file .cache/vibevoice-reference-requirements.txt` command
+`make python-lock-check` compares against (the output path is recorded in the
+file's header), and `make audit-python` plus `make audit-python-vibevoice`
+([issue #248](https://github.com/rahulsharmavishwakarma/vesper/issues/248)).
 The audit jobs install only contributor tools, not model runtimes or weights.
 All manifests and lockfiles stay versioned, while `.venv` and `.cache` stay ignored.
 
@@ -350,6 +362,21 @@ tauri-plugin-updater's Windows-only update path. Before auditing, the wrapper
 verifies the lockfile still contains only those instances with only those
 dependents; any other zip below 9 fails the job. Remove the ignores when both
 parents resolve zip 9 or drop it (issue #161).
+
+A third owner-approved scoped ignore (2026-10-21, [issue #248](https://github.com/rahulsharmavishwakarma/vesper/issues/248))
+covers RUSTSEC-2026-0381, bundled roots that trust distrusted emSign
+intermediates, patched in webpki-roots 1.0.10. The 1.x copy (used by the app's
+`reqwest` downloader) and `rustls-webpki` / `webpki-root-certs` were updated in
+`Cargo.lock` (0.103.16 and 1.0.10), so they need no exception. The remaining
+webpki-roots 0.26.11 is a build-dependency of sherpa-onnx-sys through ureq 2.12.1,
+a download helper its build script uses only when no prebuilt runtime directory is
+supplied; the app always supplies `SHERPA_ONNX_LIB_DIR`, so it is never compiled
+into the application, and `cargo tree -e normal` shows ureq is not a normal
+dependency of anything. sherpa-onnx-sys 1.13.8 (2026-09-11) is the newest published
+version, so upgrading could not clear it. The wrapper verifies the lockfile still
+shows exactly webpki-roots 0.26.11 used only by ureq 2.12.1, itself used only by
+sherpa-onnx-sys, and refuses any other webpki-roots below 1.0.10 before auditing.
+Remove the ignore and guard when sherpa-onnx-sys moves to ureq 3.
 
 The end-of-file formatter excludes only GLib's upstream `LICENSE` and
 `.cargo_vcs_info.json`, preserving their original end-of-file whitespace. Their hashes

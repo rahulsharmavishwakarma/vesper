@@ -20,6 +20,20 @@ ADVISORY = "RUSTSEC-2024-0429"
 # tauri-plugin-updater resolve zip >= 9 (or drop zip).
 ZIP_ADVISORIES = ("RUSTSEC-2026-0367", "RUSTSEC-2026-0368", "RUSTSEC-2026-0369")
 PINNED_ZIP_DEPENDENTS = {"2.6.1": "sherpa-onnx-sys", "4.6.1": "tauri-plugin-updater"}
+# Owner-approved scoped exception (issue #248, 2026-10-21). RUSTSEC-2026-0381
+# (bundled roots trusting distrusted emSign intermediates) is patched in
+# webpki-roots >= 1.0.10. The 0.26.11 instance is a build-dependency of
+# sherpa-onnx-sys through ureq 2.12.1 (a download helper its build script uses
+# only when no prebuilt runtime directory is supplied; we always supply
+# SHERPA_ONNX_LIB_DIR), so it is never compiled into the application, and no
+# newer sherpa-onnx-sys is published. The ignore applies only while
+# verify_webpki_exception confirms exactly that shape; any other webpki-roots
+# below 1.0.10 fails before auditing. Remove both when sherpa-onnx-sys moves to
+# ureq 3 / webpki-roots >= 1.0.10.
+WEBPKI_ADVISORY = "RUSTSEC-2026-0381"
+PINNED_WEBPKI = "0.26.11"
+PINNED_UREQ = "2.12.1"
+PINNED_UREQ_DEPENDENT = "sherpa-onnx-sys"
 ARCHIVE_SHA256 = "233daaf6e83ae6a12a52055f568f9d7cf4671dabb78ff9560ab6da230ce00ee5"
 PROVENANCE_SHA256 = "afce59aee5239ed3c48389fa4f089a39ae9efc16a0eabec16706f1aea3ebc7fb"
 ROOT = Path(__file__).resolve().parents[1]
@@ -129,6 +143,53 @@ def verify_zip_exceptions(lock):
             )
 
 
+def lock_dependents(lock, name):
+    """Map each locked version of `name` to the (package, version) pairs using it."""
+    versions = sorted({p["version"] for p in lock["package"] if p["name"] == name})
+    dependents = {version: set() for version in versions}
+    for package in lock["package"]:
+        for dependency in package.get("dependencies", []):
+            parts = dependency.split(" ")
+            if parts[0] != name:
+                continue
+            if len(parts) > 1:
+                version = parts[1]
+            elif len(versions) == 1:
+                version = versions[0]
+            else:
+                raise ValueError(f"Unversioned {name} dependency cannot be scoped")
+            dependents.setdefault(version, set()).add((package["name"], package["version"]))
+    return dependents
+
+
+def verify_webpki_exception(lock):
+    """Refuse the scoped webpki-roots ignore for anything but the reviewed shape.
+
+    webpki-roots >= 1.0.10 is patched and needs no exception. Below that, only
+    PINNED_WEBPKI may appear, used solely by ureq PINNED_UREQ, which in turn is
+    used solely by sherpa-onnx-sys. A new instance, a version bump under the
+    pin, or a new dependent fails here so the ignore can never cover a runtime
+    exposure.
+    """
+    for package in lock["package"]:
+        if package["name"] != "webpki-roots":
+            continue
+        version = package["version"]
+        if tuple(int(part) for part in version.split(".")) >= (1, 0, 10):
+            continue
+        roots = lock_dependents(lock, "webpki-roots")
+        ureqs = lock_dependents(lock, "ureq")
+        if (
+            version != PINNED_WEBPKI
+            or roots.get(version) != {("ureq", PINNED_UREQ)}
+            or {name for name, _ in ureqs.get(PINNED_UREQ, set())} != {PINNED_UREQ_DEPENDENT}
+        ):
+            raise ValueError(
+                f"webpki-roots {version} is outside the scoped audit exception "
+                f"(dependents: {sorted(roots.get(version, set()))})"
+            )
+
+
 def registry_audit_lock(lock_text):
     """Restore only GLib's registry identity so future advisories still match.
 
@@ -163,13 +224,15 @@ def registry_audit_lock(lock_text):
 def run_audit(root):
     # The ignores below are only valid for the reviewed pins; refuse to
     # apply them to any other lockfile shape.
-    verify_zip_exceptions(tomllib.loads((root / "Cargo.lock").read_text()))
+    lock = tomllib.loads((root / "Cargo.lock").read_text())
+    verify_zip_exceptions(lock)
+    verify_webpki_exception(lock)
     with tempfile.TemporaryDirectory(prefix="vesper-rust-audit-") as directory:
         shadow = Path(directory) / "Cargo.lock"
         shadow.write_text(registry_audit_lock((root / "Cargo.lock").read_text()))
         ignores = [
             argument
-            for advisory in (ADVISORY, *ZIP_ADVISORIES)
+            for advisory in (ADVISORY, *ZIP_ADVISORIES, WEBPKI_ADVISORY)
             for argument in ("--ignore", advisory)
         ]
         subprocess.run(
