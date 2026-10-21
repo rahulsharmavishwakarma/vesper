@@ -622,6 +622,7 @@ impl WorkerState {
                 vesper_core::AdapterKind::CohereAsr
                     | vesper_core::AdapterKind::Whisper
                     | vesper_core::AdapterKind::QwenAsr
+                    | vesper_core::AdapterKind::MoonshineAsr
             )
         {
             return Ok(false);

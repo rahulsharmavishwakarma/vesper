@@ -351,7 +351,10 @@ fn built_in_asr_spec(config: &AppConfig, model: AsrModel) -> ModelInstallSpec {
     // Installation metadata must not inherit a recording's language restriction.
     target.language = if vesper_core::mlx_speech_supported(model) {
         config.language
-    } else if matches!(model, AsrModel::CohereTranscribe | AsrModel::Lfm25Audio15b) {
+    } else if matches!(
+        model,
+        AsrModel::CohereTranscribe | AsrModel::Lfm25Audio15b | AsrModel::MoonshineBase
+    ) {
         Language::English
     } else {
         Language::Auto

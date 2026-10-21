@@ -39,6 +39,7 @@ every capability of an upstream architecture or checkpoint.
 | Liquid LFM2.5 Audio 1.5B                                          | Yes                  | Buffered drafts through its current CPU/GPU runtime                             |
 | Parakeet TDT v2, Parakeet Unified, FastConformer European presets | Yes                  | Buffered drafts with the selected transducer export                             |
 | Whisper Small / Turbo                                             | Yes                  | Buffered drafts; English/French only; quality gates failed (see language guide)  |
+| Moonshine Base (English)                                          | Yes                  | Buffered drafts; English only; completed-audio final in parts of at most 15 s   |
 | Imported custom ASR profiles                                      | Yes                  | Buffered drafts for compatible validated transducer profiles                    |
 
 The common live interface selects native sessions or buffered previews after
@@ -217,7 +218,7 @@ Whisper, SenseVoice, Moonshine, Canary, Qwen3-ASR, and CTC-only exports are not
 interchangeable with this profile format. Although the
 [upstream runtime defines separate configurations](https://github.com/k2-fsa/sherpa-onnx/blob/v1.13.8/sherpa-onnx/csrc/offline-model-config.h)
 for more families, the application needs corresponding adapters before listing
-them as usable models. Qwen3-ASR and Cohere now have dedicated built-in adapters; they are not imported as transducer profiles. See [their runtime contract](offline-asr.md).
+them as usable models. Qwen3-ASR, Cohere and Moonshine Base now have dedicated built-in adapters; they are not imported as transducer profiles. See [their runtime contract](offline-asr.md).
 
 ## Maintaining the catalog
 

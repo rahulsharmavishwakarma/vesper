@@ -34,6 +34,7 @@ const MODEL_CREATORS: Record<string, string> = {
   'Qwen/Qwen3-ASR-0.6B': 'Qwen · Alibaba',
   'CohereLabs/cohere-transcribe-03-2026': 'Cohere',
   'LiquidAI/LFM2.5-Audio-1.5B': 'Liquid AI',
+  'moonshine-ai/moonshine-base': 'Moonshine AI',
   'Qwen/Qwen3.5-0.8B': 'Qwen · Alibaba',
   'nvidia/parakeet-tdt-0.6b-v2': 'NVIDIA',
   'nvidia/parakeet-unified-en-0.6b': 'NVIDIA',

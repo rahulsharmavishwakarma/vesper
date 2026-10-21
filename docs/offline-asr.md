@@ -111,6 +111,25 @@ Use `cohere`/`en` or `parakeet`/`en` for the other adapters. Link the same probe
 
 The non-silent boundary fixture `fleurs-en_us-padded-10s.wav` retains every original English float32 sample and appends 19,840 zero samples (1.24 seconds). Its canonical minimal RIFF/WAVE header declares format 3, one channel, 16,000 Hz, 64,000 bytes/second, four-byte block alignment and 32-bit samples, followed by a 640,000-byte data chunk. File size is 640,044 bytes; SHA-256 is `994f93a06e1e5d45b2b3bdb3e219b39e1976cba413a139b96675cc12c7f1411d`. This is an explicitly modified CC-BY-4.0 FLEURS derivative with added trailing silence, retaining the English reference and attribution above.
 
+## Moonshine Base (English)
+
+Moonshine Base runs through a dedicated `MoonshineAsr` adapter on sherpa-onnx's
+Moonshine v2 recognizer (`encoder_model.ort` plus `decoder_model_merged.ort`).
+
+- **Following the reference runtime:**
+  - Completed audio is decoded in parts of at most 15 s.
+  - The native token budget is 6.5 tokens per second of audio. Reaching it
+    reports `duration_token_limit` and the result is rejected.
+- **Pinned-runtime fix:** the patch backports sherpa-onnx's raw-length decoder
+  mask fix (#3976). Without it, every decode above about 9.2 s failed silently.
+- **Empty-result retry:** a non-silent part of at least 2 s that decodes to
+  nothing at EOS is decoded once more as two halves, split at the quietest
+  point near the middle.
+- **Scope:** English only; never a default.
+
+Held-out FLEURS en-US WER is 10.11% at a median of 86 ms per clip on CPU. See
+the [adapter record](validation/moonshine-base-2026-10-21.md).
+
 ## Parakeet CPU precision
 
 The built-in Parakeet TDT v3 CPU path installs 4-bit weight-only artifacts
