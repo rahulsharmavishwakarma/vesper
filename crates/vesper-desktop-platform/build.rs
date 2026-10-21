@@ -7,7 +7,7 @@ fn main() {
             .flag("-fobjc-arc")
             .flag("-fblocks")
             .compile("vesper_desktop_platform");
-        for framework in ["AppKit", "ApplicationServices", "Carbon"] {
+        for framework in ["AppKit", "ApplicationServices", "AVFoundation", "Carbon"] {
             println!("cargo:rustc-link-lib=framework={framework}");
         }
     }
