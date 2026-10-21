@@ -63,6 +63,10 @@ unchanged to this port.
 
 The subsequent [quantized BitNet CPU benchmark](../../docs/validation/vibevoice-bitnet-2026-09-18.md) executes the verified specialized GGUF pair using the official native CLI and resident-file server. It includes matching corpus controls, thread and normalization ablations, a fresh Cohere comparison, raw-output/completion instrumentation and a separately measured decoder-position correction. Memory-blocked long input and failed hotword/JSON output remain visible. The native server's token output is not an incremental-audio streaming adapter; this development benchmark does not make the capability entry executable in the application.
 
+### Quantization research notebooks
+
+[`notebooks/asr-quantization/`](../../notebooks/asr-quantization/README.md) holds three Colab notebooks for [#271](https://github.com/rahulsharmavishwakarma/vesper/issues/271). They diagnose which operators of the Parakeet v3 4-bit encoder hold its bytes and time, test a pointwise-convolution-to-`MatMul` rewrite with RTN and HQQ, and score the variants on public FLEURS English. They run on a CPU Colab runtime from pinned public sources, write JSON with the full environment, and are not part of CI or the application. Colab CPU timings are not comparable with the desktop reports; their results are research evidence and do not qualify or change any shipped artifact. The [22 October 2026 results](../../docs/validation/parakeet-conv-rewrite-2026-10-22.md) show that pointwise convolutions hold 303 MB of the 4-bit encoder and that rewriting them before quantization cuts it from 679 MB to 425 MB with WER unchanged within noise on 100 English clips.
+
 ### Python environments
 
 Use uv and the versioned `pyproject.toml` / `uv.lock` for each environment:
