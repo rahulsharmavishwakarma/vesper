@@ -5,8 +5,8 @@ use crate::{
 };
 use serde::{Deserialize, Serialize};
 use sherpa_onnx::{
-    OfflineCohereTranscribeModelConfig, OfflineModelConfig, OfflineQwen3ASRModelConfig,
-    OfflineRecognizer, OfflineRecognizerConfig, OfflineStream,
+    OfflineCohereTranscribeModelConfig, OfflineModelConfig, OfflineMoonshineModelConfig,
+    OfflineQwen3ASRModelConfig, OfflineRecognizer, OfflineRecognizerConfig, OfflineStream,
 };
 use std::{path::Path, sync::atomic::AtomicBool};
 use vesper_audio::{MonoPcm, ASR_SAMPLE_RATE};
@@ -25,6 +25,7 @@ pub(crate) struct SegmentObservation {
 const REPORT_OPTION: &str = "vesper.decode_report.v1";
 pub(crate) const QWEN_REVISION: &str = "68818b2313fe77bd06f6a7c5068ff3ef59d02b8a";
 pub(crate) const COHERE_REVISION: &str = "156a470cf08eefe706a0004f3c52d9ee567ca7a0";
+pub(crate) const MOONSHINE_REVISION: &str = "577269bb93e5cb0f92c01bd4444d93f9a9203805";
 pub(crate) const COHERE_USE_PUNCT: bool = true;
 pub(crate) const COHERE_USE_ITN: bool = false;
 // Use the existing context allowance without an independent lower output ceiling.
@@ -124,6 +125,11 @@ fn language(config: &AppConfig) -> Option<&'static str> {
     )
 }
 
+/// Moonshine trains on 4-30 s segments; its reference runtime caps VAD
+/// segments at 15 s (`vad_max_segment_duration`). Above about 9.2 s the
+/// pinned decoder needed the backported raw-length attention mask (#3976).
+pub(crate) const MOONSHINE_MAX_SEGMENT_SECONDS: usize = 15;
+
 pub(crate) fn recognizer_config(
     config: &AppConfig,
     root: &Path,
@@ -157,6 +163,14 @@ pub(crate) fn recognizer_config(
                 "tokens.txt",
             ],
         ),
+        AsrModel::MoonshineBase => (
+            "moonshine-base-en",
+            &[
+                "encoder_model.ort",
+                "decoder_model_merged.ort",
+                "tokens.txt",
+            ],
+        ),
         _ => return Err(InferenceError::UnsupportedAsr(config.models.asr.id())),
     };
     for file in files {
@@ -183,6 +197,15 @@ pub(crate) fn recognizer_config(
                 language: language(config).map(str::to_owned),
                 use_punct: COHERE_USE_PUNCT,
                 use_itn: COHERE_USE_ITN,
+            };
+            model.tokens = Some(path("tokens.txt")?);
+        }
+        AsrModel::MoonshineBase => {
+            // v2 exports: one encoder and one merged (cached/uncached) decoder.
+            model.moonshine = OfflineMoonshineModelConfig {
+                encoder: Some(path("encoder_model.ort")?),
+                merged_decoder: Some(path("decoder_model_merged.ort")?),
+                ..Default::default()
             };
             model.tokens = Some(path("tokens.txt")?);
         }
@@ -327,56 +350,117 @@ pub(crate) fn decode_for_purpose(
         check_cancelled(cancelled)?;
         return Ok(String::new());
     }
+    let decode_part = |samples: &[f32]| {
+        decode_segment_once(
+            recognizer, samples, config, cancelled, healthy, observe, purpose,
+        )
+    };
     decode_segments_with_limit(
         audio.samples(),
         cancelled,
         if config.models.asr.is_whisper() {
             crate::whisper::MAX_SEGMENT_SECONDS
+        } else if config.models.asr == AsrModel::MoonshineBase {
+            MOONSHINE_MAX_SEGMENT_SECONDS
         } else {
             MAX_SEGMENT_SECONDS
         } * ASR_SAMPLE_RATE as usize,
         |samples| {
-            // Only weights/sessions may persist. Every segment gets fresh features,
-            // options and generated decoding state, even across recordings.
-            let started = std::time::Instant::now();
-            let stream = recognizer.create_stream();
-            if let Some(language) = language(config) {
-                stream.set_option("language", language);
+            let text = decode_part(samples)?;
+            if config.models.asr != AsrModel::MoonshineBase
+                || !moonshine_retry_eligible(samples, &text)
+            {
+                return Ok(text);
             }
-            stream.accept_waveform(ASR_SAMPLE_RATE as i32, samples);
-            let accept_us = started.elapsed().as_micros().min(u64::MAX as u128) as u64;
-            check_cancelled(cancelled)?;
-            // Offline decode cannot be interrupted; cancellation discards its result.
-            let started = std::time::Instant::now();
-            recognizer.decode(&stream);
-            observe(SegmentObservation {
-                samples: samples.len(),
-                accept_us,
-                decode_us: started.elapsed().as_micros().min(u64::MAX as u128) as u64,
-                completion: serde_json::from_str(&stream.get_option(REPORT_OPTION)).ok(),
-                whisper_scores: config
-                    .models
-                    .asr
-                    .is_whisper()
-                    .then(|| {
-                        crate::whisper::Scores::parse(
-                            &stream.get_option(crate::whisper::SCORE_OPTION),
-                        )
-                        .ok()
-                    })
-                    .flatten(),
-            });
-            if let Some(healthy) = healthy {
-                // Inspect native completion health even when cancellation discards
-                // its text, so an unknown fault cannot leave a cached session.
-                let result = result_text_for(&stream, config, &AtomicBool::new(false), purpose);
-                retain_native_health(result, healthy, cancelled)
-            } else {
-                result_text_for(&stream, config, cancelled, purpose)
-            }
+            // Moonshine sometimes emits EOS first on clear speech. Its reference
+            // runtime decodes shorter VAD segments, so retry once as two halves
+            // split at the quietest point near the middle.
+            let split = quietest_split(samples);
+            let first = decode_part(&samples[..split])?;
+            let second = decode_part(&samples[split..])?;
+            Ok([first, second]
+                .into_iter()
+                .filter(|part| !part.is_empty())
+                .collect::<Vec<_>>()
+                .join(" "))
         },
         progress,
     )
+}
+
+/// Retry only non-silent parts that decoded to nothing: the native recognizer
+/// reports digital silence (|x| <= 1e-6) separately and returns no text for it.
+fn moonshine_retry_eligible(samples: &[f32], text: &str) -> bool {
+    text.is_empty()
+        && samples.len() >= 2 * ASR_SAMPLE_RATE as usize
+        && samples.iter().any(|sample| sample.abs() > 1e-6)
+}
+
+/// Quietest 100 ms window within 1.5 s of the middle; both halves stay >= 0.5 s.
+fn quietest_split(samples: &[f32]) -> usize {
+    let rate = ASR_SAMPLE_RATE as usize;
+    let (window, middle, reach) = (rate / 10, samples.len() / 2, rate * 3 / 2);
+    let low = (middle.saturating_sub(reach)).max(rate / 2 + window / 2);
+    let high = (middle + reach).min(samples.len() - rate / 2 - window / 2);
+    (low..=high.max(low))
+        .step_by(rate / 100)
+        .min_by(|a, b| {
+            let energy = |c: usize| -> f64 {
+                samples[c - window / 2..c + window / 2]
+                    .iter()
+                    .map(|x| f64::from(*x).powi(2))
+                    .sum()
+            };
+            energy(*a).total_cmp(&energy(*b))
+        })
+        .unwrap_or(middle)
+}
+
+#[allow(clippy::too_many_arguments)]
+fn decode_segment_once(
+    recognizer: &OfflineRecognizer,
+    samples: &[f32],
+    config: &AppConfig,
+    cancelled: &AtomicBool,
+    healthy: Option<&std::cell::Cell<bool>>,
+    observe: &dyn Fn(SegmentObservation),
+    purpose: DecodePurpose,
+) -> Result<String> {
+    // Only weights/sessions may persist. Every segment gets fresh features,
+    // options and generated decoding state, even across recordings.
+    let started = std::time::Instant::now();
+    let stream = recognizer.create_stream();
+    if let Some(language) = language(config) {
+        stream.set_option("language", language);
+    }
+    stream.accept_waveform(ASR_SAMPLE_RATE as i32, samples);
+    let accept_us = started.elapsed().as_micros().min(u64::MAX as u128) as u64;
+    check_cancelled(cancelled)?;
+    // Offline decode cannot be interrupted; cancellation discards its result.
+    let started = std::time::Instant::now();
+    recognizer.decode(&stream);
+    observe(SegmentObservation {
+        samples: samples.len(),
+        accept_us,
+        decode_us: started.elapsed().as_micros().min(u64::MAX as u128) as u64,
+        completion: serde_json::from_str(&stream.get_option(REPORT_OPTION)).ok(),
+        whisper_scores: config
+            .models
+            .asr
+            .is_whisper()
+            .then(|| {
+                crate::whisper::Scores::parse(&stream.get_option(crate::whisper::SCORE_OPTION)).ok()
+            })
+            .flatten(),
+    });
+    if let Some(healthy) = healthy {
+        // Inspect native completion health even when cancellation discards
+        // its text, so an unknown fault cannot leave a cached session.
+        let result = result_text_for(&stream, config, &AtomicBool::new(false), purpose);
+        retain_native_health(result, healthy, cancelled)
+    } else {
+        result_text_for(&stream, config, cancelled, purpose)
+    }
 }
 
 fn retain_native_health(
@@ -397,6 +481,34 @@ fn retain_native_health(
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    #[test]
+    fn moonshine_retry_only_for_empty_non_silent_parts_of_two_seconds_or_more() {
+        let rate = ASR_SAMPLE_RATE as usize;
+        let speech = vec![0.1; 3 * rate];
+        assert!(moonshine_retry_eligible(&speech, ""));
+        assert!(!moonshine_retry_eligible(&speech, "text"));
+        assert!(!moonshine_retry_eligible(&vec![0.1; rate], ""));
+        // Digital silence is reported natively and never retried.
+        assert!(!moonshine_retry_eligible(&vec![1e-7; 3 * rate], ""));
+    }
+
+    #[test]
+    fn quietest_split_prefers_a_pause_near_the_middle_and_keeps_halves() {
+        let rate = ASR_SAMPLE_RATE as usize;
+        let mut samples = vec![0.2_f32; 10 * rate];
+        // A 300 ms pause 1 s after the middle.
+        samples[6 * rate..6 * rate + 3 * rate / 10].fill(0.0);
+        let split = quietest_split(&samples);
+        assert!(
+            (6 * rate..6 * rate + 3 * rate / 10).contains(&split),
+            "{split}"
+        );
+        // Short inputs still leave at least 0.5 s on each side.
+        let short = vec![0.2_f32; 2 * rate];
+        let split = quietest_split(&short);
+        assert!(split >= rate / 2 && short.len() - split >= rate / 2);
+    }
 
     #[test]
     fn duration_limited_drafts_cannot_pass_completed_validation() {
