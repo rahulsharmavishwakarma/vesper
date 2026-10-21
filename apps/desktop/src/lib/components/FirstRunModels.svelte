@@ -143,14 +143,14 @@
       </div>
       <span class="size-switch">
         {#if tidy}<span class="size">{formatBytes(remainingBytes(catalog, [writer]))}</span>{/if}
-        <label class="switch"
-          ><input
-            type="checkbox"
-            bind:checked={tidy}
-            disabled={started}
-            aria-label="Tidy my text"
-          /></label
-        >
+        <input
+          type="checkbox"
+          class="switch"
+          role="switch"
+          bind:checked={tidy}
+          disabled={started}
+          aria-label="Tidy my text"
+        />
       </span>
     </div>
     {#if picking}

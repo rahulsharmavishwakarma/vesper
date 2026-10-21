@@ -1,9 +1,8 @@
 <script lang="ts">
-  import { onDestroy } from 'svelte';
-  import { getRuntimeStatus, startRecording, stopRecording } from '../api/runtime';
+  import AudioIndicator from './AudioIndicator.svelte';
+  import { startRecording, stopRecording } from '../api/runtime';
   import { recordingShortcuts, type AppConfig } from '../config';
   import { shortcutLabel } from '../recording-shortcuts';
-  import { ReedMotion, followLevel, waveformEnergy } from '../voiceWaveform';
 
   let {
     settings,
@@ -22,13 +21,7 @@
   let text = $state('');
   let phase = $state<'idle' | 'listening' | 'transcribing'>('idle');
   let error = $state<string | null>(null);
-  let path = $state('');
   let box: HTMLTextAreaElement | undefined = $state();
-  const reed = new ReedMotion(false);
-  let level = 0;
-  let raw = 0;
-  let frame = 0;
-  let sampler: ReturnType<typeof setInterval> | undefined;
   let holding = false;
   const ready = $derived(install === 'done');
   const hold = $derived(shortcutLabel(recordingShortcuts(settings).hold));
@@ -36,19 +29,6 @@
   // Any text that lands in the box counts: the button below, or the global
   // shortcut pasting into it when typing into apps is on.
   $effect(() => onDone(text.trim().length > 1));
-
-  function animate() {
-    let last = performance.now();
-    const draw = (now: number) => {
-      const elapsed = now - last;
-      last = now;
-      level = followLevel(level, phase === 'listening' ? waveformEnergy(raw) : 0, elapsed);
-      path = reed.path(Math.max(0.03, level), 3.4, elapsed);
-      if (phase !== 'idle' || level > 0.01) frame = requestAnimationFrame(draw);
-    };
-    cancelAnimationFrame(frame);
-    frame = requestAnimationFrame(draw);
-  }
 
   async function begin() {
     if (!ready || holding || phase === 'transcribing') return;
@@ -62,15 +42,6 @@
       return;
     }
     phase = 'listening';
-    clearInterval(sampler);
-    sampler = setInterval(async () => {
-      try {
-        raw = (await getRuntimeStatus()).audioLevel;
-      } catch {
-        raw = 0;
-      }
-    }, 70);
-    animate();
     // A release that arrived while starting still finishes the recording.
     if (!holding) void end();
   }
@@ -81,8 +52,6 @@
       return;
     }
     holding = false;
-    clearInterval(sampler);
-    raw = 0;
     phase = 'transcribing';
     try {
       const result = await stopRecording();
@@ -100,11 +69,6 @@
     phase = 'idle';
     box?.focus();
   }
-
-  onDestroy(() => {
-    cancelAnimationFrame(frame);
-    clearInterval(sampler);
-  });
 </script>
 
 <div class="card">
@@ -117,9 +81,12 @@
       aria-label="Practice text"
       disabled={!ready}></textarea>
     <div class="live">
-      <svg viewBox="0 0 320 100" preserveAspectRatio="none" aria-hidden="true"
-        ><path d={path} /></svg
-      >
+      <AudioIndicator
+        recording={phase === 'listening'}
+        processing={phase === 'transcribing'}
+        complete={phase === 'idle' && Boolean(text.trim())}
+        desktop
+      />
       <p class="state" role="status">
         {#if phase === 'listening'}<b>Listening</b>{:else if phase === 'transcribing'}<b
             >Transcribing…</b
@@ -211,15 +178,10 @@
     margin-top: 16px;
     min-height: 60px;
   }
-  .live svg {
+  .live > :global(.voice-indicator) {
+    --voice-height: 72px;
     flex: 1;
-    min-width: 0;
-    height: 60px;
-    color: var(--color-accent);
-    stroke: currentColor;
-    stroke-width: 3;
-    stroke-linecap: round;
-    fill: none;
+    margin: 0;
   }
   .state {
     min-width: 128px;

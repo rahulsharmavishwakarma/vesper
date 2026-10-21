@@ -444,7 +444,7 @@
     background: var(--color-tint);
   }
   .style[aria-checked='true'] b {
-    color: var(--color-accent-light);
+    color: var(--color-accent);
   }
   .style[aria-disabled='true'] {
     opacity: 0.5;

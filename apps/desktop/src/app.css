@@ -2862,7 +2862,8 @@ button:is(
   padding-block: 0;
   gap: var(--space-4);
 }
-.settings-content .setting-toggle .checkbox-field input[type='checkbox'] {
+.settings-content .setting-toggle .checkbox-field input[type='checkbox'],
+.first-run input.switch {
   order: 2;
   margin-left: auto;
   appearance: none;
@@ -2880,7 +2881,8 @@ button:is(
   transform: none;
   transition: background-color var(--duration-state) var(--ease-out);
 }
-.settings-content .setting-toggle input[type='checkbox']::before {
+.settings-content .setting-toggle input[type='checkbox']::before,
+.first-run input.switch::before {
   content: '';
   position: absolute;
   top: 3px;
@@ -2894,16 +2896,19 @@ button:is(
   transform: none;
   transition: transform var(--duration-state) var(--ease-out);
 }
-.settings-content .setting-toggle input[type='checkbox']:checked {
+.settings-content .setting-toggle input[type='checkbox']:checked,
+.first-run input.switch:checked {
   background: var(--color-accent);
   border-color: var(--color-accent);
 }
-.settings-content .setting-toggle input[type='checkbox']:checked::before {
+.settings-content .setting-toggle input[type='checkbox']:checked::before,
+.first-run input.switch:checked::before {
   transform: translateX(16px);
   background: var(--color-on-accent);
   opacity: 1;
 }
-.settings-content .setting-toggle input[type='checkbox']:disabled {
+.settings-content .setting-toggle input[type='checkbox']:disabled,
+.first-run input.switch:disabled {
   opacity: 0.45;
   cursor: not-allowed;
 }
