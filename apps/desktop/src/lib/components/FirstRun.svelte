@@ -8,8 +8,9 @@
   import FirstRunAccess from './FirstRunAccess.svelte';
   import FirstRunShortcut from './FirstRunShortcut.svelte';
   import FirstRunWords from './FirstRunWords.svelte';
-  import { installModel, type InstallProgress } from '../api/runtime';
-  import type { DownloadTarget } from '../modelDownloads';
+  import FirstRunTry from './FirstRunTry.svelte';
+  import { getModelInstallation, installModel, type InstallProgress } from '../api/runtime';
+  import { downloadTarget, type DownloadTarget } from '../modelDownloads';
   import { completeOnboarding, saveOnboardingStep } from '../api/onboarding';
   import {
     FIRST_RUN_STEPS,
@@ -25,7 +26,6 @@
     transcriptionLanguageOptions,
     type AppConfig,
   } from '../config';
-  import { downloadTarget } from '../modelDownloads';
   import { shortcutLabel } from '../recording-shortcuts';
 
   let {
@@ -106,6 +106,7 @@
   let voiceReady = $state(false);
   let accessReady = $state(false);
   let words = $state<string[]>([]);
+  let tried = $state(false);
   let models:
     | {
         plan: () => { settings: AppConfig; targets: DownloadTarget[]; bytes: number };
@@ -181,6 +182,26 @@
     install.status = 'done';
   }
 
+  // After a restart the download state is gone: check what is installed and
+  // pick the download up again if anything is missing.
+  async function ensureInstalled() {
+    if (install.status !== 'idle' || !settings) return;
+    try {
+      if ((await getModelInstallation()).ready) {
+        install = { status: 'done', total: 0, done: 0, error: null };
+        return;
+      }
+    } catch {
+      // Fall through to a download, which skips files that are already present.
+    }
+    const targets = [downloadTarget(settings, 'asr')];
+    if (settings.cleanupEnabled) targets.push(downloadTarget(settings, 'rewriter'));
+    void startInstall({ settings, targets, bytes: 1 });
+  }
+  $effect(() => {
+    if (step === 6) void ensureInstalled();
+  });
+
   const percent = $derived.by(() => {
     if (install.status === 'done') return 100;
     if (!install.total) return 0;
@@ -198,6 +219,10 @@
   const waiting = $derived.by(() => {
     if (step === 1 && !voiceReady) return 'Allow the microphone and say a few words.';
     if (step === 3 && !accessReady) return 'Turn on Accessibility, or keep your text in Vesper.';
+    if (step === 6 && !tried)
+      return install.status === 'done'
+        ? 'Hold to talk and say something.'
+        : 'Waiting for the models to finish.';
     if (step === 2 && install.status === 'idle') return models?.blocker() ?? null;
     return null;
   });
@@ -609,7 +634,13 @@
                   onWords={(next) => (words = next)}
                 />
               {:else}
-                <div class="placeholder">This step arrives in the next setup build.</div>
+                {#if step === 6 && settings}<FirstRunTry
+                    {settings}
+                    install={install.status}
+                    {percent}
+                    onRetry={() => void startInstall(lastPlan ?? undefined)}
+                    onDone={(done) => (tried = done)}
+                  />{/if}
               {/if}
             </section>
           {/if}
@@ -641,7 +672,7 @@
               type="button"
               class="primary go"
               disabled={Boolean(waiting)}
-              onclick={() => go(step + 1)}>Continue</button
+              onclick={() => go(step + 1)}>{step === 6 ? 'Finish' : 'Continue'}</button
             >
           {/if}
         </footer>
@@ -1022,12 +1053,6 @@
     color: var(--color-muted);
     margin: 0 0 26px;
     max-width: 56ch;
-  }
-  .placeholder {
-    padding: var(--space-6);
-    border: 1px dashed var(--color-line);
-    border-radius: var(--radius-lg);
-    color: var(--color-muted);
   }
   .ready-mark {
     width: 84px;
