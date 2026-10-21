@@ -71,6 +71,7 @@ make audit-python
 # Apple-silicon macOS benchmark dependency audits:
 make audit-python-audio-frontend
 make audit-python-vibevoice
+make audit-python-onnx-quantize
 ```
 
 Use `uv add --dev PACKAGE` / `uv remove --dev PACKAGE` for contributor tools.
@@ -83,7 +84,9 @@ is independent of the non-distributable Python tooling project's version.
 
 Model probes use separate macOS Apple-silicon/Python 3.12 projects under
 `benchmarks/asr/python/audio-frontend` and `benchmarks/asr/python/vibevoice`, each
-with its own manifest and lockfile. Their incompatible NumPy/model dependencies
+with its own manifest and lockfile. `benchmarks/asr/python/onnx-quantize` holds the
+ONNX weight-only conversion tooling for published speech artifacts; see
+[Parakeet CPU precision](offline-asr.md#parakeet-cpu-precision). Their incompatible NumPy/model dependencies
 are isolated from contributor checks. See [benchmark Python setup](../benchmarks/asr/README.md#python-environments).
 The retained benchmark requirements files are generated compatibility exports;
 `make python-lock-check` verifies they match their locks. Dated validation reports

@@ -69,7 +69,13 @@ pub(crate) fn key(config: &AppConfig, root: &Path) -> Result<RecognizerKey> {
         provider: "cpu",
         threads: worker_threads(),
         language: config.language,
-        precision: "pinned-int8-onnx",
+        precision: if config.models.custom_asr.is_none()
+            && config.models.asr == vesper_core::AsrModel::ParakeetTdt06bV3
+        {
+            "pinned-int4-weight-only-onnx"
+        } else {
+            "pinned-int8-onnx"
+        },
         decoding_method: "greedy_search",
         use_punct: offline_asr::COHERE_USE_PUNCT,
         use_itn: offline_asr::COHERE_USE_ITN,
