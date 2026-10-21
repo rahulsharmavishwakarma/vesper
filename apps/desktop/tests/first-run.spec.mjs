@@ -39,15 +39,39 @@ test('setup welcomes a new profile, saves progress and finishes once', async ({ 
   await expect(page.getByText('Apple M3')).toBeVisible();
   await expect(page.getByText('Already on this Mac. Nothing to download.')).toBeVisible();
   await page.getByRole('button', { name: 'Download and set up' }).click();
-  for (const title of [
-    'Let Vesper type for you.',
-    'Your shortcut.',
-    'Make it yours.',
-    'Say something.',
-  ]) {
-    await expect(page.getByRole('heading', { name: title })).toBeVisible();
-    await page.getByRole('button', { name: 'Continue' }).click();
-  }
+  // Access: typing into apps turns on once Accessibility is allowed.
+  await expect(page.getByRole('heading', { name: 'Let Vesper type for you.' })).toBeVisible();
+  await expect(page.getByRole('button', { name: 'Continue' })).toBeDisabled();
+  await page.getByRole('button', { name: 'Open System Settings' }).click();
+  await page.evaluate(() => {
+    window.previewPermissions = {
+      supported: true,
+      accessibility: true,
+      eventPosting: true,
+      clipboard: true,
+    };
+  });
+  await expect(page.locator('.first-run .pill.ok')).toHaveCount(2, { timeout: 5000 });
+  await page.getByRole('button', { name: 'Continue' }).click();
+  // Shortcut: the same recorder as Settings.
+  await expect(page.getByRole('heading', { name: 'Your shortcut.' })).toBeVisible();
+  await expect(page.locator('#setup-hold-shortcut')).toBeVisible();
+  await page.getByRole('button', { name: 'Continue' }).click();
+  // Your words: a taught word lands in the sample sentence and is saved.
+  await expect(page.getByRole('heading', { name: 'Make it yours.' })).toBeVisible();
+  await page.getByRole('button', { name: 'Try “Arclight”' }).click();
+  await expect(page.locator('.first-run mark[data-word="Arclight"]')).toBeVisible();
+  await expect.poll(() => commands(page, 'save_personalization')).toBeGreaterThan(0);
+  await page.getByRole('radio', { name: /Polished/ }).click();
+  await expect(page.locator('.first-run .written')).toHaveText(
+    'Can you send the Arclight notes to Priya by Friday?',
+  );
+  await page.getByRole('button', { name: 'Continue' }).click();
+  await expect(page.getByRole('heading', { name: 'Say something.' })).toBeVisible();
+  await page.getByRole('button', { name: 'Continue' }).click();
+  await expect(page.getByRole('heading', { name: 'Vesper is ready.' })).toBeVisible();
+  await expect(page.locator('.first-run .summary')).toContainText('Polished · Arclight');
+  await expect(page.locator('.first-run .summary')).toContainText(/Typing into apps\s*On/);
   await expect(page.getByRole('heading', { name: 'Vesper is ready.' })).toBeVisible();
   await page.getByRole('button', { name: 'Start dictating' }).click();
   await expect(page.getByRole('heading', { name: 'Vesper is ready.' })).toHaveCount(0);
@@ -102,6 +126,25 @@ test('a blocked microphone explains where to turn it on', async ({ page }) => {
   await page.getByRole('button', { name: 'Open System Settings' }).click();
   expect(await commands(page, 'open_privacy_settings')).toBe(1);
   await expect(page.getByRole('button', { name: 'Continue' })).toBeDisabled();
+});
+
+test('a person who cannot turn on Accessibility can keep text in Vesper', async ({ page }) => {
+  await page.goto('/tests/interaction-preview.html?first-run&first-run-step=3');
+  await page.getByRole('button', { name: 'Open System Settings' }).click();
+  await expect(page.getByText('Still waiting?')).toBeVisible({ timeout: 12_000 });
+  await page.getByRole('button', { name: 'Keep text in Vesper' }).click();
+  await expect(page.getByText('Your words appear in Vesper, ready to copy.')).toBeVisible();
+  await expect(page.getByRole('button', { name: 'Continue' })).toBeEnabled();
+});
+
+test('a word already added is not added twice', async ({ page }) => {
+  await page.goto('/tests/interaction-preview.html?first-run&first-run-step=5');
+  await page.getByLabel('Word to add').fill('Priya');
+  await page.getByLabel('Word to add').press('Enter');
+  await page.getByLabel('Word to add').fill('priya');
+  await page.getByLabel('Word to add').press('Enter');
+  await expect(page.getByRole('alert')).toHaveText('“priya” is already in your words.');
+  await expect(page.locator('.first-run .chip:not(.try)')).toHaveCount(1);
 });
 
 test('setup resumes where it stopped, without replaying Welcome', async ({ page }) => {
