@@ -43,6 +43,10 @@ fn main() {
             "phonon2BridgeSha256",
         ),
         (
+            "native/mlx/Sources/VesperMLX/ParakeetRedux.swift",
+            "reduxBridgeSha256",
+        ),
+        (
             "patches/mlx-audio-swift/live-session.patch",
             "livePatchSha256",
         ),
