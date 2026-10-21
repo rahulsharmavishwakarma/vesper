@@ -1,0 +1,1150 @@
+{
+  "_description": "Accuracy figures setup uses to recommend a speech model (issue #270). Published figures come from the Open ASR Leaderboard (hf-audio/open-asr-leaderboard-results@648e485, hf-audio/multilingual_evals@3589b3c, version 21 Oct 2026) or the model maker's own card or paper; they are not Vesper measurements. Local results are Vesper's own runs through the application path; speed and memory come only from these. Replace published ranking with a local per-language matrix under issue #296. Writer scores are instruction following (IFEval) and, where published, a multilingual benchmark; they are compared only within one evaluation harness.",
+  "schema_version": 1,
+  "writers": {
+    "Qwen/Qwen3.5-0.8B": {
+      "instructions": {
+        "value": 52.1,
+        "set": "IFEval, non-thinking",
+        "harness": "Qwen’s own evaluation",
+        "url": "https://huggingface.co/Qwen/Qwen3.5-0.8B"
+      },
+      "multilingual": {
+        "value": 34.1,
+        "set": "MMMLU, non-thinking",
+        "harness": "Qwen’s own evaluation",
+        "url": "https://huggingface.co/Qwen/Qwen3.5-0.8B"
+      },
+      "local": "Vesper tested it end to end for keeping your meaning."
+    },
+    "preset:hf-82e478ca6fdb1e11": {
+      "instructions": {
+        "value": 30.71,
+        "set": "IFEval, full-precision model",
+        "harness": "Open LLM Leaderboard v2",
+        "url": "https://huggingface.co/datasets/open-llm-leaderboard/contents"
+      }
+    },
+    "preset:hf-e42e73104709477e": {
+      "instructions": {
+        "value": 44.76,
+        "set": "IFEval, full-precision model",
+        "harness": "Open LLM Leaderboard v2",
+        "url": "https://huggingface.co/datasets/open-llm-leaderboard/contents"
+      }
+    },
+    "preset:hf-e8b39a8752a85d55": {
+      "instructions": {
+        "value": 38.42,
+        "set": "IFEval, full-precision model",
+        "harness": "Open LLM Leaderboard v2",
+        "url": "https://huggingface.co/datasets/open-llm-leaderboard/contents"
+      }
+    },
+    "preset:hf-d152d789235fe4ec": {
+      "instructions": {
+        "value": 53.68,
+        "set": "IFEval, full-precision model",
+        "harness": "Open LLM Leaderboard v2",
+        "url": "https://huggingface.co/datasets/open-llm-leaderboard/contents"
+      }
+    },
+    "preset:hf-68aaf8e5b14b7284": {
+      "instructions": {
+        "value": 80.2,
+        "set": "IFEval",
+        "harness": "Google’s Gemma 3 technical report",
+        "url": "https://arxiv.org/abs/2503.19786"
+      },
+      "multilingual": {
+        "value": 34.2,
+        "set": "Global-MMLU-Lite",
+        "harness": "Google’s Gemma 3 technical report",
+        "url": "https://arxiv.org/abs/2503.19786"
+      }
+    }
+  },
+  "published": {
+    "nvidia/parakeet-tdt-0.6b-v3": {
+      "bg": {
+        "metric": "wer",
+        "value": 12.64,
+        "source": "maker",
+        "set": "FLEURS, NVIDIA model card",
+        "url": "https://huggingface.co/nvidia/parakeet-tdt-0.6b-v3"
+      },
+      "cs": {
+        "metric": "wer",
+        "value": 11.01,
+        "source": "maker",
+        "set": "FLEURS, NVIDIA model card",
+        "url": "https://huggingface.co/nvidia/parakeet-tdt-0.6b-v3"
+      },
+      "da": {
+        "metric": "wer",
+        "value": 18.41,
+        "source": "maker",
+        "set": "FLEURS, NVIDIA model card",
+        "url": "https://huggingface.co/nvidia/parakeet-tdt-0.6b-v3"
+      },
+      "de": {
+        "metric": "wer",
+        "value": 4.16,
+        "source": "leaderboard",
+        "set": "FLEURS, 21 Oct 2026",
+        "url": "https://huggingface.co/spaces/hf-audio/open_asr_leaderboard"
+      },
+      "el": {
+        "metric": "wer",
+        "value": 20.7,
+        "source": "maker",
+        "set": "FLEURS, NVIDIA model card",
+        "url": "https://huggingface.co/nvidia/parakeet-tdt-0.6b-v3"
+      },
+      "en": {
+        "metric": "wer",
+        "value": 6.51,
+        "source": "leaderboard",
+        "set": "English average, 21 Oct 2026",
+        "url": "https://huggingface.co/spaces/hf-audio/open_asr_leaderboard"
+      },
+      "es": {
+        "metric": "wer",
+        "value": 3.25,
+        "source": "leaderboard",
+        "set": "FLEURS, 21 Oct 2026",
+        "url": "https://huggingface.co/spaces/hf-audio/open_asr_leaderboard"
+      },
+      "et": {
+        "metric": "wer",
+        "value": 17.73,
+        "source": "maker",
+        "set": "FLEURS, NVIDIA model card",
+        "url": "https://huggingface.co/nvidia/parakeet-tdt-0.6b-v3"
+      },
+      "fi": {
+        "metric": "wer",
+        "value": 13.21,
+        "source": "maker",
+        "set": "FLEURS, NVIDIA model card",
+        "url": "https://huggingface.co/nvidia/parakeet-tdt-0.6b-v3"
+      },
+      "fr": {
+        "metric": "wer",
+        "value": 4.68,
+        "source": "leaderboard",
+        "set": "FLEURS, 21 Oct 2026",
+        "url": "https://huggingface.co/spaces/hf-audio/open_asr_leaderboard"
+      },
+      "hr": {
+        "metric": "wer",
+        "value": 12.46,
+        "source": "maker",
+        "set": "FLEURS, NVIDIA model card",
+        "url": "https://huggingface.co/nvidia/parakeet-tdt-0.6b-v3"
+      },
+      "hu": {
+        "metric": "wer",
+        "value": 15.72,
+        "source": "maker",
+        "set": "FLEURS, NVIDIA model card",
+        "url": "https://huggingface.co/nvidia/parakeet-tdt-0.6b-v3"
+      },
+      "it": {
+        "metric": "wer",
+        "value": 2.42,
+        "source": "leaderboard",
+        "set": "FLEURS, 21 Oct 2026",
+        "url": "https://huggingface.co/spaces/hf-audio/open_asr_leaderboard"
+      },
+      "lt": {
+        "metric": "wer",
+        "value": 20.35,
+        "source": "maker",
+        "set": "FLEURS, NVIDIA model card",
+        "url": "https://huggingface.co/nvidia/parakeet-tdt-0.6b-v3"
+      },
+      "lv": {
+        "metric": "wer",
+        "value": 22.84,
+        "source": "maker",
+        "set": "FLEURS, NVIDIA model card",
+        "url": "https://huggingface.co/nvidia/parakeet-tdt-0.6b-v3"
+      },
+      "mt": {
+        "metric": "wer",
+        "value": 20.46,
+        "source": "maker",
+        "set": "FLEURS, NVIDIA model card",
+        "url": "https://huggingface.co/nvidia/parakeet-tdt-0.6b-v3"
+      },
+      "nl": {
+        "metric": "wer",
+        "value": 6.39,
+        "source": "leaderboard",
+        "set": "FLEURS, 21 Oct 2026",
+        "url": "https://huggingface.co/spaces/hf-audio/open_asr_leaderboard"
+      },
+      "pl": {
+        "metric": "wer",
+        "value": 7.31,
+        "source": "maker",
+        "set": "FLEURS, NVIDIA model card",
+        "url": "https://huggingface.co/nvidia/parakeet-tdt-0.6b-v3"
+      },
+      "pt": {
+        "metric": "wer",
+        "value": 4.46,
+        "source": "leaderboard",
+        "set": "FLEURS, 21 Oct 2026",
+        "url": "https://huggingface.co/spaces/hf-audio/open_asr_leaderboard"
+      },
+      "ro": {
+        "metric": "wer",
+        "value": 12.44,
+        "source": "maker",
+        "set": "FLEURS, NVIDIA model card",
+        "url": "https://huggingface.co/nvidia/parakeet-tdt-0.6b-v3"
+      },
+      "ru": {
+        "metric": "wer",
+        "value": 5.51,
+        "source": "maker",
+        "set": "FLEURS, NVIDIA model card",
+        "url": "https://huggingface.co/nvidia/parakeet-tdt-0.6b-v3"
+      },
+      "sk": {
+        "metric": "wer",
+        "value": 8.82,
+        "source": "maker",
+        "set": "FLEURS, NVIDIA model card",
+        "url": "https://huggingface.co/nvidia/parakeet-tdt-0.6b-v3"
+      },
+      "sl": {
+        "metric": "wer",
+        "value": 24.03,
+        "source": "maker",
+        "set": "FLEURS, NVIDIA model card",
+        "url": "https://huggingface.co/nvidia/parakeet-tdt-0.6b-v3"
+      },
+      "sv": {
+        "metric": "wer",
+        "value": 15.08,
+        "source": "maker",
+        "set": "FLEURS, NVIDIA model card",
+        "url": "https://huggingface.co/nvidia/parakeet-tdt-0.6b-v3"
+      },
+      "uk": {
+        "metric": "wer",
+        "value": 6.79,
+        "source": "maker",
+        "set": "FLEURS, NVIDIA model card",
+        "url": "https://huggingface.co/nvidia/parakeet-tdt-0.6b-v3"
+      }
+    },
+    "moondream/parakeet-redux": {
+      "bg": {
+        "metric": "wer",
+        "value": 11.23,
+        "source": "maker",
+        "set": "FLEURS, Moondream model card",
+        "url": "https://huggingface.co/moondream/parakeet-redux"
+      },
+      "hr": {
+        "metric": "wer",
+        "value": 9.26,
+        "source": "maker",
+        "set": "FLEURS, Moondream model card",
+        "url": "https://huggingface.co/moondream/parakeet-redux"
+      },
+      "cs": {
+        "metric": "wer",
+        "value": 10.25,
+        "source": "maker",
+        "set": "FLEURS, Moondream model card",
+        "url": "https://huggingface.co/moondream/parakeet-redux"
+      },
+      "da": {
+        "metric": "wer",
+        "value": 15.94,
+        "source": "maker",
+        "set": "FLEURS, Moondream model card",
+        "url": "https://huggingface.co/moondream/parakeet-redux"
+      },
+      "nl": {
+        "metric": "wer",
+        "value": 7.45,
+        "source": "maker",
+        "set": "FLEURS, Moondream model card",
+        "url": "https://huggingface.co/moondream/parakeet-redux"
+      },
+      "en": {
+        "metric": "wer",
+        "value": 4.9,
+        "source": "maker",
+        "set": "FLEURS, Moondream model card",
+        "url": "https://huggingface.co/moondream/parakeet-redux"
+      },
+      "et": {
+        "metric": "wer",
+        "value": 9.15,
+        "source": "maker",
+        "set": "FLEURS, Moondream model card",
+        "url": "https://huggingface.co/moondream/parakeet-redux"
+      },
+      "fi": {
+        "metric": "wer",
+        "value": 10.38,
+        "source": "maker",
+        "set": "FLEURS, Moondream model card",
+        "url": "https://huggingface.co/moondream/parakeet-redux"
+      },
+      "fr": {
+        "metric": "wer",
+        "value": 7.71,
+        "source": "maker",
+        "set": "FLEURS, Moondream model card",
+        "url": "https://huggingface.co/moondream/parakeet-redux"
+      },
+      "de": {
+        "metric": "wer",
+        "value": 5.42,
+        "source": "maker",
+        "set": "FLEURS, Moondream model card",
+        "url": "https://huggingface.co/moondream/parakeet-redux"
+      },
+      "el": {
+        "metric": "wer",
+        "value": 32.48,
+        "source": "maker",
+        "set": "FLEURS, Moondream model card",
+        "url": "https://huggingface.co/moondream/parakeet-redux"
+      },
+      "hu": {
+        "metric": "wer",
+        "value": 14.15,
+        "source": "maker",
+        "set": "FLEURS, Moondream model card",
+        "url": "https://huggingface.co/moondream/parakeet-redux"
+      },
+      "it": {
+        "metric": "wer",
+        "value": 3.24,
+        "source": "maker",
+        "set": "FLEURS, Moondream model card",
+        "url": "https://huggingface.co/moondream/parakeet-redux"
+      },
+      "lv": {
+        "metric": "wer",
+        "value": 12.8,
+        "source": "maker",
+        "set": "FLEURS, Moondream model card",
+        "url": "https://huggingface.co/moondream/parakeet-redux"
+      },
+      "lt": {
+        "metric": "wer",
+        "value": 17.27,
+        "source": "maker",
+        "set": "FLEURS, Moondream model card",
+        "url": "https://huggingface.co/moondream/parakeet-redux"
+      },
+      "mt": {
+        "metric": "wer",
+        "value": 13.65,
+        "source": "maker",
+        "set": "FLEURS, Moondream model card",
+        "url": "https://huggingface.co/moondream/parakeet-redux"
+      },
+      "pl": {
+        "metric": "wer",
+        "value": 8.59,
+        "source": "maker",
+        "set": "FLEURS, Moondream model card",
+        "url": "https://huggingface.co/moondream/parakeet-redux"
+      },
+      "pt": {
+        "metric": "wer",
+        "value": 4.99,
+        "source": "maker",
+        "set": "FLEURS, Moondream model card",
+        "url": "https://huggingface.co/moondream/parakeet-redux"
+      },
+      "ro": {
+        "metric": "wer",
+        "value": 10.32,
+        "source": "maker",
+        "set": "FLEURS, Moondream model card",
+        "url": "https://huggingface.co/moondream/parakeet-redux"
+      },
+      "ru": {
+        "metric": "wer",
+        "value": 7.91,
+        "source": "maker",
+        "set": "FLEURS, Moondream model card",
+        "url": "https://huggingface.co/moondream/parakeet-redux"
+      },
+      "sk": {
+        "metric": "wer",
+        "value": 7.26,
+        "source": "maker",
+        "set": "FLEURS, Moondream model card",
+        "url": "https://huggingface.co/moondream/parakeet-redux"
+      },
+      "sl": {
+        "metric": "wer",
+        "value": 16.21,
+        "source": "maker",
+        "set": "FLEURS, Moondream model card",
+        "url": "https://huggingface.co/moondream/parakeet-redux"
+      },
+      "es": {
+        "metric": "wer",
+        "value": 3.71,
+        "source": "maker",
+        "set": "FLEURS, Moondream model card",
+        "url": "https://huggingface.co/moondream/parakeet-redux"
+      },
+      "sv": {
+        "metric": "wer",
+        "value": 12.71,
+        "source": "maker",
+        "set": "FLEURS, Moondream model card",
+        "url": "https://huggingface.co/moondream/parakeet-redux"
+      },
+      "uk": {
+        "metric": "wer",
+        "value": 7.06,
+        "source": "maker",
+        "set": "FLEURS, Moondream model card",
+        "url": "https://huggingface.co/moondream/parakeet-redux"
+      }
+    },
+    "nvidia/nemotron-3.5-asr-streaming-0.6b": {
+      "es": {
+        "metric": "wer",
+        "value": 4.23,
+        "source": "leaderboard",
+        "set": "FLEURS, 21 Oct 2026",
+        "url": "https://huggingface.co/spaces/hf-audio/open_asr_leaderboard"
+      },
+      "it": {
+        "metric": "wer",
+        "value": 4.81,
+        "source": "leaderboard",
+        "set": "FLEURS, 21 Oct 2026",
+        "url": "https://huggingface.co/spaces/hf-audio/open_asr_leaderboard"
+      },
+      "pt": {
+        "metric": "wer",
+        "value": 5.8,
+        "source": "leaderboard",
+        "set": "FLEURS, 21 Oct 2026",
+        "url": "https://huggingface.co/spaces/hf-audio/open_asr_leaderboard"
+      },
+      "hi": {
+        "metric": "wer",
+        "value": 13.85,
+        "source": "leaderboard",
+        "set": "Voice Arena Monsoon Hindi, 21 Oct 2026",
+        "url": "https://huggingface.co/spaces/hf-audio/open_asr_leaderboard"
+      },
+      "ko": {
+        "metric": "cer",
+        "value": 7.59,
+        "source": "maker",
+        "set": "FLEURS, 80 ms streaming chunks, NVIDIA model card",
+        "url": "https://huggingface.co/nvidia/nemotron-3.5-asr-streaming-0.6b"
+      },
+      "en": {
+        "metric": "wer",
+        "value": 10.51,
+        "source": "leaderboard",
+        "set": "English average, 21 Oct 2026",
+        "url": "https://huggingface.co/spaces/hf-audio/open_asr_leaderboard"
+      },
+      "de": {
+        "metric": "wer",
+        "value": 8.46,
+        "source": "leaderboard",
+        "set": "FLEURS, 21 Oct 2026",
+        "url": "https://huggingface.co/spaces/hf-audio/open_asr_leaderboard"
+      },
+      "fr": {
+        "metric": "wer",
+        "value": 9.86,
+        "source": "leaderboard",
+        "set": "FLEURS, 21 Oct 2026",
+        "url": "https://huggingface.co/spaces/hf-audio/open_asr_leaderboard"
+      },
+      "ru": {
+        "metric": "wer",
+        "value": 10.84,
+        "source": "maker",
+        "set": "FLEURS, 80 ms streaming chunks, NVIDIA model card",
+        "url": "https://huggingface.co/nvidia/nemotron-3.5-asr-streaming-0.6b"
+      },
+      "tr": {
+        "metric": "wer",
+        "value": 12.34,
+        "source": "maker",
+        "set": "FLEURS, 80 ms streaming chunks, NVIDIA model card",
+        "url": "https://huggingface.co/nvidia/nemotron-3.5-asr-streaming-0.6b"
+      },
+      "vi": {
+        "metric": "wer",
+        "value": 13.41,
+        "source": "maker",
+        "set": "FLEURS, 80 ms streaming chunks, NVIDIA model card",
+        "url": "https://huggingface.co/nvidia/nemotron-3.5-asr-streaming-0.6b"
+      },
+      "nl": {
+        "metric": "wer",
+        "value": 11.9,
+        "source": "leaderboard",
+        "set": "FLEURS, 21 Oct 2026",
+        "url": "https://huggingface.co/spaces/hf-audio/open_asr_leaderboard"
+      },
+      "ja": {
+        "metric": "cer",
+        "value": 13.87,
+        "source": "maker",
+        "set": "FLEURS, 80 ms streaming chunks, NVIDIA model card",
+        "url": "https://huggingface.co/nvidia/nemotron-3.5-asr-streaming-0.6b"
+      },
+      "ar": {
+        "metric": "wer",
+        "value": 13.17,
+        "source": "maker",
+        "set": "FLEURS, 80 ms streaming chunks, NVIDIA model card",
+        "url": "https://huggingface.co/nvidia/nemotron-3.5-asr-streaming-0.6b"
+      },
+      "uk": {
+        "metric": "wer",
+        "value": 15.7,
+        "source": "maker",
+        "set": "FLEURS, 80 ms streaming chunks, NVIDIA model card",
+        "url": "https://huggingface.co/nvidia/nemotron-3.5-asr-streaming-0.6b"
+      },
+      "pl": {
+        "metric": "wer",
+        "value": 19.88,
+        "source": "maker",
+        "set": "FLEURS, 80 ms streaming chunks, NVIDIA model card",
+        "url": "https://huggingface.co/nvidia/nemotron-3.5-asr-streaming-0.6b"
+      },
+      "nb": {
+        "metric": "wer",
+        "value": 20.43,
+        "source": "maker",
+        "set": "FLEURS, 80 ms streaming chunks, NVIDIA model card",
+        "url": "https://huggingface.co/nvidia/nemotron-3.5-asr-streaming-0.6b"
+      },
+      "fi": {
+        "metric": "wer",
+        "value": 21.19,
+        "source": "maker",
+        "set": "FLEURS, 80 ms streaming chunks, NVIDIA model card",
+        "url": "https://huggingface.co/nvidia/nemotron-3.5-asr-streaming-0.6b"
+      },
+      "zh": {
+        "metric": "cer",
+        "value": 20.56,
+        "source": "maker",
+        "set": "FLEURS, 80 ms streaming chunks, NVIDIA model card",
+        "url": "https://huggingface.co/nvidia/nemotron-3.5-asr-streaming-0.6b"
+      },
+      "cs": {
+        "metric": "wer",
+        "value": 24.18,
+        "source": "maker",
+        "set": "FLEURS, 80 ms streaming chunks, NVIDIA model card",
+        "url": "https://huggingface.co/nvidia/nemotron-3.5-asr-streaming-0.6b"
+      },
+      "bg": {
+        "metric": "wer",
+        "value": 24.5,
+        "source": "maker",
+        "set": "FLEURS, 80 ms streaming chunks, NVIDIA model card",
+        "url": "https://huggingface.co/nvidia/nemotron-3.5-asr-streaming-0.6b"
+      },
+      "sk": {
+        "metric": "wer",
+        "value": 25.08,
+        "source": "maker",
+        "set": "FLEURS, 80 ms streaming chunks, NVIDIA model card",
+        "url": "https://huggingface.co/nvidia/nemotron-3.5-asr-streaming-0.6b"
+      },
+      "sv": {
+        "metric": "wer",
+        "value": 25.61,
+        "source": "maker",
+        "set": "FLEURS, 80 ms streaming chunks, NVIDIA model card",
+        "url": "https://huggingface.co/nvidia/nemotron-3.5-asr-streaming-0.6b"
+      },
+      "hr": {
+        "metric": "wer",
+        "value": 27.92,
+        "source": "maker",
+        "set": "FLEURS, 80 ms streaming chunks, NVIDIA model card",
+        "url": "https://huggingface.co/nvidia/nemotron-3.5-asr-streaming-0.6b"
+      },
+      "ro": {
+        "metric": "wer",
+        "value": 31.52,
+        "source": "maker",
+        "set": "FLEURS, 80 ms streaming chunks, NVIDIA model card",
+        "url": "https://huggingface.co/nvidia/nemotron-3.5-asr-streaming-0.6b"
+      },
+      "et": {
+        "metric": "wer",
+        "value": 29.95,
+        "source": "maker",
+        "set": "FLEURS, 80 ms streaming chunks, NVIDIA model card",
+        "url": "https://huggingface.co/nvidia/nemotron-3.5-asr-streaming-0.6b"
+      },
+      "da": {
+        "metric": "wer",
+        "value": 32.62,
+        "source": "maker",
+        "set": "FLEURS, 80 ms streaming chunks, NVIDIA model card",
+        "url": "https://huggingface.co/nvidia/nemotron-3.5-asr-streaming-0.6b"
+      },
+      "hu": {
+        "metric": "wer",
+        "value": 32.7,
+        "source": "maker",
+        "set": "FLEURS, 80 ms streaming chunks, NVIDIA model card",
+        "url": "https://huggingface.co/nvidia/nemotron-3.5-asr-streaming-0.6b"
+      }
+    },
+    "Qwen/Qwen3-ASR-0.6B": {
+      "zh": {
+        "metric": "wer",
+        "value": 2.88,
+        "source": "maker",
+        "set": "FLEURS, Qwen3-ASR technical report, table A.2",
+        "url": "https://arxiv.org/abs/2601.21337"
+      },
+      "en": {
+        "metric": "wer",
+        "value": 6.6,
+        "source": "leaderboard",
+        "set": "English average, 21 Oct 2026",
+        "url": "https://huggingface.co/spaces/hf-audio/open_asr_leaderboard"
+      },
+      "yue": {
+        "metric": "wer",
+        "value": 5.79,
+        "source": "maker",
+        "set": "FLEURS, Qwen3-ASR technical report, table A.2",
+        "url": "https://arxiv.org/abs/2601.21337"
+      },
+      "ar": {
+        "metric": "wer",
+        "value": 25.51,
+        "source": "maker",
+        "set": "FLEURS, Qwen3-ASR technical report, table A.2",
+        "url": "https://arxiv.org/abs/2601.21337"
+      },
+      "de": {
+        "metric": "wer",
+        "value": 5.41,
+        "source": "leaderboard",
+        "set": "FLEURS, 21 Oct 2026",
+        "url": "https://huggingface.co/spaces/hf-audio/open_asr_leaderboard"
+      },
+      "fr": {
+        "metric": "wer",
+        "value": 7.06,
+        "source": "leaderboard",
+        "set": "FLEURS, 21 Oct 2026",
+        "url": "https://huggingface.co/spaces/hf-audio/open_asr_leaderboard"
+      },
+      "es": {
+        "metric": "wer",
+        "value": 4.46,
+        "source": "leaderboard",
+        "set": "FLEURS, 21 Oct 2026",
+        "url": "https://huggingface.co/spaces/hf-audio/open_asr_leaderboard"
+      },
+      "pt": {
+        "metric": "wer",
+        "value": 6.03,
+        "source": "leaderboard",
+        "set": "FLEURS, 21 Oct 2026",
+        "url": "https://huggingface.co/spaces/hf-audio/open_asr_leaderboard"
+      },
+      "id": {
+        "metric": "wer",
+        "value": 7.92,
+        "source": "maker",
+        "set": "FLEURS, Qwen3-ASR technical report, table A.2",
+        "url": "https://arxiv.org/abs/2601.21337"
+      },
+      "it": {
+        "metric": "wer",
+        "value": 4.57,
+        "source": "leaderboard",
+        "set": "FLEURS, 21 Oct 2026",
+        "url": "https://huggingface.co/spaces/hf-audio/open_asr_leaderboard"
+      },
+      "ko": {
+        "metric": "wer",
+        "value": 3.72,
+        "source": "maker",
+        "set": "FLEURS, Qwen3-ASR technical report, table A.2",
+        "url": "https://arxiv.org/abs/2601.21337"
+      },
+      "ru": {
+        "metric": "wer",
+        "value": 9.91,
+        "source": "maker",
+        "set": "FLEURS, Qwen3-ASR technical report, table A.2",
+        "url": "https://arxiv.org/abs/2601.21337"
+      },
+      "th": {
+        "metric": "wer",
+        "value": 8.34,
+        "source": "maker",
+        "set": "FLEURS, Qwen3-ASR technical report, table A.2",
+        "url": "https://arxiv.org/abs/2601.21337"
+      },
+      "vi": {
+        "metric": "wer",
+        "value": 8.52,
+        "source": "maker",
+        "set": "FLEURS, Qwen3-ASR technical report, table A.2",
+        "url": "https://arxiv.org/abs/2601.21337"
+      },
+      "ja": {
+        "metric": "wer",
+        "value": 8.33,
+        "source": "maker",
+        "set": "FLEURS, Qwen3-ASR technical report, table A.2",
+        "url": "https://arxiv.org/abs/2601.21337"
+      },
+      "tr": {
+        "metric": "wer",
+        "value": 16.18,
+        "source": "maker",
+        "set": "FLEURS, Qwen3-ASR technical report, table A.2",
+        "url": "https://arxiv.org/abs/2601.21337"
+      },
+      "hi": {
+        "metric": "wer",
+        "value": 18.13,
+        "source": "leaderboard",
+        "set": "Voice Arena Monsoon Hindi, 21 Oct 2026",
+        "url": "https://huggingface.co/spaces/hf-audio/open_asr_leaderboard"
+      },
+      "ms": {
+        "metric": "wer",
+        "value": 17.66,
+        "source": "maker",
+        "set": "FLEURS, Qwen3-ASR technical report, table A.2",
+        "url": "https://arxiv.org/abs/2601.21337"
+      },
+      "nl": {
+        "metric": "wer",
+        "value": 12.92,
+        "source": "leaderboard",
+        "set": "FLEURS, 21 Oct 2026",
+        "url": "https://huggingface.co/spaces/hf-audio/open_asr_leaderboard"
+      },
+      "sv": {
+        "metric": "wer",
+        "value": 35.87,
+        "source": "maker",
+        "set": "FLEURS, Qwen3-ASR technical report, table A.2",
+        "url": "https://arxiv.org/abs/2601.21337"
+      },
+      "da": {
+        "metric": "wer",
+        "value": 36.36,
+        "source": "maker",
+        "set": "FLEURS, Qwen3-ASR technical report, table A.2",
+        "url": "https://arxiv.org/abs/2601.21337"
+      },
+      "fi": {
+        "metric": "wer",
+        "value": 46.59,
+        "source": "maker",
+        "set": "FLEURS, Qwen3-ASR technical report, table A.2",
+        "url": "https://arxiv.org/abs/2601.21337"
+      },
+      "pl": {
+        "metric": "wer",
+        "value": 24.71,
+        "source": "maker",
+        "set": "FLEURS, Qwen3-ASR technical report, table A.2",
+        "url": "https://arxiv.org/abs/2601.21337"
+      },
+      "cs": {
+        "metric": "wer",
+        "value": 47.67,
+        "source": "maker",
+        "set": "FLEURS, Qwen3-ASR technical report, table A.2",
+        "url": "https://arxiv.org/abs/2601.21337"
+      },
+      "fil": {
+        "metric": "wer",
+        "value": 36.1,
+        "source": "maker",
+        "set": "FLEURS, Qwen3-ASR technical report, table A.2",
+        "url": "https://arxiv.org/abs/2601.21337"
+      },
+      "fa": {
+        "metric": "wer",
+        "value": 53.76,
+        "source": "maker",
+        "set": "FLEURS, Qwen3-ASR technical report, table A.2",
+        "url": "https://arxiv.org/abs/2601.21337"
+      },
+      "el": {
+        "metric": "wer",
+        "value": 49.67,
+        "source": "maker",
+        "set": "FLEURS, Qwen3-ASR technical report, table A.2",
+        "url": "https://arxiv.org/abs/2601.21337"
+      },
+      "hu": {
+        "metric": "wer",
+        "value": 59.47,
+        "source": "maker",
+        "set": "FLEURS, Qwen3-ASR technical report, table A.2",
+        "url": "https://arxiv.org/abs/2601.21337"
+      },
+      "mk": {
+        "metric": "wer",
+        "value": 37.26,
+        "source": "maker",
+        "set": "FLEURS, Qwen3-ASR technical report, table A.2",
+        "url": "https://arxiv.org/abs/2601.21337"
+      },
+      "ro": {
+        "metric": "wer",
+        "value": 44.26,
+        "source": "maker",
+        "set": "FLEURS, Qwen3-ASR technical report, table A.2",
+        "url": "https://arxiv.org/abs/2601.21337"
+      }
+    },
+    "CohereLabs/cohere-transcribe-03-2026": {
+      "en": {
+        "metric": "wer",
+        "value": 6.26,
+        "source": "leaderboard",
+        "set": "English average, 21 Oct 2026",
+        "url": "https://huggingface.co/spaces/hf-audio/open_asr_leaderboard"
+      },
+      "de": {
+        "metric": "wer",
+        "value": 3.33,
+        "source": "leaderboard",
+        "set": "FLEURS, 21 Oct 2026",
+        "url": "https://huggingface.co/spaces/hf-audio/open_asr_leaderboard"
+      },
+      "es": {
+        "metric": "wer",
+        "value": 3.26,
+        "source": "leaderboard",
+        "set": "FLEURS, 21 Oct 2026",
+        "url": "https://huggingface.co/spaces/hf-audio/open_asr_leaderboard"
+      },
+      "fr": {
+        "metric": "wer",
+        "value": 4.33,
+        "source": "leaderboard",
+        "set": "FLEURS, 21 Oct 2026",
+        "url": "https://huggingface.co/spaces/hf-audio/open_asr_leaderboard"
+      },
+      "it": {
+        "metric": "wer",
+        "value": 2.33,
+        "source": "leaderboard",
+        "set": "FLEURS, 21 Oct 2026",
+        "url": "https://huggingface.co/spaces/hf-audio/open_asr_leaderboard"
+      },
+      "nl": {
+        "metric": "wer",
+        "value": 4.9,
+        "source": "leaderboard",
+        "set": "FLEURS, 21 Oct 2026",
+        "url": "https://huggingface.co/spaces/hf-audio/open_asr_leaderboard"
+      },
+      "pt": {
+        "metric": "wer",
+        "value": 4.24,
+        "source": "leaderboard",
+        "set": "FLEURS, 21 Oct 2026",
+        "url": "https://huggingface.co/spaces/hf-audio/open_asr_leaderboard"
+      }
+    },
+    "openai/whisper-small": {
+      "en": {
+        "metric": "wer",
+        "value": 6.1,
+        "source": "maker",
+        "set": "FLEURS, Whisper paper table 13",
+        "url": "https://arxiv.org/abs/2212.04356"
+      },
+      "fr": {
+        "metric": "wer",
+        "value": 15.0,
+        "source": "maker",
+        "set": "FLEURS, Whisper paper table 13",
+        "url": "https://arxiv.org/abs/2212.04356"
+      }
+    },
+    "openai/whisper-large-v3-turbo": {
+      "en": {
+        "metric": "wer",
+        "value": 8.39,
+        "source": "leaderboard",
+        "set": "English average, 21 Oct 2026",
+        "url": "https://huggingface.co/spaces/hf-audio/open_asr_leaderboard"
+      },
+      "fr": {
+        "metric": "wer",
+        "value": 4.9,
+        "source": "leaderboard",
+        "set": "FLEURS, 21 Oct 2026",
+        "url": "https://huggingface.co/spaces/hf-audio/open_asr_leaderboard"
+      }
+    },
+    "moonshine-ai/moonshine-base": {
+      "en": {
+        "metric": "wer",
+        "value": 10.07,
+        "source": "maker",
+        "set": "Average of 8 English test sets, Moonshine paper",
+        "url": "https://arxiv.org/abs/2410.15608"
+      }
+    },
+    "ibm-granite/granite-speech-5.0-470m-turboctc": {
+      "en": {
+        "metric": "wer",
+        "value": 6.84,
+        "source": "leaderboard",
+        "set": "English average, 21 Oct 2026",
+        "url": "https://huggingface.co/spaces/hf-audio/open_asr_leaderboard"
+      }
+    },
+    "FermionResearch/Phonon-2": {
+      "en": {
+        "metric": "wer",
+        "value": 7.23,
+        "source": "leaderboard",
+        "set": "English average, 21 Oct 2026",
+        "url": "https://huggingface.co/spaces/hf-audio/open_asr_leaderboard"
+      }
+    },
+    "LiquidAI/LFM2.5-Audio-1.5B": {
+      "en": {
+        "metric": "wer",
+        "value": 7.53,
+        "source": "maker",
+        "set": "Average of 8 English test sets, Liquid AI model card",
+        "url": "https://huggingface.co/LiquidAI/LFM2.5-Audio-1.5B"
+      }
+    }
+  },
+  "local": {
+    "runs": {
+      "en-fleurs-32": {
+        "label": "32 held-out FLEURS English recordings",
+        "hardware": "Apple M5 Pro, 64 GB",
+        "date": "2026-10",
+        "source": "docs/inference-performance.md"
+      },
+      "en-fleurs-94": {
+        "label": "94 held-out FLEURS English recordings",
+        "hardware": "Apple M5 Pro, 64 GB",
+        "date": "2026-10-21",
+        "source": "docs/validation/granite-speech5-turboctc-2026-10-21.md"
+      },
+      "hi-fleurs-32": {
+        "label": "32 held-out FLEURS Hindi recordings",
+        "hardware": "Apple M5 Pro, 64 GB",
+        "date": "2026-10",
+        "source": "docs/inference-performance.md"
+      },
+      "de-fleurs-50": {
+        "label": "50 held-out FLEURS German recordings",
+        "hardware": "Apple M5 Pro, 64 GB",
+        "date": "2026-10-21",
+        "source": "docs/validation/granite-speech5-turboctc-2026-10-21.md"
+      }
+    },
+    "results": {
+      "Qwen/Qwen3-ASR-0.6B": {
+        "en": {
+          "run": "en-fleurs-32",
+          "wer": 3.15,
+          "ms": 182,
+          "peakMemoryGb": 1.81,
+          "executions": 32,
+          "failures": 0,
+          "passed": true
+        },
+        "hi": {
+          "run": "hi-fleurs-32",
+          "wer": 25.17,
+          "ms": 2573,
+          "peakMemoryGb": 1.61,
+          "executions": 32,
+          "failures": 0,
+          "passed": false,
+          "why": "more than 20% of words were wrong"
+        }
+      },
+      "openai/whisper-small": {
+        "en": {
+          "run": "en-fleurs-32",
+          "wer": 5.85,
+          "ms": 191,
+          "peakMemoryGb": 1.64,
+          "executions": 32,
+          "failures": 0,
+          "passed": true
+        }
+      },
+      "openai/whisper-large-v3-turbo": {
+        "en": {
+          "run": "en-fleurs-32",
+          "wer": 5.1,
+          "ms": 1155,
+          "peakMemoryGb": 3.09,
+          "executions": 32,
+          "failures": 0,
+          "passed": true
+        }
+      },
+      "LiquidAI/LFM2.5-Audio-1.5B": {
+        "en": {
+          "run": "en-fleurs-32",
+          "wer": 6.9,
+          "ms": 168,
+          "peakMemoryGb": null,
+          "executions": 32,
+          "failures": 0,
+          "passed": true
+        }
+      },
+      "nvidia/nemotron-3.5-asr-streaming-0.6b": {
+        "en": {
+          "run": "en-fleurs-32",
+          "wer": 12.29,
+          "ms": 93,
+          "peakMemoryGb": 1.33,
+          "executions": 32,
+          "failures": 0,
+          "passed": true
+        },
+        "hi": {
+          "run": "hi-fleurs-32",
+          "wer": 14.42,
+          "ms": 108,
+          "peakMemoryGb": 1.33,
+          "executions": 32,
+          "failures": 0,
+          "passed": true
+        }
+      },
+      "CohereLabs/cohere-transcribe-03-2026": {
+        "en": {
+          "run": "en-fleurs-32",
+          "wer": 6.61,
+          "ms": 550,
+          "peakMemoryGb": 5.37,
+          "executions": 32,
+          "failures": 1,
+          "passed": false,
+          "why": "1 of 32 recordings failed"
+        }
+      },
+      "nvidia/parakeet-tdt-0.6b-v3": {
+        "en": {
+          "run": "en-fleurs-94",
+          "wer": 5.25,
+          "ms": 48,
+          "peakMemoryGb": 3.8,
+          "executions": 94,
+          "failures": 0,
+          "passed": true
+        },
+        "de": {
+          "run": "de-fleurs-50",
+          "wer": 6.62,
+          "ms": null,
+          "peakMemoryGb": 3.8,
+          "executions": 50,
+          "failures": 0,
+          "passed": true
+        }
+      },
+      "ibm-granite/granite-speech-5.0-470m-turboctc": {
+        "en": {
+          "run": "en-fleurs-94",
+          "wer": 5.3,
+          "ms": 22,
+          "peakMemoryGb": 1.37,
+          "executions": 94,
+          "failures": 0,
+          "passed": true
+        },
+        "de": {
+          "run": "de-fleurs-50",
+          "wer": 6.44,
+          "ms": null,
+          "peakMemoryGb": 1.37,
+          "executions": 50,
+          "failures": 0,
+          "passed": true
+        }
+      },
+      "FermionResearch/Phonon-2": {
+        "en": {
+          "run": "en-fleurs-94",
+          "wer": 5.75,
+          "ms": 55,
+          "peakMemoryGb": 0.86,
+          "executions": 94,
+          "failures": 0,
+          "passed": true
+        }
+      },
+      "moondream/parakeet-redux": {
+        "en": {
+          "run": "en-fleurs-94",
+          "wer": 6.35,
+          "ms": 51,
+          "peakMemoryGb": 0.94,
+          "executions": 94,
+          "failures": 0,
+          "passed": true
+        },
+        "de": {
+          "run": "de-fleurs-50",
+          "wer": 7.16,
+          "ms": null,
+          "peakMemoryGb": 0.94,
+          "executions": 50,
+          "failures": 0,
+          "passed": true
+        }
+      },
+      "moonshine-ai/moonshine-base": {
+        "en": {
+          "run": "en-fleurs-94",
+          "wer": 10.11,
+          "ms": 86,
+          "peakMemoryGb": null,
+          "executions": 94,
+          "failures": 0,
+          "passed": true
+        }
+      }
+    }
+  }
+}
