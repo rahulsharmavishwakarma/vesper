@@ -70,6 +70,10 @@ jobs:
     env:
       CMAKE_BUILD_PARALLEL_LEVEL: '2'
       DEVELOPER_DIR: /Applications/Xcode_26.3.app/Contents/Developer
+      # Tauri skips the Finder step that writes the DMG window layout whenever
+      # CI is set; the nightly trial showed it runs fine on the runner (#252).
+      # package-release.sh fails a DMG without that layout.
+      TAURI_BUNDLER_DMG_IGNORE_CI: 'true'
       # Enrolled updater key (Refs #65). Absent on forks: the build then
       # produces no signed updater archive and packaging skips the feed.
       TAURI_SIGNING_PRIVATE_KEY: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY }}
