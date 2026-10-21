@@ -16,9 +16,10 @@ test('setup shows only for a pending profile', () => {
   assert.equal(shouldShowFirstRun({ status: 'completed' }, false, true), false);
 });
 
-test('setup stays off for real users until it is enabled', () => {
-  assert.equal(FIRST_RUN_ENABLED, false);
-  assert.equal(shouldShowFirstRun({ status: 'pending' }), false);
+test('setup is on for new profiles, and a disabled build still honours previews', () => {
+  assert.equal(FIRST_RUN_ENABLED, true);
+  assert.equal(shouldShowFirstRun({ status: 'pending' }), true);
+  assert.equal(shouldShowFirstRun({ status: 'pending' }, false), false);
   assert.equal(shouldShowFirstRun({ status: 'pending' }, false, true), true);
 });
 

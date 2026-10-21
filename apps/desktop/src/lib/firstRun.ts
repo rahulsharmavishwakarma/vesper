@@ -1,8 +1,8 @@
 import type { OnboardingState } from './api/onboarding';
 
-/** Off until every step is built (issue #270), so no one meets a partial flow.
- * Previews and tests can still open it with `?first-run`. */
-export const FIRST_RUN_ENABLED = false;
+/** On for every new profile (issue #270). Previews and tests can open it with
+ * `?first-run`; a finished or existing profile never sees it. */
+export const FIRST_RUN_ENABLED = true;
 
 export const FIRST_RUN_STEPS = [
   'Welcome',

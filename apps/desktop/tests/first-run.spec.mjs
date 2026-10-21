@@ -10,8 +10,8 @@ test('a finished or existing profile never sees setup', async ({ page }) => {
   await page.goto('/tests/interaction-preview.html');
   await expect(page.getByRole('navigation', { name: 'Application', exact: true })).toBeVisible();
   await expect(page.getByRole('heading', { name: 'Welcome to Vesper' })).toHaveCount(0);
-  // The flow is still off for users, so the app does not even ask.
-  expect(await commands(page, 'get_onboarding')).toBe(0);
+  // The app asks once and the finished profile stays out of setup.
+  expect(await commands(page, 'get_onboarding')).toBe(1);
 });
 
 async function passVoice(page) {
@@ -67,8 +67,21 @@ test('setup welcomes a new profile, saves progress and finishes once', async ({ 
     'Can you send the Arclight notes to Priya by Friday?',
   );
   await page.getByRole('button', { name: 'Continue' }).click();
+  // Try it: a real dictation lands in the practice box, then Finish unlocks.
   await expect(page.getByRole('heading', { name: 'Say something.' })).toBeVisible();
-  await page.getByRole('button', { name: 'Continue' }).click();
+  await expect(page.getByRole('button', { name: 'Finish' })).toBeDisabled();
+  const hold = page.getByRole('button', { name: 'Hold to talk' });
+  await expect(hold).toBeEnabled();
+  const box = await hold.boundingBox();
+  await page.mouse.move(box.x + 20, box.y + 20);
+  await page.mouse.down();
+  await expect(page.locator('.first-run').getByText('Listening', { exact: true })).toBeVisible();
+  await page.mouse.up();
+  await expect(page.getByLabel('Practice text')).toHaveValue(
+    'Can you send the Arclight notes to Priya by Friday?',
+  );
+  await expect(page.getByText('It works')).toBeVisible();
+  await page.getByRole('button', { name: 'Finish' }).click();
   await expect(page.getByRole('heading', { name: 'Vesper is ready.' })).toBeVisible();
   await expect(page.locator('.first-run .summary')).toContainText('Polished · Arclight');
   await expect(page.locator('.first-run .summary')).toContainText(/Typing into apps\s*On/);
@@ -145,6 +158,23 @@ test('a word already added is not added twice', async ({ page }) => {
   await page.getByLabel('Word to add').press('Enter');
   await expect(page.getByRole('alert')).toHaveText('“priya” is already in your words.');
   await expect(page.locator('.first-run .chip:not(.try)')).toHaveCount(1);
+});
+
+test('the practice waits for the models and resumes their download after a restart', async ({
+  page,
+}) => {
+  await page.goto(
+    '/tests/interaction-preview.html?first-run&first-run-step=6&first-run-models-missing',
+  );
+  await expect(page.getByText('Finishing your models')).toBeVisible();
+  await expect(page.getByRole('button', { name: 'Hold to talk' })).toBeDisabled();
+  await expect.poll(() => commands(page, 'install_model')).toBeGreaterThan(0);
+  await page.evaluate(() => window.previewFinishDownload());
+  await page.waitForFunction(
+    () => window.previewCommands.filter((c) => c === 'install_model').length >= 2,
+  );
+  await page.evaluate(() => window.previewFinishDownload());
+  await expect(page.getByRole('button', { name: 'Hold to talk' })).toBeEnabled();
 });
 
 test('setup resumes where it stopped, without replaying Welcome', async ({ page }) => {

@@ -149,6 +149,15 @@ async function setup({ recording = false, preview = false, main = false, interce
             activity: { ...state.runtime },
             timings: null,
           };
+        case 'get_onboarding':
+          // An existing install: first-run setup finished long ago.
+          return {
+            version: 1,
+            status: 'completed',
+            step: 7,
+            reason: 'existing_install',
+            completedAt: 1,
+          };
         case 'get_settings':
           return defaultSettings();
         case 'save_settings':

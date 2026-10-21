@@ -151,7 +151,10 @@ if (states) {
   const firstRunParams = new URLSearchParams(location.search);
   // Setup mocks: the microphone has not been asked yet, and with
   // ?first-run-download the selected speech model still needs its files.
-  const setup = { microphone: firstRunParams.get('first-run-mic') ?? 'not_asked' };
+  const setup = {
+    microphone: firstRunParams.get('first-run-mic') ?? 'not_asked',
+    modelsReady: !firstRunParams.has('first-run-models-missing'),
+  };
   const onboarding = {
     version: 1,
     status: firstRunParams.has('first-run') ? 'pending' : 'completed',
@@ -197,6 +200,7 @@ if (states) {
             window.previewFinishDownload = resolve;
           });
           Object.assign(runtime, { busy: false, stage: 'idle', operationId: null, download: null });
+          setup.modelsReady = true;
           return args?.modelId ? structuredClone(catalog[0]) : { ready: true, message: '' };
         }
         case 'save_settings':
@@ -242,6 +246,22 @@ if (states) {
           return null;
         case 'open_privacy_settings':
           return null;
+        case 'start_recording':
+          Object.assign(runtime, {
+            busy: true,
+            stage: 'recording',
+            operationId: 'preview-try',
+            audioLevel: 0.05,
+          });
+          return 'preview-try';
+        case 'stop_recording':
+          Object.assign(runtime, { busy: false, stage: 'idle', operationId: null, audioLevel: 0 });
+          return {
+            resultId: 'preview-try',
+            rawTranscript: 'can you send the arc light notes to priya by friday',
+            cleanedTranscript: 'Can you send the Arclight notes to Priya by Friday?',
+            session: null,
+          };
         case 'get_onboarding':
           return { ...onboarding };
         case 'save_onboarding_step':
@@ -289,7 +309,7 @@ if (states) {
           };
         case 'get_model_installation':
           return {
-            ready: true,
+            ready: setup.modelsReady,
             supported: true,
             modelDirectory: 'visual-fixture',
             files: [],
