@@ -36,6 +36,7 @@ struct RunOptions {
     environment: PathBuf,
     output: PathBuf,
     model: AsrModel,
+    asr_engine: vesper_core::AsrEngine,
     asr_profile_path: Option<PathBuf>,
     mode: RunMode,
     pace: ReplayPace,
@@ -143,6 +144,7 @@ fn parse_run(arguments: &[String]) -> Result<RunOptions, String> {
         environment: PathBuf::from(&arguments[3]),
         output: PathBuf::from(&arguments[4]),
         model: AsrModel::Nemotron35AsrStreaming06b,
+        asr_engine: vesper_core::AsrEngine::Standard,
         asr_profile_path: None,
         mode: RunMode::Offline,
         pace: ReplayPace::Accelerated,
@@ -173,6 +175,14 @@ fn parse_run(arguments: &[String]) -> Result<RunOptions, String> {
                 options.asr_profile_path = Some(PathBuf::from(
                     arguments.get(index).ok_or("--asr-profile needs a path")?,
                 ));
+            }
+            "--asr-engine" => {
+                index += 1;
+                options.asr_engine = match arguments.get(index).map(String::as_str) {
+                    Some("standard") => vesper_core::AsrEngine::Standard,
+                    Some("unified_gguf") => vesper_core::AsrEngine::UnifiedGguf,
+                    _ => return Err("--asr-engine needs standard or unified_gguf".into()),
+                };
             }
             "--profile" => {
                 index += 1;
@@ -243,6 +253,7 @@ fn run(mut options: RunOptions) -> Result<(), Box<dyn std::error::Error>> {
     };
     let mut config = AppConfig::default();
     config.models.asr = options.model;
+    config.models.asr_engine = options.asr_engine;
     if let Some(path) = &options.asr_profile_path {
         config.models.custom_asr = Some(read_json::<HuggingFaceProfile>(
             path.to_str().ok_or("ASR profile path is not valid UTF-8")?,
@@ -729,7 +740,7 @@ fn parse_backend(value: &str) -> Result<ComputeBackend, String> {
 }
 
 fn usage() -> String {
-    "usage:\n  vesper-eval validate MANIFEST\n  vesper-eval run MANIFEST CORPUS_ROOT MODEL_ROOT ENVIRONMENT OUTPUT [--model MODEL_ID | --asr-profile PROFILE_JSON] [--streaming] [--realtime] [--cleanup] [--vad] [--auto-level] [--denoiser off|dpdfnet4|dpdfnet8] [--language auto|LANGUAGE_CODE] [--chunk-ms 20] [--profile EVALUATION_MEMORY]\n  vesper-eval build-memory CALIBRATION_MANIFEST BASELINE_REPORT OUTPUT\n  vesper-eval recommend REQUEST_JSON CAPABILITIES_JSON EVIDENCE_JSON".into()
+    "usage:\n  vesper-eval validate MANIFEST\n  vesper-eval run MANIFEST CORPUS_ROOT MODEL_ROOT ENVIRONMENT OUTPUT [--model MODEL_ID | --asr-profile PROFILE_JSON] [--asr-engine standard|unified_gguf] [--streaming] [--realtime] [--cleanup] [--vad] [--auto-level] [--denoiser off|dpdfnet4|dpdfnet8] [--language auto|LANGUAGE_CODE] [--chunk-ms 20] [--profile EVALUATION_MEMORY]\n  vesper-eval build-memory CALIBRATION_MANIFEST BASELINE_REPORT OUTPUT\n  vesper-eval recommend REQUEST_JSON CAPABILITIES_JSON EVIDENCE_JSON".into()
 }
 
 #[cfg(test)]

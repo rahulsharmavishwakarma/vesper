@@ -27,7 +27,9 @@ pub(crate) fn speech_key(config: &AppConfig, root: &Path) -> Result<SpeechKey> {
         return Ok(SpeechKey::Mlx(crate::mlx::key(config, root)?));
     }
     Ok(match config.speech_adapter().kind {
-        AdapterKind::NemoRnnt => SpeechKey::Nemo(nemotron::key(config, root)?),
+        AdapterKind::NemoRnnt | AdapterKind::NemoTdt => {
+            SpeechKey::Nemo(nemotron::key(config, root)?)
+        }
         AdapterKind::LfmAudio => SpeechKey::Lfm(lfm::key(config, root)?),
         AdapterKind::CohereAsr
         | AdapterKind::Whisper
@@ -161,7 +163,7 @@ impl SpeechModel {
             | AdapterKind::SherpaTransducer => Ok(Self::Sherpa(resident_sherpa::Recognizer::load(
                 config, root, cancelled,
             )?)),
-            AdapterKind::NemoRnnt => {
+            AdapterKind::NemoRnnt | AdapterKind::NemoTdt => {
                 vesper_models::verify_asr(config, root, cancelled)
                     .map_err(|e| native("speech model verification", e))?;
                 Ok(Self::Nemo(nemotron::Recognizer::load(
@@ -272,7 +274,7 @@ impl SpeechModel {
             ) => Some("cpu"),
             Self::Lfm(_) | Self::Sherpa(_) | Self::PerJob(_) => None,
         };
-        serde_json::json!({"requestedBackend":config.compute_backend, "initializedProvider":initialized, "nativeGraphThreads":if matches!(self, Self::Nemo(_)) { Some(4) } else { None }, "streamingPolicy":if matches!(self, Self::Nemo(_)) { serde_json::json!({"rightContextPolicy":"artifact-default", "artifactRightContextFrames":3, "artifactLeftContextFrames":56, "nominalEncoderAdvanceMs":320, "evidence":"pinned-model-and-runtime-source"}) } else { serde_json::Value::Null }, "operatorPlacement":"unknown", "profileRevision":profile.revision, "contextualPhrasesSupported":config.speech_adapter().capabilities.contextual_phrases, "contextualPhraseCount":if config.speech_adapter().capabilities.contextual_phrases { profile.speech_phrases(config.language).len() } else { 0 }, "phraseBoost":2.0, "evidence":"adapter-initialization-or-explicit-cpu-contract"})
+        serde_json::json!({"requestedBackend":config.compute_backend, "initializedProvider":initialized, "nativeGraphThreads":if matches!(self, Self::Nemo(_)) { Some(4) } else { None }, "streamingPolicy":if matches!(self, Self::Nemo(_)) && config.speech_adapter().capabilities.native_streaming { serde_json::json!({"rightContextPolicy":"artifact-default", "artifactRightContextFrames":3, "artifactLeftContextFrames":56, "nominalEncoderAdvanceMs":320, "evidence":"pinned-model-and-runtime-source"}) } else { serde_json::Value::Null }, "operatorPlacement":"unknown", "profileRevision":profile.revision, "contextualPhrasesSupported":config.speech_adapter().capabilities.contextual_phrases, "contextualPhraseCount":if config.speech_adapter().capabilities.contextual_phrases { profile.speech_phrases(config.language).len() } else { 0 }, "phraseBoost":2.0, "evidence":"adapter-initialization-or-explicit-cpu-contract"})
     }
 }
 
@@ -296,7 +298,9 @@ pub(crate) fn transcribe_once(
     }
     require_runtime(config)?;
     match kind {
-        AdapterKind::NemoRnnt => nemotron::transcribe(audio, config, root, cancelled),
+        AdapterKind::NemoRnnt | AdapterKind::NemoTdt => {
+            nemotron::transcribe(audio, config, root, cancelled)
+        }
         AdapterKind::LfmAudio => {
             vesper_models::verify_asr(config, root, cancelled)
                 .map_err(|e| native("speech model verification", e))?;
