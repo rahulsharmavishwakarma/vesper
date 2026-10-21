@@ -230,6 +230,11 @@ Xcode command-line tools and the project's locked uv environment. Set
 `CMAKE_BUILD_PARALLEL_LEVEL` to a positive integer to adjust the default four
 build jobs. Later builds reuse the verified package without fetching sources.
 Development remains offline-tolerant when no source or bundle is available.
+The staging search includes the installed app's model folder under
+`~/Library/Application Support/com.vesper.desktop/models`, so
+`scripts/diarization-runtime.test.mjs` sets `HOME` to its temporary fixture. On
+a Mac with Vesper installed, the absent-runtime tests would otherwise find the
+real bundle.
 The staging directory
 `.tooling/diarization-runtime/` maps into the bundle at
 `Contents/Resources/diarization-runtime/` via

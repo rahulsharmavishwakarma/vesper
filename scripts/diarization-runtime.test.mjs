@@ -38,6 +38,9 @@ function fixture(t) {
       encoding: 'utf8',
       env: {
         ...process.env,
+        // The script also searches the installed app's data folder under HOME;
+        // isolate it so a developer's real runtime cannot satisfy the fixture.
+        HOME: root,
         NEMO_SPEECH_SOURCE: '',
         VESPER_MODEL_DIR: models,
         UKTI_MODEL_DIR: '',
