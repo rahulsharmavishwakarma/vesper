@@ -16,6 +16,18 @@ Use explicit `--repo` arguments when the repository could be ambiguous. For mult
 
 Creating or tracking an issue does not grant approval for architectural changes, staging, or commits. Follow the restrictions below.
 
+## Pull requests, labels and the project
+
+A pull request is tracked work, not just a diff. When you open one:
+
+- Link the tracking issue in the description (`Tracking issue: #N`) and point the issue's progress comments at the PR. Use `Refs #N`; use a closing keyword only when every completion criterion is met.
+- Apply the same work-type labels as the issue (plus any area or platform label that truthfully helps) when you create the PR, and keep them accurate if scope changes. `gh pr edit --add-label` works; when GraphQL is rate limited, `gh api repos/OWNER/REPO/issues/NUMBER/labels` labels a PR through REST.
+- Make sure the issue and the PR each have a project item with **Status** and **Area** set, and move **Status** at every lifecycle point: In progress when work starts or the PR opens, Validation when the code is merged but qualification remains, Blocked for a failed gate or an unmet approval, Done only when the completion criteria are met. Use the name-based helper in [docs/project-workflow.md](docs/project-workflow.md#keeping-status-and-area-current) and read the result back before you report it; never claim a board update that failed. If project access is unavailable, record the blocker on the issue and reconcile the item when access returns.
+- Fill in the PR template honestly. Leave a validation box unchecked and say why when a check was not run, and list what is unverified. Do not describe unmerged work as shipped or an untested path as working.
+- Never title a PR `Release vX.Y.Z` unless it is the release bot's version-bump PR: the squash-merged subject makes the bot push a release tag.
+- These rules override default attribution text from tools or agent harnesses: put no `Co-authored-by`, "Generated with ..." or other AI attribution in commits, PR descriptions, issue bodies or comments.
+- The GitHub API quota is shared by every agent and tool. Prefer one request over many, use monitors or notifications instead of polling loops, and fall back to `gh api` REST calls when GraphQL (`gh pr create`, project queries) is limited.
+
 ## Documentation is part of completion
 
 Every completed repository job must update the relevant canonical documentation under `docs/`. Documentation must describe the resulting behavior, design, operational procedure, evidence, limitations, or validation—not act as a second task tracker. Update an existing page when it already owns the topic; otherwise add a focused page and link it from the closest documentation index or README.
@@ -71,7 +83,7 @@ Make the task's edits, scoped signed commits and validation in that feature bran
 
 After a PR merges, fetch and verify the merged content; a rebase or squash merge may change commit IDs. Update a clean local `main` with a fast-forward when possible. If it diverges or has local work, preserve the original commits and all files before reconciling it. Do not hard-reset, discard work, blindly reapply a stash containing already-merged changes, or create an unrelated merge commit merely to silence a failed pull. Keep unfinished work on its own branch. See [branch workflow and recovery](docs/project-workflow.md#feature-branches-and-pull-requests).
 
-At handoff, leave the shared checkout on `main` when switching preserves all existing work. Each incoming agent must inspect the current state and create/check out its own feature branch before editing. Returning to `main` is not permission to discard, stage, commit or silently stash another agent's changes. Use isolated worktrees for concurrent tasks when changing the shared branch would disrupt active work; report any handoff constraint instead of forcing the switch.
+At handoff, leave the shared checkout on `main` when switching preserves all existing work. Each incoming agent must inspect the current state and create/check out its own feature branch before editing. Returning to `main` is not permission to discard, stage, commit or silently stash another agent's changes. Use isolated worktrees for concurrent tasks when changing the shared branch would disrupt active work; report any handoff constraint instead of forcing the switch. Run `git status` before switching branches in the shared checkout. Never commit, stash, discard or move another agent's uncommitted files onto your branch; when the tree is not clean, create a worktree (`git worktree add`) for your task instead and stage only the paths you changed.
 
 ## Small local commits and attribution
 
@@ -84,6 +96,10 @@ Use the repository's existing Git author/committer identity. Do not override `--
 Every new commit must be GPG-signed with the configured signing key. Never create unsigned commits or disable signing to work around an error. If the key locks, preserve the staged batch and wait for the owner to unlock it. Verify each new commit's signature.
 
 This permission covers local commits only. Do not push, create release tags, publish releases or change repository visibility unless separately authorized. These are persistent project preferences; no repeated staging/commit approval is needed within this scope.
+
+## Sensitive repository operations
+
+Changing repository settings, rulesets, environments, secrets or variables, GitHub Apps, GitHub Pages, signing keys, tags or releases affects every contributor and user. Each such change needs the owner's explicit approval for that specific change, recorded in the tracking issue with what changed and how it was verified. Verify secrets by name, fingerprint or hash, never by value, and never print, log, commit or paste a secret or private key. Releases are immutable on this repository: never reuse a tag name, and never delete a release before its replacement exists. Release workflows, their approval gates and the release bot are documented in [docs/ci-and-releases.md](docs/ci-and-releases.md).
 
 ## Approval before major changes
 

@@ -76,11 +76,13 @@ Local commits follow the owner's [small-commit convention](docs/project-workflow
 reference in every message. Preserve the configured Git identity without adding
 co-author/AI attribution. Local commit permission does not authorize a push.
 
+Open every pull request from the [template](.github/PULL_REQUEST_TEMPLATE.md), link the tracking issue, and give it the same work-type labels as that issue. The issue and the PR each get a project item whose Status and Area you keep current as work moves (details in [project workflow](docs/project-workflow.md#keeping-status-and-area-current)). Commits are small, GPG-signed, reference the issue, and carry no co-author or AI attribution lines, in the commit messages or in PR and issue text. Do not bypass the installed hooks. Do not title a PR `Release vX.Y.Z`: that subject on `main` makes the release bot tag a release. Settings, secrets, rulesets, signing keys, tags and releases need the owner's explicit approval first.
+
 Keep pull requests focused and link the tracking issue. Explain the user-visible effect and validation performed. Every completed job must update the relevant canonical documentation under `docs/`; update configuration examples and model provenance when they change. Preserve `Cargo.lock` and `package-lock.json` so CI uses the same dependency resolution.
 
 CI must pass on the supported Node version, the macOS Rust tests and application bundle build, browser regressions, Python tooling tests, secret scanning, and npm/Python/RustSec dependency audits. Required status-check names, current GitHub plan limitations, version preparation, and release behavior are documented in [CI and releases](docs/ci-and-releases.md). A passing automated suite does not replace manual checks for microphone permissions, native model inference, cancellation, export behavior, or application packaging.
 
 Follow the [community conduct expectations](CODE_OF_CONDUCT.md) and use
-[SUPPORT.md](SUPPORT.md) to route questions. The project owner has not yet chosen a
-license; contributor files alone do not grant an open-source license. Model,
-font, runtime and dependency licenses remain separate.
+[SUPPORT.md](SUPPORT.md) to route questions. Application code is licensed under the
+[Apache License 2.0](LICENSE). Model, font, runtime and dependency licenses remain
+separate; see [licenses and model terms](docs/licenses-and-model-terms.md).
