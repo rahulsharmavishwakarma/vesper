@@ -263,7 +263,7 @@
       "name": "Moonshine Base (English)",
       "role": "speech_recognition",
       "status": "optional",
-      "description": "Small, fast English-only CPU model (about 141 MB) for low-end or non-Apple-silicon machines. Completed audio is decoded in parts of at most 9 seconds; less accurate than Parakeet or Cohere.",
+      "description": "Small, fast English-only CPU model (about 141 MB) for low-end or non-Apple-silicon machines. Completed audio is decoded in parts of at most 15 seconds; less accurate than Parakeet or Cohere.",
       "source_url": "https://huggingface.co/moonshine-ai/moonshine-base",
       "license": "MIT (English Moonshine models; files unchanged from the sherpa-onnx package)",
       "proposed_runtime": "sherpa-onnx 1.13.8 Moonshine v2 with application completion-reporting patch",
