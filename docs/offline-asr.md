@@ -129,8 +129,14 @@ WER on read speech:
 
 The download size is about the same; CPU decoding is roughly 1.5× slower.
 See the [precision record](validation/parakeet-weight-only-2026-10-21.md). The
-scores in the next section were measured on the previous INT8 export. Other
-sherpa presets and Cohere still use dynamic INT8.
+scores in the next section were measured on the previous INT8 export. The
+Parakeet v2 and Unified presets showed no gain from the same conversion and keep
+their INT8 exports. Cohere's INT8 export has not been re-measured.
+
+For a source under the NVIDIA Open Model License, pass `--license other
+--license-name nvidia-open-model-license --license-link URL --notice "Licensed by
+NVIDIA Corporation under the NVIDIA Open Model License"`. That writes the
+required `NOTICE` file next to the converted files.
 
 Reproduce a conversion with:
 

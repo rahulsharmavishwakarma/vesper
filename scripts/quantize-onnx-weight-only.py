@@ -54,9 +54,11 @@ def model_card(args, provenance) -> str:
         f"| `{item['path']}` | {item['sizeBytes']:,} | `{item['sha256']}` |"
         for item in provenance["outputs"]
     )
+    license_lines = f"license: {args.license}\n"
+    if args.license == "other":
+        license_lines += f"license_name: {args.license_name}\nlicense_link: {args.license_link}\n"
     return f"""---
-license: cc-by-4.0
-base_model: {args.source_model}
+{license_lines}base_model: {args.source_model}
 tags: [sherpa-onnx, onnx, speech-recognition, vesper]
 ---
 
@@ -68,7 +70,7 @@ symmetric) of the official sherpa-onnx FP32 export
 Activations stay FP32. Prepared for the [Vesper](https://github.com/rahulsharmavishwakarma/vesper)
 dictation app; usable with any sherpa-onnx build whose ONNX Runtime provides `MatMulNBits`.
 
-- Model: [{args.source_model}](https://huggingface.co/{args.source_model}) by NVIDIA, CC-BY-4.0.
+- Model: [{args.source_model}](https://huggingface.co/{args.source_model}) by NVIDIA, {args.license_name or args.license.upper()}.
 - ONNX export: [k2-fsa/sherpa-onnx](https://github.com/k2-fsa/sherpa-onnx).
 - Changes: MatMul weights quantized as described; no retraining. See `provenance.json`.
 
@@ -87,9 +89,19 @@ def main() -> int:
     parser.add_argument("--cache", type=Path, default=Path(".cache/onnx-quantize"))
     parser.add_argument("--bits", type=int, default=4, choices=(4, 8))
     parser.add_argument("--block-size", type=int, default=32)
+    parser.add_argument(
+        "--license", default="cc-by-4.0", help="Hugging Face license id, or 'other'"
+    )
+    parser.add_argument("--license-name", default="", help="Required with --license other")
+    parser.add_argument("--license-link", default="", help="Required with --license other")
+    parser.add_argument(
+        "--notice", default="", help="Text for a NOTICE file the source license requires"
+    )
     args = parser.parse_args()
     if len(args.revision) != 40:
         sys.exit("--revision must be a full commit hash")
+    if args.license == "other" and not (args.license_name and args.license_link):
+        sys.exit("--license other needs --license-name and --license-link")
     if args.out.exists():
         sys.exit(f"{args.out} already exists")
     args.out.mkdir(parents=True)
@@ -143,6 +155,10 @@ def main() -> int:
     }
     (args.out / "provenance.json").write_text(json.dumps(provenance, indent=2) + "\n")
     (args.out / "README.md").write_text(model_card(args, provenance))
+    if args.notice:
+        (args.out / "NOTICE").write_text(
+            f"{args.notice}\n\nLicense: {args.license_link or args.license}\n"
+        )
     print(json.dumps(provenance["outputs"], indent=2))
     return 0
 
