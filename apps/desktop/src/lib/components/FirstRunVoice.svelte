@@ -11,9 +11,8 @@
     type MicrophoneAccess,
   } from '../api/onboarding';
   import { listAudioDevices, type AudioDevice } from '../api/runtime';
-  import { catalogModel } from '../config';
   import { waveformEnergy } from '../voiceWaveform';
-  import { COHERE, SETUP_LANGUAGES, recommendedSpeechModel, type SetupLanguage } from '../firstRun';
+  import { SETUP_LANGUAGES, type SetupLanguage } from '../firstRun';
 
   let {
     language,
@@ -42,12 +41,7 @@
 
   $effect(() => onReady(access === 'allowed' && heard));
 
-  const languageHint = $derived.by(() => {
-    const model = recommendedSpeechModel(language);
-    if (model === COHERE) return 'You can change this later on the Dictate page.';
-    const name = catalogModel(model)?.name ?? 'a different speech model';
-    return `${SETUP_LANGUAGES.find((option) => option.value === language)?.label ?? 'This language'} uses ${name}. Vesper picks it for you next.`;
-  });
+  const languageHint = 'Vesper suggests the best models for it on the next step.';
 
   /** About 0.6 s of clear speech counts as heard. Levels arrive every ~40 ms. */
   function hear(raw: number) {

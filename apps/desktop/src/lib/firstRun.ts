@@ -2,9 +2,9 @@ import type { OnboardingState } from './api/onboarding';
 import {
   LANGUAGE_OPTIONS,
   defaultSettings,
+  offeredModelIds,
   transcriptionLanguageOptions,
   type AppConfig,
-  type ComputeBackend,
   type Language,
   type LanguageOption,
 } from './config.ts';
@@ -47,52 +47,20 @@ export function firstRunRequested(search: string): boolean {
   return new URLSearchParams(search).has('first-run');
 }
 
-export const COHERE = 'CohereLabs/cohere-transcribe-03-2026';
-export const QWEN_ASR = 'Qwen/Qwen3-ASR-0.6B';
-/** Speech models setup can offer, in display order, with one plain reason each. */
-export const SETUP_SPEECH_MODELS = [
-  { id: COHERE, reason: 'Most accurate for English and French' },
-  { id: 'nvidia/parakeet-tdt-0.6b-v3', reason: 'Fast and light, for European languages' },
-  { id: QWEN_ASR, reason: 'Hindi, Thai, Cantonese and more' },
-  { id: 'nvidia/nemotron-3.5-asr-streaming-0.6b', reason: 'Words appear while you speak' },
-] as const;
-
-/** Does a built-in speech model declare this language (models/languages.json)? */
-export function speechModelSupports(
-  id: string,
-  language: Language,
-  backend: ComputeBackend = 'auto',
-): boolean {
-  return transcriptionLanguageOptions(
-    { ...defaultSettings().models, asr: id as AppConfig['models']['asr'], customAsr: null },
-    backend,
-  ).some((option) => option.value === language);
-}
-
-/** Every language at least one setup speech model declares, in the app's
- * order. Automatic detection stays in Settings: setup asks what you speak. */
+/** Every explicit language at least one built-in speech model declares, in
+ * the app's order. Automatic detection stays in Settings: setup asks what you
+ * speak. The model for it is chosen on the next step (recommendations.ts). */
 export const SETUP_LANGUAGES: LanguageOption[] = LANGUAGE_OPTIONS.filter(
   (option) =>
     option.value !== 'auto' &&
-    SETUP_SPEECH_MODELS.some((model) => speechModelSupports(model.id, option.value)),
+    offeredModelIds('speech_recognition').some((id) =>
+      transcriptionLanguageOptions(
+        { ...defaultSettings().models, asr: id as AppConfig['models']['asr'], customAsr: null },
+        'auto',
+      ).some((entry) => entry.value === option.value),
+    ),
 );
 export type SetupLanguage = Language;
-
-/** The recommended speech model follows existing evidence (ADR-0010): the
- * current default wherever it declares the language, Qwen3-ASR for Hindi.
- * Other languages take the first setup model that declares them; that is
- * declared support, not a measured ranking. Memory does not change the pick
- * until peak memory per model is measured (issue #270). */
-export function recommendedSpeechModel(
-  language: SetupLanguage,
-  backend: ComputeBackend = 'auto',
-): string {
-  if (language === 'hi') return QWEN_ASR;
-  return (
-    SETUP_SPEECH_MODELS.find((model) => speechModelSupports(model.id, language, backend))?.id ??
-    COHERE
-  );
-}
 
 /** Bytes still to download for these catalog entries; files already present
  * count as nothing. Unknown entries count as nothing rather than guessing. */

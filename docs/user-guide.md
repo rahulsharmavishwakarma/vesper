@@ -26,9 +26,10 @@ A new installation opens with a short guided setup (issue #270):
    and say a few words until Vesper shows **Heard you**. If your language needs
    a different speech model, Vesper says which and selects it for the next
    step.
-3. **Models**: Vesper shows this Mac (chip, memory, free space) and recommends
-   a speech model for your language plus the writing model behind **Tidy my
-   text**. **Choose different** lists the other speech models. **Download and
+3. **Models**: Vesper shows this Mac (chip, memory, free space) and suggests
+   the best speech model for your language plus the writing model behind
+   **Tidy my text**. Click either model to see the others, best first for your
+   language, with small rings for accuracy, speed and memory. **Download and
    set up** starts the download in the background; progress stays at the
    bottom left while you carry on. A download that does not fit in the free
    space, or needs a connection you do not have, is blocked with the reason.

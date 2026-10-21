@@ -324,16 +324,23 @@ and tests open it with `?first-run`.
   denial names the exact System Settings path and is noticed as soon as access
   is turned on. About 0.6 s of clear input confirms "Heard you", and Continue
   waits for it.
-- **Models** shows this Mac in one line (chip, memory, free space), then one
-  recommended setup: the speech model for the chosen language and the writing
-  model behind **Tidy my text**, with the remaining download size from the
-  catalog. Until peak memory per model is measured, the recommendation follows
-  the language only: Cohere Transcribe wherever it declares the language and
-  Qwen3-ASR for Hindi (ADR-0010 evidence); any other language takes the first
-  setup model that declares it (Parakeet v3, Qwen3-ASR, then Nemotron
-  streaming), which is declared support, not a measured ranking. Memory is
-  shown but does not change the pick. **Tidy my text** uses the Settings
-  switch style.
+- **Models** shows this Mac as three tiles (chip, memory, free space with a
+  bar for this download) that rise in once while the numbers count up. Below,
+  the recommended speech model and, under **Tidy my text**, the writing model
+  are the app's identity `Select`, the same picker as the Models page. Each
+  opens filtered to the language chosen on Voice, best first. Under the
+  speech model, accuracy, speed and memory crossfade when the choice changes,
+  with one evidence line naming where each number comes from.
+- **Picker results** (setup and the Models page, `recommendations.ts`): each
+  speech row carries three ring gauges before its download icon: accuracy in
+  the chosen language (target), time to write a recording (CPU) and memory
+  against this Mac's RAM (amber above a quarter, red above half). Writer rows
+  carry instruction following (shield) and a multilingual score (globe).
+  Rings draw in when the list opens; a dashed empty ring means no figure
+  exists. The row's description starts with a tag such as *Best for English*,
+  *Published result*, *Failed Vesper's test · 1 of 32 recordings failed* or
+  *Doesn't support Hindi*. Setup locks rows that cannot run here; the Models
+  page keeps them selectable so a language can be repaired after a switch.
   Free space must cover the download plus a quarter, and being offline blocks
   the download, each with its reason in the footer. **Download and set up**
   saves the choice, starts the download in the background and moves on; a chip

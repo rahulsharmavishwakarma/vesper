@@ -37,6 +37,10 @@ test('setup welcomes a new profile, saves progress and finishes once', async ({ 
   await passVoice(page);
   await expect(page.getByRole('heading', { name: 'Models for this Mac.' })).toBeVisible();
   await expect(page.getByText('Apple M3')).toBeVisible();
+  // Choosing a different, already installed writer leaves nothing to download.
+  await page.locator('#setup-writer-model').click();
+  await page.getByRole('option', { name: /Qwen3\.5 0\.8B/ }).click();
+  await expect(page.locator('#setup-writer-model')).toContainText('Qwen3.5 0.8B');
   await expect(page.getByText('Already on this Mac. Nothing to download.')).toBeVisible();
   await page.getByRole('button', { name: 'Download and set up' }).click();
   // Access: typing into apps turns on once Accessibility is allowed.
@@ -96,12 +100,17 @@ test('setup welcomes a new profile, saves progress and finishes once', async ({ 
 test('models download in the background while setup carries on', async ({ page }) => {
   await page.goto('/tests/interaction-preview.html?first-run&first-run-step=2&first-run-download');
   await expect(page.getByRole('heading', { name: 'Models for this Mac.' })).toBeVisible();
-  await expect(page.getByText('Download 4.3 GB')).toBeVisible();
-  await expect(page.getByText(/Needs 5\.4 GB free/)).toBeVisible();
+  // Published figures pick the models; the total covers both downloads.
+  await expect(page.locator('#setup-speech-model')).toContainText('Parakeet TDT 0.6B v3');
+  await expect(page.locator('#setup-writer-model')).toContainText('SmolLM2 1.7B');
+  await expect(page.getByText('Download 4.0 GB')).toBeVisible();
+  await expect(page.getByText(/Needs 4\.9 GB free/)).toBeVisible();
   await page.getByRole('button', { name: 'Download and set up' }).click();
   await expect(page.getByRole('heading', { name: 'Let Vesper type for you.' })).toBeVisible();
   await expect(page.getByText('Setting up models')).toBeVisible();
-  await expect(page.getByRole('progressbar', { name: 'Model download' })).toBeVisible();
+  await expect(
+    page.getByRole('progressbar', { name: 'Model download', exact: true }),
+  ).toBeVisible();
   await page.evaluate(() => window.previewFinishDownload());
   await page.waitForFunction(
     () => window.previewCommands.filter((c) => c === 'install_model').length >= 2,
@@ -126,11 +135,22 @@ test('choosing Hindi switches to a speech model that can hear it', async ({ page
   await page.locator('#setup-language').click();
   await page.getByRole('option', { name: /^Hindi/ }).click();
   await expect(page.locator('#setup-language')).toContainText('Hindi');
-  await expect(page.getByText('Hindi uses Qwen3-ASR 0.6B.')).toBeVisible();
   await expect.poll(() => commands(page, 'save_settings')).toBeGreaterThan(0);
   await expect(page.getByText('Heard you')).toBeVisible({ timeout: 8000 });
   await page.getByRole('button', { name: 'Continue' }).click();
-  await expect(page.locator('.first-run .row b').first()).toHaveText('Qwen3-ASR 0.6B');
+  await expect(page.locator('#setup-speech-model')).toContainText('Nemotron');
+  await expect(page.getByText('Best for Hindi', { exact: true })).toBeVisible();
+  // The picker opens on Hindi, best first, with result rings on each row.
+  await page.locator('#setup-speech-model').click();
+  await expect(page.getByRole('button', { name: 'Hindi', pressed: true })).toBeVisible();
+  const first = page.getByRole('option').first();
+  await expect(first).toContainText('Nemotron');
+  await expect(first.locator('.gauge')).toHaveCount(3);
+  // Models that cannot hear Hindi are listed under Any language, locked with the reason.
+  await page.getByRole('button', { name: 'Any language' }).click();
+  const cohere = page.getByRole('option', { name: /Cohere Transcribe/ });
+  await expect(cohere).toBeDisabled();
+  await expect(cohere).toContainText('Doesn’t support Hindi');
 });
 
 test('setup offers every language its speech models declare', async ({ page }) => {

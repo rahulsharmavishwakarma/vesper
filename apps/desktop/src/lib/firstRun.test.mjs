@@ -37,30 +37,12 @@ test('previews open setup with ?first-run', () => {
   assert.equal(firstRunRequested('?other'), false);
 });
 
-test('the recommended speech model follows the language', async () => {
-  const {
-    recommendedSpeechModel,
-    speechModelSupports,
-    COHERE,
-    QWEN_ASR,
-    SETUP_LANGUAGES,
-    SETUP_SPEECH_MODELS,
-  } = await import('./firstRun.ts');
+test('setup offers every language a built-in speech model declares', async () => {
+  const { SETUP_LANGUAGES } = await import('./firstRun.ts');
   const offered = SETUP_LANGUAGES.map((l) => l.value);
-  // Every language a setup model declares, but not automatic detection.
   for (const code of ['en', 'fr', 'hi', 'de', 'ja', 'th', 'lv', 'nb'])
     assert.ok(offered.includes(code));
   assert.ok(!offered.includes('auto'));
-  assert.equal(recommendedSpeechModel('en'), COHERE);
-  assert.equal(recommendedSpeechModel('fr'), COHERE);
-  assert.equal(recommendedSpeechModel('hi'), QWEN_ASR);
-  // Beyond the measured languages the pick is the first model that declares it.
-  assert.equal(recommendedSpeechModel('de'), COHERE);
-  assert.equal(recommendedSpeechModel('lv'), 'nvidia/parakeet-tdt-0.6b-v3');
-  assert.equal(recommendedSpeechModel('th'), QWEN_ASR);
-  assert.equal(recommendedSpeechModel('nb'), 'nvidia/nemotron-3.5-asr-streaming-0.6b');
-  for (const code of offered) assert.ok(speechModelSupports(recommendedSpeechModel(code), code));
-  assert.ok(SETUP_SPEECH_MODELS.some((m) => m.id === COHERE));
 });
 
 test('download size counts only missing files and needs a quarter more space', async () => {

@@ -16,7 +16,6 @@
     FIRST_RUN_STEPS,
     READY_STEP,
     SETUP_LANGUAGES,
-    recommendedSpeechModel,
     resumeStep,
     type SetupLanguage,
   } from '../firstRun';
@@ -27,6 +26,7 @@
     type AppConfig,
   } from '../config';
   import { shortcutLabel } from '../recording-shortcuts';
+  import { recommendedSpeechModel } from '../recommendations';
 
   let {
     settings,
@@ -139,6 +139,7 @@
               ...settings.models,
               asr: recommendedSpeechModel(
                 next,
+                null,
                 settings.computeBackend,
               ) as AppConfig['models']['asr'],
               customAsr: null,
