@@ -288,6 +288,18 @@ versions. `make audit-python-audio-frontend` and `make audit-python-vibevoice`
 use the same auditor against fresh exports of their owning locks. They require
 Apple-silicon macOS: running these exports through a Linux auditor would skip
 their platform-marked dependencies and could produce an empty, misleading pass.
+
+Advisories published after a lock was written fail these audits on every pull
+request until the lock moves, even on unrelated changes. On 20 October 2026 that
+happened twice: `pillow` 12.3.0 (eight CVEs, fixed in 13.0.0, VibeVoice lock) and
+`certifi` 2026.7.22 (GHSA-6q48-6c7w-9gw2, fixed in 2026.10.19; root, cleanup and
+VibeVoice locks). The fix is `uv lock --upgrade-package` for exactly those
+packages (the VibeVoice `pyproject.toml` pins both directly), regeneration of
+`benchmarks/asr/vibevoice-reference-requirements.txt` with the same
+`uv export ... --output-file .cache/vibevoice-reference-requirements.txt` command
+`make python-lock-check` compares against (the output path is recorded in the
+file's header), and `make audit-python` plus `make audit-python-vibevoice`
+([issue #248](https://github.com/rahulsharmavishwakarma/vesper/issues/248)).
 The audit jobs install only contributor tools, not model runtimes or weights.
 All manifests and lockfiles stay versioned, while `.venv` and `.cache` stay ignored.
 
