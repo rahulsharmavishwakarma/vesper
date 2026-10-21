@@ -98,7 +98,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        project: [audio-frontend, vibevoice]
+        project: [audio-frontend, vibevoice, onnx-quantize]
     env:
       UV_CACHE_DIR: ${{ github.workspace }}/.cache/uv
       PYTHON_AUDIT_PROJECT: ${{ matrix.project }}
