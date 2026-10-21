@@ -657,14 +657,10 @@ fn language_for_sample(value: &str) -> Language {
     }
 }
 
+/// Accepts `auto` or any application language code, as models/languages.json spells it.
 fn parse_language(value: &str) -> Result<Language, String> {
-    match value {
-        "auto" => Ok(Language::Auto),
-        "en" => Ok(Language::English),
-        "fr" => Ok(Language::French),
-        "hi" => Ok(Language::Hindi),
-        _ => Err(format!("unsupported language: {value}")),
-    }
+    serde_json::from_value(serde_json::Value::String(value.into()))
+        .map_err(|_| format!("unsupported language: {value}"))
 }
 
 fn language_name(value: Language) -> &'static str {
@@ -733,7 +729,7 @@ fn parse_backend(value: &str) -> Result<ComputeBackend, String> {
 }
 
 fn usage() -> String {
-    "usage:\n  vesper-eval validate MANIFEST\n  vesper-eval run MANIFEST CORPUS_ROOT MODEL_ROOT ENVIRONMENT OUTPUT [--model MODEL_ID | --asr-profile PROFILE_JSON] [--streaming] [--realtime] [--cleanup] [--vad] [--auto-level] [--denoiser off|dpdfnet4|dpdfnet8] [--language auto|en|fr|hi] [--chunk-ms 20] [--profile EVALUATION_MEMORY]\n  vesper-eval build-memory CALIBRATION_MANIFEST BASELINE_REPORT OUTPUT\n  vesper-eval recommend REQUEST_JSON CAPABILITIES_JSON EVIDENCE_JSON".into()
+    "usage:\n  vesper-eval validate MANIFEST\n  vesper-eval run MANIFEST CORPUS_ROOT MODEL_ROOT ENVIRONMENT OUTPUT [--model MODEL_ID | --asr-profile PROFILE_JSON] [--streaming] [--realtime] [--cleanup] [--vad] [--auto-level] [--denoiser off|dpdfnet4|dpdfnet8] [--language auto|LANGUAGE_CODE] [--chunk-ms 20] [--profile EVALUATION_MEMORY]\n  vesper-eval build-memory CALIBRATION_MANIFEST BASELINE_REPORT OUTPUT\n  vesper-eval recommend REQUEST_JSON CAPABILITIES_JSON EVIDENCE_JSON".into()
 }
 
 #[cfg(test)]
@@ -755,6 +751,14 @@ mod tests {
         assert_eq!(options.audio_frontend.model_ids(), ["silero-v6.2"]);
     }
     use super::*;
+
+    #[test]
+    fn language_codes_follow_the_application_manifest() {
+        assert_eq!(parse_language("auto"), Ok(Language::Auto));
+        assert_eq!(parse_language("de"), Ok(Language::German));
+        assert_eq!(parse_language("ja"), Ok(Language::Japanese));
+        assert!(parse_language("German").is_err());
+    }
 
     #[test]
     fn language_names_match_core_codes_for_every_mode() {
