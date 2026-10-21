@@ -52,6 +52,7 @@ export function acceleratorReason(
         'CohereLabs/cohere-transcribe-03-2026',
         'openai/whisper-small',
         'openai/whisper-large-v3-turbo',
+        'moonshine-ai/moonshine-base',
       ].includes(config.models.asr)
     ) {
       if (backend !== 'metal' || !capabilities.speechMetalModels?.includes(config.models.asr))
