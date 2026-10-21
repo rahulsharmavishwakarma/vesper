@@ -2,7 +2,7 @@
 name = "vesper-onnx-quantize"
 version = "0.0.0"
 description = "Isolated conversion tooling for published ONNX speech artifacts; not part of the desktop runtime"
-requires-python = ">=3.12,<3.13"
+requires-python = ">=3.12,<3.14"
 dependencies = [
     "huggingface-hub==1.5.0",
     "onnx==1.23.2",
@@ -12,3 +12,21 @@ dependencies = [
 
 [tool.uv]
 package = false
+
+[dependency-groups]
+evaluation = [
+    "sherpa-onnx==1.13.8",
+    "sherpa-onnx-core==1.13.8",
+    "soundfile>=0.14.0",
+]
+hqq = [
+    "torch>=2.8",
+]
+
+[[tool.uv.index]]
+name = "pytorch-cpu"
+url = "https://download.pytorch.org/whl/cpu"
+explicit = true
+
+[tool.uv.sources]
+torch = [{ index = "pytorch-cpu", marker = "sys_platform == 'linux'" }]

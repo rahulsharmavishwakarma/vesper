@@ -87,7 +87,11 @@ Model probes use separate macOS Apple-silicon/Python 3.12 projects under
 `benchmarks/asr/python/audio-frontend` and `benchmarks/asr/python/vibevoice`, each
 with its own manifest and lockfile. `benchmarks/asr/python/onnx-quantize` holds the
 ONNX weight-only conversion tooling for published speech artifacts; see
-[Parakeet CPU precision](offline-asr.md#parakeet-cpu-precision).
+[Parakeet CPU precision](offline-asr.md#parakeet-cpu-precision). It supports Python 3.12 and 3.13
+so Google Colab's current runtime can install its hash-checked export, and its non-default `evaluation` group
+(`sherpa-onnx`, `sherpa-onnx-core`, `soundfile`) and `hqq` group (CPU PyTorch from the `pytorch-cpu` index on Linux, which ONNX
+Runtime's HQQ quantizer imports) serve the [quantization research notebooks](../notebooks/asr-quantization/README.md).
+CI's dependency audit covers only the default group.
 `benchmarks/asr/python/mlx-convert` pins mlx-audio for MLX artifact conversion;
 see [Parakeet Redux](offline-asr.md#parakeet-redux-apple-gpu). Their incompatible NumPy/model dependencies
 are isolated from contributor checks. See [benchmark Python setup](../benchmarks/asr/README.md#python-environments).
