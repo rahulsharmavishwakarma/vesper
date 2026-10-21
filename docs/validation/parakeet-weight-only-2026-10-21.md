@@ -79,12 +79,30 @@ test split. After repinning, the built-in path scored the same 5.95% on the
 An export of v3 made with the same NeMo 3.0 pipeline scored 17.98% in INT8, close
 to the official 18.26%, so the export tooling does not explain the difference.
 
+## Other Parakeet presets (not changed)
+
+The same conversion was applied to the official FP32 exports of Parakeet TDT
+0.6B v2 (`csukuangfj/sherpa-onnx-nemo-parakeet-tdt-0.6b-v2@86891485`) and
+Parakeet Unified English 0.6B
+(`csukuangfj2/sherpa-onnx-nemo-parakeet-unified-en-0.6b-non-streaming@e69c9fb5`,
+NVIDIA Open Model License). Both were compared with their current dynamic INT8
+presets on the same 94 held-out FLEURS en-US clips:
+
+| Preset | Dynamic INT8 (shipped) | 4-bit weight-only | Better / worse clips | Difference CI | Median ASR |
+| --- | ---: | ---: | --- | --- | --- |
+| Parakeet v2 | 4.95% | 5.05% | 10 / 12 | [−0.46, 0.67] | 196 → 279 ms |
+| Parakeet Unified | 5.45% | 5.75% | 11 / 13 | [−0.50, 1.15] | 271 → 397 ms |
+
+Neither shows a difference within noise, and both are slower. Both presets keep
+their INT8 exports, and no converted copies were published. The INT8 accuracy
+loss is specific to the v3 export. FastConformer already ships FP32.
+
 ## Limitations
 
 - Only English and German read speech were measured. The other 23 supported
   languages, spontaneous dictation and long recordings were not.
 - The quiet lane stays poor in both precisions.
 - Memory, other CPUs and sustained thermals were not measured.
-- Parakeet v2, Unified and FastConformer presets and Cohere still use dynamic
-  INT8 and have not been re-measured. That is tracked in #251.
+- Cohere still uses dynamic INT8 and has not been re-measured. That is tracked
+  in #251.
 - The Metal path (MLX FP32) is unaffected.
