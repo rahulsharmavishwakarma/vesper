@@ -67,11 +67,33 @@ Supporting measurements outside the application path:
   clip than NeMo Metal there (42.7 ms against 59 ms mean). Those runs used different timing scopes and are not
   combined with the table above.
 
+### Contention with the writer (measured in #143)
+
+A separate session measured how the speech engines and the Metal writer slow each other when they run at the same time
+([#143](https://github.com/rahulsharmavishwakarma/vesper/issues/143)). Quiet machine on AC power, Apple M5 Pro, two
+rounds in alternating order. Writer: llama.cpp at the pinned `d8123504`, Qwen3.5-0.8B Q4_0 on Metal (pp512/tg128; solo
+248 tok/s generation). The speech engines ran as continuous loops; the NeMo lanes used `nemo-speech bench` on 94
+held-out FLEURS clips with the CLI's default thread count, not the app's 4 graph threads.
+
+| Speech engine running alongside | Writer generation | Writer prompt processing | Speech latency with writer running |
+| --- | ---: | ---: | ---: |
+| Core ML on the Neural Engine | −8% | −4% | ×1.32 |
+| Core ML on GPU | −48% | −29% | ×1.52 |
+| MLX on GPU (current Apple GPU engine) | −61% | −33% | ×1.40 |
+| **Unified GGUF, Metal** | **−25%** | **−17%** | **×2.84** (58.6 → 161-172 ms per clip) |
+| **Unified GGUF, CPU** | **−3%** | **−2%** | ×1.96 (300 → 446-740 ms per clip) |
+
+The unified engine on Metal slows the writer less than the current MLX engine, but its own latency is the most
+sensitive to a concurrent writer; on CPU it barely affects the writer. Vesper's inference worker runs requests one at a
+time, so this matters only when work overlaps (live previews during polishing, other GPU applications, or a future
+pipelined writer), not for back-to-back requests.
+
 ## Limitations and remaining gates
 
 - English and German only. The other 23 declared languages, spontaneous speech and long recordings remain to be
   qualified.
 - CUDA and Vulkan packages are pinned but were not run.
-- Memory, cold load and sustained thermal behaviour were not recorded.
+- Memory, cold load and sustained thermal behaviour were not recorded. Contention was measured with the CLI, not the
+  application worker.
 - Raw transcripts differ in punctuation and number formatting because NeMo-Speech.cpp normalizes text differently from
   sherpa-onnx; the scorer normalizes punctuation, but number formatting can still count as errors in either direction.
