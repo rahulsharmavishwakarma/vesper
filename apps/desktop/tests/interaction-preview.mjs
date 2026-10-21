@@ -277,6 +277,16 @@ if (states) {
           return { ...onboarding };
         case 'get_runtime_status':
           return { ...runtime };
+        case 'get_audio_features': {
+          // A gently varying voice while the microphone is open.
+          const t = performance.now() / 1000;
+          return runtime.audioLevel
+            ? {
+                level: 0.06 + 0.05 * Math.max(0, Math.sin(t * 2.1)),
+                pitchHz: 170 + 40 * Math.sin(t),
+              }
+            : { level: 0, pitchHz: null };
+        }
         case 'get_app_status':
           return {
             name: 'Vesper',

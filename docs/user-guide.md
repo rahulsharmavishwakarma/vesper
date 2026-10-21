@@ -21,8 +21,11 @@ do not indicate a different application.
 A new installation opens with a short guided setup (issue #270):
 
 1. **Welcome**, then **Get started**.
-2. **Voice**: choose English, French or Hindi, allow the microphone when macOS
-   asks, and say a few words until Vesper shows **Heard you**.
+2. **Voice**: choose the language you speak from the full list, pick a
+   microphone if you have more than one, allow the microphone when macOS asks,
+   and say a few words until Vesper shows **Heard you**. If your language needs
+   a different speech model, Vesper says which and selects it for the next
+   step.
 3. **Models**: Vesper shows this Mac (chip, memory, free space) and recommends
    a speech model for your language plus the writing model behind **Tidy my
    text**. **Choose different** lists the other speech models. **Download and
@@ -39,6 +42,9 @@ A new installation opens with a short guided setup (issue #270):
 7. **Try it**: once the models are ready, hold **Hold to talk** (or your
    shortcut) and speak; your words appear in the practice box. **Finish** and
    **Start dictating** open Dictate.
+
+**Back** (or a finished step in the sidebar) returns to an earlier step;
+going back from Voice shows Welcome again.
 
 Setup appears once per user. Finishing it is remembered on this Mac, so later
 launches and app updates open Vesper normally, and people who already used

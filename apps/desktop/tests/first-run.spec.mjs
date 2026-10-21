@@ -123,12 +123,45 @@ test('choosing Hindi switches to a speech model that can hear it', async ({ page
   await page.goto(
     '/tests/interaction-preview.html?first-run&first-run-step=1&first-run-mic=allowed',
   );
-  await page.getByRole('radio', { name: 'Hindi' }).click();
-  await expect(page.getByText('Hindi needs a different speech model.')).toBeVisible();
+  await page.locator('#setup-language').click();
+  await page.getByRole('option', { name: /^Hindi/ }).click();
+  await expect(page.locator('#setup-language')).toContainText('Hindi');
+  await expect(page.getByText('Hindi uses Qwen3-ASR 0.6B.')).toBeVisible();
   await expect.poll(() => commands(page, 'save_settings')).toBeGreaterThan(0);
   await expect(page.getByText('Heard you')).toBeVisible({ timeout: 8000 });
   await page.getByRole('button', { name: 'Continue' }).click();
   await expect(page.locator('.first-run .row b').first()).toHaveText('Qwen3-ASR 0.6B');
+});
+
+test('setup offers every language its speech models declare', async ({ page }) => {
+  await page.goto(
+    '/tests/interaction-preview.html?first-run&first-run-step=1&first-run-mic=allowed',
+  );
+  await page.locator('#setup-language').click();
+  for (const name of ['English', 'German', 'Japanese', 'Thai', 'Norwegian (Bokmål)'])
+    await expect(
+      page.getByRole('option', { name: new RegExp(`^${name.replace(/[()]/g, '\\$&')}`) }),
+    ).toBeVisible();
+  await expect(page.getByRole('option', { name: /^Detect automatically/ })).toHaveCount(0);
+  await page.getByRole('option', { name: /^German/ }).click();
+  await expect(page.locator('#setup-microphone')).toContainText('Synthetic microphone');
+  // The recording waveform from Dictate, not a separate meter.
+  await expect(page.locator('.first-run .meter .voice-indicator')).toBeVisible();
+});
+
+test('Back from Voice and Welcome in the rail return to the real Welcome', async ({ page }) => {
+  await page.emulateMedia({ reducedMotion: 'reduce' });
+  await page.goto(
+    '/tests/interaction-preview.html?first-run&first-run-step=1&first-run-mic=allowed',
+  );
+  await page.locator('.first-run').getByRole('button', { name: 'Back', exact: true }).click();
+  await expect(page.getByRole('heading', { name: 'Welcome to Vesper' })).toBeVisible();
+  await expect(page.getByText('Step 1 of 7')).toHaveCount(0);
+  await page.getByRole('button', { name: 'Get started' }).click();
+  await expect(page.getByRole('heading', { name: 'What will you speak?' })).toBeVisible();
+  await page.getByRole('button', { name: 'Go back to Welcome' }).click();
+  await expect(page.getByRole('heading', { name: 'Welcome to Vesper' })).toBeVisible();
+  await expect(page.getByText('Step 1 of 7')).toHaveCount(0);
 });
 
 test('a blocked microphone explains where to turn it on', async ({ page }) => {

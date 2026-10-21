@@ -308,20 +308,32 @@ and tests open it with `?first-run`.
   measured where the logo rests rather than mid-slide. The rail slides in as
   one piece and the content fades in as one.
 - **Steps** keep the setup rail (completed steps are buttons for going back;
-  later steps are not interactive) and one Continue per step. There is no
-  Skip. Progress is saved after every step so a quit resumes where it stopped.
-- **Voice** offers English, French and Hindi (other languages stay in
-  Settings). Choosing a language the current speech model cannot hear also
-  selects the recommended model for it, so saved settings stay valid. The
-  microphone prompt appears only from **Allow microphone**; a denial names the
-  exact System Settings path and is noticed as soon as access is turned on. A
-  live waveform (the app's reed shape, from the real input level) confirms
-  "Heard you", and Continue waits for it.
+  later steps are not interactive), **Back** from Voice onward and one
+  Continue per step. Going back to Welcome, from Back or the rail, shows the
+  composed Welcome screen again (a short fade, no replayed intro); there is no
+  empty step 1. There is no Skip. Progress is saved after every step so a quit
+  resumes where it stopped.
+- **Voice** uses the app's shared controls: the language and microphone
+  fields are the same `Select` as Dictate, and the meter is the recording
+  waveform (`AudioIndicator`, full reed shape and pitch spacing). The language
+  list is every explicit language at least one setup speech model declares in
+  `models/languages.json`; automatic detection stays in Dictate and Settings.
+  Choosing a language the current speech model cannot hear also selects the
+  recommended model for it, so saved settings stay valid, and the hint names
+  that model. The microphone prompt appears only from **Allow microphone**; a
+  denial names the exact System Settings path and is noticed as soon as access
+  is turned on. About 0.6 s of clear input confirms "Heard you", and Continue
+  waits for it.
 - **Models** shows this Mac in one line (chip, memory, free space), then one
   recommended setup: the speech model for the chosen language and the writing
   model behind **Tidy my text**, with the remaining download size from the
   catalog. Until peak memory per model is measured, the recommendation follows
-  the language only (ADR-0010); memory is shown but does not change the pick.
+  the language only: Cohere Transcribe wherever it declares the language and
+  Qwen3-ASR for Hindi (ADR-0010 evidence); any other language takes the first
+  setup model that declares it (Parakeet v3, Qwen3-ASR, then Nemotron
+  streaming), which is declared support, not a measured ranking. Memory is
+  shown but does not change the pick. **Tidy my text** uses the Settings
+  switch style.
   Free space must cover the download plus a quarter, and being offline blocks
   the download, each with its reason in the footer. **Download and set up**
   saves the choice, starts the download in the background and moves on; a chip

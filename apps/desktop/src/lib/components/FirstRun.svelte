@@ -137,7 +137,10 @@
           ? settings.models
           : {
               ...settings.models,
-              asr: recommendedSpeechModel(next) as AppConfig['models']['asr'],
+              asr: recommendedSpeechModel(
+                next,
+                settings.computeBackend,
+              ) as AppConfig['models']['asr'],
               customAsr: null,
             },
       });
@@ -391,10 +394,28 @@
   }
 
   function go(next: number) {
+    if (next === 0) return void returnToWelcome();
     step = next;
     save(next);
     error = null;
     void tick().then(() => root?.querySelector<HTMLElement>('h1')?.focus({ preventScroll: true }));
+  }
+
+  // Back from Voice, or Welcome in the rail: the Welcome screen itself comes
+  // back, already composed, rather than an empty step.
+  let returning = $state(false);
+  async function returnToWelcome() {
+    step = 0;
+    save(0);
+    error = null;
+    enteredFromWelcome = false;
+    birdIn = true;
+    textIn = true;
+    returning = true;
+    phase = 'welcome';
+    await tick();
+    stopDots = startDots();
+    root?.querySelector<HTMLElement>('.get-started')?.focus({ preventScroll: true });
   }
 
   // Get started: step 2 is placed underneath at once, Welcome crossfades away
@@ -646,7 +667,7 @@
           {/if}
         </div>
         <footer class="fr-foot">
-          {#if step > 1 && step < READY_STEP}<button
+          {#if step >= 1 && step < READY_STEP}<button
               type="button"
               class="quiet"
               onclick={() => go(step - 1)}>Back</button
@@ -693,7 +714,12 @@
     </div>
   {/if}
   {#if phase === 'welcome' || phase === 'leaving'}
-    <section class="hello" class:leaving={phase === 'leaving'} aria-labelledby="hello-title">
+    <section
+      class="hello"
+      class:leaving={phase === 'leaving'}
+      class:returning
+      aria-labelledby="hello-title"
+    >
       <canvas class="hello-dots" bind:this={dotCanvas} aria-hidden="true"></canvas>
       <div class="hello-mark">
         <svg class="reed" viewBox="0 0 320 100" preserveAspectRatio="none" aria-hidden="true"
@@ -762,6 +788,14 @@
   }
   .hello > :not(.hello-dots) {
     position: relative;
+  }
+  .hello.returning {
+    animation: hello-return 320ms var(--ease-out) both;
+  }
+  @keyframes hello-return {
+    from {
+      opacity: 0;
+    }
   }
   .hello.leaving {
     pointer-events: none;
@@ -1229,6 +1263,7 @@
       transform: none;
     }
     .fx.in,
+    .hello.returning,
     .hello.leaving,
     .hello.leaving .fx,
     .fr-grid.from-welcome .fr-rail,
