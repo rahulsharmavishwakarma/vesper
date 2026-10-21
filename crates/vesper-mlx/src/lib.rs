@@ -357,8 +357,17 @@ fn take_string(pointer: *mut c_char, free: Free) -> Option<String> {
     Some(value)
 }
 
-fn runtime(error: impl std::fmt::Display) -> Error {
-    Error::Runtime(error.to_string())
+fn runtime(error: impl std::error::Error) -> Error {
+    // libloading keeps the dyld/dlerror text in `source()`; Display alone is
+    // only "dlopen failed", which hid the real cause (#245).
+    let mut text = error.to_string();
+    let mut source = error.source();
+    while let Some(next) = source {
+        text.push_str(": ");
+        text.push_str(&next.to_string());
+        source = next.source();
+    }
+    Error::Runtime(text)
 }
 
 fn completed(response: &str) -> Result<Transcript> {
@@ -487,5 +496,24 @@ mod tests {
         value["runtimeRevision"] = "unpatched".into();
         assert!(completed(&value.to_string()).is_err());
         assert!(completed(r#"{"schemaVersion":1,"error":"no model"}"#).is_err());
+    }
+}
+
+#[cfg(test)]
+mod load_error_tests {
+    use super::*;
+
+    #[test]
+    fn library_load_failure_reports_the_system_reason() {
+        let missing = Path::new("/nonexistent/vesper-mlx-test/libVesperMLX.dylib");
+        let message = device_available(missing).unwrap_err().to_string();
+        assert!(message.starts_with("MLX runtime: "), "{message}");
+        // The bare libloading Display is only "dlopen failed"; the path and the
+        // system text come from the error's source chain.
+        assert!(message.contains("vesper-mlx-test"), "{message}");
+        assert!(
+            message.len() > "MLX runtime: dlopen failed".len(),
+            "{message}"
+        );
     }
 }
