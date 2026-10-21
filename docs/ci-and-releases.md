@@ -139,17 +139,28 @@ retain `./` local workflow references until actionlint supports GitHub's newer
 The repository is public, and repository rulesets protect `main`: changes arrive
 through pull requests, commits must carry verified signatures, and force pushes
 and branch deletion are refused. The repository admin and the release bot app
-are bypass actors so the bot can tag merged release pull requests. The rulesets
-do **not** yet require status checks, so a pull request can be merged while a
-check is failing or still running; the proposal to require them, including which
-names to require, is [issue #281](https://github.com/rahulsharmavishwakarma/vesper/issues/281).
+are bypass actors so the bot can tag merged release pull requests.
+
+A separate ruleset, `main required checks`, applies only to the default branch
+and blocks merging until these five GitHub Actions checks pass:
+`Frontend and repository hygiene`, `Browser regressions`, `Rust (macOS)`,
+`Dependencies` and `Secrets` ([issue #281](https://github.com/rahulsharmavishwakarma/vesper/issues/281)).
+Branches need not be up to date with `main` first, so a merge does not force
+every open pull request to re-run the macOS job. The rule is kept off the
+all-branches ruleset because there it would also refuse ordinary pushes to
+feature branches. The benchmark matrix checks are not required: their names
+follow the `security.yml` matrix, so a newly added project would block every
+pull request opened before it. CodeQL and GitGuardian also run but are not
+required. The same two bypass actors apply. Release-only jobs never run on pull
+requests and must not be required.
+
 (The 2026-09-19 review found the rulesets API returning HTTP 403 while the
 repository was private; that no longer applies.) See GitHub's
 [ruleset availability](https://docs.github.com/en/repositories/configuring-branches-and-merges-in-your-repository/managing-rulesets/about-rulesets).
 
-Do not mark release-only jobs as required PR checks. Job names above are an API
-contract for branch protection and should change only with a coordinated ruleset
-update.
+Job names above are an API contract for the required-checks ruleset: renaming a
+required job leaves pull requests waiting for a check that never reports, so
+rename only together with the ruleset.
 
 ## Local setup and hook scope
 
