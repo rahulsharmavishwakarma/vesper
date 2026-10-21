@@ -130,6 +130,7 @@ impl Model {
             "qwen3_asr",
             "parakeet",
             "granite_speech5_ctc",
+            "phonon2",
         ]
         .contains(&architecture)
         {
@@ -438,7 +439,7 @@ mod tests {
             first
         );
         // Non-autoregressive decoders consume the whole input without a token budget.
-        if !["parakeet", "granite_speech5_ctc"].contains(&architecture.as_str()) {
+        if !["parakeet", "granite_speech5_ctc", "phonon2"].contains(&architecture.as_str()) {
             assert!(matches!(
                 model.transcribe(a.samples(), Some(&language), 1, &flag),
                 Err(Error::Incomplete(_))
