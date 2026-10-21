@@ -43,6 +43,7 @@ pub(crate) fn key(config: &AppConfig, root: &Path) -> Result<RecognizerKey> {
         AdapterKind::CohereAsr
             | AdapterKind::Whisper
             | AdapterKind::QwenAsr
+            | AdapterKind::MoonshineAsr
             | AdapterKind::SherpaTransducer
     ) {
         return Err(crate::InferenceError::UnsupportedAsr(

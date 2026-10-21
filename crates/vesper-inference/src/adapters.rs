@@ -32,6 +32,7 @@ pub(crate) fn speech_key(config: &AppConfig, root: &Path) -> Result<SpeechKey> {
         AdapterKind::CohereAsr
         | AdapterKind::Whisper
         | AdapterKind::QwenAsr
+        | AdapterKind::MoonshineAsr
         | AdapterKind::SherpaTransducer => SpeechKey::Sherpa(resident_sherpa::key(config, root)?),
         kind => SpeechKey::PerJob(kind, root.to_owned(), Box::new(config.clone())),
     })
@@ -156,6 +157,7 @@ impl SpeechModel {
             AdapterKind::CohereAsr
             | AdapterKind::Whisper
             | AdapterKind::QwenAsr
+            | AdapterKind::MoonshineAsr
             | AdapterKind::SherpaTransducer => Ok(Self::Sherpa(resident_sherpa::Recognizer::load(
                 config, root, cancelled,
             )?)),
@@ -263,7 +265,10 @@ impl SpeechModel {
             Self::Mlx(_) => Some("metal"),
             Self::Nemo(m) => Some(m.initialized_provider),
             Self::PerJob(
-                AdapterKind::SherpaTransducer | AdapterKind::QwenAsr | AdapterKind::CohereAsr,
+                AdapterKind::SherpaTransducer
+                | AdapterKind::QwenAsr
+                | AdapterKind::CohereAsr
+                | AdapterKind::MoonshineAsr,
             ) => Some("cpu"),
             Self::Lfm(_) | Self::Sherpa(_) | Self::PerJob(_) => None,
         };
@@ -304,15 +309,16 @@ pub(crate) fn transcribe_once(
         AdapterKind::SherpaTransducer => {
             crate::parakeet::transcribe(audio, config, root, cancelled)
         }
-        AdapterKind::QwenAsr | AdapterKind::CohereAsr | AdapterKind::Whisper => {
-            crate::offline_asr::transcribe_with_progress(
-                audio,
-                config,
-                root,
-                cancelled,
-                &**progress,
-            )
-        }
+        AdapterKind::QwenAsr
+        | AdapterKind::CohereAsr
+        | AdapterKind::Whisper
+        | AdapterKind::MoonshineAsr => crate::offline_asr::transcribe_with_progress(
+            audio,
+            config,
+            root,
+            cancelled,
+            &**progress,
+        ),
         _ => Err(InferenceError::UnsupportedAsr(config.models.asr.id())),
     }
 }
