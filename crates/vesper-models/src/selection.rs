@@ -28,6 +28,11 @@ impl SpeechSelection {
     /// Only callers handling a GPU initialization failure may use this retry.
     /// Cancellation, verification and decoding failures are not retry signals.
     pub fn cpu_fallback(&mut self, root: &Path, reason: String) -> Result<()> {
+        if vesper_core::mlx_speech_only(self.config.models.asr) {
+            return Err(ModelError::RuntimeUnavailable(format!(
+                "Automatic GPU initialization failed ({reason}). This model runs only on the Apple GPU and has no CPU version."
+            )));
+        }
         if self.requested_backend != ComputeBackend::Auto || !self.config.uses_mlx_speech() {
             return Err(ModelError::InvalidRequest(
                 "CPU fallback is unavailable for this selection".into(),
@@ -55,7 +60,11 @@ fn automatic_candidate(config: &AppConfig) -> bool {
 
 fn preferred_with_availability(config: &AppConfig, available: bool) -> AppConfig {
     let mut preferred = config.clone();
-    if automatic_candidate(config) && available {
+    // A model without a CPU export has one execution path: Automatic means GPU,
+    // and an unusable GPU surfaces as a load error rather than another model.
+    if (automatic_candidate(config) && available)
+        || (config.compute_backend == ComputeBackend::Auto && config.uses_mlx_speech())
+    {
         preferred.compute_backend = ComputeBackend::Metal;
     }
     preferred
@@ -109,6 +118,7 @@ fn resolve_with_preferred(
     };
     if config.compute_backend == ComputeBackend::Auto
         && selection.config.uses_mlx_speech()
+        && !vesper_core::mlx_speech_only(config.models.asr)
         && !speech_files_present(&selection.config, root)?
     {
         let mut cpu = config.clone();
@@ -143,6 +153,42 @@ pub fn resolve_speech(config: &AppConfig, root: &Path) -> Result<SpeechSelection
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    #[test]
+    fn apple_gpu_only_automatic_is_metal_without_a_cpu_fallback() {
+        let mut config = AppConfig::default();
+        config.models.asr = AsrModel::GraniteSpeech5TurboCtc;
+        config.compute_backend = ComputeBackend::Auto;
+        for language in [Language::English, Language::German, Language::Japanese] {
+            config.language = language;
+            for available in [true, false] {
+                let expected = if vesper_core::mlx_speech_supported(config.models.asr) {
+                    ComputeBackend::Metal
+                } else {
+                    ComputeBackend::Auto
+                };
+                assert_eq!(
+                    preferred_with_availability(&config, available).compute_backend,
+                    expected
+                );
+            }
+        }
+        if vesper_core::mlx_speech_supported(config.models.asr) {
+            let root = tempfile::tempdir().unwrap();
+            let mut selection = resolve_with_preferred(
+                &config,
+                preferred_with_availability(&config, false),
+                root.path(),
+            )
+            .unwrap();
+            assert_eq!(selection.config.compute_backend, ComputeBackend::Metal);
+            assert!(selection.fallback_reason.is_none());
+            let error = selection
+                .cpu_fallback(root.path(), "fixture".into())
+                .unwrap_err();
+            assert!(error.to_string().contains("no CPU version"), "{error}");
+        }
+    }
 
     #[test]
     fn automatic_preserves_language_model_and_manual_overrides() {

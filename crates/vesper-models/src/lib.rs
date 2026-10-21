@@ -349,7 +349,9 @@ fn built_in_asr_spec(config: &AppConfig, model: AsrModel) -> ModelInstallSpec {
     target.cleanup_enabled = false;
     target.audio_frontend = Default::default();
     // Installation metadata must not inherit a recording's language restriction.
-    target.language = if vesper_core::mlx_speech_supported(model) {
+    target.language = if vesper_core::mlx_speech_only(model) {
+        Language::English
+    } else if vesper_core::mlx_speech_supported(model) {
         config.language
     } else if matches!(
         model,
@@ -362,7 +364,9 @@ fn built_in_asr_spec(config: &AppConfig, model: AsrModel) -> ModelInstallSpec {
     // Catalog entries must remain independently installable even when the saved
     // backend is incompatible with a different selected model. Auto still uses
     // the current host/platform resolver to choose a real packaged runtime.
-    target.compute_backend = if config.compute_backend == ComputeBackend::Metal
+    target.compute_backend = if vesper_core::mlx_speech_only(model) {
+        ComputeBackend::Auto
+    } else if config.compute_backend == ComputeBackend::Metal
         && vesper_core::mlx_speech_supported(model)
     {
         target.language = Language::English;
@@ -1536,7 +1540,14 @@ mod tests {
                 .iter()
                 .find(|entry| entry.model_id == model.id())
                 .unwrap();
-            assert!(status.supported, "{}: {}", model.id(), status.message);
+            // GPU-only models are installable only where their runtime is compiled.
+            assert_eq!(
+                status.supported,
+                !vesper_core::mlx_speech_only(model) || vesper_core::mlx_speech_supported(model),
+                "{}: {}",
+                model.id(),
+                status.message
+            );
         }
     }
 
