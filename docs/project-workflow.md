@@ -22,7 +22,8 @@ evidence as historical, with a current-name note where needed; see
 6. Before the first repository edit, create and check out a new feature branch from the freshly fetched default branch. Preserve existing local work separately when needed. Implement or investigate there, then prepare small local commits under the owner's standing authorization and the rules below.
 7. Update canonical documentation alongside the implementation, in the same change. Prefer an existing owner page; otherwise add a focused page and link it from the nearest index or README. Include related docs in the implementation commit when practical.
 8. Run proportionate validation and publish the result, documentation location, limitations, and deferred work to the issue.
-9. Confirm labels still represent the completed scope, then close only when every completion criterion—including documentation—is complete. Leave incomplete work open with an explicit status.
+9. Open the pull request from the [template](../.github/PULL_REQUEST_TEMPLATE.md): link the issue, apply the same work-type labels as the issue, make sure the issue and the PR each have a project item with Status and Area set (see [Keeping Status and Area current](#keeping-status-and-area-current)), state validation honestly, add no attribution lines, and do not title it `Release vX.Y.Z` (only the release bot's version PR may; that subject makes it tag a release on merge).
+10. Confirm labels still represent the completed scope, then close only when every completion criterion—including documentation—is complete. Leave incomplete work open with an explicit status.
 
 ## GitHub Project progress view
 
@@ -260,7 +261,7 @@ dependency is required by this documentation workflow.
 
 ## GitHub CLI patterns
 
-Use `gh`, not hand-written REST requests or a local issue directory:
+Use `gh`, not a local issue directory. Prefer the porcelain commands; use `gh api` REST calls when GraphQL is rate limited (`gh pr create`, `gh pr merge` and project queries use GraphQL, and the quota is shared by every agent and tool):
 
 ```sh
 gh issue list --repo OWNER/REPOSITORY --state all --search "short topic"
@@ -270,6 +271,16 @@ gh issue edit NUMBER --repo OWNER/REPOSITORY --add-label bug
 gh issue comment NUMBER --repo OWNER/REPOSITORY --body-file /tmp/progress.md
 gh issue close NUMBER --repo OWNER/REPOSITORY --comment "Completion criteria and documentation are complete."
 ```
+
+Pull requests share the issue label namespace and the project:
+
+```sh
+gh pr edit NUMBER --repo OWNER/REPOSITORY --add-label enhancement
+gh api repos/OWNER/REPOSITORY/issues/NUMBER/labels -f 'labels[]=enhancement'   # REST fallback, also for PRs
+gh api repos/OWNER/REPOSITORY/pulls -f title="..." -f head=BRANCH -f base=main -F body=@/tmp/pr-body.md
+```
+
+Check `git status` before switching branches in a shared checkout and never touch another agent's uncommitted files; use `git worktree add` for your task when the tree is not clean. Changes to repository settings, rulesets, environments, secrets, Pages, apps, signing keys, tags or releases need the owner's explicit approval, recorded in the issue; verify secrets by name or hash, never by value.
 
 For multiline content, write the exact body to a temporary file outside the source tree and pass `--body-file`. Never publish private audio, transcripts, credentials, tokens, or sensitive machine-specific paths. If GitHub is unavailable, keep the intended body only in a temporary file, report the blocker, and do not claim a remote update occurred.
 

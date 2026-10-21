@@ -874,7 +874,20 @@ npm exec tauri -- signer generate -w ~/.tauri/vesper.key
 - The `plugins.updater` block in the base `tauri.conf.json` carries the enrolled
   public key and the stable HTTPS endpoint. Prerelease tags are routed to a
   separate feed by the manifest name (`beta.json`) chosen in the release
-  workflow; the app does not read a beta feed yet (proposal on issue #66).
+  workflow. A stable build reads that feed only when the user turns on
+  **Include beta and pre-release builds** in About
+  ([issue #277](https://github.com/rahulsharmavishwakarma/vesper/issues/277)):
+  `releases/latest/download/latest.json` never names a pre-release, so
+  `pages.yml` publishes the newest published pre-release's `beta.json` at
+  `https://rahulsharmavishwakarma.github.io/vesper/beta.json` (the promote job
+  requests that deploy after publishing), and a small main-window-only Rust command,
+  `check_prerelease_update`, builds the same updater against it and registers the
+  result as the plugin does, so the plugin's own download, signature check and
+  install apply unchanged. Pre-release builds are signed with the stable updater
+  key, so this adds no new trust. With the switch on the app checks both feeds and
+  offers the higher version newer than the installed one; either feed failing never
+  hides the other's answer. Installed builds cannot gain the switch: it first ships
+  in the next build.
 - Keep `allow_downgrades` off and do not enable a custom version comparator
   ([issue #65](https://github.com/rahulsharmavishwakarma/vesper/issues/65)).
   Rotation is one transition release that accepts the new public key before
@@ -889,9 +902,10 @@ installation. Updater signatures and [Apple distribution signing](https://v2.tau
 have different purposes. Publish both formats from the same qualified app.
 Use immutable version-specific archive URLs, an HTTPS feed, and separate stable
 and beta routes. Do not enable automatic checks before a trusted release exists.
-The About switches (issue #195) store two device-local preferences,
-`autoCheck` (default on: startup and first-About-view checks) and `autoInstall`
-(default off, requires `autoCheck`), under the `vesper.updatePreferences`
+The About switches (issues #195, #277) store three device-local preferences,
+`autoCheck` (default on: startup and first-About-view checks), `autoInstall`
+(default off, requires `autoCheck`) and `includePrereleases` (default off: stable
+only), under the `vesper.updatePreferences`
 `localStorage` key; they are not part of the settings file. Automatic install calls
 the same download-verify-install path and never relaunches the app.
 

@@ -210,6 +210,8 @@ jobs:
     environment: production
     permissions:
       contents: write
+      # Dispatching pages.yml with GITHUB_TOKEN is allowed.
+      actions: write
     env:
       TAG: ${{ inputs.tag }}
     steps:
@@ -250,6 +252,10 @@ jobs:
           esac
           if [ "$prerelease" = "true" ]; then latest=false; else latest=true; fi
           gh release edit "$TAG" --repo "$GITHUB_REPOSITORY" --draft=false --prerelease="$prerelease" --latest="$latest"
+      - name: Republish the project site feeds
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: gh workflow run pages.yml --repo "$GITHUB_REPOSITORY" --ref main
       - name: Record download links
         run: |
           {

@@ -1,11 +1,14 @@
 // Native backend for the update manager (#66). The only module that talks to
 // the updater/process plugins; the state machine stays pure and testable.
-import { check as tauriCheck, type Update } from '@tauri-apps/plugin-updater';
+import { check as tauriCheck, Update } from '@tauri-apps/plugin-updater';
 import { relaunch } from '@tauri-apps/plugin-process';
-import { isTauri } from '@tauri-apps/api/core';
+import { getVersion } from '@tauri-apps/api/app';
+import { invoke, isTauri } from '@tauri-apps/api/core';
 import { getEngineDiagnostics } from './api/desktop';
 import {
+  selectCandidate,
   UpdateManager,
+  type CheckOutcome,
   type UpdateBackend,
   type UpdateInfo,
   type UpdatePreferenceStore,
@@ -13,16 +16,48 @@ import {
 
 let pending: Update | null = null;
 
+async function settle(run: () => Promise<Update | null>): Promise<CheckOutcome<Update>> {
+  try {
+    return { value: await run(), error: null };
+  } catch (error) {
+    return { value: null, error };
+  }
+}
+
+/** The pre-release feed, checked by a main-window-only Rust command (#277). */
+async function checkPrerelease(): Promise<Update | null> {
+  const metadata = await invoke<ConstructorParameters<typeof Update>[0] | null>(
+    'check_prerelease_update',
+  );
+  return metadata ? new Update(metadata) : null;
+}
+
+// Nightly builds follow their own feed and key; they never take this channel.
+let nightlyBuild: boolean | null = null;
+async function isNightlyBuild(): Promise<boolean> {
+  if (nightlyBuild === null) nightlyBuild = (await getVersion()).includes('-nightly.');
+  return nightlyBuild;
+}
+
 export const updateBackend: UpdateBackend = {
   enabled: isTauri(),
 
-  async check(): Promise<UpdateInfo | null> {
-    pending = await tauriCheck();
-    if (!pending) return null;
+  async check({ includePrereleases }): Promise<UpdateInfo | null> {
+    const stable = await settle(() => tauriCheck());
+    const wantsPrerelease = includePrereleases && !(await isNightlyBuild());
+    const prerelease = wantsPrerelease ? await settle(checkPrerelease) : null;
+    const { chosen, error } = selectCandidate(stable, prerelease);
+    if (error) throw error;
+    // Free the update that lost, best effort; the plugin keeps it in a table.
+    for (const outcome of [stable, prerelease]) {
+      if (outcome?.value && outcome.value !== chosen) void outcome.value.close().catch(() => {});
+    }
+    pending = chosen;
+    if (!chosen) return null;
     return {
-      version: pending.version,
-      notes: pending.body ?? '',
-      date: pending.date,
+      version: chosen.version,
+      notes: chosen.body ?? '',
+      date: chosen.date,
     };
   },
 
