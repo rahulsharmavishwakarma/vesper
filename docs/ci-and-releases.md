@@ -19,6 +19,11 @@ the same checks before packaging. Stable PR check names are:
 5. `Security / Dependencies`
 6. `Security / Python benchmarks (audio-frontend)`
 7. `Security / Python benchmarks (vibevoice)`
+8. `Security / Python benchmarks (onnx-quantize)`
+9. `Security / Python benchmarks (mlx-convert)`
+
+The benchmark names come from the `security.yml` matrix, so adding or removing a
+benchmark project adds or removes a check.
 
 The frontend job runs repository hooks, actionlint with ShellCheck, zizmor,
 and `make check-portable`: source formatting, ESLint, Ruff, shell linting,
@@ -131,14 +136,16 @@ retain `./` local workflow references until actionlint supports GitHub's newer
 [actionlint](https://github.com/rhysd/actionlint/blob/main/docs/usage.md), and
 [zizmor](https://docs.zizmor.sh/integrations/).
 
-GitHub makes required status checks enforceable through branch protection or
-rulesets. Those controls are available for public repositories on GitHub Free,
-but private repositories require GitHub Pro, Team, or Enterprise. This private
-repository's rulesets API returned HTTP 403 during the 2026-09-19 review. Workflow
-files can be prepared locally, but the current plan cannot enforce these rules. After changing
-visibility or plan, protect `main`, require a pull request, require the seven exact
-checks above, require branches to be up to date, dismiss stale approvals, and
-require conversation resolution. See GitHub's [ruleset availability](https://docs.github.com/en/repositories/configuring-branches-and-merges-in-your-repository/managing-rulesets/about-rulesets).
+The repository is public, and repository rulesets protect `main`: changes arrive
+through pull requests, commits must carry verified signatures, and force pushes
+and branch deletion are refused. The repository admin and the release bot app
+are bypass actors so the bot can tag merged release pull requests. The rulesets
+do **not** yet require status checks, so a pull request can be merged while a
+check is failing or still running; the proposal to require them, including which
+names to require, is [issue #281](https://github.com/rahulsharmavishwakarma/vesper/issues/281).
+(The 2026-09-19 review found the rulesets API returning HTTP 403 while the
+repository was private; that no longer applies.) See GitHub's
+[ruleset availability](https://docs.github.com/en/repositories/configuring-branches-and-merges-in-your-repository/managing-rulesets/about-rulesets).
 
 Do not mark release-only jobs as required PR checks. Job names above are an API
 contract for branch protection and should change only with a coordinated ruleset
@@ -495,9 +502,16 @@ app plus DMG using Tauri's existing bundler, and stages both assets on a
   branded installer window (see [DMG installer window](#dmg-installer-window));
 - `SHA256SUMS`, covering that DMG.
 
-Publication is a separate approval-gated step: the `promote` job runs only on
-workflow dispatch with the tag, requires the `production` environment (an owner
-configures required reviewers under repository Settings → Environments),
+The `production` environment holds the updater signing key and, since
+21 October 2026, requires the owner's review (Settings → Environments →
+production; admin bypass stays enabled). Two jobs use it, so a release waits for
+approval twice: the tag run's `Desktop package (macOS)` job before building, and
+the `promote` job before publishing. Before that date the environment had no
+protection rules, and `v0.1.1-rc.4` was published by the automatic promote run
+with no approval step.
+
+Publication is a separate step: the `promote` job runs only on
+workflow dispatch with the tag, requires the `production` environment,
 re-verifies tag/version agreement, refuses anything that is not a draft, and
 flips that exact draft to published without rebuilding. The draft job requests
 that dispatch automatically, so a run waits for approval instead of needing a
@@ -635,7 +649,8 @@ sequence below.
 2. Review, run the normal checks and squash-merge it. The commit subject must
    keep the `Release vX.Y.Z` prefix.
 3. The `tag` job re-checks versions, refuses an existing tag and pushes
-   `vX.Y.Z`, which starts the Release workflow and stages the draft.
+   `vX.Y.Z`, which starts the Release workflow. Approve the `production`
+   deployment of its desktop job; it builds and stages the draft.
 4. The draft job dispatches `promote`; approve the `production` deployment.
    Verification follows in the same run.
 
@@ -660,9 +675,12 @@ sequenceDiagram
     Maintainer->>PR: review checks, squash-merge
     PR->>Main: "Release vX.Y.Z"
     Main->>Prep: push event, tag job
-    Prep->>Rel: push tag vX.Y.Z (build, draft)
+    Prep->>Rel: push tag vX.Y.Z
+    Rel->>Prod: desktop build waits for approval
+    Maintainer->>Prod: approve build
+    Prod->>Rel: build, stage draft
     Rel->>Prod: dispatch promote, waits for approval
-    Maintainer->>Prod: approve
+    Maintainer->>Prod: approve publish
     Prod->>Rel: publish draft, then verify
     Note over Prep,Rel: Mismatched version, existing tag, or unmerged PR means no tag
 ```
@@ -676,8 +694,9 @@ sequenceDiagram
 5. Merge the reviewed changes and push the matching `vX.Y.Z` tag. This is a
    maintainer action, not something `make version-set` performs. The tag run
    stages a draft candidate and requests a promote run; it never publishes.
-6. Wait for the Release workflow to pass and inspect the draft candidate and
-   its checksums.
+6. Approve the `production` deployment of the tag run's desktop job, wait for
+   the Release workflow to pass, and inspect the draft candidate and its
+   checksums.
 7. Approve the `production` deployment of the requested promote run (or start one
    with `gh workflow run Release --ref main -f tag=vX.Y.Z`), and confirm the
    published assets and download links in the run summary.
