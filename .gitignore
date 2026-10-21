@@ -1,7 +1,8 @@
 # Rust and frontend build artifacts
 /target/
-# Extra Cargo build directories from dependency-upgrade work (generated output).
-/target-deps*/
+# Extra Cargo build directories (CARGO_TARGET_DIR=target-<name>) used to keep
+# isolated builds, e.g. a patched native runtime, apart from /target/.
+/target-*/
 /tests/glib-backport/target/
 node_modules/
 build/
