@@ -89,6 +89,7 @@ public func loadModel(
         case "whisper": model = try await WhisperModel.fromDirectory(directory)
         case "qwen3_asr": model = try await Qwen3ASRModel.fromModelDirectory(directory)
         case "parakeet": model = try ParakeetModel.fromDirectory(directory)
+        case "granite_speech5_ctc": model = try GraniteSpeech5CTCModel.fromDirectory(directory)
         default: throw fail("Unsupported compiled speech architecture")
         }
         return ModelHandle(model, kind: kind)
