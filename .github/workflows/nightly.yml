@@ -81,10 +81,15 @@ jobs:
     if: needs.plan.outputs.build == 'true'
     runs-on: macos-15
     timeout-minutes: 90
+    # The nightly-only updater key lives in this environment, which only the
+    # main branch may use (#262). Without it the build skips the update archive.
+    environment: nightly
     permissions:
       contents: read
     env:
       CMAKE_BUILD_PARALLEL_LEVEL: '2'
+      TAURI_SIGNING_PRIVATE_KEY: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY }}
+      TAURI_SIGNING_PRIVATE_KEY_PASSWORD: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY_PASSWORD }}
       DEVELOPER_DIR: /Applications/Xcode_26.3.app/Contents/Developer
       # Tauri skips the Finder step that writes the DMG window layout (.DS_Store)
       # whenever CI is set, so published DMGs opened as a plain window (#252).
@@ -134,8 +139,12 @@ jobs:
       - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
         with:
           name: nightly-${{ runner.os }}-${{ runner.arch }}
-          path: release/vesper-macos-arm64.dmg
-          if-no-files-found: error
+          path: |
+            release/vesper-macos-arm64.dmg
+            release/vesper-macos-arm64.app.tar.gz
+            release/vesper-macos-arm64.app.tar.gz.sig
+          # The DMG is always produced; the update archive only with the key.
+          if-no-files-found: warn
           retention-days: 7
           include-hidden-files: false
 
@@ -146,11 +155,21 @@ jobs:
     timeout-minutes: 10
     permissions:
       contents: write
+      # Dispatching pages.yml with GITHUB_TOKEN is allowed.
+      actions: write
     env:
       GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       SHA: ${{ needs.plan.outputs.sha }}
       VERSION: ${{ needs.plan.outputs.version }}
     steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+        with:
+          ref: ${{ needs.plan.outputs.sha }}
+          persist-credentials: false
+      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1
+        with:
+          node-version-file: .nvmrc
+          package-manager-cache: false
       - uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333 # v8.0.2
         with:
           pattern: nightly-*
@@ -169,12 +188,22 @@ jobs:
           fi
           mkdir assets
           cp dmg/vesper-macos-arm64.dmg assets/vesper-nightly-macos-arm64.dmg
+          # A signed update archive exists only when the nightly key was
+          # available. Then publish it with a feed manifest that Pages serves
+          # at the address nightly builds check; otherwise skip the feed.
+          feed=0
+          if [ -f dmg/vesper-macos-arm64.app.tar.gz ] && [ -f dmg/vesper-macos-arm64.app.tar.gz.sig ]; then
+            cp dmg/vesper-macos-arm64.app.tar.gz assets/vesper-nightly-macos-arm64.app.tar.gz
+            cp dmg/vesper-macos-arm64.app.tar.gz.sig assets/vesper-nightly-macos-arm64.app.tar.gz.sig
+            node scripts/compose-updater-manifest.mjs --version="$VERSION"               --archive=assets/vesper-nightly-macos-arm64.app.tar.gz               --sig=assets/vesper-nightly-macos-arm64.app.tar.gz.sig               --url="https://github.com/$GITHUB_REPOSITORY/releases/download/$tag/vesper-nightly-macos-arm64.app.tar.gz"               --notes="Nightly ${VERSION} built from main at ${SHA:0:7}."               --out=assets/nightly.json
+            feed=1
+          fi
           (cd assets && sha256sum -- * > SHA256SUMS)
           notes="Unsigned nightly build of main at ${SHA}, version ${VERSION}. Installs beside the stable app with its own settings and models. Not for production use. It is unsigned and not notarized: macOS asks you to allow it under System Settings, Privacy & Security, Open Anyway."
           gh release create "$tag" --repo "$GITHUB_REPOSITORY" --target "$SHA" \
             --prerelease --latest=false \
             --title "Vesper Nightly ${VERSION}" --notes "$notes" \
-            assets/vesper-nightly-macos-arm64.dmg assets/SHA256SUMS
+            assets/*
           # Keep only the newest nightly. Deleting an immutable release is
           # allowed; its tag stays reserved, which is why tags are never reused.
           gh release list --repo "$GITHUB_REPOSITORY" --limit 100 --json tagName --jq '.[].tagName | select(startswith("nightly-"))' |
@@ -182,3 +211,9 @@ jobs:
               [ "$old" = "$tag" ] || gh release delete "$old" --repo "$GITHUB_REPOSITORY" --yes
             done
           echo "Nightly ${VERSION}: https://github.com/$GITHUB_REPOSITORY/releases/tag/$tag" >> "$GITHUB_STEP_SUMMARY"
+          if [ "$feed" = 1 ]; then
+            gh workflow run pages.yml --repo "$GITHUB_REPOSITORY" --ref main
+            echo "Requested a Pages deploy for the nightly feed." >> "$GITHUB_STEP_SUMMARY"
+          else
+            echo "No signed update archive (nightly key unavailable); no feed published." >> "$GITHUB_STEP_SUMMARY"
+          fi

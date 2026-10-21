@@ -1,0 +1,64 @@
+name: Pages
+
+# Publishes the project site and the machine-readable release feeds on GitHub
+# Pages (issue #262). Release workflows attach their feed to the release; this
+# workflow only republishes the newest one, so a later landing page can be
+# deployed without losing the feeds. Deployment uses the official Pages actions:
+# no branch push and no ruleset bypass.
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'site/**'
+      - '.github/workflows/pages.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: pages
+  cancel-in-progress: false
+
+jobs:
+  deploy:
+    name: Deploy the project site
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    permissions:
+      contents: read
+      pages: write
+      id-token: write
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    env:
+      GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - name: Assemble the site and its release feeds
+        run: |
+          set -eu
+          mkdir _site
+          cp -R site/. _site/
+          # The newest nightly release carries the signed nightly feed; an
+          # unsigned build has none, and then no feed is published.
+          tag="$(gh api "repos/$GITHUB_REPOSITORY/releases?per_page=100" --jq '[.[]|select(.tag_name|startswith("nightly-"))][0].tag_name // ""')"
+          if [ -n "$tag" ]; then
+            gh release download "$tag" --repo "$GITHUB_REPOSITORY" --pattern nightly.json --dir _site \
+              || echo "Release $tag has no nightly.json; no nightly feed published." | tee -a "$GITHUB_STEP_SUMMARY"
+          fi
+          # Never publish a feed that is not valid JSON.
+          for feed in _site/*.json; do
+            [ -e "$feed" ] || continue
+            node -e 'JSON.parse(require("fs").readFileSync(process.argv[1], "utf8"))' "$feed"
+            echo "Publishing feed: $(basename "$feed")" >> "$GITHUB_STEP_SUMMARY"
+          done
+      - uses: actions/upload-pages-artifact@fc324d3547104276b827a68afc52ff2a11cc49c9 # v5.0.0
+        with:
+          path: _site
+      - id: deployment
+        uses: actions/deploy-pages@368f82528645a54fb793d4d04e342629a3f51346 # v5.0.1
