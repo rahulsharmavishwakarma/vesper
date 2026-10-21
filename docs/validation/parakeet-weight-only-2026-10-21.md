@@ -97,12 +97,42 @@ Neither shows a difference within noise, and both are slower. Both presets keep
 their INT8 exports, and no converted copies were published. The INT8 accuracy
 loss is specific to the v3 export. FastConformer already ships FP32.
 
+## Cohere Transcribe (not changed)
+
+sherpa-onnx publishes Cohere only as dynamic INT8
+(`csukuangfj2/sherpa-onnx-cohere-transcribe-14-lang-int8-2026-04-01@156a470c`), so
+a full-precision copy was reconstructed locally for comparison:
+
+1. The INT8 graph's dynamic-quantized operators (`MatMulInteger`,
+   `ConvInteger`, `DynamicQuantizeLSTM`) were rewritten as FP32 operators with
+   the stored 8-bit weights. This removes run-time activation quantization only.
+2. Each dequantized weight was replaced by the original tensor from
+   `CohereLabs/cohere-transcribe-03-2026@d552dadc`. Matching used shape and
+   values: 450 encoder and 65 decoder tensors.
+   - Median relative error of the INT8 weights against the originals: 1.9%; the
+     worst layers reached 31–33%.
+   - The next candidate was always at least 3× further away. Tied output and
+     embedding weights count as one tensor.
+
+Decoded with the pinned sherpa-onnx runtime (`11afbd0`) through a batch C-API
+probe, CPU, 8 threads:
+
+| Set | INT8 (shipped) | INT8 weights, no activation quantization | Original weights (FP32) | FP32 better / worse | Median decode |
+| --- | ---: | ---: | ---: | --- | --- |
+| FLEURS en-US, 94 held-out clips | 5.85% | 5.75% | 5.75% | 6 / 6; CI [−0.56, 0.30] | 460 → 917 ms |
+| FLEURS de-DE, 50 clips | 4.74% | — | 4.56% | 6 / 4; CI [−0.97, 0.67] | 678 → 1,351 ms |
+
+Despite the coarse per-tensor weight scales, Cohere's INT8 export shows no
+accuracy loss outside noise, while full precision doubles decode time. Cohere is
+unchanged. The reconstruction scripts and artifacts stayed local and nothing was
+published.
+
 ## Limitations
 
 - Only English and German read speech were measured. The other 23 supported
   languages, spontaneous dictation and long recordings were not.
 - The quiet lane stays poor in both precisions.
 - Memory, other CPUs and sustained thermals were not measured.
-- Cohere still uses dynamic INT8 and has not been re-measured. That is tracked
-  in #251.
+- The Cohere comparison used a batch C-API probe rather than the application's
+  segmented adapter. It covers English and German read speech only.
 - The Metal path (MLX FP32) is unaffected.
