@@ -73,7 +73,8 @@ pub(crate) struct Recognizer {
 pub(crate) fn maximum_samples(model: AsrModel) -> usize {
     (match model {
         AsrModel::WhisperSmall => 29,
-        AsrModel::ParakeetTdt06bV3 => 30,
+        // Block attention is local to 1.28 s windows, so 30 s parts stay exact.
+        AsrModel::ParakeetTdt06bV3 | AsrModel::GraniteSpeech5TurboCtc => 30,
         _ => 10,
     }) * ASR_SAMPLE_RATE as usize
 }
@@ -118,6 +119,7 @@ impl Recognizer {
             AsrModel::ParakeetTdt06bV3 => "parakeet",
             AsrModel::Qwen3Asr06b => "qwen3_asr",
             AsrModel::WhisperSmall => "whisper",
+            AsrModel::GraniteSpeech5TurboCtc => "granite_speech5_ctc",
             _ => unreachable!(),
         };
         let directory = root.join(
@@ -184,10 +186,13 @@ impl Recognizer {
                     .borrow_mut()
                     .transcribe(
                         samples,
-                        Some(if config.models.asr == AsrModel::Qwen3Asr06b {
-                            "English"
-                        } else {
-                            "en"
+                        Some(match config.models.asr {
+                            AsrModel::Qwen3Asr06b => "English",
+                            // Granite has no language prompt; record the selected mode.
+                            AsrModel::GraniteSpeech5TurboCtc => {
+                                config.language.code().unwrap_or("auto")
+                            }
+                            _ => "en",
                         }),
                         512,
                         cancelled,

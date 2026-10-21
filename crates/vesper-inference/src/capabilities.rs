@@ -42,6 +42,7 @@ pub fn accelerator_capabilities() -> &'static AcceleratorCapabilities {
                         vesper_core::AsrModel::ParakeetTdt06bV3,
                         vesper_core::AsrModel::Qwen3Asr06b,
                         vesper_core::AsrModel::WhisperSmall,
+                        vesper_core::AsrModel::GraniteSpeech5TurboCtc,
                     ]
                     .into_iter()
                     .filter(|model| {
