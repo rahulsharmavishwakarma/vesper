@@ -363,6 +363,21 @@ verifies the lockfile still contains only those instances with only those
 dependents; any other zip below 9 fails the job. Remove the ignores when both
 parents resolve zip 9 or drop it (issue #161).
 
+A third owner-approved scoped ignore (2026-10-21, [issue #248](https://github.com/rahulsharmavishwakarma/vesper/issues/248))
+covers RUSTSEC-2026-0381, bundled roots that trust distrusted emSign
+intermediates, patched in webpki-roots 1.0.10. The 1.x copy (used by the app's
+`reqwest` downloader) and `rustls-webpki` / `webpki-root-certs` were updated in
+`Cargo.lock` (0.103.16 and 1.0.10), so they need no exception. The remaining
+webpki-roots 0.26.11 is a build-dependency of sherpa-onnx-sys through ureq 2.12.1,
+a download helper its build script uses only when no prebuilt runtime directory is
+supplied; the app always supplies `SHERPA_ONNX_LIB_DIR`, so it is never compiled
+into the application, and `cargo tree -e normal` shows ureq is not a normal
+dependency of anything. sherpa-onnx-sys 1.13.8 (2026-09-11) is the newest published
+version, so upgrading could not clear it. The wrapper verifies the lockfile still
+shows exactly webpki-roots 0.26.11 used only by ureq 2.12.1, itself used only by
+sherpa-onnx-sys, and refuses any other webpki-roots below 1.0.10 before auditing.
+Remove the ignore and guard when sherpa-onnx-sys moves to ureq 3.
+
 The end-of-file formatter excludes only GLib's upstream `LICENSE` and
 `.cargo_vcs_info.json`, preserving their original end-of-file whitespace. Their hashes
 remain enforced by the source guard; secret and dependency scans still include
