@@ -6,8 +6,9 @@ the same results on CPU and GPU, through the application's own path?
 
 **Result:** on the #251 held-out read-speech sets, the unified engine gave identical transcripts on CPU and Metal, was
 **1.01 points more accurate on English** (significant) and 0.63 points more accurate on German (within noise) than the
-current 4-bit ONNX engine, at about the same CPU speed and 4-5x lower latency on Metal. Noise, quiet speech, other
-languages, long audio, CUDA and Vulkan are not measured yet, so `Standard` stays the default.
+current 4-bit ONNX engine, at about the same CPU speed and 4-5x lower latency on Metal. On the regression lanes it cut
+quiet-speech WER from 64.05% to 7.25%, improved or matched clean and noisy speech, and produced no text on non-speech
+audio. Other languages, long audio, CUDA and Vulkan are not measured yet, so `Standard` stays the default.
 
 ## Method
 
@@ -39,6 +40,24 @@ languages, long audio, CUDA and Vulkan are not measured yet, so `Standard` stays
 CPU and Metal produced the same scores on both sets. No clip failed. The current engine's 6.62% German result matches
 its #251 record on the same set.
 
+### Regression lanes
+
+The [16 September regression corpus](audio-regression-2026-09-16.md) (`asr.json`: 28 FLEURS en-US sentences per
+condition plus 8 non-speech clips), explicit English, same runner and build:
+
+| Lane | Current ONNX, CPU | Unified GGUF, CPU [vs current, 95% CI] | Unified GGUF, Metal [vs current, 95% CI] |
+| --- | ---: | ---: | ---: |
+| Clean, 662 words | 8.01% | 6.34% [−4.47, +0.47] | 6.04% [−4.74, +0.28] |
+| Natural noise 0 dB | 10.57% | 9.52% [−3.62, +0.92] | 9.37% [−3.71, +0.62] |
+| Natural noise 10 dB | 7.55% | 6.95% [−2.30, +0.79] | 6.95% [−2.30, +0.79] |
+| **Quiet, −30 dB** | **64.05%** | **7.25% [−72.91, −37.21]** | **7.25% [−72.91, −37.21]** |
+| Non-speech noise, 8 clips | 0 false transcripts | 0 false transcripts | 0 false transcripts |
+
+The current engine loses most words on quiet speech, as its #251 record already showed (68.75% there); the unified
+engine does not. The cause was not isolated: NeMo-Speech.cpp's feature front end may normalize level differently from
+the sherpa-onnx export. Every other lane improved or stayed within noise, and neither engine produced text on
+non-speech audio.
+
 Supporting measurements outside the application path:
 
 - NeMo-Speech.cpp CLI on 100 other FLEURS en-US test clips: 4.94% CPU and 4.89% Metal, the same transcript for 99/100
@@ -50,8 +69,8 @@ Supporting measurements outside the application path:
 
 ## Limitations and remaining gates
 
-- Read speech in English and German only. Noise, quiet (−30 dB), spoken controls and non-speech controls, the other 23
-  declared languages and long recordings remain to be qualified.
+- English and German only. The other 23 declared languages, spontaneous speech and long recordings remain to be
+  qualified.
 - CUDA and Vulkan packages are pinned but were not run.
 - Memory, cold load and sustained thermal behaviour were not recorded.
 - Raw transcripts differ in punctuation and number formatting because NeMo-Speech.cpp normalizes text differently from

@@ -222,8 +222,9 @@ automatic language detection; live dictation shows buffered drafts and the
 completed-audio pass stays authoritative. It does not use personal vocabulary
 phrase boosting. On the #251 held-out sets it scored 4.86% WER in English and
 5.99% in German on both CPU and Metal, against 5.86% and 6.62% for the current
-engine ([qualification record](validation/parakeet-unified-gguf-2026-10-22.md)).
-Noise, quiet speech, the other languages, CUDA and Vulkan are not yet qualified,
+engine, and 7.25% against 64.05% on quiet (−30 dB) speech, with no text on
+non-speech audio ([qualification record](validation/parakeet-unified-gguf-2026-10-22.md)).
+The other languages, long recordings, CUDA and Vulkan are not yet qualified,
 so **Current** remains the default.
 
 ## Parakeet MLX precision
