@@ -150,6 +150,11 @@ uv run --locked --project benchmarks/asr/python/onnx-quantize \
   --source-model nvidia/parakeet-tdt-0.6b-v3 --out OUTPUT_DIR
 ```
 
+`moondream/parakeet-ultra`, a post-trained v3, was converted exactly for both
+engines and measured on 21 October 2026. It did not beat v3 (Metal 5.10% vs 5.25%;
+CPU FP32 9.27% vs 8.28%), so it is not offered. See the
+[parakeet-ultra record](validation/parakeet-ultra-2026-10-21.md).
+
 ## Parakeet completed-audio parts
 
 Parakeet TDT v3 and custom NeMo transducer profiles on CPU decode completed audio in contiguous parts of up to 30 s. Each part has a fresh stream, and progress is reported per part. Recordings of 30 s or less still use one native call. Before [#153](https://github.com/rahulsharmavishwakarma/vesper/issues/153), the whole recording went to a single `decode` call, which silently lost about half of the words on 60–120 s recordings.
