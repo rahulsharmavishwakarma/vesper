@@ -131,7 +131,9 @@ The download size is about the same; CPU decoding is roughly 1.5× slower.
 See the [precision record](validation/parakeet-weight-only-2026-10-21.md). The
 scores in the next section were measured on the previous INT8 export. The
 Parakeet v2 and Unified presets showed no gain from the same conversion and keep
-their INT8 exports. Cohere's INT8 export has not been re-measured.
+their INT8 exports. Cohere's INT8 export matched a full-precision reconstruction
+from the original weights within noise (English 5.85% vs 5.75%, German 4.74% vs
+4.56%) at half the decode time, so it is unchanged.
 
 For a source under the NVIDIA Open Model License, pass `--license other
 --license-name nvidia-open-model-license --license-link URL --notice "Licensed by
