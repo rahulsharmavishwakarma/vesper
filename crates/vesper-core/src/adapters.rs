@@ -14,6 +14,7 @@ pub enum AdapterKind {
     MoonshineAsr,
     GraniteCtc,
     PackedTdt,
+    TernaryTdt,
     LfmAudio,
     QwenHybrid,
     LlamaGguf,
@@ -132,7 +133,7 @@ const ALL_LANGUAGES: &[Language] = &[
 /// The manifest is the source of record; nothing here may drift from it.
 use crate::generated::{
     COHERE_LANGUAGES, GRANITE_LANGUAGES, LFM_LANGUAGES, MOONSHINE_LANGUAGES, NEMOTRON_LANGUAGES,
-    PARAKEET_LANGUAGES, PHONON2_LANGUAGES, QWEN_ASR_LANGUAGES, WHISPER_LANGUAGES,
+    PARAKEET_LANGUAGES, PHONON2_LANGUAGES, QWEN_ASR_LANGUAGES, REDUX_LANGUAGES, WHISPER_LANGUAGES,
 };
 const SHERPA: &str = "11afbd009a7f8c08f4bcf2fc1b265d0df4670fbf";
 const LLAMA: &str = "d81235049384534c167caea52b85a694f6103d14";
@@ -156,7 +157,10 @@ const MLX_ONLY_BACKENDS: &[ComputeBackend] = if MLX_COMPILED {
 /// Models without a CPU export. Automatic resolves to the Apple GPU for every
 /// declared language and never falls back to a CPU model.
 pub const fn mlx_speech_only(model: AsrModel) -> bool {
-    matches!(model, AsrModel::GraniteSpeech5TurboCtc | AsrModel::Phonon2)
+    matches!(
+        model,
+        AsrModel::GraniteSpeech5TurboCtc | AsrModel::Phonon2 | AsrModel::ParakeetRedux
+    )
 }
 
 /// Qualified completed-audio English variants. The models crate resolves saved
@@ -313,6 +317,19 @@ pub const ADAPTERS: &[AdapterRegistration] = &[
             ..caps(CacheState::Rnnt, PHONON2_LANGUAGES, MLX_ONLY_BACKENDS)
         },
     },
+    // Parakeet TDT with a ternary encoder (Vesper's lossless MLX repacking).
+    AdapterRegistration {
+        kind: AdapterKind::TernaryTdt,
+        task: SPEECH,
+        architecture: "parakeet_redux",
+        runtime: MLX_RUNTIME,
+        runtime_revision: MLX_REVISION,
+        capabilities: AdapterCapabilities {
+            resident_weights: true,
+            completion_report: true,
+            ..caps(CacheState::Rnnt, REDUX_LANGUAGES, MLX_ONLY_BACKENDS)
+        },
+    },
     AdapterRegistration {
         kind: AdapterKind::LfmAudio,
         task: SPEECH,
@@ -394,6 +411,7 @@ impl AsrModel {
             Self::MoonshineBase => AdapterKind::MoonshineAsr,
             Self::GraniteSpeech5TurboCtc => AdapterKind::GraniteCtc,
             Self::Phonon2 => AdapterKind::PackedTdt,
+            Self::ParakeetRedux => AdapterKind::TernaryTdt,
         }
     }
 }
@@ -536,6 +554,7 @@ mod tests {
                 AsrModel::MoonshineBase => AdapterKind::MoonshineAsr,
                 AsrModel::GraniteSpeech5TurboCtc => AdapterKind::GraniteCtc,
                 AsrModel::Phonon2 => AdapterKind::PackedTdt,
+                AsrModel::ParakeetRedux => AdapterKind::TernaryTdt,
             };
             let offered: std::collections::BTreeSet<&str> = adapter(kind)
                 .capabilities

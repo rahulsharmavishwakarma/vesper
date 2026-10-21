@@ -25,6 +25,7 @@ const gpuBackends: ComputeBackend[] = ['metal', 'cuda', 'vulkan', 'rocm'];
 export const APPLE_GPU_ONLY_SPEECH_MODELS: readonly string[] = [
   'ibm-granite/granite-speech-5.0-470m-turboctc',
   'FermionResearch/Phonon-2',
+  'moondream/parakeet-redux',
 ];
 const appleGpuOnly = (config: AppConfig) =>
   !config.models.customAsr && APPLE_GPU_ONLY_SPEECH_MODELS.includes(config.models.asr);

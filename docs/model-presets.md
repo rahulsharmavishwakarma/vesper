@@ -42,6 +42,7 @@ every capability of an upstream architecture or checkpoint.
 | Moonshine Base (English)                                          | Yes                  | Buffered drafts; English only; completed-audio final in parts of at most 15 s   |
 | IBM Granite Speech 5.0 TurboCTC                                   | Yes                  | Buffered drafts; Apple GPU only; completed-audio final in parts of at most 30 s |
 | Fermion Phonon-2 (English)                                        | Yes                  | Buffered drafts; Apple GPU only; English; completed-audio final in parts of at most 30 s |
+| Moondream Parakeet Redux                                          | Yes                  | Buffered drafts; Apple GPU only; 25 languages; completed-audio final in parts of at most 30 s |
 | Imported custom ASR profiles                                      | Yes                  | Buffered drafts for compatible validated transducer profiles                    |
 
 The common live interface selects native sessions or buffered previews after
@@ -220,7 +221,7 @@ Whisper, SenseVoice, Moonshine, Canary, Qwen3-ASR, and CTC-only exports are not
 interchangeable with this profile format. Although the
 [upstream runtime defines separate configurations](https://github.com/k2-fsa/sherpa-onnx/blob/v1.13.8/sherpa-onnx/csrc/offline-model-config.h)
 for more families, the application needs corresponding adapters before listing
-them as usable models. Qwen3-ASR, Cohere, Moonshine Base, Granite Speech 5.0 TurboCTC and Phonon-2 now have dedicated built-in adapters; they are not imported as transducer profiles. See [their runtime contract](offline-asr.md).
+them as usable models. Qwen3-ASR, Cohere, Moonshine Base, Granite Speech 5.0 TurboCTC, Phonon-2 and Parakeet Redux now have dedicated built-in adapters; they are not imported as transducer profiles. See [their runtime contract](offline-asr.md).
 
 ## Maintaining the catalog
 

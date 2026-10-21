@@ -353,6 +353,33 @@
       "artifact_notes": "Unmodified files from mlx-community/Phonon-2; exact executable metadata is in mlx-artifacts.json. See docs/offline-asr.md.",
       "creator": "Fermion Research",
       "picker_blurb": "English only · Apple GPU only · small"
+    },
+    {
+      "id": "moondream/parakeet-redux",
+      "name": "Moondream Parakeet Redux",
+      "role": "speech_recognition",
+      "status": "optional",
+      "description": "Smallest multilingual model (about 217 MB) for Apple silicon: a ternary student of Parakeet TDT v3 with the same 25 European languages. Less accurate than Parakeet v3. Runs only on the Apple GPU; there is no CPU version.",
+      "source_url": "https://huggingface.co/moondream/parakeet-redux",
+      "license": "CC-BY-4.0 (derived from NVIDIA Parakeet TDT 0.6B v3; lossless MLX repacking by Vesper)",
+      "proposed_runtime": "Vesper's Swift ternary layer on the pinned MLX Parakeet TDT graph",
+      "runtime_integrated": true,
+      "artifact_revision": "47de12f261ab05fe19dd211c0c98812eab46139e",
+      "artifacts": [
+        {
+          "filename": "config.json",
+          "size_bytes": 351148,
+          "sha256": "8461d1419e710bdc9f7bdb9be0a3f1da5d989f4c8fc656c276a370b63bc19bda"
+        },
+        {
+          "filename": "model.safetensors",
+          "size_bytes": 216875637,
+          "sha256": "40f4451e324b1e14e0a0254d02b5a91e01c006974b9f540b8619500ac8a8d1cf"
+        }
+      ],
+      "artifact_notes": "Converted from moondream/parakeet-redux@2bf12860 by scripts/convert-parakeet-redux-mlx.py and hosted at rahulsharmavishwakarma/vesper-parakeet-redux-mlx; exact metadata is in mlx-artifacts.json. See docs/offline-asr.md.",
+      "creator": "Moondream",
+      "picker_blurb": "25 languages · Apple GPU only · smallest"
     }
   ]
 }

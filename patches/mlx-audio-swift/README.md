@@ -84,8 +84,10 @@ its sanitized weights before strict verification. It may replace modules and
 must return weights that match them. Stock Parakeet passes nil and loads
 exactly as before.
 
-VesperMLX uses the hook for Phonon-2: it replaces the 264 encoder projections
-with packed five-value layers and derives their float32 scales from the fp16
-row palettes before the loader casts float parameters. The hook adds no kernel
-and does not change upstream decoding. See
-[the Phonon-2 adapter](../../docs/offline-asr.md#phonon-2-apple-gpu).
+VesperMLX uses the hook for Phonon-2 and Parakeet Redux. It replaces the 264
+encoder projections with packed 2-bit layers: two planes per projection for
+Phonon-2's five-value weights, one for Redux's ternary weights. Their float32
+scales are taken from the fp16 file values before the loader casts float
+parameters. The hook adds no kernel and does not change upstream decoding. See
+[Phonon-2](../../docs/offline-asr.md#phonon-2-apple-gpu) and
+[Parakeet Redux](../../docs/offline-asr.md#parakeet-redux-apple-gpu).

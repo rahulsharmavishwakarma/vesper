@@ -182,6 +182,30 @@ It is less accurate than Parakeet v3 (unseen FLEURS 7.43% vs 5.68%; quiet
 speech 8.88% vs 6.91%) and not faster. See the
 [adapter record](validation/phonon2-2026-10-21.md).
 
+## Parakeet Redux (Apple GPU)
+
+Redux is offered for its size: ~217 MB and 0.94 GB of GPU memory, with v3's 25
+languages and automatic detection. It is not offered for accuracy.
+
+- **Conversion:** `scripts/convert-parakeet-redux-mlx.py`, run in the locked
+  `benchmarks/asr/python/mlx-convert` project, repacks Moondream's ternary
+  codes losslessly into MLX 2-bit words. It writes v3's MLX config. The output
+  is hosted unmodified on the project's Hugging Face account.
+- **Runtime:** `ParakeetRedux.swift` swaps the 264 encoder projections for one
+  2-bit matmul each through the Parakeet load hook, and runs in float32.
+- **Backends:** Automatic and Metal only, in 30 s parts; never a default.
+
+Measured through the application against Parakeet v3:
+
+| Lane | Redux | Parakeet v3 |
+| --- | --- | --- |
+| Unseen FLEURS en-US | 6.71% | 5.68% |
+| 0 dB noise | 13.32% | 9.21% |
+| German | 7.16% | 6.62% (CPU export) |
+
+Long-form was 8.97% vs 10.50% (within noise). See the
+[Redux record](validation/parakeet-redux-2026-10-21.md).
+
 ## Parakeet CPU precision
 
 The built-in Parakeet TDT v3 CPU path installs 4-bit weight-only artifacts
@@ -226,10 +250,9 @@ engines and measured on 21 October 2026. It did not beat v3 (Metal 5.10% vs 5.25
 CPU FP32 9.27% vs 8.28%), so it is not offered. See the
 [parakeet-ultra record](validation/parakeet-ultra-2026-10-21.md).
 
-`moondream/parakeet-redux`, a 178 MB ternary student, was measured on 21 October
-2026 and is not offered. It was less accurate than v3 on clean speech, noise and
-German, and better only on very quiet input. See the
-[parakeet-redux record](validation/parakeet-redux-2026-10-21.md).
+`moondream/parakeet-redux`, a ternary student of v3, was first measured on
+21 October 2026 and not offered. On 22 October it was added by owner decision
+for its size; see [Parakeet Redux](#parakeet-redux-apple-gpu).
 
 ## Parakeet completed-audio parts
 

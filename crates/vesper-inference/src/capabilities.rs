@@ -44,6 +44,7 @@ pub fn accelerator_capabilities() -> &'static AcceleratorCapabilities {
                         vesper_core::AsrModel::WhisperSmall,
                         vesper_core::AsrModel::GraniteSpeech5TurboCtc,
                         vesper_core::AsrModel::Phonon2,
+                        vesper_core::AsrModel::ParakeetRedux,
                     ]
                     .into_iter()
                     .filter(|model| {

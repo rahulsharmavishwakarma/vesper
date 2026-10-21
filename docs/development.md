@@ -72,6 +72,7 @@ make audit-python
 make audit-python-audio-frontend
 make audit-python-vibevoice
 make audit-python-onnx-quantize
+make audit-python-mlx-convert
 ```
 
 Use `uv add --dev PACKAGE` / `uv remove --dev PACKAGE` for contributor tools.
@@ -86,7 +87,9 @@ Model probes use separate macOS Apple-silicon/Python 3.12 projects under
 `benchmarks/asr/python/audio-frontend` and `benchmarks/asr/python/vibevoice`, each
 with its own manifest and lockfile. `benchmarks/asr/python/onnx-quantize` holds the
 ONNX weight-only conversion tooling for published speech artifacts; see
-[Parakeet CPU precision](offline-asr.md#parakeet-cpu-precision). Their incompatible NumPy/model dependencies
+[Parakeet CPU precision](offline-asr.md#parakeet-cpu-precision).
+`benchmarks/asr/python/mlx-convert` pins mlx-audio for MLX artifact conversion;
+see [Parakeet Redux](offline-asr.md#parakeet-redux-apple-gpu). Their incompatible NumPy/model dependencies
 are isolated from contributor checks. See [benchmark Python setup](../benchmarks/asr/README.md#python-environments).
 The retained benchmark requirements files are generated compatibility exports;
 `make python-lock-check` verifies they match their locks. Dated validation reports

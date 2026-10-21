@@ -25,7 +25,7 @@ export HF_REPO HF_WEIGHTS HF_REVISION HF_OUTPUT
 
 .PHONY: help setup setup-checks hooks precommit prepush workflows dev web model-profile build build-debug build-web check check-fast check-web test-tools test-python test-browser benchmark-contract version-check version-set container-build container-smoke fmt fmt-check lint test smoke-native models sherpa-runtime test-native-report
 .PHONY: check-portable check-rust fmt-rust fmt-rust-check fmt-web fmt-web-check fmt-python fmt-python-check fmt-shell fmt-shell-check lint-rust lint-web lint-python lint-shell test-rust doc-rust
-.PHONY: python-lock-check audit-python audit-python-audio-frontend audit-python-vibevoice audit-python-onnx-quantize audit-rust test-glib-backport test-cleanup-bridge
+.PHONY: python-lock-check audit-python audit-python-audio-frontend audit-python-vibevoice audit-python-onnx-quantize audit-python-mlx-convert audit-rust test-glib-backport test-cleanup-bridge
 
 help: ## Show available commands
 	@awk 'BEGIN { FS = ":.*## "; printf "Usage: make <target>\n\n" } /^[a-zA-Z_-]+:.*## / { printf "  %-14s %s\n", $$1, $$2 }' Makefile
@@ -51,6 +51,7 @@ python-lock-check: ## Verify Python manifests, lockfiles and compatibility expor
 	$(UV) lock --check --project benchmarks/asr/python/audio-frontend
 	$(UV) lock --check --project benchmarks/asr/python/vibevoice
 	$(UV) lock --check --project benchmarks/asr/python/onnx-quantize
+	$(UV) lock --check --project benchmarks/asr/python/mlx-convert
 	$(UV) lock --check --project training/cleanup
 	@mkdir -p .cache
 	$(UV) export --locked --project benchmarks/asr/python/audio-frontend --no-dev --no-emit-project --output-file .cache/audio-frontend-requirements.txt > /dev/null
@@ -73,10 +74,12 @@ test-glib-backport: ## Run optimized GLib iterator regressions (requires system 
 audit-python-audio-frontend: PYTHON_AUDIT_PROJECT = audio-frontend
 audit-python-vibevoice: PYTHON_AUDIT_PROJECT = vibevoice
 audit-python-onnx-quantize: PYTHON_AUDIT_PROJECT = onnx-quantize
+audit-python-mlx-convert: PYTHON_AUDIT_PROJECT = mlx-convert
 audit-python-audio-frontend: ## Audit the locked audio frontend environment on Apple-silicon macOS
 audit-python-vibevoice: ## Audit the locked VibeVoice environment on Apple-silicon macOS
 audit-python-onnx-quantize: ## Audit the locked ONNX weight-only quantization environment on Apple-silicon macOS
-audit-python-audio-frontend audit-python-vibevoice audit-python-onnx-quantize:
+audit-python-mlx-convert: ## Audit the locked MLX artifact conversion environment on Apple-silicon macOS
+audit-python-audio-frontend audit-python-vibevoice audit-python-onnx-quantize audit-python-mlx-convert:
 	@$(PYTHON) -c 'import platform, sys; sys.exit(0 if (platform.system(), platform.machine()) == ("Darwin", "arm64") else "Benchmark audits require Apple-silicon macOS; other hosts skip their dependency markers.")'
 	@mkdir -p .cache
 	$(UV) export --locked --project benchmarks/asr/python/$(PYTHON_AUDIT_PROJECT) --no-dev --no-emit-project --output-file .cache/$(PYTHON_AUDIT_PROJECT)-audit-requirements.txt > /dev/null
