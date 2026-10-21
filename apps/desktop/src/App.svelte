@@ -91,9 +91,17 @@
   const shortcutError = $derived(shortcutRetryError ?? snapshot?.status.shortcut_error);
   let statusError = $state<string | null>(null);
   let refreshing = $state(false);
+  // Recording, transcription or file removal is running. A model download is
+  // tracked separately in `downloading`: it only locks model and device choices.
   let pipelineBusy = $state(false);
+  let downloading = $state(false);
   let transcriptionPanel: TranscriptionPanel | undefined = $state();
   let downloadRequest = $state<string | null>(null);
+  // Model, device and reset choices wait for a running download; the rest of
+  // the app stays usable while it runs.
+  const modelChoicesLocked = $derived(
+    pending !== null || pipelineBusy || downloading || downloadRequest !== null,
+  );
   let downloads = $state<ModelDownloadState>({
     catalog: [],
     checking: true,
@@ -407,6 +415,7 @@
       environment !== 'desktop' ||
       pending ||
       pipelineBusy ||
+      downloading ||
       downloadRequest ||
       validationErrors.length ||
       !transcriptionPanel
@@ -423,7 +432,7 @@
     }
   }
   async function reset() {
-    if (pending || pipelineBusy) return;
+    if (pending || pipelineBusy || downloading || downloadRequest) return;
     pending = 'resetting';
     error = null;
     feedback = null;
@@ -649,7 +658,11 @@
                   void transcriptionPanel?.cancelDownload();
                 }}>{downloads.cancelling ? 'Cancelling…' : 'Cancel download'}</button
               >
-            </div>{/if}
+            </div>
+            <p class="note">
+              Model and device choices unlock when the download finishes. Everything else stays
+              available.
+            </p>{/if}
           {#if error}<p class="error" role="alert">{error}</p>{/if}
           {#if downloads.error}<p class="error" role="alert">{downloads.error}</p>{/if}
           {#if downloads.feedback}<p class="success">{downloads.feedback}</p>{/if}
@@ -688,7 +701,7 @@
             novalidate
           >
             {#if loaded}
-              <fieldset disabled={pending !== null || pipelineBusy || downloadRequest !== null}>
+              <fieldset disabled={pending !== null || pipelineBusy}>
                 <legend class="visually-hidden">Application settings</legend>
                 <section
                   class="settings-section"
@@ -838,7 +851,7 @@
                       value={selectedModelValue(draft.models, 'asr')}
                       options={asrOptions}
                       languageFilters={MODEL_LANGUAGE_FILTERS}
-                      disabled={pending !== null || pipelineBusy}
+                      disabled={modelChoicesLocked}
                       describedBy="models-asr-help"
                       onChange={(value) => {
                         draft.models = selectModel(modelChoiceContext('asr'), 'asr', value);
@@ -872,7 +885,7 @@
                     state={downloads}
                     desktop={environment === 'desktop'}
                     {dirty}
-                    disabled={pending !== null || pipelineBusy || downloadRequest !== null}
+                    disabled={modelChoicesLocked}
                     downloadDisabled={validationErrors.length > 0}
                     fallbackBytes={draft.models.customAsr?.files.reduce(
                       (sum, file) => sum + file.sizeBytes,
@@ -910,7 +923,7 @@
                       value={selectedModelValue(draft.models, 'rewriter')}
                       options={cleanupOptions}
                       languageFilters={MODEL_LANGUAGE_FILTERS}
-                      disabled={pending !== null || pipelineBusy}
+                      disabled={modelChoicesLocked}
                       onChange={(value) => {
                         draft.models = selectModel(
                           modelChoiceContext('rewriter'),
@@ -943,7 +956,7 @@
                         id="models-cleanup-precision"
                         bind:value={draft.rewriteQuantization}
                         options={precisionOptions}
-                        disabled={pending !== null || pipelineBusy}
+                        disabled={modelChoicesLocked}
                         describedBy="models-cleanup-precision-help"
                       />
                     {/if}
@@ -962,7 +975,7 @@
                     state={downloads}
                     desktop={environment === 'desktop'}
                     {dirty}
-                    disabled={pending !== null || pipelineBusy || downloadRequest !== null}
+                    disabled={modelChoicesLocked}
                     downloadDisabled={validationErrors.length > 0}
                     fallbackBytes={draft.models.customRewriter?.files.reduce(
                       (sum, file) => sum + file.sizeBytes,
@@ -991,7 +1004,7 @@
                       id="compute-backend"
                       bind:value={draft.computeBackend}
                       options={backendOptions}
-                      disabled={pending !== null || pipelineBusy}
+                      disabled={modelChoicesLocked}
                       describedBy="compute-device-help compute-backend-help"
                       invalid={Boolean(backendError)}
                     />
@@ -1058,11 +1071,7 @@
                         Restore and save the application's default settings. Your recordings and
                         vocabulary stay.
                       </p>
-                      <button
-                        type="button"
-                        onclick={reset}
-                        disabled={pending !== null || pipelineBusy}
-                      >
+                      <button type="button" onclick={reset} disabled={modelChoicesLocked}>
                         {pending === 'resetting' ? 'Restoring…' : 'Restore defaults'}
                       </button>
                     </details>
@@ -1090,9 +1099,7 @@
             <AppearanceSettings />
             <div class="capture-appearance">
               <h3>Floating capture</h3>
-              <fieldset
-                disabled={!loaded || pending !== null || pipelineBusy || downloadRequest !== null}
-              >
+              <fieldset disabled={!loaded || pending !== null || pipelineBusy}>
                 <div class="setting-toggle">
                   <label class="checkbox-field" for="floating-bar"
                     ><input
@@ -1163,7 +1170,7 @@
             <PersonalizationPanel
               desktop={environment === 'desktop'}
               visible={activeView === 'settings' && settingsSection === 'writing'}
-              disabled={pending !== null || pipelineBusy || downloadRequest !== null}
+              disabled={pending !== null || pipelineBusy}
               onSaveActivity={(saving, at) => {
                 panelSaving = saving;
                 panelSavedAt = at;
@@ -1198,8 +1205,9 @@
           draft.language = value;
           markEdited();
         }}
-        onBusyChange={(busy) => {
+        onBusyChange={(busy, downloadActive) => {
           pipelineBusy = busy;
+          downloading = downloadActive;
         }}
         onResult={(result) => {
           if (result.session) datasetRevision += 1;
@@ -1209,7 +1217,7 @@
 
       <ModelRemovalDialog
         bind:this={removalDialog}
-        disabled={pending !== null || pipelineBusy || downloadRequest !== null}
+        disabled={modelChoicesLocked}
         onRemove={async (model) => {
           if (!transcriptionPanel) throw new Error('Model controls are still loading.');
           return transcriptionPanel.removeDownloadedModel(model);

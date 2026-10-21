@@ -91,7 +91,7 @@
     languageError: string | null;
     languageHint: string;
     onTranscriptionLanguage: (language: Language) => void;
-    onBusyChange: (busy: boolean) => void;
+    onBusyChange: (busy: boolean, downloading: boolean) => void;
     onRuntimeChange?: (runtime: RuntimeStatus | null) => void;
     onResult: (result: PipelineResult) => void;
     onDownloadState: (state: ModelDownloadState) => void;
@@ -150,6 +150,18 @@
 
   const desktop = $derived(environment === 'desktop');
   const busy = $derived(Boolean(action || installingModelKey || runtime?.busy || cancelling));
+  // A model download holds the backend's single operation slot, but it never
+  // touches recordings, transcripts or ordinary settings. Controls that only
+  // conflict with real work read `working`; recording, transcription and model
+  // changes keep reading `busy`.
+  const downloading = $derived(
+    Boolean(
+      installingModelKey || (runtime?.busy && (runtime.download || runtime.stage === 'installing')),
+    ),
+  );
+  const working = $derived(
+    Boolean(action || (runtime?.busy && !downloading) || (cancelling && !downloading)),
+  );
   const blocked = $derived(
     savingDraft ||
       !desktop ||
@@ -347,7 +359,7 @@
   function commitDraft(): Promise<boolean> {
     if (draftSave) return draftSave;
     if (!result || draft === savedDraft) return Promise.resolve(true);
-    if (busy || composing) return Promise.resolve(false);
+    if (working || composing) return Promise.resolve(false);
     const current = result;
     const text = draft;
     savingDraft = true;
@@ -374,7 +386,7 @@
     return draftSave;
   }
   async function undoLearned() {
-    if (!result || busy || savingDraft || undoing) return;
+    if (!result || working || savingDraft || undoing) return;
     const id = result.resultId;
     undoing = true;
     draftError = '';
@@ -472,7 +484,7 @@
     }
   }
   async function undoRemembered() {
-    if (!result || undoing || busy) return;
+    if (!result || undoing || working) return;
     const current = result;
     undoing = true;
     error = null;
@@ -735,7 +747,7 @@
     });
   });
   $effect(() => {
-    onBusyChange(busy);
+    onBusyChange(working, downloading);
   });
   // The sidebar bird tilts and quickens its call dashes while recording. The
   // class lives on the body because the lockup renders outside this panel.
@@ -812,7 +824,7 @@
             id="dictate-language"
             value={transcriptionLanguage}
             options={languageOptions}
-            disabled={settingsBusy || !settingsLoaded || busy}
+            disabled={settingsBusy || !settingsLoaded || working}
             invalid={languageError !== null}
             describedBy={languageError ? 'dictate-language-error' : 'dictate-language-help'}
             onChange={(value) => onTranscriptionLanguage(value)}
@@ -842,7 +854,7 @@
                           : 'No input selected',
                     },
                   ]}
-              disabled={!desktop || busy || refreshing || !devices.length}
+              disabled={!desktop || working || refreshing || !devices.length}
             />
             <button
               type="button"
@@ -851,7 +863,7 @@
               title={refreshing ? 'Scanning microphones' : 'Rescan microphones'}
               aria-busy={refreshing}
               onclick={refreshResources}
-              disabled={!desktop || busy || refreshing || settingsBusy || !settingsLoaded}
+              disabled={!desktop || working || refreshing || settingsBusy || !settingsLoaded}
             >
               <span class:spinning={refreshing} aria-hidden="true"><Icon name="refresh" /></span>
             </button>
@@ -900,6 +912,9 @@
                 disabled={cancelling}>{cancelling ? 'Cancelling…' : 'Cancel operation'}</button
               >{/if}
           </div>
+          {#if downloading}<p class="note" role="status">
+              A model is downloading. Recording is back when it finishes.
+            </p>{/if}
         </div>
         <div class="dictate-stage">
           <div class="stage-header">
@@ -993,7 +1008,7 @@
           class:copy-confirmed={copied}
           type="button"
           onclick={copyResult}
-          disabled={copying || busy || !draft.trim()}
+          disabled={copying || working || !draft.trim()}
           aria-busy={copying}
           ><CopyGlyph {copied} />{copying ? 'Copying…' : copied ? 'Copied' : 'Copy text'}</button
         >
@@ -1005,7 +1020,7 @@
           rows="5"
           bind:value={draft}
           maxlength="100000"
-          disabled={busy || savingDraft || undoing}
+          disabled={working || savingDraft || undoing}
           oncompositionstart={() => {
             composing = true;
           }}
@@ -1025,7 +1040,7 @@
       {#if draftError}<p class="error" role="alert">{draftError}</p>
         <button
           type="button"
-          disabled={busy || savingDraft}
+          disabled={working || savingDraft}
           onclick={() => {
             void commitDraft();
           }}>Retry saving edit</button
@@ -1053,7 +1068,7 @@
             <button
               type="button"
               class="quiet"
-              disabled={busy || savingDraft || undoing}
+              disabled={working || savingDraft || undoing}
               onclick={undoLearned}>Undo learning</button
             >{/if}
         </p>{/if}
@@ -1061,7 +1076,7 @@
         {#key result.session.id}
           <TranscriptCard
             record={result.session}
-            disabled={busy || savingDraft || undoing}
+            disabled={working || savingDraft || undoing}
             onUpdate={(updated) => {
               if (result) result = { ...result, session: updated };
             }}
@@ -1073,7 +1088,7 @@
           <button
             class="quiet"
             type="button"
-            disabled={undoing || busy || savingDraft || draft !== savedDraft}
+            disabled={undoing || working || savingDraft || draft !== savedDraft}
             onclick={undoRemembered}>Undo remembered edits</button
           >
         </div>{/if}
