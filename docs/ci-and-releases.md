@@ -43,12 +43,42 @@ The `Rust (macOS)` job (the slowest check, about 25 minutes cold) restores a
 pushes to `main` so pull requests never churn the shared repository cache (10 GB
 limit). It builds with `CARGO_INCREMENTAL=0` and
 `CARGO_PROFILE_DEV_DEBUG=line-tables-only` because CI never debugs these
-artifacts. On a pull request that changes only `docs/**` or Markdown files, a
-first step detects that and every later step is skipped, so the required check
-still reports success within seconds; pushes to `main` and release tag runs
-always build everything. The MLX Swift build and the macOS bundle build are not
-cached or parallelized yet ([issue #228](https://github.com/rahulsharmavishwakarma/vesper/issues/228));
-measured effect is recorded there, not assumed here.
+artifacts. The MLX Swift packages (about 8 minutes from scratch) are cached the
+same way, in `.tooling/mlx-build`, saved only from `main`. The cache key changes
+with the Swift manifest and lockfile, the MLX Audio patches, the build scripts and
+the Xcode version, and any of those starts a cold build because the patched
+checkouts live in that directory. A change to the bridge sources under
+`native/mlx/Sources` restores the previous build, so only VesperMLX recompiles.
+The macOS bundle build is not parallelized. Measured effect is recorded in
+[issue #228](https://github.com/rahulsharmavishwakarma/vesper/issues/228) and
+[issue #298](https://github.com/rahulsharmavishwakarma/vesper/issues/298), not
+assumed here.
+
+### Change-based job selection
+
+On pull requests, a small `scope` job in each workflow lists the files the merge
+would change (`git diff HEAD^1 HEAD` on the merge commit) and
+[`scripts/ci-scope.mjs`](../scripts/ci-scope.mjs) decides which heavy jobs they
+need:
+
+| Job | Skipped when every changed file is… |
+| --- | --- |
+| `Rust (macOS)` | documentation, Markdown, notebooks, the Pages `site/`, Python benchmark projects, or the browser-only frontend (`apps/desktop/src/`, `apps/desktop/tests/`, Playwright/ESLint config) |
+| `Browser regressions` | documentation, Markdown, notebooks, `site/`, Python benchmark projects, or Rust/native-only paths (`crates/`, `native/`, `patches/`, `vendor/`, `apps/desktop/src-tauri/`, Cargo and toolchain files) |
+| `Python benchmarks (…)` | anything other than a benchmark project, its exported requirements, the root `pyproject.toml`/`uv.lock` or the `Makefile` |
+
+The rules list what each job can ignore, so a path nobody anticipated still runs
+the job. Rust embeds files from `models/` and `benchmarks/`, so those always run
+it. Changing a workflow or the scope script runs everything, and so do pushes to
+`main`, release tags, merge-queue entries, manual runs, the weekly security
+schedule and any pull request whose file list comes back empty. `Frontend and
+repository hygiene`, `Dependencies` and `Secrets` always run.
+
+Skipping uses a job-level `if:`, never workflow `paths:` filters: GitHub reports a
+job skipped by its condition as successful, so required checks still pass, while
+a workflow that never starts would leave them pending forever. The condition is
+`!cancelled() && needs.scope.outputs.<job> != 'false'`, so if the scope job itself
+fails, the jobs run instead of being skipped as passed.
 
 Native-protocol tests in `scripts/test-vibevoice-bitnet.py` launch synthetic
 children through the real resource wrapper. It uses BSD `/usr/bin/time -l` on
