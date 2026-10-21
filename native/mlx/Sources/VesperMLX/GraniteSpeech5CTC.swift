@@ -320,6 +320,23 @@ enum GraniteSpeech5Frontend {
     return values
   }()
 
+  /// Vesper adaptation, not part of IBM's extractor. The log-mel scale is
+  /// absolute (no per-utterance normalization), so quiet input shifts every
+  /// feature. Boost-only gain toward -23 dBFS RMS (EBU R128's target), capped
+  /// at +40 dB and at a 0.9 peak so it never clips; louder input is unchanged.
+  static func leveled(_ samples: [Float]) -> [Float] {
+    var energy = 0.0
+    var peak: Float = 0
+    for sample in samples {
+      energy += Double(sample) * Double(sample)
+      peak = max(peak, abs(sample))
+    }
+    guard energy > 0 else { return samples }
+    let rms = (energy / Double(samples.count)).squareRoot()
+    let gain = min(pow(10, -23.0 / 20) / rms, 0.9 / Double(peak), 100)
+    return gain > 1 ? samples.map { $0 * Float(gain) } : samples
+  }
+
   static func features(_ samples: [Float]) throws -> MLXArray {
     let melFrames = samples.count / hop
     let frames = 2 * ((melFrames + 1) / 2)
@@ -391,7 +408,7 @@ final class GraniteSpeech5CTCModel: Module, STTGenerationModel {
   func generate(audio: MLXArray, generationParameters: STTGenerateParameters) -> STTOutput {
     let start = CFAbsoluteTimeGetCurrent()
     let samples = audio.reshaped(-1).asType(.float32).asArray(Float.self)
-    guard let logits = try? logits(samples) else {
+    guard let logits = try? logits(GraniteSpeech5Frontend.leveled(samples)) else {
       return STTOutput(text: "", vesperCompletionReason: "error")
     }
     let best = logits[0].argMax(axis: -1).asType(.int32)

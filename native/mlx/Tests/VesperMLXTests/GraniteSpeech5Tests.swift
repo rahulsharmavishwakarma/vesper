@@ -37,6 +37,21 @@ final class GraniteSpeech5Tests: XCTestCase {
     }
   }
 
+  func testLevelingOnlyBoostsQuietInputWithoutClipping() {
+    let quiet = signal(16_000).map { $0 * 0.03 }
+    let boosted = GraniteSpeech5Frontend.leveled(quiet)
+    let rms = { (x: [Float]) in (x.reduce(0) { $0 + Double($1 * $1) } / Double(x.count)).squareRoot() }
+    XCTAssertEqual(20 * log10(rms(boosted)), -23, accuracy: 0.01)
+    XCTAssertLessThanOrEqual(boosted.map(abs).max()!, 0.9)
+    // A sparse click is limited by the peak cap, not the RMS target.
+    var click = [Float](repeating: 0, count: 16_000)
+    click[100] = 0.01
+    XCTAssertEqual(GraniteSpeech5Frontend.leveled(click).map(abs).max()!, 0.9, accuracy: 1e-6)
+    let loud = signal(16_000)
+    XCTAssertEqual(GraniteSpeech5Frontend.leveled(loud), loud)
+    XCTAssertEqual(GraniteSpeech5Frontend.leveled([0, 0, 0]), [0, 0, 0])
+  }
+
   func testDetokenizerFollowsPublishedDecoderSequence() throws {
     let directory = FileManager.default.temporaryDirectory
       .appendingPathComponent(UUID().uuidString, isDirectory: true)
@@ -76,6 +91,8 @@ final class GraniteSpeech5Tests: XCTestCase {
     XCTAssertEqual(best.count, expected.count)
     let agreement = Double(zip(best, expected).filter { $0 == $1 }.count) / Double(expected.count)
     XCTAssertGreaterThanOrEqual(agreement, 0.99)
+    // The reference has no level stage; compare it on input leveling leaves unchanged.
+    XCTAssertEqual(GraniteSpeech5Frontend.leveled(samples), samples)
     let output = model.generate(audio: MLXArray(samples), generationParameters: model.defaultGenerationParameters)
     XCTAssertEqual(output.text, fixture["text"] as? String)
     XCTAssertEqual(output.vesperCompletionReason, "audio_consumed")
