@@ -206,6 +206,28 @@ Measured through the application against Parakeet v3:
 Long-form was 8.97% vs 10.50% (within noise). See the
 [Redux record](validation/parakeet-redux-2026-10-21.md).
 
+## Parakeet MLX precision
+
+On the Apple GPU, the pinned Parakeet loader casts every float32 weight of
+`mlx-community/parakeet-tdt-0.6b-v3@ed2b7e8c` to bfloat16 before any
+computation. Since 22 October 2026 Vesper installs that cast ahead of time.
+`scripts/convert-parakeet-v3-bf16-mlx.py`, run in the locked `mlx-convert`
+project, produces `rahulsharmavishwakarma/vesper-parakeet-tdt-0.6b-v3-mlx-bf16@5668bb2d`
+(`model.safetensors`, 1,254,184,375 bytes, `77f8ac63…091b`; config unchanged).
+Two runs give identical bytes.
+
+Through the application on Metal:
+
+| | float32 files | bfloat16 files |
+| --- | --- | --- |
+| Download | 2.51 GB | 1.25 GB |
+| Peak MLX allocator memory | 3.80 GB | 1.72 GB |
+| Model load | 274–792 ms | 203–214 ms |
+
+Transcripts were identical on 94/94 held-out and 100/100 unseen FLEURS en-US
+clips, and latency was unchanged. Existing Apple-GPU installations need one
+**Download** to replace the old files. CPU exports are unaffected.
+
 ## Parakeet CPU precision
 
 The built-in Parakeet TDT v3 CPU path installs 4-bit weight-only artifacts
