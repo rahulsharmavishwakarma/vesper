@@ -95,3 +95,62 @@ export function formatBytes(bytes: number): string {
   if (bytes >= 1e6) return `${Math.round(bytes / 1e6)} MB`;
   return `${Math.max(1, Math.round(bytes / 1e3))} KB`;
 }
+
+/** The sample sentence Your words previews: what someone says, and what the
+ * writing step returns in each style with the words they taught it. */
+export const SAMPLE_HEARD = 'so um can you send the arc light notes to priya by friday';
+export interface SampleToken {
+  text: string;
+  /** Spelled from the person's own words. */
+  taught: boolean;
+}
+const squash = (text: string) => text.toLowerCase().replace(/[^a-z0-9]/g, '');
+
+export function sampleWritten(style: 'minimal' | 'balanced', words: string[]): SampleToken[] {
+  let tokens: SampleToken[] = SAMPLE_HEARD.split(' ').map((text) => ({ text, taught: false }));
+  for (const word of words) {
+    const key = squash(word);
+    if (!key) continue;
+    search: for (let length = 3; length >= 1; length--)
+      for (let i = 0; i + length <= tokens.length; i++)
+        if (
+          squash(
+            tokens
+              .slice(i, i + length)
+              .map((token) => token.text)
+              .join(''),
+          ) === key
+        ) {
+          tokens.splice(i, length, { text: word, taught: true });
+          break search;
+        }
+  }
+  const capital = (token: SampleToken): SampleToken =>
+    token.taught ? token : { ...token, text: token.text[0].toUpperCase() + token.text.slice(1) };
+  tokens = tokens.map((token) =>
+    ['priya', 'friday'].includes(token.text) ? capital(token) : token,
+  );
+  if (style === 'balanced')
+    tokens = tokens.filter((token, i) => !(i < 2 && ['so', 'um'].includes(token.text)));
+  else
+    tokens = tokens.map((token, i) =>
+      i < 2 && !token.taught ? { ...token, text: `${token.text},` } : token,
+    );
+  tokens[0] = capital(tokens[0]);
+  const last = tokens.length - 1;
+  tokens[last] = { ...tokens[last], text: `${tokens[last].text}?` };
+  return tokens;
+}
+
+/** A word to add, or why it cannot be added. */
+export function vocabularyWord(
+  raw: string,
+  existing: string[],
+): { word: string } | { error: string } {
+  const word = raw.trim().replace(/\s+/g, ' ');
+  if (!word) return { error: 'Type a word first.' };
+  if (word.length > 40) return { error: 'Keep a word under 40 characters.' };
+  if (existing.some((entry) => entry.toLowerCase() === word.toLowerCase()))
+    return { error: `“${word}” is already in your words.` };
+  return { word };
+}

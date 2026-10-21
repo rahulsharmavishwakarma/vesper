@@ -76,3 +76,32 @@ test('download size counts only missing files and needs a quarter more space', a
   assert.equal(formatBytes(28_000_000), '28 MB');
   assert.equal(formatBytes(214_000_000_000), '214 GB');
 });
+
+test('the sample sentence follows the style and the taught words', async () => {
+  const { sampleWritten } = await import('./firstRun.ts');
+  const text = (tokens) => tokens.map((t) => t.text).join(' ');
+  assert.equal(
+    text(sampleWritten('minimal', [])),
+    'So, um, can you send the arc light notes to Priya by Friday?',
+  );
+  assert.equal(
+    text(sampleWritten('balanced', [])),
+    'Can you send the arc light notes to Priya by Friday?',
+  );
+  const taught = sampleWritten('balanced', ['Arclight']);
+  assert.equal(text(taught), 'Can you send the Arclight notes to Priya by Friday?');
+  assert.deepEqual(
+    taught.filter((t) => t.taught).map((t) => t.text),
+    ['Arclight'],
+  );
+  // A word the sentence does not contain changes nothing.
+  assert.equal(text(sampleWritten('balanced', ['Zanzibar'])), text(sampleWritten('balanced', [])));
+});
+
+test('added words are trimmed, bounded and unique', async () => {
+  const { vocabularyWord } = await import('./firstRun.ts');
+  assert.deepEqual(vocabularyWord('  Arc   light ', []), { word: 'Arc light' });
+  assert.deepEqual(vocabularyWord('   ', []), { error: 'Type a word first.' });
+  assert.ok('error' in vocabularyWord('x'.repeat(41), []));
+  assert.ok('error' in vocabularyWord('arclight', ['Arclight']));
+});
