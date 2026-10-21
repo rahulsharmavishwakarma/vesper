@@ -2,6 +2,7 @@ mod commands;
 mod diagnostics;
 mod dictation;
 mod menu_bar;
+mod onboarding;
 mod resources;
 mod runtime;
 mod settings;
@@ -37,6 +38,7 @@ pub struct AppStorage {
     shortcut_status: std::sync::Mutex<shortcuts::ShortcutStatus>,
     shortcut_recorder: std::sync::Mutex<shortcuts::Recorder>,
     dictation: dictation::Dictation,
+    onboarding: onboarding::OnboardingStore,
 }
 
 pub fn replace_global_shortcut(
@@ -101,6 +103,16 @@ pub fn run() {
                 std::env::var_os("UKTI_MODEL_DIR"),
                 std::env::var_os("STT_MODEL_DIR").or_else(development_model_root),
             );
+            // Decide first-run state before anything below writes into the
+            // profile (the speaker runtime install fills the model folder).
+            let onboarding = onboarding::OnboardingStore::open(
+                config_root.join("onboarding.json"),
+                onboarding::existing_profile(
+                    &config_root.join("settings.json"),
+                    &model_dir,
+                    &data_root.join("dataset"),
+                ),
+            );
             // First-run pre-check: install the bundled speaker runtime when it
             // is missing so fresh installs can produce speaker timelines. The
             // weights still download through the regular audio setup flow.
@@ -130,6 +142,7 @@ pub fn run() {
                 shortcut_status: std::sync::Mutex::new(shortcuts::ShortcutStatus::default()),
                 shortcut_recorder: std::sync::Mutex::new(shortcuts::Recorder::default()),
                 dictation: dictation::Dictation::default(),
+                onboarding,
             });
             if let Some(window) = app.get_webview_window("quick-capture") {
                 vesper_desktop_platform::initialize(&window).map_err(std::io::Error::other)?;
@@ -178,6 +191,9 @@ pub fn run() {
             dictation::start_capture_drag,
             dictation::copy_dictation,
             menu_bar::take_menu_navigation,
+            onboarding::get_onboarding,
+            onboarding::save_onboarding_step,
+            onboarding::complete_onboarding,
             commands::get_app_info,
             commands::read_project_application,
             commands::resolve_project_folder,
