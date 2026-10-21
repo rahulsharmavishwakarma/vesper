@@ -174,6 +174,11 @@ engines and measured on 21 October 2026. It did not beat v3 (Metal 5.10% vs 5.25
 CPU FP32 9.27% vs 8.28%), so it is not offered. See the
 [parakeet-ultra record](validation/parakeet-ultra-2026-10-21.md).
 
+`moondream/parakeet-redux`, a 178 MB ternary student, was measured on 21 October
+2026 and is not offered. It was less accurate than v3 on clean speech, noise and
+German, and better only on very quiet input. See the
+[parakeet-redux record](validation/parakeet-redux-2026-10-21.md).
+
 ## Parakeet completed-audio parts
 
 Parakeet TDT v3 and custom NeMo transducer profiles on CPU decode completed audio in contiguous parts of up to 30 s. Each part has a fresh stream, and progress is reported per part. Recordings of 30 s or less still use one native call. Before [#153](https://github.com/rahulsharmavishwakarma/vesper/issues/153), the whole recording went to a single `decode` call, which silently lost about half of the words on 60–120 s recordings.
