@@ -752,3 +752,147 @@
        }
  
        if (start_ == -1) {
+--- a/sherpa-onnx/csrc/offline-moonshine-decoder.h
++++ b/sherpa-onnx/csrc/offline-moonshine-decoder.h
+@@ -14,6 +14,8 @@
+ struct OfflineMoonshineDecoderResult {
+   /// The decoded token IDs
+   std::vector<int32_t> tokens;
++  // Internal only; the public C ABI is unchanged.
++  const char *stop_reason = "error";
+ };
+ 
+ class OfflineMoonshineDecoder {
+--- a/sherpa-onnx/csrc/offline-moonshine-model-v2.cc
++++ b/sherpa-onnx/csrc/offline-moonshine-model-v2.cc
+@@ -103,9 +103,13 @@
+     inputs.reserve(4 + states.size());
+ 
+     if (decoder_needs_mask_) {
+-      mask.resize(encoder_out.GetTensorTypeAndShapeInfo().GetShape()[1], 1);
+-      std::array<int64_t, 2> shape = {
+-          1, encoder_out.GetTensorTypeAndShapeInfo().GetShape()[1]};
++      // Backport of upstream 3a82dc5 (#3976): the merged decoder downsamples
++      // encoder_attention_mask itself (stride 384), so it expects raw audio
++      // length. Frame length broke every decode above 384 frames (~9.2 s).
++      int64_t raw_len =
++          encoder_out.GetTensorTypeAndShapeInfo().GetShape()[1] * 384;
++      mask.resize(raw_len, 1);
++      std::array<int64_t, 2> shape = {1, raw_len};
+ 
+       Ort::Value mask_tensor = Ort::Value::CreateTensor<int64_t>(
+           memory_info, mask.data(), mask.size(), shape.data(), shape.size());
+--- a/sherpa-onnx/csrc/offline-moonshine-v2-greedy-search-decoder.cc
++++ b/sherpa-onnx/csrc/offline-moonshine-v2-greedy-search-decoder.cc
+@@ -5,11 +5,13 @@
+ #include "sherpa-onnx/csrc/offline-moonshine-v2-greedy-search-decoder.h"
+ 
+ #include <algorithm>
++#include <cmath>
+ #include <utility>
+ #include <vector>
+ 
+ #include "sherpa-onnx/csrc/macros.h"
+ #include "sherpa-onnx/csrc/onnx-utils.h"
++#include "sherpa-onnx/csrc/vesper-decode-report.h"
+ 
+ namespace sherpa_onnx {
+ 
+@@ -30,8 +32,10 @@
+   //
+   //
+   // 384 is from the moonshine paper
+-  int32_t max_len =
+-      static_cast<int32_t>(encoder_out_shape[1] * 384 / 16000.0 * 15);
++  // Vesper: the Moonshine reference runtime's budget of ceil(seconds * 6.5)
++  // tokens (moonshine-model.cpp); repetition is its main failure mode.
++  int32_t max_len = static_cast<int32_t>(
++      std::ceil(encoder_out_shape[1] * 384 / 16000.0 * 6.5));
+ 
+   int64_t sos = 1;
+   int32_t eos = 2;
+@@ -56,17 +60,26 @@
+   std::tie(logits, states) = model_->ForwardDecoder(
+       std::move(token_tensor), View(&encoder_out), std::move(tmp_states));
+ 
+-  int32_t vocab_size = logits.GetTensorTypeAndShapeInfo().GetShape()[2];
++  const auto logits_shape = logits.GetTensorTypeAndShapeInfo().GetShape();
++  if (logits_shape.size() != 3 || logits_shape[0] != 1 ||
++      logits_shape[1] != 1 || logits_shape[2] <= 0 ||
++      logits_shape[2] > INT32_MAX) return {};
++  int32_t vocab_size = logits_shape[2];
+ 
+   int64_t max_token_id;
++  bool eos_seen = false;
+ 
+   for (int32_t i = 0; i != max_len; ++i) {
++    const auto step_shape = logits.GetTensorTypeAndShapeInfo().GetShape();
++    if (step_shape != logits_shape) return {};
+     const float *p = logits.GetTensorData<float>();
+ 
++    if (!VesperValidGreedyLogits(p, vocab_size)) return {};
+     max_token_id = static_cast<int64_t>(
+         std::distance(p, std::max_element(p, p + vocab_size)));
+ 
+     if (max_token_id == eos) {
++      eos_seen = true;
+       break;
+     }
+ 
+@@ -84,6 +97,8 @@
+   }
+ 
+   OfflineMoonshineDecoderResult ans;
++  // The duration-derived cap ends decoding without EOS: incomplete text.
++  ans.stop_reason = eos_seen ? "eos" : "duration_token_limit";
+   ans.tokens = std::move(tokens);
+ 
+   return {ans};
+--- a/sherpa-onnx/csrc/offline-recognizer-moonshine-v2-impl.h
++++ b/sherpa-onnx/csrc/offline-recognizer-moonshine-v2-impl.h
+@@ -21,6 +21,7 @@
+ #include "sherpa-onnx/csrc/offline-recognizer.h"
+ #include "sherpa-onnx/csrc/symbol-table.h"
+ #include "sherpa-onnx/csrc/transpose.h"
++#include "sherpa-onnx/csrc/vesper-decode-report.h"
+ 
+ namespace sherpa_onnx {
+ 
+@@ -106,10 +107,17 @@
+     auto memory_info =
+         Ort::MemoryInfo::CreateCpu(OrtDeviceAllocator, OrtMemTypeDefault);
+ 
++    VesperBegin(s);
++    s->SetResult(OfflineRecognitionResult{});
+     std::vector<float> audio = s->GetFrames();
+ 
++    if (audio.empty()) {
++      VesperReport(s, "no_input");
++      return;
++    }
+     if (MoonshineV2AudioIsSilent(audio.data(),
+                                  static_cast<int32_t>(audio.size()))) {
++      VesperReport(s, "silence_detected");
+       // The whole clip is silence. Return an empty result before running the
+       // encoder, so the decoder cannot hallucinate text (e.g. "You") for
+       // silent audio.
+@@ -128,11 +136,18 @@
+ 
+       auto results = decoder_->Decode(std::move(encoder_out));
+ 
++      if (results.size() != 1) return;
++      VesperReport(s, results[0].stop_reason);
++      for (auto id : results[0].tokens) {
++        if (!symbol_table_.Contains(id)) VesperReport(s, "error");
++      }
+       auto r = Convert(results[0], symbol_table_);
+       r.text = ApplyInverseTextNormalization(std::move(r.text));
+       r.text = ApplyHomophoneReplacer(std::move(r.text));
+       s->SetResult(r);
+-    } catch (const Ort::Exception &ex) {
++    } catch (const std::exception &ex) {
++      VesperReport(s, "error");
++      s->SetResult(OfflineRecognitionResult{});
+       SHERPA_ONNX_LOGE(
+           "\n\nCaught exception:\n\n%s\n\nReturn an empty result. Number of "
+           "audio samples: %d",
