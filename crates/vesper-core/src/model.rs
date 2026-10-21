@@ -19,10 +19,12 @@ pub enum AsrModel {
     WhisperTurbo,
     #[serde(rename = "moonshine-ai/moonshine-base")]
     MoonshineBase,
+    #[serde(rename = "ibm-granite/granite-speech-5.0-470m-turboctc")]
+    GraniteSpeech5TurboCtc,
 }
 
 impl AsrModel {
-    pub const ALL: [Self; 8] = [
+    pub const ALL: [Self; 9] = [
         Self::ParakeetTdt06bV3,
         Self::Nemotron35AsrStreaming06b,
         Self::Qwen3Asr06b,
@@ -31,6 +33,7 @@ impl AsrModel {
         Self::WhisperSmall,
         Self::WhisperTurbo,
         Self::MoonshineBase,
+        Self::GraniteSpeech5TurboCtc,
     ];
 
     pub const fn id(self) -> &'static str {
@@ -43,6 +46,7 @@ impl AsrModel {
             Self::WhisperSmall => "openai/whisper-small",
             Self::WhisperTurbo => "openai/whisper-large-v3-turbo",
             Self::MoonshineBase => "moonshine-ai/moonshine-base",
+            Self::GraniteSpeech5TurboCtc => "ibm-granite/granite-speech-5.0-470m-turboctc",
         }
     }
 
@@ -56,6 +60,7 @@ impl AsrModel {
             Self::WhisperSmall => "OpenAI Whisper Small",
             Self::WhisperTurbo => "OpenAI Whisper Turbo",
             Self::MoonshineBase => "Moonshine Base (English)",
+            Self::GraniteSpeech5TurboCtc => "IBM Granite Speech 5.0 TurboCTC",
         }
     }
 

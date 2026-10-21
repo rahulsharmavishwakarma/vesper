@@ -12,6 +12,7 @@ pub enum AdapterKind {
     CohereAsr,
     Whisper,
     MoonshineAsr,
+    GraniteCtc,
     LfmAudio,
     QwenHybrid,
     LlamaGguf,
@@ -129,8 +130,8 @@ const ALL_LANGUAGES: &[Language] = &[
 /// Adapter language sets generated from models/languages.json (see build.rs).
 /// The manifest is the source of record; nothing here may drift from it.
 use crate::generated::{
-    COHERE_LANGUAGES, LFM_LANGUAGES, MOONSHINE_LANGUAGES, NEMOTRON_LANGUAGES, PARAKEET_LANGUAGES,
-    QWEN_ASR_LANGUAGES, WHISPER_LANGUAGES,
+    COHERE_LANGUAGES, GRANITE_LANGUAGES, LFM_LANGUAGES, MOONSHINE_LANGUAGES, NEMOTRON_LANGUAGES,
+    PARAKEET_LANGUAGES, QWEN_ASR_LANGUAGES, WHISPER_LANGUAGES,
 };
 const SHERPA: &str = "11afbd009a7f8c08f4bcf2fc1b265d0df4670fbf";
 const LLAMA: &str = "d81235049384534c167caea52b85a694f6103d14";
@@ -138,18 +139,34 @@ const SPEECH: ModelRole = ModelRole::SpeechRecognition;
 const TEXT: ModelRole = ModelRole::TextReconstruction;
 pub const MLX_RUNTIME: &str = "MLX-Audio-Swift";
 pub const MLX_REVISION: &str = "d302a5c6080d2bb97bae38c7418f82abb76013b6";
+const MLX_COMPILED: bool = cfg!(all(
+    feature = "mlx",
+    target_os = "macos",
+    target_arch = "aarch64"
+));
+/// Backends for models whose only adapter is Vesper's own MLX port. Builds
+/// without the MLX bridge offer none, so selecting such a model fails closed.
+const MLX_ONLY_BACKENDS: &[ComputeBackend] = if MLX_COMPILED {
+    &[ComputeBackend::Auto, ComputeBackend::Metal]
+} else {
+    &[]
+};
+
+/// Models without a CPU export. Automatic resolves to the Apple GPU for every
+/// declared language and never falls back to a CPU model.
+pub const fn mlx_speech_only(model: AsrModel) -> bool {
+    matches!(model, AsrModel::GraniteSpeech5TurboCtc)
+}
 
 /// Qualified completed-audio English variants. The models crate resolves saved
 /// Automatic preferences against runtime/device availability and installed files.
 pub fn mlx_speech_supported(model: AsrModel) -> bool {
-    cfg!(all(
-        feature = "mlx",
-        target_os = "macos",
-        target_arch = "aarch64"
-    )) && matches!(
-        model,
-        AsrModel::ParakeetTdt06bV3 | AsrModel::Qwen3Asr06b | AsrModel::WhisperSmall
-    )
+    MLX_COMPILED
+        && (mlx_speech_only(model)
+            || matches!(
+                model,
+                AsrModel::ParakeetTdt06bV3 | AsrModel::Qwen3Asr06b | AsrModel::WhisperSmall
+            ))
 }
 
 #[cfg(all(feature = "mlx", target_os = "macos", target_arch = "aarch64"))]
@@ -265,6 +282,23 @@ pub const ADAPTERS: &[AdapterRegistration] = &[
             ..caps(CacheState::EncoderDecoder, MOONSHINE_LANGUAGES, CPU)
         },
     },
+    // Vesper's Swift port of IBM's reference; there is no CPU registration.
+    AdapterRegistration {
+        kind: AdapterKind::GraniteCtc,
+        task: SPEECH,
+        architecture: "granite_speech5_ctc",
+        runtime: MLX_RUNTIME,
+        runtime_revision: MLX_REVISION,
+        capabilities: AdapterCapabilities {
+            resident_weights: true,
+            completion_report: true,
+            ..caps(
+                CacheState::ModelDefined,
+                GRANITE_LANGUAGES,
+                MLX_ONLY_BACKENDS,
+            )
+        },
+    },
     AdapterRegistration {
         kind: AdapterKind::LfmAudio,
         task: SPEECH,
@@ -344,6 +378,7 @@ impl AsrModel {
             Self::WhisperSmall | Self::WhisperTurbo => AdapterKind::Whisper,
             Self::Lfm25Audio15b => AdapterKind::LfmAudio,
             Self::MoonshineBase => AdapterKind::MoonshineAsr,
+            Self::GraniteSpeech5TurboCtc => AdapterKind::GraniteCtc,
         }
     }
 }
@@ -351,8 +386,10 @@ impl AsrModel {
 impl AppConfig {
     pub fn uses_mlx_speech(&self) -> bool {
         self.models.custom_asr.is_none()
-            && self.compute_backend == ComputeBackend::Metal
             && mlx_speech_supported(self.models.asr)
+            && (self.compute_backend == ComputeBackend::Metal
+                || (self.compute_backend == ComputeBackend::Auto
+                    && mlx_speech_only(self.models.asr)))
     }
     pub fn speech_adapter(&self) -> &'static AdapterRegistration {
         if self.uses_mlx_speech() {
@@ -482,6 +519,7 @@ mod tests {
                 AsrModel::WhisperSmall | AsrModel::WhisperTurbo => AdapterKind::Whisper,
                 AsrModel::Lfm25Audio15b => AdapterKind::LfmAudio,
                 AsrModel::MoonshineBase => AdapterKind::MoonshineAsr,
+                AsrModel::GraniteSpeech5TurboCtc => AdapterKind::GraniteCtc,
             };
             let offered: std::collections::BTreeSet<&str> = adapter(kind)
                 .capabilities
@@ -517,7 +555,13 @@ mod tests {
                 let mut config = AppConfig::default();
                 config.models.asr = model;
                 config.language = *language;
-                assert!(config.validate().is_ok(), "{:?} {language:?}", model);
+                // A GPU-only model is admitted only by builds that carry its runtime.
+                assert_eq!(
+                    config.validate().is_ok(),
+                    !mlx_speech_only(model) || MLX_COMPILED,
+                    "{:?} {language:?}",
+                    model
+                );
             }
             // One undeclared mode still fails instead of falling back.
             if let Some(outside) = ALL_LANGUAGES.iter().find(|l| !codes.contains(l)) {
@@ -527,6 +571,31 @@ mod tests {
                 assert!(config.validate().is_err(), "{:?} {outside:?}", model);
             }
         }
+    }
+
+    #[test]
+    fn apple_gpu_only_models_never_resolve_to_a_cpu_adapter() {
+        let mut config = AppConfig::default();
+        config.models.asr = AsrModel::GraniteSpeech5TurboCtc;
+        assert!(mlx_speech_only(config.models.asr));
+        assert_eq!(config.speech_adapter().kind, AdapterKind::GraniteCtc);
+        assert_eq!(config.speech_adapter().runtime, MLX_RUNTIME);
+        for language in [Language::English, Language::German, Language::Japanese] {
+            config.language = language;
+            for backend in ALL_BACKENDS {
+                config.compute_backend = *backend;
+                let gpu = matches!(backend, ComputeBackend::Auto | ComputeBackend::Metal);
+                assert_eq!(
+                    config.validate().is_ok(),
+                    MLX_COMPILED && gpu,
+                    "{backend:?}"
+                );
+                assert_eq!(config.uses_mlx_speech(), MLX_COMPILED && gpu, "{backend:?}");
+            }
+        }
+        config.compute_backend = ComputeBackend::Auto;
+        config.language = Language::Hindi;
+        assert!(config.validate().is_err());
     }
 
     #[test]
