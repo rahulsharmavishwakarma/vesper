@@ -17,10 +17,12 @@ pub enum AsrModel {
     WhisperSmall,
     #[serde(rename = "openai/whisper-large-v3-turbo")]
     WhisperTurbo,
+    #[serde(rename = "moonshine-ai/moonshine-base")]
+    MoonshineBase,
 }
 
 impl AsrModel {
-    pub const ALL: [Self; 7] = [
+    pub const ALL: [Self; 8] = [
         Self::ParakeetTdt06bV3,
         Self::Nemotron35AsrStreaming06b,
         Self::Qwen3Asr06b,
@@ -28,6 +30,7 @@ impl AsrModel {
         Self::Lfm25Audio15b,
         Self::WhisperSmall,
         Self::WhisperTurbo,
+        Self::MoonshineBase,
     ];
 
     pub const fn id(self) -> &'static str {
@@ -39,6 +42,7 @@ impl AsrModel {
             Self::Lfm25Audio15b => "LiquidAI/LFM2.5-Audio-1.5B",
             Self::WhisperSmall => "openai/whisper-small",
             Self::WhisperTurbo => "openai/whisper-large-v3-turbo",
+            Self::MoonshineBase => "moonshine-ai/moonshine-base",
         }
     }
 
@@ -51,13 +55,18 @@ impl AsrModel {
             Self::Lfm25Audio15b => "Liquid LFM2.5 Audio 1.5B",
             Self::WhisperSmall => "OpenAI Whisper Small",
             Self::WhisperTurbo => "OpenAI Whisper Turbo",
+            Self::MoonshineBase => "Moonshine Base (English)",
         }
     }
 
     pub const fn requires_completion_report(self) -> bool {
         matches!(
             self,
-            Self::Qwen3Asr06b | Self::CohereTranscribe | Self::WhisperSmall | Self::WhisperTurbo
+            Self::Qwen3Asr06b
+                | Self::CohereTranscribe
+                | Self::WhisperSmall
+                | Self::WhisperTurbo
+                | Self::MoonshineBase
         )
     }
 

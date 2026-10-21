@@ -11,6 +11,7 @@ pub enum AdapterKind {
     QwenAsr,
     CohereAsr,
     Whisper,
+    MoonshineAsr,
     LfmAudio,
     QwenHybrid,
     LlamaGguf,
@@ -128,8 +129,8 @@ const ALL_LANGUAGES: &[Language] = &[
 /// Adapter language sets generated from models/languages.json (see build.rs).
 /// The manifest is the source of record; nothing here may drift from it.
 use crate::generated::{
-    COHERE_LANGUAGES, LFM_LANGUAGES, NEMOTRON_LANGUAGES, PARAKEET_LANGUAGES, QWEN_ASR_LANGUAGES,
-    WHISPER_LANGUAGES,
+    COHERE_LANGUAGES, LFM_LANGUAGES, MOONSHINE_LANGUAGES, NEMOTRON_LANGUAGES, PARAKEET_LANGUAGES,
+    QWEN_ASR_LANGUAGES, WHISPER_LANGUAGES,
 };
 const SHERPA: &str = "11afbd009a7f8c08f4bcf2fc1b265d0df4670fbf";
 const LLAMA: &str = "d81235049384534c167caea52b85a694f6103d14";
@@ -253,6 +254,18 @@ pub const ADAPTERS: &[AdapterRegistration] = &[
         },
     },
     AdapterRegistration {
+        kind: AdapterKind::MoonshineAsr,
+        task: SPEECH,
+        architecture: "moonshine_v2",
+        runtime: "sherpa-onnx",
+        runtime_revision: SHERPA,
+        capabilities: AdapterCapabilities {
+            resident_weights: true,
+            completion_report: true,
+            ..caps(CacheState::EncoderDecoder, MOONSHINE_LANGUAGES, CPU)
+        },
+    },
+    AdapterRegistration {
         kind: AdapterKind::LfmAudio,
         task: SPEECH,
         architecture: "lfm2_audio",
@@ -330,6 +343,7 @@ impl AsrModel {
             Self::CohereTranscribe => AdapterKind::CohereAsr,
             Self::WhisperSmall | Self::WhisperTurbo => AdapterKind::Whisper,
             Self::Lfm25Audio15b => AdapterKind::LfmAudio,
+            Self::MoonshineBase => AdapterKind::MoonshineAsr,
         }
     }
 }
@@ -467,6 +481,7 @@ mod tests {
                 AsrModel::CohereTranscribe => AdapterKind::CohereAsr,
                 AsrModel::WhisperSmall | AsrModel::WhisperTurbo => AdapterKind::Whisper,
                 AsrModel::Lfm25Audio15b => AdapterKind::LfmAudio,
+                AsrModel::MoonshineBase => AdapterKind::MoonshineAsr,
             };
             let offered: std::collections::BTreeSet<&str> = adapter(kind)
                 .capabilities

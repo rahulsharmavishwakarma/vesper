@@ -69,6 +69,7 @@ const TABLES: &[(&str, &str)] = &[
     ("openai/whisper-small", "WHISPER_LANGUAGES"),
     ("openai/whisper-large-v3-turbo", "WHISPER_LANGUAGES"),
     ("LiquidAI/LFM2.5-Audio-1.5B", "LFM_LANGUAGES"),
+    ("moonshine-ai/moonshine-base", "MOONSHINE_LANGUAGES"),
 ];
 
 fn variant(code: &str) -> &str {
