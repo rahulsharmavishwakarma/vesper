@@ -294,9 +294,8 @@ With checking off, the idle pill becomes a manual **Check for updates** action.
 
 The one-time setup (issue #270; design study in `docs/design/first-run/`) is
 `FirstRun.svelte`, shown by `App.svelte` above the app while the profile's
-first-run state is pending. It is off for users (`FIRST_RUN_ENABLED` in
-`lib/firstRun.ts`) until every step is built; previews and tests open it with
-`?first-run`.
+first-run state is pending (`FIRST_RUN_ENABLED` in `lib/firstRun.ts`). Previews
+and tests open it with `?first-run`.
 
 - **Welcome** uses the whole window with one focal point: the bird, "Welcome
   to Vesper", one line and one Get started button. Its single signature motion
@@ -344,6 +343,16 @@ first-run state is pending. It is off for users (`FIRST_RUN_ENABLED` in
   re-writes the sentence with a soft blur while the bird tilts and chirps;
   adding a word sends it as a chip into its place in the sentence, where the
   bird chirps. Automatic learning is explained, not switched (it is always on).
+- **Try it** is locked behind live progress until the models are installed;
+  after a restart it checks what is installed and resumes the download. **Hold
+  to talk** records through the normal pipeline into a practice box (the
+  global shortcut pasting into the box counts too), and **Finish** waits for
+  words to appear.
+- **Welcome's background** is a fine dot field in the accent colour. Each call
+  of the bird (about every five seconds, and on hover or click) sends a soft
+  ripple out from its beak; dots near the pointer brighten and drift aside,
+  easing after the cursor. Only the bird's body stays clear, so dots never show
+  through its eye or wing; there is no glow behind the bird.
 - **Reduced motion** shows Welcome at once and changes step without the flight.
 
 ## Busy and locked controls
