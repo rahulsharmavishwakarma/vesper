@@ -79,6 +79,13 @@
     type AcceleratorCapabilities,
   } from './lib/accelerators';
   import type { RuntimeStatus } from './lib/api/runtime';
+  import { getDeviceProfile } from './lib/api/onboarding';
+  import {
+    decorateSpeechOptions,
+    decorateWriterOptions,
+    languageLabel,
+    type Device,
+  } from './lib/recommendations';
 
   const environment = getEnvironment();
   const quickWindow =
@@ -262,9 +269,35 @@
   );
   const writerError = $derived(writingLanguageError(draft));
   const languageError = $derived(transcriptionLanguageError(draft) ?? writerError);
-  const asrOptions = $derived(optionsWithDownloads('asr'));
+  // The pickers rank, tag and gauge models for the chosen language on this
+  // Mac, the same way first-run setup does (recommendations.ts).
+  let modelsMac = $state<Device | null>(null);
+  let modelsMacRequested = false;
+  const asrOptions = $derived(
+    decorateSpeechOptions(
+      optionsWithDownloads('asr'),
+      draft.language,
+      modelsMac,
+      draft.computeBackend,
+      { lockUnavailable: false },
+    ),
+  );
+  const modelLanguageFilters = $derived(
+    draft.language === 'auto' ||
+      MODEL_LANGUAGE_FILTERS.some((filter) => filter.value === draft.language)
+      ? MODEL_LANGUAGE_FILTERS
+      : [
+          ...MODEL_LANGUAGE_FILTERS,
+          { value: draft.language, label: languageLabel(draft.language) },
+        ],
+  );
+  const modelLanguageFilter = $derived(draft.language === 'auto' ? 'all' : draft.language);
   const asrKnown = $derived(knownDownloadSelection(draft, engineSettings, 'asr'));
-  const cleanupOptions = $derived(optionsWithDownloads('rewriter'));
+  const cleanupOptions = $derived(
+    decorateWriterOptions(optionsWithDownloads('rewriter'), draft.language, {
+      lockUnavailable: false,
+    }),
+  );
   const cleanupKnown = $derived(knownDownloadSelection(draft, engineSettings, 'rewriter'));
   const precisionOptions = $derived(
     CLEANUP_QUANTIZATION_OPTIONS.map((option) => ({
@@ -325,6 +358,14 @@
     navigationRevision += 1;
     window.scrollTo(0, 0);
     if (view === 'models' && !deviceRequested) void detectDevice();
+    if (view === 'models' && !modelsMacRequested && environment === 'desktop') {
+      modelsMacRequested = true;
+      void getDeviceProfile()
+        .then((profile) => {
+          modelsMac = { os: profile.os, arch: profile.arch, memoryBytes: profile.memoryBytes };
+        })
+        .catch(() => {});
+    }
   }
   async function detectDevice() {
     if (environment !== 'desktop' || detectingDevice || quickWindow) return;
@@ -894,7 +935,8 @@
                       label={MODEL_ROLE_LABELS.asr}
                       value={selectedModelValue(draft.models, 'asr')}
                       options={asrOptions}
-                      languageFilters={MODEL_LANGUAGE_FILTERS}
+                      languageFilters={modelLanguageFilters}
+                      initialLanguageFilter={modelLanguageFilter}
                       disabled={modelChoicesLocked}
                       describedBy="models-asr-help"
                       onChange={(value) => {
@@ -966,7 +1008,8 @@
                       label={MODEL_ROLE_LABELS.rewriter}
                       value={selectedModelValue(draft.models, 'rewriter')}
                       options={cleanupOptions}
-                      languageFilters={MODEL_LANGUAGE_FILTERS}
+                      languageFilters={modelLanguageFilters}
+                      initialLanguageFilter={modelLanguageFilter}
                       disabled={modelChoicesLocked}
                       onChange={(value) => {
                         draft.models = selectModel(
