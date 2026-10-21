@@ -18,6 +18,13 @@ do not indicate a different application.
 
 ## First launch
 
+A guided first-run setup is being built (issue #270) and is not switched on
+yet. When it is, a new installation will open with a short Welcome and a few
+steps (voice, models, access, shortcut, your words and a practice dictation),
+then go straight to Dictate. It appears once per user: finishing it is
+remembered on this Mac, so later launches and app updates open Vesper
+normally, and people who already use Vesper never see it.
+
 New dataset export folders use `vesper-export-<uuid>`. Existing exported folders
 remain valid and are never renamed automatically; their data format is unchanged.
 

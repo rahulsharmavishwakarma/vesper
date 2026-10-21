@@ -290,6 +290,29 @@ their own feed. Installing automatically never restarts the app and reuses
 `downloadAndInstall`'s signature check and wait for active work (issue #195).
 With checking off, the idle pill becomes a manual **Check for updates** action.
 
+## First-run setup
+
+The one-time setup (issue #270; design study in `docs/design/first-run/`) is
+`FirstRun.svelte`, shown by `App.svelte` above the app while the profile's
+first-run state is pending. It is off for users (`FIRST_RUN_ENABLED` in
+`lib/firstRun.ts`) until every step is built; previews and tests open it with
+`?first-run`.
+
+- **Welcome** uses the whole window with one focal point: the bird, "Welcome
+  to Vesper", one line and one Get started button. Its single signature motion
+  is a thin voice line that gathers into the centre and becomes the bird; the
+  words then come into focus in sequence and the bird chirps once. Afterwards
+  only the blink remains.
+- **Leaving Welcome** places step 2 underneath at once and crossfades Welcome
+  away above it, so there is no blank frame. The bird is the one shared
+  element: it flies a sampled arc with one ease-in-out into the sidebar logo,
+  measured where the logo rests rather than mid-slide. The rail slides in as
+  one piece and the content fades in as one.
+- **Steps** keep the setup rail (completed steps are buttons for going back;
+  later steps are not interactive) and one Continue per step. There is no
+  Skip. Progress is saved after every step so a quit resumes where it stopped.
+- **Reduced motion** shows Welcome at once and changes step without the flight.
+
 ## Busy and locked controls
 
 The backend runs one operation at a time, so a model download holds the same slot
