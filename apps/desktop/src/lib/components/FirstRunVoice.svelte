@@ -1,6 +1,8 @@
 <script lang="ts">
   import { onDestroy, onMount } from 'svelte';
+  import AudioIndicator from './AudioIndicator.svelte';
   import Icon from './Icon.svelte';
+  import Select from './Select.svelte';
   import {
     microphoneAccess,
     openPrivacySettings,
@@ -8,9 +10,10 @@
     stopMicrophoneCheck,
     type MicrophoneAccess,
   } from '../api/onboarding';
-  import { getRuntimeStatus, listAudioDevices, type AudioDevice } from '../api/runtime';
-  import { ReedMotion, followLevel, waveformEnergy } from '../voiceWaveform';
-  import { SETUP_LANGUAGES, type SetupLanguage } from '../firstRun';
+  import { listAudioDevices, type AudioDevice } from '../api/runtime';
+  import { catalogModel } from '../config';
+  import { waveformEnergy } from '../voiceWaveform';
+  import { COHERE, SETUP_LANGUAGES, recommendedSpeechModel, type SetupLanguage } from '../firstRun';
 
   let {
     language,
@@ -31,19 +34,27 @@
   let heard = $state(false);
   let listening = $state(false);
   let error = $state<string | null>(null);
-  let path = $state('');
 
-  const reed = new ReedMotion(true);
-  let level = 0;
-  let raw = 0;
-  let sampler: ReturnType<typeof setInterval> | undefined;
   let heardMs = 0;
-  let frame = 0;
   let poll: ReturnType<typeof setInterval> | undefined;
   let restart: ReturnType<typeof setTimeout> | undefined;
   let disposed = false;
 
   $effect(() => onReady(access === 'allowed' && heard));
+
+  const languageHint = $derived.by(() => {
+    const model = recommendedSpeechModel(language);
+    if (model === COHERE) return 'You can change this later on the Dictate page.';
+    const name = catalogModel(model)?.name ?? 'a different speech model';
+    return `${SETUP_LANGUAGES.find((option) => option.value === language)?.label ?? 'This language'} uses ${name}. Vesper picks it for you next.`;
+  });
+
+  /** About 0.6 s of clear speech counts as heard. Levels arrive every ~40 ms. */
+  function hear(raw: number) {
+    if (heard) return;
+    heardMs = waveformEnergy(raw) > 0.22 ? heardMs + 40 : Math.max(0, heardMs - 40);
+    if (heardMs >= 600) heard = true;
+  }
 
   async function readAccess(request = false) {
     if (preview) return (access = 'allowed');
@@ -108,41 +119,10 @@
     // The check stops itself after 30 seconds; start a fresh one before then.
     clearTimeout(restart);
     restart = setTimeout(() => void relisten(), 25_000);
-    let last = performance.now();
-    const started = last;
-    // Read the level about 14 times a second; draw every frame from the latest.
-    clearInterval(sampler);
-    if (!preview)
-      sampler = setInterval(async () => {
-        try {
-          raw = (await getRuntimeStatus()).audioLevel;
-        } catch {
-          raw = 0;
-        }
-      }, 70);
-    const draw = (now: number) => {
-      if (disposed || !listening) return;
-      const elapsed = now - last;
-      last = now;
-      if (preview) {
-        const t = (now - started) / 1000;
-        raw = t > 1 ? 0.05 * Math.max(0, Math.sin(t * 1.3 - 0.6)) : 0;
-      }
-      level = followLevel(level, waveformEnergy(raw), elapsed);
-      path = reed.path(Math.max(0.04, level), 3.4, elapsed);
-      if (!heard) {
-        heardMs = level > 0.22 ? heardMs + elapsed : Math.max(0, heardMs - elapsed);
-        if (heardMs > 600) heard = true;
-      }
-      frame = requestAnimationFrame(draw);
-    };
-    frame = requestAnimationFrame(draw);
   }
 
   async function stop() {
-    cancelAnimationFrame(frame);
     clearTimeout(restart);
-    clearInterval(sampler);
     if (listening && !preview) await stopMicrophoneCheck().catch(() => {});
     listening = false;
   }
@@ -165,27 +145,23 @@
 
 <div class="card">
   <section class="sec">
-    <p class="lab"><Icon name="globe" />Transcription language</p>
-    <div class="langs" role="radiogroup" aria-label="Transcription language">
-      {#each SETUP_LANGUAGES as option (option.value)}
-        <button
-          type="button"
-          class="lang"
-          role="radio"
-          aria-checked={language === option.value}
-          onclick={() => onLanguage(option.value)}
-          >{#if language === option.value}<Icon name="check" />{/if}{option.label}</button
-        >
-      {/each}
-    </div>
-    <p class="hint">
-      {language === 'hi'
-        ? 'Hindi needs a different speech model. Vesper picks it for you next.'
-        : 'You can add more languages later in Models.'}
-    </p>
+    <label class="field-label" for="setup-language"
+      ><Icon name="globe" />Transcription language</label
+    >
+    <Select
+      id="setup-language"
+      value={language}
+      options={SETUP_LANGUAGES}
+      describedBy="setup-language-help"
+      onChange={(value) => onLanguage(value)}
+    />
+    <p id="setup-language-help" class="field-hint">{languageHint}</p>
   </section>
   <section class="sec">
-    <p class="lab"><Icon name="mic" />Microphone</p>
+    {#if access === 'allowed'}<label class="field-label" for="setup-microphone"
+        ><Icon name="mic" />Microphone</label
+      >
+    {:else}<p class="lab"><Icon name="mic" />Microphone</p>{/if}
     {#if access === 'checking'}
       <p class="hint">Checking microphone access…</p>
     {:else if access === 'not_asked' || access === 'asking'}
@@ -221,16 +197,21 @@
         </div>
       </div>
     {:else}
-      {#if devices.length > 1}
-        <select class="device" bind:value={deviceId} onchange={relisten} aria-label="Microphone">
-          {#each devices as device (device.id)}<option value={device.id}>{device.name}</option
-            >{/each}
-        </select>
-      {:else if devices[0]}<p class="device-name">{devices[0].name}</p>{/if}
+      <Select
+        id="setup-microphone"
+        bind:value={deviceId}
+        options={devices.length
+          ? devices.map((device) => ({
+              value: device.id,
+              label: device.name,
+              description: device.isDefault ? 'System default' : undefined,
+            }))
+          : [{ value: deviceId, label: 'Looking for microphones…' }]}
+        disabled={!devices.length}
+        onChange={() => void relisten()}
+      />
       <div class="meter" class:heard>
-        <svg viewBox="0 0 320 100" preserveAspectRatio="none" aria-hidden="true"
-          ><path d={path} /></svg
-        >
+        <AudioIndicator recording={listening} desktop onLevel={hear} />
         <p class="cap" role="status">
           <b>{heard ? 'Heard you' : 'Say a few words'}</b>
           <span>{heard ? 'Your microphone works.' : 'Try “testing, one two three”.'}</span>
@@ -254,43 +235,30 @@
   .sec + .sec {
     border-top: 1px solid var(--color-line);
   }
+  /* Matches label.field-label for the heading shown before access. */
   .lab {
     display: flex;
     align-items: center;
     gap: 8px;
-    font-size: 13px;
-    margin: 0 0 10px;
+    font-weight: 500;
+    margin: 0 0 8px;
   }
-  .lab :global(svg) {
-    width: 16px;
-    height: 16px;
+  .lab :global(.icon) {
+    width: 18px;
+    height: 18px;
+    flex: none;
     color: var(--color-accent);
   }
-  .langs {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 8px;
-  }
-  .lang {
-    min-height: 40px;
-    padding: 8px 16px;
-    border-radius: var(--radius-pill);
-    border: 1px solid var(--color-control-edge);
-    background: transparent;
-  }
-  .lang[aria-checked='true'] {
-    background: var(--color-tint);
-    border-color: var(--color-accent);
-    color: var(--color-accent-light);
-  }
-  .lang :global(svg) {
-    width: 14px;
-    height: 14px;
-  }
   .hint {
-    font-size: 13px;
+    font-size: 13.5px;
     color: var(--color-muted);
-    margin: 10px 0 0;
+    margin: 0;
+  }
+  .sec :global(.select-trigger) {
+    max-width: none;
+  }
+  .sec > .field-hint {
+    margin-top: 8px;
   }
   .note {
     display: flex;
@@ -324,28 +292,18 @@
   .acts {
     margin-top: 10px;
   }
-  .device {
-    width: 100%;
-    margin-bottom: 12px;
-  }
-  .device-name {
-    margin: 0 0 12px;
-  }
   .meter {
+    margin-top: 12px;
     display: flex;
     align-items: center;
     gap: 22px;
     min-height: 96px;
   }
-  .meter svg {
+  .meter > :global(.voice-indicator) {
+    --voice-height: 96px;
+    --voice-width: 440px;
     flex: 1;
-    min-width: 0;
-    height: 84px;
-    color: var(--color-accent);
-    stroke: currentColor;
-    stroke-width: 3;
-    stroke-linecap: round;
-    fill: none;
+    margin: 0;
   }
   .cap {
     flex: none;
@@ -372,6 +330,9 @@
   @container first-run (max-width: 760px) {
     .sec {
       padding: 18px;
+    }
+    .meter > :global(.voice-indicator) {
+      --voice-height: 64px;
     }
     .meter {
       flex-direction: column;
