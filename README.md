@@ -72,12 +72,17 @@ You can also [run from source](#development). Packaging details are in the
 
 ## Getting started
 
-After launching the desktop app:
+The first launch opens a short guided setup: choose your language and check the
+microphone, download the recommended models for this Mac, allow Accessibility so
+Vesper can type into other apps, confirm your shortcut, add words Vesper should
+know, and try a first dictation. It appears once; see
+[first launch](docs/user-guide.md#first-launch).
 
-1. Open **Models**, choose your speech and writing models, and download their files. Supporting audio models are set up automatically; see [audio setup](docs/user-guide.md#experimental-audio-processing).
-2. Open **Dictate**, select your microphone and language, and allow microphone access when macOS asks.
-3. Press **Record**, speak, then **Stop and transcribe**. You can also import an audio file.
-4. Review the result and copy the text. Saved recordings appear in **History**.
+Afterwards, in **Dictate**:
+
+1. Press **Record** (or hold your shortcut in any app), speak, then **Stop and transcribe**. You can also import an audio file.
+2. Review the result and copy the text. Saved recordings appear in **History**.
+3. Change models in **Models** and preferences in **Settings** at any time. Supporting audio models are set up automatically; see [audio setup](docs/user-guide.md#experimental-audio-processing).
 
 Default shortcuts while the app is running:
 
