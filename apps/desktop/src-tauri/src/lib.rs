@@ -250,6 +250,7 @@ pub fn run() {
             commands::list_model_installations,
             commands::install_models,
             commands::install_model,
+            commands::install_companion_models,
             commands::remove_model,
             commands::start_recording,
             commands::stop_recording,
