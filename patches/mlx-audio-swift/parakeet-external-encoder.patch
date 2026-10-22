@@ -1,0 +1,29 @@
+--- a/Sources/MLXAudioSTT/Models/Parakeet/ParakeetModel.swift
++++ b/Sources/MLXAudioSTT/Models/Parakeet/ParakeetModel.swift
+@@ -945,6 +945,26 @@
+         text = text.replacingOccurrences(of: "Infinity", with: "null")
+         text = text.replacingOccurrences(of: "NaN", with: "null")
+         return Data(text.utf8)
++    }
++
++    /// Pinned Vesper patch: this model's log-mel frames [frames, features] for
++    /// one window, for an encoder that runs outside MLX (Core ML).
++    func vesperLogMel(_ audio: MLXArray) -> MLXArray {
++        ParakeetAudio.logMelSpectrogram(audio, config: preprocessConfig).squeezed(axis: 0)
++    }
++
++    /// Pinned Vesper patch: decode one window from external encoder output
++    /// [1, frames, dModel] with fresh decoder state, as `generate` does after
++    /// its own encoder.
++    func vesperDecode(encoded: MLXArray, frames: Int) -> STTOutput {
++        let result = decodeEncoded(
++            batchFeatures: encoded.asType(computeDType), lengths: MLXArray([Int32(frames)])
++        )[0]
++        return STTOutput(
++            text: result.text,
++            segments: result.segments,
++            vesperCompletionReason: Task.isCancelled ? "cancelled" : "audio_consumed"
++        )
+     }
+ 
+     /// Pinned Vesper patch: `prepare` may replace modules and return the
