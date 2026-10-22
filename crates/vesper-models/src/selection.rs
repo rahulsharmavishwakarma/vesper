@@ -148,7 +148,8 @@ fn resolve_with_preferred(
             .filter(|candidate| candidate.validate().is_ok())
             .find_map(|candidate| match speech_files_present(&candidate, root) {
                 Ok(true) => Some(Ok(candidate)),
-                Ok(false) => None,
+                // A leftover damaged set is not a fallback; the selected files still are.
+                Ok(false) | Err(ModelError::Integrity(_)) => None,
                 Err(error) => Some(Err(error)),
             })
             .transpose()?;
@@ -318,9 +319,21 @@ mod tests {
         let chosen = resolve_with_preferred(&config, preferred.clone(), root.path()).unwrap();
         assert!(chosen.config.uses_nemo_gguf());
         assert!(chosen.fallback_reason.is_none());
-        // Only the standard files are installed: keep using them.
+        // A damaged leftover standard file does not block the GGUF download target.
         let mut standard = config.clone();
         standard.models.asr_engine = vesper_core::AsrEngine::Standard;
+        let leftover = selected_exact(&standard)
+            .unwrap()
+            .into_iter()
+            .find(|a| a.role == "asr")
+            .unwrap();
+        let path = root.path().join(&leftover.relative_path);
+        std::fs::create_dir_all(path.parent().unwrap()).unwrap();
+        std::fs::File::create(path).unwrap().set_len(1).unwrap();
+        let chosen = resolve_with_preferred(&config, preferred.clone(), root.path()).unwrap();
+        assert!(chosen.config.uses_nemo_gguf());
+        assert!(chosen.fallback_reason.is_none());
+        // Only the standard files are installed: keep using them.
         install(&standard);
         let chosen = resolve_with_preferred(&config, preferred.clone(), root.path()).unwrap();
         assert!(!chosen.config.uses_nemo_gguf());
