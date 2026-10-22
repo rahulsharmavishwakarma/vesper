@@ -166,5 +166,6 @@ Focused research pages that are not part of the sequence above:
 - [Audio frontends for dictation quality](research-audio-quality.md)
 - [Automatic personalization from dictation usage](research-automatic-personalization.md)
 - [Personal dictation that improves with use](research-personal-dictation.md)
+- [Quantization methods for local ASR and writing models](research-quantization.md)
 - [VibeVoice variants, streaming contract, and CPU qualification](research-vibevoice.md)
 - [Whisper qualification and native integration](research-whisper.md)
