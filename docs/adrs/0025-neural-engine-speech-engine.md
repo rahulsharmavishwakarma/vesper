@@ -23,7 +23,8 @@ file, and the risk of failing the converter's dependency audit.
 ## Decision
 
 - `ModelSelection.asr_engine` gains `NeuralEngine`. Only models in `neural_engine_supported`, Parakeet v3 in builds
-  with the MLX bridge, accept it. Validation rejects it elsewhere. Inventory specs, and the Settings model picker,
+  with the MLX bridge, accept it. Since [ADR-0026](0026-automatic-speech-engine.md), Automatic selects it for English
+  and the explicit value is a developer override. Validation rejects it elsewhere. Inventory specs, and the Settings model picker,
   reset it for other models.
 - A `NeuralEngineTdt` registration (`parakeet_neural_engine`, MLX-Audio-Swift `d302a5c`) declares English only, the
   qualified language, and Automatic or Metal. Like ADR-0024's engine it is completed-audio only, so live dictation
@@ -74,7 +75,8 @@ Macs, are not measured.
   equals the MLX path on recordings up to 15 s.
   - Longer recordings are cut every 15 s instead of every 30 s.
   - The extra cuts cost a few word errors on clips of 15–20 s.
-- `Standard` stays the default. The engine is offered only for English.
+- Users do not choose it: Automatic ([ADR-0026](0026-automatic-speech-engine.md)) runs English Parakeet v3 on it and
+  every other language on the unified GGUF, with the other set fetched in the background.
 - A macOS update clears Core ML's specialization cache, so the first recording after an update pays that cost again.
 - The converter depends on Transformers' Parakeet port and coremltools. Both are pinned, and coremltools 9.0
   requires NumPy 1.
