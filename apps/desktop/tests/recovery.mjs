@@ -3439,7 +3439,8 @@ await test('Model status icons distinguish downloaded files from selection and m
   trigger.dispatchEvent(new KeyboardEvent('keydown', { key: 'Enter', bubbles: true }));
   await tick();
   assert(
-    document.activeElement === trigger && trigger.textContent.includes('Parakeet'),
+    // Home picks the first row: Granite is the measured English pick.
+    document.activeElement === trigger && trigger.textContent.includes('Granite'),
     'Icon rows broke keyboard selection or focus',
   );
   assert(

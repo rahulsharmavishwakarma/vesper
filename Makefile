@@ -141,7 +141,7 @@ test-browser: ## Run the existing mocked-native UI regressions in Chromium
 	npm exec playwright test
 
 benchmark-contract: ## Test benchmark preparation, scoring, manifests, and recommendation rules
-	node --test scripts/prepare-fleurs-benchmark.test.mjs scripts/prepare-mucs-benchmark.test.mjs scripts/summarize-asr-benchmarks.test.mjs scripts/summarize-personalization-benchmark.test.mjs
+	node --test scripts/prepare-fleurs-benchmark.test.mjs scripts/prepare-mucs-benchmark.test.mjs scripts/run-recommendation-matrix.test.mjs scripts/export-recommendation-evidence.test.mjs scripts/summarize-asr-benchmarks.test.mjs scripts/summarize-personalization-benchmark.test.mjs
 	$(RUN) cargo test -p vesper-eval --locked
 
 version-check: ## Verify Cargo, npm, lockfile, Tauri, and optional TAG versions agree

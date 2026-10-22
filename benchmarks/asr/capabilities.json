@@ -1,104 +1,280 @@
 [
   {
-    "modelId": "nvidia/nemotron-3.5-asr-streaming-0.6b",
-    "displayName": "NVIDIA Nemotron 3.5 ASR Streaming 0.6B",
+    "modelId": "nvidia/parakeet-tdt-0.6b-v3",
+    "displayName": "NVIDIA Parakeet TDT 0.6B v3",
     "languages": [
+      "bg",
+      "hr",
+      "cs",
+      "da",
+      "nl",
       "en",
+      "et",
+      "fi",
       "fr",
-      "hi"
+      "de",
+      "el",
+      "hu",
+      "it",
+      "lv",
+      "lt",
+      "mt",
+      "pl",
+      "pt",
+      "ro",
+      "sk",
+      "sl",
+      "es",
+      "sv",
+      "ru",
+      "uk"
     ],
-    "modes": [
-      "offline",
-      "streaming"
-    ],
-    "backends": [
-      "cpu",
-      "metal",
-      "cuda",
-      "vulkan"
-    ],
+    "modes": ["offline"],
+    "backends": ["cpu", "cuda", "metal", "rocm", "vulkan"],
     "supportsAutoLanguage": true,
     "supportsCodeSwitching": false,
     "supportsSinging": false,
     "maximumSeconds": null,
     "executable": true,
-    "evidenceUrl": "https://huggingface.co/nvidia/nemotron-3.5-asr-streaming-0.6b"
+    "evidenceUrl": "https://github.com/rahulsharmavishwakarma/vesper/blob/main/docs/validation/recommendation-matrix-2026-10-22.md"
+  },
+  {
+    "modelId": "nvidia/nemotron-3.5-asr-streaming-0.6b",
+    "displayName": "NVIDIA Nemotron 3.5 ASR Streaming 0.6B",
+    "languages": [
+      "en",
+      "es",
+      "fr",
+      "it",
+      "pt",
+      "nl",
+      "de",
+      "tr",
+      "ru",
+      "ar",
+      "hi",
+      "ja",
+      "ko",
+      "vi",
+      "uk",
+      "pl",
+      "sv",
+      "cs",
+      "nb",
+      "da",
+      "bg",
+      "fi",
+      "hr",
+      "sk",
+      "zh",
+      "hu",
+      "ro",
+      "et"
+    ],
+    "modes": ["offline", "streaming"],
+    "backends": ["cpu", "cuda", "metal", "rocm", "vulkan"],
+    "supportsAutoLanguage": true,
+    "supportsCodeSwitching": false,
+    "supportsSinging": false,
+    "maximumSeconds": null,
+    "executable": true,
+    "evidenceUrl": "https://github.com/rahulsharmavishwakarma/vesper/blob/main/docs/validation/recommendation-matrix-2026-10-22.md"
   },
   {
     "modelId": "Qwen/Qwen3-ASR-0.6B",
     "displayName": "Qwen3-ASR 0.6B",
     "languages": [
+      "zh",
       "en",
+      "yue",
+      "ar",
+      "de",
       "fr",
-      "hi"
+      "es",
+      "pt",
+      "id",
+      "it",
+      "ko",
+      "ru",
+      "th",
+      "vi",
+      "ja",
+      "tr",
+      "hi",
+      "ms",
+      "nl",
+      "sv",
+      "da",
+      "fi",
+      "pl",
+      "cs",
+      "fil",
+      "fa",
+      "el",
+      "hu",
+      "mk",
+      "ro"
     ],
-    "modes": [
-      "offline"
-    ],
-    "backends": [
-      "cpu"
-    ],
+    "modes": ["offline", "streaming"],
+    "backends": ["cpu", "metal"],
     "supportsAutoLanguage": true,
     "supportsCodeSwitching": true,
     "supportsSinging": true,
     "maximumSeconds": null,
     "executable": true,
-    "evidenceUrl": "https://huggingface.co/Qwen/Qwen3-ASR-0.6B"
+    "evidenceUrl": "https://github.com/rahulsharmavishwakarma/vesper/blob/main/docs/validation/recommendation-matrix-2026-10-22.md"
   },
   {
     "modelId": "CohereLabs/cohere-transcribe-03-2026",
     "displayName": "Cohere Transcribe",
     "languages": [
       "en",
-      "fr"
+      "fr",
+      "de",
+      "it",
+      "es",
+      "pt",
+      "el",
+      "nl",
+      "pl",
+      "zh",
+      "ja",
+      "ko",
+      "vi",
+      "ar"
     ],
-    "modes": [
-      "offline"
-    ],
-    "backends": [
-      "cpu"
-    ],
+    "modes": ["offline"],
+    "backends": ["cpu"],
     "supportsAutoLanguage": false,
     "supportsCodeSwitching": false,
     "supportsSinging": false,
     "maximumSeconds": null,
     "executable": true,
-    "evidenceUrl": "https://huggingface.co/CohereLabs/cohere-transcribe-03-2026"
+    "evidenceUrl": "https://github.com/rahulsharmavishwakarma/vesper/blob/main/docs/validation/recommendation-matrix-2026-10-22.md"
   },
   {
-    "modelId": "nvidia/parakeet-tdt-0.6b-v3",
-    "displayName": "NVIDIA Parakeet TDT 0.6B v3",
-    "languages": [
-      "en",
-      "fr"
-    ],
-    "modes": [
-      "offline"
-    ],
-    "backends": [
-      "cpu"
-    ],
+    "modelId": "LiquidAI/LFM2.5-Audio-1.5B",
+    "displayName": "Liquid LFM2.5 Audio 1.5B",
+    "languages": ["en"],
+    "modes": ["offline"],
+    "backends": ["cpu", "cuda", "metal", "rocm", "vulkan"],
+    "supportsAutoLanguage": false,
+    "supportsCodeSwitching": false,
+    "supportsSinging": false,
+    "maximumSeconds": null,
+    "executable": true,
+    "evidenceUrl": "https://github.com/rahulsharmavishwakarma/vesper/blob/main/docs/validation/recommendation-matrix-2026-10-22.md"
+  },
+  {
+    "modelId": "openai/whisper-small",
+    "displayName": "OpenAI Whisper Small INT8",
+    "languages": ["en", "fr"],
+    "modes": ["offline"],
+    "backends": ["cpu", "metal"],
     "supportsAutoLanguage": true,
     "supportsCodeSwitching": false,
     "supportsSinging": false,
     "maximumSeconds": null,
     "executable": true,
-    "evidenceUrl": "https://huggingface.co/nvidia/parakeet-tdt-0.6b-v3"
+    "evidenceUrl": "https://github.com/rahulsharmavishwakarma/vesper/blob/main/docs/validation/recommendation-matrix-2026-10-22.md"
+  },
+  {
+    "modelId": "openai/whisper-large-v3-turbo",
+    "displayName": "OpenAI Whisper Turbo INT8",
+    "languages": ["en", "fr"],
+    "modes": ["offline"],
+    "backends": ["cpu"],
+    "supportsAutoLanguage": true,
+    "supportsCodeSwitching": false,
+    "supportsSinging": false,
+    "maximumSeconds": null,
+    "executable": true,
+    "evidenceUrl": "https://github.com/rahulsharmavishwakarma/vesper/blob/main/docs/validation/recommendation-matrix-2026-10-22.md"
+  },
+  {
+    "modelId": "moonshine-ai/moonshine-base",
+    "displayName": "Moonshine Base (English)",
+    "languages": ["en"],
+    "modes": ["offline"],
+    "backends": ["cpu"],
+    "supportsAutoLanguage": false,
+    "supportsCodeSwitching": false,
+    "supportsSinging": false,
+    "maximumSeconds": null,
+    "executable": true,
+    "evidenceUrl": "https://github.com/rahulsharmavishwakarma/vesper/blob/main/docs/validation/recommendation-matrix-2026-10-22.md"
+  },
+  {
+    "modelId": "ibm-granite/granite-speech-5.0-470m-turboctc",
+    "displayName": "IBM Granite Speech 5.0 TurboCTC",
+    "languages": ["en", "fr", "de", "es", "pt", "it", "ja"],
+    "modes": ["offline"],
+    "backends": ["metal"],
+    "supportsAutoLanguage": false,
+    "supportsCodeSwitching": false,
+    "supportsSinging": false,
+    "maximumSeconds": null,
+    "executable": true,
+    "evidenceUrl": "https://github.com/rahulsharmavishwakarma/vesper/blob/main/docs/validation/recommendation-matrix-2026-10-22.md"
+  },
+  {
+    "modelId": "FermionResearch/Phonon-2",
+    "displayName": "Fermion Phonon-2 (English)",
+    "languages": ["en"],
+    "modes": ["offline"],
+    "backends": ["metal"],
+    "supportsAutoLanguage": false,
+    "supportsCodeSwitching": false,
+    "supportsSinging": false,
+    "maximumSeconds": null,
+    "executable": true,
+    "evidenceUrl": "https://github.com/rahulsharmavishwakarma/vesper/blob/main/docs/validation/recommendation-matrix-2026-10-22.md"
+  },
+  {
+    "modelId": "moondream/parakeet-redux",
+    "displayName": "Moondream Parakeet Redux",
+    "languages": [
+      "bg",
+      "hr",
+      "cs",
+      "da",
+      "nl",
+      "en",
+      "et",
+      "fi",
+      "fr",
+      "de",
+      "el",
+      "hu",
+      "it",
+      "lv",
+      "lt",
+      "mt",
+      "pl",
+      "pt",
+      "ro",
+      "sk",
+      "sl",
+      "es",
+      "sv",
+      "ru",
+      "uk"
+    ],
+    "modes": ["offline"],
+    "backends": ["metal"],
+    "supportsAutoLanguage": true,
+    "supportsCodeSwitching": false,
+    "supportsSinging": false,
+    "maximumSeconds": null,
+    "executable": true,
+    "evidenceUrl": "https://github.com/rahulsharmavishwakarma/vesper/blob/main/docs/validation/recommendation-matrix-2026-10-22.md"
   },
   {
     "modelId": "mistralai/Voxtral-Mini-4B-Realtime-2602",
     "displayName": "Voxtral Mini 4B Realtime",
-    "languages": [
-      "en",
-      "fr",
-      "hi"
-    ],
-    "modes": [
-      "streaming"
-    ],
-    "backends": [
-      "cuda"
-    ],
+    "languages": ["en", "fr", "hi"],
+    "modes": ["streaming"],
+    "backends": ["cuda"],
     "supportsAutoLanguage": true,
     "supportsCodeSwitching": false,
     "supportsSinging": false,
@@ -109,80 +285,14 @@
   {
     "modelId": "microsoft/VibeVoice-ASR-BitNet",
     "displayName": "Microsoft VibeVoice ASR BitNet",
-    "languages": [
-      "en",
-      "fr"
-    ],
-    "modes": [
-      "offline"
-    ],
-    "backends": [
-      "cpu"
-    ],
+    "languages": ["en", "fr"],
+    "modes": ["offline"],
+    "backends": ["cpu"],
     "supportsAutoLanguage": true,
     "supportsCodeSwitching": false,
     "supportsSinging": false,
     "maximumSeconds": null,
     "executable": false,
     "evidenceUrl": "https://huggingface.co/microsoft/VibeVoice-ASR-BitNet"
-  },
-  {
-    "modelId": "LiquidAI/LFM2.5-Audio-1.5B",
-    "displayName": "Liquid LFM2.5 Audio 1.5B",
-    "languages": [
-      "en"
-    ],
-    "modes": [
-      "offline"
-    ],
-    "backends": [
-      "cpu"
-    ],
-    "supportsAutoLanguage": false,
-    "supportsCodeSwitching": false,
-    "supportsSinging": false,
-    "maximumSeconds": null,
-    "executable": true,
-    "evidenceUrl": "https://github.com/rahulsharmavishwakarma/transcribe/issues/40"
-  },
-  {
-    "modelId": "openai/whisper-small",
-    "displayName": "OpenAI Whisper Small INT8 (qualification pending)",
-    "languages": [
-      "en",
-      "fr"
-    ],
-    "modes": [
-      "offline"
-    ],
-    "backends": [
-      "cpu"
-    ],
-    "supportsAutoLanguage": true,
-    "supportsCodeSwitching": false,
-    "supportsSinging": false,
-    "maximumSeconds": null,
-    "executable": false,
-    "evidenceUrl": "https://github.com/rahulsharmavishwakarma/transcribe/issues/45"
-  },
-  {
-    "modelId": "openai/whisper-large-v3-turbo",
-    "displayName": "OpenAI Whisper Turbo INT8 (qualification pending)",
-    "languages": [
-      "en",
-      "fr"
-    ],
-    "modes": [
-      "offline"
-    ],
-    "backends": [
-      "cpu"
-    ],
-    "supportsAutoLanguage": true,
-    "supportsCodeSwitching": false,
-    "supportsSinging": false,
-    "maximumSeconds": null,
-    "executable": false,
-    "evidenceUrl": "https://github.com/rahulsharmavishwakarma/transcribe/issues/45"
   }
 ]

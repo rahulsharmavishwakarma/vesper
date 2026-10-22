@@ -101,8 +101,9 @@ test('setup welcomes a new profile, saves progress and finishes once', async ({ 
 test('models download in the background while setup carries on', async ({ page }) => {
   await page.goto('/tests/interaction-preview.html?first-run&first-run-step=2&first-run-download');
   await expect(page.getByRole('heading', { name: 'Models for this Mac.' })).toBeVisible();
-  // Published figures pick the models; the total covers both downloads.
-  await expect(page.locator('#setup-speech-model')).toContainText('Parakeet TDT 0.6B v3');
+  // Vesper's own English results pick Granite (tied with Parakeet, faster);
+  // the total covers both downloads.
+  await expect(page.locator('#setup-speech-model')).toContainText('Granite Speech 5.0 TurboCTC');
   await expect(page.locator('#setup-writer-model')).toContainText('Qwen3.5 0.8B');
   await expect(page.getByText('Download 4.3 GB')).toBeVisible();
   await expect(page.getByText(/Needs 5\.4 GB free/)).toBeVisible();
