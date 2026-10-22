@@ -186,7 +186,9 @@ fn resolve_with_preferred(
             .filter(|candidate| candidate.validate().is_ok())
             .find_map(|candidate| match speech_files_present(&candidate, root) {
                 Ok(true) => Some(Ok(candidate)),
-                Ok(false) => None,
+                // A fallback with damaged or outdated files is not usable; it
+                // never blocks the selected set's own download.
+                Ok(false) | Err(ModelError::Integrity(_)) => None,
                 Err(error) => Some(Err(error)),
             })
             .transpose()?;
@@ -402,6 +404,24 @@ mod tests {
                     .unwrap();
             }
         };
+        // An outdated standard file (wrong size) is skipped, not an error.
+        let mut standard = config.clone();
+        standard.models.asr_engine = vesper_core::AsrEngine::Standard;
+        let standard = preferred_speech_config(&standard).unwrap();
+        for artifact in selected_exact(&standard)
+            .unwrap()
+            .into_iter()
+            .filter(|a| a.role == "asr")
+        {
+            let path = root.path().join(&artifact.relative_path);
+            std::fs::create_dir_all(path.parent().unwrap()).unwrap();
+            std::fs::File::create(path)
+                .unwrap()
+                .set_len(artifact.size_bytes + 1)
+                .unwrap();
+        }
+        let chosen = resolve_with_preferred(&config, preferred.clone(), root.path()).unwrap();
+        assert!(chosen.config.uses_neural_engine() && chosen.fallback_reason.is_none());
         // Only the GGUF is installed: use it until the Neural Engine set arrives.
         let mut gguf = config.clone();
         gguf.models.asr_engine = vesper_core::AsrEngine::UnifiedGguf;
