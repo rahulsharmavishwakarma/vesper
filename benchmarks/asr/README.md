@@ -162,6 +162,9 @@ The [18 September real-audio accent evaluation](2026-09-18-accent-personalizatio
 
 ## What is measured
 
+The transcripts these runs produce, without audio or private recordings, are published as a text dataset; see [benchmark output dataset](../../docs/benchmark-dataset.md).
+
+
 - exact, normalized word error rate and Unicode grapheme error rate;
 - audio decode/setup time, ASR time, cleanup time, and real-time factor;
 - first nonempty partial, stop-to-final latency, partial count, and edit distance between partials;
