@@ -321,7 +321,7 @@ The per-tensor 6-bit result above failed this project's gate, so their choice do
 2. **Mixed-bit palettization (about 350–420 MB).** Assign 4, 6 or 8 bits per layer from an encoder-output sensitivity analysis on public calibration audio, using only modes from the "stays" column. Apple's mixed-bit pre-analysis in [ml-stable-diffusion](https://github.com/apple/ml-stable-diffusion) (MIT) is a usable starting point.
 3. **int4 per channel or 4-bit grouped palettization (about 300 MB).** Only with GPTQ or sensitive-k-means calibration: a data-free 4-bit build of another model lost badly (Paper/card, FluidAudio's SenseVoice result).
 
-Each step must pass the held-out WER gate and pass `MLComputePlan` placement on more than one chip before shipping.
+Each step must pass the held-out WER gate before shipping. It must also be timed on more than one chip, not only placement-checked with `MLComputePlan`, because a mode can stay on the Neural Engine and still run much slower (see the per-row result below).
 
 Excluded:
 
@@ -334,7 +334,15 @@ Excluded:
 - Parakeet Redux's ternary weights stored as int4 per 128-block compiled to about 327 MB.
 - Its `.cpuAndNeuralEngine` load then ran the Neural Engine compiler at full CPU for more than 28 minutes without finishing. The float16 model loads in about 7 s.
 
-#304 is now measuring exact per-row lookup tables (3-bit for Phonon-2, 6-bit for Redux).
+#304 also measured exact per-row lookup tables (Local, [packed-encoder record](validation/packed-parakeet-neural-engine-2026-10-22.md), PR #319). Setup: macOS 15 target, `.cpuAndNeuralEngine`, M5 Pro, each model timed alone.
+
+| Encoder               | Encoding                             |     Size | On Neural Engine | Median per 15 s window | First load |
+| --------------------- | ------------------------------------ | -------: | ---------------: | ---------------------: | ---------: |
+| Phonon-2              | Per-row (group 1) 3-bit lookup table |   252 MB |           99.92% |                72.5 ms |       90 s |
+| Redux                 | Per-row 6-bit lookup table           |   585 MB |           99.92% |                72.6 ms |       88 s |
+| Either, dense float16 | —                                    | 1,186 MB |           99.92% |           20.3–21.6 ms |    10–12 s |
+
+The outputs matched dense float16 bit for bit. But the per-row tables ran about 3.5× slower and took about 8× longer to prepare on first load, even though the compute plan placed them on the Neural Engine. Group-16 palettization (step 1) may avoid this; it has to be timed.
 
 The Core ML encoder and the GGUF cannot share weight files. Each runtime needs its own container, and the closest shared numeric format (block-wise int4) is the one that leaves the Neural Engine.
 
