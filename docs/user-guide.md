@@ -18,6 +18,42 @@ do not indicate a different application.
 
 ## First launch
 
+A new installation opens with a short guided setup (issue #270):
+
+1. **Welcome**, then **Get started**.
+2. **Voice**: choose the language you speak from the full list, pick a
+   microphone if you have more than one, allow the microphone when macOS asks,
+   and say a few words until Vesper shows **Heard you**. If your language needs
+   a different speech model, Vesper says which and selects it for the next
+   step.
+3. **Models**: Vesper shows this Mac (chip, memory, free space) and suggests
+   the best speech model for your language plus the writing model behind
+   **Tidy my text**. Click either model to see the others, best first for your
+   language, with small rings for accuracy, speed and memory. **Download and
+   set up** starts the download in the background; progress stays at the
+   bottom left while you carry on. A download that does not fit in the free
+   space, or needs a connection you do not have, is blocked with the reason.
+4. **Access**: turn on Accessibility so Vesper can type into other apps. If it
+   will not turn on, **Restart Vesper** (setup comes back to this step) or
+   **Keep text in Vesper**, where your words wait, ready to copy.
+5. **Shortcut**: keep or change Hold to talk and Press to toggle.
+6. **Your words**: choose **As I said it** or **Polished**, and add names and
+   terms Vesper should spell your way. Vesper also learns from your
+   corrections on this Mac.
+7. **Try it**: once the models are ready, click **Record**, speak, and click
+   **Stop and transcribe**. You can also hold **Record** or your shortcut while
+   you speak. Your words appear live as you talk, then land in the practice
+   box. **Finish** and
+   **Start dictating** open Dictate.
+
+**Back** (or a finished step in the sidebar) returns to an earlier step;
+going back from Voice shows Welcome again.
+
+Setup appears once per user. Finishing it is remembered on this Mac, so later
+launches and app updates open Vesper normally, and people who already used
+Vesper before this setup existed never see it. Quitting part way resumes at the
+same step. Everything chosen here can be changed later in Settings and Models.
+
 New dataset export folders use `vesper-export-<uuid>`. Existing exported folders
 remain valid and are never renamed automatically; their data format is unchanged.
 

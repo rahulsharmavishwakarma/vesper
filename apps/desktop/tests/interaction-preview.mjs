@@ -146,6 +146,22 @@ if (states) {
     configSnapshot: settings,
     modelVersions: {},
   });
+  // First run: pending only when the page asks for it (?first-run), resuming
+  // at ?first-run-step=N when given; otherwise this profile already finished.
+  const firstRunParams = new URLSearchParams(location.search);
+  // Setup mocks: the microphone has not been asked yet, and with
+  // ?first-run-download the selected speech model still needs its files.
+  const setup = {
+    microphone: firstRunParams.get('first-run-mic') ?? 'not_asked',
+    modelsReady: !firstRunParams.has('first-run-models-missing'),
+  };
+  const onboarding = {
+    version: 1,
+    status: firstRunParams.has('first-run') ? 'pending' : 'completed',
+    step: Number(firstRunParams.get('first-run-step') ?? 0),
+    reason: null,
+    completedAt: null,
+  };
   window.previewCommands = [];
   window.previewPermissions = null;
   mockIPC(
@@ -184,6 +200,7 @@ if (states) {
             window.previewFinishDownload = resolve;
           });
           Object.assign(runtime, { busy: false, stage: 'idle', operationId: null, download: null });
+          setup.modelsReady = true;
           return args?.modelId ? structuredClone(catalog[0]) : { ready: true, message: '' };
         }
         case 'save_settings':
@@ -209,8 +226,105 @@ if (states) {
         case 'reset_settings':
           settings = defaultSettings();
           return settings;
+        case 'microphone_access':
+          if (args.request && setup.microphone === 'not_asked') setup.microphone = 'allowed';
+          return setup.microphone;
+        case 'get_device_profile':
+          return {
+            os: 'macos',
+            arch: 'aarch64',
+            chip: 'Apple M3',
+            memoryBytes: 16e9,
+            freeBytes: firstRunParams.get('first-run-disk') === 'low' ? 3.1e9 : 214e9,
+          };
+        case 'start_microphone_check':
+          window.previewCommands.push(`mic:${args.deviceId}`);
+          runtime.audioLevel = 0.05;
+          return null;
+        case 'stop_microphone_check':
+          runtime.audioLevel = 0;
+          return null;
+        case 'open_privacy_settings':
+          return null;
+        case 'start_recording':
+          Object.assign(runtime, {
+            busy: true,
+            stage: 'recording',
+            operationId: 'preview-try',
+            audioLevel: 0.05,
+            startedAt: Date.now(),
+            // Live words arrive while speaking, as from a streaming model.
+            partial: {
+              operationId: 'preview-try',
+              sequence: 1,
+              committedText: 'Can you send',
+              provisionalText: ' the Arclight notes',
+              audioProcessedSeconds: 1.2,
+              emittedAtUnixMs: Date.now(),
+              isFinal: false,
+            },
+            partialInvalidatedFor: null,
+          });
+          return 'preview-try';
+        case 'stop_recording':
+          Object.assign(runtime, {
+            busy: false,
+            stage: 'idle',
+            operationId: null,
+            audioLevel: 0,
+            partial: null,
+          });
+          return {
+            resultId: 'preview-try',
+            rawTranscript: 'can you send the arc light notes to priya by friday',
+            cleanedTranscript: 'Can you send the Arclight notes to Priya by Friday?',
+            session: null,
+          };
+        case 'get_onboarding':
+          return { ...onboarding };
+        case 'save_onboarding_step':
+          if (onboarding.status === 'pending') onboarding.step = args.step;
+          return { ...onboarding };
+        case 'complete_onboarding':
+          Object.assign(onboarding, {
+            status: 'completed',
+            step: 7,
+            reason: 'finished',
+            completedAt: 1,
+          });
+          return { ...onboarding };
         case 'get_runtime_status':
+          if (runtime.stage === 'recording' && runtime.operationId === 'preview-try') {
+            // A draft that grows over time: committed words only append and
+            // the grey tail is re-decoded, like a streaming model.
+            const spoken = ['Can', 'you', 'send', 'the', 'Arclight', 'notes', 'to', 'Priya'];
+            const step = Math.min(
+              spoken.length,
+              1 + Math.floor((Date.now() - (runtime.startedAt ?? Date.now())) / 300),
+            );
+            const committed = spoken.slice(0, Math.max(0, step - 2)).join(' ');
+            const tail = spoken.slice(Math.max(0, step - 2), step).join(' ');
+            runtime.partial = {
+              operationId: 'preview-try',
+              sequence: step,
+              committedText: committed,
+              provisionalText: committed ? ` ${tail}` : tail,
+              audioProcessedSeconds: step * 0.3,
+              emittedAtUnixMs: Date.now(),
+              isFinal: false,
+            };
+          }
           return { ...runtime };
+        case 'get_audio_features': {
+          // A gently varying voice while the microphone is open.
+          const t = performance.now() / 1000;
+          return runtime.audioLevel
+            ? {
+                level: 0.06 + 0.05 * Math.max(0, Math.sin(t * 2.1)),
+                pitchHz: 170 + 40 * Math.sin(t),
+              }
+            : { level: 0, pitchHz: null };
+        }
         case 'get_app_status':
           return {
             name: 'Vesper',
@@ -243,13 +357,24 @@ if (states) {
           };
         case 'get_model_installation':
           return {
-            ready: true,
+            ready: setup.modelsReady,
             supported: true,
             modelDirectory: 'visual-fixture',
             files: [],
             message: 'Synthetic model installation',
           };
         case 'list_model_installations':
+          if (firstRunParams.has('first-run-download'))
+            return structuredClone(catalog).map((entry) => ({
+              ...entry,
+              files: [
+                {
+                  name: 'model.bin',
+                  installed: false,
+                  sizeBytes: entry.role === 'speech_recognition' ? 2.9e9 : 1.4e9,
+                },
+              ],
+            }));
           return structuredClone(catalog);
         case 'list_sessions':
           return structuredClone(records);

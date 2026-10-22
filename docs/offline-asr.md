@@ -7,7 +7,7 @@ The application has dedicated CPU adapters for Qwen3-ASR 0.6B and Cohere Transcr
 | Qwen3-ASR 0.6B INT8 | Automatic plus 30 declared languages | 987,015,347 bytes |
 | Cohere Transcribe INT8 | 14 declared languages, explicit only | 2,888,052,036 bytes |
 
-Cohere has no automatic language detection or Hindi support in this adapter. The picker follows `models/languages.json`. Both adapters accept Automatic/CPU compute settings. Qwen3-ASR is a speech model, separate from the Qwen cleanup model. Their files cannot be imported as a four-file NeMo transducer profile.
+The Cohere export leaves 945 MB of pointwise convolutions in float32; a [research rewrite](validation/model-precision-inventory-2026-10-22.md) that quantizes only those cut the encoder by 0.7-0.8 GB with unchanged WER on 100 English clips, but the app still uses the published files. Cohere has no automatic language detection or Hindi support in this adapter. The picker follows `models/languages.json`. Both adapters accept Automatic/CPU compute settings. Qwen3-ASR is a speech model, separate from the Qwen cleanup model. Their files cannot be imported as a four-file NeMo transducer profile.
 
 ## Completion contract
 
