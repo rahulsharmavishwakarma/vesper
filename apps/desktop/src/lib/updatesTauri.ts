@@ -16,6 +16,10 @@ import {
 
 let pending: Update | null = null;
 
+// A stalled network must end in "Couldn't check", not an endless check (#321).
+// Applies per feed request; matches CHECK_TIMEOUT in updates.rs.
+const CHECK_TIMEOUT_MS = 20_000;
+
 async function settle(run: () => Promise<Update | null>): Promise<CheckOutcome<Update>> {
   try {
     return { value: await run(), error: null };
@@ -43,9 +47,12 @@ export const updateBackend: UpdateBackend = {
   enabled: isTauri(),
 
   async check({ includePrereleases }): Promise<UpdateInfo | null> {
-    const stable = await settle(() => tauriCheck());
     const wantsPrerelease = includePrereleases && !(await isNightlyBuild());
-    const prerelease = wantsPrerelease ? await settle(checkPrerelease) : null;
+    // Both feeds at once: the stable one alone has taken 15 s on a slow network.
+    const [stable, prerelease] = await Promise.all([
+      settle(() => tauriCheck({ timeout: CHECK_TIMEOUT_MS })),
+      wantsPrerelease ? settle(checkPrerelease) : Promise.resolve(null),
+    ]);
     const { chosen, error } = selectCandidate(stable, prerelease);
     if (error) throw error;
     // Free the update that lost, best effort; the plugin keeps it in a table.

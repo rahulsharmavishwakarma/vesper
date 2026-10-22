@@ -7,12 +7,18 @@
 //! exactly as the plugin's own `check` does, so the plugin's download, signature
 //! verification and install then apply unchanged. Pre-release builds are signed
 //! with the stable updater key, so this adds no new trust.
+use std::time::Duration;
+
 use serde::Serialize;
 use tauri::{Manager, Runtime, Url, Webview};
 use tauri_plugin_updater::UpdaterExt;
 
 /// Published by `pages.yml` from the newest published pre-release's `beta.json`.
 const PRERELEASE_FEED: &str = "https://rahulsharmavishwakarma.github.io/vesper/beta.json";
+
+/// A stalled network must surface as "Couldn't check", not an endless check (#321).
+/// Matches `CHECK_TIMEOUT_MS` in `updatesTauri.ts`.
+const CHECK_TIMEOUT: Duration = Duration::from_secs(20);
 
 /// Same field names as the plugin's own update metadata, which the JavaScript
 /// `Update` class is constructed from.
@@ -50,6 +56,7 @@ pub async fn check_prerelease_update<R: Runtime>(
         .updater_builder()
         .endpoints(vec![feed_url()])
         .map_err(|error| error.to_string())?
+        .timeout(CHECK_TIMEOUT)
         .build()
         .map_err(|error| error.to_string())?;
     let Some(update) = updater.check().await.map_err(|error| error.to_string())? else {
@@ -87,10 +94,13 @@ mod tests {
         // It must never alias the stable feed that a stable build is configured with.
         let config: serde_json::Value =
             serde_json::from_str(include_str!("../tauri.conf.json")).unwrap();
-        let stable = config["plugins"]["updater"]["endpoints"][0]
-            .as_str()
+        let stable = config["plugins"]["updater"]["endpoints"]
+            .as_array()
             .unwrap();
-        assert_ne!(url.as_str(), stable);
+        assert!(!stable.is_empty());
+        for endpoint in stable {
+            assert_ne!(url.as_str(), endpoint.as_str().unwrap());
+        }
     }
 
     #[test]

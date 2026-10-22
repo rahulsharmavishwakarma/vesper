@@ -59,6 +59,15 @@ jobs:
             gh release download "$beta_tag" --repo "$GITHUB_REPOSITORY" --pattern beta.json --dir _site \
               || echo "Release $beta_tag has no beta.json; no beta feed published." | tee -a "$GITHUB_STEP_SUMMARY"
           fi
+          # The newest stable release's feed is served here as well. GitHub's
+          # releases/latest/download redirect chain took 15.6 s on one network
+          # against well under a second for Pages (#321); apps list this first
+          # and keep the GitHub address as the fallback older builds still use.
+          stable_tag="$(gh api "repos/$GITHUB_REPOSITORY/releases/latest" --jq '.tag_name // ""' 2>/dev/null || true)"
+          if [ -n "$stable_tag" ]; then
+            gh release download "$stable_tag" --repo "$GITHUB_REPOSITORY" --pattern latest.json --dir _site \
+              || echo "Release $stable_tag has no latest.json; no stable feed published." | tee -a "$GITHUB_STEP_SUMMARY"
+          fi
           # Never publish a feed that is not valid JSON.
           for feed in _site/*.json; do
             [ -e "$feed" ] || continue

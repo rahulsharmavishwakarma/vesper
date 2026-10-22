@@ -36,7 +36,9 @@ test('the updater key is enrolled with the stable feed only', () => {
     /^untrusted comment: minisign public key: [0-9A-F]+\n/,
     'pubkey must be minisign format',
   );
+  // Pages first (fast, #321), then the release asset older builds already use.
   assert.deepEqual(updater.endpoints, [
+    'https://rahulsharmavishwakarma.github.io/vesper/latest.json',
     'https://github.com/rahulsharmavishwakarma/vesper/releases/latest/download/latest.json',
   ]);
 });
