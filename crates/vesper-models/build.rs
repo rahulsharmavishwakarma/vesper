@@ -55,6 +55,10 @@ fn main() {
             "loadHookPatchSha256",
         ),
         (
+            "patches/mlx-audio-swift/parakeet-blocked-tdt.patch",
+            "blockedTdtPatchSha256",
+        ),
+        (
             "native/mlx/Sources/PrepareTokenizer/main.swift",
             "tokenizerSourceSha256",
         ),

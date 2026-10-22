@@ -179,7 +179,9 @@ encoder projections are replaced with a Swift packed five-value layer
 
 It is the smallest Apple GPU option: ~351 MB download and 0.86 GB GPU memory.
 It is less accurate than Parakeet v3 (unseen FLEURS 7.43% vs 5.68%; quiet
-speech 8.88% vs 6.91%) and not faster. See the
+speech 8.88% vs 6.91%) and slightly slower (43.9 vs 40.8 ms median per
+held-out clip, both with
+[blocked TDT decoding](inference-performance.md#blocked-tdt-decoding-on-metal--22-october-2026)). See the
 [adapter record](validation/phonon2-2026-10-21.md).
 
 ## Parakeet Redux (Apple GPU)
@@ -205,6 +207,28 @@ Measured through the application against Parakeet v3:
 
 Long-form was 8.97% vs 10.50% (within noise). See the
 [Redux record](validation/parakeet-redux-2026-10-21.md).
+
+## Parakeet MLX precision
+
+On the Apple GPU, the pinned Parakeet loader casts every float32 weight of
+`mlx-community/parakeet-tdt-0.6b-v3@ed2b7e8c` to bfloat16 before any
+computation. Since 22 October 2026 Vesper installs that cast ahead of time.
+`scripts/convert-parakeet-v3-bf16-mlx.py`, run in the locked `mlx-convert`
+project, produces `rahulsharmavishwakarma/vesper-parakeet-tdt-0.6b-v3-mlx-bf16@5668bb2d`
+(`model.safetensors`, 1,254,184,375 bytes, `77f8ac63…091b`; config unchanged).
+Two runs give identical bytes.
+
+Through the application on Metal:
+
+| | float32 files | bfloat16 files |
+| --- | --- | --- |
+| Download | 2.51 GB | 1.25 GB |
+| Peak MLX allocator memory | 3.80 GB | 1.72 GB |
+| Model load | 274–792 ms | 203–214 ms |
+
+Transcripts were identical on 94/94 held-out and 100/100 unseen FLEURS en-US
+clips, and latency was unchanged. Existing Apple-GPU installations need one
+**Download** to replace the old files. CPU exports are unaffected.
 
 ## Parakeet CPU precision
 

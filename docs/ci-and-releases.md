@@ -19,6 +19,11 @@ the same checks before packaging. Stable PR check names are:
 5. `Security / Dependencies`
 6. `Security / Python benchmarks (audio-frontend)`
 7. `Security / Python benchmarks (vibevoice)`
+8. `Security / Python benchmarks (onnx-quantize)`
+9. `Security / Python benchmarks (mlx-convert)`
+
+The benchmark names come from the `security.yml` matrix, so adding or removing a
+benchmark project adds or removes a check.
 
 The frontend job runs repository hooks, actionlint with ShellCheck, zizmor,
 and `make check-portable`: source formatting, ESLint, Ruff, shell linting,
@@ -31,19 +36,53 @@ versioned `uv.lock`. Optional model/inference projects are kept separate.
 `make python-lock-check` checks all Python lockfiles and generated benchmark
 exports. CI installs uv 0.12.15 through a SHA-pinned action and selects Python
 3.12. The frontend job caches downloads under `.cache/uv`, keyed by lockfiles;
-only pushes to `main` save that cache. Security jobs disable cache reuse.
+only pushes to `main` save that cache. It also restores pre-commit's hook
+environments (`~/.cache/pre-commit`, keyed on `.pre-commit-config.yaml` and saved
+only from `main`): installing them, including Go builds of gitleaks and
+actionlint, took about 2.5 of the job's 3.2 minutes. Security jobs disable cache
+reuse.
 
 The `Rust (macOS)` job (the slowest check, about 25 minutes cold) restores a
 `Swatinem/rust-cache` of the Cargo registry and dependency builds, saved only from
 pushes to `main` so pull requests never churn the shared repository cache (10 GB
 limit). It builds with `CARGO_INCREMENTAL=0` and
 `CARGO_PROFILE_DEV_DEBUG=line-tables-only` because CI never debugs these
-artifacts. On a pull request that changes only `docs/**` or Markdown files, a
-first step detects that and every later step is skipped, so the required check
-still reports success within seconds; pushes to `main` and release tag runs
-always build everything. The MLX Swift build and the macOS bundle build are not
-cached or parallelized yet ([issue #228](https://github.com/rahulsharmavishwakarma/vesper/issues/228));
-measured effect is recorded there, not assumed here.
+artifacts. The MLX Swift packages (about 8 minutes from scratch) are cached the
+same way, in `.tooling/mlx-build`, saved only from `main`. The cache key changes
+with the Swift manifest and lockfile, the MLX Audio patches, the build scripts and
+the Xcode version, and any of those starts a cold build because the patched
+checkouts live in that directory. A change to the bridge sources under
+`native/mlx/Sources` restores the previous build, so only VesperMLX recompiles.
+The macOS bundle build is not parallelized. Measured effect is recorded in
+[issue #228](https://github.com/rahulsharmavishwakarma/vesper/issues/228) and
+[issue #298](https://github.com/rahulsharmavishwakarma/vesper/issues/298), not
+assumed here.
+
+### Change-based job selection
+
+On pull requests, a small `scope` job in each workflow lists the files the merge
+would change (`git diff HEAD^1 HEAD` on the merge commit) and
+[`scripts/ci-scope.mjs`](../scripts/ci-scope.mjs) decides which heavy jobs they
+need:
+
+| Job | Skipped when every changed file is… |
+| --- | --- |
+| `Rust (macOS)` | documentation, Markdown, notebooks, the Pages `site/`, Python benchmark projects, or the browser-only frontend (`apps/desktop/src/`, `apps/desktop/tests/`, Playwright/ESLint config) |
+| `Browser regressions` | documentation, Markdown, notebooks, `site/`, Python benchmark projects, or Rust/native-only paths (`crates/`, `native/`, `patches/`, `vendor/`, `apps/desktop/src-tauri/`, Cargo and toolchain files) |
+| `Python benchmarks (…)` | anything other than a benchmark project, its exported requirements, the root `pyproject.toml`/`uv.lock` or the `Makefile` |
+
+The rules list what each job can ignore, so a path nobody anticipated still runs
+the job. Rust embeds files from `models/` and `benchmarks/`, so those always run
+it. Changing a workflow or the scope script runs everything, and so do pushes to
+`main`, release tags, merge-queue entries, manual runs, the weekly security
+schedule and any pull request whose file list comes back empty. `Frontend and
+repository hygiene`, `Dependencies` and `Secrets` always run.
+
+Skipping uses a job-level `if:`, never workflow `paths:` filters: GitHub reports a
+job skipped by its condition as successful, so required checks still pass, while
+a workflow that never starts would leave them pending forever. The condition is
+`!cancelled() && needs.scope.outputs.<job> != 'false'`, so if the scope job itself
+fails, the jobs run instead of being skipped as passed.
 
 Native-protocol tests in `scripts/test-vibevoice-bitnet.py` launch synthetic
 children through the real resource wrapper. It uses BSD `/usr/bin/time -l` on
@@ -131,18 +170,31 @@ retain `./` local workflow references until actionlint supports GitHub's newer
 [actionlint](https://github.com/rhysd/actionlint/blob/main/docs/usage.md), and
 [zizmor](https://docs.zizmor.sh/integrations/).
 
-GitHub makes required status checks enforceable through branch protection or
-rulesets. Those controls are available for public repositories on GitHub Free,
-but private repositories require GitHub Pro, Team, or Enterprise. This private
-repository's rulesets API returned HTTP 403 during the 2026-09-19 review. Workflow
-files can be prepared locally, but the current plan cannot enforce these rules. After changing
-visibility or plan, protect `main`, require a pull request, require the seven exact
-checks above, require branches to be up to date, dismiss stale approvals, and
-require conversation resolution. See GitHub's [ruleset availability](https://docs.github.com/en/repositories/configuring-branches-and-merges-in-your-repository/managing-rulesets/about-rulesets).
+The repository is public, and repository rulesets protect `main`: changes arrive
+through pull requests, commits must carry verified signatures, and force pushes
+and branch deletion are refused. The repository admin and the release bot app
+are bypass actors so the bot can tag merged release pull requests.
 
-Do not mark release-only jobs as required PR checks. Job names above are an API
-contract for branch protection and should change only with a coordinated ruleset
-update.
+A separate ruleset, `main required checks`, applies only to the default branch
+and blocks merging until these five GitHub Actions checks pass:
+`Frontend and repository hygiene`, `Browser regressions`, `Rust (macOS)`,
+`Dependencies` and `Secrets` ([issue #281](https://github.com/rahulsharmavishwakarma/vesper/issues/281)).
+Branches need not be up to date with `main` first, so a merge does not force
+every open pull request to re-run the macOS job. The rule is kept off the
+all-branches ruleset because there it would also refuse ordinary pushes to
+feature branches. The benchmark matrix checks are not required: their names
+follow the `security.yml` matrix, so a newly added project would block every
+pull request opened before it. CodeQL and GitGuardian also run but are not
+required. The same two bypass actors apply. Release-only jobs never run on pull
+requests and must not be required.
+
+(The 2026-09-19 review found the rulesets API returning HTTP 403 while the
+repository was private; that no longer applies.) See GitHub's
+[ruleset availability](https://docs.github.com/en/repositories/configuring-branches-and-merges-in-your-repository/managing-rulesets/about-rulesets).
+
+Job names above are an API contract for the required-checks ruleset: renaming a
+required job leaves pull requests waiting for a check that never reports, so
+rename only together with the ruleset.
 
 ## Local setup and hook scope
 
@@ -266,7 +318,9 @@ rules; a synthetic API-key control was separately confirmed to fail the scanner.
 
 The dependency job installs packages without lifecycle scripts, runs `npm audit`
 against production **and development** dependencies, runs `make audit-python`,
-and runs the verified-source `make audit-rust` wrapper with cargo-audit 0.22.2 against RustSec with
+and runs the verified-source `make audit-rust` wrapper with cargo-audit 0.22.2 (the
+upstream Linux release binary, checked against its SHA-256 in `security.yml`
+rather than compiled on every run) against RustSec with
 known vulnerabilities and `unsound` advisories denied. Maintenance warnings stay
 visible for dependency-upgrade planning without broad ignores. Separate
 Apple-silicon macOS matrix jobs audit both isolated Python benchmark graphs;
@@ -495,9 +549,16 @@ app plus DMG using Tauri's existing bundler, and stages both assets on a
   branded installer window (see [DMG installer window](#dmg-installer-window));
 - `SHA256SUMS`, covering that DMG.
 
-Publication is a separate approval-gated step: the `promote` job runs only on
-workflow dispatch with the tag, requires the `production` environment (an owner
-configures required reviewers under repository Settings → Environments),
+The `production` environment holds the updater signing key and, since
+21 October 2026, requires the owner's review (Settings → Environments →
+production; admin bypass stays enabled). Two jobs use it, so a release waits for
+approval twice: the tag run's `Desktop package (macOS)` job before building, and
+the `promote` job before publishing. Before that date the environment had no
+protection rules, and `v0.1.1-rc.4` was published by the automatic promote run
+with no approval step.
+
+Publication is a separate step: the `promote` job runs only on
+workflow dispatch with the tag, requires the `production` environment,
 re-verifies tag/version agreement, refuses anything that is not a draft, and
 flips that exact draft to published without rebuilding. The draft job requests
 that dispatch automatically, so a run waits for approval instead of needing a
@@ -635,7 +696,8 @@ sequence below.
 2. Review, run the normal checks and squash-merge it. The commit subject must
    keep the `Release vX.Y.Z` prefix.
 3. The `tag` job re-checks versions, refuses an existing tag and pushes
-   `vX.Y.Z`, which starts the Release workflow and stages the draft.
+   `vX.Y.Z`, which starts the Release workflow. Approve the `production`
+   deployment of its desktop job; it builds and stages the draft.
 4. The draft job dispatches `promote`; approve the `production` deployment.
    Verification follows in the same run.
 
@@ -660,9 +722,12 @@ sequenceDiagram
     Maintainer->>PR: review checks, squash-merge
     PR->>Main: "Release vX.Y.Z"
     Main->>Prep: push event, tag job
-    Prep->>Rel: push tag vX.Y.Z (build, draft)
+    Prep->>Rel: push tag vX.Y.Z
+    Rel->>Prod: desktop build waits for approval
+    Maintainer->>Prod: approve build
+    Prod->>Rel: build, stage draft
     Rel->>Prod: dispatch promote, waits for approval
-    Maintainer->>Prod: approve
+    Maintainer->>Prod: approve publish
     Prod->>Rel: publish draft, then verify
     Note over Prep,Rel: Mismatched version, existing tag, or unmerged PR means no tag
 ```
@@ -676,8 +741,9 @@ sequenceDiagram
 5. Merge the reviewed changes and push the matching `vX.Y.Z` tag. This is a
    maintainer action, not something `make version-set` performs. The tag run
    stages a draft candidate and requests a promote run; it never publishes.
-6. Wait for the Release workflow to pass and inspect the draft candidate and
-   its checksums.
+6. Approve the `production` deployment of the tag run's desktop job, wait for
+   the Release workflow to pass, and inspect the draft candidate and its
+   checksums.
 7. Approve the `production` deployment of the requested promote run (or start one
    with `gh workflow run Release --ref main -f tag=vX.Y.Z`), and confirm the
    published assets and download links in the run summary.

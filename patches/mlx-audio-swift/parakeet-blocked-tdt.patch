@@ -1,0 +1,165 @@
+--- a/Sources/MLXAudioSTT/Models/Parakeet/ParakeetModel.swift
++++ b/Sources/MLXAudioSTT/Models/Parakeet/ParakeetModel.swift
+@@ -29,6 +29,9 @@
+     enum TDTDecoderImplementation: Sendable {
+         case serial
+         case hybrid
++        /// Pinned Vesper patch: the serial algorithm with its loop state kept
++        /// on the device, evaluated once per block of steps.
++        case blocked
+     }
+ 
+     enum EncoderExecutionImplementation: Sendable {
+@@ -53,6 +56,7 @@
+     var tdtDecoderImplementation: TDTDecoderImplementation?
+     var encoderExecutionImplementation: EncoderExecutionImplementation?
+     var tdtTraceEmitter: (@Sendable (TDTTraceStep) -> Void)?
++    var tdtBlockSteps = 16
+     private var compiledEncoderFeaturesByShape: [String: @Sendable (MLXArray) -> MLXArray] = [:]
+ 
+     public var defaultGenerationParameters: STTGenerateParameters {
+@@ -72,6 +76,13 @@
+         vocabulary.count
+     }
+ 
++    private lazy var compiledBlockedTDTStep = makeCompiledBlockedTDTStep(
++        step: self.compiledTDTStep,
++        blankTokenId: self.blankTokenId,
++        durations: self.durations,
++        maxSymbols: self.maxSymbols
++    )
++
+     private lazy var compiledTDTStep = makeCompiledTDTStep(
+         decoder: self.decoder,
+         joint: self.joint,
+@@ -379,14 +390,80 @@
+         )
+         eval(batchFeatures, lengths)
+ 
+-        switch tdtDecoderImplementation ?? .serial {
++        switch tdtDecoderImplementation ?? .blocked {
++        case .blocked:
++            return decodeTDTBlocked(batchFeatures: batchFeatures, lengths: lengths)
+         case .serial:
+             return decodeTDTSerial(batchFeatures: batchFeatures, lengths: lengths, decoder: decoder, joint: joint)
+         case .hybrid:
+             return decodeTDTHybrid(batchFeatures: batchFeatures, lengths: lengths, decoder: decoder, joint: joint)
+         }
+     }
++
++    /// The same compiled step and reductions as `decodeTDTSerial`, but the
++    /// frame index, symbol count, last token and decoder state stay on the
++    /// device. Each host synchronization covers `tdtBlockSteps` steps instead
++    /// of one; steps after the end are masked and leave the state unchanged.
++    private func decodeTDTBlocked(batchFeatures: MLXArray, lengths: MLXArray) -> [ParakeetAlignedResult] {
++        var results: [ParakeetAlignedResult] = []
++        let blankToken = blankTokenId
++        let zero = MLXArray(Int32(0))
++
++        for b in 0..<batchFeatures.shape[0] {
++            let featureSeq = batchFeatures[b..<(b + 1)]
++            let maxLength = Int(lengths[b].item(Int32.self))
++            let lastFrame = MLXArray(Int32(maxLength - 1))
++            let limit = MLXArray(Int32(maxLength))
++            let initial = makeInitialDecoderState(batchSize: 1, dtype: computeDType)
++            var hidden = initial.hidden!
++            var cell = initial.cell!
++            var time = zero
++            var newSymbols = zero
++            var currentToken = MLXArray(Int32(blankToken)).reshaped([1, 1])
++            var hypothesis: [ParakeetAlignedToken] = []
++            var hostTime = 0
+ 
++            while hostTime < maxLength {
++                if Task.isCancelled { break }
++                var records: [MLXArray] = []
++                for _ in 0..<tdtBlockSteps {
++                    let frame = featureSeq.take(minimum(time, lastFrame).reshaped([1]), axis: 1)
++                    let next = compiledBlockedTDTStep([frame, time, newSymbols, currentToken, hidden, cell, limit])
++                    records.append(next[0])
++                    time = next[1]
++                    newSymbols = next[2]
++                    currentToken = next[3]
++                    hidden = next[4]
++                    cell = next[5]
++                }
++                let block = MLX.stacked(records)
++                MLX.eval(block, time, newSymbols, currentToken, hidden, cell)
++                let values = block.asArray(Int32.self)
++                for step in 0..<tdtBlockSteps {
++                    let row = Array(values[(step * 6)..<(step * 6 + 6)]).map(Int.init)
++                    guard row[0] == 1 else { break }
++                    let token = row[3]
++                    tdtTraceEmitter?(
++                        TDTTraceStep(
++                            row: b, time: row[1], newSymbols: row[2], token: token,
++                            decisionIndex: row[4], committedState: token != blankToken))
++                    if token != blankToken, !ParakeetTokenizer.isSpecialToken(token, vocabulary: vocabulary) {
++                        hypothesis.append(
++                            ParakeetAlignedToken(
++                                id: token,
++                                text: ParakeetTokenizer.decode(tokens: [token], vocabulary: vocabulary),
++                                start: frameTimeSeconds(frameIndex: row[1]),
++                                duration: frameTimeSeconds(frameIndex: row[5])))
++                    }
++                }
++                hostTime = Int(time.item(Int32.self))
++            }
++            results.append(
++                ParakeetAlignment.sentencesToResult(ParakeetAlignment.tokensToSentences(hypothesis)))
++        }
++        return results
++    }
++
+     private func decodeTDTSerial(
+         batchFeatures: MLXArray,
+         lengths: MLXArray,
+@@ -892,6 +969,48 @@
+         } catch {
+             return ParakeetAlignment.mergeLongestCommonSubsequence(existing, incoming, overlapDuration: overlapDuration)
+         }
++    }
++}
++
++/// Pinned Vesper patch: one decode step plus the serial loop's reductions
++/// (`tdtStep`), as a single compiled call. Inputs: frame, time, newSymbols,
++/// lastToken [1, 1], hidden, cell, frame count. Outputs: the step record
++/// [active, time, newSymbols, token, decisionIndex, jump] and the next loop
++/// state. Inactive steps (time >= frame count) leave the state unchanged.
++private func makeCompiledBlockedTDTStep(
++    step: @escaping @Sendable ([MLXArray]) -> [MLXArray],
++    blankTokenId: Int,
++    durations: [Int],
++    maxSymbols: Int?
++) -> @Sendable ([MLXArray]) -> [MLXArray] {
++    let blank = MLXArray(Int32(blankTokenId))
++    let durationTable = MLXArray(durations.map { Int32($0) })
++    let symbolLimit = MLXArray(Int32(clamping: maxSymbols ?? Int(Int32.max)))
++    let zero = MLXArray(Int32(0))
++    let one = MLXArray(Int32(1))
++    return compile { arrays in
++        let (frame, time, newSymbols, lastToken, hidden, cell, limit) =
++            (arrays[0], arrays[1], arrays[2], arrays[3], arrays[4], arrays[5], arrays[6])
++        let active = time .< limit
++        let outputs = step([frame, lastToken, hidden, cell])
++        let token = outputs[0][0]
++        let decisionIndex = outputs[0][1]
++        let jump = durationTable.take(decisionIndex)
++        let counted = newSymbols + one
++        let moved = jump .!= zero
++        let capped = .!moved .&& (counted .>= symbolLimit)
++        let nextTime = MLX.where(moved, time + jump, MLX.where(capped, time + one, time))
++        let nextSymbols = MLX.where(moved .|| capped, zero, counted)
++        let commit = active .&& (token .!= blank)
++        let record = MLX.stacked([active.asType(.int32), time, newSymbols, token, decisionIndex, jump])
++        return [
++            record,
++            MLX.where(active, nextTime, time),
++            MLX.where(active, nextSymbols, newSymbols),
++            MLX.where(commit, token, lastToken.reshaped([])).reshaped([1, 1]),
++            MLX.where(commit, outputs[1], hidden),
++            MLX.where(commit, outputs[2], cell),
++        ]
+     }
+ }
+ 
