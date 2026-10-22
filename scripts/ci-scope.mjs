@@ -56,6 +56,18 @@ const pythonAuditInputs = [
   /^Makefile$/,
 ];
 
+// The GLib backport regression builds tests/glib-backport against system GLib
+// with the patched vendored crate; installing GLib's development files from the
+// Ubuntu mirror is the slow, unreliable part (#298).
+const glibInputs = [
+  /^vendor\/glib\//,
+  /^tests\/glib-backport\//,
+  /^Cargo\.(toml|lock)$/,
+  /^rust-toolchain\.toml$/,
+  /^scripts\/(audit-rust|test_rust_audit)\.py$/,
+  /^Makefile$/,
+];
+
 // Changing how scope is decided or how the jobs run re-runs everything.
 const everything = [/^\.github\/workflows\//, /^scripts\/ci-scope(\.test)?\.mjs$/];
 
@@ -71,11 +83,12 @@ export function ciScope(files, { pullRequest = true } = {}) {
     !changed.length ||
     changed.some((file) => everything.some((pattern) => pattern.test(file)))
   )
-    return { rust: true, browser: true, python: true };
+    return { rust: true, browser: true, python: true, glib: true };
   return {
     rust: needs(changed, rustIrrelevant),
     browser: needs(changed, browserIrrelevant),
     python: changed.some((file) => pythonAuditInputs.some((pattern) => pattern.test(file))),
+    glib: changed.some((file) => glibInputs.some((pattern) => pattern.test(file))),
   };
 }
 

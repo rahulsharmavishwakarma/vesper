@@ -24,6 +24,7 @@ jobs:
     timeout-minutes: 5
     outputs:
       python: ${{ steps.decide.outputs.python }}
+      glib: ${{ steps.decide.outputs.glib }}
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
@@ -71,6 +72,9 @@ jobs:
 
   dependencies:
     name: Dependencies
+    needs: scope
+    # Required check: always runs (even if scope fails); only the GLib step is scoped.
+    if: ${{ !cancelled() }}
     env:
       UV_CACHE_DIR: ${{ github.workspace }}/.cache/uv
     runs-on: ubuntu-24.04
@@ -118,10 +122,20 @@ jobs:
           tar -xzf "$RUNNER_TEMP/$name.tgz" -C "$RUNNER_TEMP"
           install -m 0755 "$RUNNER_TEMP/$name/cargo-audit" "$HOME/.cargo/bin/cargo-audit"
           cargo audit --version
+      # Pull requests run this only when GLib, Cargo or the audit scripts change;
+      # pushes, schedules and release runs always do. A slow Ubuntu mirror once
+      # took 6m42s for 4.7 MB and another run hung 20 minutes (#298), so apt
+      # retries with timeouts and the step is capped instead of stalling.
       - name: Test the maintained GLib backport with optimizations enabled
+        if: needs.scope.outputs.glib != 'false'
+        timeout-minutes: 8
         run: |
-          sudo apt-get update
-          sudo apt-get install --yes --no-install-recommends libglib2.0-dev pkg-config
+          set -eu
+          apt_options='-o Acquire::Retries=3 -o Acquire::http::Timeout=30 -o Acquire::https::Timeout=30'
+          # shellcheck disable=SC2086
+          sudo apt-get $apt_options update
+          # shellcheck disable=SC2086
+          sudo apt-get $apt_options install --yes --no-install-recommends libglib2.0-dev pkg-config
           make test-glib-backport
       - name: Verify patched GLib and audit Cargo.lock against RustSec advisories
         run: make audit-rust

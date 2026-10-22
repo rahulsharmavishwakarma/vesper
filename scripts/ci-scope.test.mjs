@@ -2,13 +2,14 @@ import assert from 'node:assert/strict';
 import test from 'node:test';
 import { ciScope } from './ci-scope.mjs';
 
-const all = { rust: true, browser: true, python: true };
+const all = { rust: true, browser: true, python: true, glib: true };
 
 test('documentation-only pull requests skip the heavy jobs', () => {
   assert.deepEqual(ciScope(['docs/user-guide.md', 'README.md', 'notebooks/a.ipynb']), {
     rust: false,
     browser: false,
     python: false,
+    glib: false,
   });
 });
 
@@ -17,13 +18,14 @@ test('frontend changes run the browser suite only', () => {
     rust: false,
     browser: true,
     python: false,
+    glib: false,
   });
 });
 
 test('native changes run Rust only', () => {
   assert.deepEqual(
     ciScope(['crates/vesper-core/src/lib.rs', 'native/mlx/Package.resolved', 'Cargo.lock']),
-    { rust: true, browser: false, python: false },
+    { rust: true, browser: false, python: false, glib: true },
   );
 });
 
@@ -37,6 +39,7 @@ test('Python benchmark projects run only the benchmark audits', () => {
     rust: false,
     browser: false,
     python: true,
+    glib: false,
   });
   for (const file of [
     'uv.lock',
@@ -48,7 +51,11 @@ test('Python benchmark projects run only the benchmark audits', () => {
 
 test('shared or unknown paths run Rust and the browser suite', () => {
   for (const file of ['package-lock.json', 'scripts/desktop.mjs', 'something/new.txt'])
-    assert.deepEqual(ciScope([file]), { rust: true, browser: true, python: false }, file);
+    assert.deepEqual(
+      ciScope([file]),
+      { rust: true, browser: true, python: false, glib: false },
+      file,
+    );
 });
 
 test('workflow or scope changes run everything', () => {
@@ -59,4 +66,15 @@ test('workflow or scope changes run everything', () => {
 test('non-pull-request events and empty file lists run everything', () => {
   assert.deepEqual(ciScope(['docs/a.md'], { pullRequest: false }), all);
   assert.deepEqual(ciScope(['', ' ']), all);
+});
+
+test('only GLib, Cargo and audit-script changes run the GLib backport test', () => {
+  for (const file of [
+    'vendor/glib/src/value.rs',
+    'tests/glib-backport/src/lib.rs',
+    'scripts/audit-rust.py',
+  ])
+    assert.equal(ciScope([file]).glib, true, file);
+  for (const file of ['crates/vesper-core/src/lib.rs', 'apps/desktop/src/App.svelte', 'docs/a.md'])
+    assert.equal(ciScope([file]).glib, false, file);
 });
