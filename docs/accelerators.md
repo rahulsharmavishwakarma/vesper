@@ -16,6 +16,11 @@ and platform rules permit it.
 | Vulkan   | Windows/Linux Vulkan build with a detected GPU      | Model-specific restrictions still apply; Parakeet v3 needs the Unified GGUF speech engine                                                                               |
 | AMD ROCm | Windows/Linux ROCm build with a detected GPU        | Nemotron's existing profile uses Vulkan for speech; its package requires x86-64                                       |
 
+The Apple Neural Engine is not a processing-device choice. For English Parakeet
+v3 on Apple Silicon, the **Neural Engine** speech engine runs the encoder there
+with **Automatic** or **Metal** selected; see
+[Parakeet on the Neural Engine](offline-asr.md#parakeet-on-the-neural-engine).
+
 Imported speech profiles still run on CPU. With cleanup enabled, the accelerator
 preference applies to cleanup; with cleanup off, their menu retains only Automatic
 and CPU. An AMD CPU or an AMD vendor label alone never enables ROCm.

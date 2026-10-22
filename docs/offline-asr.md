@@ -212,7 +212,8 @@ Long-form was 8.97% vs 10.50% (within noise). See the
 
 **Models > Device and storage > Speech engine** chooses how Parakeet v3 runs.
 **Current** (the default) keeps the CPU ONNX files and, for English, the Apple
-GPU files. **Unified GGUF** downloads one file, NVIDIA's
+GPU files. **Neural Engine** is described [below](#parakeet-on-the-neural-engine).
+**Unified GGUF** downloads one file, NVIDIA's
 `parakeet-tdt-0.6b-v3.q8_0.gguf` at `541d1f99` (713,975,456 bytes), and runs it
 through the bundled NeMo-Speech.cpp 0.1.0 runtime on CPU, Metal, CUDA or Vulkan
 for every declared Parakeet language ([ADR-0024](adrs/0024-unified-gguf-speech-engine.md)).
@@ -226,6 +227,51 @@ engine, and 7.25% against 64.05% on quiet (−30 dB) speech, with no text on
 non-speech audio ([qualification record](validation/parakeet-unified-gguf-2026-10-22.md)).
 The other languages, long recordings, CUDA and Vulkan are not yet qualified,
 so **Current** remains the default.
+
+## Parakeet on the Neural Engine
+
+The **Neural Engine** speech engine runs Parakeet v3's encoder on the Apple Neural Engine. The rest of the model
+stays in MLX ([ADR-0025](adrs/0025-neural-engine-speech-engine.md)):
+
+- The encoder runs as a Core ML float16 program.
+- Parakeet's own log-mel frontend and the TDT decoder run on the GPU.
+
+It is offered for English on Apple Silicon builds that include MLX, with **Automatic** or **Metal**. The download is
+1.23 GB from `rahulsharmavishwakarma/vesper-parakeet-tdt-0.6b-v3-coreml-ane@4dc405d6`:
+
+- the compiled encoder, `ParakeetEncoder15s.mlmodelc`;
+- a 45 MB MLX checkpoint with zero encoder layers, holding the decoder, joint network and subsampling tensors.
+
+`scripts/convert-parakeet-v3-coreml-ane.py` builds these files in the locked `coreml-convert` project.
+
+How it runs:
+
+- **Window.** The encoder takes one fixed 15 s window, so completed audio is processed in parts of at most 15 s
+  rather than 30.
+- **Mel input.** The mel input is zero-padded. The program masks the padding as NeMo's encoder does.
+- **Output.** Output is read through the Neural Engine's padded strides and decoded with fresh state for each part.
+- **Live dictation.** Live dictation shows buffered drafts. The completed-audio pass stays authoritative.
+- **Directory check.** The model directory must hold only the pinned files at every depth.
+
+Core ML prepares the program for this Mac's Neural Engine on its first load in a process, which took about 7 s on an
+M5 Pro. Installing the files performs that load, so the first recording does not wait. A macOS update clears the
+prepared copy, and the next recording takes the extra seconds once.
+
+Through the application on 94 held-out English clips, the engine scored 5.26% WER against 5.16% for the MLX path, a
+difference within noise.
+- Clips up to 15 s matched.
+- Clips of 15–20 s gained a few errors from the extra cut.
+
+The [spike record](validation/ane-coreml-spike-2026-10-22.md) measured the same encoder program alongside the writing
+model:
+
+| Measure | Neural Engine | MLX speech |
+| --- | --- | --- |
+| Writer generation slowdown | 8% | 61% |
+| Encoder energy per window | about a fifth of MLX's | — |
+
+See the [qualification record](validation/parakeet-neural-engine-2026-10-22.md). Other languages and other Mac models
+are not yet measured, so **Current** stays the default.
 
 ## Parakeet MLX precision
 

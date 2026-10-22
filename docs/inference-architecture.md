@@ -221,12 +221,14 @@ flowchart LR
     k9[PackedTdt: Apple GPU only]
     k10[TernaryTdt: Apple GPU only]
     k11[NemoTdt: completed audio, buffered live]
+    k12[NeuralEngineTdt: English, 15 s parts, buffered live]
   end
   subgraph Runtime["Runtime"]
     r1[NeMo-Speech.cpp: CPU / Metal / CUDA / Vulkan]
     r2[sherpa-onnx: CPU only]
     r3[MLX Swift: Metal; English except<br/>Granite and Redux languages]
     r4[llama.cpp mtmd: CPU / GPU]
+    r5[Core ML encoder on the Neural Engine<br/>+ MLX decoder on Metal, via the MLX bridge]
   end
   nem --> k1 --> r1
   par --> k2
@@ -241,6 +243,7 @@ flowchart LR
   red --> k10 --> r3
   par -. "MLX registration" .-> r3
   par -. "Unified GGUF engine" .-> k11 --> r1
+  par -. "Neural Engine engine" .-> k12 --> r5
   qwa -. "MLX registration, native live preview" .-> r3
   whi -. "WhisperSmall MLX registration" .-> r3
   lfm --> k6 --> r4
@@ -257,7 +260,12 @@ flowchart TB
   nload -->|GPU load fails| nretry[Retry once on CPU with the same file]
   nload -->|ok| run
   nretry --> run
-  unified -->|no| gpuonly{Apple-GPU-only model<br/>Granite, Phonon-2 or Redux, MLX build?}
+  unified -->|no| ane{Neural Engine engine?<br/>Parakeet v3, English, MLX build}
+  ane -->|yes| anesel[Select neural-engine/parakeet files<br/>prepared for this Mac at install]
+  anesel --> aload[Load Core ML encoder + MLX decoder]
+  aload -->|fails| aerr[Error; no CPU fallback for this engine]
+  aload -->|ok| run
+  ane -->|no| gpuonly{Apple-GPU-only model<br/>Granite, Phonon-2 or Redux, MLX build?}
   gpuonly -->|yes| gpusel[Select MLX / Metal artifacts,<br/>any declared language]
   gpusel --> gload[Load on Metal]
   gload -->|AcceleratorInitialization| gerr[Error: no CPU version;<br/>never another model]
@@ -279,7 +287,9 @@ memory, or CPU. Only under Auto do they retry a failed GPU initialization on
 CPU. Nemotron, and Parakeet v3 with the unified GGUF engine, pick Metal on Apple
 Silicon under Auto, CUDA when an NVIDIA GPU is visible, and CPU otherwise; both
 also retry on CPU, with the same GGUF file
-([ADR-0024](adrs/0024-unified-gguf-speech-engine.md)). Cancellation,
+([ADR-0024](adrs/0024-unified-gguf-speech-engine.md)). The Neural Engine
+engine has one execution path, Automatic or Metal, with no CPU fallback
+([ADR-0025](adrs/0025-neural-engine-speech-engine.md)). Cancellation,
 verification and decode errors never trigger a fallback.
 
 ## 5. Live pipeline
