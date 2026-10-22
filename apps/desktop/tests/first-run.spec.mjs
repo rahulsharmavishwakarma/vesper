@@ -37,10 +37,9 @@ test('setup welcomes a new profile, saves progress and finishes once', async ({ 
   await passVoice(page);
   await expect(page.getByRole('heading', { name: 'Models for this Mac.' })).toBeVisible();
   await expect(page.getByText('Apple M3')).toBeVisible();
-  // Choosing a different, already installed writer leaves nothing to download.
-  await page.locator('#setup-writer-model').click();
-  await page.getByRole('option', { name: /Qwen3\.5 0\.8B/ }).click();
+  // The meaning-checked writer leads; it is already installed here.
   await expect(page.locator('#setup-writer-model')).toContainText('Qwen3.5 0.8B');
+  await expect(page.getByText('Best writing model for English')).toBeVisible();
   await expect(page.getByText('Already on this Mac. Nothing to download.')).toBeVisible();
   await page.getByRole('button', { name: 'Download and set up' }).click();
   // Access: typing into apps turns on once Accessibility is allowed.
@@ -102,9 +101,9 @@ test('models download in the background while setup carries on', async ({ page }
   await expect(page.getByRole('heading', { name: 'Models for this Mac.' })).toBeVisible();
   // Published figures pick the models; the total covers both downloads.
   await expect(page.locator('#setup-speech-model')).toContainText('Parakeet TDT 0.6B v3');
-  await expect(page.locator('#setup-writer-model')).toContainText('SmolLM2 1.7B');
-  await expect(page.getByText('Download 4.0 GB')).toBeVisible();
-  await expect(page.getByText(/Needs 4\.9 GB free/)).toBeVisible();
+  await expect(page.locator('#setup-writer-model')).toContainText('Qwen3.5 0.8B');
+  await expect(page.getByText('Download 4.3 GB')).toBeVisible();
+  await expect(page.getByText(/Needs 5\.4 GB free/)).toBeVisible();
   await page.getByRole('button', { name: 'Download and set up' }).click();
   await expect(page.getByRole('heading', { name: 'Let Vesper type for you.' })).toBeVisible();
   await expect(page.getByText('Setting up models')).toBeVisible();

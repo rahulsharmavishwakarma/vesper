@@ -86,11 +86,14 @@ test('picker options are ordered best first, with tags and gauges', () => {
 
 test('writers rank on published instruction following within one harness', () => {
   const writers = modelOptions(defaultSettings().models, 'rewriter');
-  // English: SmolLM2 1.7B leads the shared leaderboard; Gemma's own report is a
-  // different harness, so its higher number is not compared.
+  // English: Qwen3.5 0.8B passed Vesper's own meaning check, so it leads; the
+  // rest follow the shared leaderboard (SmolLM2 1.7B first). Gemma's own report
+  // is a different harness, so its higher number is not compared.
   const english = decorateWriterOptions(writers, 'en');
-  assert.equal(english[0].value, 'preset:hf-d152d789235fe4ec');
+  assert.equal(english[0].value, 'Qwen/Qwen3.5-0.8B');
   assert.match(english[0].description, /^Best for English/);
+  assert.equal(english[1].value, 'preset:hf-d152d789235fe4ec');
+  assert.match(english[1].description, /^Published result/);
   // Hindi: only the multilingual writer declares it; the others are tagged.
   const hindi = decorateWriterOptions(writers, 'hi');
   assert.equal(hindi[0].value, 'Qwen/Qwen3.5-0.8B');

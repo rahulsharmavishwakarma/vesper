@@ -340,8 +340,8 @@ const writerFits = (
 
 /** Writing models ranked on published instruction following (IFEval), the
  * closest public measure of cleaning a transcript without changing it. Scores
- * are compared within one harness only; a model without a comparable score
- * ranks after those with one, and Vesper's own end-to-end check breaks ties. */
+ * are compared within one harness only. A writer that passed Vesper's own
+ * end-to-end meaning check comes first; the rest follow by published score. */
 function rankWriters<
   Option extends {
     value: string;
@@ -362,8 +362,11 @@ function rankWriters<
     return entry && entry.harness === harness ? entry.value : Number.NEGATIVE_INFINITY;
   };
   const local = (value: string) => Number(Boolean(EVIDENCE.writers[value]?.local));
+  // Owner decision 2026-10-22 (#270): a writer Vesper has checked end to end
+  // for keeping meaning ranks ahead of published scores, which measure general
+  // instruction following rather than transcript cleanup.
   return [...usable].sort(
-    (a, b) => score(b.value) - score(a.value) || local(b.value) - local(a.value),
+    (a, b) => local(b.value) - local(a.value) || score(b.value) - score(a.value),
   );
 }
 

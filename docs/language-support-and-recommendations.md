@@ -176,7 +176,8 @@ First-run setup and the Models page rank models with `apps/desktop/src/lib/recom
 **Writing models**
 
 - **What they are ranked on.** Published instruction following (IFEval), compared within one harness. The Open LLM Leaderboard v2 covers Qwen2.5 0.5B/1.5B and SmolLM2 360M/1.7B. Qwen3.5 0.8B (52.1, non-thinking) and Gemma 3 1B (80.2) are their makers' own evaluations and are not compared with the leaderboard.
-- **Result.** English picks SmolLM2 1.7B (53.7). Languages only Qwen3.5 0.8B declares pick it.
+- **Meaning check first.** The owner decided on 2026-10-22 that a writer which passed Vesper's own end-to-end meaning check ranks ahead of published scores. Today that is only Qwen3.5 0.8B.
+- **Result.** Qwen3.5 0.8B is picked for every language. The other writers follow by published score: in English, SmolLM2 1.7B comes next at 53.7.
 - **Caveat.** These are general instruction benchmarks, not transcript-cleanup fidelity. Only Qwen3.5 0.8B has Vesper's own end-to-end meaning check.
 
 **Picks from today's figures**
@@ -187,6 +188,8 @@ First-run setup and the Models page rank models with `apps/desktop/src/lib/recom
 | Hindi | Nemotron |
 | German, French, Italian, Portuguese, Dutch | Cohere |
 | Japanese | Qwen3-ASR |
+
+The writing model pick is Qwen3.5 0.8B for every language.
 
 Nothing downloads or changes until the person presses **Download and set up** or chooses a model.
 
