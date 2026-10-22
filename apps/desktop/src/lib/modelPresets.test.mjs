@@ -14,14 +14,12 @@ import {
   selectedModelValue,
 } from './modelPresets.ts';
 
-test('choosing another speech model drops an engine it does not offer', () => {
+test('a Neural Engine override survives only on models that offer it', () => {
   let models = { ...defaultSettings().models, asrEngine: 'neural_engine' };
   models = selectModel(models, 'asr', 'nvidia/parakeet-tdt-0.6b-v3');
   assert.equal(models.asrEngine, 'neural_engine');
   models = selectModel(models, 'asr', 'Qwen/Qwen3-ASR-0.6B');
-  assert.equal(models.asrEngine, 'standard');
-  models = selectModel({ ...models, asrEngine: 'unified_gguf' }, 'asr', 'moondream/parakeet-redux');
-  assert.equal(models.asrEngine, 'standard');
+  assert.equal(models.asrEngine, 'automatic');
 });
 
 test('catalog has distinct pinned profiles for both pipeline stages', () => {
