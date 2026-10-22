@@ -36,19 +36,53 @@ versioned `uv.lock`. Optional model/inference projects are kept separate.
 `make python-lock-check` checks all Python lockfiles and generated benchmark
 exports. CI installs uv 0.12.15 through a SHA-pinned action and selects Python
 3.12. The frontend job caches downloads under `.cache/uv`, keyed by lockfiles;
-only pushes to `main` save that cache. Security jobs disable cache reuse.
+only pushes to `main` save that cache. It also restores pre-commit's hook
+environments (`~/.cache/pre-commit`, keyed on `.pre-commit-config.yaml` and saved
+only from `main`): installing them, including Go builds of gitleaks and
+actionlint, took about 2.5 of the job's 3.2 minutes. Security jobs disable cache
+reuse.
 
 The `Rust (macOS)` job (the slowest check, about 25 minutes cold) restores a
 `Swatinem/rust-cache` of the Cargo registry and dependency builds, saved only from
 pushes to `main` so pull requests never churn the shared repository cache (10 GB
 limit). It builds with `CARGO_INCREMENTAL=0` and
 `CARGO_PROFILE_DEV_DEBUG=line-tables-only` because CI never debugs these
-artifacts. On a pull request that changes only `docs/**` or Markdown files, a
-first step detects that and every later step is skipped, so the required check
-still reports success within seconds; pushes to `main` and release tag runs
-always build everything. The MLX Swift build and the macOS bundle build are not
-cached or parallelized yet ([issue #228](https://github.com/rahulsharmavishwakarma/vesper/issues/228));
-measured effect is recorded there, not assumed here.
+artifacts. The MLX Swift packages (about 8 minutes from scratch) are cached the
+same way, in `.tooling/mlx-build`, saved only from `main`. The cache key changes
+with the Swift manifest and lockfile, the MLX Audio patches, the build scripts and
+the Xcode version, and any of those starts a cold build because the patched
+checkouts live in that directory. A change to the bridge sources under
+`native/mlx/Sources` restores the previous build, so only VesperMLX recompiles.
+The macOS bundle build is not parallelized. Measured effect is recorded in
+[issue #228](https://github.com/rahulsharmavishwakarma/vesper/issues/228) and
+[issue #298](https://github.com/rahulsharmavishwakarma/vesper/issues/298), not
+assumed here.
+
+### Change-based job selection
+
+On pull requests, a small `scope` job in each workflow lists the files the merge
+would change (`git diff HEAD^1 HEAD` on the merge commit) and
+[`scripts/ci-scope.mjs`](../scripts/ci-scope.mjs) decides which heavy jobs they
+need:
+
+| Job | Skipped when every changed file is… |
+| --- | --- |
+| `Rust (macOS)` | documentation, Markdown, notebooks, the Pages `site/`, Python benchmark projects, or the browser-only frontend (`apps/desktop/src/`, `apps/desktop/tests/`, Playwright/ESLint config) |
+| `Browser regressions` | documentation, Markdown, notebooks, `site/`, Python benchmark projects, or Rust/native-only paths (`crates/`, `native/`, `patches/`, `vendor/`, `apps/desktop/src-tauri/`, Cargo and toolchain files) |
+| `Python benchmarks (…)` | anything other than a benchmark project, its exported requirements, the root `pyproject.toml`/`uv.lock` or the `Makefile` |
+
+The rules list what each job can ignore, so a path nobody anticipated still runs
+the job. Rust embeds files from `models/` and `benchmarks/`, so those always run
+it. Changing a workflow or the scope script runs everything, and so do pushes to
+`main`, release tags, merge-queue entries, manual runs, the weekly security
+schedule and any pull request whose file list comes back empty. `Frontend and
+repository hygiene`, `Dependencies` and `Secrets` always run.
+
+Skipping uses a job-level `if:`, never workflow `paths:` filters: GitHub reports a
+job skipped by its condition as successful, so required checks still pass, while
+a workflow that never starts would leave them pending forever. The condition is
+`!cancelled() && needs.scope.outputs.<job> != 'false'`, so if the scope job itself
+fails, the jobs run instead of being skipped as passed.
 
 Native-protocol tests in `scripts/test-vibevoice-bitnet.py` launch synthetic
 children through the real resource wrapper. It uses BSD `/usr/bin/time -l` on
@@ -139,17 +173,28 @@ retain `./` local workflow references until actionlint supports GitHub's newer
 The repository is public, and repository rulesets protect `main`: changes arrive
 through pull requests, commits must carry verified signatures, and force pushes
 and branch deletion are refused. The repository admin and the release bot app
-are bypass actors so the bot can tag merged release pull requests. The rulesets
-do **not** yet require status checks, so a pull request can be merged while a
-check is failing or still running; the proposal to require them, including which
-names to require, is [issue #281](https://github.com/rahulsharmavishwakarma/vesper/issues/281).
+are bypass actors so the bot can tag merged release pull requests.
+
+A separate ruleset, `main required checks`, applies only to the default branch
+and blocks merging until these five GitHub Actions checks pass:
+`Frontend and repository hygiene`, `Browser regressions`, `Rust (macOS)`,
+`Dependencies` and `Secrets` ([issue #281](https://github.com/rahulsharmavishwakarma/vesper/issues/281)).
+Branches need not be up to date with `main` first, so a merge does not force
+every open pull request to re-run the macOS job. The rule is kept off the
+all-branches ruleset because there it would also refuse ordinary pushes to
+feature branches. The benchmark matrix checks are not required: their names
+follow the `security.yml` matrix, so a newly added project would block every
+pull request opened before it. CodeQL and GitGuardian also run but are not
+required. The same two bypass actors apply. Release-only jobs never run on pull
+requests and must not be required.
+
 (The 2026-09-19 review found the rulesets API returning HTTP 403 while the
 repository was private; that no longer applies.) See GitHub's
 [ruleset availability](https://docs.github.com/en/repositories/configuring-branches-and-merges-in-your-repository/managing-rulesets/about-rulesets).
 
-Do not mark release-only jobs as required PR checks. Job names above are an API
-contract for branch protection and should change only with a coordinated ruleset
-update.
+Job names above are an API contract for the required-checks ruleset: renaming a
+required job leaves pull requests waiting for a check that never reports, so
+rename only together with the ruleset.
 
 ## Local setup and hook scope
 
@@ -273,7 +318,9 @@ rules; a synthetic API-key control was separately confirmed to fail the scanner.
 
 The dependency job installs packages without lifecycle scripts, runs `npm audit`
 against production **and development** dependencies, runs `make audit-python`,
-and runs the verified-source `make audit-rust` wrapper with cargo-audit 0.22.2 against RustSec with
+and runs the verified-source `make audit-rust` wrapper with cargo-audit 0.22.2 (the
+upstream Linux release binary, checked against its SHA-256 in `security.yml`
+rather than compiled on every run) against RustSec with
 known vulnerabilities and `unsound` advisories denied. Maintenance warnings stay
 visible for dependency-upgrade planning without broad ignores. Separate
 Apple-silicon macOS matrix jobs audit both isolated Python benchmark graphs;
