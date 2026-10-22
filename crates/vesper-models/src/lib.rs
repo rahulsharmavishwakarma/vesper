@@ -369,7 +369,7 @@ fn built_in_asr_spec(config: &AppConfig, model: AsrModel) -> ModelInstallSpec {
     target.models.asr = model;
     // The engine choice belongs to the model that offers it.
     if !vesper_core::nemo_gguf_supported(model) {
-        target.models.asr_engine = vesper_core::AsrEngine::Standard;
+        target.models.asr_engine = vesper_core::AsrEngine::Automatic;
     }
     target.models.custom_asr = None;
     target.models.custom_rewriter = None;
@@ -1493,8 +1493,11 @@ mod tests {
         }
         config.models.asr = AsrModel::ParakeetTdt06bV3;
         config.compute_backend = ComputeBackend::Cpu;
-        assert_eq!(selected(&config).unwrap().len(), 4);
+        // Automatic: the unified GGUF plus one NeMo runtime package.
+        assert_eq!(selected(&config).unwrap().len(), 2);
         assert!(inspect(&config, Path::new("/nonexistent")).supported);
+        config.models.asr_engine = vesper_core::AsrEngine::Standard;
+        assert_eq!(selected(&config).unwrap().len(), 4);
     }
 
     #[test]

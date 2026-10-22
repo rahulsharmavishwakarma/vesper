@@ -436,10 +436,20 @@ impl AsrModel {
 }
 
 impl AppConfig {
+    /// The engine that actually runs the selected built-in speech model. Pure: it
+    /// uses compiled capability only; device probes and installed-file fallbacks
+    /// are applied by `vesper-models::selection`.
+    pub fn effective_asr_engine(&self) -> AsrEngine {
+        match self.models.asr_engine {
+            AsrEngine::Automatic if nemo_gguf_supported(self.models.asr) => AsrEngine::UnifiedGguf,
+            AsrEngine::Automatic => AsrEngine::Standard,
+            explicit => explicit,
+        }
+    }
     /// The selected speech model runs as one GGUF through NeMo-Speech.cpp.
     pub fn uses_nemo_gguf(&self) -> bool {
         self.models.custom_asr.is_none()
-            && self.models.asr_engine == AsrEngine::UnifiedGguf
+            && self.effective_asr_engine() == AsrEngine::UnifiedGguf
             && nemo_gguf_supported(self.models.asr)
     }
     pub fn uses_mlx_speech(&self) -> bool {
@@ -773,9 +783,25 @@ mod tests {
     }
 
     #[test]
+    fn automatic_engine_is_the_default_and_picks_the_unified_gguf_for_parakeet() {
+        let mut config = AppConfig::default();
+        assert_eq!(config.models.asr_engine, AsrEngine::Automatic);
+        // Models without another engine keep their standard adapter.
+        assert_eq!(config.effective_asr_engine(), AsrEngine::Standard);
+        config.validate().unwrap();
+        config.models.asr = AsrModel::ParakeetTdt06bV3;
+        config.language = Language::German;
+        assert_eq!(config.effective_asr_engine(), AsrEngine::UnifiedGguf);
+        assert!(config.uses_nemo_gguf());
+        assert_eq!(config.speech_adapter().kind, AdapterKind::NemoTdt);
+        config.validate().unwrap();
+    }
+
+    #[test]
     fn standard_engine_keeps_parakeet_on_its_existing_adapters() {
         let mut config = AppConfig::default();
         config.models.asr = AsrModel::ParakeetTdt06bV3;
+        config.models.asr_engine = AsrEngine::Standard;
         config.compute_backend = ComputeBackend::Cpu;
         config.language = Language::German;
         assert!(!config.uses_nemo_gguf());
