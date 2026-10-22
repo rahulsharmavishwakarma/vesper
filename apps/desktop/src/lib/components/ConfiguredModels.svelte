@@ -2,8 +2,14 @@
   import Icon from './Icon.svelte';
   import { MODEL_ROLE_LABELS, type AppConfig } from '../config';
   import { downloadTarget } from '../modelDownloads';
+  import { Settled } from '../settled.svelte';
 
   let { settings, onManage }: { settings: AppConfig | null; onManage: () => void } = $props();
+  // Settings usually arrive within a moment; only a slow load says so.
+  const loading = new Settled(
+    () => settings === null,
+    (value) => value,
+  );
 </script>
 
 <div class="configured-models" role="group" aria-label="Configured models">
@@ -19,7 +25,13 @@
               · Off</span
             >{/if}
         </dt>
-        <dd>{settings ? downloadTarget(settings, role).name : 'Loading preferences…'}</dd>
+        <dd>
+          {settings
+            ? downloadTarget(settings, role).name
+            : loading.value
+              ? 'Loading preferences…'
+              : '\u00a0'}
+        </dd>
       </div>
     {/each}
   </dl>

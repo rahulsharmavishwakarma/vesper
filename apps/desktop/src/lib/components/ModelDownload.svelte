@@ -47,6 +47,9 @@
       : '',
   );
   const installed = $derived(entry?.artifactsInstalled === true);
+  // A re-check (after any download, verify or remove) keeps every row's last
+  // known status; only a row with nothing known yet says it is checking.
+  const checkingUnknown = $derived(state.checking && !entry);
   const unsupported = $derived(entry?.supported === false && desktop);
   const status = $derived(
     !desktop
@@ -55,7 +58,7 @@
         ? 'Downloading and verifying…'
         : !knownSelection
           ? 'Save selection to check files'
-          : state.checking
+          : checkingUnknown
             ? 'Checking files…'
             : installed
               ? entry?.runtimeReady
@@ -78,7 +81,7 @@
         ? 'busy'
         : !knownSelection
           ? 'unknown'
-          : state.checking
+          : checkingUnknown
             ? 'busy'
             : installed
               ? entry?.runtimeReady

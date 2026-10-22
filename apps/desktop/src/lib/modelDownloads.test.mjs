@@ -223,3 +223,22 @@ test('backend and language edits cannot reuse saved speech artifact readiness', 
     assert.equal(knownDownloadSelection(draft, saved, 'rewriter'), true);
   }
 });
+
+test('a re-check keeps every known model row on its last status', () => {
+  const saved = defaultSettings();
+  const speech = { ...downloadTarget(saved, 'asr'), artifactsInstalled: true, localFileCount: 1 };
+  const writer = {
+    ...downloadTarget(saved, 'rewriter'),
+    supported: true,
+    artifactsInstalled: false,
+    localFileCount: 0,
+  };
+  // Verifying the speech model re-checks the whole catalog; the writer row
+  // must not flip to "Checking…" while that runs.
+  const rechecking = { ...stateWith([speech, writer]), checking: true };
+  assert.equal(downloadOptionStatus(saved, saved, 'asr', rechecking, true).label, 'Downloaded');
+  assert.equal(
+    downloadOptionStatus(saved, saved, 'rewriter', rechecking, true).label,
+    'Not downloaded',
+  );
+});

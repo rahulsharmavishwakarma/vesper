@@ -10,6 +10,7 @@
     undoUnsavedPersonalization,
   } from '../api/personalization';
   import { onMount, tick, untrack } from 'svelte';
+  import { Settled } from '../settled.svelte';
   import { SvelteSet } from 'svelte/reactivity';
   import { listen } from '@tauri-apps/api/event';
   import Icon from './Icon.svelte';
@@ -220,6 +221,16 @@
         cancelled: 'Cancelled',
       } as Record<string, string>
     )[runtime?.stage ?? ''] ?? 'Checking status',
+  );
+  // Brief start-up and refresh states only show if they last; see settled.svelte.ts.
+  const PASSING_STATUS = new Set([
+    'Loading preferences…',
+    'Checking your microphone…',
+    'Saving your preferences…',
+  ]);
+  const shownStatus = new Settled(
+    () => recorderStatus,
+    (value) => PASSING_STATUS.has(value),
   );
   const recorderStatus = $derived(
     cancelling
@@ -937,7 +948,9 @@
           <div>
             <div class="recorder-heading">
               <Icon name="mic" />
-              <h2 class="recorder-label"><span role="status">{recorderStatus}</span></h2>
+              <h2 class="recorder-label">
+                <span role="status">{shownStatus.value ?? '\u00a0'}</span>
+              </h2>
             </div>
             <p class="dictate-hint" class:quiet-input={quietInput} aria-live="polite">
               {dictateHint}
