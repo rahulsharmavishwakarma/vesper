@@ -8,7 +8,7 @@ moves?
 **Result (research evidence, not a qualification):** 8-bit affine quantization of the `Linear` layers cuts the weights
 from 2,508 MB to **749 MB (−70%)** with the same word errors as float32 on every one of 100 FLEURS English test clips.
 Lower bit widths cost about 0.1 to 0.3 points of WER on this set, and sensitivity-guided mixed precision did not beat
-uniform 4-bit. Nothing in the application changed.
+uniform 4-bit. Nothing in the application changed. Since this record, `main` ships these weights pre-cast to bfloat16 (1.25 GB, #292); the bfloat16 row below matches that file's precision.
 
 ## Method
 
@@ -32,7 +32,7 @@ Tool: `scripts/quantize-mlx-parakeet.py` in the locked `benchmarks/asr/python/ml
 
 | Variant | Weights | WER | Difference from float32 [95% CI] |
 | --- | ---: | ---: | --- |
-| float32 (current artifact) | 2,508 MB | 4.89% | — |
+| float32 (artifact pinned when measured) | 2,508 MB | 4.89% | — |
 | bfloat16 | 1,254 MB | 4.94% | +0.05 [0.00, +0.14] |
 | **8-bit, group 64** | **749 MB** | **4.89%** | **0.00 [0.00, 0.00]** |
 | 6-bit, group 64 | 614 MB | 5.03% | +0.14 [−0.09, +0.38] |
