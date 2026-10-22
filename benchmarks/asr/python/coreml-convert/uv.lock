@@ -450,6 +450,7 @@ version = "0.0.0"
 source = { virtual = "." }
 dependencies = [
     { name = "coremltools" },
+    { name = "huggingface-hub" },
     { name = "numpy" },
     { name = "safetensors" },
     { name = "torch" },
@@ -459,6 +460,7 @@ dependencies = [
 [package.metadata]
 requires-dist = [
     { name = "coremltools", specifier = "==9.0" },
+    { name = "huggingface-hub", specifier = ">=2.2.0" },
     { name = "numpy", specifier = "==1.26.4" },
     { name = "safetensors" },
     { name = "torch", specifier = "==2.14.1" },
