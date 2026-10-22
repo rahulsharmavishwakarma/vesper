@@ -192,6 +192,18 @@ requests and must not be required.
 repository was private; that no longer applies.) See GitHub's
 [ruleset availability](https://docs.github.com/en/repositories/configuring-branches-and-merges-in-your-repository/managing-rulesets/about-rulesets).
 
+CodeQL runs through GitHub's default code-scanning setup (repository Settings →
+Code security, not a workflow file). It scans Actions, C/C++, JavaScript/TypeScript,
+Python and Rust on pull requests, `main` pushes and weekly. It finds flaws in
+this repository's own code, which the dependency, secret and workflow linters do
+not cover. It is not a required check. Fix alerts in our code. Alerts in
+`vendor/glib` are dismissed with a recorded reason, not edited, because that
+directory is gtk-rs `glib` 0.18.5 kept only for the RUSTSEC-2024-0429 backport,
+its provenance is verified byte for byte, and only Tauri's Linux GTK/WebKit stack
+compiles it, not the macOS app. Dismissals and their reasons are in
+[issue #305](https://github.com/rahulsharmavishwakarma/vesper/issues/305). The
+directory goes away once that stack moves to `glib` 0.20 or newer.
+
 Job names above are an API contract for the required-checks ruleset: renaming a
 required job leaves pull requests waiting for a check that never reports, so
 rename only together with the ruleset.

@@ -79,3 +79,11 @@ test('Tauri places the icons where the artwork expects them', () => {
   assert.deepEqual(dmg.appPosition, ICONS.app);
   assert.deepEqual(dmg.applicationFolderPosition, ICONS.applications);
 });
+
+test('artwork whose comments reassemble after stripping is refused', () => {
+  const tokens = read('apps/desktop/src/tokens.css');
+  assert.throws(
+    () => dmgBackgroundSource('<svg viewBox="0 0 1 1"><!-<!---->-><path/></svg>', tokens),
+    /Unexpected comment markup/,
+  );
+});
