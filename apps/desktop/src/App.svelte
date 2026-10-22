@@ -20,8 +20,8 @@
   } from './lib/api/desktop';
   import {
     MODEL_ROLE_LABELS,
-    ASR_ENGINE_OPTIONS,
-    UNIFIED_GGUF_MODELS,
+    asrEngineOptions,
+    usesNeuralEngine,
     usesUnifiedGguf,
     CLEANUP_QUANTIZATION_OPTIONS,
     defaultSettings,
@@ -239,6 +239,7 @@
   let deviceRequested = false;
   let disposed = false;
   const backendOptions = $derived(acceleratorOptions(draft, capabilities));
+  const engineOptions = $derived(asrEngineOptions(draft.models, capabilities));
   const backendError = $derived(
     capabilities ? acceleratorReason(draft, capabilities, draft.computeBackend) : null,
   );
@@ -1001,20 +1002,22 @@
                   aria-labelledby="model-device-heading"
                 >
                   <h2 id="model-device-heading">Device and storage</h2>
-                  {#if !draft.models.customAsr && UNIFIED_GGUF_MODELS.includes(draft.models.asr)}
+                  {#if engineOptions.length > 1}
                     <div class="field">
                       <label for="asr-engine">Speech engine</label>
                       <Select
                         id="asr-engine"
                         bind:value={draft.models.asrEngine}
-                        options={ASR_ENGINE_OPTIONS}
+                        options={engineOptions}
                         disabled={modelChoicesLocked}
                         describedBy="asr-engine-help"
                       />
                       <p id="asr-engine-help" class="note">
                         {#if usesUnifiedGguf(draft.models)}One 714 MB file runs this model on CPU
-                          and on every supported GPU.{:else}Uses the CPU file, or the Apple GPU file
-                          for English.{/if}
+                          and on every supported GPU.{:else if usesNeuralEngine(draft.models)}A 1.2
+                          GB download runs this model on the Neural Engine and leaves the GPU to the
+                          writing model. English only. The first use on this Mac takes a few seconds
+                          to prepare.{:else}Uses the CPU file, or the Apple GPU file for English.{/if}
                       </p>
                     </div>
                   {/if}

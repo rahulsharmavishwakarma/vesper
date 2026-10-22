@@ -103,9 +103,20 @@ export type LanguageOption = { value: Language; label: string; description: stri
 export type CleanupPreset = 'minimal' | 'balanced';
 export type ComputeBackend = 'auto' | 'cpu' | 'metal' | 'cuda' | 'vulkan' | 'rocm';
 /** Engine for a speech model with more than one; see `AsrEngine` in vesper-core. */
-export type AsrEngine = 'standard' | 'unified_gguf';
-export { UNIFIED_GGUF_MODELS, usesUnifiedGguf } from './accelerators.ts';
-import { usesUnifiedGguf } from './accelerators.ts';
+export type AsrEngine = 'standard' | 'unified_gguf' | 'neural_engine';
+export {
+  NEURAL_ENGINE_MODELS,
+  UNIFIED_GGUF_MODELS,
+  usesNeuralEngine,
+  usesUnifiedGguf,
+} from './accelerators.ts';
+import type { AcceleratorCapabilities } from './accelerators.ts';
+import {
+  NEURAL_ENGINE_MODELS,
+  UNIFIED_GGUF_MODELS,
+  usesNeuralEngine,
+  usesUnifiedGguf,
+} from './accelerators.ts';
 
 export const ASR_ENGINE_OPTIONS: { value: AsrEngine; label: string; description: string }[] = [
   {
@@ -118,7 +129,30 @@ export const ASR_ENGINE_OPTIONS: { value: AsrEngine; label: string; description:
     label: 'Unified GGUF',
     description: 'One file for CPU and every supported GPU',
   },
+  {
+    value: 'neural_engine',
+    label: 'Neural Engine',
+    description: 'Apple Neural Engine, English',
+  },
 ];
+
+/** Engines this build offers for the selected model. A saved choice stays listed
+ * so the control never shows a blank value while device detection loads. */
+export function asrEngineOptions(
+  models: { asr: string; asrEngine?: AsrEngine; customAsr?: unknown },
+  capabilities: AcceleratorCapabilities | null,
+): typeof ASR_ENGINE_OPTIONS {
+  if (models.customAsr) return [];
+  return ASR_ENGINE_OPTIONS.filter(
+    (option) =>
+      option.value === 'standard' ||
+      (option.value === 'unified_gguf' && UNIFIED_GGUF_MODELS.includes(models.asr)) ||
+      (option.value === 'neural_engine' &&
+        NEURAL_ENGINE_MODELS.includes(models.asr) &&
+        (models.asrEngine === 'neural_engine' ||
+          Boolean(capabilities?.speechMetalModels?.includes(models.asr)))),
+  );
+}
 export const AUDIO_FRONTENDS = {
   'silero-v6.2': 'Silero v6.2',
   dpdfnet8: 'DPDFNet8',
@@ -350,6 +384,7 @@ export function transcriptionLanguageOptions(
       (option) => option.value === 'auto' || declared.has(option.value),
     );
   }
+  if (usesNeuralEngine(models)) return LANGUAGE_OPTIONS.filter((option) => option.value === 'en');
   if (
     backend === 'metal' &&
     !usesUnifiedGguf(models) &&

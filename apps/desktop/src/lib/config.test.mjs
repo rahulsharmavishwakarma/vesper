@@ -3,6 +3,7 @@ import { readFileSync } from 'node:fs';
 import test from 'node:test';
 import {
   ASR_MODELS,
+  asrEngineOptions,
   CAPTURE_DESIGNS,
   CLEANUP_MODELS,
   CLEANUP_MODEL_OPTIONS,
@@ -576,6 +577,35 @@ test('a custom writing profile validates per declared language', () => {
       `custom writer declaring ${code} should validate`,
     );
   }
+});
+
+test('the Neural Engine is offered for Parakeet in MLX builds and keeps English', () => {
+  const settings = defaultSettings();
+  settings.models.asr = 'nvidia/parakeet-tdt-0.6b-v3';
+  const engines = (models, capabilities) =>
+    asrEngineOptions(models, capabilities).map((option) => option.value);
+  const mac = {
+    os: 'macos',
+    arch: 'aarch64',
+    backends: [],
+    speechMetalModels: [settings.models.asr],
+  };
+  assert.deepEqual(engines(settings.models, mac), ['standard', 'unified_gguf', 'neural_engine']);
+  // Builds without the MLX bridge, and other models, do not offer it.
+  assert.deepEqual(engines(settings.models, { ...mac, speechMetalModels: [] }), [
+    'standard',
+    'unified_gguf',
+  ]);
+  assert.deepEqual(engines({ ...settings.models, asr: 'Qwen/Qwen3-ASR-0.6B' }, mac), ['standard']);
+  assert.deepEqual(engines({ ...settings.models, customAsr: {} }, mac), []);
+  settings.models.asrEngine = 'neural_engine';
+  // A saved choice stays listed while device detection loads.
+  assert.ok(engines(settings.models, null).includes('neural_engine'));
+  for (const backend of ['auto', 'metal'])
+    assert.deepEqual(
+      transcriptionLanguageOptions(settings.models, backend).map((option) => option.value),
+      ['en'],
+    );
 });
 
 test('the unified Parakeet GGUF keeps every declared language on Metal', () => {
