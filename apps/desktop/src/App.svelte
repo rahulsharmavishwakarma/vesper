@@ -20,7 +20,6 @@
   } from './lib/api/desktop';
   import {
     MODEL_ROLE_LABELS,
-    CLEANUP_QUANTIZATION_OPTIONS,
     defaultSettings,
     effectiveRecordingSeconds,
     requiresCompletionReport,
@@ -299,20 +298,7 @@
     }),
   );
   const cleanupKnown = $derived(knownDownloadSelection(draft, engineSettings, 'rewriter'));
-  const precisionOptions = $derived(
-    CLEANUP_QUANTIZATION_OPTIONS.map((option) => ({
-      ...option,
-      status: downloadOptionStatus(
-        { ...draft, rewriteQuantization: option.value },
-        engineSettings,
-        'rewriter',
-        downloads,
-        environment === 'desktop',
-      ),
-    })),
-  );
   const asrPreset = $derived(presetForProfile(draft.models.customAsr));
-  const cleanupPreset = $derived(presetForProfile(draft.models.customRewriter));
   const languageOptions = $derived(pipelineLanguageOptions(draft));
   const languageHint = $derived(
     languageOptions.some((option) => option.value === 'auto')
@@ -345,7 +331,6 @@
           role,
           downloads,
           environment === 'desktop',
-          role === 'rewriter',
         ),
       };
     });
@@ -1029,30 +1014,6 @@
                   {#if writerError}<p id="models-writer-language-error" class="error">
                       {writerError}
                     </p>{/if}
-                  <div class="field">
-                    <label for="models-cleanup-precision">Model precision</label>
-                    {#if draft.models.customRewriter}
-                      <input
-                        id="models-cleanup-precision"
-                        value={cleanupPreset?.precision ?? 'Included with this model'}
-                        readonly
-                        aria-describedby="models-cleanup-precision-help"
-                      />
-                    {:else}
-                      <Select
-                        id="models-cleanup-precision"
-                        bind:value={draft.rewriteQuantization}
-                        options={precisionOptions}
-                        disabled={modelChoicesLocked}
-                        describedBy="models-cleanup-precision-help"
-                      />
-                    {/if}
-                    <p id="models-cleanup-precision-help" class="note">
-                      {draft.models.customRewriter
-                        ? 'Precision is fixed for this download.'
-                        : 'Q4 uses less memory and disk space. Q8 offers higher precision. Each is a separate download.'}
-                    </p>
-                  </div>
                   <ModelDownload
                     target={cleanupDownload}
                     knownSelection={cleanupKnown}

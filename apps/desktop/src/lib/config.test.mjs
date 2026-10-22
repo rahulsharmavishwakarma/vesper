@@ -7,7 +7,7 @@ import {
   CLEANUP_MODELS,
   CLEANUP_MODEL_OPTIONS,
   CLEANUP_QUANTIZATIONS,
-  CLEANUP_QUANTIZATION_OPTIONS,
+  resolvedRewriteQuantization,
   LANGUAGE_OPTIONS,
   defaultSettings,
   recordingShortcuts,
@@ -208,10 +208,10 @@ test('cleanup choices expose only packaged models and quantizations', () => {
     CLEANUP_MODEL_OPTIONS.map((option) => option.value),
     ['Qwen/Qwen3.5-0.8B'],
   );
-  assert.deepEqual(
-    CLEANUP_QUANTIZATION_OPTIONS.map((option) => option.value),
-    ['q4_0', 'q8_0'],
-  );
+  // Users never choose a precision; Automatic resolves to the qualified Q4 file.
+  assert.equal(defaultSettings().rewriteQuantization, 'automatic');
+  assert.equal(resolvedRewriteQuantization('automatic'), 'q4_0');
+  assert.equal(resolvedRewriteQuantization('q8_0'), 'q8_0');
   assert.equal(CLEANUP_QUANTIZATIONS.q4_0.sizeBytes, 563_036_064);
   assert.equal(CLEANUP_QUANTIZATIONS.q8_0.sizeBytes, 833_592_096);
 

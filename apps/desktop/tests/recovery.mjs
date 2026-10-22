@@ -1582,10 +1582,7 @@ await test('Model presets save before explicit download and survive reopening', 
   await choose('models-asr-model', speech.profile.name);
   await choose('models-cleanup-model', cleanup.profile.name);
   assert(installs.length === 0, 'Selection alone downloaded models');
-  assert(
-    target.querySelector('#models-cleanup-precision').value === 'Q8_0',
-    'Preset precision inherited the built-in Q4 selection',
-  );
+  assert(!target.querySelector('#models-cleanup-precision'), 'A precision choice is shown');
   target.querySelector('[aria-label="Speech model download"] button').click();
   await until(
     () =>
@@ -1620,10 +1617,6 @@ await test('Model presets save before explicit download and survive reopening', 
   assert(
     target.querySelector('#models-cleanup-model').textContent.includes(cleanup.profile.name),
     'Cleanup selection did not survive reopening',
-  );
-  assert(
-    target.querySelector('#models-cleanup-precision').value === 'Q8_0',
-    'Saved preset precision changed',
   );
 });
 

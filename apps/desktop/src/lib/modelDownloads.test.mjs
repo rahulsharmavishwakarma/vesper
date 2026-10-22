@@ -63,6 +63,8 @@ test('progress uses byte totals, bounds invalid values and never rounds unfinish
 
 test('speech downloads never inherit cleanup precision', () => {
   const config = defaultSettings();
+  assert.equal(config.rewriteQuantization, 'automatic');
+  assert.equal(downloadTarget(config, 'rewriter').quantization, 'q4_0');
   config.models.asr = 'nvidia/nemotron-3.5-asr-streaming-0.6b';
   config.rewriteQuantization = 'q8_0';
   assert.equal(downloadTarget(config, 'asr').modelId, config.models.asr);
@@ -104,7 +106,7 @@ const stateWith = (catalog) => ({
   feedback: null,
 });
 
-test('menus identify downloaded cleanup precisions without claiming the other one is installed', () => {
+test('writer status follows the resolved file without claiming another precision is installed', () => {
   const saved = defaultSettings();
   const draft = { ...saved, rewriteQuantization: 'q8_0' };
   const q4 = {
@@ -120,15 +122,10 @@ test('menus identify downloaded cleanup precisions without claiming the other on
     localFileCount: 0,
   };
   const state = stateWith([q4, q8]);
-  assert.equal(
-    downloadOptionStatus(draft, saved, 'rewriter', state, true, true).label,
-    'Q4 downloaded',
-  );
   assert.equal(downloadOptionStatus(draft, saved, 'rewriter', state, true).label, 'Not downloaded');
   assert.equal(downloadOptionStatus(saved, saved, 'rewriter', state, true).label, 'Downloaded');
   assert.equal(downloadOptionStatus(saved, saved, 'rewriter', state, true).kind, 'downloaded');
   assert.equal(downloadOptionStatus(draft, saved, 'rewriter', state, true).kind, 'missing');
-  assert.equal(downloadOptionStatus(draft, saved, 'rewriter', state, true, true).detail, 'Q4');
   q8.localFileCount = 1;
   assert.equal(
     downloadOptionStatus(draft, saved, 'rewriter', state, true).label,
