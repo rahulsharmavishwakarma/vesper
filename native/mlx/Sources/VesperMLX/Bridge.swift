@@ -174,6 +174,9 @@ public func transcribe(
       "provider": "metal", "runtimeRevision": "d302a5c6080d2bb97bae38c7418f82abb76013b6",
     ]
     if let scores = result.vesperWhisperScores { response["whisperScores"] = scores }
+    if let neuralEngine = handle.model as? ParakeetNeuralEngineModel {
+      response["encoderComputeUnits"] = neuralEngine.computeUnits
+    }
     return jsonString(response)
   } catch { return jsonString(["schemaVersion": 1, "error": error.localizedDescription]) }
 }

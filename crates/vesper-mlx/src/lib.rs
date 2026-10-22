@@ -43,6 +43,9 @@ pub struct Transcript {
     pub whisper_scores: Option<WhisperScores>,
     #[serde(default)]
     pub resources: Option<serde_json::Value>,
+    /// Core ML compute units the Neural Engine engine's encoder loaded with.
+    #[serde(default)]
+    pub encoder_compute_units: Option<String>,
 }
 #[derive(Debug, Deserialize, Serialize)]
 #[serde(rename_all = "camelCase")]

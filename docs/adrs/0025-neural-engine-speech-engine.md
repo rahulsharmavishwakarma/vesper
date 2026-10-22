@@ -35,6 +35,8 @@ file, and the risk of failing the converter's dependency audit.
   - A pinned MLX Audio patch exposes `vesperLogMel` and `vesperDecode`.
   - The encoder takes one fixed 15 s window, so the recognizer delivers parts of at most 15 s instead of 30.
   - Neural Engine output is read through its padded strides.
+  - The encoder loads with CPU and Neural Engine, then CPU and GPU, then CPU only. A failed load or a failed probe
+    window falls through once, with no extra files.
 - Artifacts use `engine: coreml_ane`, `backend: neural_engine` and the directory `neural-engine/parakeet`:
   - a compiled encoder with int8 per-channel weights and float16 compute (`ParakeetEncoder15s.mlmodelc`);
   - a decoder-only MLX checkpoint: decoder, joint and subsampling tensors copied unchanged from the pinned bfloat16

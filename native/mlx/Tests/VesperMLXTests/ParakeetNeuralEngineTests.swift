@@ -27,6 +27,30 @@ final class ParakeetNeuralEngineTests: XCTestCase {
     XCTAssertThrowsError(try ParakeetNeuralEngineModel.channelsLast(encoded, frames: frames + 1))
   }
 
+  /// Optional: every compute unit in the fallback order loads the same
+  /// installed files and transcribes alike. Set VESPER_ANE_MODEL to the
+  /// installed `neural-engine/parakeet` directory and VESPER_ANE_AUDIO to raw
+  /// f32 16 kHz PCM of at most 15 s.
+  func testEveryComputeUnitRunsTheInstalledEncoderWhenProvided() throws {
+    let environment = ProcessInfo.processInfo.environment
+    guard let model = environment["VESPER_ANE_MODEL"], let audio = environment["VESPER_ANE_AUDIO"]
+    else { throw XCTSkip("VESPER_ANE_MODEL and VESPER_ANE_AUDIO are not set") }
+    let samples = try Data(contentsOf: URL(fileURLWithPath: audio)).withUnsafeBytes {
+      Array($0.bindMemory(to: Float.self))
+    }
+    var texts: [String] = []
+    for unit in ParakeetNeuralEngineModel.computeUnitOrder {
+      let engine = try ParakeetNeuralEngineModel(
+        directory: URL(fileURLWithPath: model, isDirectory: true), order: [unit])
+      XCTAssertEqual(engine.computeUnits, unit.1)
+      let output = try engine.transcribe(MLXArray(samples))
+      XCTAssertEqual(output.vesperCompletionReason, "audio_consumed")
+      texts.append(output.text)
+    }
+    XCTAssertFalse(texts[0].isEmpty)
+    XCTAssertEqual(Set(texts).count, 1, "\(texts)")
+  }
+
   /// One cut at the quietest 100 ms within 3 s of the middle, so each part of
   /// a clip up to 21 s fits the 15 s window. The app segments in Rust instead.
   private func parts(_ audio: [Float]) -> [[Float]] {

@@ -203,6 +203,11 @@ Encoder on the installed int8 files, with the 15 s speech mel:
 
 The lower cosine against NeMo fp32 did not change word error rates.
 
+The model now tries those compute units in that order at load, falling through on a failed load or probe window.
+- Loaded alone, each unit gave identical text on a held-out clip (`testEveryComputeUnitRunsTheInstalledEncoderWhenProvided`).
+- Rerunning the regression lane through `vesper-eval` recorded `encoderComputeUnits: cpu_and_neural_engine` for every
+  segment, with all 48 transcripts unchanged.
+
 ## Limitations
 
 - **One machine.** M1–M4 Macs and lower-memory Macs are not measured. The owner decided on 22 October 2026 that

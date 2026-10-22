@@ -27,33 +27,69 @@ final class ParakeetNeuralEngineModel: STTGenerationModel {
   static let encoderName = "ParakeetEncoder15s.mlmodelc"
   static let windowFrames = 1501
 
+  /// Tried in order with the same compiled file: the Neural Engine first, then
+  /// the GPU, then the CPU. Within each, Core ML still places unsupported
+  /// operations on the CPU.
+  static let computeUnitOrder: [(MLComputeUnits, String)] = [
+    (.cpuAndNeuralEngine, "cpu_and_neural_engine"), (.cpuAndGPU, "cpu_and_gpu"),
+    (.cpuOnly, "cpu_only"),
+  ]
+
   let parakeet: ParakeetModel
   let encoder: MLModel
+  /// The compute units of the first load that passed a probe window.
+  let computeUnits: String
 
   /// The first load on a Mac specializes the program for its Neural Engine
-  /// (seconds); Core ML caches that per model path until the OS changes.
-  init(directory: URL) throws {
+  /// (seconds); Core ML caches that per model path until the OS changes. A load
+  /// that fails, or whose probe window errors or is not finite, falls through
+  /// to the next compute units once.
+  init(directory: URL, order: [(MLComputeUnits, String)] = computeUnitOrder) throws {
     parakeet = try ParakeetModel.fromDirectory(directory)
-    let configuration = MLModelConfiguration()
-    configuration.computeUnits = .cpuAndNeuralEngine
-    encoder = try MLModel(
-      contentsOf: directory.appendingPathComponent(Self.encoderName), configuration: configuration)
+    let url = directory.appendingPathComponent(Self.encoderName)
+    var failures: [String] = []
+    for (units, name) in order {
+      do {
+        let configuration = MLModelConfiguration()
+        configuration.computeUnits = units
+        let candidate = try MLModel(contentsOf: url, configuration: configuration)
+        let probe = try Self.encode(
+          candidate, mel: MLXArray.zeros([100, 128], type: Float.self))
+        guard probe.features.asType(.float32).abs().max().item(Float.self).isFinite else {
+          throw fail("non-finite probe output")
+        }
+        encoder = candidate
+        computeUnits = name
+        return
+      } catch {
+        failures.append("\(name): \(error.localizedDescription)")
+      }
+    }
+    throw fail("Core ML encoder unavailable (\(failures.joined(separator: "; ")))")
   }
 
   var defaultGenerationParameters: STTGenerateParameters { parakeet.defaultGenerationParameters }
 
   func transcribe(_ audio: MLXArray) throws -> STTOutput {
-    let mel = parakeet.vesperLogMel(audio).asType(.float32)
+    let encoded = try Self.encode(encoder, mel: parakeet.vesperLogMel(audio))
+    return parakeet.vesperDecode(encoded: encoded.features, frames: encoded.frames)
+  }
+
+  /// Runs one window of log-mel frames [frames, 128] through the encoder and
+  /// returns MLX features [1, encoded frames, dModel].
+  static func encode(_ encoder: MLModel, mel: MLXArray) throws -> (features: MLXArray, frames: Int)
+  {
+    let mel = mel.asType(.float32)
     let frames = mel.dim(0)
-    guard frames <= Self.windowFrames, mel.dim(1) == 128 else {
+    guard frames <= windowFrames, mel.dim(1) == 128 else {
       throw fail("Audio part exceeds the 15 s Neural Engine window")
     }
     // Channel-first [1, 128, 1501]; the program zeroes frames past mel_length.
-    let values = MLX.padded(mel, widths: [.init((0, Self.windowFrames - frames)), .init((0, 0))])
+    let values = MLX.padded(mel, widths: [.init((0, windowFrames - frames)), .init((0, 0))])
       .transposed(1, 0).asArray(Float.self)
     let input = try MLMultiArray(
-      shape: [1, 128, NSNumber(value: Self.windowFrames)], dataType: .float32)
-    guard input.strides.map(\.intValue) == [128 * Self.windowFrames, Self.windowFrames, 1] else {
+      shape: [1, 128, NSNumber(value: windowFrames)], dataType: .float32)
+    guard input.strides.map(\.intValue) == [128 * windowFrames, windowFrames, 1] else {
       throw fail("Unexpected Core ML input layout")
     }
     values.withUnsafeBufferPointer { source in
@@ -67,8 +103,7 @@ final class ParakeetNeuralEngineModel: STTGenerationModel {
     guard let encoded = output.featureValue(for: "encoder")?.multiArrayValue,
       let encodedFrames = output.featureValue(for: "encoder_length")?.multiArrayValue?[0].intValue
     else { throw fail("Core ML encoder returned no features") }
-    return parakeet.vesperDecode(
-      encoded: try Self.channelsLast(encoded, frames: encodedFrames), frames: encodedFrames)
+    return (try channelsLast(encoded, frames: encodedFrames), encodedFrames)
   }
 
   /// [1, dModel, T] Core ML output to MLX [1, frames, dModel]. The Neural Engine

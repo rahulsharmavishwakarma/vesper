@@ -207,7 +207,7 @@ impl Recognizer {
                         cancelled,
                     )
                     .map_err(map_error)?;
-                self.metrics.borrow_mut().segments.push(serde_json::json!({"inputSamples":samples.len(), "stopReason":report.stop_reason, "generationTokens":report.generation_tokens, "promptTokens":report.prompt_tokens, "nativeSeconds":report.native_seconds, "processAllocatorPeakGB":report.peak_memory_gb, "whisperScores":report.whisper_scores,"resources":report.resources}));
+                self.metrics.borrow_mut().segments.push(serde_json::json!({"inputSamples":samples.len(), "stopReason":report.stop_reason, "generationTokens":report.generation_tokens, "promptTokens":report.prompt_tokens, "nativeSeconds":report.native_seconds, "processAllocatorPeakGB":report.peak_memory_gb, "whisperScores":report.whisper_scores,"resources":report.resources,"encoderComputeUnits":report.encoder_compute_units}));
                 Ok(report.text)
             },
             &|p| {
