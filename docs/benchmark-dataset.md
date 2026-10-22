@@ -2,9 +2,10 @@
 
 Vesper publishes the transcripts its benchmark runs produce as a text-only dataset:
 [`rahulsharmavishwakarma/vesper-data-asr-outputs`](https://huggingface.co/datasets/rahulsharmavishwakarma/vesper-data-asr-outputs)
-([#324](https://github.com/rahulsharmavishwakarma/vesper/issues/324)). The first export, on 23 October 2026, holds
-10,602 transcriptions from 415 local `vesper-eval` reports (September–October 2026). It covers 11 speech models across
-English, Indian English, Hindi, German and French, and 4,996 rows also carry the writing model's cleaned text. The
+([#324](https://github.com/rahulsharmavishwakarma/vesper/issues/324)). The current export, from 23 October 2026, holds
+16,602 transcriptions from 475 local `vesper-eval` reports (September–October 2026, including the 22 October
+per-language recommendation matrix). It covers 15 speech models across English, Indian English, Hindi, German, French
+and Spanish, and 4,996 rows also carry the writing model's cleaned text. The
 first upload is private, so the owner can review it before publishing.
 
 ## What is published
@@ -57,5 +58,5 @@ purpose-built, balanced dataset generated from public corpora with pinned models
 ## Limitations
 
 - **Historical, not balanced.** The rows mix experiments, application revisions, quantizations and configurations,
-  including repeats, and about three quarters are English FLEURS read speech.
+  including repeats, and about two thirds are English FLEURS read speech.
 - **Timings.** They come from Apple silicon Macs and are comparable only within one report.
