@@ -73,6 +73,7 @@ make audit-python-audio-frontend
 make audit-python-vibevoice
 make audit-python-onnx-quantize
 make audit-python-mlx-convert
+make audit-python-nemo-convert
 ```
 
 Use `uv add --dev PACKAGE` / `uv remove --dev PACKAGE` for contributor tools.
@@ -92,6 +93,9 @@ so Google Colab's current runtime can install its hash-checked export, and its n
 (`sherpa-onnx`, `sherpa-onnx-core`, `soundfile`) and `hqq` group (CPU PyTorch from the `pytorch-cpu` index on Linux, which ONNX
 Runtime's HQQ quantizer imports) serve the [quantization research notebooks](../notebooks/asr-quantization/README.md).
 CI's dependency audit covers only the default group.
+`benchmarks/asr/python/nemo-convert` mirrors the converter requirements of the pinned NeMo-Speech.cpp runtime
+(PyTorch 2.6 CPU, torchaudio, librosa, NumPy 1.26) for producing GGUF files that one file serves on CPU, Metal, CUDA
+and Vulkan; see the [Parakeet GGUF record](validation/parakeet-gguf-cross-backend-2026-10-22.md).
 `benchmarks/asr/python/mlx-convert` pins mlx-audio for MLX artifact conversion;
 see [Parakeet Redux](offline-asr.md#parakeet-redux-apple-gpu). Their incompatible NumPy/model dependencies
 are isolated from contributor checks. See [benchmark Python setup](../benchmarks/asr/README.md#python-environments).
