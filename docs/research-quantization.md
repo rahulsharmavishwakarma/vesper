@@ -329,7 +329,12 @@ Excluded:
 - **Pruning without fine-tuning.**
 - **OD-MBP outlier decomposition** (WhisperKit, [arXiv 2507.10860](https://arxiv.org/abs/2507.10860)): not available in open tooling.
 
-#304 is measuring Neural Engine placement and WER for two exact-format encodings on smaller encoders. The block-wise one may hit the CPU fallback above.
+#304 confirmed the block-wise result on a real model (Local).
+
+- Parakeet Redux's ternary weights stored as int4 per 128-block compiled to about 327 MB.
+- Its `.cpuAndNeuralEngine` load then ran the Neural Engine compiler at full CPU for more than 28 minutes without finishing. The float16 model loads in about 7 s.
+
+#304 is now measuring exact per-row lookup tables (3-bit for Phonon-2, 6-bit for Redux).
 
 The Core ML encoder and the GGUF cannot share weight files. Each runtime needs its own container, and the closest shared numeric format (block-wise int4) is the one that leaves the Neural Engine.
 
