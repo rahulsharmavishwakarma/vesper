@@ -378,6 +378,33 @@ impl Default for AppConfig {
 }
 
 impl AppConfig {
+    /// Whether moving from these settings to `next` changes files that a
+    /// running download is writing (issue #313). `downloading` is the model id
+    /// of that download; an unknown target keeps every model choice locked.
+    /// The processing device and audio frontend decide which artifacts are
+    /// fetched, so they stay locked during any download.
+    pub fn conflicts_with_download(&self, next: &AppConfig, downloading: Option<&str>) -> bool {
+        let shared = self.compute_backend != next.compute_backend
+            || self.audio_frontend != next.audio_frontend;
+        let speech_changed =
+            self.models.asr != next.models.asr || self.models.custom_asr != next.models.custom_asr;
+        let writer_changed = self.models.rewriter != next.models.rewriter
+            || self.models.custom_rewriter != next.models.custom_rewriter
+            || self.rewrite_quantization != next.rewrite_quantization;
+        let profile = |profile: &Option<HuggingFaceProfile>, id: &str| {
+            profile.as_ref().is_some_and(|profile| profile.id == id)
+        };
+        let Some(id) = downloading else {
+            return shared || speech_changed || writer_changed;
+        };
+        let speech = self.models.asr.id() == id || profile(&self.models.custom_asr, id);
+        let writer = self.models.rewriter.id() == id || profile(&self.models.custom_rewriter, id);
+        if !speech && !writer {
+            return shared || speech_changed || writer_changed;
+        }
+        shared || (speech && speech_changed) || (writer && writer_changed)
+    }
+
     /// Preserve an older user's binding for its chosen action and choose an
     /// unused default for the other action. Explicit duplicates remain invalid.
     pub fn recording_shortcuts(&self) -> [&str; 2] {
@@ -597,6 +624,38 @@ impl AppConfig {
 
 #[cfg(test)]
 mod tests {
+    #[test]
+    fn a_download_locks_only_the_files_it_is_writing() {
+        use super::*;
+        let saved = AppConfig::default();
+        let speech = saved.models.asr.id();
+        let writer = saved.models.rewriter.id();
+
+        let mut other_writer = saved.clone();
+        other_writer.rewrite_quantization = RewriteQuantization::Q8_0;
+        let mut other_speech = saved.clone();
+        other_speech.models.asr = AsrModel::ParakeetTdt06bV3;
+        let mut other_device = saved.clone();
+        other_device.compute_backend = ComputeBackend::Cpu;
+
+        // While the speech model downloads, the writer may change; the speech
+        // model and the device may not.
+        assert!(!saved.conflicts_with_download(&other_writer, Some(speech)));
+        assert!(saved.conflicts_with_download(&other_speech, Some(speech)));
+        assert!(saved.conflicts_with_download(&other_device, Some(speech)));
+        // And the reverse while the writer downloads.
+        assert!(!saved.conflicts_with_download(&other_speech, Some(writer)));
+        assert!(saved.conflicts_with_download(&other_writer, Some(writer)));
+        // An unknown or unrelated target keeps every model choice locked.
+        assert!(saved.conflicts_with_download(&other_writer, None));
+        assert!(saved.conflicts_with_download(&other_writer, Some("silero-v6.2")));
+        // Changes that touch no model files never conflict.
+        let mut language = saved.clone();
+        language.cleanup_enabled = !saved.cleanup_enabled;
+        assert!(!saved.conflicts_with_download(&language, Some(speech)));
+        assert!(!saved.conflicts_with_download(&language, None));
+    }
+
     #[test]
     fn retired_speaker_preference_is_ignored_and_not_saved_again() {
         use super::*;
