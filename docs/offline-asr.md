@@ -217,6 +217,10 @@ GPU files. **Unified GGUF** downloads one file, NVIDIA's
 through the bundled NeMo-Speech.cpp 0.1.0 runtime on CPU, Metal, CUDA or Vulkan
 for every declared Parakeet language ([ADR-0024](adrs/0024-unified-gguf-speech-engine.md)).
 
+On Apple silicon the download is the GGUF plus the Metal NeMo-Speech.cpp package,
+which also contains the CPU backend, so CPU, Metal and an automatic CPU retry all
+work without downloading anything else.
+
 The unified engine processes completed audio in parts of at most 30 seconds with
 automatic language detection; live dictation shows buffered drafts and the
 completed-audio pass stays authoritative. It does not use personal vocabulary

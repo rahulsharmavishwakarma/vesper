@@ -88,6 +88,13 @@ sensitive to a concurrent writer; on CPU it barely affects the writer. Vesper's 
 time, so this matters only when work overlaps (live previews during polishing, other GPU applications, or a future
 pipelined writer), not for back-to-back requests.
 
+### One download for CPU and GPU
+
+On Apple silicon the installer now selects the Metal NeMo-Speech.cpp package for every device, since it also contains
+the CPU backend. Re-running the en-US 100 set on CPU from a model folder holding only the Metal package gave the same
+4.86% WER, with `initializedProvider` reporting CPU and a 287 ms median per clip. Nemotron shares this package
+selection; its CPU path through the Metal package was not re-qualified here.
+
 ## Limitations and remaining gates
 
 - English and German only. The other 23 declared languages, spontaneous speech and long recordings remain to be

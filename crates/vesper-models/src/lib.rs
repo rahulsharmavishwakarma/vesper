@@ -271,6 +271,16 @@ pub fn uses_nemo_runtime(config: &AppConfig) -> bool {
         && (config.models.asr == AsrModel::Nemotron35AsrStreaming06b || config.uses_nemo_gguf())
 }
 
+/// NeMo runtime package to install. On Apple silicon the Metal package also
+/// contains the CPU backend, so one download serves both devices and switching
+/// between them, or an automatic CPU retry, needs no further files.
+pub fn nemo_package_backend(config: &AppConfig) -> Result<&'static str> {
+    if target_platform() == Some("macos-aarch64") {
+        return Ok("metal");
+    }
+    resolved_nemo_backend(config)
+}
+
 pub fn selected(config: &AppConfig) -> Result<Vec<Artifact>> {
     selected_exact(&preferred_speech_config(config)?)
 }
@@ -289,7 +299,7 @@ fn selected_exact(config: &AppConfig) -> Result<Vec<Artifact>> {
     let backend = if config.uses_mlx_speech() {
         Some("metal")
     } else if nemo {
-        Some(resolved_nemo_backend(config)?)
+        Some(nemo_package_backend(config)?)
     } else {
         None
     };
@@ -1444,8 +1454,12 @@ mod tests {
             assert_eq!(runtime.len(), 1, "{backend:?}");
             assert_eq!(
                 runtime[0].backend.as_deref(),
-                Some(resolved_nemo_backend(&config).unwrap())
+                Some(nemo_package_backend(&config).unwrap())
             );
+            if target_platform() == Some("macos-aarch64") {
+                // One Metal package covers CPU and GPU on Apple silicon.
+                assert_eq!(runtime[0].backend.as_deref(), Some("metal"));
+            }
         }
         // The standard engine never downloads the GGUF, and other models ignore the setting.
         config.models.asr_engine = vesper_core::AsrEngine::Standard;
