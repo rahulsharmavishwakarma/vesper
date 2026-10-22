@@ -270,8 +270,8 @@ model:
 | Writer generation slowdown | 8% | 61% |
 | Encoder energy per window | about a fifth of MLX's | — |
 
-See the [qualification record](validation/parakeet-neural-engine-2026-10-22.md). Other languages and other Mac models
-are not yet measured, so **Current** stays the default.
+See the [qualification record](validation/parakeet-neural-engine-2026-10-22.md). It was measured on one
+M5 Pro; other languages are not yet measured, so **Current** stays the default.
 
 ## Parakeet MLX precision
 

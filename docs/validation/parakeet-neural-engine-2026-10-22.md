@@ -112,7 +112,8 @@ a plain word normalizer:
 
 ## Limitations
 
-- **One machine.** M1–M4 Macs and lower-memory Macs are not measured.
+- **One machine.** M1–M4 Macs and lower-memory Macs are not measured. The owner decided on 22 October 2026 that
+  per-model Mac measurements are not required to ship this engine.
 - **English only.** Parakeet's other 24 languages need their own lanes before the engine offers them.
 - **15 s parts.** Longer recordings get twice as many cuts as on the MLX path.
   - Follow-up: one compiled model with enumerated 15 s and 30 s shapes would share weights and avoid the extra cuts.
