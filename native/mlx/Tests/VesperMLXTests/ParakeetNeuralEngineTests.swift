@@ -68,7 +68,9 @@ final class ParakeetNeuralEngineTests: XCTestCase {
   /// Optional comparison with the all-MLX path. Set VESPER_ANE_PARITY to a JSON
   /// file with `model` (converted Neural Engine directory), `parakeet` (MLX
   /// directory), `audio` (raw f32 16 kHz PCM paths, up to 21 s) and `output`
-  /// (results JSON path, for scoring outside the test).
+  /// (results JSON path, for scoring outside the test). Optional `baseline`
+  /// (`parakeet`, `phonon2` or `parakeet_redux`) selects the MLX model; for
+  /// Phonon-2 both sides get its digit-spacing repair.
   func testNeuralEngineModelAgainstMLXWhenFixtureIsProvided() throws {
     guard let path = ProcessInfo.processInfo.environment["VESPER_ANE_PARITY"] else {
       throw XCTSkip("VESPER_ANE_PARITY is not set")
@@ -84,8 +86,19 @@ final class ParakeetNeuralEngineTests: XCTestCase {
     let neuralEngine = try ParakeetNeuralEngineModel(
       directory: URL(fileURLWithPath: try XCTUnwrap(fixture["model"] as? String), isDirectory: true))
     let loadMs = elapsed(start)
-    let parakeet = try ParakeetModel.fromDirectory(
-      URL(fileURLWithPath: try XCTUnwrap(fixture["parakeet"] as? String), isDirectory: true))
+    let baselineDirectory = URL(
+      fileURLWithPath: try XCTUnwrap(fixture["parakeet"] as? String), isDirectory: true)
+    let baseline = fixture["baseline"] as? String ?? "parakeet"
+    let parakeet: any STTGenerationModel
+    if baseline == "phonon2" {
+      parakeet = Phonon2Model(try Phonon2.fromDirectory(baselineDirectory))
+    } else if baseline == "parakeet_redux" {
+      parakeet = try ParakeetRedux.fromDirectory(baselineDirectory)
+    } else {
+      parakeet = try ParakeetModel.fromDirectory(baselineDirectory)
+    }
+    let phonon2 = baseline == "phonon2"
+    let repair = { (text: String) -> String in phonon2 ? Phonon2.repairDigitSpacing(text) : text }
     let parameters = parakeet.defaultGenerationParameters
     var rows: [[String: Any]] = []
     for (index, file) in try XCTUnwrap(fixture["audio"] as? [String]).enumerated() {
@@ -98,7 +111,7 @@ final class ParakeetNeuralEngineTests: XCTestCase {
       for part in parts(samples) {
         let output = try neuralEngine.transcribe(MLXArray(part))
         XCTAssertEqual(output.vesperCompletionReason, "audio_consumed")
-        texts.append(output.text)
+        texts.append(repair(output.text))
       }
       let neuralEngineMs = elapsed(start)
       start = ContinuousClock.now

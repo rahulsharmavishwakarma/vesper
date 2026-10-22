@@ -299,7 +299,12 @@ model:
 | Encoder energy per window | about a fifth of MLX's | — |
 
 See the [qualification record](validation/parakeet-neural-engine-2026-10-22.md). It was measured on one
-M5 Pro; other languages are not yet measured, so **Current** stays the default.
+M5 Pro. Other languages are not yet measured on this path, so Automatic sends them to the unified GGUF.
+
+Phonon-2 and Parakeet Redux were also converted for the Neural Engine. They match their MLX accuracy, but keeping
+their small downloads needs per-row lookup tables: those run 3.5× slower, take about 90 s to prepare and require
+macOS 15. Both stay on the Apple GPU
+([spike record](validation/packed-parakeet-neural-engine-2026-10-22.md)).
 
 ## Parakeet MLX precision
 

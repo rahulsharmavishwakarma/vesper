@@ -25,16 +25,16 @@ Every method below falls into one of three categories from the project's researc
 
 ## What the pinned runtimes can load
 
-| Runtime (pin)                           | Formats                                                                          | Status                                                                                                                                 |
-| --------------------------------------- | -------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------- |
-| llama.cpp `d8123504` (writer, LFM mtmd) | F32/F16/BF16, Q8_0, Q4_0, Q4_1, Q5_0, Q5_1; k-quants Q2_K to Q6_K; IQ1 to IQ4_XS | Runtime. Sub-3-bit IQ types need an importance matrix.                                                                                 |
-| same                                    | TQ1_0, TQ2_0 ternary                                                             | Types and converter output exist (Runtime). Meant for ternary-trained models; poor for ordinary models (Unverified).                   |
-| same                                    | MXFP4, NVFP4, Q1_0, Q2_0                                                         | Present in headers at this revision (Runtime). Per-backend kernel coverage not verified.                                               |
-| same                                    | Online repacking of Q4_0, Q8_0, Q4_K and others on CPU                           | Runtime. Automatic at load; not a file format.                                                                                         |
-| sherpa-onnx 1.13.8                      | FP32 and dynamic INT8 ONNX (CPU)                                                 | Runtime.                                                                                                                               |
-| sherpa-onnx 1.13.8                      | MatMulNBits int4                                                                 | The repository's weight-only int4 Parakeet v3 build loads (Local, [offline ASR](offline-asr.md)); behavior of other graphs unverified. |
-| NeMo-Speech.cpp 0.1.0                   | F32, F16, Q8_0; Q4_K_M only for a voice-chat bundle                              | Runtime. Other ASR quant types undocumented.                                                                                           |
-| MLX (mlx-swift 0.31.4, mlx-audio-swift) | 4/8-bit affine groups, FP16/BF16                                                 | Only the exports pinned in `models/mlx-artifacts.json`; arbitrary exports need an adapter.                                             |
+| Runtime (pin)                           | Formats                                                                                                                    | Status                                                                                                                                              |
+| --------------------------------------- | -------------------------------------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------- |
+| llama.cpp `d8123504` (writer, LFM mtmd) | F32/F16/BF16, Q8_0, Q4_0, Q4_1, Q5_0, Q5_1; k-quants Q2_K to Q6_K; IQ1 to IQ4_XS                                           | Runtime. Sub-3-bit IQ types need an importance matrix.                                                                                              |
+| same                                    | TQ1_0, TQ2_0 ternary                                                                                                       | Types and converter output exist (Runtime). Meant for ternary-trained models; poor for ordinary models (Unverified).                                |
+| same                                    | MXFP4, NVFP4, Q1_0, Q2_0                                                                                                   | Runtime. MXFP4 has kernels on CPU, Metal, CUDA and Vulkan; NVFP4 has no Metal kernel ([backend coverage](#which-formats-run-on-every-backend)).     |
+| same                                    | Online repacking of Q4_0, Q8_0, Q4_K and others on CPU                                                                     | Runtime. Automatic at load; not a file format.                                                                                                      |
+| sherpa-onnx 1.13.8                      | FP32 and dynamic INT8 ONNX (CPU)                                                                                           | Runtime.                                                                                                                                            |
+| sherpa-onnx 1.13.8                      | MatMulNBits int4                                                                                                           | The repository's weight-only int4 Parakeet v3 build loads (Local, [offline ASR](offline-asr.md)); behavior of other graphs unverified.              |
+| NeMo-Speech.cpp 0.1.0                   | Converter: one type per file (q8_0, bf16, fp16, q6_k, q5_k, q4_k, nvfp4, mxfp4); loader: any stored type for linear layers | Runtime (`4f967622`). Depthwise and subsampling convs stay F16 and `pe` F32; see [the lowest-memory recipe](#lowest-memory-recipe-22-october-2026). |
+| MLX (mlx-swift 0.31.4, mlx-audio-swift) | 4/8-bit affine groups, FP16/BF16                                                                                           | Only the exports pinned in `models/mlx-artifacts.json`; arbitrary exports need an adapter.                                                          |
 
 The docs cite two llama.cpp revisions (`d8123504` current, `e79e4bf6` in older passages). Use `d8123504` and confirm against the `llama-cpp-sys-2` submodule when exactness matters.
 
@@ -157,6 +157,194 @@ limits stated in each record.
   Cohere Transcribe's int8 export, and NVIDIA's Q8_0 GGUF through NeMo-Speech.cpp (one file for CPU and GPU, with
   K-quants losing accuracy) are recorded under #287. Offering that GGUF in the app is #293.
 - **Calibrated or learned rounding** (GPTQ, GSQ, DWQ) and quantization-aware training remain untested here.
+
+## Lowest-memory recipe (22 October 2026)
+
+Research for [#316](https://github.com/rahulsharmavishwakarma/vesper/issues/316). It covers the files that Automatic actually loads ([ADR-0026](adrs/0026-automatic-speech-engine.md)):
+
+- the Parakeet v3 and Nemotron GGUFs through NeMo-Speech.cpp `4f967622` (ggml `c03b4e2b`);
+- the writing model through llama.cpp `d8123504`;
+- the Core ML Parakeet encoder on the Neural Engine ([ADR-0025](adrs/0025-neural-engine-speech-engine.md)).
+
+Pinned source and the shipped files were read directly. **Nothing here is implemented.** A new converter or a smaller shipped file still needs its own proposal, approval and model qualification.
+
+### Where the bytes are
+
+| File                                             |              Size | Largest parts                                                                                                                                                        |
+| ------------------------------------------------ | ----------------: | -------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Parakeet v3 `q8_0.gguf` (`541d1f99`)             |            714 MB | Encoder linears at Q8_0: FFN 428 MB, attention 134 MB, pointwise convs 80 MB. F32 `encoder.pos_enc.pe` table: 41 MB. Decoder, joint, LSTM and embedding: about 24 MB |
+| Writing model `Qwen3.5-0.8B-Q4_0.gguf`           |            563 MB | `token_embd` at **Q8_0, 270 MB**, tied as the output head. The other blocks at Q4_0 total about 280 MB                                                               |
+| Neural Engine encoder (int8 linear, per channel) | 594 MB of weights | All encoder weights; float16 is 1,186 MB                                                                                                                             |
+
+All three rows are Local: gguf-py inspection of the published Parakeet file and the installed writer file, and the [Neural Engine record](validation/parakeet-neural-engine-2026-10-22.md). Nemotron has the same encoder, a larger joint output and 17.8 MB of F32 `prompt_kernel` tensors.
+
+### Which formats run on every backend
+
+Runtime evidence, from `supports_op` and the kernel tables at both pins:
+
+| Format       | Bits per weight | CPU / Metal / CUDA / Vulkan | Notes                                                   |
+| ------------ | --------------: | --------------------------- | ------------------------------------------------------- |
+| Q8_0         |             8.5 | ✓ ✓ ✓ ✓                     | Current speech format                                   |
+| Q6_K         |            6.56 | ✓ ✓ ✓ ✓                     | Rows must be a multiple of 256 wide                     |
+| Q5_0         |             5.5 | ✓ ✓ ✓ ✓                     | 32-wide blocks                                          |
+| Q5_K         |             5.5 | ✓ ✓ ✓ ✓                     | Rows must be a multiple of 256 wide                     |
+| Q4_0, IQ4_NL |             4.5 | ✓ ✓ ✓ ✓                     | 32-wide blocks; have Metal small-batch kernels          |
+| Q4_K         |             4.5 | ✓ ✓ ✓ ✓                     | Rows must be a multiple of 256 wide; generic Metal path |
+| MXFP4        |            4.25 | ✓ ✓ ✓ ✓                     | 32-wide blocks                                          |
+| IQ4_XS       |            4.25 | ✓ ✓ ✓ ✓                     | Rows must be a multiple of 256 wide                     |
+| NVFP4        |             4.5 | ✓ ✗ ✓ ✓                     | No Metal kernel; excluded                               |
+| TQ1_0, TQ2_0 |         1.7–2.1 | ✓ ✗ ✗ ✗ at ggml `c03b4e2b`  | Metal aborts at run time; excluded                      |
+
+Formats below about 4 bits per weight also have kernels everywhere, but the ASR evidence below argues against them.
+
+Parakeet's LSTM, `joint.pred` and `joint_net` tensors are 640 wide, so only the 32-wide-block formats fit them. When NeMo's converter makes a K-quant file, it stores those tensors as F16, so the local plain Q6_K/Q5_K/Q4_K losses (#287) came from the encoder.
+
+Runtime constraints at `4f967622`:
+
+- Depthwise and subsampling conv kernels must be F16, and `pe` must be F32.
+- Within a layer, q, k and v must share one type, because the fused loader rejects mixed types.
+- Linear and pointwise layers accept any stored type, so a mixed-precision file loads without runtime changes.
+
+### Memory behaviour
+
+Runtime evidence:
+
+- **NeMo-Speech.cpp** reads each tensor into backend buffers with `fread` rather than mapping the file, and it doesn't use CPU repacking. A smaller file therefore lowers resident memory by about the same amount.
+- **Activations:** for dictation-length audio the weights dominate. Attention memory grows with the square of the frame count, so long recordings are bounded by length, not by weight precision.
+- **llama.cpp** maps the GGUF into memory. On Metal it wraps the mapped pages without copying them.
+- **CPU repacking** of Q4_0, Q8_0 and K-quants writes a second, repacked copy into anonymous memory, so a CPU-only writer run holds more than the file size.
+
+### Recommendation
+
+**Speech GGUF (Parakeet, Nemotron): our own mixed-precision file in standard formats.**
+
+1. Write a converter wrapper in the locked `benchmarks/asr/python/nemo-convert` project.
+   - It overrides the converter's per-tensor type choice (`conversion.asr._pick_dtype`) with a regex-to-type table and quantizes from the original `.nemo` checkpoint, never from Q8_0.
+   - The output is an ordinary GGUF that the pinned runtime already loads on every backend. This is a frozen-weight conversion; no runtime change is needed.
+2. Add a speech importance matrix.
+   - Collect the mean squared input per column for each linear layer with PyTorch hooks over public multilingual audio, using valid frames only.
+   - Pass it to `ggml_quantize_chunk`, which already accepts one. The converter currently passes `None`.
+   - This affects only tensors below Q8_0. Whether it recovers the plain K-quant loss is Unverified.
+3. Sweep these candidate mixes (sizes computed from the tensor list; Unverified accuracy):
+
+   | Mix  | Recipe                                                                                                            |   File |
+   | ---- | ----------------------------------------------------------------------------------------------------------------- | -----: |
+   | Q8_0 | Published                                                                                                         | 714 MB |
+   | A    | Layers 0, 1, 22, 23 at Q8_0; elsewhere attention and FFN linear2 at Q6_K, FFN linear1 and pointwise convs at Q5_K | 561 MB |
+   | B    | Attention at Q8_0 in every layer; layers 0 and 23 fully Q8_0; FFN and pointwise at 4.5 bits                       | 495 MB |
+   | C    | Same size as B, but protects FFN-down instead of attention (llama.cpp's Q4_K_M rule)                              | 495 MB |
+   | D    | Layers 0 and 23 at Q8_0; the rest of the encoder at 4.5 bits                                                      | 437 MB |
+
+   In every mix, the decoder, joint and LSTM stay at Q8_0, depthwise and subsampling convs at F16, and norms, biases and `pe` at F32.
+
+   For mixes B–D, compare Q4_K against Q4_0/IQ4_NL at the same 4.5 bits per weight. The 32-wide formats have specialised Metal small-batch kernels.
+
+   Mix B follows the closest published result, Paper [arXiv 2604.14493](https://arxiv.org/abs/2604.14493): Nemotron int4 with attention and the first and last layers kept at int8 lost 0.09 average WER points (0.73 GB). It differs here in format and checkpoint.
+
+   Other evidence:
+   - Plain 4-bit post-training quantization of a Conformer lost 0.1–0.4 points (Paper, [GenPTQ](https://aclanthology.org/2025.findings-emnlp.566/)).
+   - Quantization-aware-training studies point the same way: attention and upper layers are the sensitive parts (Paper, [arXiv 2203.15952](https://arxiv.org/abs/2203.15952)).
+
+4. Expect smaller memory, not more speed. The encoder's large matrix multiplies are compute-bound, and the local K-quants were not faster.
+
+Generating `pe` at load would save another 41 MB, but it patches vendored runtime code and needs separate approval.
+
+**Writing model (llama.cpp): fix the embedding first, then calibrate.**
+
+1. Re-quantize the tied embedding from Q8_0 to Q6_K with `--token-embedding-type`. That saves about 62 MB, or about 127 MB at Q4_0. Its quality is untested.
+2. Use an importance-matrix Q4_0 at the same size. It's the standard format, built with `llama-imatrix` and `llama-quantize --imatrix`.
+3. Run a per-tensor sweep under a size budget with `--tensor-type-file`, scored by KL divergence against BF16 and by the polishing benchmark. The Q4_0 vs Q8_0 question from #308 belongs in this sweep.
+
+**Neural Engine (Core ML encoder):** measured results and the remaining candidates are in [Neural Engine options](#neural-engine-options).
+
+**Not recommended now:**
+
+| Method                        | Reason                                                                                                               |
+| ----------------------------- | -------------------------------------------------------------------------------------------------------------------- |
+| GSQ                           | No public GGUF reader or writer                                                                                      |
+| Unsloth Dynamic 2.0           | Selection procedure and calibration data unpublished                                                                 |
+| Rotations (QuaRot, SpinQuant) | Need online Hadamard ops or untying the embedding; SpinQuant is non-commercial                                       |
+| IST-DASLab gptq-gguf-toolkit  | No license                                                                                                           |
+| AutoRound                     | Possible for the writer on CUDA; no NeMo path                                                                        |
+| NVFP4, TQ formats             | Backend gaps above                                                                                                   |
+| Below about 4 bits for speech | Per-channel 4-bit post-training quantization already fails badly on Conformers (Paper, arXiv 2203.15952, 2312.08553) |
+
+### Proposed qualification plan
+
+1. **Sensitivity scan.** Quantize one tensor group at a time against an F16 reference. Score with encoder-output cosine, per-frame KL divergence of the token and duration heads, and the identical-transcript rate.
+2. **WER lanes:**
+   - held-out FLEURS for the priority languages, at least 20,000 words per lane;
+   - the quiet and noisy regression lanes;
+   - 60–300 s long-form audio.
+3. **Statistics:** paired bootstrap against Q8_0, with equivalence pre-registered at +0.2 points pooled and +0.5 per language.
+4. **Memory and speed:** peak resident memory and physical footprint, load time, and CPU and Metal speed on the same build. Add CUDA and Vulkan when hardware is available.
+5. **Calibration audio:** public only (FLEURS train/dev, Common Voice, VoxPopuli, MLS), balanced per language, never the reported test split. Record hashes and licenses with the artifact.
+6. **Decision rule:** keep the smallest mix that passes every lane. Changing the shipped file or a default still follows [model qualification](../benchmarks/asr/README.md).
+
+### Neural Engine options
+
+Measured on the Parakeet v3 encoder by #143 (Local, [Neural Engine record](validation/parakeet-neural-engine-2026-10-22.md)). Setup:
+
+- macOS 14 target, coremltools 9.0, Apple M5 Pro.
+- 94 held-out clips, scored with the Swift parity harness and paired against float16.
+- Every variant kept 99.92% of estimated cost on the Neural Engine at about 23–25 ms per 15 s window.
+
+| Variant                                |  Weights |   WER | Δ vs float16 [95% CI]           |
+| -------------------------------------- | -------: | ----: | ------------------------------- |
+| float16                                | 1,186 MB | 5.34% | —                               |
+| 8-bit palettized, per tensor           |   593 MB | 5.44% | +0.10 [0.00, +0.26]             |
+| **int8 linear, per channel (shipped)** |   594 MB | 5.24% | −0.10 [−0.25, 0.00]             |
+| 6-bit palettized, per tensor           |   445 MB | 5.59% | +0.25 [−0.31, +0.91] (rejected) |
+
+**Placement of the other coremltools 9.0 modes.** Local, M5 Pro, macOS 27.0.1, `.cpuAndNeuralEngine` (the app's setting). Checked with `MLComputePlan` on a synthetic stack of FastConformer-sized linears, so it shows placement only, not WER:
+
+| Stays on the Neural Engine                                                                                                                                         | Falls back to CPU (4–14× slower)                                                                          |
+| ------------------------------------------------------------------------------------------------------------------------------------------------------------------ | --------------------------------------------------------------------------------------------------------- |
+| int8 and int4 per channel; 6-bit and 4-bit per-grouped-channel palettization (group 16); 4-bit palettization with an int8 lookup table; 4-bit vector palettization | **Block-wise int4** (block 32 and 128); palettization with per-channel scales; 8-bit vector palettization |
+
+What this means:
+
+- Block-wise int4 is the Core ML mode closest to GGUF Q4_0, and it is the one to avoid on the Neural Engine. Apple describes it as GPU-oriented, and one third-party report also saw it fall back (Unverified, [ANE book](https://alvaro-videla.com/ane-book/03-quantization.html)).
+- Under `.all`, Core ML put the whole encoder on the GPU, so the app must keep `.cpuAndNeuralEngine`.
+- While each encoder ran, system wired memory rose by roughly its compressed size: int8 about 610–690 MB, 6-bit about 475 MB, int4 per channel about 335 MB (Local, noisy system counter). This is consistent with Apple's statement that the Neural Engine decompresses weights just in time from macOS 14 (Runtime, [WWDC23 10047](https://developer.apple.com/videos/play/wwdc2023/10047/)).
+
+**Other ports ship smaller encoders** (Unverified for this app):
+
+- FluidInference and Argmax both ship 6-bit per-tensor palettized Parakeet v3 encoders (445 and 458 MB).
+- FluidInference also publishes an int4 per-channel encoder (298 MB) with no published WER.
+
+The per-tensor 6-bit result above failed this project's gate, so their choice doesn't transfer.
+
+**Recommended next steps, in order:**
+
+1. **6-bit per-grouped-channel palettization, group 16 (about 450 MB).** It stays on the Neural Engine and needs a macOS 15 target. If data-free k-means misses the gate, use calibrated sensitive k-means (`SKMPalettizer`).
+2. **Mixed-bit palettization (about 350–420 MB).** Assign 4, 6 or 8 bits per layer from an encoder-output sensitivity analysis on public calibration audio, using only modes from the "stays" column. Apple's mixed-bit pre-analysis in [ml-stable-diffusion](https://github.com/apple/ml-stable-diffusion) (MIT) is a usable starting point.
+3. **int4 per channel or 4-bit grouped palettization (about 300 MB).** Only with GPTQ or sensitive-k-means calibration: a data-free 4-bit build of another model lost badly (Paper/card, FluidAudio's SenseVoice result).
+
+Each step must pass the held-out WER gate before shipping. It must also be timed on more than one chip, not only placement-checked with `MLComputePlan`, because a mode can stay on the Neural Engine and still run much slower (see the per-row result below).
+
+Excluded:
+
+- **W8A8 activation quantization:** no download or memory saving over int8 weights. Apple's faster int8 compute applies only from A17 Pro/M4.
+- **Pruning without fine-tuning.**
+- **OD-MBP outlier decomposition** (WhisperKit, [arXiv 2507.10860](https://arxiv.org/abs/2507.10860)): not available in open tooling.
+
+#304 confirmed the block-wise result on a real model (Local).
+
+- Parakeet Redux's ternary weights stored as int4 per 128-block compiled to about 327 MB.
+- Its `.cpuAndNeuralEngine` load then ran the Neural Engine compiler at full CPU for more than 28 minutes without finishing. The float16 model loads in about 7 s.
+
+#304 also measured exact per-row lookup tables (Local, [packed-encoder record](validation/packed-parakeet-neural-engine-2026-10-22.md), PR #319). Setup: macOS 15 target, `.cpuAndNeuralEngine`, M5 Pro, each model timed alone.
+
+| Encoder               | Encoding                             |     Size | On Neural Engine | Median per 15 s window | First load |
+| --------------------- | ------------------------------------ | -------: | ---------------: | ---------------------: | ---------: |
+| Phonon-2              | Per-row (group 1) 3-bit lookup table |   252 MB |           99.92% |                72.5 ms |       90 s |
+| Redux                 | Per-row 6-bit lookup table           |   585 MB |           99.92% |                72.6 ms |       88 s |
+| Either, dense float16 | —                                    | 1,186 MB |           99.92% |           20.3–21.6 ms |    10–12 s |
+
+The outputs matched dense float16 bit for bit. But the per-row tables ran about 3.5× slower and took about 8× longer to prepare on first load, even though the compute plan placed them on the Neural Engine. Group-16 palettization (step 1) may avoid this; it has to be timed.
+
+The Core ML encoder and the GGUF cannot share weight files. Each runtime needs its own container, and the closest shared numeric format (block-wise int4) is the one that leaves the Neural Engine.
 
 ## Open questions and candidate experiments (proposed)
 
