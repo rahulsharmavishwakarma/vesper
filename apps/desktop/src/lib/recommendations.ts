@@ -23,11 +23,15 @@ export interface Published {
 }
 export interface LocalResult {
   run: string;
-  /** Error rate on the items it finished, in percent. */
-  wer: number;
+  /** Word error rate over the recordings it finished, in percent. */
+  wer: number | null;
+  /** Character error rate over the same recordings, in percent. */
+  cer?: number | null;
   /** Time to write one recording, in milliseconds. */
   ms: number | null;
   peakMemoryGb: number | null;
+  /** The adapter that ran, e.g. the Neural Engine path for English Parakeet. */
+  engine?: string | null;
   executions: number;
   failures: number;
   passed: boolean;
@@ -58,7 +62,13 @@ interface WriterEvidence {
 interface Evidence {
   writers: Record<string, WriterEvidence>;
   published: Record<string, Record<string, Published>>;
-  local: { runs: Record<string, LocalRun>; results: Record<string, Record<string, LocalResult>> };
+  local: {
+    runs: Record<string, LocalRun>;
+    /** Runs with the language set explicitly; these rank the models. */
+    results: Record<string, Record<string, LocalResult>>;
+    /** Runs with automatic language detection, kept apart (ADR-0010). */
+    automatic?: Record<string, Record<string, LocalResult>>;
+  };
 }
 const EVIDENCE = evidence as unknown as Evidence;
 
@@ -68,13 +78,16 @@ export interface Device {
   memoryBytes: number | null;
 }
 
+/** The four ADR-0010 states, with the pick split out of the passing models. */
 export type RecommendationState =
-  /** Most accurate published figure among the models that fit this Mac. */
+  /** Passed Vesper's test for the language and is the most accurate that did. */
   | 'recommended'
-  /** The model has a published figure for the language but is not the pick. */
-  | 'published'
-  /** Supports the language; nobody has published a figure for it. */
-  | 'unmeasured'
+  /** Passed Vesper's test for the language but is not the pick. */
+  | 'passed'
+  /** Supports the language; Vesper has not tested it there yet. */
+  | 'compatible'
+  /** Vesper's test missed an accuracy, speed or reliability gate. */
+  | 'failed'
   /** Cannot run here: language, Apple GPU or memory. */
   | 'unavailable';
 
@@ -130,13 +143,33 @@ function anyPeakMemory(id: string): number | null {
   return peaks.length ? Math.max(...peaks) : null;
 }
 
+/** Orders ids by an error rate, treating anything within half a point of the
+ * best as a tie that goes to the faster measured model. */
+function byAccuracyThenSpeed(
+  ids: string[],
+  error: (id: string) => number,
+  speed: (id: string) => number,
+  fallback: (a: string, b: string) => number = () => 0,
+): string[] {
+  const best = Math.min(...ids.map(error));
+  const tied = (id: string) => Number.isFinite(best) && error(id) - best <= 0.5;
+  return [...ids].sort((a, b) => {
+    const ta = tied(a);
+    const tb = tied(b);
+    if (ta !== tb) return ta ? -1 : 1;
+    if (ta && tb) return speed(a) - speed(b) || error(a) - error(b);
+    return error(a) - error(b) || fallback(a, b);
+  });
+}
+
 /** Every built-in speech model for a language on this Mac, best first.
  *
- * The owner decided on 2026-10-22 (#270) that setup ranks on published
- * accuracy until Vesper's own per-language matrix exists (#296). Figures are
- * compared only within one source: the shared leaderboard when it covers two
- * or more candidates for the language, otherwise the makers' own cards. Ties
- * within half a point go to the faster locally measured model. */
+ * Follows ADR-0010: models that passed Vesper's own per-language test (#296)
+ * come first, ranked by measured word error rate; then models not tested in
+ * this language yet, ordered by published figures compared within one source
+ * (the shared leaderboard when it covers two or more of them, otherwise the
+ * makers' cards); failed results come last and are never relabelled as
+ * untested. Ties within half a point go to the faster measured model. */
 export function rankSpeechModels(
   language: Language,
   device: Device | null,
@@ -144,44 +177,42 @@ export function rankSpeechModels(
 ): Candidate[] {
   const ids = offeredModelIds('speech_recognition');
   const usable = ids.filter((id) => !unavailableReason(id, language, device, backend));
-  const figures = usable.map((id) => publishedAccuracy(id, language)).filter(Boolean);
+  const local = (id: string) => localResult(id, language);
+  const speed = (id: string) => local(id)?.ms ?? Number.POSITIVE_INFINITY;
+  const measured = (id: string) => local(id)?.wer ?? Number.POSITIVE_INFINITY;
+  const passed = usable.filter((id) => local(id)?.passed);
+  const failed = usable.filter((id) => local(id) && !local(id)!.passed);
+  const untested = usable.filter((id) => !local(id));
+  const figures = untested.map((id) => publishedAccuracy(id, language)).filter(Boolean);
   const source: Published['source'] =
     figures.filter((figure) => figure?.source === 'leaderboard').length >= 2
       ? 'leaderboard'
       : 'maker';
-  const comparable = (id: string) => {
+  const published = (id: string) => {
     const figure = publishedAccuracy(id, language);
-    return figure && (source === 'maker' || figure.source === 'leaderboard') ? figure : null;
+    return figure && (source === 'maker' || figure.source === 'leaderboard')
+      ? figure.value
+      : Number.POSITIVE_INFINITY;
   };
-  const speed = (id: string) => localResult(id, language)?.ms ?? Number.POSITIVE_INFINITY;
-  const error = (id: string) => comparable(id)?.value ?? Number.POSITIVE_INFINITY;
-  // Figures within half a point of the best are treated as a tie and ordered
-  // by measured speed; everything else follows by error rate. Models with no
-  // comparable figure come last: the catalog default first, then catalog order.
-  const best = Math.min(...usable.map(error));
-  const tied = (id: string) => Number.isFinite(best) && error(id) - best <= 0.5;
   const isDefault = (id: string) => Number(catalogModel(id)?.status === 'default');
-  const ranked = [...usable].sort((a, b) => {
-    const ta = tied(a);
-    const tb = tied(b);
-    if (ta !== tb) return ta ? -1 : 1;
-    if (ta && tb) return speed(a) - speed(b) || error(a) - error(b);
-    const ea = error(a);
-    const eb = error(b);
-    if (ea !== eb) return ea - eb;
-    return isDefault(b) - isDefault(a);
-  });
-  const pick = ranked[0];
+  const ranked = [
+    ...byAccuracyThenSpeed(passed, measured, speed),
+    ...byAccuracyThenSpeed(untested, published, speed, (a, b) => isDefault(b) - isDefault(a)),
+    ...byAccuracyThenSpeed(failed, measured, speed),
+  ];
+  const pick = passed.length ? ranked[0] : null;
   const result: Candidate[] = ranked.map((id) => {
     const local = localResult(id, language);
     return {
       id,
       state:
-        id === pick && comparable(id)
+        id === pick
           ? 'recommended'
-          : publishedAccuracy(id, language)
-            ? 'published'
-            : 'unmeasured',
+          : passed.includes(id)
+            ? 'passed'
+            : failed.includes(id)
+              ? 'failed'
+              : 'compatible',
       reason: null,
       published: publishedAccuracy(id, language),
       local,
@@ -213,14 +244,25 @@ const percent = (value: number) => `${value.toFixed(1)}%`;
 const seconds = (ms: number) =>
   ms < 1000 ? `${(ms / 1000).toFixed(2)} s` : `${(ms / 1000).toFixed(1)} s`;
 
-/** The three ring gauges for a picker row. Accuracy is the published figure;
- * speed and memory are Vesper's own measurements, so they never borrow a
- * server GPU's throughput. */
+/** The three ring gauges for a picker row. Accuracy is Vesper's own result when
+ * it has one and the published figure otherwise; speed and memory are only
+ * Vesper's measurements, so they never borrow a server GPU's throughput. */
 export function candidateGauges(candidate: Candidate, language: Language, device: Device | null) {
   const name = languageLabel(language);
   const gauges: OptionGauge[] = [];
   const figure = candidate.published;
-  if (figure) {
+  const measured = candidate.local?.wer;
+  if (measured != null) {
+    const right = 100 - measured;
+    gauges.push({
+      kind: 'accuracy',
+      icon: 'target',
+      score: Math.max(6, (1 - measured / 20) * 100),
+      text: percent(right),
+      title: `${right.toFixed(1)}% of words right in ${name}, measured by Vesper (${candidate.run?.label ?? 'held-out recordings'})`,
+      tone: measured > 20 ? 'bad' : undefined,
+    });
+  } else if (figure) {
     const right = 100 - figure.value;
     gauges.push({
       kind: 'accuracy',
@@ -282,15 +324,38 @@ export function candidateTag(candidate: Candidate, language: Language): string {
   switch (candidate.state) {
     case 'recommended':
       return `Best for ${name}`;
-    case 'published':
-      return candidate.local && !candidate.local.passed
-        ? `Failed Vesper’s test · ${candidate.local.why ?? 'see details'}`
-        : 'Published result';
-    case 'unmeasured':
-      return 'No published result';
+    case 'passed':
+      return 'Passed Vesper’s test';
+    case 'failed':
+      return `Failed Vesper’s test · ${candidate.local?.why ?? 'see details'}`;
+    case 'compatible':
+      return candidate.published
+        ? 'Not tested by Vesper · published result'
+        : 'Not tested by Vesper';
     case 'unavailable':
       return candidate.reason ?? 'Unavailable';
   }
+}
+
+/** One sentence saying where the row's figures come from. */
+export function candidateEvidence(candidate: Candidate, language: Language): string {
+  const name = languageLabel(language);
+  const local = candidate.local;
+  const figure = candidate.published;
+  const parts: string[] = [];
+  if (local?.wer != null && candidate.run)
+    parts.push(
+      `Accuracy, speed and memory measured by Vesper on ${candidate.run.label} (${candidate.run.hardware}, ${candidate.run.date})`,
+    );
+  else if (figure)
+    parts.push(
+      figure.source === 'leaderboard'
+        ? `Not tested by Vesper in ${name}; accuracy from the Open ASR Leaderboard (${figure.set})`
+        : `Not tested by Vesper in ${name}; accuracy is the model maker’s own figure (${figure.set})`,
+    );
+  else parts.push(`Not tested by Vesper in ${name}, and no accuracy figure is published`);
+  if (local && !local.passed && local.why) parts.push(`in Vesper’s test ${local.why}`);
+  return `${parts.join('; ')}.`;
 }
 
 /** Adds ranking, tags and gauges to the app's speech picker options, the same

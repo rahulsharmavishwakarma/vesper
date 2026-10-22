@@ -1,5 +1,5 @@
 {
-  "_description": "Accuracy figures setup uses to recommend a speech model (issue #270). Published figures come from the Open ASR Leaderboard (hf-audio/open-asr-leaderboard-results@648e485, hf-audio/multilingual_evals@3589b3c, version 21 Oct 2026) or the model maker's own card or paper; they are not Vesper measurements. Local results are Vesper's own runs through the application path; speed and memory come only from these. Replace published ranking with a local per-language matrix under issue #296. Writer scores are instruction following (IFEval) and, where published, a multilingual benchmark; they are compared only within one evaluation harness.",
+  "_description": "Evidence setup uses to recommend speech and writing models (issues #270, #296). Speech models are ranked on Vesper's own per-language results (local.results: explicit language; local.automatic: automatic detection, not used for ranking), measured through the application path and exported by scripts/export-recommendation-evidence.mjs from the run in docs/validation/recommendation-matrix-2026-10-22.md. Published figures come from the Open ASR Leaderboard (hf-audio/open-asr-leaderboard-results@648e485, hf-audio/multilingual_evals@3589b3c, version 21 Oct 2026) or the model maker's own card or paper; they order only models Vesper has not tested in a language and are never shown as Vesper measurements. Writer scores are instruction following (IFEval) and, where published, a multilingual benchmark; they are compared only within one evaluation harness.",
   "schema_version": 1,
   "writers": {
     "Qwen/Qwen3.5-0.8B": {
@@ -890,7 +890,7 @@
       },
       "fr": {
         "metric": "wer",
-        "value": 15.0,
+        "value": 15,
         "source": "maker",
         "set": "FLEURS, Whisper paper table 13",
         "url": "https://arxiv.org/abs/2212.04356"
@@ -951,196 +951,679 @@
   },
   "local": {
     "runs": {
-      "en-fleurs-32": {
-        "label": "32 held-out FLEURS English recordings",
+      "de-fleurs-100": {
+        "label": "100 held-out FLEURS German recordings",
         "hardware": "Apple M5 Pro, 64 GB",
-        "date": "2026-10",
-        "source": "docs/inference-performance.md"
+        "date": "2026-10-22",
+        "source": "docs/validation/recommendation-matrix-2026-10-22.md"
       },
-      "en-fleurs-94": {
-        "label": "94 held-out FLEURS English recordings",
+      "en-fleurs-100": {
+        "label": "100 held-out FLEURS English recordings",
         "hardware": "Apple M5 Pro, 64 GB",
-        "date": "2026-10-21",
-        "source": "docs/validation/granite-speech5-turboctc-2026-10-21.md"
+        "date": "2026-10-22",
+        "source": "docs/validation/recommendation-matrix-2026-10-22.md"
       },
-      "hi-fleurs-32": {
-        "label": "32 held-out FLEURS Hindi recordings",
+      "es-fleurs-100": {
+        "label": "100 held-out FLEURS Latin American Spanish recordings",
         "hardware": "Apple M5 Pro, 64 GB",
-        "date": "2026-10",
-        "source": "docs/inference-performance.md"
+        "date": "2026-10-22",
+        "source": "docs/validation/recommendation-matrix-2026-10-22.md"
       },
-      "de-fleurs-50": {
-        "label": "50 held-out FLEURS German recordings",
+      "fr-fleurs-100": {
+        "label": "100 held-out FLEURS French recordings",
         "hardware": "Apple M5 Pro, 64 GB",
-        "date": "2026-10-21",
-        "source": "docs/validation/granite-speech5-turboctc-2026-10-21.md"
+        "date": "2026-10-22",
+        "source": "docs/validation/recommendation-matrix-2026-10-22.md"
+      },
+      "hi-fleurs-100": {
+        "label": "100 held-out FLEURS Hindi recordings",
+        "hardware": "Apple M5 Pro, 64 GB",
+        "date": "2026-10-22",
+        "source": "docs/validation/recommendation-matrix-2026-10-22.md"
       }
     },
     "results": {
-      "Qwen/Qwen3-ASR-0.6B": {
+      "CohereLabs/cohere-transcribe-03-2026": {
+        "de": {
+          "run": "de-fleurs-100",
+          "wer": 7.37,
+          "cer": 3.41,
+          "ms": 765,
+          "peakMemoryGb": 3.45,
+          "engine": "cohere_asr",
+          "executions": 100,
+          "failures": 14,
+          "passed": false,
+          "why": "14 of 100 recordings failed"
+        },
         "en": {
-          "run": "en-fleurs-32",
-          "wer": 3.15,
-          "ms": 182,
-          "peakMemoryGb": 1.81,
-          "executions": 32,
+          "run": "en-fleurs-100",
+          "wer": 6.88,
+          "cer": 3.93,
+          "ms": 475,
+          "peakMemoryGb": 3.47,
+          "engine": "cohere_asr",
+          "executions": 100,
+          "failures": 2,
+          "passed": true
+        },
+        "es": {
+          "run": "es-fleurs-100",
+          "wer": 5.09,
+          "cer": 2.81,
+          "ms": 775,
+          "peakMemoryGb": 3.57,
+          "engine": "cohere_asr",
+          "executions": 100,
+          "failures": 1,
+          "passed": true
+        },
+        "fr": {
+          "run": "fr-fleurs-100",
+          "wer": 5.85,
+          "cer": 2.81,
+          "ms": 643,
+          "peakMemoryGb": 3.46,
+          "engine": "cohere_asr",
+          "executions": 100,
+          "failures": 25,
+          "passed": false,
+          "why": "25 of 100 recordings failed"
+        }
+      },
+      "Qwen/Qwen3-ASR-0.6B": {
+        "de": {
+          "run": "de-fleurs-100",
+          "wer": 14.38,
+          "cer": 6.12,
+          "ms": 798,
+          "peakMemoryGb": 2.06,
+          "engine": "qwen_asr",
+          "executions": 100,
+          "failures": 0,
+          "passed": true
+        },
+        "en": {
+          "run": "en-fleurs-100",
+          "wer": 6.55,
+          "cer": 4.04,
+          "ms": 178,
+          "peakMemoryGb": 1.77,
+          "engine": "qwen_asr",
+          "executions": 100,
+          "failures": 0,
+          "passed": true
+        },
+        "es": {
+          "run": "es-fleurs-100",
+          "wer": 9.09,
+          "cer": 3.94,
+          "ms": 781,
+          "peakMemoryGb": 1.98,
+          "engine": "qwen_asr",
+          "executions": 100,
+          "failures": 0,
+          "passed": true
+        },
+        "fr": {
+          "run": "fr-fleurs-100",
+          "wer": 13.05,
+          "cer": 6.38,
+          "ms": 773,
+          "peakMemoryGb": 1.98,
+          "engine": "qwen_asr",
+          "executions": 100,
           "failures": 0,
           "passed": true
         },
         "hi": {
-          "run": "hi-fleurs-32",
-          "wer": 25.17,
-          "ms": 2573,
-          "peakMemoryGb": 1.61,
-          "executions": 32,
+          "run": "hi-fleurs-100",
+          "wer": 24.91,
+          "cer": 18.37,
+          "ms": 1477,
+          "peakMemoryGb": 1.98,
+          "engine": "qwen_asr",
+          "executions": 100,
           "failures": 0,
           "passed": false,
           "why": "more than 20% of words were wrong"
         }
       },
-      "openai/whisper-small": {
+      "ibm-granite/granite-speech-5.0-470m-turboctc": {
+        "de": {
+          "run": "de-fleurs-100",
+          "wer": 5.86,
+          "cer": 3.12,
+          "ms": 27,
+          "peakMemoryGb": 1.7,
+          "engine": "granite_ctc",
+          "executions": 100,
+          "failures": 0,
+          "passed": true
+        },
         "en": {
-          "run": "en-fleurs-32",
-          "wer": 5.85,
-          "ms": 191,
-          "peakMemoryGb": 1.64,
-          "executions": 32,
+          "run": "en-fleurs-100",
+          "wer": 5.08,
+          "cer": 2.91,
+          "ms": 23,
+          "peakMemoryGb": 1.71,
+          "engine": "granite_ctc",
+          "executions": 100,
+          "failures": 0,
+          "passed": true
+        },
+        "es": {
+          "run": "es-fleurs-100",
+          "wer": 3.76,
+          "cer": 1.53,
+          "ms": 29,
+          "peakMemoryGb": 1.72,
+          "engine": "granite_ctc",
+          "executions": 100,
+          "failures": 0,
+          "passed": true
+        },
+        "fr": {
+          "run": "fr-fleurs-100",
+          "wer": 7.54,
+          "cer": 3.35,
+          "ms": 22,
+          "peakMemoryGb": 1.7,
+          "engine": "granite_ctc",
+          "executions": 100,
           "failures": 0,
           "passed": true
         }
       },
-      "openai/whisper-large-v3-turbo": {
-        "en": {
-          "run": "en-fleurs-32",
-          "wer": 5.1,
-          "ms": 1155,
-          "peakMemoryGb": 3.09,
-          "executions": 32,
+      "moondream/parakeet-redux": {
+        "de": {
+          "run": "de-fleurs-100",
+          "wer": 6.32,
+          "cer": 2.12,
+          "ms": 49,
+          "peakMemoryGb": 1.32,
+          "engine": "ternary_tdt",
+          "executions": 100,
           "failures": 0,
           "passed": true
-        }
-      },
-      "LiquidAI/LFM2.5-Audio-1.5B": {
+        },
         "en": {
-          "run": "en-fleurs-32",
-          "wer": 6.9,
-          "ms": 168,
-          "peakMemoryGb": null,
-          "executions": 32,
+          "run": "en-fleurs-100",
+          "wer": 6.28,
+          "cer": 3.58,
+          "ms": 43,
+          "peakMemoryGb": 1.33,
+          "engine": "ternary_tdt",
+          "executions": 100,
+          "failures": 0,
+          "passed": true
+        },
+        "es": {
+          "run": "es-fleurs-100",
+          "wer": 3.6,
+          "cer": 1.28,
+          "ms": 53,
+          "peakMemoryGb": 1.34,
+          "engine": "ternary_tdt",
+          "executions": 100,
+          "failures": 0,
+          "passed": true
+        },
+        "fr": {
+          "run": "fr-fleurs-100",
+          "wer": 8.79,
+          "cer": 3.36,
+          "ms": 46,
+          "peakMemoryGb": 1.29,
+          "engine": "ternary_tdt",
+          "executions": 100,
           "failures": 0,
           "passed": true
         }
       },
       "nvidia/nemotron-3.5-asr-streaming-0.6b": {
+        "de": {
+          "run": "de-fleurs-100",
+          "wer": 11.18,
+          "cer": 6.06,
+          "ms": 106,
+          "peakMemoryGb": 1,
+          "engine": "nemo_rnnt",
+          "executions": 100,
+          "failures": 0,
+          "passed": true
+        },
         "en": {
-          "run": "en-fleurs-32",
-          "wer": 12.29,
-          "ms": 93,
-          "peakMemoryGb": 1.33,
-          "executions": 32,
+          "run": "en-fleurs-100",
+          "wer": 10.49,
+          "cer": 6.01,
+          "ms": 87,
+          "peakMemoryGb": 1,
+          "engine": "nemo_rnnt",
+          "executions": 100,
+          "failures": 0,
+          "passed": true
+        },
+        "es": {
+          "run": "es-fleurs-100",
+          "wer": 5.68,
+          "cer": 2.82,
+          "ms": 104,
+          "peakMemoryGb": 1.01,
+          "engine": "nemo_rnnt",
+          "executions": 100,
+          "failures": 0,
+          "passed": true
+        },
+        "fr": {
+          "run": "fr-fleurs-100",
+          "wer": 11.69,
+          "cer": 5.54,
+          "ms": 106,
+          "peakMemoryGb": 1,
+          "engine": "nemo_rnnt",
+          "executions": 100,
           "failures": 0,
           "passed": true
         },
         "hi": {
-          "run": "hi-fleurs-32",
-          "wer": 14.42,
-          "ms": 108,
-          "peakMemoryGb": 1.33,
-          "executions": 32,
+          "run": "hi-fleurs-100",
+          "wer": 16.59,
+          "cer": 10.49,
+          "ms": 104,
+          "peakMemoryGb": 1,
+          "engine": "nemo_rnnt",
+          "executions": 100,
           "failures": 0,
           "passed": true
-        }
-      },
-      "CohereLabs/cohere-transcribe-03-2026": {
-        "en": {
-          "run": "en-fleurs-32",
-          "wer": 6.61,
-          "ms": 550,
-          "peakMemoryGb": 5.37,
-          "executions": 32,
-          "failures": 1,
-          "passed": false,
-          "why": "1 of 32 recordings failed"
         }
       },
       "nvidia/parakeet-tdt-0.6b-v3": {
-        "en": {
-          "run": "en-fleurs-94",
-          "wer": 5.25,
-          "ms": 48,
-          "peakMemoryGb": 3.8,
-          "executions": 94,
+        "de": {
+          "run": "de-fleurs-100",
+          "wer": 4.99,
+          "cer": 1.48,
+          "ms": 72,
+          "peakMemoryGb": 0.95,
+          "engine": "nemo_tdt",
+          "executions": 100,
           "failures": 0,
           "passed": true
         },
-        "de": {
-          "run": "de-fleurs-50",
-          "wer": 6.62,
-          "ms": null,
-          "peakMemoryGb": 3.8,
-          "executions": 50,
-          "failures": 0,
-          "passed": true
-        }
-      },
-      "ibm-granite/granite-speech-5.0-470m-turboctc": {
         "en": {
-          "run": "en-fleurs-94",
-          "wer": 5.3,
-          "ms": 22,
-          "peakMemoryGb": 1.37,
-          "executions": 94,
+          "run": "en-fleurs-100",
+          "wer": 4.95,
+          "cer": 2.57,
+          "ms": 39,
+          "peakMemoryGb": 0.56,
+          "engine": "neural_engine_tdt",
+          "executions": 100,
           "failures": 0,
           "passed": true
         },
-        "de": {
-          "run": "de-fleurs-50",
-          "wer": 6.44,
-          "ms": null,
-          "peakMemoryGb": 1.37,
-          "executions": 50,
+        "es": {
+          "run": "es-fleurs-100",
+          "wer": 2.9,
+          "cer": 0.98,
+          "ms": 69,
+          "peakMemoryGb": 0.97,
+          "engine": "nemo_tdt",
+          "executions": 100,
+          "failures": 0,
+          "passed": true
+        },
+        "fr": {
+          "run": "fr-fleurs-100",
+          "wer": 4.86,
+          "cer": 1.73,
+          "ms": 64,
+          "peakMemoryGb": 0.97,
+          "engine": "nemo_tdt",
+          "executions": 100,
           "failures": 0,
           "passed": true
         }
       },
       "FermionResearch/Phonon-2": {
         "en": {
-          "run": "en-fleurs-94",
-          "wer": 5.75,
-          "ms": 55,
-          "peakMemoryGb": 0.86,
-          "executions": 94,
+          "run": "en-fleurs-100",
+          "wer": 5.86,
+          "cer": 3.25,
+          "ms": 46,
+          "peakMemoryGb": 1.26,
+          "engine": "packed_tdt",
+          "executions": 100,
           "failures": 0,
           "passed": true
         }
       },
-      "moondream/parakeet-redux": {
+      "LiquidAI/LFM2.5-Audio-1.5B": {
         "en": {
-          "run": "en-fleurs-94",
-          "wer": 6.35,
-          "ms": 51,
-          "peakMemoryGb": 0.94,
-          "executions": 94,
-          "failures": 0,
-          "passed": true
-        },
-        "de": {
-          "run": "de-fleurs-50",
-          "wer": 7.16,
-          "ms": null,
-          "peakMemoryGb": 0.94,
-          "executions": 50,
-          "failures": 0,
+          "run": "en-fleurs-100",
+          "wer": 7.6,
+          "cer": 4.67,
+          "ms": 168,
+          "peakMemoryGb": 0.54,
+          "engine": "lfm_audio",
+          "executions": 100,
+          "failures": 1,
           "passed": true
         }
       },
       "moonshine-ai/moonshine-base": {
         "en": {
-          "run": "en-fleurs-94",
-          "wer": 10.11,
-          "ms": 86,
-          "peakMemoryGb": null,
-          "executions": 94,
+          "run": "en-fleurs-100",
+          "wer": 9.99,
+          "cer": 5.4,
+          "ms": 97,
+          "peakMemoryGb": 0.54,
+          "engine": "moonshine_asr",
+          "executions": 100,
+          "failures": 0,
+          "passed": true
+        }
+      },
+      "openai/whisper-large-v3-turbo": {
+        "en": {
+          "run": "en-fleurs-100",
+          "wer": 5.63,
+          "cer": 2.83,
+          "ms": 1371,
+          "peakMemoryGb": 2.66,
+          "engine": "whisper",
+          "executions": 100,
+          "failures": 0,
+          "passed": true
+        },
+        "fr": {
+          "run": "fr-fleurs-100",
+          "wer": 7.54,
+          "cer": 2.7,
+          "ms": 1520,
+          "peakMemoryGb": 2.66,
+          "engine": "whisper",
+          "executions": 100,
+          "failures": 0,
+          "passed": true
+        }
+      },
+      "openai/whisper-small": {
+        "en": {
+          "run": "en-fleurs-100",
+          "wer": 5.96,
+          "cer": 3.21,
+          "ms": 286,
+          "peakMemoryGb": 1.75,
+          "engine": "whisper",
+          "executions": 100,
+          "failures": 0,
+          "passed": true
+        },
+        "fr": {
+          "run": "fr-fleurs-100",
+          "wer": 15.23,
+          "cer": 6.25,
+          "ms": 1033,
+          "peakMemoryGb": 1.59,
+          "engine": "whisper",
+          "executions": 100,
+          "failures": 0,
+          "passed": true
+        }
+      }
+    },
+    "automatic": {
+      "Qwen/Qwen3-ASR-0.6B": {
+        "de": {
+          "run": "de-fleurs-100",
+          "wer": 14.34,
+          "cer": 6.35,
+          "ms": 864,
+          "peakMemoryGb": 2.04,
+          "engine": "qwen_asr",
+          "executions": 100,
+          "failures": 0,
+          "passed": true
+        },
+        "en": {
+          "run": "en-fleurs-100",
+          "wer": 8.15,
+          "cer": 4.72,
+          "ms": 558,
+          "peakMemoryGb": 2.04,
+          "engine": "qwen_asr",
+          "executions": 100,
+          "failures": 0,
+          "passed": true
+        },
+        "es": {
+          "run": "es-fleurs-100",
+          "wer": 10.18,
+          "cer": 4.77,
+          "ms": 900,
+          "peakMemoryGb": 1.98,
+          "engine": "qwen_asr",
+          "executions": 100,
+          "failures": 0,
+          "passed": true
+        },
+        "fr": {
+          "run": "fr-fleurs-100",
+          "wer": 12.82,
+          "cer": 6.64,
+          "ms": 820,
+          "peakMemoryGb": 1.99,
+          "engine": "qwen_asr",
+          "executions": 100,
+          "failures": 0,
+          "passed": true
+        },
+        "hi": {
+          "run": "hi-fleurs-100",
+          "wer": 25.05,
+          "cer": 19.28,
+          "ms": 1635,
+          "peakMemoryGb": 1.92,
+          "engine": "qwen_asr",
+          "executions": 100,
+          "failures": 1,
+          "passed": false,
+          "why": "more than 20% of words were wrong"
+        }
+      },
+      "moondream/parakeet-redux": {
+        "de": {
+          "run": "de-fleurs-100",
+          "wer": 6.32,
+          "cer": 2.12,
+          "ms": 49,
+          "peakMemoryGb": 1.32,
+          "engine": "ternary_tdt",
+          "executions": 100,
+          "failures": 0,
+          "passed": true
+        },
+        "en": {
+          "run": "en-fleurs-100",
+          "wer": 6.28,
+          "cer": 3.58,
+          "ms": 43,
+          "peakMemoryGb": 1.32,
+          "engine": "ternary_tdt",
+          "executions": 100,
+          "failures": 0,
+          "passed": true
+        },
+        "es": {
+          "run": "es-fleurs-100",
+          "wer": 3.6,
+          "cer": 1.28,
+          "ms": 50,
+          "peakMemoryGb": 1.34,
+          "engine": "ternary_tdt",
+          "executions": 100,
+          "failures": 0,
+          "passed": true
+        },
+        "fr": {
+          "run": "fr-fleurs-100",
+          "wer": 8.79,
+          "cer": 3.36,
+          "ms": 45,
+          "peakMemoryGb": 1.3,
+          "engine": "ternary_tdt",
+          "executions": 100,
+          "failures": 0,
+          "passed": true
+        }
+      },
+      "nvidia/nemotron-3.5-asr-streaming-0.6b": {
+        "de": {
+          "run": "de-fleurs-100",
+          "wer": 10.95,
+          "cer": 6.25,
+          "ms": 106,
+          "peakMemoryGb": 1,
+          "engine": "nemo_rnnt",
+          "executions": 100,
+          "failures": 0,
+          "passed": true
+        },
+        "en": {
+          "run": "en-fleurs-100",
+          "wer": 10.81,
+          "cer": 6.12,
+          "ms": 90,
+          "peakMemoryGb": 1,
+          "engine": "nemo_rnnt",
+          "executions": 100,
+          "failures": 0,
+          "passed": true
+        },
+        "es": {
+          "run": "es-fleurs-100",
+          "wer": 5.91,
+          "cer": 2.96,
+          "ms": 113,
+          "peakMemoryGb": 1.01,
+          "engine": "nemo_rnnt",
+          "executions": 100,
+          "failures": 0,
+          "passed": true
+        },
+        "fr": {
+          "run": "fr-fleurs-100",
+          "wer": 11.8,
+          "cer": 5.56,
+          "ms": 105,
+          "peakMemoryGb": 1,
+          "engine": "nemo_rnnt",
+          "executions": 100,
+          "failures": 0,
+          "passed": true
+        },
+        "hi": {
+          "run": "hi-fleurs-100",
+          "wer": 17.69,
+          "cer": 14.91,
+          "ms": 106,
+          "peakMemoryGb": 1.01,
+          "engine": "nemo_rnnt",
+          "executions": 100,
+          "failures": 0,
+          "passed": true
+        }
+      },
+      "nvidia/parakeet-tdt-0.6b-v3": {
+        "de": {
+          "run": "de-fleurs-100",
+          "wer": 4.99,
+          "cer": 1.48,
+          "ms": 69,
+          "peakMemoryGb": 0.95,
+          "engine": "nemo_tdt",
+          "executions": 100,
+          "failures": 0,
+          "passed": true
+        },
+        "en": {
+          "run": "en-fleurs-100",
+          "wer": 4.86,
+          "cer": 2.44,
+          "ms": 58,
+          "peakMemoryGb": 0.95,
+          "engine": "nemo_tdt",
+          "executions": 100,
+          "failures": 0,
+          "passed": true
+        },
+        "es": {
+          "run": "es-fleurs-100",
+          "wer": 2.9,
+          "cer": 0.98,
+          "ms": 68,
+          "peakMemoryGb": 0.97,
+          "engine": "nemo_tdt",
+          "executions": 100,
+          "failures": 0,
+          "passed": true
+        },
+        "fr": {
+          "run": "fr-fleurs-100",
+          "wer": 4.86,
+          "cer": 1.73,
+          "ms": 65,
+          "peakMemoryGb": 0.96,
+          "engine": "nemo_tdt",
+          "executions": 100,
+          "failures": 0,
+          "passed": true
+        }
+      },
+      "openai/whisper-large-v3-turbo": {
+        "en": {
+          "run": "en-fleurs-100",
+          "wer": 5.63,
+          "cer": 2.83,
+          "ms": 1437,
+          "peakMemoryGb": 2.65,
+          "engine": "whisper",
+          "executions": 100,
+          "failures": 0,
+          "passed": true
+        },
+        "fr": {
+          "run": "fr-fleurs-100",
+          "wer": 7.54,
+          "cer": 2.7,
+          "ms": 1513,
+          "peakMemoryGb": 2.66,
+          "engine": "whisper",
+          "executions": 100,
+          "failures": 0,
+          "passed": true
+        }
+      },
+      "openai/whisper-small": {
+        "en": {
+          "run": "en-fleurs-100",
+          "wer": 6.18,
+          "cer": 3.29,
+          "ms": 756,
+          "peakMemoryGb": 1.55,
+          "engine": "whisper",
+          "executions": 100,
+          "failures": 0,
+          "passed": true
+        },
+        "fr": {
+          "run": "fr-fleurs-100",
+          "wer": 15.23,
+          "cer": 6.25,
+          "ms": 1078,
+          "peakMemoryGb": 1.5,
+          "engine": "whisper",
+          "executions": 100,
           "failures": 0,
           "passed": true
         }

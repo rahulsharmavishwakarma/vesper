@@ -12,6 +12,7 @@
   } from '../modelDownloads';
   import { modelOptions, selectModel, selectedModelValue } from '../modelPresets';
   import {
+    candidateEvidence,
     candidateGauges,
     decorateSpeechOptions,
     decorateWriterOptions,
@@ -130,30 +131,13 @@
   );
   const pill = $derived.by(() => {
     if (!current) return { label: 'Choose a speech model', tone: 'quiet' };
-    if (current.local && !current.local.passed)
-      return { label: `Failed Vesper’s ${name} test`, tone: 'bad' };
+    if (current.state === 'failed') return { label: `Failed Vesper’s ${name} test`, tone: 'bad' };
     if (current.state === 'recommended') return { label: `Best for ${name}`, tone: 'accent' };
-    if (current.state === 'published')
-      return { label: `Published result for ${name}`, tone: 'quiet' };
-    return { label: `No published result for ${name} yet`, tone: 'quiet' };
+    if (current.state === 'passed') return { label: `Passed Vesper’s ${name} test`, tone: 'quiet' };
+    return { label: `Not tested by Vesper in ${name} yet`, tone: 'quiet' };
   });
   const gauges = $derived(current ? candidateGauges(current, language, mac) : []);
-  const evidence = $derived.by(() => {
-    if (!current) return '';
-    const figure = current.published;
-    const parts = [
-      figure
-        ? figure.source === 'leaderboard'
-          ? `Accuracy from the Open ASR Leaderboard (${figure.set})`
-          : `Accuracy is the model maker’s own figure (${figure.set})`
-        : `No accuracy figure is published for ${name}`,
-    ];
-    if (current.local?.ms && current.run)
-      parts.push(`speed and memory measured by Vesper on ${current.run.hardware}`);
-    if (current.local && !current.local.passed && current.local.why)
-      parts.push(`in Vesper’s own test ${current.local.why}`);
-    return `${parts.join('; ')}.`;
-  });
+  const evidence = $derived(current ? candidateEvidence(current, language) : '');
   const writerOption = $derived(writerOptions.find((option) => option.value === writer));
   const writerIsRecommended = $derived(writer === writerRecommendation);
 

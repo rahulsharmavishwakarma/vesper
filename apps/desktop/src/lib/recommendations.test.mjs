@@ -19,28 +19,51 @@ test('every evidence entry names a catalog speech model and a language it declar
   const speech = new Set(
     catalog.models.filter((m) => m.role === 'speech_recognition').map((m) => m.id),
   );
-  for (const section of [evidence.published, evidence.local.results])
+  for (const section of [evidence.published, evidence.local.results, evidence.local.automatic])
     for (const [id, byLanguage] of Object.entries(section)) {
       assert.ok(speech.has(id), `${id} is not a catalog speech model`);
       for (const code of Object.keys(byLanguage))
         assert.ok(languages[id].languages.includes(code), `${id} does not declare ${code}`);
     }
-  for (const results of Object.values(evidence.local.results))
-    for (const result of Object.values(results))
-      assert.ok(evidence.local.runs[result.run], `unknown run ${result.run}`);
+  for (const section of [evidence.local.results, evidence.local.automatic])
+    for (const results of Object.values(section))
+      for (const result of Object.values(results))
+        assert.ok(evidence.local.runs[result.run], `unknown run ${result.run}`);
   for (const byLanguage of Object.values(evidence.published))
     for (const figure of Object.values(byLanguage)) assert.match(figure.url, /^https:\/\//);
 });
 
-test('setup picks from published accuracy, breaking near-ties by measured speed', () => {
-  // English leaderboard: Cohere 6.26, Parakeet 6.51 and Qwen 6.60 are within half a
-  // point, so the fastest locally measured of them wins.
-  assert.equal(recommendedSpeechModel('en', mac(64)), 'nvidia/parakeet-tdt-0.6b-v3');
+test('setup picks from Vesper’s own results, breaking near-ties by measured speed', () => {
+  // English: Granite (5.08%) is within half a point of Parakeet (4.95%) and faster.
+  assert.equal(
+    recommendedSpeechModel('en', mac(64)),
+    'ibm-granite/granite-speech-5.0-470m-turboctc',
+  );
+  for (const language of ['fr', 'de', 'es'])
+    assert.equal(recommendedSpeechModel(language, mac(64)), 'nvidia/parakeet-tdt-0.6b-v3');
   assert.equal(recommendedSpeechModel('hi', mac(64)), 'nvidia/nemotron-3.5-asr-streaming-0.6b');
-  // German leaderboard FLEURS: Cohere 3.33 is more than half a point ahead.
-  assert.equal(recommendedSpeechModel('de', mac(64)), 'CohereLabs/cohere-transcribe-03-2026');
-  // Japanese has only makers' figures: Qwen (8.33) before Nemotron (13.87 CER).
+  // Japanese has no local run, so published makers' figures order the untested
+  // models: Qwen (8.33) before Nemotron (13.87 CER).
   assert.equal(recommendedSpeechModel('ja', mac(64)), 'Qwen/Qwen3-ASR-0.6B');
+  assert.equal(rankSpeechModels('ja', mac(64))[0].state, 'compatible');
+});
+
+test('failed results rank after untested models and are never relabelled as untested', () => {
+  const french = rankSpeechModels('fr', mac(64));
+  const cohere = french.find((c) => c.id === 'CohereLabs/cohere-transcribe-03-2026');
+  assert.equal(cohere.state, 'failed');
+  assert.equal(cohere.local.why, '25 of 100 recordings failed');
+  const states = french.filter((c) => c.state !== 'unavailable').map((c) => c.state);
+  assert.ok(states.indexOf('failed') > states.lastIndexOf('passed'));
+  // Hindi: Qwen missed the accuracy gate, so Nemotron is the only passing model.
+  const hindi = rankSpeechModels('hi', mac(64));
+  assert.deepEqual(
+    hindi.filter((c) => c.state !== 'unavailable').map((c) => [c.id, c.state]),
+    [
+      ['nvidia/nemotron-3.5-asr-streaming-0.6b', 'recommended'],
+      ['Qwen/Qwen3-ASR-0.6B', 'failed'],
+    ],
+  );
 });
 
 test('this Mac filters what can be recommended', () => {
@@ -49,8 +72,8 @@ test('this Mac filters what can be recommended', () => {
   const granite = ranked.find((c) => c.id === 'ibm-granite/granite-speech-5.0-470m-turboctc');
   assert.equal(granite.state, 'unavailable');
   assert.equal(granite.reason, 'Needs an Apple silicon Mac');
-  // Cohere's measured peak (5.37 GB) is more than half of an 8 GB Mac.
-  const small = rankSpeechModels('en', mac(8));
+  // Cohere's measured peak (about 3.5 GB) is more than half of a 6 GB Mac.
+  const small = rankSpeechModels('en', mac(6));
   assert.equal(
     small.find((c) => c.id === 'CohereLabs/cohere-transcribe-03-2026').state,
     'unavailable',
@@ -58,15 +81,18 @@ test('this Mac filters what can be recommended', () => {
   assert.ok(small.some((c) => c.state === 'recommended'));
 });
 
-test('gauges show published accuracy and only Vesper-measured speed and memory', () => {
-  const ranked = rankSpeechModels('fr', mac(64));
-  const cohere = ranked.find((c) => c.id === 'CohereLabs/cohere-transcribe-03-2026');
-  const [accuracy, speed, memory] = candidateGauges(cohere, 'fr', mac(64));
-  assert.equal(accuracy.text, '95.7%');
-  assert.match(accuracy.title, /Open ASR Leaderboard/);
-  // No French speed run exists, so speed is not borrowed from another language.
-  assert.equal(speed.score, null);
-  assert.equal(memory.text, '5.4 GB');
+test('gauges prefer Vesper’s measurement and never borrow speed from another language', () => {
+  const french = rankSpeechModels('fr', mac(64));
+  const parakeet = french.find((c) => c.id === 'nvidia/parakeet-tdt-0.6b-v3');
+  const [accuracy, speed] = candidateGauges(parakeet, 'fr', mac(64));
+  assert.equal(accuracy.text, '95.1%');
+  assert.match(accuracy.title, /measured by Vesper/);
+  assert.notEqual(speed.score, null);
+  // Japanese has no local run: accuracy is the published figure and speed is unmeasured.
+  const japanese = rankSpeechModels('ja', mac(64)).find((c) => c.id === 'Qwen/Qwen3-ASR-0.6B');
+  const [published, unmeasured] = candidateGauges(japanese, 'ja', mac(64));
+  assert.doesNotMatch(published.title, /measured by Vesper/);
+  assert.equal(unmeasured.score, null);
 });
 
 test('picker options are ordered best first, with tags and gauges', () => {
@@ -76,8 +102,9 @@ test('picker options are ordered best first, with tags and gauges', () => {
     { value: 'preset:custom', description: 'Imported model profile' },
   ];
   const decorated = decorateSpeechOptions(options, 'en', mac(64));
+  // Parakeet passed but Granite (not in this list) is the English pick.
   assert.equal(decorated[0].value, 'nvidia/parakeet-tdt-0.6b-v3');
-  assert.match(decorated[0].description, /^Best for English · /);
+  assert.match(decorated[0].description, /^Passed Vesper’s test · /);
   assert.equal(decorated[0].gauges.length, 3);
   assert.equal(decorated.at(-1).value, 'preset:custom');
   // Automatic detection has no language to rank for.
