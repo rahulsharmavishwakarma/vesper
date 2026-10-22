@@ -51,7 +51,7 @@ Treat them as text-only unless you rebuild them from the Vesper repository.
 ```python
 from datasets import load_dataset
 
-rows = load_dataset("rahulsharmavishwakarma/vesper-data-asr-outputs", split="train")
+rows = load_dataset("rahulsharmavishwakarma/vesper-asr-benchmark", split="train")
 fleurs = load_dataset("google/fleurs", "en_us", split="test",
                       revision="70bb2e84b976b7e960aa89f1c648e09c59f894dd")
 by_file = {r["path"].rsplit("/", 1)[-1].removesuffix(".wav"): i for i, r in enumerate(fleurs)}

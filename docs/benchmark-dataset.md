@@ -1,7 +1,7 @@
 # Benchmark output dataset
 
 Vesper publishes the transcripts its benchmark runs produce as a text-only dataset:
-[`rahulsharmavishwakarma/vesper-data-asr-outputs`](https://huggingface.co/datasets/rahulsharmavishwakarma/vesper-data-asr-outputs)
+[`rahulsharmavishwakarma/vesper-asr-benchmark`](https://huggingface.co/datasets/rahulsharmavishwakarma/vesper-asr-benchmark)
 ([#324](https://github.com/rahulsharmavishwakarma/vesper/issues/324)). The current export, from 23 October 2026, holds
 16,602 transcriptions from 475 local `vesper-eval` reports (September–October 2026, including the 22 October
 per-language recommendation matrix). It covers 15 speech models across English, Indian English, Hindi, German, French
