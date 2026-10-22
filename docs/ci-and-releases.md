@@ -864,8 +864,9 @@ expiring artifact only" policy (2026-10-20) and chose download-only first.
   ([issue #67](https://github.com/rahulsharmavishwakarma/vesper/issues/67)). The
   workflow assembles `site/` plus the newest nightly feed, validates every JSON
   feed, and deploys with GitHub's `upload-pages-artifact` and `deploy-pages`
-  actions (no branch push, no ruleset bypass). The stable and beta feeds are
-  unchanged: stable apps still read `releases/latest/download/latest.json`.
+  actions (no branch push, no ruleset bypass). It also publishes the newest
+  pre-release's `beta.json` and the newest stable release's `latest.json`
+  (see the updater contract below).
 - Limitations: nightly is unsigned, so macOS asks you to allow it under System Settings → Privacy & Security → Open Anyway;
   only the latest nightly release is kept (its tag stays reserved); a nightly can lag main by a day, and a
   failed or running `Check` on the newest commit skips that night.
@@ -929,8 +930,16 @@ The information-only section can precede the updater work in
 ### Updater contract and missing release gates
 
 The updater and process plugins are initialized, and the base `tauri.conf.json`
-enrolls the updater public key and the stable feed endpoint
-(`releases/latest/download/latest.json`). Feed manifests are published only by
+enrolls the updater public key and two stable feed endpoints, tried in order:
+`https://rahulsharmavishwakarma.github.io/vesper/latest.json`, which `pages.yml`
+copies from the newest stable release, then the release asset
+`releases/latest/download/latest.json`, which builds before `v0.1.2` use alone.
+GitHub's redirect chain for the asset took 15.6 s on one network against under
+a second for Pages, and the plugin falls back to the next endpoint when one
+fails ([issue #321](https://github.com/rahulsharmavishwakarma/vesper/issues/321)).
+Every feed request has a 20-second timeout, and with **Include beta and
+pre-release builds** on, the stable and beta checks run at the same time, so a
+stalled network ends in **Couldn't check** instead of an endless check. Feed manifests are published only by
 signed tag-run candidates. `v0.1.0` (stable, 20 October 2026) carries the first
 `latest.json`, but no higher version exists yet, so an update check finds nothing
 to install.
