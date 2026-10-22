@@ -240,7 +240,7 @@ flowchart LR
   pho --> k9 --> r3
   red --> k10 --> r3
   par -. "MLX registration" .-> r3
-  par -. "Unified GGUF engine" .-> k11 --> r1
+  par -. "Automatic engine (default)" .-> k11 --> r1
   qwa -. "MLX registration, native live preview" .-> r3
   whi -. "WhisperSmall MLX registration" .-> r3
   lfm --> k6 --> r4
@@ -251,7 +251,7 @@ flowchart TB
   req[Requested backend: Auto / Cpu / Metal / Cuda / Vulkan / Rocm]
   req --> auto{Auto?}
   auto -->|no| exact[Use the explicit backend; error if unavailable]
-  auto -->|yes| unified{Unified GGUF engine?<br/>Parakeet v3 only}
+  auto -->|yes| unified{Effective engine is the unified GGUF?<br/>Automatic for Parakeet v3}
   unified -->|yes| nemosel[NeMo-Speech.cpp package for Metal on Apple Silicon,<br/>CUDA if an NVIDIA GPU is visible, else CPU]
   nemosel --> nload[Load the one GGUF]
   nload -->|GPU load fails| nretry[Retry once on CPU with the same file]
@@ -276,7 +276,7 @@ flowchart TB
 
 The llama.cpp paths (LFM and the writer) choose the GPU with the most free
 memory, or CPU. Only under Auto do they retry a failed GPU initialization on
-CPU. Nemotron, and Parakeet v3 with the unified GGUF engine, pick Metal on Apple
+CPU. Nemotron, and Parakeet v3 under the Automatic engine, pick Metal on Apple
 Silicon under Auto, CUDA when an NVIDIA GPU is visible, and CPU otherwise; both
 also retry on CPU, with the same GGUF file
 ([ADR-0024](adrs/0024-unified-gguf-speech-engine.md)). Cancellation,

@@ -1,6 +1,6 @@
 # ADR-0024: One GGUF for every device as a Parakeet v3 speech engine
 
-Status: Accepted
+Status: Accepted; engine selection amended by [ADR-0026](0026-automatic-speech-engine.md)
 Date: 2026-10-22
 Related: [#293](https://github.com/rahulsharmavishwakarma/vesper/issues/293), [#287](https://github.com/rahulsharmavishwakarma/vesper/issues/287); extends ADR-0006 and ADR-0021
 
