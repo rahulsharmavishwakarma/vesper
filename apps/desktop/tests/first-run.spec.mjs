@@ -159,10 +159,10 @@ test('setup offers every language its speech models declare', async ({ page }) =
     '/tests/interaction-preview.html?first-run&first-run-step=1&first-run-mic=allowed',
   );
   await page.locator('#setup-language').click();
+  // Escape every regular-expression character, including backslashes.
+  const startsWith = (text) => new RegExp(`^${text.replace(/[\\^$.*+?()[\]{}|]/g, '\\$&')}`);
   for (const name of ['English', 'German', 'Japanese', 'Thai', 'Norwegian (Bokmål)'])
-    await expect(
-      page.getByRole('option', { name: new RegExp(`^${name.replace(/[()]/g, '\\$&')}`) }),
-    ).toBeVisible();
+    await expect(page.getByRole('option', { name: startsWith(name) })).toBeVisible();
   await expect(page.getByRole('option', { name: /^Detect automatically/ })).toHaveCount(0);
   await page.getByRole('option', { name: /^German/ }).click();
   await expect(page.locator('#setup-microphone')).toContainText('Synthetic microphone');
