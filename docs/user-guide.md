@@ -210,7 +210,7 @@ For Parakeet v3, **Speech engine** under **Device and storage** offers these cho
 | --- | --- |
 | **Current** | Separate CPU and Apple GPU files. |
 | **Unified GGUF** | One 714 MB file that runs on CPU and on every supported GPU, in every Parakeet language. See [Parakeet unified GGUF engine](offline-asr.md#parakeet-unified-gguf-engine). |
-| **Neural Engine** | Apple Silicon only. A 1.2 GB download that runs the model on the Apple Neural Engine, leaving the GPU to the writing model. English only, with **Automatic** or **Metal**. Setup takes a few extra seconds after the download, and again once after each macOS update. See [Parakeet on the Neural Engine](offline-asr.md#parakeet-on-the-neural-engine). |
+| **Neural Engine** | Apple Silicon only. A 640 MB download that runs the model on the Apple Neural Engine, leaving the GPU to the writing model. English only, with **Automatic** or **Metal**. Setup takes a few extra seconds after the download, and again once after each macOS update. See [Parakeet on the Neural Engine](offline-asr.md#parakeet-on-the-neural-engine). |
 
 Choosing a different speech model returns the engine to **Current** when that model lacks the chosen engine.
 

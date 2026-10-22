@@ -1101,8 +1101,8 @@
                       />
                       <p id="asr-engine-help" class="note">
                         {#if usesUnifiedGguf(draft.models)}One 714 MB file runs this model on CPU
-                          and on every supported GPU.{:else if usesNeuralEngine(draft.models)}A 1.2
-                          GB download runs this model on the Neural Engine and leaves the GPU to the
+                          and on every supported GPU.{:else if usesNeuralEngine(draft.models)}A 640
+                          MB download runs this model on the Neural Engine and leaves the GPU to the
                           writing model. English only. The first use on this Mac takes a few seconds
                           to prepare.{:else}Uses the CPU file, or the Apple GPU file for English.{/if}
                       </p>

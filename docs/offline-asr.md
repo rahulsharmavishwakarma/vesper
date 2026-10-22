@@ -237,11 +237,11 @@ so **Current** remains the default.
 The **Neural Engine** speech engine runs Parakeet v3's encoder on the Apple Neural Engine. The rest of the model
 stays in MLX ([ADR-0025](adrs/0025-neural-engine-speech-engine.md)):
 
-- The encoder runs as a Core ML float16 program.
+- The encoder runs as a Core ML program with int8 weights and float16 compute.
 - Parakeet's own log-mel frontend and the TDT decoder run on the GPU.
 
 It is offered for English on Apple Silicon builds that include MLX, with **Automatic** or **Metal**. The download is
-1.23 GB from `rahulsharmavishwakarma/vesper-parakeet-tdt-0.6b-v3-coreml-ane@4dc405d6`:
+640 MB from `rahulsharmavishwakarma/vesper-parakeet-tdt-0.6b-v3-coreml-ane@c81d0368`:
 
 - the compiled encoder, `ParakeetEncoder15s.mlmodelc`;
 - a 45 MB MLX checkpoint with zero encoder layers, holding the decoder, joint network and subsampling tensors.
@@ -261,7 +261,7 @@ Core ML prepares the program for this Mac's Neural Engine on its first load in a
 M5 Pro. Installing the files performs that load, so the first recording does not wait. A macOS update clears the
 prepared copy, and the next recording takes the extra seconds once.
 
-Through the application on 94 held-out English clips, the engine scored 5.26% WER against 5.16% for the MLX path, a
+Through the application on 94 held-out English clips, the engine scored 5.11% WER against 5.16% for the MLX path, a
 difference within noise.
 - Clips up to 15 s matched.
 - Clips of 15–20 s gained a few errors from the extra cut.

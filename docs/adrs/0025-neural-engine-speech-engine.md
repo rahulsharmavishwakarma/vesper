@@ -36,12 +36,13 @@ file, and the risk of failing the converter's dependency audit.
   - The encoder takes one fixed 15 s window, so the recognizer delivers parts of at most 15 s instead of 30.
   - Neural Engine output is read through its padded strides.
 - Artifacts use `engine: coreml_ane`, `backend: neural_engine` and the directory `neural-engine/parakeet`:
-  - a compiled float16 encoder (`ParakeetEncoder15s.mlmodelc`);
+  - a compiled encoder with int8 per-channel weights and float16 compute (`ParakeetEncoder15s.mlmodelc`);
   - a decoder-only MLX checkpoint: decoder, joint and subsampling tensors copied unchanged from the pinned bfloat16
     file, with `encoder.n_layers` 0 so MLX never loads the encoder Core ML replaces.
 
   They are hosted at `rahulsharmavishwakarma/vesper-parakeet-tdt-0.6b-v3-coreml-ane@4dc405d6` (CC-BY-4.0, with
-  attribution and a modification notice). The total download is 1.23 GB.
+  attribution and a modification notice). The total download is 640 MB. The owner approved int8 weights on
+  22 October 2026 after they matched the float16 encoder within noise at half the size.
 - `scripts/convert-parakeet-v3-coreml-ane.py` builds those files.
   - It runs in the locked, audited `coreml-convert` project.
   - It builds the encoder from NVIDIA's Transformers-format checkpoint rather than NeMo, whose dependency stack

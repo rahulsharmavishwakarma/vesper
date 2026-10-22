@@ -5,7 +5,8 @@ Vesper runs Parakeet's FastConformer encoder through Core ML on the Neural Engin
 and keeps the TDT decoder and joint network in its MLX runtime. This script:
 
 1. builds the encoder from NVIDIA's pinned Transformers-format checkpoint, traces
-   it over one fixed 15 s window, converts it to a float16 ML program, and checks
+   it over one fixed 15 s window, converts it to a float16 ML program with int8
+   per-channel weights (half the float16 download, accuracy within noise), and checks
    the Core ML result on the CPU and Neural Engine against the float32 PyTorch
    encoder at full and padded lengths on a synthetic voiced signal;
 2. copies the decoder, joint network and subsampling tensors bit for bit from
@@ -43,6 +44,11 @@ from pathlib import Path
 import coremltools as ct
 import numpy as np
 import torch
+from coremltools.optimize.coreml import (
+    OpLinearQuantizerConfig,
+    OptimizationConfig,
+    linear_quantize_weights,
+)
 from huggingface_hub import hf_hub_download
 from safetensors import safe_open
 from safetensors.torch import save_file
@@ -64,9 +70,16 @@ COMPILED = "ParakeetEncoder15s.mlmodelc"
 # NeMo's attention masking value; float16 keeps it finite.
 MASK_VALUE = -10000.0
 CHECK_LENGTHS = (1501, 1200, 901, 457, 120)
-# Catches broken exports (layout, masking, NaN), not accuracy: float16 drifts more on
-# this synthetic signal than on speech, so speech is qualified by held-out WER instead.
-MIN_COSINE = 0.98
+# Catches broken exports (layout, masking, NaN), not accuracy: float16 compute and int8
+# weights drift more on this synthetic signal than on speech, so speech is qualified by
+# held-out WER instead. A broken export scores near zero.
+MIN_COSINE = 0.90
+# Symmetric per-output-channel int8 weights for every tensor of 2,048+ elements.
+WEIGHTS = OptimizationConfig(
+    global_config=OpLinearQuantizerConfig(
+        mode="linear_symmetric", dtype="int8", granularity="per_channel", weight_threshold=2048
+    )
+)
 
 
 def fp16_safe_attention(module, query, key, value, attention_mask, **kwargs):
@@ -222,10 +235,12 @@ def main() -> int:
         minimum_deployment_target=ct.target.macOS14,
         compute_precision=ct.precision.FLOAT16,
     )
+    program = linear_quantize_weights(program, WEIGHTS)
     program.author = "Vesper conversion of NVIDIA Parakeet TDT 0.6B v3"
     program.license = "CC-BY-4.0"
     program.short_description = (
-        "Parakeet TDT 0.6B v3 FastConformer encoder, float16, one 15 s window. Modified: "
+        "Parakeet TDT 0.6B v3 FastConformer encoder, float16 compute with int8 weights, one 15 s "
+        "window. Modified: "
         "exported to Core ML from the Transformers-format checkpoint; decoder not included."
     )
     args.out.mkdir(parents=True)
@@ -289,7 +304,7 @@ license: cc-by-4.0
 library_name: coreml
 pipeline_tag: automatic-speech-recognition
 base_model: nvidia/parakeet-tdt-0.6b-v3
-tags: [coreml, neural-engine, parakeet, float16, vesper]
+tags: [coreml, neural-engine, parakeet, int8, vesper]
 ---
 
 # Parakeet TDT 0.6B v3 for the Apple Neural Engine (Core ML encoder + MLX decoder)
@@ -301,7 +316,8 @@ as a Core ML program on the Neural Engine, and the TDT decoder and joint network
 **Modifications.**
 
 - `{COMPILED}`: the encoder, as a compiled Core ML model, loaded from NVIDIA's Transformers-format checkpoint, traced
-  over one fixed 15 s window and converted to float16 by {versions}. Frames past
+  over one fixed 15 s window and converted to a float16 program with symmetric per-channel
+  int8 weights by {versions}. Frames past
   `mel_length` are zeroed and the attention mask is clamped to -10000, matching NeMo's
   encoder.
 - `model.safetensors` and `config.json`: the decoder, joint network and subsampling
@@ -322,8 +338,8 @@ release.
 | `encoder_length` | int32 | 1 |
 
 Conversion check on the CPU and Neural Engine against float32 PyTorch, using a synthetic
-voiced signal. This catches broken exports; float16 drifts more on this signal than on
-speech, and speech accuracy is measured in Vesper's validation records. Estimated cost
+voiced signal. This catches broken exports; float16 compute and int8 weights drift more on
+this signal than on speech, and speech accuracy is measured in Vesper's validation records. Estimated cost
 scheduled on the Neural Engine: {share:.2%}.
 
 | Mel frames | Encoder frames | Max abs diff | Cosine |
