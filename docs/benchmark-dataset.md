@@ -20,6 +20,20 @@ One row per transcription:
 Run-level metadata is published separately, limited to hardware, OS, backend, precision and revisions. The dataset
 card on Hugging Face lists the fields, sources, model licences and caveats.
 
+## Audio
+
+The dataset ships no source-dataset audio. Rows reference FLEURS, AMI, MS-SNSD, Svarah and MUCS clips by their own
+IDs. [Getting the audio for each row](benchmark-dataset-referencing.md) explains the mapping, the pinned source
+revisions, the processing behind condition suffixes such as `--quiet30`, and how to join with FLEURS. The dataset
+carries the same guide as `REFERENCING.md`.
+
+The only audio included is Vesper's four generated noise clips (`audio/synthetic-noise/`, 5 s each, deterministic,
+redistributable). The scripted dictation controls stay text-only: their audio was spoken by macOS system voices.
+Republishable versions would need an open-licence voice; that's planned with the regenerated dataset.
+
+Raw `vesper-eval` reports are not published. Per-row results and run metadata are in the dataset, and the conclusions
+are in `docs/validation/`. What remains in the reports is process logs, hashes, machine labels and paths.
+
 ## Publication rules
 
 `scripts/export-benchmark-dataset.py` applies these rules. It only reads the benchmark cache.
