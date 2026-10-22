@@ -40,13 +40,7 @@
   const bytes = $derived(
     entry?.files.reduce((total, file) => total + file.sizeBytes, 0) ?? fallbackBytes,
   );
-  const packageLabel = $derived(
-    target.quantization
-      ? target.quantization === 'q4_0'
-        ? 'Q4 weights'
-        : 'Q8 weights'
-      : 'Model package',
-  );
+  const packageLabel = 'Model package';
   const sizeLabel = $derived(
     bytes > 0
       ? `${(bytes / (bytes >= 1024 ** 3 ? 1024 ** 3 : 1024 ** 2)).toLocaleString(undefined, { maximumFractionDigits: 2 })} ${bytes >= 1024 ** 3 ? 'GiB' : 'MiB'} · `
@@ -144,8 +138,7 @@
             state.checking ||
             state.installing ||
             Boolean(entry.removalError)}
-          aria-label={`Remove ${target.name}${target.quantization ? ` ${target.quantization.slice(0, 2).toUpperCase()}` : ''}`}
-          ><Icon name="trash" />Remove</button
+          aria-label={`Remove ${target.name}`}><Icon name="trash" />Remove</button
         >
       {/if}
       <button
@@ -158,7 +151,7 @@
           installing ||
           unsupported ||
           (!dirty && (state.checking || !entry))}
-        aria-label={`${label} ${target.name}${target.quantization ? ` ${target.quantization}` : ''}`}
+        aria-label={`${label} ${target.name}`}
       >
         {#if installing}<span class="spinning" aria-hidden="true"></span>{:else}<Icon
             name={installed ? 'refresh' : 'download'}
