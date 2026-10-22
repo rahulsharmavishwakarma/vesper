@@ -279,3 +279,17 @@ test('dedicated ASR choices preserve settings, enforce languages and ignore obso
     }
   }
 });
+
+test('choosing a speech model without the saved engine resets it to Automatic', () => {
+  let models = { ...defaultSettings().models, asr: 'nvidia/parakeet-tdt-0.6b-v3' };
+  models.asrEngine = 'unified_gguf';
+  // Parakeet keeps the unified engine it offers.
+  assert.equal(selectModel(models, 'asr', 'nvidia/parakeet-tdt-0.6b-v3').asrEngine, 'unified_gguf');
+  // Another model does not offer it, so saving would otherwise fail validation.
+  models = selectModel(models, 'asr', 'CohereLabs/cohere-transcribe-03-2026');
+  assert.equal(models.asr, 'CohereLabs/cohere-transcribe-03-2026');
+  assert.equal(models.asrEngine, 'automatic');
+  // Automatic is valid for every model and is kept.
+  models = { ...models, asrEngine: 'automatic' };
+  assert.equal(selectModel(models, 'asr', 'openai/whisper-small').asrEngine, 'automatic');
+});

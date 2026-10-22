@@ -56,6 +56,8 @@ fn automatic_candidate(config: &AppConfig) -> bool {
         && config.models.custom_asr.is_none()
         && config.language == Language::English
         && vesper_core::mlx_speech_supported(config.models.asr)
+        // The unified GGUF picks its own device through NeMo-Speech.cpp.
+        && !config.uses_nemo_gguf()
 }
 
 fn preferred_with_availability(config: &AppConfig, available: bool) -> AppConfig {
@@ -130,6 +132,35 @@ fn resolve_with_preferred(
             );
         }
     }
+    // Automatic prefers the unified GGUF; until it is installed, keep using the
+    // model's existing standard files rather than failing.
+    if config.models.asr_engine == vesper_core::AsrEngine::Automatic
+        && selection.config.uses_nemo_gguf()
+        && !speech_files_present(&selection.config, root)?
+    {
+        let mut standard = config.clone();
+        standard.models.asr_engine = vesper_core::AsrEngine::Standard;
+        let standard = preferred_speech_config(&standard)?;
+        let mut cpu = standard.clone();
+        cpu.compute_backend = ComputeBackend::Cpu;
+        let installed = [standard, cpu]
+            .into_iter()
+            .filter(|candidate| candidate.validate().is_ok())
+            .find_map(|candidate| match speech_files_present(&candidate, root) {
+                Ok(true) => Some(Ok(candidate)),
+                // A leftover damaged set is not a fallback; the selected files still are.
+                Ok(false) | Err(ModelError::Integrity(_)) => None,
+                Err(error) => Some(Err(error)),
+            })
+            .transpose()?;
+        if let Some(standard) = installed {
+            selection.config = standard;
+            selection.fallback_reason = Some(
+                "The optimized model file is not installed yet; using the existing model files."
+                    .into(),
+            );
+        }
+    }
     #[cfg(feature = "mlx")]
     if selection.fallback_reason.is_none()
         && automatic_candidate(config)
@@ -191,6 +222,20 @@ mod tests {
     }
 
     #[test]
+    fn unified_gguf_automatic_is_left_to_the_nemo_runtime() {
+        let mut config = AppConfig::default();
+        config.models.asr = AsrModel::ParakeetTdt06bV3;
+        config.models.asr_engine = vesper_core::AsrEngine::UnifiedGguf;
+        config.compute_backend = ComputeBackend::Auto;
+        config.language = Language::English;
+        for available in [false, true] {
+            let preferred = preferred_with_availability(&config, available);
+            assert_eq!(preferred.compute_backend, ComputeBackend::Auto);
+            assert!(!preferred.uses_mlx_speech());
+        }
+    }
+
+    #[test]
     fn automatic_preserves_language_model_and_manual_overrides() {
         let mut config = AppConfig::default();
         config.models.asr = AsrModel::Qwen3Asr06b;
@@ -246,6 +291,62 @@ mod tests {
             .find(|p| p.runtime == vesper_core::ModelRuntime::SherpaOnnxTransducer);
         assert!(config.models.custom_asr.is_some());
         assert_eq!(preferred_with_availability(&config, true), config);
+    }
+
+    #[test]
+    fn automatic_keeps_installed_standard_files_until_the_gguf_is_installed() {
+        let root = tempfile::tempdir().unwrap();
+        let mut config = AppConfig::default();
+        config.models.asr = AsrModel::ParakeetTdt06bV3;
+        config.compute_backend = ComputeBackend::Cpu;
+        config.language = Language::German;
+        let preferred = preferred_with_availability(&config, false);
+        let install = |config: &AppConfig| {
+            for artifact in selected_exact(config)
+                .unwrap()
+                .into_iter()
+                .filter(|a| matches!(a.role.as_str(), "asr" | "asr_runtime"))
+            {
+                let path = root.path().join(&artifact.relative_path);
+                std::fs::create_dir_all(path.parent().unwrap()).unwrap();
+                std::fs::File::create(path)
+                    .unwrap()
+                    .set_len(artifact.size_bytes)
+                    .unwrap();
+            }
+        };
+        // Nothing installed: the GGUF stays the download target.
+        let chosen = resolve_with_preferred(&config, preferred.clone(), root.path()).unwrap();
+        assert!(chosen.config.uses_nemo_gguf());
+        assert!(chosen.fallback_reason.is_none());
+        // A damaged leftover standard file does not block the GGUF download target.
+        let mut standard = config.clone();
+        standard.models.asr_engine = vesper_core::AsrEngine::Standard;
+        let leftover = selected_exact(&standard)
+            .unwrap()
+            .into_iter()
+            .find(|a| a.role == "asr")
+            .unwrap();
+        let path = root.path().join(&leftover.relative_path);
+        std::fs::create_dir_all(path.parent().unwrap()).unwrap();
+        std::fs::File::create(path).unwrap().set_len(1).unwrap();
+        let chosen = resolve_with_preferred(&config, preferred.clone(), root.path()).unwrap();
+        assert!(chosen.config.uses_nemo_gguf());
+        assert!(chosen.fallback_reason.is_none());
+        // Only the standard files are installed: keep using them.
+        install(&standard);
+        let chosen = resolve_with_preferred(&config, preferred.clone(), root.path()).unwrap();
+        assert!(!chosen.config.uses_nemo_gguf());
+        assert_eq!(
+            chosen.config.models.asr_engine,
+            vesper_core::AsrEngine::Standard
+        );
+        assert!(chosen.fallback_reason.is_some());
+        // Once the GGUF and its runtime package are installed, Automatic uses them.
+        install(&preferred);
+        let chosen = resolve_with_preferred(&config, preferred, root.path()).unwrap();
+        assert!(chosen.config.uses_nemo_gguf());
+        assert!(chosen.fallback_reason.is_none());
     }
 
     #[test]

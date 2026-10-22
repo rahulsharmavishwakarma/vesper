@@ -12,8 +12,8 @@ and platform rules permit it.
 | Choice   | Device/build evidence required                      | Existing model limits                                                                                                 |
 | -------- | --------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------- |
 | Metal    | Apple Silicon macOS build with a detected Metal GPU | Native LFM and Nemotron paths are available; Apple Silicon builds also support English Parakeet/Qwen-ASR through MLX; Whisper Small can also use MLX (offered in the picker by owner decision 2026-10-07); Granite Speech 5.0 TurboCTC runs only here, for all seven of its languages, as do the English Phonon-2 and the 25-language Parakeet Redux |
-| CUDA     | Windows/Linux GPU build with a detected CUDA device | Model-specific restrictions still apply                                                                               |
-| Vulkan   | Windows/Linux Vulkan build with a detected GPU      | Model-specific restrictions still apply                                                                               |
+| CUDA     | Windows/Linux GPU build with a detected CUDA device | Model-specific restrictions still apply; Automatic runs Parakeet v3 here as its unified GGUF                                                                               |
+| Vulkan   | Windows/Linux Vulkan build with a detected GPU      | Model-specific restrictions still apply; Automatic runs Parakeet v3 here as its unified GGUF                                                                               |
 | AMD ROCm | Windows/Linux ROCm build with a detected GPU        | Nemotron's existing profile uses Vulkan for speech; its package requires x86-64                                       |
 
 Imported speech profiles still run on CPU. With cleanup enabled, the accelerator

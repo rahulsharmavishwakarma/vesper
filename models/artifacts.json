@@ -60,6 +60,19 @@
     "license": "OpenMDW-1.1"
   },
   {
+    "name": "parakeet-tdt-0.6b-v3.q8_0.gguf",
+    "relativePath": "parakeet-tdt-0.6b-v3-gguf/parakeet-tdt-0.6b-v3.q8_0.gguf",
+    "url": "https://huggingface.co/nvidia/parakeet-tdt-0.6b-v3/resolve/541d1f99c6b0c3cd0b11a95167540bb8edefd82b/parakeet-tdt-0.6b-v3.q8_0.gguf",
+    "revision": "541d1f99c6b0c3cd0b11a95167540bb8edefd82b",
+    "sha256": "e3880d0aaaaf2c308ea2c35016b2b895c423eb3fda924c1b463d1c19b7f4d32e",
+    "sizeBytes": 713975456,
+    "role": "asr",
+    "modelId": "nvidia/parakeet-tdt-0.6b-v3",
+    "engine": "nemo_gguf",
+    "quantization": "q8_0",
+    "license": "CC-BY-4.0 (NVIDIA original weights)"
+  },
+  {
     "name": "nemo-speech-0.1.0-macos-aarch64-metal.tar.gz",
     "relativePath": "nemo-speech-runtime/archives/nemo-speech-0.1.0-macos-aarch64-metal.tar.gz",
     "url": "https://github.com/NVIDIA/NeMo-Speech.cpp/releases/download/v0.1.0/nemo-speech-0.1.0-macos-aarch64-metal.tar.gz",

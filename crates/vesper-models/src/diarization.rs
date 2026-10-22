@@ -34,7 +34,7 @@ pub fn artifact() -> Artifact {
         revision: MODEL_REVISION.into(),
         sha256:"08456d9e22cd9a323c0364d98375f3746d6e68507ebb705cd46438c534c7a3a1".into(),
         size_bytes:107_012_128, role:"diarization".into(),model_id:Some(MODEL_ID.into()),
-        platform:None,backend:None,archive:None,quantization:None,license:"OpenMDW-1.1".into(),
+        platform:None,backend:None,archive:None,engine:None,quantization:None,license:"OpenMDW-1.1".into(),
     }
 }
 pub fn runtime_relative() -> String {
