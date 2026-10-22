@@ -401,13 +401,22 @@ as recording and transcription, but it does not touch recordings, transcripts or
 ordinary settings. The interface keeps the two apart. `TranscriptionPanel`
 reports `working` (recording, transcription, removal) and `downloading`
 separately: `App.svelte` disables the settings form and History only for
-`working`, and locks the model, precision, device, removal and Restore defaults
-controls for `working || downloading`. A locked control carries a visible reason
-(for example, "Model and device choices unlock when the download finishes").
+`working`. A download locks only its own model's choices (issue #313):
+`asrChoicesLocked` and `writerChoicesLocked` follow the role of the running or
+requested download (`downloads.installingKey`, `downloadRequestRole`), so the
+writer picker and precision stay usable while the speech model downloads, and
+the reverse. The device, removal, Restore defaults and the download/verify
+buttons stay locked for any download, and an unknown target (download-all,
+automatic audio packages) locks both pickers. A locked control carries a
+visible reason (for example, "The speech model and processing device unlock
+when this download finishes").
 Recording and transcription still wait for a download. The backend mirrors the
 split: `save_settings` and `retry_global_shortcut` accept a running download, and
-`save_settings` rejects changes to the model, precision, device or audio frontend
-while one runs. Do not gate a control on the combined busy flag unless it truly
+`save_settings` rejects only changes that `AppConfig::conflicts_with_download`
+reports for the running download's model (`Runtime::downloading_model`): that
+model's own choice (speech model or profile; writer, profile or quantization),
+the processing device or the audio frontend. Running downloads alongside
+recording is a separate proposal (#314). Do not gate a control on the combined busy flag unless it truly
 conflicts with the running operation (issue #273).
 
 ## Verification

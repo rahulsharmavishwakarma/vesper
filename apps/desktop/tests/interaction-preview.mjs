@@ -206,26 +206,44 @@ if (states) {
           setup.modelsReady = true;
           return args?.modelId ? structuredClone(catalog[0]) : { ready: true, message: '' };
         }
-        case 'save_settings':
+        case 'save_settings': {
           // Mirrors the backend: while a download runs, settings save unless
           // they change which model files are needed.
+          // Mirrors AppConfig::conflicts_with_download: only the files the
+          // running download writes, plus the device, stay fixed (#313).
+          const target = runtime.download?.modelId ?? null;
+          const next = args.settings;
+          const speechChanged =
+            JSON.stringify([next.models.asr, next.models.customAsr]) !==
+            JSON.stringify([settings.models.asr, settings.models.customAsr]);
+          const writerChanged =
+            JSON.stringify([
+              next.models.rewriter,
+              next.models.customRewriter,
+              next.rewriteQuantization,
+            ]) !==
+            JSON.stringify([
+              settings.models.rewriter,
+              settings.models.customRewriter,
+              settings.rewriteQuantization,
+            ]);
+          const isSpeech =
+            target === settings.models.asr || target === settings.models.customAsr?.id;
+          const isWriter =
+            target === settings.models.rewriter || target === settings.models.customRewriter?.id;
+          const shared = next.computeBackend !== settings.computeBackend;
           if (
             runtime.busy &&
-            JSON.stringify([
-              args.settings.models,
-              args.settings.rewriteQuantization,
-              args.settings.computeBackend,
-            ]) !==
-              JSON.stringify([
-                settings.models,
-                settings.rewriteQuantization,
-                settings.computeBackend,
-              ])
+            (shared ||
+              (isSpeech && speechChanged) ||
+              (isWriter && writerChanged) ||
+              (!isSpeech && !isWriter && (speechChanged || writerChanged)))
           )
-            throw 'A model is downloading. Wait for it to finish before changing models or the processing device.';
+            throw 'A model is downloading. Wait for it to finish before changing that model or the processing device.';
           await new Promise((r) => setTimeout(r, 450));
           settings = JSON.parse(JSON.stringify(args.settings));
           return settings;
+        }
         case 'reset_settings':
           settings = defaultSettings();
           return settings;

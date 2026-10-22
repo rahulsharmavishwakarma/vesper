@@ -318,8 +318,9 @@ Download progress and **Cancel download** are visible even outside Models. Setup
 uses the existing installation operation, so recording and transcription wait
 during an active download; cancellation lets you continue with original-audio
 fallback. Only choices that conflict with a download are locked while it runs:
-speech and writing model, model precision, the processing device, removing models
-and Restore defaults, each with a note saying why. Everything else stays usable,
+the model being downloaded (while the speech model downloads you can still
+change the writing model and its precision, and the reverse), the processing
+device, removing models and Restore defaults, each with a note saying why. Everything else stays usable,
 including History (browse, import, export, review), the language and microphone,
 Appearance, Shortcuts, Writing preferences and other settings, which save as usual. Files are
 verified against pinned hashes. Downloads require internet access; transcription

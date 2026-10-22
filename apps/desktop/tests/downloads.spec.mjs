@@ -23,13 +23,23 @@ async function startDownload(page) {
 
 test('a model download locks only what conflicts with it', async ({ page }) => {
   await startDownload(page);
-  // Model, device and reset choices wait for the download, and say so.
+  // The speech model downloads: its choice and the device wait, and say so.
+  // The writing model is a different download, so it stays free (#313).
   await expect(page.locator('#models-asr-model')).toBeDisabled();
-  await expect(page.locator('#models-cleanup-model')).toBeDisabled();
   await expect(page.locator('#compute-backend')).toBeDisabled();
   await expect(
-    page.getByText('Model and device choices unlock when the download finishes.'),
+    page.getByText('The speech model and processing device unlock when this download finishes.', {
+      exact: false,
+    }),
   ).toBeVisible();
+  const writer = page.locator('#models-cleanup-model');
+  await expect(writer).toBeEnabled();
+  await writer.click();
+  await page.getByRole('button', { name: 'Any language' }).click();
+  await page.getByRole('option', { name: /SmolLM2 360M/ }).click();
+  await expect(writer).toContainText('SmolLM2 360M');
+  await expect(page.locator('.save-status')).toContainText(/Saved \d/, { timeout: 10_000 });
+  await expect(page.getByRole('alert')).toHaveCount(0);
 
   // Dictate: recording waits, choosing a language and microphone does not.
   await nav(page, 'Dictate').click();
