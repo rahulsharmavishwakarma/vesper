@@ -35,9 +35,15 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
             "--asr-engine" => {
                 let id = args
                     .next()
-                    .ok_or("--asr-engine requires standard or unified_gguf")?;
+                    .ok_or("--asr-engine requires standard, unified_gguf or neural_engine")?;
                 config.models.asr_engine = serde_json::from_value(serde_json::Value::String(id))?;
-                config.language = vesper_core::Language::Auto;
+                // The Neural Engine engine is qualified for English only.
+                config.language =
+                    if config.models.asr_engine == vesper_core::AsrEngine::NeuralEngine {
+                        vesper_core::Language::English
+                    } else {
+                        vesper_core::Language::Auto
+                    };
             }
             "--backend" => {
                 let id = args.next().ok_or("--backend requires a backend ID")?;
