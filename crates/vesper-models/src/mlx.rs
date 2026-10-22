@@ -228,6 +228,7 @@ mod tests {
         let root = tempfile::tempdir().unwrap();
         let mut config = AppConfig::default();
         config.models.asr = AsrModel::ParakeetTdt06bV3;
+        config.models.asr_engine = vesper_core::AsrEngine::Standard;
         config.compute_backend = ComputeBackend::Metal;
         config.cleanup_enabled = false;
         let directory = root.path().join("mlx/parakeet");
@@ -295,6 +296,8 @@ mod tests {
         ] {
             let mut config = AppConfig::default();
             config.models.asr = model;
+            // The standard exports; Automatic runs English Parakeet on the Neural Engine.
+            config.models.asr_engine = vesper_core::AsrEngine::Standard;
             config.cleanup_enabled = false;
             config.compute_backend = ComputeBackend::Metal;
             let gpu = selected(&config).unwrap();

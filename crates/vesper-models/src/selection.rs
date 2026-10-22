@@ -28,6 +28,24 @@ impl SpeechSelection {
     /// Only callers handling a GPU initialization failure may use this retry.
     /// Cancellation, verification and decoding failures are not retry signals.
     pub fn cpu_fallback(&mut self, root: &Path, reason: String) -> Result<()> {
+        // Automatic's Neural Engine load failed: run the unified GGUF if its file
+        // is already installed (the companion download fetches it).
+        if self.config.models.asr_engine == vesper_core::AsrEngine::Automatic
+            && self.config.uses_neural_engine()
+        {
+            let mut gguf = self.config.clone();
+            gguf.models.asr_engine = vesper_core::AsrEngine::UnifiedGguf;
+            if !speech_files_present(&gguf, root)? {
+                return Err(ModelError::RuntimeUnavailable(format!(
+                    "The Neural Engine could not be used ({reason}), and the fallback model file is still downloading."
+                )));
+            }
+            self.config = gguf;
+            self.fallback_reason = Some(format!(
+                "The Neural Engine could not be used ({reason}); using the unified model file."
+            ));
+            return Ok(());
+        }
         if vesper_core::mlx_speech_only(self.config.models.asr) {
             return Err(ModelError::RuntimeUnavailable(format!(
                 "Automatic GPU initialization failed ({reason}). This model runs only on the Apple GPU and has no CPU version."
@@ -77,6 +95,16 @@ fn preferred_with_availability(config: &AppConfig, available: bool) -> AppConfig
 /// Select pinned files for an explicit install/repair, independent of which
 /// export is already installed. Hardware discovery never loads model weights.
 pub fn preferred_speech_config(config: &AppConfig) -> Result<AppConfig> {
+    // Automatic picks the Neural Engine only where the MLX bridge, which runs
+    // its decoder, loads; elsewhere the unified GGUF.
+    let mut config = config.clone();
+    if config.models.asr_engine == vesper_core::AsrEngine::Automatic
+        && config.uses_neural_engine()
+        && !neural_engine_runnable()
+    {
+        config.models.asr_engine = vesper_core::AsrEngine::UnifiedGguf;
+    }
+    let config = &config;
     #[cfg(feature = "mlx")]
     let available = automatic_candidate(config) && mlx::available()?;
     #[cfg(not(feature = "mlx"))]
@@ -134,18 +162,26 @@ fn resolve_with_preferred(
             );
         }
     }
-    // Automatic prefers the unified GGUF; until it is installed, keep using the
-    // model's existing standard files rather than failing.
+    // Automatic prefers the Neural Engine (English) or the unified GGUF; until
+    // that set is installed, use another installed set rather than failing: the
+    // GGUF after the Neural Engine, then the model's standard files.
     if config.models.asr_engine == vesper_core::AsrEngine::Automatic
-        && selection.config.uses_nemo_gguf()
+        && (selection.config.uses_nemo_gguf() || selection.config.uses_neural_engine())
         && !speech_files_present(&selection.config, root)?
     {
+        let mut candidates = Vec::new();
+        if selection.config.uses_neural_engine() {
+            let mut gguf = config.clone();
+            gguf.models.asr_engine = vesper_core::AsrEngine::UnifiedGguf;
+            candidates.push(preferred_speech_config(&gguf)?);
+        }
         let mut standard = config.clone();
         standard.models.asr_engine = vesper_core::AsrEngine::Standard;
         let standard = preferred_speech_config(&standard)?;
         let mut cpu = standard.clone();
         cpu.compute_backend = ComputeBackend::Cpu;
-        let installed = [standard, cpu]
+        candidates.extend([standard, cpu]);
+        let installed = candidates
             .into_iter()
             .filter(|candidate| candidate.validate().is_ok())
             .find_map(|candidate| match speech_files_present(&candidate, root) {
@@ -336,6 +372,52 @@ mod tests {
         let chosen = resolve_with_preferred(&config, preferred, root.path()).unwrap();
         assert!(chosen.config.uses_nemo_gguf());
         assert!(chosen.fallback_reason.is_none());
+    }
+
+    #[test]
+    fn automatic_english_prefers_the_neural_engine_then_the_installed_gguf() {
+        let root = tempfile::tempdir().unwrap();
+        let mut config = AppConfig::default();
+        config.models.asr = AsrModel::ParakeetTdt06bV3;
+        config.compute_backend = ComputeBackend::Auto;
+        config.language = Language::English;
+        let preferred = preferred_speech_config(&config).unwrap();
+        if !(vesper_core::neural_engine_supported(config.models.asr) && neural_engine_runnable()) {
+            // Without the MLX bridge, Automatic English runs the unified GGUF.
+            assert!(preferred.uses_nemo_gguf() && !preferred.uses_neural_engine());
+            return;
+        }
+        assert!(preferred.uses_neural_engine());
+        let install = |config: &AppConfig| {
+            for artifact in selected_exact(config)
+                .unwrap()
+                .into_iter()
+                .filter(|a| matches!(a.role.as_str(), "asr" | "asr_runtime"))
+            {
+                let path = root.path().join(&artifact.relative_path);
+                std::fs::create_dir_all(path.parent().unwrap()).unwrap();
+                std::fs::File::create(path)
+                    .unwrap()
+                    .set_len(artifact.size_bytes)
+                    .unwrap();
+            }
+        };
+        // Only the GGUF is installed: use it until the Neural Engine set arrives.
+        let mut gguf = config.clone();
+        gguf.models.asr_engine = vesper_core::AsrEngine::UnifiedGguf;
+        install(&preferred_speech_config(&gguf).unwrap());
+        let chosen = resolve_with_preferred(&config, preferred.clone(), root.path()).unwrap();
+        assert!(chosen.config.uses_nemo_gguf() && chosen.fallback_reason.is_some());
+        // With the Neural Engine set installed, Automatic uses it; a failed
+        // Neural Engine load retries on the installed GGUF.
+        install(&preferred);
+        let mut chosen = resolve_with_preferred(&config, preferred, root.path()).unwrap();
+        assert!(chosen.config.uses_neural_engine() && chosen.fallback_reason.is_none());
+        chosen
+            .cpu_fallback(root.path(), "probe failed".into())
+            .unwrap();
+        assert!(chosen.config.uses_nemo_gguf());
+        assert!(chosen.fallback_reason.unwrap().contains("Neural Engine"));
     }
 
     #[test]
