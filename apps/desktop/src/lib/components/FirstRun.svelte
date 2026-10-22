@@ -868,9 +868,17 @@
   .fr-flyer :global(.lid) {
     fill: currentColor;
   }
-  .hello-bird :global(.dsh) {
+  /* The same call as the app logo (BrandLogo): both dashes pulse every 2.6 s,
+   * the second trailing by 0.35 s. A chirp plays a stronger burst on top. */
+  .hello-bird :global(.dsh),
+  .fr-flyer :global(.dsh) {
     transform-box: fill-box;
     transform-origin: left center;
+    animation: ember-chirp 2.6s ease-in-out infinite;
+  }
+  .hello-bird :global(.d1),
+  .fr-flyer :global(.d1) {
+    animation-delay: 0.35s;
   }
   .hello-bird :global(.lid),
   .fr-flyer :global(.lid) {
@@ -883,6 +891,9 @@
   }
   .hello-bird.calling :global(.dsh) {
     animation: call 0.9s ease-out both;
+  }
+  .hello-bird.calling :global(.d1) {
+    animation-delay: 0.08s;
   }
   .hello h1 {
     font: 800 56px/1.04 var(--font-display);
@@ -1244,6 +1255,22 @@
       transform: scaleY(1);
     }
   }
+  @keyframes ember-chirp {
+    0%,
+    55%,
+    100% {
+      opacity: 1;
+      transform: scale(1);
+    }
+    20% {
+      opacity: 0.12;
+      transform: scale(0.7);
+    }
+    38% {
+      opacity: 1;
+      transform: scale(1.08);
+    }
+  }
   @keyframes call {
     0% {
       opacity: 0.1;
@@ -1271,6 +1298,8 @@
     .fr-grid.from-welcome .fr-rail,
     .fr-grid.from-welcome .fr-main,
     .hello-bird :global(.lid),
+    .hello-bird :global(.dsh),
+    .fr-flyer :global(.dsh),
     .hello-bird.calling :global(.dsh) {
       animation: none;
     }

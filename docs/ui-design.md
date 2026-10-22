@@ -375,6 +375,10 @@ and tests open it with `?first-run`.
   global shortcut shows the same states (its result lands in the box by paste
   or from the latest result). Recording goes through the normal pipeline, and
   **Finish** waits for words to appear.
+- **Welcome's bird** calls like the app logo: its two beak dashes pulse every
+  2.6 s, the second trailing by 0.35 s, the eye blinks every 4.2 s, and a chirp
+  (on its own call, hover or click) plays a stronger burst on top. The flying
+  bird keeps the same pulse on its way to the sidebar.
 - **Welcome's background** is a fine dot field in the accent colour. Each call
   of the bird (about every five seconds, and on hover or click) sends a soft
   ripple out from its beak; dots near the pointer brighten and drift aside,
