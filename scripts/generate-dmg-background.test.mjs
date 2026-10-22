@@ -86,4 +86,8 @@ test('artwork whose comments reassemble after stripping is refused', () => {
     () => dmgBackgroundSource('<svg viewBox="0 0 1 1"><!-<!---->-><path/></svg>', tokens),
     /Unexpected comment markup/,
   );
+  assert.doesNotMatch(
+    dmgBackgroundSource('<svg viewBox="0 0 1 1"><!-- note --!><path/></svg>', tokens),
+    /note/,
+  );
 });
