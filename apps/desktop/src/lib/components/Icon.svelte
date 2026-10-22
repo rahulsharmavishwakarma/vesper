@@ -20,6 +20,10 @@
     plus: 'M12 5v14M5 12h14',
     refresh: 'M20 12a8 8 0 1 1-2.5-5.8M20 4v5h-5',
     close: 'M6 6l12 12M18 6L6 18',
+    memory: 'M3 8h18v8h-7l-1 1.5h-2L10 16H3zM7 11v2M11 11v2M15 11v2M18 11v2',
+    disk: 'M3 7.5A2.5 2.5 0 0 1 5.5 5h13A2.5 2.5 0 0 1 21 7.5v9a2.5 2.5 0 0 1-2.5 2.5h-13A2.5 2.5 0 0 1 3 16.5zM3 13h18M17 16h.01M14 16h.01',
+    target: 'M12 21a9 9 0 1 0 0-18 9 9 0 0 0 0 18Zm0-5a4 4 0 1 0 0-8 4 4 0 0 0 0 8Zm0-4h.01',
+    shield: 'M12 3 5 6v5c0 4.5 3 8 7 10 4-2 7-5.5 7-10V6zm-3 9 2 2 4-4',
   };
   type IconName =
     | keyof typeof simplePaths

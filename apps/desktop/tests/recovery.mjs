@@ -149,6 +149,23 @@ async function setup({ recording = false, preview = false, main = false, interce
             activity: { ...state.runtime },
             timings: null,
           };
+        case 'get_device_profile':
+          return {
+            os: 'macos',
+            arch: 'aarch64',
+            chip: 'Apple M3',
+            memoryBytes: 16e9,
+            freeBytes: 214e9,
+          };
+        case 'get_onboarding':
+          // An existing install: first-run setup finished long ago.
+          return {
+            version: 1,
+            status: 'completed',
+            step: 7,
+            reason: 'existing_install',
+            completedAt: 1,
+          };
         case 'get_settings':
           return defaultSettings();
         case 'save_settings':
@@ -1638,7 +1655,14 @@ await test('language menus follow the writer and preserve incompatible selection
   };
   await until(() => target.querySelector('.configured-models'), 'Settings did not load');
   await navigate('Models');
-  (await openOptions('models-cleanup-model'))
+  await openOptions('models-cleanup-model');
+  // The picker opens filtered to the current language (Hindi); an English-only
+  // writer is one "Any language" click away, so a mismatch can still be chosen.
+  [...document.querySelectorAll('.lang-filter button')]
+    .find((element) => element.textContent.trim() === 'Any language')
+    .click();
+  await tick();
+  [...document.querySelectorAll('[role="option"]')]
     .find((option) => option.textContent.includes(english.profile.name))
     .click();
   await tick();

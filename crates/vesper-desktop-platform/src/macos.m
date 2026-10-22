@@ -1,6 +1,8 @@
 #import <AppKit/AppKit.h>
 #import <ApplicationServices/ApplicationServices.h>
 #import <Carbon/Carbon.h>
+#import <AVFoundation/AVFoundation.h>
+#include <sys/sysctl.h>
 #include <math.h>
 #import "projects.m"
 
@@ -478,4 +480,45 @@ bool td_copy(const char *text) {
     if (!value) return false;
     [NSPasteboard.generalPasteboard clearContents];
     return [NSPasteboard.generalPasteboard setString:value forType:NSPasteboardTypeString];
+}
+
+// First-run setup (issue #270). Microphone: 0 not asked, 1 restricted,
+// 2 denied, 3 allowed, 4 just asked (the system prompt is showing). Asking is
+// explicit only; a read never prompts.
+int32_t td_microphone(bool request) {
+    AVAuthorizationStatus status = [AVCaptureDevice authorizationStatusForMediaType:AVMediaTypeAudio];
+    switch (status) {
+        case AVAuthorizationStatusAuthorized: return 3;
+        case AVAuthorizationStatusDenied: return 2;
+        case AVAuthorizationStatusRestricted: return 1;
+        case AVAuthorizationStatusNotDetermined:
+        default:
+            if (!request) return 0;
+            [AVCaptureDevice requestAccessForMediaType:AVMediaTypeAudio completionHandler:^(BOOL granted) { (void)granted; }];
+            return 4;
+    }
+}
+// The chip name (for example "Apple M3") and physical memory in bytes.
+uint64_t td_device(char *chip, size_t capacity) {
+    if (chip && capacity) {
+        size_t size = capacity;
+        if (sysctlbyname("machdep.cpu.brand_string", chip, &size, NULL, 0) != 0) chip[0] = 0;
+        chip[capacity - 1] = 0;
+    }
+    return NSProcessInfo.processInfo.physicalMemory;
+}
+// Space available for new files on the volume holding `path`, counting
+// purgeable space macOS frees on demand; -1 when unknown.
+int64_t td_free_space(const char *path) {
+    if (!path) return -1;
+    NSURL *url = [NSURL fileURLWithPath:[NSString stringWithUTF8String:path]];
+    while (url && ![url checkResourceIsReachableAndReturnError:nil]) {
+        NSURL *parent = url.URLByDeletingLastPathComponent;
+        if ([parent isEqual:url]) break;
+        url = parent;
+    }
+    NSNumber *free = nil;
+    if (![url getResourceValue:&free forKey:NSURLVolumeAvailableCapacityForImportantUsageKey error:nil] || !free)
+        return -1;
+    return free.longLongValue;
 }

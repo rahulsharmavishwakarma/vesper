@@ -290,6 +290,110 @@ their own feed. Installing automatically never restarts the app and reuses
 `downloadAndInstall`'s signature check and wait for active work (issue #195).
 With checking off, the idle pill becomes a manual **Check for updates** action.
 
+## First-run setup
+
+The one-time setup (issue #270; design study in `docs/design/first-run/`) is
+`FirstRun.svelte`, shown by `App.svelte` above the app while the profile's
+first-run state is pending (`FIRST_RUN_ENABLED` in `lib/firstRun.ts`). Previews
+and tests open it with `?first-run`.
+
+- **Welcome** uses the whole window with one focal point: the bird, "Welcome
+  to Vesper", one line and one Get started button. Its single signature motion
+  is a thin voice line that gathers into the centre and becomes the bird; the
+  words then come into focus in sequence and the bird chirps once. Afterwards
+  only the blink remains.
+- **Leaving Welcome** places step 2 underneath at once and crossfades Welcome
+  away above it, so there is no blank frame. The bird is the one shared
+  element: it flies a sampled arc with one ease-in-out into the sidebar logo,
+  measured where the logo rests rather than mid-slide. The rail slides in as
+  one piece and the content fades in as one.
+- **Steps** keep the setup rail (completed steps are buttons for going back;
+  later steps are not interactive), **Back** from Voice onward and one
+  Continue per step. Going back to Welcome, from Back or the rail, shows the
+  composed Welcome screen again (a short fade, no replayed intro); there is no
+  empty step 1. There is no Skip. Progress is saved after every step so a quit
+  resumes where it stopped.
+- **Voice** uses the app's shared controls: the language and microphone
+  fields are the same `Select` as Dictate, and the meter is the recording
+  waveform (`AudioIndicator`, full reed shape and pitch spacing). The language
+  list is every explicit language at least one setup speech model declares in
+  `models/languages.json`; automatic detection stays in Dictate and Settings.
+  Choosing a language the current speech model cannot hear also selects the
+  recommended model for it, so saved settings stay valid, and the hint names
+  that model. The microphone prompt appears only from **Allow microphone**; a
+  denial names the exact System Settings path and is noticed as soon as access
+  is turned on. About 0.6 s of clear input confirms "Heard you", and Continue
+  waits for it.
+- **Models** shows this Mac as three tiles (chip, memory, free space with a
+  bar for this download) that rise in once while the numbers count up. Below,
+  the recommended speech model and, under **Tidy my text**, the writing model
+  are the app's identity `Select`, the same picker as the Models page. Each
+  opens filtered to the language chosen on Voice, best first. Under the
+  speech model, accuracy, speed and memory crossfade when the choice changes,
+  with one evidence line naming where each number comes from.
+- **Picker results** (setup and the Models page, `recommendations.ts`): each
+  speech row carries three ring gauges before its download icon: accuracy in
+  the chosen language (target), time to write a recording (CPU) and memory
+  against this Mac's RAM (amber above a quarter, red above half). Writer rows
+  carry instruction following (shield) and a multilingual score (globe).
+  Rings draw in when the list opens; a dashed empty ring means no figure
+  exists. The row's description starts with a tag such as *Best for English*,
+  *Published result*, *Failed Vesper's test · 1 of 32 recordings failed* or
+  *Doesn't support Hindi*. Setup locks rows that cannot run here; the Models
+  page keeps them selectable so a language can be repaired after a switch.
+  Free space must cover the download plus a quarter, and being offline blocks
+  the download, each with its reason in the footer. **Download and set up**
+  saves the choice, starts the download in the background and moves on; a chip
+  at the bottom of the rail shows progress, then **Models ready**, or **Download
+  stopped** with **Try again**.
+- **Access** shows the microphone and Accessibility. **Open System Settings**
+  asks macOS and opens the Accessibility pane, then notices the moment access
+  is granted (a second request finishes event posting or clipboard access when
+  only those are missing). Granting access turns on typing into apps. After
+  eight seconds of waiting it offers **Restart Vesper** (setup resumes here) and
+  **Keep text in Vesper**, an explicit outcome that keeps words in the app,
+  ready to copy, so nobody is trapped.
+- **Shortcut** reuses the Settings recorder for Hold to talk and Press to
+  toggle: activate the field, press the keys, Escape cancels.
+- **Your words** previews one sample sentence as said and as written. **As I
+  said it** and **Polished** are the Formatting-only and fuller cleanup
+  presets; with Tidy my text off they are disabled with the reason. Words added
+  here are saved to Your vocabulary as words you added. Changing the style
+  re-writes the sentence with a soft blur while the bird tilts and chirps;
+  adding a word sends it as a chip into its place in the sentence, where the
+  bird chirps. Automatic learning is explained, not switched (it is always on).
+- **Try it** is locked behind live progress until the models are installed;
+  after a restart it checks what is installed and resumes the download. It
+  reuses the Dictate recorder's shared classes: the large status heading
+  (Ready to try, Listening…, Writing it down…, It works), the **Record**
+  button with its ember ring, and the timer above the centred recording
+  waveform, with one short hint ("Click to start and stop, or hold to talk")
+  that hides while recording; the shortcut is named once, under the card. A
+  click starts recording and a second click (**Stop and
+  transcribe**) finishes it; holding the button for more than 350 ms works as
+  push-to-talk (**Release to finish**). Like Dictate, the step follows the
+  recorder status and `transcription-partial` events, so live words stream
+  into the practice box itself while speaking (confirmed words in ink, the
+  unconfirmed tail in grey, a blinking caret) and become the editable final
+  text on stop. Drafts are painted at most once per frame, newest first;
+  words that stay the same keep their element (`liveWords.ts` keys them by
+  position and text), so only new or revised words ease in and a grey word
+  turning final fades to ink, and a capture started with the
+  global shortcut shows the same states (its result lands in the box by paste
+  or from the latest result). Recording goes through the normal pipeline, and
+  **Finish** waits for words to appear.
+- **Welcome's bird** calls like the app logo: its two beak dashes pulse every
+  2.6 s, the second trailing by 0.35 s, the eye blinks every 4.2 s, and a chirp
+  (on its own call, hover or click) plays a stronger burst on top. The flying
+  bird keeps the same pulse on its way to the sidebar.
+- **Welcome's background** is a fine dot field in the accent colour. Each call
+  of the bird (about every five seconds, and on hover or click) sends a soft
+  ripple out from its beak; dots near the pointer brighten and drift aside,
+  easing after the cursor. Only the bird's body stays clear, so dots never show
+  through its eye or wing; there is no glow behind the bird, and hovering it
+  shows no button fill.
+- **Reduced motion** shows Welcome at once and changes step without the flight.
+
 ## Busy and locked controls
 
 The backend runs one operation at a time, so a model download holds the same slot
