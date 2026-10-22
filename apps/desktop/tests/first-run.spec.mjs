@@ -78,7 +78,7 @@ test('setup welcomes a new profile, saves progress and finishes once', async ({ 
   await expect(record).toBeEnabled();
   await record.click();
   await expect(page.locator('.first-run').getByText('Listening…', { exact: true })).toBeVisible();
-  await expect(page.locator('.first-run .live-words')).toContainText(
+  await expect(page.locator('.first-run .live-box')).toContainText(
     'Can you send the Arclight notes',
   );
   await page.locator('.first-run').getByRole('button', { name: 'Stop and transcribe' }).click();

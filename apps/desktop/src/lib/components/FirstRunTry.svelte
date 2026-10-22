@@ -66,7 +66,6 @@
           ? 'It works'
           : 'Ready to try',
   );
-  const liveWords = $derived(live ? `${live.committedText}${live.provisionalText}`.trim() : '');
 
   // Any text that lands in the box counts: the button, or the global shortcut.
   $effect(() => onDone(text.trim().length > 1));
@@ -215,10 +214,9 @@
           <Icon name="mic" />
           <h2 class="recorder-label"><span role="status">{status}</span></h2>
         </div>
-        <p class="dictate-hint">
-          Click Record to start and again to stop, or hold it while you speak. In any app, hold
-          <kbd>{hold}</kbd>.
-        </p>
+        {#if phase === 'idle'}<p class="dictate-hint">
+            Click to start and stop, or hold to talk.
+          </p>{/if}
       </div>
       <div class="capture-actions">
         <button
@@ -276,18 +274,26 @@
     </div>
   </div>
   <section class="practice">
-    {#if liveWords && phase !== 'idle'}<p class="live-words" aria-live="polite">
-        <span class="label"
-          >{live?.isFinal || phase === 'transcribing' ? 'Finalizing' : 'Live'}</span
-        ><span>{live?.committedText}</span><span class="provisional">{live?.provisionalText}</span>
-      </p>{/if}
-    <textarea
-      bind:this={box}
-      bind:value={text}
-      rows="3"
-      placeholder="Your words will appear here…"
-      aria-label="Practice text"
-      disabled={!ready}></textarea>
+    {#if phase !== 'idle'}
+      <!-- While recording, the box itself fills with live words: what is already
+           written, then the confirmed draft, then the unconfirmed tail in grey. -->
+      <div class="box live-box" aria-live="polite" aria-label="Practice text, live">
+        {#if text.trim()}<span>{text.trim()} </span>{/if}<span>{live?.committedText ?? ''}</span
+        ><span class="provisional">{live?.provisionalText ?? ''}</span><span
+          class="caret"
+          aria-hidden="true"
+        ></span>
+      </div>
+    {:else}
+      <textarea
+        bind:this={box}
+        bind:value={text}
+        class="box"
+        rows="3"
+        placeholder="Your words will appear here…"
+        aria-label="Practice text"
+        disabled={!ready}></textarea>
+    {/if}
     {#if error}<p class="error" role="alert">{error}</p>{/if}
   </section>
   {#if !ready}
@@ -315,8 +321,11 @@
 </div>
 <p class="hint">
   {settings.dictationOutput === 'paste'
-    ? 'In everyday use the text goes into the app you’re in.'
-    : 'Your words appear in Vesper, ready to copy.'}
+    ? 'In other apps, hold '
+    : 'Your words stay in Vesper, ready to copy. Anywhere, hold '}<kbd>{hold}</kbd
+  >{settings.dictationOutput === 'paste'
+    ? ' and your words go where you’re typing.'
+    : ' to dictate.'}
 </p>
 
 <style>
@@ -327,7 +336,9 @@
     padding: 20px 28px 24px;
     border-top: 1px solid var(--color-line);
   }
-  textarea {
+  .box {
+    display: block;
+    box-sizing: border-box;
     width: 100%;
     min-height: 110px;
     resize: none;
@@ -339,7 +350,7 @@
     background: var(--color-bg);
     transition: border-color var(--duration-state) var(--ease-out);
   }
-  textarea:focus-visible {
+  textarea.box:focus-visible {
     outline: none;
     border-color: var(--color-accent);
   }
@@ -356,34 +367,31 @@
   .recorder-signal {
     align-items: center;
   }
-  .live-words {
-    display: flex;
-    flex-wrap: wrap;
-    align-items: baseline;
-    gap: 0 6px;
-    margin: 0 0 12px;
-    font-size: 18px;
-    line-height: 1.5;
+  .live-box {
+    white-space: pre-wrap;
+    overflow-wrap: anywhere;
     color: var(--color-ink);
-    animation: live-in 220ms var(--ease);
+    border-color: var(--color-accent);
   }
-  .live-words .label {
-    margin-right: 4px;
-    font-size: 12px;
-    font-weight: 600;
-    color: var(--color-accent);
-  }
-  .live-words .provisional {
+  .live-box .provisional {
     color: var(--color-muted);
   }
-  @keyframes live-in {
-    from {
-      opacity: 0;
-      transform: translateY(4px);
+  .caret {
+    display: inline-block;
+    width: 2px;
+    height: 1.1em;
+    margin-left: 1px;
+    vertical-align: -0.15em;
+    background: var(--color-accent);
+    animation: caret 1s steps(2, start) infinite;
+  }
+  @keyframes caret {
+    to {
+      visibility: hidden;
     }
   }
   @media (prefers-reduced-motion: reduce) {
-    .live-words {
+    .caret {
       animation: none;
     }
   }

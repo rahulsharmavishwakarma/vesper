@@ -367,11 +367,15 @@ and tests open it with `?first-run`.
   reuses the Dictate recorder's shared classes: the large status heading
   (Ready to try, Listening…, Writing it down…, It works), the **Record**
   button with its ember ring, and the timer above the centred recording
-  waveform. A click starts recording and a second click (**Stop and
+  waveform, with one short hint ("Click to start and stop, or hold to talk")
+  that hides while recording; the shortcut is named once, under the card. A
+  click starts recording and a second click (**Stop and
   transcribe**) finishes it; holding the button for more than 350 ms works as
   push-to-talk (**Release to finish**). Like Dictate, the step follows the
   recorder status and `transcription-partial` events, so live words stream
-  above the practice box while speaking, and a capture started with the
+  into the practice box itself while speaking (confirmed words in ink, the
+  unconfirmed tail in grey, a blinking caret) and become the editable final
+  text on stop, and a capture started with the
   global shortcut shows the same states (its result lands in the box by paste
   or from the latest result). Recording goes through the normal pipeline, and
   **Finish** waits for words to appear.
@@ -383,7 +387,8 @@ and tests open it with `?first-run`.
   of the bird (about every five seconds, and on hover or click) sends a soft
   ripple out from its beak; dots near the pointer brighten and drift aside,
   easing after the cursor. Only the bird's body stays clear, so dots never show
-  through its eye or wing; there is no glow behind the bird.
+  through its eye or wing; there is no glow behind the bird, and hovering it
+  shows no button fill.
 - **Reduced motion** shows Welcome at once and changes step without the flight.
 
 ## Busy and locked controls

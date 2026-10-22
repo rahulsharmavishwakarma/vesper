@@ -69,7 +69,7 @@
     },
     6: {
       title: 'Say something.',
-      lede: 'Press Record, or hold your shortcut, and say the sentence from the last step. It appears here, written your way.',
+      lede: 'Say the sentence from the last step. It appears here, written your way.',
     },
   };
 
@@ -842,6 +842,14 @@
       opacity 0.5s var(--ease-out),
       transform 1s var(--ease-spring),
       filter 0.8s var(--ease-out);
+  }
+  /* The bird is a button only so it can be clicked; it never shows the app's
+   * button hover or press fill (a grey square behind the artwork). */
+  .hello-bird:hover:enabled,
+  .hello-bird:active:enabled {
+    background: none;
+    border-color: transparent;
+    box-shadow: none;
   }
   .hello-bird.in {
     opacity: 1;
