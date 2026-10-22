@@ -132,6 +132,7 @@ impl Model {
             "granite_speech5_ctc",
             "phonon2",
             "parakeet_redux",
+            "parakeet_neural_engine",
         ]
         .contains(&architecture)
         {
@@ -445,6 +446,7 @@ mod tests {
             "granite_speech5_ctc",
             "phonon2",
             "parakeet_redux",
+            "parakeet_neural_engine",
         ]
         .contains(&architecture.as_str())
         {

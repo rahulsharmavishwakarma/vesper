@@ -23,7 +23,7 @@ pub(crate) struct RecognizerKey {
 
 pub(crate) fn key(config: &AppConfig, root: &Path) -> Result<RecognizerKey> {
     config.validate()?;
-    if !config.uses_mlx_speech() {
+    if !config.uses_mlx_runtime() {
         return Err(crate::InferenceError::UnsupportedAsr(
             config.models.asr.id(),
         ));
@@ -70,8 +70,11 @@ pub(crate) struct Recognizer {
     metrics: RefCell<Metrics>,
 }
 
-pub(crate) fn maximum_samples(model: AsrModel) -> usize {
-    (match model {
+pub(crate) fn maximum_samples(config: &AppConfig) -> usize {
+    if config.uses_neural_engine() {
+        return crate::segmented_audio::NEURAL_ENGINE_SEGMENT_SECONDS * ASR_SAMPLE_RATE as usize;
+    }
+    (match config.models.asr {
         AsrModel::WhisperSmall => 29,
         // Block attention is local to 1.28 s windows, so 30 s parts stay exact.
         AsrModel::ParakeetTdt06bV3
@@ -119,6 +122,7 @@ impl Recognizer {
         let verification_us = micros(started);
         check_cancelled(cancelled)?;
         let architecture = match config.models.asr {
+            _ if config.uses_neural_engine() => "parakeet_neural_engine",
             AsrModel::ParakeetTdt06bV3 => "parakeet",
             AsrModel::Qwen3Asr06b => "qwen3_asr",
             AsrModel::WhisperSmall => "whisper",
@@ -128,7 +132,7 @@ impl Recognizer {
             _ => unreachable!(),
         };
         let directory = root.join(
-            vesper_models::mlx::model_subdirectory(config.models.asr)
+            vesper_models::mlx::speech_subdirectory(config)
                 .map_err(crate::resident_sherpa::verification_error)?,
         );
         let started = Instant::now();
@@ -184,7 +188,7 @@ impl Recognizer {
         let result = crate::segmented_audio::decode_segments_with_limit(
             audio.samples(),
             cancelled,
-            maximum_samples(config.models.asr),
+            maximum_samples(config),
             |samples| {
                 let report = self
                     .model
