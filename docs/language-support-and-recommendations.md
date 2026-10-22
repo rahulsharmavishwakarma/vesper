@@ -160,7 +160,38 @@ The checked-in request examples currently use a 20% median-WER ceiling for monol
 
 ## What the application recommends today
 
-The application currently filters the language menu and download availability using compatibility metadata. It does **not** yet consume benchmark evidence to show “best model for you,” automatically switch models, or automatically download a recommendation. The evaluator can generate evidence-backed recommendation JSON for development review.
+First-run setup and the Models page rank models with `apps/desktop/src/lib/recommendations.ts` and the checked-in `models/recommendations.json`. On 2026-10-22 the owner decided that, until a comparable local matrix exists ([#296](https://github.com/rahulsharmavishwakarma/vesper/issues/296)), the ranking uses **published accuracy**. This deliberately departs from the ADR-0010 preference for local evidence, for setup only. Published figures are labelled as such, never as Vesper measurements.
+
+**Speech models**
+
+- **Filters.** Every offered speech model is filtered by declared language (`models/languages.json`) and by whether it runs on this Mac (Apple-GPU-only models need Apple silicon). A model whose measured peak memory exceeds half of the Mac's RAM is excluded.
+- **Which figures are compared.** The ranking compares published WER/CER within one source only:
+  - the [Open ASR Leaderboard](https://huggingface.co/spaces/hf-audio/open_asr_leaderboard) (version 21 Oct 2026; `hf-audio/open-asr-leaderboard-results@648e485`, `hf-audio/multilingual_evals@3589b3c`) when it covers at least two candidates for the language. That is English (CSV `avg`), French, German, Spanish, Italian, Portuguese, Dutch (FLEURS) and Hindi (Voice Arena Monsoon).
+  - otherwise the makers' own cards and papers. Scorers and text normalization differ between makers, so those orderings are weaker.
+- **Ties.** Figures within half a point of the best are a tie, broken by Vesper's measured speed.
+- **Nemotron** uses the maker's most conservative 80 ms streaming-chunk figures.
+- **Speed and memory** come only from Vesper's own runs on an Apple M5 Pro (64 GB). Server-GPU throughput is never shown as Mac speed.
+- **Local results still shown.** For example, Cohere's 1 of 32 failed recordings in the 32-clip English run is shown as *Failed Vesper's test*.
+
+**Writing models**
+
+- **What they are ranked on.** Published instruction following (IFEval), compared within one harness. The Open LLM Leaderboard v2 covers Qwen2.5 0.5B/1.5B and SmolLM2 360M/1.7B. Qwen3.5 0.8B (52.1, non-thinking) and Gemma 3 1B (80.2) are their makers' own evaluations and are not compared with the leaderboard.
+- **Meaning check first.** The owner decided on 2026-10-22 that a writer which passed Vesper's own end-to-end meaning check ranks ahead of published scores. Today that is only Qwen3.5 0.8B.
+- **Result.** Qwen3.5 0.8B is picked for every language. The other writers follow by published score: in English, SmolLM2 1.7B comes next at 53.7.
+- **Caveat.** These are general instruction benchmarks, not transcript-cleanup fidelity. Only Qwen3.5 0.8B has Vesper's own end-to-end meaning check.
+
+**Picks from today's figures**
+
+| Language | Pick |
+| --- | --- |
+| English | Parakeet v3: within half a point of Cohere and Qwen3-ASR, and fastest |
+| Hindi | Nemotron |
+| German, French, Italian, Portuguese, Dutch | Cohere |
+| Japanese | Qwen3-ASR |
+
+The writing model pick is Qwen3.5 0.8B for every language.
+
+Nothing downloads or changes until the person presses **Download and set up** or chooses a model.
 
 A future user-facing recommendation should display four distinct states:
 

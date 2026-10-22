@@ -25,6 +25,9 @@ mod ffi {
         pub fn td_panel_hide();
         pub fn td_panel_destroy();
         pub fn td_permissions(request: bool) -> u32;
+        pub fn td_microphone(request: bool) -> i32;
+        pub fn td_device(chip: *mut c_char, capacity: usize) -> u64;
+        pub fn td_free_space(path: *const c_char) -> i64;
         pub fn td_secure_input() -> bool;
         pub fn td_paste_access_enabled(enabled: bool);
         pub fn td_target_capture(token: u64) -> i32;
@@ -158,6 +161,59 @@ pub fn permissions(request: bool) -> u32 {
     {
         let _ = request;
         0
+    }
+}
+/// Microphone access: 0 not asked, 1 restricted, 2 denied, 3 allowed,
+/// 4 just asked. `request` shows the system prompt only when not yet asked.
+pub fn microphone(request: bool) -> i32 {
+    #[cfg(target_os = "macos")]
+    // SAFETY: Scalar argument and result.
+    unsafe {
+        ffi::td_microphone(request)
+    }
+    #[cfg(not(target_os = "macos"))]
+    {
+        let _ = request;
+        3
+    }
+}
+/// The chip name and physical memory in bytes, when known.
+pub fn device() -> (Option<String>, Option<u64>) {
+    #[cfg(target_os = "macos")]
+    {
+        let mut chip = [0 as std::ffi::c_char; 128];
+        // SAFETY: The buffer and its capacity are valid for the call; the
+        // native side always terminates the string.
+        let memory = unsafe { ffi::td_device(chip.as_mut_ptr(), chip.len()) };
+        // SAFETY: Terminated above.
+        let name = unsafe { std::ffi::CStr::from_ptr(chip.as_ptr()) }
+            .to_string_lossy()
+            .trim()
+            .to_string();
+        (
+            (!name.is_empty()).then_some(name),
+            (memory > 0).then_some(memory),
+        )
+    }
+    #[cfg(not(target_os = "macos"))]
+    {
+        (None, None)
+    }
+}
+/// Bytes available for new files on the volume holding `path`.
+pub fn free_space(path: &std::path::Path) -> Option<u64> {
+    #[cfg(target_os = "macos")]
+    {
+        use std::os::unix::ffi::OsStrExt;
+        let path = std::ffi::CString::new(path.as_os_str().as_bytes()).ok()?;
+        // SAFETY: A valid, terminated path string for the duration of the call.
+        let free = unsafe { ffi::td_free_space(path.as_ptr()) };
+        u64::try_from(free).ok()
+    }
+    #[cfg(not(target_os = "macos"))]
+    {
+        let _ = path;
+        None
     }
 }
 pub fn secure_input() -> bool {

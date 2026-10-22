@@ -7,7 +7,7 @@ The application has dedicated CPU adapters for Qwen3-ASR 0.6B and Cohere Transcr
 | Qwen3-ASR 0.6B INT8 | Automatic plus 30 declared languages | 987,015,347 bytes |
 | Cohere Transcribe INT8 | 14 declared languages, explicit only | 2,888,052,036 bytes |
 
-Cohere has no automatic language detection or Hindi support in this adapter. The picker follows `models/languages.json`. Both adapters accept Automatic/CPU compute settings. Qwen3-ASR is a speech model, separate from the Qwen cleanup model. Their files cannot be imported as a four-file NeMo transducer profile.
+The Cohere export leaves 945 MB of pointwise convolutions in float32; a [research rewrite](validation/model-precision-inventory-2026-10-22.md) that quantizes only those cut the encoder by 0.7-0.8 GB with unchanged WER on 100 English clips, but the app still uses the published files. Cohere has no automatic language detection or Hindi support in this adapter. The picker follows `models/languages.json`. Both adapters accept Automatic/CPU compute settings. Qwen3-ASR is a speech model, separate from the Qwen cleanup model. Their files cannot be imported as a four-file NeMo transducer profile.
 
 ## Completion contract
 
@@ -217,6 +217,10 @@ GPU files. **Neural Engine** is described [below](#parakeet-on-the-neural-engine
 `parakeet-tdt-0.6b-v3.q8_0.gguf` at `541d1f99` (713,975,456 bytes), and runs it
 through the bundled NeMo-Speech.cpp 0.1.0 runtime on CPU, Metal, CUDA or Vulkan
 for every declared Parakeet language ([ADR-0024](adrs/0024-unified-gguf-speech-engine.md)).
+
+On Apple silicon the download is the GGUF plus the Metal NeMo-Speech.cpp package,
+which also contains the CPU backend, so CPU, Metal and an automatic CPU retry all
+work without downloading anything else.
 
 The unified engine processes completed audio in parts of at most 30 seconds with
 automatic language detection; live dictation shows buffered drafts and the

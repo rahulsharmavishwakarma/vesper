@@ -6,6 +6,7 @@
   import type { DownloadOptionStatus } from '../modelDownloads';
   import { filterModelOptions } from '../modelPresets';
   import { optionHighlight } from '../actions/selectionHighlight';
+  import type { OptionGauge } from '../optionResults';
 
   type Option = {
     value: T;
@@ -16,6 +17,8 @@
     status?: DownloadOptionStatus;
     languages?: { value: string; label: string }[];
     unrestrictedLanguages?: boolean;
+    /** Ring gauges before the download status, e.g. accuracy and speed. */
+    gauges?: OptionGauge[];
   };
   const EXPANDABLE_LANGUAGE_COUNT = 6;
   let {
@@ -28,6 +31,7 @@
     label,
     identity = false,
     languageFilters,
+    initialLanguageFilter = 'all',
     onChange,
   }: {
     id: string;
@@ -39,9 +43,12 @@
     label?: string;
     identity?: boolean;
     languageFilters?: { value: string; label: string }[];
+    /** The language filter the list opens with; `all` shows every row. */
+    initialLanguageFilter?: string;
     onChange?: (value: T) => void;
   } = $props();
-  let langFilter = $state('all');
+  // svelte-ignore state_referenced_locally
+  let langFilter = $state(initialLanguageFilter);
   const visibleOptions = $derived(filterModelOptions(options, langFilter));
   let trigger: HTMLButtonElement;
   let popup = $state<HTMLDivElement>();
@@ -61,7 +68,7 @@
   function close() {
     open = false;
     search = '';
-    langFilter = 'all';
+    langFilter = initialLanguageFilter;
     expandedLanguages.clear();
   }
   let expandedLanguages = new SvelteSet<T>();
@@ -367,6 +374,7 @@
             : option.languages?.length
               ? `${option.languages.length} ${option.languages.length === 1 ? 'language' : 'languages'}`
               : undefined,
+          ...(option.gauges ?? []).map((gauge) => gauge.title),
           option.status?.label,
         ]
           .filter(Boolean)
@@ -431,6 +439,34 @@
             {/if}
           {/if}</span
         >
+        {#if option.gauges?.length}<span class="option-gauges"
+            >{#each option.gauges as gauge (gauge.kind)}<span
+                class="gauge"
+                class:low={gauge.tone === 'low'}
+                class:bad={gauge.tone === 'bad'}
+                class:none={gauge.score === null}
+                title={gauge.title}
+                ><span class="gauge-ring"
+                  ><svg viewBox="0 0 30 30" aria-hidden="true"
+                    ><circle
+                      class="gauge-track"
+                      cx="15"
+                      cy="15"
+                      r="12.5"
+                      pathLength="100"
+                    />{#if gauge.score !== null}<circle
+                        class="gauge-value"
+                        cx="15"
+                        cy="15"
+                        r="12.5"
+                        pathLength="100"
+                        style:--gauge-off={100 - Math.max(6, Math.min(100, gauge.score))}
+                        style:--gauge-delay={`${index * 45 + 80}ms`}
+                      />{/if}</svg
+                  ><Icon name={gauge.icon} /></span
+                ><span class="gauge-text">{gauge.text}</span></span
+              >{/each}</span
+          >{/if}
         {#if option.status}<span class="option-status"><ModelStatus status={option.status} /></span
           >{/if}
         <span class="selected-check" aria-hidden="true"
@@ -761,6 +797,88 @@
     border-color: var(--color-accent);
     color: var(--color-on-accent);
   }
+  .option-gauges {
+    display: flex;
+    flex: none;
+    gap: 6px;
+    align-items: flex-start;
+  }
+  .gauge {
+    display: grid;
+    justify-items: center;
+    gap: 3px;
+    width: 46px;
+    color: var(--color-accent);
+  }
+  .gauge-ring {
+    position: relative;
+    width: 30px;
+    height: 30px;
+  }
+  .gauge-ring svg {
+    position: absolute;
+    inset: 0;
+    width: 30px;
+    height: 30px;
+    transform: rotate(-90deg);
+  }
+  .gauge-ring :global(.icon) {
+    position: absolute;
+    left: 9px;
+    top: 9px;
+    width: 12px;
+    height: 12px;
+  }
+  .gauge-track,
+  .gauge-value {
+    fill: none;
+    stroke-width: 2.6;
+  }
+  .gauge-track {
+    stroke: var(--color-line);
+  }
+  .gauge-value {
+    stroke: currentColor;
+    stroke-linecap: round;
+    stroke-dasharray: 100;
+    stroke-dashoffset: 100;
+    animation: gauge-in 700ms var(--ease) var(--gauge-delay, 0ms) forwards;
+  }
+  @keyframes gauge-in {
+    to {
+      stroke-dashoffset: var(--gauge-off);
+    }
+  }
+  .gauge-text {
+    font-size: 10.5px;
+    font-weight: 600;
+    line-height: 1;
+    color: var(--color-ink);
+    font-variant-numeric: tabular-nums;
+    white-space: nowrap;
+  }
+  .gauge.low {
+    color: var(--color-warning);
+  }
+  .gauge.bad {
+    color: var(--color-error);
+  }
+  .gauge.low .gauge-text,
+  .gauge.bad .gauge-text {
+    color: currentColor;
+  }
+  .gauge.none {
+    color: var(--color-muted);
+  }
+  .gauge.none .gauge-track {
+    stroke-dasharray: 2.5 3;
+  }
+  .gauge.none .gauge-text {
+    color: var(--color-muted);
+  }
+  .select-option[aria-selected='true'] .gauge-text {
+    color: var(--color-accent);
+  }
   .option-status {
     display: flex;
     justify-content: flex-end;
@@ -836,6 +954,10 @@
     .select-popup,
     .selected-check :global(path) {
       animation: none;
+    }
+    .gauge-value {
+      animation: none;
+      stroke-dashoffset: var(--gauge-off);
     }
   }
 </style>

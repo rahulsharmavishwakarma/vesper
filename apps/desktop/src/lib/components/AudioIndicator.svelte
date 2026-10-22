@@ -20,6 +20,7 @@
     compact = false,
     fit = false,
     onSignal,
+    onLevel,
   }: {
     recording: boolean;
     processing?: boolean;
@@ -30,6 +31,8 @@
     compact?: boolean;
     fit?: boolean;
     onSignal?: () => void;
+    /** Each measured input level, 0 to 1, about every 40 ms while recording. */
+    onLevel?: (level: number) => void;
   } = $props();
   let rawLevel = $state(0);
   let pitchHz = $state<number | null>(null);
@@ -101,6 +104,7 @@
           rawLevel = Math.max(0, Math.min(1, value.level));
           pitchHz = pitchDisplay.update(rawLevel > 0.001 ? value.pitchHz : null, now);
           if (rawLevel >= 0.008) onSignal?.();
+          onLevel?.(rawLevel);
           staleTimer = setTimeout(clearSignal, 200 - roundtrip);
         }
       } catch {
