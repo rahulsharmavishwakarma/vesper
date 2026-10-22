@@ -221,13 +221,36 @@ impl CleanupPreset {
     }
 }
 
+/// Writing-model weight precision. Users never choose it: `Automatic` picks the
+/// best qualified file, and the explicit values are developer and evaluation overrides.
 #[derive(Debug, Clone, Copy, Default, PartialEq, Eq, Serialize, Deserialize)]
 pub enum RewriteQuantization {
     #[default]
+    #[serde(rename = "automatic")]
+    Automatic,
     #[serde(rename = "q4_0")]
     Q4_0,
     #[serde(rename = "q8_0")]
     Q8_0,
+}
+
+impl RewriteQuantization {
+    /// The pinned file Automatic uses. Q4_0 is the only writer precision with
+    /// validation evidence; Q8_0 is unmeasured.
+    pub fn resolved(self) -> Self {
+        match self {
+            Self::Automatic => Self::Q4_0,
+            explicit => explicit,
+        }
+    }
+
+    /// Artifact-catalog name of the resolved file.
+    pub fn artifact_name(self) -> &'static str {
+        match self.resolved() {
+            Self::Q8_0 => "q8_0",
+            _ => "q4_0",
+        }
+    }
 }
 
 /// Requested accelerator for native inference. `Auto` selects the best backend
@@ -824,9 +847,13 @@ mod tests {
         assert!(config.models.custom_rewriter.is_none());
         config.validate().unwrap();
 
-        let saved = serde_json::to_value(config).unwrap();
+        let saved = serde_json::to_value(&config).unwrap();
         assert_eq!(saved["language"], "en");
-        assert_eq!(saved["rewriteQuantization"], "q4_0");
+        assert_eq!(saved["rewriteQuantization"], "automatic");
+        assert_eq!(
+            config.rewrite_quantization.resolved(),
+            RewriteQuantization::Q4_0
+        );
         assert_eq!(saved["computeBackend"], "auto");
         assert_eq!(saved["globalShortcut"], "CommandOrControl+Shift+Space");
         assert_eq!(saved["floatingBarEnabled"], true);

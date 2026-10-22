@@ -301,9 +301,9 @@ pub fn model_versions(config: &AppConfig) -> Value {
 }
 
 pub fn rewrite_filename(quantization: RewriteQuantization) -> &'static str {
-    match quantization {
-        RewriteQuantization::Q4_0 => "Qwen3.5-0.8B-Q4_0.gguf",
+    match quantization.resolved() {
         RewriteQuantization::Q8_0 => "Qwen3.5-0.8B-Q8_0.gguf",
+        _ => "Qwen3.5-0.8B-Q4_0.gguf",
     }
 }
 

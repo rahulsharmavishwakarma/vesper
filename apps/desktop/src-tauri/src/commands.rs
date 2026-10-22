@@ -436,7 +436,7 @@ pub fn retry_global_shortcut(
 /// while a download runs; everything else can be saved meanwhile.
 fn model_files_changed(previous: &AppConfig, next: &AppConfig) -> bool {
     previous.models != next.models
-        || previous.rewrite_quantization != next.rewrite_quantization
+        || previous.rewrite_quantization.resolved() != next.rewrite_quantization.resolved()
         || previous.compute_backend != next.compute_backend
         || previous.audio_frontend != next.audio_frontend
 }

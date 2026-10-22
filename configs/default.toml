@@ -12,7 +12,7 @@ computeBackend = "auto" # auto, cpu, metal, cuda, vulkan, or rocm
 cleanupPreset = "minimal" # minimal (formatting only) or balanced (context correction)
 # Nonblank custom text replaces the preset instruction; at most 4000 characters.
 customCleanupInstruction = ""
-rewriteQuantization = "q4_0" # q4_0 or q8_0
+rewriteQuantization = "automatic" # automatic; q4_0 or q8_0 are developer overrides
 maxRecordingSeconds = 0 # Legacy field, ignored. No general duration cutoff; adapter/resource limits still apply.
 globalShortcut = "CommandOrControl+Shift+Space"
 floatingBarEnabled = true

@@ -155,7 +155,9 @@ on first launch.
 ### Initial setup
 
 1. Open **Models** and select speech and writing models. The writing model is
-   used only when text cleanup is enabled. Each picker row shows the model's
+   used only when text cleanup is enabled. You do not choose its precision:
+   Vesper downloads and uses the best qualified file automatically (currently
+   the compact Q4 build). Each picker row shows the model's
    supported languages; a row with more than six languages shows a count that
    expands to the full list, and the writing model shows Many languages
    because it publishes no per-language list. The Needs row at the top of an
@@ -326,7 +328,7 @@ Download progress and **Cancel download** are visible even outside Models. Setup
 uses the existing installation operation, so recording and transcription wait
 during an active download; cancellation lets you continue with original-audio
 fallback. Only choices that conflict with a download are locked while it runs:
-speech and writing model, model precision, the processing device, removing models
+speech and writing model, the processing device, removing models
 and Restore defaults, each with a note saying why. Everything else stays usable,
 including History (browse, import, export, review), the language and microphone,
 Appearance, Shortcuts, Writing preferences and other settings, which save as usual. Files are

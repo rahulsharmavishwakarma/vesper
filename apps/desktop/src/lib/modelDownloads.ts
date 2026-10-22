@@ -1,4 +1,9 @@
-import { catalogModel, type AppConfig, type ModelProfileRole } from './config.ts';
+import {
+  catalogModel,
+  resolvedRewriteQuantization,
+  type AppConfig,
+  type ModelProfileRole,
+} from './config.ts';
 import type { InstallProgress, ModelCatalogInstallation } from './api/runtime';
 import { presetForProfile, sameModelProfile } from './modelPresets.ts';
 
@@ -79,7 +84,8 @@ export function downloadTarget(config: AppConfig, role: ModelProfileRole): Downl
       (speech
         ? (catalogModel(config.models.asr)?.name ?? config.models.asr)
         : (catalogModel(config.models.rewriter)?.name ?? config.models.rewriter)),
-    quantization: speech || profile ? null : config.rewriteQuantization,
+    quantization:
+      speech || profile ? null : resolvedRewriteQuantization(config.rewriteQuantization),
   };
 }
 export function matchingDownload(
@@ -113,7 +119,6 @@ export interface DownloadOptionStatus {
   label: string;
   tone: 'ready' | 'muted' | 'warning';
   kind: 'downloaded' | 'missing' | 'busy' | 'warning' | 'unavailable' | 'unknown';
-  detail?: string;
 }
 export function downloadOptionStatus(
   config: AppConfig,
@@ -121,7 +126,6 @@ export function downloadOptionStatus(
   role: ModelProfileRole,
   state: ModelDownloadState,
   desktop: boolean,
-  allPrecisions = false,
 ): DownloadOptionStatus {
   const muted = (
     label: string,
@@ -134,7 +138,7 @@ export function downloadOptionStatus(
     (entry) =>
       entry.modelId === target.modelId &&
       entry.role === target.role &&
-      (allPrecisions || entry.quantization === target.quantization),
+      entry.quantization === target.quantization,
   );
   // A re-check keeps the last known status; only an unknown row is "checking".
   if (!entries.length)
@@ -142,19 +146,7 @@ export function downloadOptionStatus(
   if (entries.some((entry) => downloadKey(entry) === state.installingKey))
     return muted('Downloading…', 'busy');
   const downloaded = entries.filter((entry) => entry.artifactsInstalled);
-  if (downloaded.length) {
-    const precisions = allPrecisions
-      ? downloaded.flatMap((entry) =>
-          entry.quantization ? [entry.quantization.slice(0, 2).toUpperCase()] : [],
-        )
-      : [];
-    return {
-      label: precisions.length ? `${precisions.join(' / ')} downloaded` : 'Downloaded',
-      tone: 'ready',
-      kind: 'downloaded',
-      detail: precisions.length ? precisions.join(' / ') : undefined,
-    };
-  }
+  if (downloaded.length) return { label: 'Downloaded', tone: 'ready', kind: 'downloaded' };
   if (entries.some((entry) => entry.ready))
     return { label: 'Ready · update available', tone: 'ready', kind: 'downloaded' };
   if (entries.some((entry) => entry.localFileCount > 0 || entry.removalError))

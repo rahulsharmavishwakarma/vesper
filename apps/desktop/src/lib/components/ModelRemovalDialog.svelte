@@ -50,9 +50,7 @@
           ? 'models-noise-reduction'
           : model.role === 'speech_recognition'
             ? 'models-asr-model'
-            : model.quantization
-              ? 'models-cleanup-precision'
-              : 'models-cleanup-model';
+            : 'models-cleanup-model';
       document.getElementById(returnTo)?.focus({ preventScroll: true });
     } catch (cause) {
       error = `Could not remove these files. ${cause instanceof Error ? cause.message : String(cause)}`;

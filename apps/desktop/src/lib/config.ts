@@ -146,21 +146,23 @@ export const CLEANUP_MODELS = {
 
 export type RewriteModel = keyof typeof CLEANUP_MODELS;
 
-/** Packaged GGUF choices; sizes match the pinned artifacts manifest. */
+/** Packaged GGUF files; sizes match the pinned artifacts manifest. */
 export const CLEANUP_QUANTIZATIONS = {
-  q4_0: {
-    label: 'Q4 · Compact',
-    description: 'Smaller model and lower memory use',
-    sizeBytes: 563_036_064,
-  },
-  q8_0: {
-    label: 'Q8 · Higher precision',
-    description: 'Larger model with less quantization',
-    sizeBytes: 833_592_096,
-  },
+  q4_0: { label: 'Q4 · Compact', sizeBytes: 563_036_064 },
+  q8_0: { label: 'Q8 · Higher precision', sizeBytes: 833_592_096 },
 } as const;
 
-export type RewriteQuantization = keyof typeof CLEANUP_QUANTIZATIONS;
+/** Users never choose a precision: `automatic` picks the best qualified file,
+ * and the explicit values are developer overrides. */
+export type RewriteQuantization = 'automatic' | keyof typeof CLEANUP_QUANTIZATIONS;
+
+/** The file Automatic uses. Q4_0 is the only writer precision with validation
+ * evidence; this mirrors `RewriteQuantization::resolved` in vesper-core. */
+export function resolvedRewriteQuantization(
+  value: RewriteQuantization,
+): keyof typeof CLEANUP_QUANTIZATIONS {
+  return value === 'automatic' ? 'q4_0' : value;
+}
 
 export const CLEANUP_MODEL_OPTIONS = (Object.keys(CLEANUP_MODELS) as RewriteModel[]).map(
   (value) => {
@@ -172,14 +174,6 @@ export const CLEANUP_MODEL_OPTIONS = (Object.keys(CLEANUP_MODELS) as RewriteMode
     };
   },
 );
-
-export const CLEANUP_QUANTIZATION_OPTIONS = (
-  Object.keys(CLEANUP_QUANTIZATIONS) as RewriteQuantization[]
-).map((value) => ({
-  value,
-  label: CLEANUP_QUANTIZATIONS[value].label,
-  description: CLEANUP_QUANTIZATIONS[value].description,
-}));
 
 export interface HuggingFaceProfile {
   id: string;
@@ -447,7 +441,7 @@ export function defaultSettings(): AppConfig {
     language: 'en',
     cleanupPreset: 'minimal',
     customCleanupInstruction: '',
-    rewriteQuantization: 'q4_0',
+    rewriteQuantization: 'automatic',
     computeBackend: 'auto',
     maxRecordingSeconds: 0,
     globalShortcut: 'CommandOrControl+Shift+Space',
@@ -713,7 +707,7 @@ export function validateSettings(value: unknown, checkWriterLanguage = true): st
     errors.push('Select a supported language.');
   if (!isOneOf(value.cleanupPreset, ['minimal', 'balanced']))
     errors.push('Select a writing style.');
-  if (!isOneOf(value.rewriteQuantization, Object.keys(CLEANUP_QUANTIZATIONS)))
+  if (!isOneOf(value.rewriteQuantization, ['automatic', ...Object.keys(CLEANUP_QUANTIZATIONS)]))
     errors.push('Select a supported writing model quantization.');
   if (!isOneOf(value.computeBackend, ['auto', 'cpu', 'metal', 'cuda', 'vulkan', 'rocm']))
     errors.push('Select a supported inference backend.');
