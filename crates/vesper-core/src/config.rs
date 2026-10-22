@@ -247,13 +247,16 @@ pub enum ComputeBackend {
 /// Which native engine runs a speech model that has more than one. `Standard`
 /// keeps each model's established exports (for Parakeet v3: ONNX on CPU, MLX on
 /// Apple GPU). `UnifiedGguf` runs one GGUF file through NeMo-Speech.cpp on every
-/// backend; only models with a pinned NeMo GGUF accept it.
+/// backend; only models with a pinned NeMo GGUF accept it. `NeuralEngine` runs
+/// the encoder as Core ML on the Apple Neural Engine and the decoder in MLX;
+/// only models with a pinned Core ML encoder in an MLX build accept it.
 #[derive(Debug, Clone, Copy, Default, PartialEq, Eq, Serialize, Deserialize)]
 #[serde(rename_all = "snake_case")]
 pub enum AsrEngine {
     #[default]
     Standard,
     UnifiedGguf,
+    NeuralEngine,
 }
 
 /// Policy for future model improvements. Selecting a mode does not run training.
@@ -447,6 +450,16 @@ impl AppConfig {
                 message:
                     "the unified GGUF engine is available only for models with a pinned NeMo GGUF"
                         .into(),
+            });
+        }
+        if self.models.custom_asr.is_none()
+            && self.models.asr_engine == AsrEngine::NeuralEngine
+            && !crate::neural_engine_supported(self.models.asr)
+        {
+            return Err(Error::InvalidConfig {
+                field: "models.asrEngine",
+                message: "the Neural Engine is available only for Parakeet v3 on Apple silicon"
+                    .into(),
             });
         }
         let speech = self.speech_adapter();
