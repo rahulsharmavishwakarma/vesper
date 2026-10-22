@@ -1,9 +1,9 @@
 --- a/Sources/MLXAudioSTT/Models/Parakeet/ParakeetModel.swift
 +++ b/Sources/MLXAudioSTT/Models/Parakeet/ParakeetModel.swift
-@@ -945,6 +945,26 @@
-         text = text.replacingOccurrences(of: "Infinity", with: "null")
-         text = text.replacingOccurrences(of: "NaN", with: "null")
-         return Data(text.utf8)
+@@ -1176,6 +1176,26 @@
+         model.train(false)
+         eval(model)
+         return model
 +    }
 +
 +    /// Pinned Vesper patch: this model's log-mel frames [frames, features] for
@@ -26,4 +26,4 @@
 +        )
      }
  
-     /// Pinned Vesper patch: `prepare` may replace modules and return the
+     static func fromPretrained(
