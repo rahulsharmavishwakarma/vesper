@@ -284,10 +284,7 @@ fn selected_exact(config: &AppConfig) -> Result<Vec<Artifact>> {
     } else {
         None
     };
-    let quantization = match config.rewrite_quantization {
-        RewriteQuantization::Q4_0 => "q4_0",
-        RewriteQuantization::Q8_0 => "q8_0",
-    };
+    let quantization = config.rewrite_quantization.artifact_name();
     let mut artifacts: Vec<_> = catalog()
         .into_iter()
         .filter(|file| {
@@ -403,10 +400,7 @@ fn built_in_rewriter_spec(
     model: RewriteModel,
     quantization: RewriteQuantization,
 ) -> ModelInstallSpec {
-    let quantization_name = match quantization {
-        RewriteQuantization::Q4_0 => "q4_0",
-        RewriteQuantization::Q8_0 => "q8_0",
-    };
+    let quantization_name = quantization.artifact_name();
     let artifacts = catalog()
         .into_iter()
         .filter(|artifact| {
@@ -428,7 +422,7 @@ fn built_in_rewriter_spec(
         quantization: Some(quantization),
         selected: config.models.custom_rewriter.is_none()
             && config.models.rewriter == model
-            && config.rewrite_quantization == quantization,
+            && config.rewrite_quantization.resolved() == quantization,
         artifacts,
         support_error,
     }
@@ -1110,6 +1104,7 @@ pub fn install_model(
     if candidates.is_empty() {
         return Err(ModelError::UnknownModel(model_id.into()));
     }
+    let quantization = quantization.map(RewriteQuantization::resolved);
     let matches = candidates
         .iter()
         .copied()
@@ -1119,10 +1114,7 @@ pub fn install_model(
         let expected = candidates
             .iter()
             .filter_map(|spec| spec.quantization)
-            .map(|value| match value {
-                RewriteQuantization::Q4_0 => "q4_0",
-                RewriteQuantization::Q8_0 => "q8_0",
-            })
+            .map(RewriteQuantization::artifact_name)
             .collect::<Vec<_>>();
         let requirement: String = if expected.is_empty() {
             "omit quantization for this model".into()
@@ -1525,6 +1517,25 @@ mod tests {
         ] {
             assert!(serialized.get(field).is_some(), "missing {field}");
         }
+    }
+
+    #[test]
+    fn automatic_writer_precision_selects_the_q4_file() {
+        let config = AppConfig::default();
+        assert_eq!(config.rewrite_quantization, RewriteQuantization::Automatic);
+        let writer: Vec<_> = selected(&config)
+            .unwrap()
+            .into_iter()
+            .filter(|a| a.role == "rewriter")
+            .collect();
+        assert_eq!(writer.len(), 1);
+        assert_eq!(writer[0].quantization.as_deref(), Some("q4_0"));
+        let selected_specs: Vec<_> = model_install_specs(&config)
+            .into_iter()
+            .filter(|spec| spec.selected && spec.role == ModelRole::TextReconstruction)
+            .map(|spec| spec.quantization)
+            .collect();
+        assert_eq!(selected_specs, [Some(RewriteQuantization::Q4_0)]);
     }
 
     #[test]
