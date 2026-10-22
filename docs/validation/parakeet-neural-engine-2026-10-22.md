@@ -10,9 +10,12 @@ ML on the Neural Engine and the decoder in MLX.
 - Longer recordings: slightly worse, because they are cut every 15 s instead of every 30 s.
 - Placement: 99.92% of the encoder's estimated cost runs on the Neural Engine.
 - Load: Core ML's one-time preparation now happens during the download.
+- Shipped encoder: int8 per-channel weights since 22 October 2026, at half the download (640 MB in total). It
+  matches the float16 encoder within noise on every lane; see [Shipped int8 encoder](#shipped-int8-encoder).
 
-The GPU-contention and energy results come from the [spike record](ane-coreml-spike-2026-10-22.md). They apply
-unchanged, because this is the same encoder program; its weights are byte-identical across conversions.
+The sections up to [Compressed encoders](#compressed-encoders) qualify the float16 encoder first pinned
+(`@4dc405d6`). The GPU-contention and energy results come from the [spike record](ane-coreml-spike-2026-10-22.md),
+measured on the float16 program; they are not re-measured for int8 weights.
 
 ## Method
 
@@ -161,6 +164,44 @@ the installed files with the 15 s speech mel:
 
 The application requests CPU and Neural Engine. Within that setting, Core ML runs on the CPU any operation the Neural
 Engine cannot take. The decoder always runs in MLX on the Apple GPU.
+
+## Shipped int8 encoder
+
+The owner approved int8 linear weights on 22 October 2026 (#143). The converter now quantizes every weight of
+2,048+ elements to symmetric per-channel int8, with float16 compute; the decoder files are unchanged.
+
+- **Hosted:** `@c81d0368`. `weight.bin` is 594,214,208 bytes, `2b4c00b4…`, byte-identical to the int8 variant
+  above. The total download is 640,274,531 bytes, against 1,231,812,753.
+- **Installed:** with the application installer, every hash verified.
+- **Measured:** through `vesper-eval` with the same method, sets and machine as the float16 lanes above.
+
+| Set | int8 | float16 | MLX | int8 − float16 [95% CI] | Same text as float16 |
+| --- | ---: | ---: | ---: | --- | ---: |
+| `heldout-fleurs100` (94) | 5.11% | 5.26% | 5.16% | −0.15 [−0.34, 0.00] | 83/94 |
+| `heldout-long48` (48) | 6.49% | 6.75% | 6.40% | −0.26 [−0.58, 0.00] | 39/48 |
+
+Regression lanes (`heldout-regression`, 48 clips) were identical for int8 and float16:
+
+| Lane | Clips | WER |
+| --- | ---: | ---: |
+| Clean | 4 | 15.38% |
+| Natural noise, 10 dB | 4 | 15.38% |
+| Natural noise, 0 dB | 4 | 19.23% |
+| Quiet, −30 dB | 28 | 8.16% |
+
+No non-speech clip produced text (0/8), and no clip failed.
+
+The median application time per clip was 41.3 ms for int8 against 40.5 ms for float16.
+
+Encoder on the installed int8 files, with the 15 s speech mel:
+
+| Compute units | Median per 15 s window | Cosine vs NeMo fp32 |
+| --- | ---: | ---: |
+| CPU and Neural Engine (99.92% placement; first load 6.8 s) | 24.1 ms | 0.98935 |
+| CPU only | 83.3 ms | 0.97896 |
+| CPU and GPU | 14.6 ms | 0.98023 |
+
+The lower cosine against NeMo fp32 did not change word error rates.
 
 ## Limitations
 
