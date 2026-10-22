@@ -31,9 +31,7 @@
     role="img"
     aria-label={status.label}><Icon name={glyph} /></span
   >
-  {#if showLabel}<span class="status-label" aria-hidden="true">{status.label}</span
-    >{:else if status.detail}<span class="status-label" aria-hidden="true">{status.detail}</span
-    >{/if}
+  {#if showLabel}<span class="status-label" aria-hidden="true">{status.label}</span>{/if}
 </span>
 
 <style>

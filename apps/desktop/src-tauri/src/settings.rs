@@ -1,6 +1,6 @@
 use std::{fs, io::Write, path::PathBuf, sync::Mutex};
 
-use vesper_core::{AppConfig, AudioFrontendConfig, NoiseReduction};
+use vesper_core::{AppConfig, AudioFrontendConfig, NoiseReduction, RewriteQuantization};
 
 /// Desktop-owned audio selection; evaluator profiles remain independently configurable.
 pub(crate) fn managed_audio(mut settings: AppConfig) -> AppConfig {
@@ -35,9 +35,14 @@ impl SettingsStore {
             }
             Err(error) => return Err(format!("Could not read settings: {error}")),
         };
-        let settings: AppConfig = serde_json::from_slice(&bytes)
+        let mut settings: AppConfig = serde_json::from_slice(&bytes)
             .map_err(|e| format!("Saved settings could not be decoded: {e}"))?;
         settings.validate().map_err(|e| e.to_string())?;
+        // Q4_0 was the old visible default; it now follows Automatic. A saved
+        // Q8_0 keeps the file its user already downloaded.
+        if settings.rewrite_quantization == RewriteQuantization::Q4_0 {
+            settings.rewrite_quantization = RewriteQuantization::Automatic;
+        }
         Ok(managed_audio(settings))
     }
 
@@ -120,6 +125,23 @@ mod tests {
         config.models.custom_rewriter.as_mut().unwrap().languages = vec!["en-US".into()];
         store.save(&config).unwrap();
         assert_eq!(store.load().unwrap().models, config.models);
+    }
+
+    #[test]
+    fn saved_q4_follows_automatic_and_saved_q8_is_kept() {
+        let temp = tempfile::tempdir().unwrap();
+        let path = temp.path().join("settings.json");
+        let store = SettingsStore::new(path.clone());
+        for (saved, loaded) in [
+            ("q4_0", RewriteQuantization::Automatic),
+            ("q8_0", RewriteQuantization::Q8_0),
+            ("automatic", RewriteQuantization::Automatic),
+        ] {
+            let mut value = serde_json::to_value(AppConfig::default()).unwrap();
+            value["rewriteQuantization"] = saved.into();
+            fs::write(&path, serde_json::to_vec(&value).unwrap()).unwrap();
+            assert_eq!(store.load().unwrap().rewrite_quantization, loaded);
+        }
     }
 
     #[test]

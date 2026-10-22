@@ -47,7 +47,6 @@
   };
   const modelStates: DownloadOptionStatus[] = [
     { label: 'Downloaded', kind: 'downloaded', tone: 'ready' },
-    { label: 'Q4 downloaded', detail: 'Q4', kind: 'downloaded', tone: 'ready' },
     { label: 'Not downloaded', kind: 'missing', tone: 'muted' },
     { label: 'Checking…', kind: 'busy', tone: 'muted' },
     { label: 'Downloading…', kind: 'busy', tone: 'muted' },
