@@ -129,7 +129,6 @@ export function downloadOptionStatus(
   ): DownloadOptionStatus => ({ label, tone: 'muted', kind });
   if (!desktop) return muted('Desktop only', 'unavailable');
   if (!knownDownloadSelection(config, saved, role)) return muted('Save to check');
-  if (state.checking) return muted('Checking…', 'busy');
   const target = downloadTarget(config, role);
   const entries = state.catalog.filter(
     (entry) =>
@@ -137,7 +136,9 @@ export function downloadOptionStatus(
       entry.role === target.role &&
       (allPrecisions || entry.quantization === target.quantization),
   );
-  if (!entries.length) return muted('Status unavailable');
+  // A re-check keeps the last known status; only an unknown row is "checking".
+  if (!entries.length)
+    return state.checking ? muted('Checking…', 'busy') : muted('Status unavailable');
   if (entries.some((entry) => downloadKey(entry) === state.installingKey))
     return muted('Downloading…', 'busy');
   const downloaded = entries.filter((entry) => entry.artifactsInstalled);

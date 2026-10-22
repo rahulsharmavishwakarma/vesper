@@ -81,6 +81,12 @@
   } from './lib/accelerators';
   import type { RuntimeStatus } from './lib/api/runtime';
   import { getDeviceProfile } from './lib/api/onboarding';
+  import { Settled } from './lib/settled.svelte';
+  import {
+    sidebarActivity,
+    type BackgroundDownload,
+    type SidebarActivity,
+  } from './lib/sidebarActivity';
   import {
     decorateSpeechOptions,
     decorateWriterOptions,
@@ -295,6 +301,26 @@
   );
   const writerError = $derived(writingLanguageError(draft));
   const languageError = $derived(transcriptionLanguageError(draft) ?? writerError);
+  // The sidebar names whatever is running, from any page (sidebarActivity.ts).
+  // backgroundDownload arrives with the Neural Engine work (#301).
+  const activity = $derived<SidebarActivity | null>(
+    sidebarActivity(
+      engineActivity,
+      downloads,
+      (engineActivity as (RuntimeStatus & { backgroundDownload?: BackgroundDownload }) | null)
+        ?.backgroundDownload ?? null,
+    ) ?? (pipelineBusy ? { label: 'Working', percent: null, view: 'dictate', live: false } : null),
+  );
+  const activityText = $derived(
+    activity
+      ? `${activity.label}${activity.percent !== null ? ` · ${Math.floor(activity.percent)}%` : ''}`
+      : '',
+  );
+  // Settings usually load within a moment; only a slow load shows its text.
+  const slowSettings = new Settled(
+    () => pending === 'loading',
+    (value) => value,
+  );
   // The pickers rank, tag and gauge models for the chosen language on this
   // Mac, the same way first-run setup does (recommendations.ts).
   let modelsMac = $state<Device | null>(null);
@@ -685,14 +711,25 @@
         {/each}
       </nav>
       <div class="sidebar-foot">
-        {#if pipelineBusy}<button
+        {#if activity}<button
             type="button"
             class="activity-link"
-            aria-label="Operation in progress"
-            onclick={() => navigate('dictate')}
-            ><span class="status-dot"></span><span class:visually-hidden={activeView === 'settings'}
-              >Operation in progress</span
-            ></button
+            class:live={activity.live}
+            title={activityText}
+            aria-label={`${activityText}. Open ${activity.view === 'models' ? 'Models' : 'Dictate'}`}
+            onclick={() => navigate(activity.view)}
+            ><span class="activity-row"
+              ><span class="status-dot"></span><span
+                class="activity-label"
+                class:visually-hidden={activeView === 'settings'}>{activity.label}</span
+              >{#if activity.percent !== null}<span
+                  class="activity-percent"
+                  class:visually-hidden={activeView === 'settings'}
+                  >{Math.floor(activity.percent)}%</span
+                >{/if}</span
+            >{#if activity.percent !== null}<span class="activity-bar" aria-hidden="true"
+                ><i style:transform={`scaleX(${activity.percent / 100})`}></i></span
+              >{/if}</button
           >{/if}
         <span class="environment-tag" hidden={activeView === 'settings'}
           >{environment === 'browser-preview' ? 'Browser preview' : 'On your device'}</span
@@ -1207,7 +1244,7 @@
                   </div>
                 </section>
               </fieldset>
-            {:else if pending === 'loading'}<p class="loading" role="status">
+            {:else if pending === 'loading' && slowSettings.value}<p class="loading" role="status">
                 Loading your settings…
               </p>{/if}
           </form>

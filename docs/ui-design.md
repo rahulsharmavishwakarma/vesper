@@ -419,6 +419,32 @@ the processing device or the audio frontend. Running downloads alongside
 recording is a separate proposal (#314). Do not gate a control on the combined busy flag unless it truly
 conflicts with the running operation (issue #273).
 
+## Status during checks, loading and running work
+
+- **Model rows keep their status during a re-check.** `refreshResources()`
+  re-reads the whole catalog after every download, verify or removal and at
+  startup. While it runs, a row with a known catalog entry keeps its last
+  status (stale while revalidating). Only a row with nothing known yet says
+  **Checking files…**, and the row being installed shows its own progress
+  (`ModelDownload.svelte`, `downloadOptionStatus`).
+- **Brief loading states do not flash.** Start-up and refresh texts, such as
+  "Loading your settings…", "Loading preferences…" and "Checking your
+  microphone…", appear only after they have lasted 300 ms (`Settled` in
+  `settled.svelte.ts`). Until then the normal layout stays in place, with
+  its controls disabled as before.
+- **The sidebar names running work from any page** (`sidebarActivity.ts`):
+  - It shows a model download or verify with the model's name, percent and
+    a thin bar, then recording, transcription, polishing or removal. A
+    recording uses a red dot.
+  - When nothing in the foreground runs, it shows the background
+    language-pack download from the Neural Engine work as **Preparing other
+    languages · N%**. It reads `RuntimeStatus.backgroundDownload` when that
+    field exists.
+  - It is a button that opens Models or Dictate.
+  - In the Settings icon rail it is a dot over a 24 px bar; its full text is
+    the accessible name and tooltip.
+  - Reduced motion stops the pulse and the bar transition. (Issue #307.)
+
 ## Verification
 
 Exercise the whole task with pointer and keyboard input: initial value, entering edit mode, valid and invalid input, cancellation, focus movement, saving, failure/retry, and reloading. Include slow asynchronous setup and navigation while work is pending. Check narrow and desktop layouts using the rendered component; do not rely solely on a screenshot or a synthetic event pass. Reduced motion must preserve the same state and feedback. Keep real OS shortcut and permission qualification separate from browser mocks.
