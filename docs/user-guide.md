@@ -40,8 +40,10 @@ A new installation opens with a short guided setup (issue #270):
 6. **Your words**: choose **As I said it** or **Polished**, and add names and
    terms Vesper should spell your way. Vesper also learns from your
    corrections on this Mac.
-7. **Try it**: once the models are ready, hold **Hold to record** (or your
-   shortcut) and speak; your words appear in the practice box. **Finish** and
+7. **Try it**: once the models are ready, click **Record**, speak, and click
+   **Stop and transcribe**. You can also hold **Record** or your shortcut while
+   you speak. Your words appear live as you talk, then land in the practice
+   box. **Finish** and
    **Start dictating** open Dictate.
 
 **Back** (or a finished step in the sidebar) returns to an earlier step;

@@ -73,13 +73,15 @@ test('setup welcomes a new profile, saves progress and finishes once', async ({ 
   // Try it: a real dictation lands in the practice box, then Finish unlocks.
   await expect(page.getByRole('heading', { name: 'Say something.' })).toBeVisible();
   await expect(page.getByRole('button', { name: 'Finish' })).toBeDisabled();
-  const hold = page.getByRole('button', { name: 'Hold to record' });
-  await expect(hold).toBeEnabled();
-  const box = await hold.boundingBox();
-  await page.mouse.move(box.x + 20, box.y + 20);
-  await page.mouse.down();
+  // Click to start: live words stream in while speaking; click again to stop.
+  const record = page.locator('.first-run').getByRole('button', { name: 'Record', exact: true });
+  await expect(record).toBeEnabled();
+  await record.click();
   await expect(page.locator('.first-run').getByText('Listening…', { exact: true })).toBeVisible();
-  await page.mouse.up();
+  await expect(page.locator('.first-run .live-words')).toContainText(
+    'Can you send the Arclight notes',
+  );
+  await page.locator('.first-run').getByRole('button', { name: 'Stop and transcribe' }).click();
   await expect(page.getByLabel('Practice text')).toHaveValue(
     'Can you send the Arclight notes to Priya by Friday?',
   );
@@ -183,6 +185,25 @@ test('Back from Voice and Welcome in the rail return to the real Welcome', async
   await expect(page.getByText('Step 1 of 7')).toHaveCount(0);
 });
 
+test('Try it also records while Record is held, like push-to-talk', async ({ page }) => {
+  await page.goto(
+    '/tests/interaction-preview.html?first-run&first-run-step=6&first-run-mic=allowed',
+  );
+  const record = page.locator('.first-run').getByRole('button', { name: 'Record', exact: true });
+  const box = await record.boundingBox();
+  await page.mouse.move(box.x + 20, box.y + 20);
+  await page.mouse.down();
+  await expect(
+    page.locator('.first-run').getByRole('button', { name: 'Release to finish' }),
+  ).toBeVisible();
+  await page.waitForTimeout(450);
+  await page.mouse.up();
+  await expect(page.getByLabel('Practice text')).toHaveValue(
+    'Can you send the Arclight notes to Priya by Friday?',
+  );
+  await expect(page.locator('.first-run').getByText('It works', { exact: true })).toBeVisible();
+});
+
 test('a blocked microphone explains where to turn it on', async ({ page }) => {
   await page.goto(
     '/tests/interaction-preview.html?first-run&first-run-step=1&first-run-mic=denied',
@@ -219,14 +240,18 @@ test('the practice waits for the models and resumes their download after a resta
     '/tests/interaction-preview.html?first-run&first-run-step=6&first-run-models-missing',
   );
   await expect(page.getByText('Finishing your models')).toBeVisible();
-  await expect(page.getByRole('button', { name: 'Hold to record' })).toBeDisabled();
+  await expect(
+    page.locator('.first-run').getByRole('button', { name: 'Record', exact: true }),
+  ).toBeDisabled();
   await expect.poll(() => commands(page, 'install_model')).toBeGreaterThan(0);
   await page.evaluate(() => window.previewFinishDownload());
   await page.waitForFunction(
     () => window.previewCommands.filter((c) => c === 'install_model').length >= 2,
   );
   await page.evaluate(() => window.previewFinishDownload());
-  await expect(page.getByRole('button', { name: 'Hold to record' })).toBeEnabled();
+  await expect(
+    page.locator('.first-run').getByRole('button', { name: 'Record', exact: true }),
+  ).toBeEnabled();
 });
 
 test('setup resumes where it stopped, without replaying Welcome', async ({ page }) => {

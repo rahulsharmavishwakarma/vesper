@@ -69,7 +69,7 @@
     },
     6: {
       title: 'Say something.',
-      lede: 'Hold your shortcut and say the sentence from the last step. It appears here, written your way.',
+      lede: 'Press Record, or hold your shortcut, and say the sentence from the last step. It appears here, written your way.',
     },
   };
 
@@ -225,7 +225,7 @@
     if (step === 3 && !accessReady) return 'Turn on Accessibility, or keep your text in Vesper.';
     if (step === 6 && !tried)
       return install.status === 'done'
-        ? 'Hold Record and say something.'
+        ? 'Record and say something.'
         : 'Waiting for the models to finish.';
     if (step === 2 && install.status === 'idle') return models?.blocker() ?? null;
     return null;
@@ -658,6 +658,7 @@
               {:else}
                 {#if step === 6 && settings}<FirstRunTry
                     {settings}
+                    preview={!persist}
                     install={install.status}
                     {percent}
                     onRetry={() => void startInstall(lastPlan ?? undefined)}

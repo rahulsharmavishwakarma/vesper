@@ -365,11 +365,16 @@ and tests open it with `?first-run`.
 - **Try it** is locked behind live progress until the models are installed;
   after a restart it checks what is installed and resumes the download. It
   reuses the Dictate recorder's shared classes: the large status heading
-  (Ready to try, Listening…, Writing it down…, It works), the **Hold to
-  record** button with its ember ring while held, and the timer above the
-  centred recording waveform. Holding records through the normal pipeline
-  into a practice box below (the global shortcut pasting into the box counts
-  too), and **Finish** waits for words to appear.
+  (Ready to try, Listening…, Writing it down…, It works), the **Record**
+  button with its ember ring, and the timer above the centred recording
+  waveform. A click starts recording and a second click (**Stop and
+  transcribe**) finishes it; holding the button for more than 350 ms works as
+  push-to-talk (**Release to finish**). Like Dictate, the step follows the
+  recorder status and `transcription-partial` events, so live words stream
+  above the practice box while speaking, and a capture started with the
+  global shortcut shows the same states (its result lands in the box by paste
+  or from the latest result). Recording goes through the normal pipeline, and
+  **Finish** waits for words to appear.
 - **Welcome's background** is a fine dot field in the accent colour. Each call
   of the bird (about every five seconds, and on hover or click) sends a soft
   ripple out from its beak; dots near the pointer brighten and drift aside,

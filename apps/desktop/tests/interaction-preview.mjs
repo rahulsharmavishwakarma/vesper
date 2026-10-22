@@ -252,10 +252,27 @@ if (states) {
             stage: 'recording',
             operationId: 'preview-try',
             audioLevel: 0.05,
+            // Live words arrive while speaking, as from a streaming model.
+            partial: {
+              operationId: 'preview-try',
+              sequence: 1,
+              committedText: 'Can you send',
+              provisionalText: ' the Arclight notes',
+              audioProcessedSeconds: 1.2,
+              emittedAtUnixMs: Date.now(),
+              isFinal: false,
+            },
+            partialInvalidatedFor: null,
           });
           return 'preview-try';
         case 'stop_recording':
-          Object.assign(runtime, { busy: false, stage: 'idle', operationId: null, audioLevel: 0 });
+          Object.assign(runtime, {
+            busy: false,
+            stage: 'idle',
+            operationId: null,
+            audioLevel: 0,
+            partial: null,
+          });
           return {
             resultId: 'preview-try',
             rawTranscript: 'can you send the arc light notes to priya by friday',
