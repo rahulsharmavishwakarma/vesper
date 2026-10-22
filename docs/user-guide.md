@@ -119,7 +119,9 @@ Installation waits while you are recording, transcribing, cleaning up writing or
 downloading a model, and it never force-restarts; the reason appears below the
 pill. If a check, download or install fails, the pill shows **Couldn't check**,
 **Download failed**, **Install failed** or **Restart failed**; hover it for
-**Retry**. In a build without an enrolled updater it reads **Updates
+**Retry**. A check gives up after 20 seconds without an answer, so a slow or
+offline network shows **Couldn't check** rather than **Checking…** indefinitely.
+In a build without an enrolled updater it reads **Updates
 unavailable** and the switches below are hidden. Model downloads continue to be
 managed separately in **Models**.
 
