@@ -110,6 +110,58 @@ a plain word normalizer:
   ([WWDC23 10049](https://developer.apple.com/videos/play/wwdc2023/10049/)). The first recording after an update
   pays the cost again.
 
+## Compressed encoders
+
+Asked on #301: can a palettized encoder shrink the 1.19 GB download? The variants below were compressed from the same
+float16 program with coremltools 9.0 at the app's macOS 14 target:
+- per-tensor k-means palettization, the only kind that target supports;
+- int8 per-channel linear quantization, for comparison.
+
+All four schedule 99.92% of estimated cost on the Neural Engine.
+
+| Encoder | Weights | First load | Median per 15 s window | Cosine vs NeMo fp32 (speech mel) |
+| --- | ---: | ---: | ---: | ---: |
+| float16 (shipped) | 1,186 MB | 7.1 s | 24.8 ms | 0.99944 |
+| 8-bit palettized | 593 MB | 6.7 s | 24.0 ms | 0.99570 |
+| int8 linear, per channel | 594 MB | 7.1 s | 24.8 ms | 0.98935 |
+| 6-bit palettized | 445 MB | 10.5 s | 23.3 ms | 0.93553 |
+
+Word error rates come from the Swift parity test (`ParakeetNeuralEngineTests`, plain word normalizer, the same MLX
+decoder). The 94-clip set is the held-out FLEURS set used above. The regression lanes are #251's 48-clip
+`heldout-regression` set: 4 clean clips, 4 at 10 dB natural noise, 4 at 0 dB, 28 at −30 dB, and 8 non-speech clips.
+The bracketed interval is a 2,000-resample paired bootstrap against float16.
+
+| Encoder | 94 held-out | Δ vs float16 [95% CI] | Same text as float16 | Clean | 10 dB | 0 dB | −30 dB | Non-speech clips with text |
+| --- | ---: | --- | ---: | ---: | ---: | ---: | ---: | ---: |
+| float16 | 5.34% | — | 94/94 | 15.38% | 15.38% | 19.23% | 8.48% | 0/8 |
+| 8-bit palettized | 5.44% | +0.10 [0.00, +0.26] | 88/94 | 15.38% | 15.38% | 19.23% | 8.64% | 0/8 |
+| int8 linear | 5.24% | −0.10 [−0.25, 0.00] | 82/94 | 15.38% | 15.38% | 19.23% | 8.48% | 0/8 |
+| 6-bit palettized | 5.59% | +0.25 [−0.31, +0.91] | 70/94 | 15.38% | 15.38% | 19.23% | 8.33% | 0/8 |
+
+The all-MLX path scored 5.49% on the same 94 clips, with identical regression lanes.
+
+- **8-bit is within noise.** Both 8-bit encoders halve the download, keep Neural Engine placement and speed, and
+  change WER by at most 0.10 points.
+- **6-bit is too lossy.** Per-tensor 6-bit loses fidelity and changes a quarter of the transcripts, so it is not a
+  candidate at this target.
+- **Not adopted yet.** The shipped engine still uses float16. Switching to an 8-bit file needs its own hosted
+  artifact, a manifest change and the application-path lanes.
+
+## Compute-unit fallback
+
+The shipped compiled model is one directory. It needs no extra files to run on other Core ML compute units. Measured on
+the installed files with the 15 s speech mel:
+
+| Compute units | First load | Median per 15 s window | Cosine vs NeMo fp32 |
+| --- | ---: | ---: | ---: |
+| CPU and Neural Engine (the app's setting) | 8.8 s | 24.8 ms | 0.99944 |
+| CPU only | 0.6 s | 84.9 ms | 0.99992 |
+| CPU and GPU | 0.9 s | 14.3 ms | 1.00000 |
+| All | 1.5 s | 14.1 ms | 1.00000 |
+
+The application requests CPU and Neural Engine. Within that setting, Core ML runs on the CPU any operation the Neural
+Engine cannot take. The decoder always runs in MLX on the Apple GPU.
+
 ## Limitations
 
 - **One machine.** M1–M4 Macs and lower-memory Macs are not measured. The owner decided on 22 October 2026 that
