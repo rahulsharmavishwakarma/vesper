@@ -77,6 +77,14 @@ pub fn verify_runtime(cancelled: &AtomicBool) -> Result<()> {
     Ok(())
 }
 
+/// Directory the bridge loads for the selected engine.
+pub fn speech_subdirectory(config: &AppConfig) -> Result<&'static str> {
+    if config.uses_neural_engine() {
+        return Ok("neural-engine/parakeet");
+    }
+    model_subdirectory(config.models.asr)
+}
+
 pub fn model_subdirectory(model: AsrModel) -> Result<&'static str> {
     match model {
         AsrModel::ParakeetTdt06bV3 => Ok("mlx/parakeet"),
@@ -154,20 +162,30 @@ pub(super) fn prepare_tokenizer(
 }
 
 pub(super) fn verify_directory(config: &AppConfig, root: &Path) -> Result<()> {
-    let directory = artifact_path(root, model_subdirectory(config.models.asr)?)?;
+    let directory = artifact_path(root, speech_subdirectory(config)?)?;
     let allowed: std::collections::BTreeSet<_> = selected(config)?
         .into_iter()
         .filter(|a| a.role == "asr")
         .map(|a| root.join(a.relative_path))
         .collect();
-    // Upstream loaders enumerate safetensors. A verified manifest must never be
-    // supplemented by an unverified shard or an alternate tokenizer directory.
-    for entry in std::fs::read_dir(directory)? {
-        let entry = entry?;
-        if entry.file_name() != ".DS_Store" && !allowed.contains(&entry.path()) {
-            return Err(ModelError::Integrity(
-                "unexpected file in the MLX model directory".into(),
-            ));
+    // Upstream loaders enumerate safetensors, and Core ML reads a compiled
+    // model's whole directory. A verified manifest must never be supplemented
+    // by an unverified shard, tokenizer or model file at any depth.
+    let mut pending = vec![directory];
+    while let Some(directory) = pending.pop() {
+        for entry in std::fs::read_dir(directory)? {
+            let entry = entry?;
+            let path = entry.path();
+            if entry.file_name() == ".DS_Store" || allowed.contains(&path) {
+                continue;
+            }
+            if entry.file_type()?.is_dir() && allowed.iter().any(|file| file.starts_with(&path)) {
+                pending.push(path);
+            } else {
+                return Err(ModelError::Integrity(
+                    "unexpected file in the MLX model directory".into(),
+                ));
+            }
         }
     }
     Ok(())
@@ -205,6 +223,50 @@ mod tests {
             verify_directory(&config, root.path()),
             Err(ModelError::Integrity(_))
         ));
+    }
+
+    #[test]
+    fn neural_engine_directory_admits_only_pinned_files_at_every_depth() {
+        let root = tempfile::tempdir().unwrap();
+        let mut config = AppConfig::default();
+        config.models.asr = AsrModel::ParakeetTdt06bV3;
+        config.models.asr_engine = vesper_core::AsrEngine::NeuralEngine;
+        config.language = Language::English;
+        config.cleanup_enabled = false;
+        let files = selected(&config).unwrap();
+        assert_eq!(files.len(), 6);
+        assert!(files
+            .iter()
+            .all(|a| a.relative_path.starts_with("neural-engine/parakeet/")
+                && a.engine.as_deref() == Some(NEURAL_ENGINE_ENGINE)
+                && a.backend.as_deref() == Some(NEURAL_ENGINE_BACKEND)));
+        for artifact in &files {
+            let path = root.path().join(&artifact.relative_path);
+            std::fs::create_dir_all(path.parent().unwrap()).unwrap();
+            std::fs::write(path, "fixture").unwrap();
+        }
+        verify_directory(&config, root.path()).unwrap();
+        let compiled = root
+            .path()
+            .join("neural-engine/parakeet/ParakeetEncoder15s.mlmodelc");
+        std::fs::write(compiled.join("weights/extra.bin"), "fixture").unwrap();
+        assert!(matches!(
+            verify_directory(&config, root.path()),
+            Err(ModelError::Integrity(_))
+        ));
+        std::fs::remove_file(compiled.join("weights/extra.bin")).unwrap();
+        std::fs::create_dir(compiled.join("unpinned")).unwrap();
+        assert!(matches!(
+            verify_directory(&config, root.path()),
+            Err(ModelError::Integrity(_))
+        ));
+        // The standard engine never selects these files.
+        config.models.asr_engine = vesper_core::AsrEngine::Standard;
+        config.compute_backend = ComputeBackend::Metal;
+        assert!(selected(&config)
+            .unwrap()
+            .iter()
+            .all(|a| a.engine.is_none() && a.relative_path.starts_with("mlx/")));
     }
 
     #[test]

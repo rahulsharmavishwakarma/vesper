@@ -264,6 +264,9 @@ pub fn resolved_nemo_backend(config: &AppConfig) -> Result<&'static str> {
 
 /// `engine` value of the one-file NeMo-Speech.cpp GGUF export in the manifest.
 pub const NEMO_GGUF_ENGINE: &str = "nemo_gguf";
+/// `engine` and `backend` values of the Core ML encoder plus MLX decoder files.
+pub const NEURAL_ENGINE_ENGINE: &str = "coreml_ane";
+pub const NEURAL_ENGINE_BACKEND: &str = "neural_engine";
 
 /// The selected built-in speech model runs on the bundled NeMo-Speech.cpp runtime.
 pub fn uses_nemo_runtime(config: &AppConfig) -> bool {
@@ -288,12 +291,20 @@ fn selected_exact(config: &AppConfig) -> Result<Vec<Artifact>> {
     }
     let backend = if config.uses_mlx_speech() {
         Some("metal")
+    } else if config.uses_neural_engine() {
+        Some(NEURAL_ENGINE_BACKEND)
     } else if nemo {
         Some(resolved_nemo_backend(config)?)
     } else {
         None
     };
-    let engine = config.uses_nemo_gguf().then_some(NEMO_GGUF_ENGINE);
+    let engine = if config.uses_nemo_gguf() {
+        Some(NEMO_GGUF_ENGINE)
+    } else if config.uses_neural_engine() {
+        Some(NEURAL_ENGINE_ENGINE)
+    } else {
+        None
+    };
     let quantization = match config.rewrite_quantization {
         RewriteQuantization::Q4_0 => "q4_0",
         RewriteQuantization::Q8_0 => "q8_0",
@@ -358,7 +369,11 @@ fn built_in_asr_spec(config: &AppConfig, model: AsrModel) -> ModelInstallSpec {
     let mut target = config.clone();
     target.models.asr = model;
     // The engine choice belongs to the model that offers it.
-    if !vesper_core::nemo_gguf_supported(model) {
+    if !match config.models.asr_engine {
+        vesper_core::AsrEngine::Standard => true,
+        vesper_core::AsrEngine::UnifiedGguf => vesper_core::nemo_gguf_supported(model),
+        vesper_core::AsrEngine::NeuralEngine => vesper_core::neural_engine_supported(model),
+    } {
         target.models.asr_engine = vesper_core::AsrEngine::Standard;
     }
     target.models.custom_asr = None;
@@ -736,7 +751,7 @@ pub fn inspect(config: &AppConfig, root: &Path) -> Installation {
     let selection_error = selection.as_ref().err().map(ToString::to_string);
     let supported = selection.is_ok();
     #[cfg(feature = "mlx")]
-    let (supported, selection_error) = if config.uses_mlx_speech() && !mlx::runtime_ready() {
+    let (supported, selection_error) = if config.uses_mlx_runtime() && !mlx::runtime_ready() {
         (
             false,
             Some(
@@ -938,7 +953,7 @@ pub fn verify_asr(config: &AppConfig, root: &Path, cancelled: &AtomicBool) -> Re
     let resolved = resolve_speech(config, root)?;
     let config = &resolved.config;
     #[cfg(feature = "mlx")]
-    if config.uses_mlx_speech() {
+    if config.uses_mlx_runtime() {
         mlx::verify_runtime(cancelled)?;
         mlx::verify_directory(config, root)?;
     }
@@ -1162,7 +1177,9 @@ pub fn install_model(
 pub fn provenance(config: &AppConfig) -> serde_json::Value {
     let preferred = preferred_speech_config(config);
     let effective = preferred.as_ref().unwrap_or(config);
-    let asr_runtime = if effective.uses_mlx_speech() {
+    let asr_runtime = if effective.uses_neural_engine() {
+        "Core ML (Neural Engine encoder) + MLX-Audio-Swift"
+    } else if effective.uses_mlx_speech() {
         vesper_core::MLX_RUNTIME
     } else if uses_nemo_runtime(config) {
         "NeMo-Speech.cpp 0.1.0"

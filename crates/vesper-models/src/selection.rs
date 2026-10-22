@@ -56,8 +56,10 @@ fn automatic_candidate(config: &AppConfig) -> bool {
         && config.models.custom_asr.is_none()
         && config.language == Language::English
         && vesper_core::mlx_speech_supported(config.models.asr)
-        // The unified GGUF picks its own device through NeMo-Speech.cpp.
+        // The unified GGUF picks its own device through NeMo-Speech.cpp, and the
+        // Neural Engine engine has one execution path.
         && !config.uses_nemo_gguf()
+        && !config.uses_neural_engine()
 }
 
 fn preferred_with_availability(config: &AppConfig, available: bool) -> AppConfig {
