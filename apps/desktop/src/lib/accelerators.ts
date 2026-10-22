@@ -31,9 +31,11 @@ export function usesUnifiedGguf(models: {
   asrEngine?: AsrEngine;
   customAsr?: unknown;
 }): boolean {
+  // Mirrors AppConfig::effective_asr_engine: Automatic picks the GGUF where one is pinned.
+  const engine = models.asrEngine ?? 'automatic';
   return (
     !models.customAsr &&
-    models.asrEngine === 'unified_gguf' &&
+    (engine === 'automatic' || engine === 'unified_gguf') &&
     UNIFIED_GGUF_MODELS.includes(models.asr)
   );
 }

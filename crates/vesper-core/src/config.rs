@@ -244,16 +244,20 @@ pub enum ComputeBackend {
     Rocm,
 }
 
-/// Which native engine runs a speech model that has more than one. `Standard`
-/// keeps each model's established exports (for Parakeet v3: ONNX on CPU, MLX on
-/// Apple GPU). `UnifiedGguf` runs one GGUF file through NeMo-Speech.cpp on every
-/// backend; only models with a pinned NeMo GGUF accept it. `NeuralEngine` runs
-/// the encoder as Core ML on the Apple Neural Engine and the decoder in MLX;
-/// only models with a pinned Core ML encoder in an MLX build accept it.
+/// Which native engine runs a speech model that has more than one. Users never
+/// choose: `Automatic` (the default) resolves to the best engine for the model,
+/// language and build (`AppConfig::effective_asr_engine`). The explicit values are
+/// developer and support overrides. `Standard` keeps each model's established
+/// exports (for Parakeet v3: ONNX on CPU, MLX on Apple GPU). `UnifiedGguf` runs one
+/// GGUF file through NeMo-Speech.cpp on every backend; only models with a pinned
+/// NeMo GGUF accept it. `NeuralEngine` runs the encoder as Core ML on the Apple
+/// Neural Engine and the decoder in MLX; only models with a pinned Core ML
+/// encoder in an MLX build accept it.
 #[derive(Debug, Clone, Copy, Default, PartialEq, Eq, Serialize, Deserialize)]
 #[serde(rename_all = "snake_case")]
 pub enum AsrEngine {
     #[default]
+    Automatic,
     Standard,
     UnifiedGguf,
     NeuralEngine,

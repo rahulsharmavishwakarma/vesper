@@ -204,15 +204,17 @@ replacements for missing or damaged files. Repairs need internet only when a
 verified replacement is not already cached. They start from this action, not
 automatically during transcription.
 
-For Parakeet v3, **Speech engine** under **Device and storage** offers these choices:
-
-| Engine | What it does |
-| --- | --- |
-| **Current** | Separate CPU and Apple GPU files. |
-| **Unified GGUF** | One 714 MB file that runs on CPU and on every supported GPU, in every Parakeet language. See [Parakeet unified GGUF engine](offline-asr.md#parakeet-unified-gguf-engine). |
-| **Neural Engine** | Apple Silicon only. A 640 MB download that runs the model on the Apple Neural Engine, leaving the GPU to the writing model. English only, with **Automatic** or **Metal**. Setup takes a few extra seconds after the download, and again once after each macOS update. See [Parakeet on the Neural Engine](offline-asr.md#parakeet-on-the-neural-engine). |
-
-Choosing a different speech model returns the engine to **Current** when that model lacks the chosen engine.
+Vesper picks how a speech model runs; there is no engine setting. On Apple
+Silicon, Parakeet v3 in English runs on the Apple Neural Engine (a 640 MB
+download), leaving the GPU to the writing model. Its other languages, and Macs
+where the Neural Engine path cannot run, use one 714 MB file that runs on CPU
+and on every supported GPU. After the first set installs, Vesper downloads the
+other one quietly in the background, so changing the language needs no further
+download; dictation keeps working meanwhile and a short status line shows its
+progress. The first Neural Engine use after the download, and once after each
+macOS update, takes a few extra seconds to prepare. See
+[Parakeet on the Neural Engine](offline-asr.md#parakeet-on-the-neural-engine)
+and [Parakeet unified GGUF engine](offline-asr.md#parakeet-unified-gguf-engine).
 
 **Automatic** uses a compatible detected accelerator where the selected runtime
 supports it. LFM Audio and the writing model share native GPU selection; on Apple

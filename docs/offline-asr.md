@@ -210,13 +210,33 @@ Long-form was 8.97% vs 10.50% (within noise). See the
 
 ## Parakeet unified GGUF engine
 
-**Models > Device and storage > Speech engine** chooses how Parakeet v3 runs.
-**Current** (the default) keeps the CPU ONNX files and, for English, the Apple
-GPU files. **Neural Engine** is described [below](#parakeet-on-the-neural-engine).
-**Unified GGUF** downloads one file, NVIDIA's
-`parakeet-tdt-0.6b-v3.q8_0.gguf` at `541d1f99` (713,975,456 bytes), and runs it
-through the bundled NeMo-Speech.cpp 0.1.0 runtime on CPU, Metal, CUDA or Vulkan
-for every declared Parakeet language ([ADR-0024](adrs/0024-unified-gguf-speech-engine.md)).
+Users do not choose an engine. **Automatic** (the default `models.asrEngine`)
+runs Parakeet v3 in English on Apple Silicon builds with MLX on the
+[Neural Engine](#parakeet-on-the-neural-engine), with **Automatic** or **Metal**
+processing. Every other case runs one file, NVIDIA's
+`parakeet-tdt-0.6b-v3.q8_0.gguf` at `541d1f99` (713,975,456 bytes), through the
+bundled NeMo-Speech.cpp 0.1.0 runtime on CPU, Metal, CUDA or Vulkan for every
+declared Parakeet language:
+- other languages and automatic language detection;
+- CPU processing;
+- Macs where the MLX bridge cannot load.
+
+See [ADR-0024](adrs/0024-unified-gguf-speech-engine.md),
+[ADR-0025](adrs/0025-neural-engine-speech-engine.md) and
+[ADR-0026](adrs/0026-automatic-speech-engine.md).
+
+After the selected set installs, the app downloads the other set quietly in the
+background (`companion_artifacts`):
+- an English user gets the GGUF;
+- a user in another language gets the Neural Engine set.
+
+That download runs outside the operation slot, so recording continues. Installs
+and removals cancel it first. Readiness never waits for it.
+
+If the selected file is not installed yet but the earlier ONNX or MLX Parakeet
+files are, Automatic keeps using those and records why. The explicit engines
+(`standard`, `unified_gguf`, `neural_engine`) remain only as developer and support
+overrides in the settings file and `vesper-eval --asr-engine`.
 
 On Apple silicon the download is the GGUF plus the Metal NeMo-Speech.cpp package,
 which also contains the CPU backend, so CPU, Metal and an automatic CPU retry all
@@ -229,8 +249,7 @@ phrase boosting. On the #251 held-out sets it scored 4.86% WER in English and
 5.99% in German on both CPU and Metal, against 5.86% and 6.62% for the current
 engine, and 7.25% against 64.05% on quiet (−30 dB) speech, with no text on
 non-speech audio ([qualification record](validation/parakeet-unified-gguf-2026-10-22.md)).
-The other languages, long recordings, CUDA and Vulkan are not yet qualified,
-so **Current** remains the default.
+The other declared languages, CUDA and Vulkan are not yet measured.
 
 ## Parakeet on the Neural Engine
 

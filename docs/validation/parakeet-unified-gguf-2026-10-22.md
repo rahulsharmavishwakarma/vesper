@@ -8,7 +8,8 @@ the same results on CPU and GPU, through the application's own path?
 **1.01 points more accurate on English** (significant) and 0.63 points more accurate on German (within noise) than the
 current 4-bit ONNX engine, at about the same CPU speed and 4-5x lower latency on Metal. On the regression lanes it cut
 quiet-speech WER from 64.05% to 7.25%, improved or matched clean and noisy speech, and produced no text on non-speech
-audio. Other languages, long audio, CUDA and Vulkan are not measured yet, so `Standard` stays the default.
+audio. Other languages, long audio, CUDA and Vulkan are not measured yet. The engine was opt-in when measured; it is now
+the Automatic default for Parakeet ([ADR-0026](../adrs/0026-automatic-speech-engine.md)).
 
 ## Method
 
