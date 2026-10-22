@@ -227,14 +227,14 @@ export function selectModel(
   } else if (role === 'asr' && Object.hasOwn(ASR_MODELS, value)) {
     next.asr = value as AppConfig['models']['asr'];
     next.customAsr = null;
-    // An engine belongs to the models that offer it; others use their standard files.
+    // An engine override belongs to the models that offer it; others return to Automatic.
     const engines: Record<AsrEngine, readonly string[] | null> = {
       automatic: null,
       standard: null,
       unified_gguf: UNIFIED_GGUF_MODELS,
       neural_engine: NEURAL_ENGINE_MODELS,
     };
-    if (engines[next.asrEngine]?.includes(next.asr) === false) next.asrEngine = 'standard';
+    if (engines[next.asrEngine]?.includes(next.asr) === false) next.asrEngine = 'automatic';
   } else if (role === 'rewriter' && Object.hasOwn(CLEANUP_MODELS, value)) {
     next.rewriter = value as AppConfig['models']['rewriter'];
     next.customRewriter = null;
