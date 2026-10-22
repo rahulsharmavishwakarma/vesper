@@ -76,7 +76,8 @@ public func loadModel(
       ["config.json"]
       + (kind == "cohere"
         ? ["tokenizer.model", "tokenizer_config.json"]
-        : ["parakeet", "phonon2", "parakeet_redux"].contains(kind) ? [] : ["tokenizer.json", "tokenizer_config.json"])
+        : ["parakeet", "phonon2", "parakeet_redux", "parakeet_neural_engine"].contains(kind)
+          ? [] : ["tokenizer.json", "tokenizer_config.json"])
     for name in required
     where !FileManager.default.fileExists(atPath: directory.appendingPathComponent(name).path) {
       throw fail("Missing verified local file: \(name)")
@@ -91,6 +92,7 @@ public func loadModel(
         case "parakeet": model = try ParakeetModel.fromDirectory(directory)
         case "phonon2": model = Phonon2Model(try Phonon2.fromDirectory(directory))
         case "parakeet_redux": model = try ParakeetRedux.fromDirectory(directory)
+        case "parakeet_neural_engine": model = try ParakeetNeuralEngineModel(directory: directory)
         case "granite_speech5_ctc": model = try GraniteSpeech5CTCModel.fromDirectory(directory)
         default: throw fail("Unsupported compiled speech architecture")
         }
@@ -145,7 +147,10 @@ public func transcribe(
     let result = try blocking(
       cancel: { cancelled?(cancelContext) == true },
       {
-        Device.withDefaultDevice(.gpu) {
+        try Device.withDefaultDevice(.gpu) {
+          if let neuralEngine = handle.model as? ParakeetNeuralEngineModel {
+            return try neuralEngine.transcribe(MLXArray(boundedAudio))
+          }
           let output = handle.model.generate(
             audio: MLXArray(boundedAudio),
             generationParameters:
@@ -169,6 +174,9 @@ public func transcribe(
       "provider": "metal", "runtimeRevision": "d302a5c6080d2bb97bae38c7418f82abb76013b6",
     ]
     if let scores = result.vesperWhisperScores { response["whisperScores"] = scores }
+    if let neuralEngine = handle.model as? ParakeetNeuralEngineModel {
+      response["encoderComputeUnits"] = neuralEngine.computeUnits
+    }
     return jsonString(response)
   } catch { return jsonString(["schemaVersion": 1, "error": error.localizedDescription]) }
 }

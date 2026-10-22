@@ -18,13 +18,14 @@ mod speech;
 mod transcript;
 
 pub use adapters::{
-    adapter, mlx_speech_only, mlx_speech_supported, resolve_adapter, AdapterCapabilities,
-    AdapterKind, AdapterRegistration, CacheState, LiveMode, ADAPTERS, MLX_REVISION, MLX_RUNTIME,
+    adapter, mlx_speech_only, mlx_speech_supported, nemo_gguf_supported, neural_engine_supported,
+    resolve_adapter, AdapterCapabilities, AdapterKind, AdapterRegistration, CacheState, LiveMode,
+    ADAPTERS, MLX_REVISION, MLX_RUNTIME,
 };
 pub use config::{
-    AppConfig, AudioFrontendConfig, CaptureDesign, CleanupPreset, ComputeBackend, DictationOutput,
-    ImprovementMode, Language, ModelSelection, NoiseReduction, RecordingMode, RewriteQuantization,
-    CONFIG_SCHEMA_VERSION,
+    AppConfig, AsrEngine, AudioFrontendConfig, CaptureDesign, CleanupPreset, ComputeBackend,
+    DictationOutput, ImprovementMode, Language, ModelSelection, NoiseReduction, RecordingMode,
+    RewriteQuantization, CONFIG_SCHEMA_VERSION,
 };
 pub use diarization::{SpeakerSegment, SpeakerTimeline};
 pub use error::{Error, Result};

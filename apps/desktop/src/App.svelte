@@ -20,6 +20,7 @@
   } from './lib/api/desktop';
   import {
     MODEL_ROLE_LABELS,
+    usesUnifiedGguf,
     defaultSettings,
     effectiveRecordingSeconds,
     requiresCompletionReport,
@@ -1079,7 +1080,7 @@
                     </div>
                     <p id="compute-backend-help" class="note">
                       Automatic chooses a supported device and can fall back to CPU. {#if draft.models.customAsr}Speech
-                        uses CPU; this preference applies to the writing model.{:else if requiresCompletionReport(draft.models) || draft.models.asr === 'LiquidAI/LFM2.5-Audio-1.5B' || draft.models.asr === 'nvidia/parakeet-tdt-0.6b-v3'}This
+                        uses CPU; this preference applies to the writing model.{:else if requiresCompletionReport(draft.models) || draft.models.asr === 'LiquidAI/LFM2.5-Audio-1.5B' || (draft.models.asr === 'nvidia/parakeet-tdt-0.6b-v3' && !usesUnifiedGguf(draft.models))}This
                         speech model supports Automatic and CPU.{:else if draft.computeBackend === 'rocm'}Speech
                         uses Vulkan; writing uses ROCm.{/if}
                     </p>

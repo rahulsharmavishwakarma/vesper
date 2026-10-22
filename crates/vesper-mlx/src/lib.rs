@@ -43,6 +43,9 @@ pub struct Transcript {
     pub whisper_scores: Option<WhisperScores>,
     #[serde(default)]
     pub resources: Option<serde_json::Value>,
+    /// Core ML compute units the Neural Engine engine's encoder loaded with.
+    #[serde(default)]
+    pub encoder_compute_units: Option<String>,
 }
 #[derive(Debug, Deserialize, Serialize)]
 #[serde(rename_all = "camelCase")]
@@ -62,6 +65,25 @@ pub fn device_available(library: &Path) -> Result<bool> {
             .get::<unsafe extern "C" fn() -> bool>(b"vesper_mlx_device_available\0")
             .map_err(runtime)?;
         Ok(probe())
+    }
+}
+
+/// Load the Neural Engine encoder in `directory` once and release it, so Core ML
+/// specializes it for this Mac and caches that per path before the first
+/// recording (#143). Returns whether Core ML loaded it.
+pub fn prepare_neural_engine(library: &Path, directory: &Path) -> Result<bool> {
+    let path = CString::new(directory.to_str().ok_or(Error::Input("non-UTF-8 path"))?)
+        .map_err(|_| Error::Input("null in path"))?;
+    // SAFETY: caller verifies the application-built image; the symbol only reads
+    // the NUL-terminated path during the call and retains nothing.
+    unsafe {
+        let image = Library::new(library).map_err(runtime)?;
+        let prepare = image
+            .get::<unsafe extern "C" fn(*const c_char) -> bool>(
+                b"vesper_mlx_prepare_neural_engine\0",
+            )
+            .map_err(runtime)?;
+        Ok(prepare(path.as_ptr()))
     }
 }
 
@@ -132,6 +154,7 @@ impl Model {
             "granite_speech5_ctc",
             "phonon2",
             "parakeet_redux",
+            "parakeet_neural_engine",
         ]
         .contains(&architecture)
         {
@@ -445,6 +468,7 @@ mod tests {
             "granite_speech5_ctc",
             "phonon2",
             "parakeet_redux",
+            "parakeet_neural_engine",
         ]
         .contains(&architecture.as_str())
         {

@@ -53,6 +53,7 @@ test('accelerators follow operating system, detected GPU and app build', () => {
 test('model restrictions and cleanup off narrow GPU choices without changing saved settings', () => {
   const caps = device('macos', 'aarch64', 'metal');
   const config = defaultSettings();
+  config.models.asrEngine = 'standard'; // these cases cover the standard ONNX/MLX engine
   config.computeBackend = 'metal';
   for (const model of [
     'nvidia/parakeet-tdt-0.6b-v3',
@@ -91,6 +92,7 @@ test('MLX is explicit, packaged, English-only and model-qualified', () => {
     speechMetalModels: ['nvidia/parakeet-tdt-0.6b-v3', 'Qwen/Qwen3-ASR-0.6B'],
   };
   const config = defaultSettings();
+  config.models.asrEngine = 'standard'; // these cases cover the standard ONNX/MLX engine
   for (const model of caps.speechMetalModels) {
     config.models.asr = model;
     config.language = 'en';
@@ -142,4 +144,36 @@ test('Parakeet Redux offers Automatic and Metal for automatic detection and its 
     config.language = language;
     assert.deepEqual(enabled(config, packaged), ['auto', 'metal']);
   }
+});
+
+test('the unified Parakeet GGUF offers every NeMo device, the standard engine stays CPU or English Metal', () => {
+  const config = defaultSettings();
+  config.models.asr = 'nvidia/parakeet-tdt-0.6b-v3';
+  config.models.asrEngine = 'standard';
+  config.language = 'de';
+  const mac = { ...device('macos', 'aarch64', 'metal'), speechMetalModels: [] };
+  assert.deepEqual(enabled(config, device('windows', 'x86_64', 'cuda', 'vulkan')), ['auto', 'cpu']);
+  assert.deepEqual(enabled(config, mac), ['auto', 'cpu']);
+  // Automatic (the default) and the explicit override both pick the GGUF.
+  config.models.asrEngine = 'automatic';
+  assert.deepEqual(enabled(config, device('windows', 'x86_64', 'cuda', 'vulkan')), [
+    'auto',
+    'cpu',
+    'cuda',
+    'vulkan',
+  ]);
+  assert.deepEqual(enabled(config, mac), ['auto', 'cpu', 'metal']);
+  // Another model ignores a leftover engine setting.
+  config.models.asr = 'Qwen/Qwen3-ASR-0.6B';
+  assert.deepEqual(enabled(config, device('windows', 'x86_64', 'cuda')), ['auto', 'cpu']);
+});
+
+test('the Neural Engine runs Parakeet only on Automatic or Metal', () => {
+  const config = defaultSettings();
+  config.models.asr = 'nvidia/parakeet-tdt-0.6b-v3';
+  config.models.asrEngine = 'neural_engine';
+  config.language = 'en';
+  const mac = { ...device('macos', 'aarch64', 'metal'), speechMetalModels: [config.models.asr] };
+  assert.deepEqual(enabled(config, mac), ['auto', 'metal']);
+  assert.match(acceleratorReason(config, mac, 'cpu'), /Neural Engine/);
 });

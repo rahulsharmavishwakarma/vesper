@@ -109,3 +109,18 @@ makes it the default for single-recording decoding.
 Tokens, durations, timings and text match the serial loop exactly; see
 `ParakeetBlockedDecodeTests` and
 [inference performance](../../docs/inference-performance.md#blocked-tdt-decoding-on-metal--22-october-2026).
+
+## External Parakeet encoder
+
+`parakeet-external-encoder.patch` adds two entry points to `ParakeetModel`
+for an encoder that runs outside MLX:
+
+- `vesperLogMel(_:)` returns the model's own log-mel frames for one window.
+- `vesperDecode(encoded:frames:)` runs the upstream decoder (`decodeEncoded`)
+  with fresh state on encoder output of shape [1, frames, dModel], and reports
+  completion as `generate` does.
+
+VesperMLX uses them for Parakeet v3 on the Neural Engine: Core ML runs the
+encoder, and the MLX checkpoint holds zero encoder layers. The patch adds no
+kernel and does not change decoding for any existing model. See
+[Parakeet on the Neural Engine](../../docs/offline-asr.md#parakeet-on-the-neural-engine).

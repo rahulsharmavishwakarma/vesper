@@ -32,6 +32,19 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
                 config.language = vesper_core::Language::Auto;
                 asr_selected = true;
             }
+            "--asr-engine" => {
+                let id = args
+                    .next()
+                    .ok_or("--asr-engine requires standard, unified_gguf or neural_engine")?;
+                config.models.asr_engine = serde_json::from_value(serde_json::Value::String(id))?;
+                // The Neural Engine engine is qualified for English only.
+                config.language =
+                    if config.models.asr_engine == vesper_core::AsrEngine::NeuralEngine {
+                        vesper_core::Language::English
+                    } else {
+                        vesper_core::Language::Auto
+                    };
+            }
             "--backend" => {
                 let id = args.next().ok_or("--backend requires a backend ID")?;
                 config.compute_backend = serde_json::from_value(serde_json::Value::String(id))?;

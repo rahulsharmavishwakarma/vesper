@@ -21,6 +21,7 @@
     downloadKey,
     automaticAudioDownloads,
     audioSetupRetryDelay,
+    downloadPercent,
     type DownloadTarget,
     type ModelDownloadState,
   } from '../modelDownloads';
@@ -36,6 +37,7 @@
   import type { AppEnvironment } from '../api/desktop';
   import {
     cancelOperation,
+    installCompanionModels,
     chooseAudioFile,
     getLatestResult,
     getModelInstallation,
@@ -137,6 +139,17 @@
   let refreshVersion = 0;
   let resourceSettingsRevision = $state<string | null>(null);
   let audioSetupPaused = $state(false);
+  // The other speech engine's files download quietly once per settings
+  // revision, and retry with the audio setup back-off after a failure.
+  let companionRevision: string | null = null;
+  let companionFailures = 0;
+  let companionTimer: ReturnType<typeof setTimeout> | undefined;
+  let companionRetry = $state(0);
+  const companionPercent = $derived(
+    runtime?.backgroundDownload?.running
+      ? downloadPercent(runtime.backgroundDownload.progress)
+      : null,
+  );
   let audioSetupRetry = $state(0);
   let audioSetupDirectory: string | null = null;
   let audioRetryTimer: ReturnType<typeof setTimeout> | undefined;
@@ -474,7 +487,14 @@
         statusError = `Could not check transcription status. ${message(cause)}`;
     } finally {
       polling = false;
-      if (!disposed && (runtime?.busy || action || installingModelKey || cancelling))
+      if (
+        !disposed &&
+        (runtime?.busy ||
+          action ||
+          installingModelKey ||
+          cancelling ||
+          runtime?.backgroundDownload?.running)
+      )
         pollTimer = setTimeout(
           () => {
             void pollRuntime();
@@ -747,6 +767,47 @@
     });
   });
   $effect(() => {
+    void companionRetry;
+    if (
+      !desktop ||
+      !settingsLoaded ||
+      settingsBusy ||
+      settingsDirty ||
+      busy ||
+      refreshing ||
+      !ready ||
+      resourceSettingsRevision !== settingsRevision ||
+      downloadRequested ||
+      !installation
+    )
+      return;
+    const revision = `${installation.modelDirectory}|${settingsRevision}`;
+    untrack(() => {
+      if (companionRevision === revision || disposed) return;
+      companionRevision = revision;
+      void installCompanionModels()
+        .then((started) => {
+          if (started) startPolling();
+        })
+        .catch(() => {
+          // Optional files: the failure retries below and never blocks use.
+        });
+    });
+  });
+  $effect(() => {
+    const background = runtime?.backgroundDownload;
+    if (!background || background.running || !background.error) return;
+    untrack(() => {
+      if (companionTimer || disposed) return;
+      companionFailures += 1;
+      companionTimer = setTimeout(() => {
+        companionTimer = undefined;
+        companionRevision = null;
+        companionRetry += 1;
+      }, audioSetupRetryDelay(companionFailures));
+    });
+  });
+  $effect(() => {
     onBusyChange(working, downloading);
   });
   // The sidebar bird tilts and quickens its call dashes while recording. The
@@ -796,6 +857,7 @@
       disposed = true;
       window.removeEventListener('online', resumeAutomaticAudio);
       if (audioRetryTimer) clearTimeout(audioRetryTimer);
+      if (companionTimer) clearTimeout(companionTimer);
       unlistenPartial?.();
       if (pollTimer) clearTimeout(pollTimer);
       if (copyTimer) clearTimeout(copyTimer);
@@ -940,6 +1002,9 @@
           </div>
         </div>
       </div>
+      {#if runtime?.backgroundDownload?.running}<p class="note" role="status">
+          Preparing other languages{companionPercent === null ? '…' : ` · ${companionPercent}%`}
+        </p>{/if}
       {#if ready && installation?.files.some((file) => !file.installed)}<p class="note">
           {installation.message}
         </p>{/if}

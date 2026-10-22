@@ -154,6 +154,7 @@ test('quick capture preferences accept only supported shortcuts', () => {
 
 test('language choices respect the ASR backend and enabled writer without mutating settings', () => {
   const settings = defaultSettings();
+  settings.models.asrEngine = 'standard'; // the standard ONNX/MLX engine
   const values = () => pipelineLanguageOptions(settings).map((option) => option.value);
   for (const asr of ['Qwen/Qwen3-ASR-0.6B', 'nvidia/parakeet-tdt-0.6b-v3']) {
     settings.models.asr = asr;
@@ -576,4 +577,27 @@ test('a custom writing profile validates per declared language', () => {
       `custom writer declaring ${code} should validate`,
     );
   }
+});
+
+test('a developer Neural Engine override keeps Parakeet in English', () => {
+  const settings = defaultSettings();
+  settings.models.asr = 'nvidia/parakeet-tdt-0.6b-v3';
+  settings.models.asrEngine = 'neural_engine';
+  for (const backend of ['auto', 'metal'])
+    assert.deepEqual(
+      transcriptionLanguageOptions(settings.models, backend).map((option) => option.value),
+      ['en'],
+    );
+});
+
+test('Automatic runs Parakeet as the unified GGUF and keeps every declared language on Metal', () => {
+  const settings = defaultSettings();
+  assert.equal(settings.models.asrEngine, 'automatic');
+  settings.models.asr = 'nvidia/parakeet-tdt-0.6b-v3';
+  const metal = (models) => transcriptionLanguageOptions(models, 'metal').map((o) => o.value);
+  settings.models.asrEngine = 'standard';
+  assert.deepEqual(metal(settings.models), ['en']);
+  settings.models.asrEngine = 'automatic';
+  assert.ok(metal(settings.models).includes('de'));
+  assert.ok(metal(settings.models).includes('auto'));
 });

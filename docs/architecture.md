@@ -12,7 +12,7 @@ flowchart LR
     A2 --> C2[Decode / mono 16 kHz]
     C --> D[Selected ASR adapter]
     C2 --> D
-    D --> D1[Nemotron / NeMo-Speech.cpp]
+    D --> D1[Nemotron, Parakeet unified GGUF / NeMo-Speech.cpp]
     D --> D3[Parakeet, Qwen3-ASR, Cohere / sherpa-onnx]
     D --> D4[LFM2.5 Audio / llama.cpp mtmd]
     D --> E[Durable raw transcript]
@@ -81,7 +81,7 @@ Raw ASR output is persisted and published before cleanup. A cleanup rejection, f
 
 ## Models and text fidelity
 
-Nemotron 3.5 uses the official Q8 GGUF and NeMo-Speech.cpp 0.1.0. It is the selectable native-streaming model and maps Automatic and the 28 declared locales in `models/languages.json` to NeMo locale prompts. One bounded Rust worker owns a resident C-ABI recognizer; every microphone recording gets a fresh single-threaded native stream and emits operation-scoped, monotonic partial/final events. Stop flushes all capture audio, calls stream finish, drains results, and only then makes final raw text durable. Imported files use the same resident recognizer's offline API. Original archived microphone audio remains float WAV. Cohere is the fresh-settings default for completed recordings. Parakeet v3 remains an offline CPU fallback through sherpa-onnx 1.13.8 and does not support Hindi.
+Nemotron 3.5 uses the official Q8 GGUF and NeMo-Speech.cpp 0.1.0. It is the selectable native-streaming model and maps Automatic and the 28 declared locales in `models/languages.json` to NeMo locale prompts. One bounded Rust worker owns a resident C-ABI recognizer; every microphone recording gets a fresh single-threaded native stream and emits operation-scoped, monotonic partial/final events. Stop flushes all capture audio, calls stream finish, drains results, and only then makes final raw text durable. Imported files use the same resident recognizer's offline API. Original archived microphone audio remains float WAV. Cohere is the fresh-settings default for completed recordings. Parakeet v3 remains an offline CPU fallback through sherpa-onnx 1.13.8 and does not support Hindi. Its Automatic engine runs NVIDIA's one Q8_0 GGUF through the same NeMo-Speech.cpp runtime on CPU, Metal, CUDA or Vulkan, for completed audio with buffered live drafts; there is no user-facing engine choice ([ADR-0024](adrs/0024-unified-gguf-speech-engine.md), [ADR-0026](adrs/0026-automatic-speech-engine.md)).
 
 Qwen3-ASR and Cohere process completed recordings on CPU with strict language mapping and no whole-recording duration cutoff. Qwen-ASR, Parakeet-family and Cohere retain the selected verified recognizer in the bounded worker with observed-file invalidation ([ADR-0017](adrs/0017-resident-cohere-recognizer.md)). Internally, long audio uses contiguous bounded parts with fresh per-part streams, verified completion, and operation-scoped progress ([ADR-0011](adrs/0011-segment-long-generative-asr.md)): 10 s for Qwen-ASR/Cohere, 29 s for Whisper and 30 s for Parakeet-family transducers. A pinned Sherpa source patch reports actual decoder completion and context loss through existing stream options. Incomplete/error results are rejected, and exact digital silence bypasses inference. See [the completion contract and qualification evidence](offline-asr.md).
 

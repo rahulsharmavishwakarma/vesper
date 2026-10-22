@@ -2,9 +2,9 @@
 
 The application has dedicated CPU adapters for Qwen3-ASR 0.6B and Cohere Transcribe. Select them in **Models**, choose a compatible transcription language in **Dictate** or **Settings**, then use **Save & download**. The language menu lists only modes supported by the active adapter; it guides recognition and does not translate the transcript. Selecting a model alone does not download it. They process completed recordings and imported files without an application duration cutoff. Long audio is processed internally in bounded parts; see [ADR-0011](adrs/0011-segment-long-generative-asr.md). The old recording-duration preference is ignored.
 
-| Model | App language choices | Pinned download |
-| --- | --- | ---: |
-| Qwen3-ASR 0.6B INT8 | Automatic plus 30 declared languages | 987,015,347 bytes |
+| Model                  | App language choices                 |     Pinned download |
+| ---------------------- | ------------------------------------ | ------------------: |
+| Qwen3-ASR 0.6B INT8    | Automatic plus 30 declared languages |   987,015,347 bytes |
 | Cohere Transcribe INT8 | 14 declared languages, explicit only | 2,888,052,036 bytes |
 
 The Cohere export leaves 945 MB of pointwise convolutions in float32; a [research rewrite](validation/model-precision-inventory-2026-10-22.md) that quantizes only those cut the encoder by 0.7-0.8 GB with unchanged WER on 100 English clips, but the app still uses the published files. Cohere has no automatic language detection or Hindi support in this adapter. The picker follows `models/languages.json`. Both adapters accept Automatic/CPU compute settings. Qwen3-ASR is a speech model, separate from the Qwen cleanup model. Their files cannot be imported as a four-file NeMo transducer profile.
@@ -79,11 +79,11 @@ VESPER_ASR_FIXTURES=/path/to/verified-fixtures cargo test --locked \
 
 The public fixtures are original Google FLEURS test audio, revision `70bb2e84b976b7e960aa89f1c648e09c59f894dd`, **CC-BY-4.0**, attributed to Google and Conneau et al., [FLEURS (2022)](https://arxiv.org/abs/2205.12446). References come from each language's `test.tsv`, not model output. See the [pinned dataset](https://huggingface.co/datasets/google/fleurs/tree/70bb2e84b976b7e960aa89f1c648e09c59f894dd).
 
-| Local fixture name | Original archive member | Seconds | SHA-256 |
-| --- | --- | ---: | --- |
-| `fleurs-en_us.wav` | `test/10052240106321793346.wav` | 8.76 | `7603cae3294309ef70d234180cefccc3b13865ee525262228a636069b9b62841` |
-| `fleurs-fr_fr.wav` | `test/10138021779681596478.wav` | 8.28 | `05ccf3ccc2ab4b72d056c3f02e3ffcf6ea0f37b1c42bea5c35789c85291fbdc5` |
-| `fleurs-hi_in.wav` | `test/10011266027513218401.wav` | 9.12 | `217f3abbd8e9cd3767d6e8b87d49fbf82421fc920a103de026b4586d7e644dc5` |
+| Local fixture name | Original archive member         | Seconds | SHA-256                                                            |
+| ------------------ | ------------------------------- | ------: | ------------------------------------------------------------------ |
+| `fleurs-en_us.wav` | `test/10052240106321793346.wav` |    8.76 | `7603cae3294309ef70d234180cefccc3b13865ee525262228a636069b9b62841` |
+| `fleurs-fr_fr.wav` | `test/10138021779681596478.wav` |    8.28 | `05ccf3ccc2ab4b72d056c3f02e3ffcf6ea0f37b1c42bea5c35789c85291fbdc5` |
+| `fleurs-hi_in.wav` | `test/10011266027513218401.wav` |    9.12 | `217f3abbd8e9cd3767d6e8b87d49fbf82421fc920a103de026b4586d7e644dc5` |
 
 Synthetic mono 16 kHz all-zero WAVs cover one second, exactly ten seconds, and 160,001 samples (one sample beyond ten seconds). These few fixtures are smoke checks; they do not constitute a language benchmark or prove quality on general dictation. The live tests also force Qwen output/context limits and reuse a stream after success to verify failure does not retain an earlier completion report.
 
@@ -199,14 +199,107 @@ languages and automatic detection. It is not offered for accuracy.
 
 Measured through the application against Parakeet v3:
 
-| Lane | Redux | Parakeet v3 |
-| --- | --- | --- |
-| Unseen FLEURS en-US | 6.71% | 5.68% |
-| 0 dB noise | 13.32% | 9.21% |
-| German | 7.16% | 6.62% (CPU export) |
+| Lane                | Redux  | Parakeet v3        |
+| ------------------- | ------ | ------------------ |
+| Unseen FLEURS en-US | 6.71%  | 5.68%              |
+| 0 dB noise          | 13.32% | 9.21%              |
+| German              | 7.16%  | 6.62% (CPU export) |
 
 Long-form was 8.97% vs 10.50% (within noise). See the
 [Redux record](validation/parakeet-redux-2026-10-21.md).
+
+## Parakeet unified GGUF engine
+
+Users do not choose an engine. **Automatic** (the default `models.asrEngine`)
+runs Parakeet v3 in English on Apple Silicon builds with MLX on the
+[Neural Engine](#parakeet-on-the-neural-engine), with **Automatic** or **Metal**
+processing. Every other case runs one file, NVIDIA's
+`parakeet-tdt-0.6b-v3.q8_0.gguf` at `541d1f99` (713,975,456 bytes), through the
+bundled NeMo-Speech.cpp 0.1.0 runtime on CPU, Metal, CUDA or Vulkan for every
+declared Parakeet language:
+- other languages and automatic language detection;
+- CPU processing;
+- Macs where the MLX bridge cannot load.
+
+See [ADR-0024](adrs/0024-unified-gguf-speech-engine.md),
+[ADR-0025](adrs/0025-neural-engine-speech-engine.md) and
+[ADR-0026](adrs/0026-automatic-speech-engine.md).
+
+After the selected set installs, the app downloads the other set quietly in the
+background (`companion_artifacts`):
+- an English user gets the GGUF;
+- a user in another language gets the Neural Engine set.
+
+That download runs outside the operation slot, so recording continues. Installs
+and removals cancel it first. Readiness never waits for it.
+
+If the selected file is not installed yet but the earlier ONNX or MLX Parakeet
+files are, Automatic keeps using those and records why. An incomplete or
+wrong-size earlier set is skipped, so the app asks for the selected download
+rather than reporting a failed integrity check. The explicit engines
+(`standard`, `unified_gguf`, `neural_engine`) remain only as developer and support
+overrides in the settings file and `vesper-eval --asr-engine`.
+
+On Apple silicon the download is the GGUF plus the Metal NeMo-Speech.cpp package,
+which also contains the CPU backend, so CPU, Metal and an automatic CPU retry all
+work without downloading anything else.
+
+The unified engine processes completed audio in parts of at most 30 seconds with
+automatic language detection; live dictation shows buffered drafts and the
+completed-audio pass stays authoritative. It does not use personal vocabulary
+phrase boosting. On the #251 held-out sets it scored 4.86% WER in English and
+5.99% in German on both CPU and Metal, against 5.86% and 6.62% for the current
+engine, and 7.25% against 64.05% on quiet (−30 dB) speech, with no text on
+non-speech audio ([qualification record](validation/parakeet-unified-gguf-2026-10-22.md)).
+The other declared languages, CUDA and Vulkan are not yet measured.
+
+## Parakeet on the Neural Engine
+
+The **Neural Engine** speech engine runs Parakeet v3's encoder on the Apple Neural Engine. The rest of the model
+stays in MLX ([ADR-0025](adrs/0025-neural-engine-speech-engine.md)):
+
+- The encoder runs as a Core ML program with int8 weights and float16 compute.
+- Parakeet's own log-mel frontend and the TDT decoder run on the GPU.
+
+It is offered for English on Apple Silicon builds that include MLX, with **Automatic** or **Metal**. The download is
+640 MB from `rahulsharmavishwakarma/vesper-parakeet-tdt-0.6b-v3-coreml-ane@c81d0368`:
+
+- the compiled encoder, `ParakeetEncoder15s.mlmodelc`;
+- a 45 MB MLX checkpoint with zero encoder layers, holding the decoder, joint network and subsampling tensors.
+
+`scripts/convert-parakeet-v3-coreml-ane.py` builds these files in the locked `coreml-convert` project.
+
+How it runs:
+
+- **Window.** The encoder takes one fixed 15 s window, so completed audio is processed in parts of at most 15 s
+  rather than 30.
+- **Mel input.** The mel input is zero-padded. The program masks the padding as NeMo's encoder does.
+- **Output.** Output is read through the Neural Engine's padded strides and decoded with fresh state for each part.
+- **Compute units.** The encoder loads with CPU and Neural Engine first, then CPU and GPU, then CPU only. A load that
+  fails, or whose short probe window errors or is not finite, falls through to the next. Every option uses the same
+  installed files, and the choice is recorded as `encoderComputeUnits` in each segment's evidence.
+- **Live dictation.** Live dictation shows buffered drafts. The completed-audio pass stays authoritative.
+- **Directory check.** The model directory must hold only the pinned files at every depth.
+
+Core ML prepares the program for this Mac's Neural Engine on its first load in a process, which took about 7 s on an
+M5 Pro. Installing the files performs that load, so the first recording does not wait. A macOS update clears the
+prepared copy, and the next recording takes the extra seconds once.
+
+Through the application on 94 held-out English clips, the engine scored 5.11% WER against 5.16% for the MLX path, a
+difference within noise.
+- Clips up to 15 s matched.
+- Clips of 15–20 s gained a few errors from the extra cut.
+
+The [spike record](validation/ane-coreml-spike-2026-10-22.md) measured the same encoder program alongside the writing
+model:
+
+| Measure | Neural Engine | MLX speech |
+| --- | --- | --- |
+| Writer generation slowdown | 8% | 61% |
+| Encoder energy per window | about a fifth of MLX's | — |
+
+See the [qualification record](validation/parakeet-neural-engine-2026-10-22.md). It was measured on one
+M5 Pro; other languages are not yet measured, so **Current** stays the default.
 
 ## Parakeet MLX precision
 
@@ -220,11 +313,11 @@ Two runs give identical bytes.
 
 Through the application on Metal:
 
-| | float32 files | bfloat16 files |
-| --- | --- | --- |
-| Download | 2.51 GB | 1.25 GB |
-| Peak MLX allocator memory | 3.80 GB | 1.72 GB |
-| Model load | 274–792 ms | 203–214 ms |
+|                           | float32 files | bfloat16 files |
+| ------------------------- | ------------- | -------------- |
+| Download                  | 2.51 GB       | 1.25 GB        |
+| Peak MLX allocator memory | 3.80 GB       | 1.72 GB        |
+| Model load                | 274–792 ms    | 203–214 ms     |
 
 Transcripts were identical on 94/94 held-out and 100/100 unseen FLEURS en-US
 clips, and latency was unchanged. Existing Apple-GPU installations need one
@@ -241,10 +334,10 @@ hosted at
 The previous dynamic INT8 export quantized activations at run time. Held-out
 WER on read speech:
 
-| Language | INT8 | 4-bit weight-only |
-| --- | ---: | ---: |
-| English (FLEURS) | 7.70% | 5.95% |
-| German (FLEURS) | 8.23% | 6.62% |
+| Language         |  INT8 | 4-bit weight-only |
+| ---------------- | ----: | ----------------: |
+| English (FLEURS) | 7.70% |             5.95% |
+| German (FLEURS)  | 8.23% |             6.62% |
 
 The download size is about the same; CPU decoding is roughly 1.5× slower.
 See the [precision record](validation/parakeet-weight-only-2026-10-21.md). The
@@ -294,12 +387,12 @@ Parakeet TDT v3 and custom NeMo transducer profiles on CPU decode completed audi
 
 Local measurement, 16 October 2026 (Apple M5 Pro, CPU, resident recognizer). Public FLEURS en-US clips were concatenated into three 63–118 s recordings per lane, 608 reference words each.
 
-| Native call limit | Clean WER | 0 dB noise WER |
-| --- | ---: | ---: |
-| Whole recording (before) | 52.30% | 62.99% |
-| 10 s | 17.43% | 29.11% |
-| 20 s | 28.12% | 39.14% |
-| **30 s (selected)** | **17.27%** | **36.51%** |
+| Native call limit        |  Clean WER | 0 dB noise WER |
+| ------------------------ | ---------: | -------------: |
+| Whole recording (before) |     52.30% |         62.99% |
+| 10 s                     |     17.43% |         29.11% |
+| 20 s                     |     28.12% |         39.14% |
+| **30 s (selected)**      | **17.27%** |     **36.51%** |
 
 On the 24 individual clips (4–24 s), 30 s leaves output identical to the previous single call (15.13% clean, 25.16% at 0 dB). A 10 s limit would worsen those clips to 16.94% and 30.76%, because it cuts 10–24 s utterances mid-sentence. The 20 s result shows that a longer native call is not monotonically better for this export, so the limit is an empirical choice, not a model guarantee. The evidence covers English read speech only. Boundary words can still be misrecognized, and other languages and natural long dictation remain unmeasured. Reproduce with the ignored `installed_parakeet_long_final` test and `VESPER_LONG_FINAL_FIXTURES` set to public 16 kHz WAVs.
 

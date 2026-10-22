@@ -1,11 +1,22 @@
 use std::{path::Path, sync::atomic::AtomicBool};
 
-use vesper_audio::MonoPcm;
+use vesper_audio::{MonoPcm, ASR_SAMPLE_RATE};
 use vesper_core::{AppConfig, AsrModel, ComputeBackend, Language};
 
-use crate::{check_cancelled, native, require_file, Result};
+use crate::{check_cancelled, native, require_file, segmented_audio, Result};
 
 pub(crate) const MODEL_FILENAME: &str = "nemotron-3.5-asr-streaming-0.6b.q8_0.gguf";
+/// Parakeet v3 as one GGUF on every backend (`AsrEngine::UnifiedGguf`, #293).
+pub(crate) const PARAKEET_GGUF_DIRECTORY: &str = "parakeet-tdt-0.6b-v3-gguf";
+pub(crate) const PARAKEET_GGUF_FILENAME: &str = "parakeet-tdt-0.6b-v3.q8_0.gguf";
+/// Same completed-audio part limit as the ONNX Parakeet path.
+pub(crate) const PARAKEET_MAX_SEGMENT_SECONDS: usize = 30;
+
+/// Cache-aware streaming checkpoints load with a streaming configuration; the
+/// Parakeet GGUF is an offline model that the pinned runtime cannot stream.
+fn streaming_model(config: &AppConfig) -> bool {
+    !config.uses_nemo_gguf()
+}
 
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub(crate) struct RecognizerKey {
@@ -21,9 +32,15 @@ pub(crate) fn key(config: &AppConfig, model_root: &Path) -> Result<RecognizerKey
         .map_err(|error| native("selecting NeMo-Speech.cpp backend", error))?;
     Ok(RecognizerKey {
         library: vesper_models::nemo_speech_library(model_root),
-        model: model_root
-            .join("nemotron-3.5-asr-streaming-0.6b")
-            .join(MODEL_FILENAME),
+        model: if config.uses_nemo_gguf() {
+            model_root
+                .join(PARAKEET_GGUF_DIRECTORY)
+                .join(PARAKEET_GGUF_FILENAME)
+        } else {
+            model_root
+                .join("nemotron-3.5-asr-streaming-0.6b")
+                .join(MODEL_FILENAME)
+        },
         gpu: (backend != "cpu").then_some(0),
         requested_backend: config.compute_backend,
     })
@@ -46,19 +63,22 @@ impl Recognizer {
         require_file(&key.model)?;
         let mut initialized_provider = vesper_models::resolved_nemo_backend(config)
             .map_err(|e| native("backend selection", e))?;
-        let inner = match vesper_nemo::Recognizer::load_with_right_context(
-            &key.library,
-            &key.model,
-            key.gpu,
-            -1,
-        ) {
+        let streaming = streaming_model(config);
+        let open = |gpu: Option<u32>| {
+            if streaming {
+                vesper_nemo::Recognizer::load_with_right_context(&key.library, &key.model, gpu, -1)
+            } else {
+                vesper_nemo::Recognizer::load(&key.library, &key.model, gpu)
+            }
+        };
+        let inner = match open(key.gpu) {
             Ok(inner) => inner,
             Err(gpu_error)
                 if key.gpu.is_some() && config.compute_backend == ComputeBackend::Auto =>
             {
                 eprintln!("automatic NeMo GPU initialization failed; retrying on CPU: {gpu_error}");
                 initialized_provider = "cpu";
-                vesper_nemo::Recognizer::load_with_right_context(&key.library, &key.model, None, -1).map_err(
+                open(None).map_err(
                     |cpu_error| {
                         native(
                             "NeMo-Speech.cpp model load",
@@ -97,6 +117,36 @@ impl Recognizer {
         phrases: &[String],
     ) -> Result<String> {
         validate_audio(audio, config, cancelled)?;
+        let phrases = if config.speech_adapter().capabilities.contextual_phrases {
+            phrases
+        } else {
+            &[]
+        };
+        if !streaming_model(config) {
+            // Offline model: bounded parts with the shared planner, automatic language.
+            audio.require_sample_rate(ASR_SAMPLE_RATE)?;
+            return segmented_audio::decode_segments_with_limit(
+                audio.samples(),
+                cancelled,
+                PARAKEET_MAX_SEGMENT_SECONDS * ASR_SAMPLE_RATE as usize,
+                |samples| {
+                    let result = self
+                        .inner
+                        .recognize_with_phrases(
+                            samples,
+                            ASR_SAMPLE_RATE,
+                            None,
+                            request_id,
+                            &[],
+                            2.0,
+                        )
+                        .map_err(|error| native("NeMo-Speech.cpp transcription", error))?;
+                    check_cancelled(cancelled)?;
+                    Ok(result.text)
+                },
+                &|_| {},
+            );
+        }
         let result = self
             .inner
             .recognize_with_phrases(

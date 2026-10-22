@@ -20,8 +20,12 @@ impl InitializationFallback {
         mut load: impl FnMut(&AppConfig) -> Result<T>,
     ) -> Result<T> {
         check_cancelled(cancelled)?;
-        let automatic_gpu = selection.requested_backend == ComputeBackend::Auto
-            && selection.config.uses_mlx_speech();
+        // Automatic's MLX GPU path retries on its CPU files, and Automatic's
+        // Neural Engine engine retries on the unified GGUF.
+        let automatic_gpu = (selection.requested_backend == ComputeBackend::Auto
+            && selection.config.uses_mlx_speech())
+            || (selection.config.models.asr_engine == vesper_core::AsrEngine::Automatic
+                && selection.config.uses_neural_engine());
         let key = if automatic_gpu {
             Some(adapters::speech_key(&selection.config, root)?)
         } else {

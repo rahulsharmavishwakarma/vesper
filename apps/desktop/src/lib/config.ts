@@ -102,6 +102,18 @@ export type Language =
 export type LanguageOption = { value: Language; label: string; description: string };
 export type CleanupPreset = 'minimal' | 'balanced';
 export type ComputeBackend = 'auto' | 'cpu' | 'metal' | 'cuda' | 'vulkan' | 'rocm';
+/** Engine for a speech model with more than one; see `AsrEngine` in vesper-core.
+ * Users never choose it: `automatic` (the default) picks the engine, and the
+ * explicit values are developer and support overrides. */
+export type AsrEngine = 'automatic' | 'standard' | 'unified_gguf' | 'neural_engine';
+export {
+  NEURAL_ENGINE_MODELS,
+  UNIFIED_GGUF_MODELS,
+  usesNeuralEngine,
+  usesUnifiedGguf,
+} from './accelerators.ts';
+import { usesNeuralEngine, usesUnifiedGguf } from './accelerators.ts';
+
 export const AUDIO_FRONTENDS = {
   'silero-v6.2': 'Silero v6.2',
   dpdfnet8: 'DPDFNet8',
@@ -185,6 +197,8 @@ export interface AppConfig {
   schemaVersion: number;
   models: {
     asr: AsrModel;
+    /** The Rust contract fills `standard` for settings saved before this choice existed. */
+    asrEngine: AsrEngine;
     rewriter: RewriteModel;
     customAsr: HuggingFaceProfile | null;
     customRewriter: HuggingFaceProfile | null;
@@ -325,8 +339,10 @@ export function transcriptionLanguageOptions(
       (option) => option.value === 'auto' || declared.has(option.value),
     );
   }
+  if (usesNeuralEngine(models)) return LANGUAGE_OPTIONS.filter((option) => option.value === 'en');
   if (
     backend === 'metal' &&
+    !usesUnifiedGguf(models) &&
     ['nvidia/parakeet-tdt-0.6b-v3', 'Qwen/Qwen3-ASR-0.6B'].includes(models.asr)
   )
     return LANGUAGE_OPTIONS.filter((option) => option.value === 'en');
@@ -415,6 +431,7 @@ export function defaultSettings(): AppConfig {
     schemaVersion: 1,
     models: {
       asr: 'CohereLabs/cohere-transcribe-03-2026',
+      asrEngine: 'automatic',
       rewriter: 'Qwen/Qwen3.5-0.8B',
       customAsr: null,
       customRewriter: null,

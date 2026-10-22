@@ -14,6 +14,14 @@ export interface RuntimeStatus {
   partialInvalidatedFor: string | null;
   transcriptPreview: TranscriptPreview | null;
   download: DownloadStatus | null;
+  /** The quiet download of the other speech engine's files; never blocks recording. */
+  backgroundDownload?: BackgroundDownloadStatus;
+}
+
+export interface BackgroundDownloadStatus {
+  running: boolean;
+  progress: InstallProgress | null;
+  error: string | null;
 }
 
 export interface TranscriptPreview {
@@ -124,6 +132,10 @@ export function installModel(
   quantization: ModelCatalogInstallation['quantization'],
 ) {
   return desktopInvoke<ModelCatalogInstallation>('install_model', { modelId, quantization });
+}
+/** Starts the background download of the other speech engine's files; `true` if started. */
+export function installCompanionModels() {
+  return desktopInvoke<boolean>('install_companion_models');
 }
 export function removeModel(model: ModelCatalogInstallation) {
   return desktopInvoke<{ removedBytes: number; removedFiles: number }>('remove_model', {

@@ -74,6 +74,7 @@ make audit-python-vibevoice
 make audit-python-onnx-quantize
 make audit-python-mlx-convert
 make audit-python-nemo-convert
+make audit-python-coreml-convert
 ```
 
 Use `uv add --dev PACKAGE` / `uv remove --dev PACKAGE` for contributor tools.
@@ -97,7 +98,10 @@ CI's dependency audit covers only the default group.
 (PyTorch 2.6 CPU, torchaudio, librosa, NumPy 1.26) for producing GGUF files that one file serves on CPU, Metal, CUDA
 and Vulkan; see the [Parakeet GGUF record](validation/parakeet-gguf-cross-backend-2026-10-22.md).
 `benchmarks/asr/python/mlx-convert` pins mlx-audio for MLX artifact conversion;
-see [Parakeet Redux](offline-asr.md#parakeet-redux-apple-gpu). Their incompatible NumPy/model dependencies
+see [Parakeet Redux](offline-asr.md#parakeet-redux-apple-gpu).
+`benchmarks/asr/python/coreml-convert` pins coremltools, PyTorch and Transformers for the
+Neural Engine encoder conversion; see [Parakeet on the Neural Engine](offline-asr.md#parakeet-on-the-neural-engine).
+Their incompatible NumPy/model dependencies
 are isolated from contributor checks. See [benchmark Python setup](../benchmarks/asr/README.md#python-environments).
 The retained benchmark requirements files are generated compatibility exports;
 `make python-lock-check` verifies they match their locks. Dated validation reports

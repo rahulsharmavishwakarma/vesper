@@ -1,0 +1,19 @@
+[project]
+name = "vesper-coreml-convert"
+version = "0.0.0"
+description = "Isolated Core ML conversion tooling for published speech checkpoints; not part of the desktop runtime"
+requires-python = ">=3.12,<3.13"
+dependencies = [
+    "coremltools==9.0",
+    # coremltools 9.0 casts shape scalars with int(), which NumPy 2 rejects during PyTorch conversion.
+    "huggingface-hub>=2.2.0",
+    "numpy==1.26.4",
+    "safetensors",
+    "torch==2.14.1",
+    "transformers==5.20.2",
+]
+
+[tool.uv]
+package = false
+# Core ML conversion runs only on Apple-silicon macOS.
+environments = ["sys_platform == 'darwin' and platform_machine == 'arm64'"]

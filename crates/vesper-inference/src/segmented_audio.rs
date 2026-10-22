@@ -8,6 +8,8 @@ use vesper_audio::ASR_SAMPLE_RATE;
 // not recording or imported-file duration. Update provenance if this policy changes.
 pub(crate) const MAX_SEGMENT_SECONDS: usize = 10;
 pub(crate) const MAX_SEGMENT_SAMPLES: usize = MAX_SEGMENT_SECONDS * ASR_SAMPLE_RATE as usize;
+/// The Neural Engine's Core ML encoder takes one fixed 15 s window (#143).
+pub(crate) const NEURAL_ENGINE_SEGMENT_SECONDS: usize = 15;
 #[cfg(test)]
 pub(crate) const ENERGY_WINDOW: usize = ASR_SAMPLE_RATE as usize / 10;
 

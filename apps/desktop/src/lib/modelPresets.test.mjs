@@ -14,6 +14,14 @@ import {
   selectedModelValue,
 } from './modelPresets.ts';
 
+test('a Neural Engine override survives only on models that offer it', () => {
+  let models = { ...defaultSettings().models, asrEngine: 'neural_engine' };
+  models = selectModel(models, 'asr', 'nvidia/parakeet-tdt-0.6b-v3');
+  assert.equal(models.asrEngine, 'neural_engine');
+  models = selectModel(models, 'asr', 'Qwen/Qwen3-ASR-0.6B');
+  assert.equal(models.asrEngine, 'automatic');
+});
+
 test('catalog has distinct pinned profiles for both pipeline stages', () => {
   assert.ok(MODEL_PRESETS.some((entry) => entry.profile.runtime === 'sherpa_onnx_transducer'));
   assert.ok(MODEL_PRESETS.some((entry) => entry.profile.runtime === 'llama_cpp'));
@@ -278,4 +286,18 @@ test('dedicated ASR choices preserve settings, enforce languages and ignore obso
       assert.equal(effectiveRecordingSeconds(settings), 0);
     }
   }
+});
+
+test('choosing a speech model without the saved engine resets it to Automatic', () => {
+  let models = { ...defaultSettings().models, asr: 'nvidia/parakeet-tdt-0.6b-v3' };
+  models.asrEngine = 'unified_gguf';
+  // Parakeet keeps the unified engine it offers.
+  assert.equal(selectModel(models, 'asr', 'nvidia/parakeet-tdt-0.6b-v3').asrEngine, 'unified_gguf');
+  // Another model does not offer it, so saving would otherwise fail validation.
+  models = selectModel(models, 'asr', 'CohereLabs/cohere-transcribe-03-2026');
+  assert.equal(models.asr, 'CohereLabs/cohere-transcribe-03-2026');
+  assert.equal(models.asrEngine, 'automatic');
+  // Automatic is valid for every model and is kept.
+  models = { ...models, asrEngine: 'automatic' };
+  assert.equal(selectModel(models, 'asr', 'openai/whisper-small').asrEngine, 'automatic');
 });

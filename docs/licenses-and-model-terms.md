@@ -19,7 +19,7 @@ and [models/presets.json](../models/presets.json).
 
 | Publisher | Examples in the catalog | Terms |
 | --- | --- | --- |
-| NVIDIA | Parakeet TDT, Nemotron ASR | Original-weights terms apply; the Parakeet conversion used here is recorded as CC-BY-4.0 with NVIDIA as the original rights holder — attribution is required and preserved in the model profile (see [Hugging Face model workflow](huggingface-models.md)) |
+| NVIDIA | Parakeet TDT, Nemotron ASR | Original-weights terms apply; the Parakeet conversion used here is recorded as CC-BY-4.0 with NVIDIA as the original rights holder — attribution is required and preserved in the model profile (see [Hugging Face model workflow](huggingface-models.md)). The Parakeet unified GGUF engine downloads NVIDIA's own CC-BY-4.0 `parakeet-tdt-0.6b-v3.q8_0.gguf` directly from `nvidia/parakeet-tdt-0.6b-v3`; Vesper does not redistribute it |
 | Qwen | Qwen3.5, Qwen3-ASR, Qwen2.5 presets | Upstream Qwen license terms apply |
 | CohereLabs | Cohere Transcribe | Upstream Cohere terms apply |
 | LiquidAI | LFM Audio | Upstream Liquid AI terms apply |

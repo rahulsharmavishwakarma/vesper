@@ -21,6 +21,8 @@ the same checks before packaging. Stable PR check names are:
 7. `Security / Python benchmarks (vibevoice)`
 8. `Security / Python benchmarks (onnx-quantize)`
 9. `Security / Python benchmarks (mlx-convert)`
+10. `Security / Python benchmarks (nemo-convert)`
+11. `Security / Python benchmarks (coreml-convert)`
 
 The benchmark names come from the `security.yml` matrix, so adding or removing a
 benchmark project adds or removes a check.
@@ -70,13 +72,20 @@ need:
 | `Rust (macOS)` | documentation, Markdown, notebooks, the Pages `site/`, Python benchmark projects, or the browser-only frontend (`apps/desktop/src/`, `apps/desktop/tests/`, Playwright/ESLint config) |
 | `Browser regressions` | documentation, Markdown, notebooks, `site/`, Python benchmark projects, or Rust/native-only paths (`crates/`, `native/`, `patches/`, `vendor/`, `apps/desktop/src-tauri/`, Cargo and toolchain files) |
 | `Python benchmarks (…)` | anything other than a benchmark project, its exported requirements, the root `pyproject.toml`/`uv.lock` or the `Makefile` |
+| GLib backport step in `Dependencies` | anything other than `vendor/glib/`, `tests/glib-backport/`, Cargo manifests and lockfile, the toolchain file, `scripts/audit-rust.py`/`test_rust_audit.py` or the `Makefile` |
 
 The rules list what each job can ignore, so a path nobody anticipated still runs
 the job. Rust embeds files from `models/` and `benchmarks/`, so those always run
 it. Changing a workflow or the scope script runs everything, and so do pushes to
 `main`, release tags, merge-queue entries, manual runs, the weekly security
 schedule and any pull request whose file list comes back empty. `Frontend and
-repository hygiene`, `Dependencies` and `Secrets` always run.
+repository hygiene`, `Dependencies` and `Secrets` always run; inside
+`Dependencies` only the GLib backport regression is scoped. That step installs
+GLib's development files from the Ubuntu mirror, its only network-bound part:
+over 40 runs before scoping it took a median of 0.5 min but 2.5 min at the 90th
+percentile, once 6 min 42 s for 4.7 MB and once a 20-minute hang. It now retries
+`apt` with 30-second timeouts and is capped at 8 minutes, so a bad mirror fails
+fast and can be re-run.
 
 Skipping uses a job-level `if:`, never workflow `paths:` filters: GitHub reports a
 job skipped by its condition as successful, so required checks still pass, while

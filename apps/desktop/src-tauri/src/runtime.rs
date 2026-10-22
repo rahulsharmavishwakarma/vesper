@@ -2,7 +2,7 @@ use std::{
     path::{Path, PathBuf},
     sync::{
         atomic::{AtomicBool, Ordering},
-        mpsc, Arc, Mutex,
+        mpsc, Arc, Condvar, Mutex,
     },
 };
 
@@ -79,6 +79,34 @@ mod tests {
             duration_seconds: 1.0,
         }
     }
+    #[test]
+    fn background_download_runs_once_and_yields_to_foreground_installs() {
+        let runtime = Runtime::default();
+        assert!(runtime.begin_background().unwrap());
+        assert!(!runtime.begin_background().unwrap());
+        let failed: Result<(), String> = Err("network".into());
+        runtime.finish_background(&failed);
+        assert_eq!(
+            runtime.background.lock().unwrap().error.as_deref(),
+            Some("network")
+        );
+        // A cancelled download does not report its error.
+        assert!(runtime.begin_background().unwrap());
+        runtime.cancel_background_and_wait_for(std::time::Duration::ZERO);
+        runtime.finish_background(&failed);
+        let status = runtime.background.lock().unwrap().clone();
+        assert!(!status.running && status.error.is_none());
+        // Foreground installs and removals hold the files.
+        runtime
+            .begin("installing", "Preparing model download…")
+            .unwrap();
+        assert!(!runtime.begin_background().unwrap());
+        runtime.finish(&Ok::<(), String>(()));
+        assert!(runtime.begin_background().unwrap());
+        runtime.prepare_exit().unwrap();
+        assert!(runtime.background_cancelled.load(Ordering::Relaxed));
+    }
+
     #[test]
     fn automatic_draft_edits_are_current_revision_checked_and_recoverable_without_audio() {
         let dir = tempfile::tempdir().unwrap();
@@ -1091,6 +1119,16 @@ pub struct DownloadStatus {
     pub progress: Option<vesper_models::InstallProgress>,
 }
 
+/// The quiet download of the other engine's speech files (#143). It runs
+/// outside the operation slot, so recording and transcription continue.
+#[derive(Clone, Default, Serialize)]
+#[serde(rename_all = "camelCase")]
+pub struct BackgroundDownloadStatus {
+    pub running: bool,
+    pub progress: Option<vesper_models::InstallProgress>,
+    pub error: Option<String>,
+}
+
 #[derive(Clone, Serialize)]
 #[serde(rename_all = "camelCase")]
 pub struct TranscriptPreview {
@@ -1132,6 +1170,9 @@ pub struct Runtime {
     pub diagnostics: Arc<Diagnostics>,
     pub cancelled: Arc<AtomicBool>,
     pub closing: AtomicBool,
+    background: Mutex<BackgroundDownloadStatus>,
+    background_idle: Condvar,
+    pub background_cancelled: Arc<AtomicBool>,
 }
 
 #[derive(Serialize)]
@@ -1149,9 +1190,64 @@ pub struct RuntimeStatus {
     pub partial_invalidated_for: Option<String>,
     pub transcript_preview: Option<TranscriptPreview>,
     pub download: Option<DownloadStatus>,
+    pub background_download: BackgroundDownloadStatus,
 }
 
 impl Runtime {
+    /// Starts a background download unless one runs, a foreground install or
+    /// removal is in progress, or the app is closing.
+    pub fn begin_background(&self) -> Result<bool, String> {
+        if self.closing.load(Ordering::Relaxed) {
+            return Ok(false);
+        }
+        {
+            let state = self.state.lock().map_err(|e| e.to_string())?;
+            if state.busy && matches!(state.stage.as_str(), "installing" | "removing") {
+                return Ok(false);
+            }
+        }
+        let mut background = self.background.lock().map_err(|e| e.to_string())?;
+        if background.running {
+            return Ok(false);
+        }
+        self.background_cancelled.store(false, Ordering::Relaxed);
+        *background = BackgroundDownloadStatus {
+            running: true,
+            ..Default::default()
+        };
+        Ok(true)
+    }
+    pub fn background_progress(&self, progress: &vesper_models::InstallProgress) {
+        if let Ok(mut background) = self.background.lock() {
+            background.progress = Some(progress.clone());
+        }
+    }
+    pub fn finish_background<T>(&self, result: &Result<T, String>) {
+        if let Ok(mut background) = self.background.lock() {
+            background.running = false;
+            background.error = match result {
+                Err(error) if !self.background_cancelled.load(Ordering::Relaxed) => {
+                    Some(error.clone())
+                }
+                _ => None,
+            };
+        }
+        self.background_idle.notify_all();
+    }
+    /// Foreground installs and removals stop the background download first, so
+    /// two writers never touch the same files. Waits at most 30 seconds; the
+    /// download checks the flag between chunks.
+    pub fn cancel_background_and_wait(&self) {
+        self.cancel_background_and_wait_for(std::time::Duration::from_secs(30));
+    }
+    fn cancel_background_and_wait_for(&self, limit: std::time::Duration) {
+        self.background_cancelled.store(true, Ordering::Relaxed);
+        if let Ok(background) = self.background.lock() {
+            let _ = self
+                .background_idle
+                .wait_timeout_while(background, limit, |background| background.running);
+        }
+    }
     pub fn set_operation_id(&self, id: &str) {
         if let Ok(mut state) = self.state.lock() {
             state.operation_id = Some(id.into());
@@ -1247,6 +1343,7 @@ impl Runtime {
         // checking idle and marking shutdown. Hiding a window never calls this.
         state.cancel_semantic();
         self.closing.store(true, Ordering::Relaxed);
+        self.background_cancelled.store(true, Ordering::Relaxed);
         Ok(())
     }
     pub fn cancel_and_take_recording(&self) -> Result<(bool, Option<WorkContext>), String> {
@@ -1709,6 +1806,11 @@ impl Runtime {
             partial_invalidated_for: state.partial_invalidated_for.clone(),
             transcript_preview: state.transcript_preview.clone(),
             download: state.download.clone(),
+            background_download: self
+                .background
+                .lock()
+                .map(|background| background.clone())
+                .unwrap_or_default(),
         })
     }
 }
