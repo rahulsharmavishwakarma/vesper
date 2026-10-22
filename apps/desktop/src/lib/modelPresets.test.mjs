@@ -289,4 +289,7 @@ test('choosing a speech model without the saved engine resets it to the standard
   models = selectModel(models, 'asr', 'CohereLabs/cohere-transcribe-03-2026');
   assert.equal(models.asr, 'CohereLabs/cohere-transcribe-03-2026');
   assert.equal(models.asrEngine, 'standard');
+  // Automatic is valid for every model and is kept.
+  models = { ...models, asrEngine: 'automatic' };
+  assert.equal(selectModel(models, 'asr', 'openai/whisper-small').asrEngine, 'automatic');
 });

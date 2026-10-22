@@ -228,6 +228,7 @@ export function selectModel(
     next.customAsr = null;
     // An engine belongs to the models that offer it; others use their standard files.
     const engines: Record<AsrEngine, readonly string[] | null> = {
+      automatic: null,
       standard: null,
       unified_gguf: UNIFIED_GGUF_MODELS,
     };
