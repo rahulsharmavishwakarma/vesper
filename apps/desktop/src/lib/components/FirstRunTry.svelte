@@ -13,6 +13,7 @@
   } from '../api/runtime';
   import { recordingShortcuts, type AppConfig } from '../config';
   import { liveTranscriptFromStatus, mergeLiveTranscript } from '../liveTranscript';
+  import { liveWords } from '../liveWords';
   import { shortcutLabel } from '../recording-shortcuts';
 
   let {
@@ -40,6 +41,25 @@
   let external = $state(false);
   let error = $state<string | null>(null);
   let live = $state<StreamingTranscript | null>(null);
+  // Drafts arrive from events and from the status poll; at most one reaches
+  // the screen per frame, always the newest.
+  let next: StreamingTranscript | null = null;
+  let paint = 0;
+  function show(draft: StreamingTranscript | null) {
+    next = draft;
+    if (!paint)
+      paint = requestAnimationFrame(() => {
+        paint = 0;
+        live = next;
+      });
+  }
+  function clearLive() {
+    cancelAnimationFrame(paint);
+    paint = 0;
+    next = null;
+    live = null;
+  }
+  const words = $derived(live ? liveWords(live.committedText, live.provisionalText) : []);
   let box: HTMLTextAreaElement | undefined = $state();
   let pressing = false;
   let pressedAt = 0;
@@ -91,7 +111,7 @@
   async function start() {
     if (!ready || phase !== 'idle') return;
     error = null;
-    live = null;
+    clearLive();
     starting = (async () => {
       try {
         operation = await startRecording(null);
@@ -119,7 +139,7 @@
       error = `Vesper could not finish that recording. ${String(cause)}`;
     }
     phase = 'idle';
-    live = null;
+    clearLive();
     box?.focus();
   }
 
@@ -164,7 +184,7 @@
         clearInterval(clock);
         external = false;
         phase = 'idle';
-        live = null;
+        clearLive();
         // Typing into apps pastes into the focused box; otherwise take the result.
         setTimeout(async () => {
           try {
@@ -179,7 +199,7 @@
         phase = 'transcribing';
       }
       if (runtime.busy && runtime.operationId === operation)
-        live = liveTranscriptFromStatus(live, runtime);
+        show(liveTranscriptFromStatus(next ?? live, runtime));
     } catch {
       // Status is best-effort; the button path still finishes.
     }
@@ -190,7 +210,7 @@
     void follow();
     if (!preview)
       void listen<StreamingTranscript>('transcription-partial', (event) => {
-        live = mergeLiveTranscript(live, event.payload, operation, null);
+        show(mergeLiveTranscript(next ?? live, event.payload, operation, null));
       })
         .then((dispose) => {
           if (disposed) dispose();
@@ -200,6 +220,7 @@
   });
   onDestroy(() => {
     disposed = true;
+    cancelAnimationFrame(paint);
     clearInterval(clock);
     clearTimeout(poll);
     unlisten?.();
@@ -278,11 +299,10 @@
       <!-- While recording, the box itself fills with live words: what is already
            written, then the confirmed draft, then the unconfirmed tail in grey. -->
       <div class="box live-box" aria-live="polite" aria-label="Practice text, live">
-        {#if text.trim()}<span>{text.trim()} </span>{/if}<span>{live?.committedText ?? ''}</span
-        ><span class="provisional">{live?.provisionalText ?? ''}</span><span
-          class="caret"
-          aria-hidden="true"
-        ></span>
+        {#if text.trim()}<span>{text.trim()} </span>{/if}{#each words as word (word.key)}<span
+            class="word"
+            class:provisional={word.provisional}>{`${word.text} `}</span
+          >{/each}<span class="caret" aria-hidden="true"></span>
       </div>
     {:else}
       <textarea
@@ -373,8 +393,22 @@
     color: var(--color-ink);
     border-color: var(--color-accent);
   }
-  .live-box .provisional {
+  /* Words that stay the same keep their place; new or revised words ease in,
+   * and a grey word that becomes final eases to ink instead of snapping. */
+  .word {
+    display: inline;
+    color: var(--color-ink);
+    transition: color 260ms var(--ease-out);
+    animation: word-in 240ms var(--ease-out);
+  }
+  .word.provisional {
     color: var(--color-muted);
+  }
+  @keyframes word-in {
+    from {
+      opacity: 0;
+      filter: blur(3px);
+    }
   }
   .caret {
     display: inline-block;
@@ -391,8 +425,10 @@
     }
   }
   @media (prefers-reduced-motion: reduce) {
-    .caret {
+    .caret,
+    .word {
       animation: none;
+      transition: none;
     }
   }
   .record-button {

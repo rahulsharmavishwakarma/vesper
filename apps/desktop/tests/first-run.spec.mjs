@@ -185,6 +185,24 @@ test('Back from Voice and Welcome in the rail return to the real Welcome', async
   await expect(page.getByText('Step 1 of 7')).toHaveCount(0);
 });
 
+test('live words grow in the box without redrawing the words already shown', async ({ page }) => {
+  await page.goto(
+    '/tests/interaction-preview.html?first-run&first-run-step=6&first-run-mic=allowed',
+  );
+  await page.locator('.first-run').getByRole('button', { name: 'Record', exact: true }).click();
+  const box = page.locator('.first-run .live-box');
+  await expect(box).toContainText('Can you send');
+  // Tag the first word's element; a smooth update keeps the same element.
+  await box
+    .locator('.word')
+    .first()
+    .evaluate((element) => (element.dataset.seen = 'yes'));
+  await expect(box).toContainText('Can you send the Arclight notes to Priya', { timeout: 5000 });
+  await expect(box.locator('.word').first()).toHaveAttribute('data-seen', 'yes');
+  // Committed words are ink, the re-decoded tail is grey.
+  await expect(box.locator('.word.provisional')).toHaveCount(2);
+});
+
 test('Try it also records while Record is held, like push-to-talk', async ({ page }) => {
   await page.goto(
     '/tests/interaction-preview.html?first-run&first-run-step=6&first-run-mic=allowed',

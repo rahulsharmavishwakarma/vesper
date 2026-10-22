@@ -375,7 +375,10 @@ and tests open it with `?first-run`.
   recorder status and `transcription-partial` events, so live words stream
   into the practice box itself while speaking (confirmed words in ink, the
   unconfirmed tail in grey, a blinking caret) and become the editable final
-  text on stop, and a capture started with the
+  text on stop. Drafts are painted at most once per frame, newest first;
+  words that stay the same keep their element (`liveWords.ts` keys them by
+  position and text), so only new or revised words ease in and a grey word
+  turning final fades to ink, and a capture started with the
   global shortcut shows the same states (its result lands in the box by paste
   or from the latest result). Recording goes through the normal pipeline, and
   **Finish** waits for words to appear.

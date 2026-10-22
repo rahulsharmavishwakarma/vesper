@@ -252,6 +252,7 @@ if (states) {
             stage: 'recording',
             operationId: 'preview-try',
             audioLevel: 0.05,
+            startedAt: Date.now(),
             // Live words arrive while speaking, as from a streaming model.
             partial: {
               operationId: 'preview-try',
@@ -293,6 +294,26 @@ if (states) {
           });
           return { ...onboarding };
         case 'get_runtime_status':
+          if (runtime.stage === 'recording' && runtime.operationId === 'preview-try') {
+            // A draft that grows over time: committed words only append and
+            // the grey tail is re-decoded, like a streaming model.
+            const spoken = ['Can', 'you', 'send', 'the', 'Arclight', 'notes', 'to', 'Priya'];
+            const step = Math.min(
+              spoken.length,
+              1 + Math.floor((Date.now() - (runtime.startedAt ?? Date.now())) / 300),
+            );
+            const committed = spoken.slice(0, Math.max(0, step - 2)).join(' ');
+            const tail = spoken.slice(Math.max(0, step - 2), step).join(' ');
+            runtime.partial = {
+              operationId: 'preview-try',
+              sequence: step,
+              committedText: committed,
+              provisionalText: committed ? ` ${tail}` : tail,
+              audioProcessedSeconds: step * 0.3,
+              emittedAtUnixMs: Date.now(),
+              isFinal: false,
+            };
+          }
           return { ...runtime };
         case 'get_audio_features': {
           // A gently varying voice while the microphone is open.
