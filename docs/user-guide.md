@@ -202,7 +202,15 @@ not needed. If model files are missing or damaged, use **Download** or **Verify
 files** on the affected model. Verification keeps valid files and downloads
 replacements for missing or damaged files. Repairs need internet only when a
 verified replacement is not already cached. They start from this action, not
-automatically during transcription.
+automatically during transcription. Verifying one model leaves the other
+models' status as it was; only the model being verified shows its progress.
+
+While something runs (a model download, verify or removal, a recording,
+transcription or polishing), the bottom of the left sidebar names it and,
+for downloads, shows a progress bar with the percentage. It stays visible on
+every page; click it to open the page where you can follow or cancel it. In
+Settings, where the sidebar shrinks to icons, it becomes a dot over a short
+bar and its text is in the tooltip.
 
 **Automatic** uses a compatible detected accelerator where the selected runtime
 supports it. LFM Audio and the writing model share native GPU selection; on Apple

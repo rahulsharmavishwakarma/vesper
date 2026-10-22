@@ -593,11 +593,63 @@ h3 {
   animation: refresh-spin 700ms linear infinite;
 }
 .activity-link {
+  display: grid;
+  gap: 6px;
+  width: 100%;
   padding: var(--space-2) 0;
   margin-bottom: var(--space-3);
-  font-size: 10px;
+  font-size: 12px;
+  text-align: left;
   border: 0;
   background: var(--color-transparent);
+  color: var(--color-ink);
+}
+.activity-link:hover:enabled {
+  background: var(--color-transparent);
+  color: var(--color-accent);
+}
+.activity-row {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  min-width: 0;
+}
+.activity-label {
+  flex: 1;
+  min-width: 0;
+  white-space: normal;
+  overflow-wrap: anywhere;
+  line-height: 1.3;
+}
+.activity-row {
+  align-items: flex-start;
+}
+.activity-row > .status-dot {
+  margin-top: 5px;
+}
+.activity-percent {
+  color: var(--color-muted);
+  font-variant-numeric: tabular-nums;
+}
+.activity-bar {
+  display: block;
+  height: 3px;
+  border-radius: var(--radius-pill);
+  background: var(--color-line);
+  overflow: hidden;
+}
+.activity-bar i {
+  display: block;
+  height: 100%;
+  background: var(--color-accent);
+  transform-origin: left;
+  transition: transform var(--duration-state) var(--ease-out);
+}
+.activity-link.live .status-dot {
+  background: var(--color-error);
+}
+.activity-link.live .status-dot::after {
+  border-color: var(--color-error);
 }
 /* Settings-only icon rail: the settings sections own wayfinding there, so the
    app sidebar collapses to icons and returns side space. Labels stay in the
@@ -637,6 +689,17 @@ h3 {
   }
   .app-shell.settings-rail .sidebar-foot {
     padding-inline: 0;
+  }
+  /* In the icon rail the status is a dot over a short bar; its text stays in
+     the accessible name and the tooltip. */
+  .app-shell.settings-rail .activity-link {
+    justify-items: center;
+  }
+  .app-shell.settings-rail .activity-row {
+    justify-content: center;
+  }
+  .app-shell.settings-rail .activity-bar {
+    width: 24px;
   }
 }
 .studio-main {
@@ -900,6 +963,9 @@ body.is-recording .brand-logo .dsh {
   .status-radio[data-state='ready'] .a,
   .activity-link .status-dot::after {
     animation: none;
+  }
+  .activity-bar i {
+    transition: none;
   }
   body.is-recording .brand-logo svg {
     transform: none;
