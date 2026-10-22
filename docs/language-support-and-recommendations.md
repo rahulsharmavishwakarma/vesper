@@ -6,12 +6,12 @@ Updated 27 September 2026. This is the canonical product-facing map for transcri
 
 Four different concepts must remain separate:
 
-| Concept | Meaning |
-| --- | --- |
-| Application language | A recognition mode visible in Dictate and Settings: Automatic plus the selected model's vendor-declared languages (`models/languages.json`) |
-| Model compatibility | The selected adapter accepts that application language and backend |
-| Benchmark profile | The actual held-out speech population, such as `en-US`, `en-IN`, `hi-IN`, or `hi+en` |
-| Qualified recommendation | The exact model artifact passed declared quality, latency, reliability, mode, and device gates on comparable local evidence |
+| Concept                  | Meaning                                                                                                                                     |
+| ------------------------ | ------------------------------------------------------------------------------------------------------------------------------------------- |
+| Application language     | A recognition mode visible in Dictate and Settings: Automatic plus the selected model's vendor-declared languages (`models/languages.json`) |
+| Model compatibility      | The selected adapter accepts that application language and backend                                                                          |
+| Benchmark profile        | The actual held-out speech population, such as `en-US`, `en-IN`, `hi-IN`, or `hi+en`                                                        |
+| Qualified recommendation | The exact model artifact passed declared quality, latency, reliability, mode, and device gates on comparable local evidence                 |
 
 The language selector guides recognition; it does not translate. Indian English and US English both use the English selector but must be evaluated separately. Hinglish currently uses Automatic; it is not a separate picker value. Automatic detection does not add a language that the model does not support.
 
@@ -21,19 +21,19 @@ The product languages follow the selected speech model: each menu shows that mod
 
 Fresh settings select Cohere Transcribe, explicit English, and Qwen3.5 cleanup. Saved user selections remain authoritative.
 
-| Built-in speech model | App language choices | Delivery in this application | Speech backends exposed by the adapter | Current evidence status |
-| --- | --- | --- | --- | --- |
-| Cohere Transcribe (default) | 14 vendor-declared languages, explicit only, no auto-detect, no Hindi | Buffered live drafts; completed recording/file final | Automatic or CPU | English completed-path evidence; 48-recording Indian-English screen inside a separate personalization envelope; French integration fixture, not a broad French benchmark |
-| NVIDIA Nemotron 3.5 ASR Streaming 0.6B | Automatic plus 28 out-of-the-box locales (8 adaptation locales excluded) | Native live partials and completed audio | CPU, Metal, CUDA, Vulkan; the AMD application profile routes speech through Vulkan | Local CPU Hindi, US-English, and Hinglish screens plus separate Indian-English evidence; Hinglish does not currently pass the quality gate |
-| Qwen3-ASR 0.6B | Automatic plus 30 declared languages | Native MLX or buffered CPU drafts; completed recording/file final | Automatic; CPU; Metal for English on Apple Silicon | Local phase-one Hindi, US-English, and Hinglish screening; no qualified Hinglish result |
-| NVIDIA Parakeet TDT 0.6B v3 | Automatic plus 25 declared European languages | Buffered live drafts; completed recording/file final | Automatic; CPU; Metal for English on Apple Silicon | Compatibility/smoke evidence; no current comparable phase-one matrix; Hindi is unsupported |
-| Liquid LFM2.5 Audio 1.5B | English only, explicit | Buffered live drafts; resident weights and completed-audio final | Automatic; CPU; Metal; CUDA/Vulkan/ROCm with matching builds | English CPU/Metal evidence; non-Apple GPU qualification deferred to #76 |
-| OpenAI Whisper Small | Automatic, English, French (qualified claim, not vendor-researched) | Completed recording/file final, INT8 CPU | Automatic or CPU | Adapter validation record 2026-09-18; offered by owner decision 2026-10-07 despite failed noise/repetition gates |
-| Moonshine Base (English) | English only, explicit | Buffered live drafts; completed recording/file final in parts of at most 15 s | Automatic or CPU | [Adapter record 2026-10-21](validation/moonshine-base-2026-10-21.md): 10.11% held-out FLEURS en-US; small, fast CPU option, not a default |
-| IBM Granite Speech 5.0 TurboCTC | English, French, German, Spanish, Portuguese, Italian, Japanese; explicit only, no auto-detect | Buffered live drafts; completed recording/file final in parts of at most 30 s, with punctuation | Automatic or Metal on Apple Silicon only; no CPU version | [Adapter record 2026-10-21](validation/granite-speech5-turboctc-2026-10-21.md): ties Parakeet v3 on held-out FLEURS en-US (5.30% vs 5.25%) and de-DE at about half the latency; French, Spanish, Portuguese, Italian and Japanese are vendor claims only |
-| Fermion Phonon-2 (English) | English only, explicit | Buffered live drafts; completed recording/file final in parts of at most 30 s | Automatic or Metal on Apple Silicon only; no CPU version | [Adapter record 2026-10-21](validation/phonon2-2026-10-21.md): 5.75% held-out and 7.43% unseen FLEURS en-US against Parakeet v3's 5.25%/5.68%; ~351 MB download and 0.86 GB GPU memory; not a default |
-| Moondream Parakeet Redux | Automatic plus Parakeet v3's 25 declared European languages | Buffered live drafts; completed recording/file final in parts of at most 30 s | Automatic or Metal on Apple Silicon only; no CPU version | [Record 2026-10-22](validation/parakeet-redux-2026-10-21.md): unseen FLEURS en-US 6.71% vs v3 5.68%, 0 dB noise 13.32% vs 9.21%, de-DE 7.16%; ~217 MB and 0.94 GB GPU memory; offered for size, not a default |
-| OpenAI Whisper Turbo | Automatic, English, French (qualified claim, not vendor-researched) | Completed recording/file final, larger encoder, INT8 CPU | Automatic or CPU | Same adapter record and picker status as Whisper Small |
+| Built-in speech model                  | App language choices                                                                           | Delivery in this application                                                                    | Speech backends exposed by the adapter                                             | Current evidence status                                                                                                                                                                                                                                  |
+| -------------------------------------- | ---------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Cohere Transcribe (default)            | 14 vendor-declared languages, explicit only, no auto-detect, no Hindi                          | Buffered live drafts; completed recording/file final                                            | Automatic or CPU                                                                   | English completed-path evidence; 48-recording Indian-English screen inside a separate personalization envelope; French integration fixture, not a broad French benchmark                                                                                 |
+| NVIDIA Nemotron 3.5 ASR Streaming 0.6B | Automatic plus 28 out-of-the-box locales (8 adaptation locales excluded)                       | Native live partials and completed audio                                                        | CPU, Metal, CUDA, Vulkan; the AMD application profile routes speech through Vulkan | Local CPU Hindi, US-English, and Hinglish screens plus separate Indian-English evidence; Hinglish does not currently pass the quality gate                                                                                                               |
+| Qwen3-ASR 0.6B                         | Automatic plus 30 declared languages                                                           | Native MLX or buffered CPU drafts; completed recording/file final                               | Automatic; CPU; Metal for English on Apple Silicon                                 | Local phase-one Hindi, US-English, and Hinglish screening; no qualified Hinglish result                                                                                                                                                                  |
+| NVIDIA Parakeet TDT 0.6B v3            | Automatic plus 25 declared European languages                                                  | Buffered live drafts; completed recording/file final                                            | Automatic; CPU; Metal for English on Apple Silicon                                 | Compatibility/smoke evidence; no current comparable phase-one matrix; Hindi is unsupported                                                                                                                                                               |
+| Liquid LFM2.5 Audio 1.5B               | English only, explicit                                                                         | Buffered live drafts; resident weights and completed-audio final                                | Automatic; CPU; Metal; CUDA/Vulkan/ROCm with matching builds                       | English CPU/Metal evidence; non-Apple GPU qualification deferred to #76                                                                                                                                                                                  |
+| OpenAI Whisper Small                   | Automatic, English, French (qualified claim, not vendor-researched)                            | Completed recording/file final, INT8 CPU                                                        | Automatic or CPU                                                                   | Adapter validation record 2026-09-18; offered by owner decision 2026-10-07 despite failed noise/repetition gates                                                                                                                                         |
+| Moonshine Base (English)               | English only, explicit                                                                         | Buffered live drafts; completed recording/file final in parts of at most 15 s                   | Automatic or CPU                                                                   | [Adapter record 2026-10-21](validation/moonshine-base-2026-10-21.md): 10.11% held-out FLEURS en-US; small, fast CPU option, not a default                                                                                                                |
+| IBM Granite Speech 5.0 TurboCTC        | English, French, German, Spanish, Portuguese, Italian, Japanese; explicit only, no auto-detect | Buffered live drafts; completed recording/file final in parts of at most 30 s, with punctuation | Automatic or Metal on Apple Silicon only; no CPU version                           | [Adapter record 2026-10-21](validation/granite-speech5-turboctc-2026-10-21.md): ties Parakeet v3 on held-out FLEURS en-US (5.30% vs 5.25%) and de-DE at about half the latency; French, Spanish, Portuguese, Italian and Japanese are vendor claims only |
+| Fermion Phonon-2 (English)             | English only, explicit                                                                         | Buffered live drafts; completed recording/file final in parts of at most 30 s                   | Automatic or Metal on Apple Silicon only; no CPU version                           | [Adapter record 2026-10-21](validation/phonon2-2026-10-21.md): 5.75% held-out and 7.43% unseen FLEURS en-US against Parakeet v3's 5.25%/5.68%; ~351 MB download and 0.86 GB GPU memory; not a default                                                    |
+| Moondream Parakeet Redux               | Automatic plus Parakeet v3's 25 declared European languages                                    | Buffered live drafts; completed recording/file final in parts of at most 30 s                   | Automatic or Metal on Apple Silicon only; no CPU version                           | [Record 2026-10-22](validation/parakeet-redux-2026-10-21.md): unseen FLEURS en-US 6.71% vs v3 5.68%, 0 dB noise 13.32% vs 9.21%, de-DE 7.16%; ~217 MB and 0.94 GB GPU memory; offered for size, not a default                                            |
+| OpenAI Whisper Turbo                   | Automatic, English, French (qualified claim, not vendor-researched)                            | Completed recording/file final, larger encoder, INT8 CPU                                        | Automatic or CPU                                                                   | Same adapter record and picker status as Whisper Small                                                                                                                                                                                                   |
 
 “Automatic” in the backend column means the application may choose an available supported execution path and fall back according to that adapter's policy. It is not evidence that a GPU executed every operator. GPU, driver, precision, and runtime-package combinations require separate measurements.
 
@@ -45,7 +45,7 @@ All current ASR adapters expose live drafts. Nemotron uses native cache-aware st
 
 `vesper-core/build.rs` generates the adapter language tables, the runtime-code lookup, and the writer table from the manifest at compile time; a malformed manifest fails the build naming the offending key. The agreement test pins each model's adapter capabilities to its manifest set, and per-language tests on both the speech and writing paths read the manifest directly, so extending it extends coverage with no test edit. Menus (frontend) read the manifest file; validation (backend) reads the generated tables, so the two cannot drift.
 
-To onboard a model: add one manifest block with vendor-declared languages researched from the vendor page at a recorded revision (never guessed), wire one ADAPTERS registration plus its runtime adapter code, and every menu, validation, and per-language test follows with no further list edits. Product selection stays a separate qualification decision via the catalog `status`: withheld entries never reach the picker. The `Language` enum itself is unchanged: adding a *language* still touches the enum, its ISO code, and the frontend options.
+To onboard a model: add one manifest block with vendor-declared languages researched from the vendor page at a recorded revision (never guessed), wire one ADAPTERS registration plus its runtime adapter code, and every menu, validation, and per-language test follows with no further list edits. Product selection stays a separate qualification decision via the catalog `status`: withheld entries never reach the picker. The `Language` enum itself is unchanged: adding a _language_ still touches the enum, its ISO code, and the frontend options.
 
 Picker display (names, creators, blurbs) comes from `models/catalog.json`, not code: the frontend `modelOptions` and the backend `default_model_catalog()` both read the catalog, with language counts from `models/languages.json`. Withheld catalog statuses stay out of the picker by construction, and parity tests pin both directions. Only the selectable-id contract (`ASR_MODELS` keys, `CLEANUP_MODELS` keys) stays code-side with the backend enums, which reject unknown ids.
 
@@ -53,11 +53,11 @@ Picker display (names, creators, blurbs) comes from `models/catalog.json`, not c
 
 The Models menu also contains three pinned sherpa-onnx transducer profiles, giving ten ASR choices in total. These reuse the custom-profile runtime path rather than adding new built-in architecture adapters.
 
-| Menu profile | Declared profile languages | Languages currently selectable in the app | Delivery/backend | Qualification status |
-| --- | --- | --- | --- | --- |
-| NVIDIA Parakeet TDT 0.6B v2 INT8 | English | Automatic, English | Buffered live drafts and completed audio, CPU | 16-recording US-English CPU screen: 5.25% micro-WER and 0.122 median RTF; broader English qualification remains |
-| NVIDIA Parakeet Unified English 0.6B INT8 | English | Automatic, English | Buffered live drafts and completed audio, CPU | 16-recording US-English CPU screen: 5.86% micro-WER and 0.115 median RTF; broader English qualification remains |
-| NVIDIA FastConformer European 114M FP32 | English, German, Spanish, French | Automatic, English, German, Spanish, French | Buffered live drafts and completed audio, CPU | 16-recording US-English CPU screen: 9.26% micro-WER and 0.069 median RTF; German/Spanish now resolve as explicit selections and French remains unmeasured |
+| Menu profile                              | Declared profile languages       | Languages currently selectable in the app   | Delivery/backend                              | Qualification status                                                                                                                                      |
+| ----------------------------------------- | -------------------------------- | ------------------------------------------- | --------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| NVIDIA Parakeet TDT 0.6B v2 INT8          | English                          | Automatic, English                          | Buffered live drafts and completed audio, CPU | 16-recording US-English CPU screen: 5.25% micro-WER and 0.122 median RTF; broader English qualification remains                                           |
+| NVIDIA Parakeet Unified English 0.6B INT8 | English                          | Automatic, English                          | Buffered live drafts and completed audio, CPU | 16-recording US-English CPU screen: 5.86% micro-WER and 0.115 median RTF; broader English qualification remains                                           |
+| NVIDIA FastConformer European 114M FP32   | English, German, Spanish, French | Automatic, English, German, Spanish, French | Buffered live drafts and completed audio, CPU | 16-recording US-English CPU screen: 9.26% micro-WER and 0.069 median RTF; German/Spanish now resolve as explicit selections and French remains unmeasured |
 
 The development `vesper-eval --model` command accepts seven built-in ASR enum values, including two Whisper variants now also offered in product selection by owner decision 2026-10-07. Its validated `--asr-profile` option evaluates the three pinned menu profiles through the production custom-profile adapter.
 
@@ -74,13 +74,13 @@ Changing a model never silently changes the saved language. An inline error
 blocks saving an incompatible combination; disabling polishing restores the
 speech model's choices.
 
-| Writing selection | Explicit product languages | Evidence and boundary |
-| --- | --- | --- |
-| Built-in Qwen3.5 0.8B | All application modes (no per-language list published) | Vendor claims 201 languages and dialects (model card, 2026-10-07); third-party note: quality is not guaranteed for low-resource languages |
-| Qwen2.5 0.5B / 1.5B Q4_K_M presets | English, French | Both are named by the pinned model cards; Hindi is conservatively withheld without exact checkpoint evidence/qualification |
-| SmolLM2 360M Q8_0 / 1.7B Q4_K_M presets | English | Official cards describe primarily English behavior |
-| Gemma 3 1B Q4_K_M preset | English | Exact-size release guidance distinguishes the 1B model from larger multilingual variants; family-wide claims are insufficient |
-| Other saved profiles | Declared language tags within the shared language options | Base tags match case-insensitively, e.g. `fr-FR` maps to French; undeclared support is not inferred |
+| Writing selection                       | Explicit product languages                                | Evidence and boundary                                                                                                                     |
+| --------------------------------------- | --------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------- |
+| Built-in Qwen3.5 0.8B                   | All application modes (no per-language list published)    | Vendor claims 201 languages and dialects (model card, 2026-10-07); third-party note: quality is not guaranteed for low-resource languages |
+| Qwen2.5 0.5B / 1.5B Q4_K_M presets      | English, French                                           | Both are named by the pinned model cards; Hindi is conservatively withheld without exact checkpoint evidence/qualification                |
+| SmolLM2 360M Q8_0 / 1.7B Q4_K_M presets | English                                                   | Official cards describe primarily English behavior                                                                                        |
+| Gemma 3 1B Q4_K_M preset                | English                                                   | Exact-size release guidance distinguishes the 1B model from larger multilingual variants; family-wide claims are insufficient             |
+| Other saved profiles                    | Declared language tags within the shared language options | Base tags match case-insensitively, e.g. `fr-FR` maps to French; undeclared support is not inferred                                       |
 
 Custom writers require an explicit language. Automatic detection is not a
 language declaration, and the current completion contract has no reliable
@@ -131,15 +131,15 @@ Coverage remains narrower when filtered by language: Nemotron and Qwen3-ASR have
 
 ## Language-by-language view
 
-| User need | Candidate models before benchmarking | Required benchmark lane | Current recommendation state |
-| --- | --- | --- | --- |
-| US/general English | All seven built-ins plus the three ASR profiles, subject to their picker restrictions | `en-US`; explicit English and, where supported, Automatic kept separate | All eight current choices have one comparable explicit-English CPU screen; the small reused pack does not establish a broad or cross-device winner |
-| Indian English | Same English-compatible candidates | `en-IN`, kept separate from `en-US` | A 48-recording Svarah CPU screen measured Nemotron and Cohere; it belongs to a personalization experiment envelope and is excluded from automatic base-model recommendation aggregation |
-| Hindi | Nemotron and Qwen3-ASR | `hi-IN`; explicit Hindi and Automatic separate | Both have local CPU screening; broader device/noise coverage remains |
-| Hinglish/code switching | Qwen3-ASR advertises code switching; Nemotron is retained as an Automatic Hindi/English research comparator but its capability flag does not claim code switching | `hi+en`, mixed-script scoring plus qualitative review | No qualified model under the current phase-one quality ceiling |
-| French | Nemotron, Qwen3-ASR, Cohere, Parakeet v3, and FastConformer | `fr-FR` or another declared locale; explicit and Automatic separate | Fixture/runtime coverage exists, but no comparable all-model French recommendation |
-| German or Spanish | FastConformer metadata describes these languages; Parakeet, Nemotron, Qwen3-ASR, and Cohere declare them | A held-out locale pack | Explicit application languages for the declaring models; do not recommend through the picker without a comparable run |
-| Singing/vocals | No model is presently product-qualified | Separate singing corpus, lyrics policy, vocal conditions, and latency/quality gates | Unsupported as a recommendation claim |
+| User need               | Candidate models before benchmarking                                                                                                                              | Required benchmark lane                                                             | Current recommendation state                                                                                                                                                            |
+| ----------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| US/general English      | All seven built-ins plus the three ASR profiles, subject to their picker restrictions                                                                             | `en-US`; explicit English and, where supported, Automatic kept separate             | All eight current choices have one comparable explicit-English CPU screen; the small reused pack does not establish a broad or cross-device winner                                      |
+| Indian English          | Same English-compatible candidates                                                                                                                                | `en-IN`, kept separate from `en-US`                                                 | A 48-recording Svarah CPU screen measured Nemotron and Cohere; it belongs to a personalization experiment envelope and is excluded from automatic base-model recommendation aggregation |
+| Hindi                   | Nemotron and Qwen3-ASR                                                                                                                                            | `hi-IN`; explicit Hindi and Automatic separate                                      | Both have local CPU screening; broader device/noise coverage remains                                                                                                                    |
+| Hinglish/code switching | Qwen3-ASR advertises code switching; Nemotron is retained as an Automatic Hindi/English research comparator but its capability flag does not claim code switching | `hi+en`, mixed-script scoring plus qualitative review                               | No qualified model under the current phase-one quality ceiling                                                                                                                          |
+| French                  | Nemotron, Qwen3-ASR, Cohere, Parakeet v3, and FastConformer                                                                                                       | `fr-FR` or another declared locale; explicit and Automatic separate                 | Fixture/runtime coverage exists, but no comparable all-model French recommendation                                                                                                      |
+| German or Spanish       | FastConformer metadata describes these languages; Parakeet, Nemotron, Qwen3-ASR, and Cohere declare them                                                          | A held-out locale pack                                                              | Explicit application languages for the declaring models; do not recommend through the picker without a comparable run                                                                   |
+| Singing/vocals          | No model is presently product-qualified                                                                                                                           | Separate singing corpus, lyrics policy, vocal conditions, and latency/quality gates | Unsupported as a recommendation claim                                                                                                                                                   |
 
 Mixed-script WER treats a Latin word and its Devanagari transliteration as different. Hinglish decisions therefore require exact WER/CER plus qualitative review of meaning, entities, numbers, script choice, and code-switch boundaries.
 
@@ -160,18 +160,22 @@ The checked-in request examples currently use a 20% median-WER ceiling for monol
 
 ## What the application recommends today
 
-First-run setup and the Models page rank models with `apps/desktop/src/lib/recommendations.ts` and the checked-in `models/recommendations.json`. On 2026-10-22 the owner decided that, until a comparable local matrix exists ([#296](https://github.com/rahulsharmavishwakarma/vesper/issues/296)), the ranking uses **published accuracy**. This deliberately departs from the ADR-0010 preference for local evidence, for setup only. Published figures are labelled as such, never as Vesper measurements.
+First-run setup and the Models page rank models with `apps/desktop/src/lib/recommendations.ts` and the checked-in `models/recommendations.json`. Since 22 October 2026 the speech ranking follows ADR-0010 and uses Vesper's own per-language matrix ([#296](https://github.com/rahulsharmavishwakarma/vesper/issues/296), [results](validation/recommendation-matrix-2026-10-22.md)). Published figures are used only for models Vesper has not tested in a language, and they are labelled as the maker's or leaderboard's numbers.
 
 **Speech models**
 
 - **Filters.** Every offered speech model is filtered by declared language (`models/languages.json`) and by whether it runs on this Mac (Apple-GPU-only models need Apple silicon). A model whose measured peak memory exceeds half of the Mac's RAM is excluded.
-- **Which figures are compared.** The ranking compares published WER/CER within one source only:
-  - the [Open ASR Leaderboard](https://huggingface.co/spaces/hf-audio/open_asr_leaderboard) (version 21 Oct 2026; `hf-audio/open-asr-leaderboard-results@648e485`, `hf-audio/multilingual_evals@3589b3c`) when it covers at least two candidates for the language. That is English (CSV `avg`), French, German, Spanish, Italian, Portuguese, Dutch (FLEURS) and Hindi (Voice Arena Monsoon).
-  - otherwise the makers' own cards and papers. Scorers and text normalization differ between makers, so those orderings are weaker.
-- **Ties.** Figures within half a point of the best are a tie, broken by Vesper's measured speed.
-- **Nemotron** uses the maker's most conservative 80 ms streaming-chunk figures.
-- **Speed and memory** come only from Vesper's own runs on an Apple M5 Pro (64 GB). Server-GPU throughput is never shown as Mac speed.
-- **Local results still shown.** For example, Cohere's 1 of 32 failed recordings in the 32-clip English run is shown as *Failed Vesper's test*.
+- **States.** Each model gets one of the four ADR-0010 states, with the pick split out:
+  - _Best for <language>_: passed and is the pick.
+  - _Passed Vesper's test_.
+  - _Not tested by Vesper_: compatible but not measured in this language.
+  - _Failed Vesper's test · reason_.
+  - _Unavailable_ on this Mac.
+- **Order.** Passing models come first, ordered by measured word error rate. Untested models come next, ordered by published figures compared within one source: the [Open ASR Leaderboard](https://huggingface.co/spaces/hf-audio/open_asr_leaderboard) when it covers two or more of them, otherwise the makers' cards. Failed models come last; a failed result is never shown as untested.
+- **Ties.** Results within half a point of the best are a tie, broken by measured speed. With 100 recordings per language, smaller differences are within noise.
+- **Gates.** Median per-recording WER ≤ 20%, failure rate ≤ 2% and median real-time factor ≤ 1.0, from the checked-in screening requests.
+- **What is measured.** Accuracy, speed and peak memory come from one Apple M5 Pro (64 GB) through the application path with the Automatic engine. English Parakeet ran on the Neural Engine, whose memory isn't counted in the process figure. Automatic-detection runs are kept separately in `local.automatic` and don't affect ranking.
+- **Reproducing it.** Prepare the five FLEURS sets with `scripts/prepare-fleurs-benchmark.mjs`, run `scripts/run-recommendation-matrix.mjs`, then write the evidence with `scripts/export-recommendation-evidence.mjs` ([benchmarks/asr/README.md](../benchmarks/asr/README.md)).
 
 **Writing models**
 
@@ -180,34 +184,35 @@ First-run setup and the Models page rank models with `apps/desktop/src/lib/recom
 - **Result.** Qwen3.5 0.8B is picked for every language. The other writers follow by published score: in English, SmolLM2 1.7B comes next at 53.7.
 - **Caveat.** These are general instruction benchmarks, not transcript-cleanup fidelity. Only Qwen3.5 0.8B has Vesper's own end-to-end meaning check.
 
-**Picks from today's figures**
+**Picks from the 22 October 2026 matrix**
 
-| Language | Pick |
-| --- | --- |
-| English | Parakeet v3: within half a point of Cohere and Qwen3-ASR, and fastest |
-| Hindi | Nemotron |
-| German, French, Italian, Portuguese, Dutch | Cohere |
-| Japanese | Qwen3-ASR |
+| Language                                      | Pick                                        | Why                                                                                      |
+| --------------------------------------------- | ------------------------------------------- | ---------------------------------------------------------------------------------------- |
+| English                                       | Granite Speech 5.0 TurboCTC (Apple silicon) | 5.08% WER, within half a point of Parakeet v3 (4.95%) and faster. Elsewhere, Parakeet v3 |
+| French, German, Spanish                       | Parakeet v3                                 | Most accurate: 4.86%, 4.99% and 2.90% WER                                                |
+| Hindi                                         | Nemotron 3.5                                | The only model that passed; Qwen3-ASR missed the accuracy gate                           |
+| Languages without a local run (e.g. Japanese) | Ordered by published figures                | Qwen3-ASR for Japanese                                                                   |
+
+Cohere Transcribe failed the reliability gate in French and German. It discarded 25 and 14 of 100 recordings ([#323](https://github.com/rahulsharmavishwakarma/vesper/issues/323)).
 
 The writing model pick is Qwen3.5 0.8B for every language.
 
 Nothing downloads or changes until the person presses **Download and set up** or chooses a model.
 
-A future user-facing recommendation should display four distinct states:
+Recommendations use four distinct states:
 
-| State | User-facing meaning |
-| --- | --- |
-| Recommended for this measured profile | Passed comparable local gates for the requested language/mode/device envelope |
-| Compatible, not yet measured here | Official/runtime compatibility exists, but there is no comparable local result |
-| Did not pass this profile | A comparable run exceeded a declared quality, latency, or reliability gate |
-| Unavailable | Incompatible language/mode/backend, missing runtime, or non-executable architecture |
+| State                                 | User-facing meaning                                                                 |
+| ------------------------------------- | ----------------------------------------------------------------------------------- |
+| Recommended for this measured profile | Passed comparable local gates for the requested language/mode/device envelope       |
+| Compatible, not yet measured here     | Official/runtime compatibility exists, but there is no comparable local result      |
+| Did not pass this profile             | A comparable run exceeded a declared quality, latency, or reliability gate          |
+| Unavailable                           | Incompatible language/mode/backend, missing runtime, or non-executable architecture |
 
 Installation must remain explicit. A recommendation may explain the expected download size, runtime requirement, backend, evidence date, and why it was selected, but it must not download or change the active model without the user's action. Saved settings must remain authoritative, and a newer model release is only a candidate until its pinned artifact and architecture-specific adapter pass the same held-out manifests.
 
 ## Coverage still required for a useful user recommendation
 
 - Run a clean base-model Indian-English matrix across valid models; retain the existing 48-recording Svarah personalization screen as separate evidence.
-- Add a held-out French pack and comparable explicit/Automatic runs.
 - Run all seven built-ins and three profiles on every compatible CPU lane.
 - Qualify Metal, CUDA, Vulkan, and the AMD application profile on named hardware without pooling them with CPU.
 - Add representative noise, silence, accents, long-form, cancellation/reset, memory, power, and sustained-thermal cases.

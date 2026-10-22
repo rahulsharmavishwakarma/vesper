@@ -337,9 +337,10 @@ and tests open it with `?first-run`.
   against this Mac's RAM (amber above a quarter, red above half). Writer rows
   carry instruction following (shield) and a multilingual score (globe).
   Rings draw in when the list opens; a dashed empty ring means no figure
-  exists. The row's description starts with a tag such as *Best for English*,
-  *Published result*, *Failed Vesper's test · 1 of 32 recordings failed* or
-  *Doesn't support Hindi*. Setup locks rows that cannot run here; the Models
+  exists. The row's description starts with a tag such as _Best for English_,
+  _Passed Vesper's test_, _Not tested by Vesper · published result_,
+  _Failed Vesper's test · 25 of 100 recordings failed_ or _Doesn't support
+  Hindi_. Accuracy rings use Vesper's measurement when one exists. Setup locks rows that cannot run here; the Models
   page keeps them selectable so a language can be repaired after a switch.
   Free space must cover the download plus a quarter, and being offline blocks
   the download, each with its reason in the footer. **Download and set up**

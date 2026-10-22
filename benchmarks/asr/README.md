@@ -71,13 +71,13 @@ The subsequent [quantized BitNet CPU benchmark](../../docs/validation/vibevoice-
 
 Use uv and the versioned `pyproject.toml` / `uv.lock` for each environment:
 
-| Project | Purpose | Python/platform |
-| --- | --- | --- |
-| Repository root, `dev` group | Tests, NumPy/soundfile preparation and summaries | Python 3.12+ |
-| Repository root, `benchmark` group | PyArrow corpus preparation | Python 3.12+ |
-| `benchmarks/asr/python/audio-frontend` | ONNX Runtime and LiteRT frontend probes | Python 3.12, macOS Apple silicon |
-| `benchmarks/asr/python/vibevoice` | Frozen Torch/Transformers reference probe | Python 3.12, macOS Apple silicon |
-| `benchmarks/asr/python/onnx-quantize` | Weight-only conversion of published sherpa-onnx exports | Python 3.12, macOS Apple silicon |
+| Project                                | Purpose                                                 | Python/platform                  |
+| -------------------------------------- | ------------------------------------------------------- | -------------------------------- |
+| Repository root, `dev` group           | Tests, NumPy/soundfile preparation and summaries        | Python 3.12+                     |
+| Repository root, `benchmark` group     | PyArrow corpus preparation                              | Python 3.12+                     |
+| `benchmarks/asr/python/audio-frontend` | ONNX Runtime and LiteRT frontend probes                 | Python 3.12, macOS Apple silicon |
+| `benchmarks/asr/python/vibevoice`      | Frozen Torch/Transformers reference probe               | Python 3.12, macOS Apple silicon |
+| `benchmarks/asr/python/onnx-quantize`  | Weight-only conversion of published sherpa-onnx exports | Python 3.12, macOS Apple silicon |
 
 Run scripts from the repository root with `uv run --locked python scripts/SCRIPT.py`,
 adding `--group benchmark` for PyArrow or `--project` for an isolated probe.
@@ -195,12 +195,12 @@ record failed processes and failed sample rows rather than dropping them.
 
 ## Phase-one language packs
 
-| Pack | Benchmark language | Primary held-out source | Purpose |
-| --- | --- | --- | --- |
-| Hindi | `hi-IN` | FLEURS `hi_in` test | Monolingual Devanagari read speech |
-| Hinglish | `hi+en` | MUCS Hindi-English test | Intra-utterance code switching and mixed script |
-| Indian English | `en-IN` | AI4Bharat Svarah test | Indian accents, read and spontaneous speech |
-| General US English | `en-US` | FLEURS `en_us` test | International read-speech baseline |
+| Pack               | Benchmark language | Primary held-out source | Purpose                                         |
+| ------------------ | ------------------ | ----------------------- | ----------------------------------------------- |
+| Hindi              | `hi-IN`            | FLEURS `hi_in` test     | Monolingual Devanagari read speech              |
+| Hinglish           | `hi+en`            | MUCS Hindi-English test | Intra-utterance code switching and mixed script |
+| Indian English     | `en-IN`            | AI4Bharat Svarah test   | Indian accents, read and spontaneous speech     |
+| General US English | `en-US`            | FLEURS `en_us` test     | International read-speech baseline              |
 
 The locale or pair is part of the evidence key. `en-IN` and `en-US` must never be pooled, and `hi+en` is not a Hindi result. The application prompt remains `hi`, `en`, or `auto`; by default the runner maps locale variants to their base prompt and a language pair to `auto`.
 
@@ -245,15 +245,15 @@ Its Parquet extraction is intentionally separate from the dependency-free FLEURS
 
 The pinned source checksums used by the preparer are:
 
-| Source object | SHA-256 |
-| --- | --- |
+| Source object                     | SHA-256                                                            |
+| --------------------------------- | ------------------------------------------------------------------ |
 | FLEURS `hi_in` test audio archive | `47c238b9cf7016ba596639bb3038b0c89dc6e85759f16d09c4f58c6dfa25c65f` |
-| FLEURS `hi_in` test metadata | `889e82e2875490f9533ff59ab67326fcfa01cf828fc4412758aaaa1f442a729f` |
+| FLEURS `hi_in` test metadata      | `889e82e2875490f9533ff59ab67326fcfa01cf828fc4412758aaaa1f442a729f` |
 | FLEURS `en_us` test audio archive | `d9c2e37b41aacd41bc283554a0a82b5476b36887049774ecb2819dcaaa55a356` |
-| FLEURS `en_us` test metadata | `74c046239374deeb60fa63f258f907388093a32bcaa3140965f70ef05c79f7ca` |
-| Svarah test shard 0 | `ac8fc08edabe47dd0ef915276bc0fab51ec1037c65794c7be8f98c5bc746d1db` |
-| Svarah test shard 1 | `2adf4c4ce1e69e457f44d3af0756b3965bd05fca409b4cd27528ef5804502fba` |
-| Svarah test shard 2 | `1cb3f5c6aa0c18e8c6d106f0be6129a35ddaeeb9fc6977ecb059b8f36033fd23` |
+| FLEURS `en_us` test metadata      | `74c046239374deeb60fa63f258f907388093a32bcaa3140965f70ef05c79f7ca` |
+| Svarah test shard 0               | `ac8fc08edabe47dd0ef915276bc0fab51ec1037c65794c7be8f98c5bc746d1db` |
+| Svarah test shard 1               | `2adf4c4ce1e69e457f44d3af0756b3965bd05fca409b4cd27528ef5804502fba` |
+| Svarah test shard 2               | `1cb3f5c6aa0c18e8c6d106f0be6129a35ddaeeb9fc6977ecb059b8f36033fd23` |
 
 ## Reproduce the Hinglish suite
 
@@ -324,6 +324,43 @@ The recommendation gate first excludes incompatible language, mode, backend, dur
 The checked-in examples use a 20% median-WER ceiling for monolingual packs, 30% for `hi+en`, 1.0 median RTF, and 2% failure rate. These are initial product gates, not scientific constants; change them only with a documented validation set and review. Current development-machine evidence qualifies Nemotron for Hindi and US English under the balanced objective. Neither measured adapter qualifies on the Hinglish suite, so that request correctly returns an empty recommendation list.
 
 A separate 48-recording Svarah `en-IN` CPU screen measured raw WER of 18.50% for Nemotron and 9.83% for Cohere, with 48/48 successful executions for each. That run is part of the frozen personalization experiment documented in [the local correction-memory report](2026-09-16-personalization.md). Reports carrying a personalization profile are deliberately rejected by the base-model recommendation summarizer, so this narrow result is local Indian-English evidence but does not automatically qualify or promote either base model. A clean all-model `en-IN` recommendation matrix remains outstanding.
+
+### Setup's per-language matrix
+
+First-run setup and the Models page rank speech models from `models/recommendations.json` ([#296](https://github.com/rahulsharmavishwakarma/vesper/issues/296), [22 October 2026 results](../../docs/validation/recommendation-matrix-2026-10-22.md)). To reproduce or refresh it:
+
+1. Download each FLEURS test locale at the pinned revision as above (`en_us`, `fr_fr`, `de_de`, `es_419`, `hi_in`). FLEURS has no `es_es`.
+2. Extract each archive into `.cache/benchmarks/corpora/fleurs-<locale>/`.
+3. Prepare 100 recordings per locale:
+
+   ```sh
+   node scripts/prepare-fleurs-benchmark.mjs fr_fr \
+     .cache/benchmarks/corpora/fleurs-fr-fr/test \
+     .cache/benchmarks/downloads/fleurs/data/fr_fr/test.tsv \
+     .cache/benchmarks/datasets/rec/fleurs-fr-fr-100 --count 100
+   ```
+
+4. Install every catalog speech model with `crates/vesper-models/examples/install.rs`, once with the default backend and once with `--backend cpu`.
+5. Build `vesper-eval` with `--release --features mlx`.
+6. Run the matrix on AC power with an environment file whose backend is `auto`:
+
+   ```sh
+   node scripts/run-recommendation-matrix.mjs target/release/vesper-eval \
+     .cache/benchmarks/datasets/rec models/downloads env.json results/matrix --resume
+   ```
+
+   The runner runs one process per lane under `/usr/bin/time -l`, which records peak memory. Each lane also records its power source.
+
+7. Check the reports with `summarize-asr-benchmarks.mjs`, then write the evidence:
+
+   ```sh
+   node scripts/export-recommendation-evidence.mjs results/matrix \
+     models/recommendations.json <date> "<hardware>" <validation record>
+   ```
+
+   The export replaces only the `local` section. Failed recordings and crashed lanes stay in the denominator, and Automatic-detection lanes go to `local.automatic`.
+
+`benchmarks/asr/capabilities.json` lists every catalog speech model with the backends and modes its adapters declare.
 
 A candidate with `"executable": false` is never a recommendation; it may have a working development adapter whose release qualification is incomplete. Adding a newer model means adding its architecture adapter, pinning its artifacts, testing the same held-out manifests, and only then changing that flag or a default.
 
