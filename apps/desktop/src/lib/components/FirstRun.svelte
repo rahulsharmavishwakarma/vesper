@@ -225,7 +225,7 @@
     if (step === 3 && !accessReady) return 'Turn on Accessibility, or keep your text in Vesper.';
     if (step === 6 && !tried)
       return install.status === 'done'
-        ? 'Hold to talk and say something.'
+        ? 'Hold Record and say something.'
         : 'Waiting for the models to finish.';
     if (step === 2 && install.status === 'idle') return models?.blocker() ?? null;
     return null;

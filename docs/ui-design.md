@@ -363,10 +363,13 @@ and tests open it with `?first-run`.
   adding a word sends it as a chip into its place in the sentence, where the
   bird chirps. Automatic learning is explained, not switched (it is always on).
 - **Try it** is locked behind live progress until the models are installed;
-  after a restart it checks what is installed and resumes the download. **Hold
-  to talk** records through the normal pipeline into a practice box (the
-  global shortcut pasting into the box counts too), and **Finish** waits for
-  words to appear.
+  after a restart it checks what is installed and resumes the download. It
+  reuses the Dictate recorder's shared classes: the large status heading
+  (Ready to try, Listening…, Writing it down…, It works), the **Hold to
+  record** button with its ember ring while held, and the timer above the
+  centred recording waveform. Holding records through the normal pipeline
+  into a practice box below (the global shortcut pasting into the box counts
+  too), and **Finish** waits for words to appear.
 - **Welcome's background** is a fine dot field in the accent colour. Each call
   of the bird (about every five seconds, and on hover or click) sends a soft
   ripple out from its beak; dots near the pointer brighten and drift aside,
