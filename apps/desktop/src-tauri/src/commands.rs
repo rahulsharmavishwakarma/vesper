@@ -432,15 +432,6 @@ pub fn retry_global_shortcut(
     replace_global_shortcut(&app, Some(&shortcut), &shortcut)
 }
 
-/// Settings that decide which model files a download needs. They stay fixed
-/// while a download runs; everything else can be saved meanwhile.
-fn model_files_changed(previous: &AppConfig, next: &AppConfig) -> bool {
-    previous.models != next.models
-        || previous.rewrite_quantization.resolved() != next.rewrite_quantization.resolved()
-        || previous.compute_backend != next.compute_backend
-        || previous.audio_frontend != next.audio_frontend
-}
-
 #[tauri::command]
 pub fn save_settings(
     settings: AppConfig,
@@ -451,9 +442,14 @@ pub fn save_settings(
     let downloading = storage.runtime.require_idle_or_download()?;
     settings.validate().map_err(|e| e.to_string())?;
     let previous = storage.settings.load()?;
-    if downloading && model_files_changed(&previous, &settings) {
+    // Only the files the download is writing stay fixed (issue #313): while
+    // the speech model downloads the writer may change, and the reverse.
+    if downloading
+        && previous
+            .conflicts_with_download(&settings, storage.runtime.downloading_model().as_deref())
+    {
         return Err(
-            "A model is downloading. Wait for it to finish before changing models or the processing device."
+            "A model is downloading. Wait for it to finish before changing that model or the processing device."
                 .into(),
         );
     }
@@ -1363,15 +1359,17 @@ mod settings_tests {
         unrelated.floating_bar_enabled = !base.floating_bar_enabled;
         unrelated.cleanup_enabled = !base.cleanup_enabled;
         unrelated.collect_training_data = !base.collect_training_data;
-        assert!(!model_files_changed(&base, &unrelated));
+        assert!(!base.conflicts_with_download(&unrelated, None));
 
         let mut speech = base.clone();
         speech.models.asr = vesper_core::AsrModel::Qwen3Asr06b;
-        assert!(model_files_changed(&base, &speech));
+        assert!(base.conflicts_with_download(&speech, None));
+        // A writer download leaves the speech model free to change (#313).
+        assert!(!base.conflicts_with_download(&speech, Some(base.models.rewriter.id())));
 
         let mut device = base.clone();
         device.compute_backend = vesper_core::ComputeBackend::Cpu;
-        assert!(model_files_changed(&base, &device));
+        assert!(base.conflicts_with_download(&device, Some(base.models.rewriter.id())));
     }
 
     #[test]

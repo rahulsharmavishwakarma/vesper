@@ -595,8 +595,17 @@ mod tests {
         assert!(runtime.require_idle().is_err());
         runtime.begin_download("op", None, None);
         assert_eq!(runtime.require_idle_or_download(), Ok(true));
+        assert_eq!(runtime.downloading_model(), None);
         runtime.finish(&Ok::<(), String>(()));
         assert_eq!(runtime.require_idle_or_download(), Ok(false));
+        runtime.begin("installing", "Preparing").unwrap();
+        runtime.begin_download("op", Some("Qwen/Qwen3.5-0.8B".into()), None);
+        assert_eq!(
+            runtime.downloading_model().as_deref(),
+            Some("Qwen/Qwen3.5-0.8B")
+        );
+        runtime.finish(&Ok::<(), String>(()));
+        assert_eq!(runtime.downloading_model(), None);
         runtime.begin("removing", "Removing files").unwrap();
         assert!(runtime.require_idle_or_download().is_err());
         runtime.finish(&Ok::<(), String>(()));
@@ -1333,6 +1342,12 @@ impl Runtime {
         } else {
             Err("Wait for the current operation before changing settings.".into())
         }
+    }
+    /// The model a running download is writing, when its target is known.
+    /// `None` while idle, before `begin_download` names the target, or for a
+    /// download of everything the settings need.
+    pub fn downloading_model(&self) -> Option<String> {
+        self.state.lock().ok()?.download.as_ref()?.model_id.clone()
     }
     pub fn prepare_exit(&self) -> Result<(), String> {
         let mut state = self.state.lock().map_err(|error| error.to_string())?;

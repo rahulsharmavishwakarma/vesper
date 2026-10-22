@@ -118,6 +118,7 @@
   let downloading = $state(false);
   let transcriptionPanel: TranscriptionPanel | undefined = $state();
   let downloadRequest = $state<string | null>(null);
+  let downloadRequestRole = $state<'asr' | 'rewriter' | null>(null);
   // Model, device and reset choices wait for a running download; the rest of
   // the app stays usable while it runs.
   const modelChoicesLocked = $derived(
@@ -134,6 +135,30 @@
     error: null,
     feedback: null,
   });
+  // A download locks only its own model's choices (#313). The device, Restore
+  // defaults and the download, verify and remove buttons still wait, because
+  // the backend runs one operation at a time; an unknown target locks both.
+  const downloadingRole = $derived(
+    downloads.installingKey?.startsWith('speech_recognition:')
+      ? 'asr'
+      : downloads.installingKey?.startsWith('text_reconstruction:')
+        ? 'rewriter'
+        : null,
+  );
+  // A requested download holds the same per-model lock as a running one.
+  const requestedRole = $derived(downloadRequest !== null ? downloadRequestRole : undefined);
+  const asrChoicesLocked = $derived(
+    pending !== null ||
+      pipelineBusy ||
+      (requestedRole !== undefined && requestedRole !== 'rewriter') ||
+      (downloading && downloadingRole !== 'rewriter'),
+  );
+  const writerChoicesLocked = $derived(
+    pending !== null ||
+      pipelineBusy ||
+      (requestedRole !== undefined && requestedRole !== 'asr') ||
+      (downloading && downloadingRole !== 'asr'),
+  );
   const asrDownload = $derived(downloadTarget(draft, 'asr'));
   const cleanupDownload = $derived(downloadTarget(draft, 'rewriter'));
   let datasetRevision = $state(0);
@@ -483,6 +508,12 @@
     )
       return;
     downloadRequest = target.modelId;
+    downloadRequestRole =
+      target.role === 'speech_recognition'
+        ? 'asr'
+        : target.role === 'text_reconstruction'
+          ? 'rewriter'
+          : null;
     transcriptionPanel.clearDownloadFeedback();
     try {
       if (dirty && !(await settingsSaver.flush())) return;
@@ -490,6 +521,7 @@
       await transcriptionPanel.downloadModel(target);
     } finally {
       downloadRequest = null;
+      downloadRequestRole = null;
     }
   }
   async function reset() {
@@ -768,8 +800,11 @@
               >
             </div>
             <p class="note">
-              Model and device choices unlock when the download finishes. Everything else stays
-              available.
+              {downloadingRole === 'asr'
+                ? 'The speech model and processing device unlock when this download finishes. You can still change the writing model and everything else.'
+                : downloadingRole === 'rewriter'
+                  ? 'The writing model and processing device unlock when this download finishes. You can still change the speech model and everything else.'
+                  : 'Model and device choices unlock when the download finishes. Everything else stays available.'}
             </p>{/if}
           {#if error}<p class="error" role="alert">{error}</p>{/if}
           {#if downloads.error}<p class="error" role="alert">{downloads.error}</p>{/if}
@@ -960,7 +995,7 @@
                       options={asrOptions}
                       languageFilters={modelLanguageFilters}
                       initialLanguageFilter={modelLanguageFilter}
-                      disabled={modelChoicesLocked}
+                      disabled={asrChoicesLocked}
                       describedBy="models-asr-help"
                       onChange={(value) => {
                         draft.models = selectModel(modelChoiceContext('asr'), 'asr', value);
@@ -1033,7 +1068,7 @@
                       options={cleanupOptions}
                       languageFilters={modelLanguageFilters}
                       initialLanguageFilter={modelLanguageFilter}
-                      disabled={modelChoicesLocked}
+                      disabled={writerChoicesLocked}
                       onChange={(value) => {
                         draft.models = selectModel(
                           modelChoiceContext('rewriter'),
