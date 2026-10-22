@@ -259,6 +259,9 @@ async function setup({ recording = false, preview = false, main = false, interce
           };
         case 'plugin:window|hide':
           return null;
+        // No second speech engine to fetch in these fixtures.
+        case 'install_companion_models':
+          return false;
         default:
           unexpected.push(command);
           throw new Error(`Unexpected native command: ${command}`);
