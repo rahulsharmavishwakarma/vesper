@@ -171,6 +171,9 @@ if (states) {
         case 'take_menu_navigation':
         case 'get_latest_result':
           return null;
+        // The fixture's selection has no second speech engine to fetch.
+        case 'install_companion_models':
+          return false;
         case 'get_settings':
           return structuredClone(settings);
         case 'install_models':

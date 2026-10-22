@@ -40,6 +40,22 @@ export function usesUnifiedGguf(models: {
   );
 }
 
+/** Models with a pinned Core ML encoder for the Apple Neural Engine; the MLX build runs them. */
+export const NEURAL_ENGINE_MODELS: readonly string[] = ['nvidia/parakeet-tdt-0.6b-v3'];
+
+/** The selected built-in speech model runs its encoder on the Apple Neural Engine. */
+export function usesNeuralEngine(models: {
+  asr: string;
+  asrEngine?: AsrEngine;
+  customAsr?: unknown;
+}): boolean {
+  return (
+    !models.customAsr &&
+    models.asrEngine === 'neural_engine' &&
+    NEURAL_ENGINE_MODELS.includes(models.asr)
+  );
+}
+
 export const APPLE_GPU_ONLY_SPEECH_MODELS: readonly string[] = [
   'ibm-granite/granite-speech-5.0-470m-turboctc',
   'FermionResearch/Phonon-2',
@@ -61,6 +77,8 @@ export function acceleratorReason(
   backend: ComputeBackend,
 ): string | null {
   if (backend === 'auto') return null;
+  if (usesNeuralEngine(config.models) && backend !== 'metal')
+    return 'The Neural Engine runs on Apple Silicon; choose Automatic or Metal.';
   if (appleGpuOnly(config) && backend !== 'metal')
     return 'This speech model runs only on the Apple GPU; it has no CPU version.';
   if (backend === 'cpu') return null;

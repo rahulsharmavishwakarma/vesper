@@ -211,16 +211,34 @@ Long-form was 8.97% vs 10.50% (within noise). See the
 ## Parakeet unified GGUF engine
 
 Users do not choose an engine. **Automatic** (the default `models.asrEngine`)
-runs Parakeet v3 as one file, NVIDIA's `parakeet-tdt-0.6b-v3.q8_0.gguf` at
-`541d1f99` (713,975,456 bytes), through the bundled NeMo-Speech.cpp 0.1.0
-runtime on CPU, Metal, CUDA or Vulkan for every declared Parakeet language
-([ADR-0024](adrs/0024-unified-gguf-speech-engine.md),
-[ADR-0026](adrs/0026-automatic-speech-engine.md)). If that file is not installed
-yet but the earlier ONNX or MLX Parakeet files are, Automatic keeps using those
-and records why; an incomplete or wrong-size earlier set is skipped, so the app
-asks for the selected download rather than reporting a failed integrity check. The explicit engines (`standard`, `unified_gguf`) remain only as
-developer and support overrides in the settings file and `vesper-eval
---asr-engine`.
+runs Parakeet v3 in English on Apple Silicon builds with MLX on the
+[Neural Engine](#parakeet-on-the-neural-engine), with **Automatic** or **Metal**
+processing. Every other case runs one file, NVIDIA's
+`parakeet-tdt-0.6b-v3.q8_0.gguf` at `541d1f99` (713,975,456 bytes), through the
+bundled NeMo-Speech.cpp 0.1.0 runtime on CPU, Metal, CUDA or Vulkan for every
+declared Parakeet language:
+- other languages and automatic language detection;
+- CPU processing;
+- Macs where the MLX bridge cannot load.
+
+See [ADR-0024](adrs/0024-unified-gguf-speech-engine.md),
+[ADR-0025](adrs/0025-neural-engine-speech-engine.md) and
+[ADR-0026](adrs/0026-automatic-speech-engine.md).
+
+After the selected set installs, the app downloads the other set quietly in the
+background (`companion_artifacts`):
+- an English user gets the GGUF;
+- a user in another language gets the Neural Engine set.
+
+That download runs outside the operation slot, so recording continues. Installs
+and removals cancel it first. Readiness never waits for it.
+
+If the selected file is not installed yet but the earlier ONNX or MLX Parakeet
+files are, Automatic keeps using those and records why. An incomplete or
+wrong-size earlier set is skipped, so the app asks for the selected download
+rather than reporting a failed integrity check. The explicit engines
+(`standard`, `unified_gguf`, `neural_engine`) remain only as developer and support
+overrides in the settings file and `vesper-eval --asr-engine`.
 
 On Apple silicon the download is the GGUF plus the Metal NeMo-Speech.cpp package,
 which also contains the CPU backend, so CPU, Metal and an automatic CPU retry all
@@ -234,6 +252,54 @@ phrase boosting. On the #251 held-out sets it scored 4.86% WER in English and
 engine, and 7.25% against 64.05% on quiet (−30 dB) speech, with no text on
 non-speech audio ([qualification record](validation/parakeet-unified-gguf-2026-10-22.md)).
 The other declared languages, CUDA and Vulkan are not yet measured.
+
+## Parakeet on the Neural Engine
+
+The **Neural Engine** speech engine runs Parakeet v3's encoder on the Apple Neural Engine. The rest of the model
+stays in MLX ([ADR-0025](adrs/0025-neural-engine-speech-engine.md)):
+
+- The encoder runs as a Core ML program with int8 weights and float16 compute.
+- Parakeet's own log-mel frontend and the TDT decoder run on the GPU.
+
+It is offered for English on Apple Silicon builds that include MLX, with **Automatic** or **Metal**. The download is
+640 MB from `rahulsharmavishwakarma/vesper-parakeet-tdt-0.6b-v3-coreml-ane@c81d0368`:
+
+- the compiled encoder, `ParakeetEncoder15s.mlmodelc`;
+- a 45 MB MLX checkpoint with zero encoder layers, holding the decoder, joint network and subsampling tensors.
+
+`scripts/convert-parakeet-v3-coreml-ane.py` builds these files in the locked `coreml-convert` project.
+
+How it runs:
+
+- **Window.** The encoder takes one fixed 15 s window, so completed audio is processed in parts of at most 15 s
+  rather than 30.
+- **Mel input.** The mel input is zero-padded. The program masks the padding as NeMo's encoder does.
+- **Output.** Output is read through the Neural Engine's padded strides and decoded with fresh state for each part.
+- **Compute units.** The encoder loads with CPU and Neural Engine first, then CPU and GPU, then CPU only. A load that
+  fails, or whose short probe window errors or is not finite, falls through to the next. Every option uses the same
+  installed files, and the choice is recorded as `encoderComputeUnits` in each segment's evidence.
+- **Live dictation.** Live dictation shows buffered drafts. The completed-audio pass stays authoritative.
+- **Directory check.** The model directory must hold only the pinned files at every depth.
+
+Core ML prepares the program for this Mac's Neural Engine on its first load in a process, which took about 7 s on an
+M5 Pro. Installing the files performs that load, so the first recording does not wait. A macOS update clears the
+prepared copy, and the next recording takes the extra seconds once.
+
+Through the application on 94 held-out English clips, the engine scored 5.11% WER against 5.16% for the MLX path, a
+difference within noise.
+- Clips up to 15 s matched.
+- Clips of 15–20 s gained a few errors from the extra cut.
+
+The [spike record](validation/ane-coreml-spike-2026-10-22.md) measured the same encoder program alongside the writing
+model:
+
+| Measure | Neural Engine | MLX speech |
+| --- | --- | --- |
+| Writer generation slowdown | 8% | 61% |
+| Encoder energy per window | about a fifth of MLX's | — |
+
+See the [qualification record](validation/parakeet-neural-engine-2026-10-22.md). It was measured on one
+M5 Pro; other languages are not yet measured, so **Current** stays the default.
 
 ## Parakeet MLX precision
 

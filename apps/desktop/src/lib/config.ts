@@ -105,9 +105,14 @@ export type ComputeBackend = 'auto' | 'cpu' | 'metal' | 'cuda' | 'vulkan' | 'roc
 /** Engine for a speech model with more than one; see `AsrEngine` in vesper-core.
  * Users never choose it: `automatic` (the default) picks the engine, and the
  * explicit values are developer and support overrides. */
-export type AsrEngine = 'automatic' | 'standard' | 'unified_gguf';
-export { UNIFIED_GGUF_MODELS, usesUnifiedGguf } from './accelerators.ts';
-import { usesUnifiedGguf } from './accelerators.ts';
+export type AsrEngine = 'automatic' | 'standard' | 'unified_gguf' | 'neural_engine';
+export {
+  NEURAL_ENGINE_MODELS,
+  UNIFIED_GGUF_MODELS,
+  usesNeuralEngine,
+  usesUnifiedGguf,
+} from './accelerators.ts';
+import { usesNeuralEngine, usesUnifiedGguf } from './accelerators.ts';
 
 export const AUDIO_FRONTENDS = {
   'silero-v6.2': 'Silero v6.2',
@@ -340,6 +345,7 @@ export function transcriptionLanguageOptions(
       (option) => option.value === 'auto' || declared.has(option.value),
     );
   }
+  if (usesNeuralEngine(models)) return LANGUAGE_OPTIONS.filter((option) => option.value === 'en');
   if (
     backend === 'metal' &&
     !usesUnifiedGguf(models) &&

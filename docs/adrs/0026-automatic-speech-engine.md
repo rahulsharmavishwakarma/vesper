@@ -23,9 +23,16 @@ also chose to download the set the language needs first and fetch the other set 
 - Until the GGUF is installed, Automatic keeps using installed current-engine files, first on the configured backend and
   then on CPU, and reports the fallback reason instead of failing.
 - Inventory specs reset an engine override the model does not support back to `Automatic`.
-- The Apple Neural Engine path ([#143](https://github.com/rahulsharmavishwakarma/vesper/issues/143)) joins the same
-  resolution order on Apple silicon ahead of the GGUF, with its download and background fetch of the other set, in its
-  own change. This ADR does not claim that path is implemented.
+- The Apple Neural Engine path ([#143](https://github.com/rahulsharmavishwakarma/vesper/issues/143),
+  [ADR-0025](0025-neural-engine-speech-engine.md), PR #301) joins this order on Apple silicon ahead of the GGUF.
+  - **When it applies:** `effective_asr_engine` resolves Automatic to `NeuralEngine` for Parakeet v3 in English with
+    Automatic or Metal processing, in MLX builds.
+  - **Downgrade:** selection downgrades to the GGUF where the MLX bridge does not load.
+  - **Missing files:** if the Neural Engine files are missing, Automatic uses the installed GGUF, then the standard
+    files.
+  - **Failed load:** a failed Neural Engine load retries once on the installed GGUF.
+  - **Background fetch:** after the selected set installs, the other set (`companion_artifacts`) downloads in the
+    background, outside the operation slot.
 
 ## Research and evidence boundaries
 

@@ -16,6 +16,7 @@ pub enum AdapterKind {
     GraniteCtc,
     PackedTdt,
     TernaryTdt,
+    NeuralEngineTdt,
     LfmAudio,
     QwenHybrid,
     LlamaGguf,
@@ -167,6 +168,12 @@ pub const fn mlx_speech_only(model: AsrModel) -> bool {
 /// Models with a pinned NeMo-Speech.cpp GGUF that one file serves on every backend.
 pub const fn nemo_gguf_supported(model: AsrModel) -> bool {
     matches!(model, AsrModel::ParakeetTdt06bV3)
+}
+
+/// Models with a pinned Core ML encoder for the Apple Neural Engine beside their
+/// MLX decoder (#143). Builds without the MLX bridge offer none.
+pub const fn neural_engine_supported(model: AsrModel) -> bool {
+    MLX_COMPILED && matches!(model, AsrModel::ParakeetTdt06bV3)
 }
 
 /// Qualified completed-audio English variants. The models crate resolves saved
@@ -349,6 +356,20 @@ pub const ADAPTERS: &[AdapterRegistration] = &[
             ..caps(CacheState::Rnnt, REDUX_LANGUAGES, MLX_ONLY_BACKENDS)
         },
     },
+    // Parakeet TDT with the encoder as Core ML on the Neural Engine and the
+    // decoder in MLX, through Vesper's MLX bridge. English is the qualified mode.
+    AdapterRegistration {
+        kind: AdapterKind::NeuralEngineTdt,
+        task: SPEECH,
+        architecture: "parakeet_neural_engine",
+        runtime: MLX_RUNTIME,
+        runtime_revision: MLX_REVISION,
+        capabilities: AdapterCapabilities {
+            resident_weights: true,
+            completion_report: true,
+            ..caps(CacheState::Rnnt, &[Language::English], MLX_ONLY_BACKENDS)
+        },
+    },
     AdapterRegistration {
         kind: AdapterKind::LfmAudio,
         task: SPEECH,
@@ -441,6 +462,18 @@ impl AppConfig {
     /// are applied by `vesper-models::selection`.
     pub fn effective_asr_engine(&self) -> AsrEngine {
         match self.models.asr_engine {
+            // The Neural Engine first for its qualified language; runtime
+            // availability is checked in the models crate's selection.
+            AsrEngine::Automatic
+                if neural_engine_supported(self.models.asr)
+                    && self.language == Language::English
+                    && matches!(
+                        self.compute_backend,
+                        ComputeBackend::Auto | ComputeBackend::Metal
+                    ) =>
+            {
+                AsrEngine::NeuralEngine
+            }
             AsrEngine::Automatic if nemo_gguf_supported(self.models.asr) => AsrEngine::UnifiedGguf,
             AsrEngine::Automatic => AsrEngine::Standard,
             explicit => explicit,
@@ -452,9 +485,21 @@ impl AppConfig {
             && self.effective_asr_engine() == AsrEngine::UnifiedGguf
             && nemo_gguf_supported(self.models.asr)
     }
+    /// The selected speech model runs its encoder on the Apple Neural Engine.
+    pub fn uses_neural_engine(&self) -> bool {
+        self.models.custom_asr.is_none()
+            && self.effective_asr_engine() == AsrEngine::NeuralEngine
+            && neural_engine_supported(self.models.asr)
+    }
+    /// The speech model loads through Vesper's MLX bridge: MLX speech, or the
+    /// Neural Engine's Core ML encoder with its MLX decoder.
+    pub fn uses_mlx_runtime(&self) -> bool {
+        self.uses_mlx_speech() || self.uses_neural_engine()
+    }
     pub fn uses_mlx_speech(&self) -> bool {
         self.models.custom_asr.is_none()
             && !self.uses_nemo_gguf()
+            && !self.uses_neural_engine()
             && mlx_speech_supported(self.models.asr)
             && (self.compute_backend == ComputeBackend::Metal
                 || (self.compute_backend == ComputeBackend::Auto
@@ -463,6 +508,9 @@ impl AppConfig {
     pub fn speech_adapter(&self) -> &'static AdapterRegistration {
         if self.uses_nemo_gguf() {
             return adapter(AdapterKind::NemoTdt);
+        }
+        if self.uses_neural_engine() {
+            return adapter(AdapterKind::NeuralEngineTdt);
         }
         if self.uses_mlx_speech() {
             return resolve_adapter(
@@ -780,6 +828,66 @@ mod tests {
         assert!(!config.uses_nemo_gguf());
         let error = config.validate().unwrap_err().to_string();
         assert!(error.contains("models.asrEngine"), "{error}");
+    }
+
+    #[test]
+    fn neural_engine_runs_parakeet_in_english_on_apple_silicon_mlx_builds() {
+        let mut config = AppConfig::default();
+        config.models.asr = AsrModel::ParakeetTdt06bV3;
+        config.models.asr_engine = AsrEngine::NeuralEngine;
+        config.language = Language::English;
+        assert_eq!(config.uses_neural_engine(), MLX_COMPILED);
+        assert!(!config.uses_mlx_speech() && !config.uses_nemo_gguf());
+        for backend in [ComputeBackend::Auto, ComputeBackend::Metal] {
+            config.compute_backend = backend;
+            assert_eq!(config.validate().is_ok(), MLX_COMPILED, "{backend:?}");
+        }
+        if MLX_COMPILED {
+            assert_eq!(config.speech_adapter().kind, AdapterKind::NeuralEngineTdt);
+            assert_eq!(
+                adapter(AdapterKind::NeuralEngineTdt).live_mode(),
+                LiveMode::Buffered
+            );
+        } else {
+            let error = config.validate().unwrap_err().to_string();
+            assert!(error.contains("models.asrEngine"), "{error}");
+        }
+        config.compute_backend = ComputeBackend::Cpu;
+        assert!(config.validate().is_err());
+        config.compute_backend = ComputeBackend::Auto;
+        config.language = Language::German;
+        assert!(config.validate().is_err());
+        config.language = Language::English;
+        config.models.asr = AsrModel::Qwen3Asr06b;
+        assert!(!config.uses_neural_engine());
+        let error = config.validate().unwrap_err().to_string();
+        assert!(error.contains("models.asrEngine"), "{error}");
+    }
+
+    #[test]
+    fn automatic_engine_picks_the_neural_engine_for_english_parakeet_in_mlx_builds() {
+        let mut config = AppConfig::default();
+        config.models.asr = AsrModel::ParakeetTdt06bV3;
+        config.language = Language::English;
+        for backend in [ComputeBackend::Auto, ComputeBackend::Metal] {
+            config.compute_backend = backend;
+            let expected = if MLX_COMPILED {
+                AsrEngine::NeuralEngine
+            } else {
+                AsrEngine::UnifiedGguf
+            };
+            assert_eq!(config.effective_asr_engine(), expected, "{backend:?}");
+            config.validate().unwrap();
+        }
+        // CPU processing and other languages use the unified GGUF.
+        config.compute_backend = ComputeBackend::Cpu;
+        assert_eq!(config.effective_asr_engine(), AsrEngine::UnifiedGguf);
+        config.compute_backend = ComputeBackend::Auto;
+        for language in [Language::Auto, Language::German] {
+            config.language = language;
+            assert_eq!(config.effective_asr_engine(), AsrEngine::UnifiedGguf);
+            config.validate().unwrap();
+        }
     }
 
     #[test]

@@ -791,6 +791,9 @@ fn begin_context(
     models_required: bool,
 ) -> Result<WorkContext, String> {
     let _gate = storage.operation_gate.lock().map_err(|e| e.to_string())?;
+    if matches!(stage, "installing" | "removing") {
+        storage.runtime.cancel_background_and_wait();
+    }
     let context = work_context(storage)?;
     if models_required {
         require_models(&context)?;
@@ -926,6 +929,42 @@ pub async fn install_model(
     .and_then(|result| result);
     runtime.finish(&result);
     result
+}
+
+/// Starts the quiet download of the other speech engine's files (#143) and
+/// returns at once: `true` if it started. It runs outside the operation slot,
+/// so recording and transcription continue; foreground installs and removals
+/// cancel it first. Readiness never waits for these files.
+#[tauri::command]
+pub fn install_companion_models(storage: tauri::State<'_, AppStorage>) -> Result<bool, String> {
+    let config = storage.settings.load()?;
+    let root = storage.model_dir.clone();
+    if vesper_models::companion_artifacts(&config)
+        .map_err(|e| e.to_string())?
+        .is_empty()
+    {
+        return Ok(false);
+    }
+    {
+        // Pairs with begin_context, so a foreground install cannot start between
+        // the check and the start.
+        let _gate = storage.operation_gate.lock().map_err(|e| e.to_string())?;
+        if !storage.runtime.begin_background()? {
+            return Ok(false);
+        }
+    }
+    let runtime = Arc::clone(&storage.runtime);
+    tauri::async_runtime::spawn_blocking(move || {
+        let result = vesper_models::install_companion(
+            &config,
+            &root,
+            &runtime.background_cancelled,
+            |progress| runtime.background_progress(progress),
+        )
+        .map_err(|e| e.to_string());
+        runtime.finish_background(&result);
+    });
+    Ok(true)
 }
 
 #[tauri::command]

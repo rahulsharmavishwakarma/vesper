@@ -14,6 +14,14 @@ import {
   selectedModelValue,
 } from './modelPresets.ts';
 
+test('a Neural Engine override survives only on models that offer it', () => {
+  let models = { ...defaultSettings().models, asrEngine: 'neural_engine' };
+  models = selectModel(models, 'asr', 'nvidia/parakeet-tdt-0.6b-v3');
+  assert.equal(models.asrEngine, 'neural_engine');
+  models = selectModel(models, 'asr', 'Qwen/Qwen3-ASR-0.6B');
+  assert.equal(models.asrEngine, 'automatic');
+});
+
 test('catalog has distinct pinned profiles for both pipeline stages', () => {
   assert.ok(MODEL_PRESETS.some((entry) => entry.profile.runtime === 'sherpa_onnx_transducer'));
   assert.ok(MODEL_PRESETS.some((entry) => entry.profile.runtime === 'llama_cpp'));

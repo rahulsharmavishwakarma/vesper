@@ -47,6 +47,10 @@ fn main() {
             "reduxBridgeSha256",
         ),
         (
+            "native/mlx/Sources/VesperMLX/ParakeetNeuralEngine.swift",
+            "neuralEngineBridgeSha256",
+        ),
+        (
             "patches/mlx-audio-swift/live-session.patch",
             "livePatchSha256",
         ),
@@ -57,6 +61,10 @@ fn main() {
         (
             "patches/mlx-audio-swift/parakeet-blocked-tdt.patch",
             "blockedTdtPatchSha256",
+        ),
+        (
+            "patches/mlx-audio-swift/parakeet-external-encoder.patch",
+            "externalEncoderPatchSha256",
         ),
         (
             "native/mlx/Sources/PrepareTokenizer/main.swift",

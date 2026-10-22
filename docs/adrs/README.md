@@ -30,6 +30,7 @@ This directory records decisions that are expensive to rediscover or easy to acc
 | [0022](0022-local-speaker-timelines.md) | Accepted | Add experimental local speaker timelines after ASR with isolated native packaging and anonymous activity |
 | [0023](0023-causal-committed-live-segments.md) | Accepted | Commit causal segments once in buffered live previews; the completed-audio final stays authoritative |
 | [0024](0024-unified-gguf-speech-engine.md) | Accepted | Offer Parakeet v3 as one NeMo-Speech.cpp GGUF for every device behind a per-model speech engine setting |
+| [0025](0025-neural-engine-speech-engine.md) | Accepted | Run Parakeet v3's encoder on the Apple Neural Engine (Core ML) with its MLX decoder as another speech engine value |
 | [0026](0026-automatic-speech-engine.md) | Accepted | Pick the speech engine automatically; remove the visible engine choice (amends ADR-0024) |
 
 ## Convention

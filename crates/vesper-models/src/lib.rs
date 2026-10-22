@@ -264,6 +264,9 @@ pub fn resolved_nemo_backend(config: &AppConfig) -> Result<&'static str> {
 
 /// `engine` value of the one-file NeMo-Speech.cpp GGUF export in the manifest.
 pub const NEMO_GGUF_ENGINE: &str = "nemo_gguf";
+/// `engine` and `backend` values of the Core ML encoder plus MLX decoder files.
+pub const NEURAL_ENGINE_ENGINE: &str = "coreml_ane";
+pub const NEURAL_ENGINE_BACKEND: &str = "neural_engine";
 
 /// The selected built-in speech model runs on the bundled NeMo-Speech.cpp runtime.
 pub fn uses_nemo_runtime(config: &AppConfig) -> bool {
@@ -298,12 +301,20 @@ fn selected_exact(config: &AppConfig) -> Result<Vec<Artifact>> {
     }
     let backend = if config.uses_mlx_speech() {
         Some("metal")
+    } else if config.uses_neural_engine() {
+        Some(NEURAL_ENGINE_BACKEND)
     } else if nemo {
         Some(nemo_package_backend(config)?)
     } else {
         None
     };
-    let engine = config.uses_nemo_gguf().then_some(NEMO_GGUF_ENGINE);
+    let engine = if config.uses_nemo_gguf() {
+        Some(NEMO_GGUF_ENGINE)
+    } else if config.uses_neural_engine() {
+        Some(NEURAL_ENGINE_ENGINE)
+    } else {
+        None
+    };
     let quantization = match config.rewrite_quantization {
         RewriteQuantization::Q4_0 => "q4_0",
         RewriteQuantization::Q8_0 => "q8_0",
@@ -368,7 +379,11 @@ fn built_in_asr_spec(config: &AppConfig, model: AsrModel) -> ModelInstallSpec {
     let mut target = config.clone();
     target.models.asr = model;
     // The engine choice belongs to the model that offers it.
-    if !vesper_core::nemo_gguf_supported(model) {
+    if !match config.models.asr_engine {
+        vesper_core::AsrEngine::Automatic | vesper_core::AsrEngine::Standard => true,
+        vesper_core::AsrEngine::UnifiedGguf => vesper_core::nemo_gguf_supported(model),
+        vesper_core::AsrEngine::NeuralEngine => vesper_core::neural_engine_supported(model),
+    } {
         target.models.asr_engine = vesper_core::AsrEngine::Automatic;
     }
     target.models.custom_asr = None;
@@ -746,7 +761,7 @@ pub fn inspect(config: &AppConfig, root: &Path) -> Installation {
     let selection_error = selection.as_ref().err().map(ToString::to_string);
     let supported = selection.is_ok();
     #[cfg(feature = "mlx")]
-    let (supported, selection_error) = if config.uses_mlx_speech() && !mlx::runtime_ready() {
+    let (supported, selection_error) = if config.uses_mlx_runtime() && !mlx::runtime_ready() {
         (
             false,
             Some(
@@ -948,7 +963,7 @@ pub fn verify_asr(config: &AppConfig, root: &Path, cancelled: &AtomicBool) -> Re
     let resolved = resolve_speech(config, root)?;
     let config = &resolved.config;
     #[cfg(feature = "mlx")]
-    if config.uses_mlx_speech() {
+    if config.uses_mlx_runtime() {
         mlx::verify_runtime(cancelled)?;
         mlx::verify_directory(config, root)?;
     }
@@ -1067,6 +1082,14 @@ fn install_artifacts_with_cache(
         report(InstallPhase::Installed, artifact.size_bytes);
         completed_bytes += artifact.size_bytes;
     }
+    #[cfg(feature = "mlx")]
+    if artifacts
+        .iter()
+        .any(|artifact| artifact.engine.as_deref() == Some(NEURAL_ENGINE_ENGINE))
+    {
+        // Core ML's first load on a Mac takes seconds; do it while installing.
+        mlx::prepare_neural_engine(root, cancelled)?;
+    }
     Ok(())
 }
 
@@ -1117,6 +1140,69 @@ pub fn install(
     let artifacts = selected(config)?;
     install_artifacts(root, &artifacts, cancelled, &progress)?;
     Ok(inspect(config, root))
+}
+
+/// Speech files of the engine the selection does not use now, for a model that
+/// offers both the Neural Engine and the unified GGUF (#143, #293). The app
+/// fetches them in the background after the selected files, so changing the
+/// language or device needs no further download. They never count toward
+/// readiness, which follows `selected` alone. The Neural Engine set is offered
+/// only where the MLX bridge can run it.
+pub fn companion_artifacts(config: &AppConfig) -> Result<Vec<Artifact>> {
+    let model = config.models.asr;
+    if config.models.custom_asr.is_some()
+        || !vesper_core::nemo_gguf_supported(model)
+        || !vesper_core::neural_engine_supported(model)
+    {
+        return Ok(Vec::new());
+    }
+    let mut other = config.clone();
+    other.cleanup_enabled = false;
+    other.audio_frontend = Default::default();
+    if config.uses_neural_engine() {
+        other.models.asr_engine = vesper_core::AsrEngine::UnifiedGguf;
+        other.language = Language::Auto;
+    } else if config.uses_nemo_gguf() {
+        if !neural_engine_runnable() {
+            return Ok(Vec::new());
+        }
+        other.models.asr_engine = vesper_core::AsrEngine::NeuralEngine;
+        other.language = Language::English;
+        other.compute_backend = ComputeBackend::Auto;
+    } else {
+        return Ok(Vec::new());
+    }
+    let primary: std::collections::BTreeSet<_> = selected(config)?
+        .into_iter()
+        .map(|artifact| artifact.relative_path)
+        .collect();
+    Ok(selected(&other)?
+        .into_iter()
+        .filter(|artifact| {
+            matches!(artifact.role.as_str(), "asr" | "asr_runtime")
+                && !primary.contains(&artifact.relative_path)
+        })
+        .collect())
+}
+
+/// The MLX bridge, which runs the Neural Engine engine's decoder, loads here.
+fn neural_engine_runnable() -> bool {
+    #[cfg(feature = "mlx")]
+    return mlx::available().unwrap_or(false);
+    #[cfg(not(feature = "mlx"))]
+    false
+}
+
+/// Download and verify `companion_artifacts`. Already verified files are kept.
+pub fn install_companion(
+    config: &AppConfig,
+    root: &Path,
+    cancelled: &AtomicBool,
+    progress: impl Fn(&InstallProgress),
+) -> Result<usize> {
+    let artifacts = companion_artifacts(config)?;
+    install_artifacts(root, &artifacts, cancelled, &progress)?;
+    Ok(artifacts.len())
 }
 
 /// Install one catalog entry without changing the caller's saved selection.
@@ -1172,7 +1258,9 @@ pub fn install_model(
 pub fn provenance(config: &AppConfig) -> serde_json::Value {
     let preferred = preferred_speech_config(config);
     let effective = preferred.as_ref().unwrap_or(config);
-    let asr_runtime = if effective.uses_mlx_speech() {
+    let asr_runtime = if effective.uses_neural_engine() {
+        "Core ML (Neural Engine encoder) + MLX-Audio-Swift"
+    } else if effective.uses_mlx_speech() {
         vesper_core::MLX_RUNTIME
     } else if uses_nemo_runtime(config) {
         "NeMo-Speech.cpp 0.1.0"
@@ -1472,6 +1560,42 @@ mod tests {
         let spec = built_in_asr_spec(&config, AsrModel::CohereTranscribe);
         assert!(spec.support_error.is_none(), "{:?}", spec.support_error);
         assert!(spec.artifacts.iter().all(|f| f.engine.is_none()));
+    }
+
+    #[test]
+    fn companion_files_are_the_other_parakeet_engine_and_never_required() {
+        let mut config = AppConfig {
+            cleanup_enabled: false,
+            ..Default::default()
+        };
+        config.models.asr = AsrModel::ParakeetTdt06bV3;
+        config.models.asr_engine = vesper_core::AsrEngine::UnifiedGguf;
+        config.language = Language::German;
+        let gguf = selected(&config).unwrap();
+        let companion = companion_artifacts(&config).unwrap();
+        // Only builds and devices that can run the Neural Engine set get it.
+        if vesper_core::neural_engine_supported(config.models.asr) && neural_engine_runnable() {
+            assert_eq!(companion.len(), 6);
+            assert!(companion
+                .iter()
+                .all(|a| a.engine.as_deref() == Some(NEURAL_ENGINE_ENGINE)));
+            config.models.asr_engine = vesper_core::AsrEngine::NeuralEngine;
+            config.language = Language::English;
+            config.compute_backend = ComputeBackend::Auto;
+            let companion = companion_artifacts(&config).unwrap();
+            let paths: Vec<_> = companion.iter().map(|a| a.relative_path.clone()).collect();
+            assert!(gguf
+                .iter()
+                .filter(|a| matches!(a.role.as_str(), "asr" | "asr_runtime"))
+                .all(|a| paths.contains(&a.relative_path)));
+        } else {
+            assert!(companion.is_empty());
+        }
+        // Other models and the standard engine have no companion.
+        config.models.asr_engine = vesper_core::AsrEngine::Standard;
+        assert!(companion_artifacts(&config).unwrap().is_empty());
+        config.models.asr = AsrModel::Qwen3Asr06b;
+        assert!(companion_artifacts(&config).unwrap().is_empty());
     }
 
     #[test]

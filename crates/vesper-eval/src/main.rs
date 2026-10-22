@@ -178,14 +178,17 @@ fn parse_run(arguments: &[String]) -> Result<RunOptions, String> {
             }
             "--asr-engine" => {
                 index += 1;
-                options.asr_engine = match arguments.get(index).map(String::as_str) {
-                    Some("automatic") => vesper_core::AsrEngine::Automatic,
-                    Some("standard") => vesper_core::AsrEngine::Standard,
-                    Some("unified_gguf") => vesper_core::AsrEngine::UnifiedGguf,
-                    _ => {
-                        return Err("--asr-engine needs automatic, standard or unified_gguf".into())
-                    }
-                };
+                options.asr_engine =
+                    match arguments.get(index).map(String::as_str) {
+                        Some("automatic") => vesper_core::AsrEngine::Automatic,
+                        Some("standard") => vesper_core::AsrEngine::Standard,
+                        Some("unified_gguf") => vesper_core::AsrEngine::UnifiedGguf,
+                        Some("neural_engine") => vesper_core::AsrEngine::NeuralEngine,
+                        _ => return Err(
+                            "--asr-engine needs automatic, standard, unified_gguf or neural_engine"
+                                .into(),
+                        ),
+                    };
             }
             "--profile" => {
                 index += 1;
@@ -743,7 +746,7 @@ fn parse_backend(value: &str) -> Result<ComputeBackend, String> {
 }
 
 fn usage() -> String {
-    "usage:\n  vesper-eval validate MANIFEST\n  vesper-eval run MANIFEST CORPUS_ROOT MODEL_ROOT ENVIRONMENT OUTPUT [--model MODEL_ID | --asr-profile PROFILE_JSON] [--asr-engine automatic|standard|unified_gguf] [--streaming] [--realtime] [--cleanup] [--vad] [--auto-level] [--denoiser off|dpdfnet4|dpdfnet8] [--language auto|LANGUAGE_CODE] [--chunk-ms 20] [--profile EVALUATION_MEMORY]\n  vesper-eval build-memory CALIBRATION_MANIFEST BASELINE_REPORT OUTPUT\n  vesper-eval recommend REQUEST_JSON CAPABILITIES_JSON EVIDENCE_JSON".into()
+    "usage:\n  vesper-eval validate MANIFEST\n  vesper-eval run MANIFEST CORPUS_ROOT MODEL_ROOT ENVIRONMENT OUTPUT [--model MODEL_ID | --asr-profile PROFILE_JSON] [--asr-engine automatic|standard|unified_gguf|neural_engine] [--streaming] [--realtime] [--cleanup] [--vad] [--auto-level] [--denoiser off|dpdfnet4|dpdfnet8] [--language auto|LANGUAGE_CODE] [--chunk-ms 20] [--profile EVALUATION_MEMORY]\n  vesper-eval build-memory CALIBRATION_MANIFEST BASELINE_REPORT OUTPUT\n  vesper-eval recommend REQUEST_JSON CAPABILITIES_JSON EVIDENCE_JSON".into()
 }
 
 #[cfg(test)]

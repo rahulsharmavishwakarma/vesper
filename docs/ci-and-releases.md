@@ -21,6 +21,8 @@ the same checks before packaging. Stable PR check names are:
 7. `Security / Python benchmarks (vibevoice)`
 8. `Security / Python benchmarks (onnx-quantize)`
 9. `Security / Python benchmarks (mlx-convert)`
+10. `Security / Python benchmarks (nemo-convert)`
+11. `Security / Python benchmarks (coreml-convert)`
 
 The benchmark names come from the `security.yml` matrix, so adding or removing a
 benchmark project adds or removes a check.

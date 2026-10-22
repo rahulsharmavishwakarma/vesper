@@ -167,3 +167,13 @@ test('the unified Parakeet GGUF offers every NeMo device, the standard engine st
   config.models.asr = 'Qwen/Qwen3-ASR-0.6B';
   assert.deepEqual(enabled(config, device('windows', 'x86_64', 'cuda')), ['auto', 'cpu']);
 });
+
+test('the Neural Engine runs Parakeet only on Automatic or Metal', () => {
+  const config = defaultSettings();
+  config.models.asr = 'nvidia/parakeet-tdt-0.6b-v3';
+  config.models.asrEngine = 'neural_engine';
+  config.language = 'en';
+  const mac = { ...device('macos', 'aarch64', 'metal'), speechMetalModels: [config.models.asr] };
+  assert.deepEqual(enabled(config, mac), ['auto', 'metal']);
+  assert.match(acceleratorReason(config, mac, 'cpu'), /Neural Engine/);
+});

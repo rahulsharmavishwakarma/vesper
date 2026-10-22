@@ -23,7 +23,7 @@ pub(crate) fn speech_key(config: &AppConfig, root: &Path) -> Result<SpeechKey> {
     config.validate()?;
     require_runtime(config)?;
     #[cfg(feature = "mlx")]
-    if config.uses_mlx_speech() {
+    if config.uses_mlx_runtime() {
         return Ok(SpeechKey::Mlx(crate::mlx::key(config, root)?));
     }
     Ok(match config.speech_adapter().kind {
@@ -149,7 +149,7 @@ impl SpeechModel {
 
     pub(crate) fn load(config: &AppConfig, root: &Path, cancelled: &AtomicBool) -> Result<Self> {
         #[cfg(feature = "mlx")]
-        if config.uses_mlx_speech() {
+        if config.uses_mlx_runtime() {
             return Ok(Self::Mlx(crate::mlx::Recognizer::load(
                 config, root, cancelled,
             )?));
@@ -287,7 +287,7 @@ pub(crate) fn transcribe_once(
     progress: &TranscriptionProgressSink,
 ) -> Result<String> {
     #[cfg(feature = "mlx")]
-    if config.uses_mlx_speech() {
+    if config.uses_mlx_runtime() {
         return crate::mlx::Recognizer::load(config, root, cancelled)?.transcribe(
             audio,
             config,
@@ -358,7 +358,7 @@ impl TextModel {
 
 // Cargo may unify core capability features through another workspace consumer.
 fn require_runtime(config: &AppConfig) -> Result<()> {
-    if config.uses_mlx_speech() && !cfg!(feature = "mlx") {
+    if config.uses_mlx_runtime() && !cfg!(feature = "mlx") {
         return Err(InferenceError::UnsupportedAsr(config.models.asr.id()));
     }
     Ok(())

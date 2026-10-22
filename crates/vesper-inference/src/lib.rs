@@ -119,7 +119,7 @@ pub fn transcribe(
         model_root,
         cancelled,
         |effective| {
-            if effective.uses_mlx_speech() {
+            if effective.uses_mlx_runtime() {
                 adapters::SpeechModel::load(effective, model_root, cancelled).map(Some)
             } else {
                 // Retain each existing one-shot adapter's admission and exact-zero
@@ -238,6 +238,9 @@ pub fn model_versions(config: &AppConfig) -> Value {
                 let provider =
                     vesper_models::resolved_nemo_backend(config).unwrap_or("unavailable");
                 json!({"modelId": config.models.asr.id(), "runtime":"NeMo-Speech.cpp", "runtimeVersion":"0.1.0", "interface":"versioned-c-abi", "engine":"unified_gguf", "provider":provider, "languageMode":"automatic", "streamingMode":"completed-recordings", "modelLifetime":"resident-until-selection-change-or-exit", "segmentation":{"policy":"balanced-low-energy-v1", "maxSegmentSeconds":nemotron::PARAKEET_MAX_SEGMENT_SECONDS, "overlapSamples":0}, "artifactFiles":[nemotron::PARAKEET_GGUF_FILENAME]})
+            }
+            AdapterKind::NeuralEngineTdt => {
+                json!({"modelId":config.models.asr.id(), "runtime":"Core ML + MLX-Audio-Swift", "runtimeRevision":config.speech_adapter().runtime_revision, "engine":"neural_engine", "provider":"neural_engine+metal", "placement":{"encoder":"Core ML, CPU and Neural Engine, float16, 15 s window", "decoder":"MLX, Apple GPU"}, "modelLifetime":"resident-in-manager-fresh-segment-decoder", "streamingMode":"completed-recordings", "segmentation":{"maxSegmentSeconds":segmented_audio::NEURAL_ENGINE_SEGMENT_SECONDS, "overlapSamples":0}, "language":config.language, "artifacts":vesper_models::selected(config).unwrap_or_default().into_iter().filter(|a| a.role == "asr").collect::<Vec<_>>()})
             }
             AdapterKind::SherpaTransducer => {
                 json!({"modelId": config.models.asr.id(), "runtime":"sherpa-onnx", "runtimeVersion":"1.13.8", "provider":"cpu", "languageMode":"automatic", "segmentation":{"policy":"balanced-low-energy-v1", "maxSegmentSeconds":parakeet::MAX_SEGMENT_SECONDS, "boundaryLookbackMs":1000, "energyWindowMs":100, "boundaryStepMs":10, "overlapSamples":0, "streamLifetime":"per-segment"}, "artifactFiles":parakeet::BUILTIN_FILES})

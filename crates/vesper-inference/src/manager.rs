@@ -616,7 +616,7 @@ impl WorkerState {
         cancelled: &AtomicBool,
         progress: &TranscriptionProgressSink,
     ) -> Result<bool> {
-        if !config.uses_mlx_speech()
+        if !config.uses_mlx_runtime()
             && !matches!(
                 config.speech_adapter().kind,
                 vesper_core::AdapterKind::CohereAsr
@@ -627,7 +627,7 @@ impl WorkerState {
         {
             return Ok(false);
         }
-        if config.uses_mlx_speech() {
+        if config.uses_mlx_runtime() {
             check_cancelled(cancelled)?;
             config.validate()?;
             audio.require_sample_rate(vesper_audio::ASR_SAMPLE_RATE)?;
@@ -1145,7 +1145,7 @@ fn run_stream(
         operation_id,
         "live",
         serde_json::json!({
-            "strategy": if config.uses_mlx_speech() { "native-mlx-preview" } else { "native" },
+            "strategy": if config.uses_mlx_runtime() { "native-mlx-preview" } else { "native" },
             "authoritativeFinal": if stream.needs_completed_audio() { "completed-audio" } else { "native-final" },
             "inputQueueCapacity":STREAM_QUEUE,
         }),

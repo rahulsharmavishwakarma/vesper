@@ -4,6 +4,7 @@ import {
   CLEANUP_MODEL_OPTIONS,
   CLEANUP_MODELS,
   LANGUAGE_OPTIONS,
+  NEURAL_ENGINE_MODELS,
   UNIFIED_GGUF_MODELS,
   catalogModel,
   offeredModelIds,
@@ -231,6 +232,7 @@ export function selectModel(
       automatic: null,
       standard: null,
       unified_gguf: UNIFIED_GGUF_MODELS,
+      neural_engine: NEURAL_ENGINE_MODELS,
     };
     if (engines[next.asrEngine]?.includes(next.asr) === false) next.asrEngine = 'automatic';
   } else if (role === 'rewriter' && Object.hasOwn(CLEANUP_MODELS, value)) {

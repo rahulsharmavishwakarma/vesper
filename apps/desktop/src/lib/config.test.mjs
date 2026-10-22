@@ -579,6 +579,17 @@ test('a custom writing profile validates per declared language', () => {
   }
 });
 
+test('a developer Neural Engine override keeps Parakeet in English', () => {
+  const settings = defaultSettings();
+  settings.models.asr = 'nvidia/parakeet-tdt-0.6b-v3';
+  settings.models.asrEngine = 'neural_engine';
+  for (const backend of ['auto', 'metal'])
+    assert.deepEqual(
+      transcriptionLanguageOptions(settings.models, backend).map((option) => option.value),
+      ['en'],
+    );
+});
+
 test('Automatic runs Parakeet as the unified GGUF and keeps every declared language on Metal', () => {
   const settings = defaultSettings();
   assert.equal(settings.models.asrEngine, 'automatic');

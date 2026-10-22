@@ -47,6 +47,7 @@ const patches = [
   'live-session.patch',
   'parakeet-load-hook.patch',
   'parakeet-blocked-tdt.patch',
+  'parakeet-external-encoder.patch',
 ].map((name) => join(root, 'patches/mlx-audio-swift', name));
 for (const patch of patches) {
   try {
@@ -188,11 +189,15 @@ writeFileSync(
       livePatchSha256: hash(patches[1]),
       loadHookPatchSha256: hash(patches[2]),
       blockedTdtPatchSha256: hash(patches[3]),
+      externalEncoderPatchSha256: hash(patches[4]),
       bridgeSha256: hash(join(root, 'native/mlx/Sources/VesperMLX/Bridge.swift')),
       liveBridgeSha256: hash(join(root, 'native/mlx/Sources/VesperMLX/Live.swift')),
       graniteBridgeSha256: hash(join(root, 'native/mlx/Sources/VesperMLX/GraniteSpeech5CTC.swift')),
       phonon2BridgeSha256: hash(join(root, 'native/mlx/Sources/VesperMLX/Phonon2.swift')),
       reduxBridgeSha256: hash(join(root, 'native/mlx/Sources/VesperMLX/ParakeetRedux.swift')),
+      neuralEngineBridgeSha256: hash(
+        join(root, 'native/mlx/Sources/VesperMLX/ParakeetNeuralEngine.swift'),
+      ),
       librarySha256: hash(join(destination, 'libVesperMLX.dylib')),
       metalSha256: hash(join(destination, 'mlx.metallib')),
       tokenizerToolSha256: hash(join(destination, 'prepare-qwen-tokenizer')),
