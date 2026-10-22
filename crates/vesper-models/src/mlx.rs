@@ -99,6 +99,23 @@ pub fn model_subdirectory(model: AsrModel) -> Result<&'static str> {
     }
 }
 
+/// Best effort: specialize the downloaded Neural Engine encoder for this Mac
+/// now. A failure here is not an installation failure; the first load retries
+/// and reports its own error.
+pub(super) fn prepare_neural_engine(root: &Path, cancelled: &AtomicBool) -> Result<()> {
+    check_cancel(cancelled)?;
+    verify_runtime(cancelled)?;
+    let mut config = AppConfig::default();
+    config.models.asr = AsrModel::ParakeetTdt06bV3;
+    config.models.asr_engine = vesper_core::AsrEngine::NeuralEngine;
+    let directory = artifact_path(root, speech_subdirectory(&config)?)?;
+    let _ = vesper_mlx::prepare_neural_engine(
+        &runtime_directory().join("libVesperMLX.dylib"),
+        &directory,
+    );
+    Ok(())
+}
+
 pub(super) fn prepare_tokenizer(
     root: &Path,
     artifact: &Artifact,

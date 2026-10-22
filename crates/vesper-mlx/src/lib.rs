@@ -65,6 +65,25 @@ pub fn device_available(library: &Path) -> Result<bool> {
     }
 }
 
+/// Load the Neural Engine encoder in `directory` once and release it, so Core ML
+/// specializes it for this Mac and caches that per path before the first
+/// recording (#143). Returns whether Core ML loaded it.
+pub fn prepare_neural_engine(library: &Path, directory: &Path) -> Result<bool> {
+    let path = CString::new(directory.to_str().ok_or(Error::Input("non-UTF-8 path"))?)
+        .map_err(|_| Error::Input("null in path"))?;
+    // SAFETY: caller verifies the application-built image; the symbol only reads
+    // the NUL-terminated path during the call and retains nothing.
+    unsafe {
+        let image = Library::new(library).map_err(runtime)?;
+        let prepare = image
+            .get::<unsafe extern "C" fn(*const c_char) -> bool>(
+                b"vesper_mlx_prepare_neural_engine\0",
+            )
+            .map_err(runtime)?;
+        Ok(prepare(path.as_ptr()))
+    }
+}
+
 type Load = unsafe extern "C" fn(*const c_char, *const c_char, *mut *mut c_char) -> *mut c_void;
 type Unload = unsafe extern "C" fn(*mut c_void);
 type Free = unsafe extern "C" fn(*mut c_char);

@@ -1072,6 +1072,14 @@ fn install_artifacts_with_cache(
         report(InstallPhase::Installed, artifact.size_bytes);
         completed_bytes += artifact.size_bytes;
     }
+    #[cfg(feature = "mlx")]
+    if artifacts
+        .iter()
+        .any(|artifact| artifact.engine.as_deref() == Some(NEURAL_ENGINE_ENGINE))
+    {
+        // Core ML's first load on a Mac takes seconds; do it while installing.
+        mlx::prepare_neural_engine(root, cancelled)?;
+    }
     Ok(())
 }
 

@@ -11,6 +11,18 @@ import MLXAudioSTT
 // run in MLX; Core ML runs only the encoder. Rust delivers parts of at most
 // 15 s, so each call is one encoder window with fresh decoder state.
 
+/// Loads the encoder once and releases it, so Core ML specializes it for this
+/// Mac's Neural Engine after download rather than on the first recording.
+@_cdecl("vesper_mlx_prepare_neural_engine")
+public func prepareNeuralEngine(_ path: UnsafePointer<CChar>?) -> Bool {
+  guard let path else { return false }
+  let configuration = MLModelConfiguration()
+  configuration.computeUnits = .cpuAndNeuralEngine
+  let encoder = URL(fileURLWithPath: String(cString: path), isDirectory: true)
+    .appendingPathComponent(ParakeetNeuralEngineModel.encoderName)
+  return (try? MLModel(contentsOf: encoder, configuration: configuration)) != nil
+}
+
 final class ParakeetNeuralEngineModel: STTGenerationModel {
   static let encoderName = "ParakeetEncoder15s.mlmodelc"
   static let windowFrames = 1501
