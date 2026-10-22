@@ -144,6 +144,20 @@ The [IST-DASLab GitHub organization](https://github.com/orgs/IST-DASLab/reposito
 
 None of these is an application setting, and none changes the findings above: CPU and Apple-silicon paths depend on formats that ggml, ONNX Runtime or MLX can execute. The concrete idea worth testing is whether a GSQ-style refinement of a small model's GGUF k-quant beats the plain k-quant on the polishing benchmark (an open question below).
 
+## Measured since this survey
+
+Later work measured several of the open questions below on this repository's models. These are local results with the
+limits stated in each record.
+
+- **ONNX operator coverage.** In the Parakeet v3 4-bit encoder, 303 MB of pointwise convolutions stayed FP32 because
+  `MatMulNBits` only covers `MatMul`. Rewriting them as `MatMul` first cut the encoder from 679 MB to 425 MB with WER
+  unchanged within noise; HQQ was larger and slower than round-to-nearest
+  ([record](validation/parakeet-conv-rewrite-2026-10-22.md), #271).
+- **MLX, Cohere and one-file GGUF.** 8-bit MLX quantization of Parakeet's `Linear` layers, a pointwise rewrite for
+  Cohere Transcribe's int8 export, and NVIDIA's Q8_0 GGUF through NeMo-Speech.cpp (one file for CPU and GPU, with
+  K-quants losing accuracy) are recorded under #287. Offering that GGUF in the app is #293.
+- **Calibrated or learned rounding** (GPTQ, GSQ, DWQ) and quantization-aware training remain untested here.
+
 ## Open questions and candidate experiments (proposed)
 
 - Does the weight-only int4 recipe generalize to Granite Speech 5.0 TurboCTC and Moonshine? No quantization data was found for either.
