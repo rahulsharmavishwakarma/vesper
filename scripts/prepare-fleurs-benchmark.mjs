@@ -19,6 +19,25 @@ const LOCALES = {
     audioSha256: 'd9c2e37b41aacd41bc283554a0a82b5476b36887049774ecb2819dcaaa55a356',
     metadataSha256: '74c046239374deeb60fa63f258f907388093a32bcaa3140965f70ef05c79f7ca',
   },
+  de_de: {
+    language: 'de-DE',
+    name: 'FLEURS German (Germany) test set',
+    audioSha256: 'e86b42dfcdef749926cd92135045f87c25966c09e50d01c401adb04ee7d8628f',
+    metadataSha256: '82fab72c58a347345675c238f2492bb997105a4ab45d69e2a2b34ed29082fa97',
+  },
+  fr_fr: {
+    language: 'fr-FR',
+    name: 'FLEURS French (France) test set',
+    audioSha256: 'd23690e102f373554d1b544cd2ff1e76e4fedeb04953c0b72751a1b7c518cfdd',
+    metadataSha256: '5d06d338b242e00786fcf12c4c92008b9f399d5a5c872c91dca90572e7869c0d',
+  },
+  // FLEURS publishes Spanish only as Latin American Spanish.
+  es_419: {
+    language: 'es-419',
+    name: 'FLEURS Spanish (Latin America) test set',
+    audioSha256: '981802f6c828fd214fcf8bfc1036d80c9184b6eeb5650b3f7882f8affec046c9',
+    metadataSha256: 'd107a93a4f54a18ac25cd470bb4cdadce14fb075b0c1d1542258e274d209ec09',
+  },
 };
 
 export function parseFleursRows(text) {
@@ -107,7 +126,7 @@ async function prepare(localeId, audioRoot, metadataPath, outputRoot, count) {
 }
 
 function usage() {
-  return 'usage: node scripts/prepare-fleurs-benchmark.mjs hi_in|en_us EXTRACTED_TEST_DIR TEST_TSV OUTPUT_DIR [--count N]';
+  return `usage: node scripts/prepare-fleurs-benchmark.mjs ${Object.keys(LOCALES).join('|')} EXTRACTED_TEST_DIR TEST_TSV OUTPUT_DIR [--count N]`;
 }
 
 async function main(arguments_) {
