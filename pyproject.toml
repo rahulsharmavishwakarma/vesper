@@ -3,7 +3,9 @@ name = "vesper-tooling"
 version = "0.0.0"
 description = "Contributor and benchmark tooling for the native Vesper app"
 requires-python = ">=3.12"
-dependencies = []
+dependencies = [
+    "filelock>=4.2.1",
+]
 
 [dependency-groups]
 dev = [
