@@ -383,6 +383,11 @@ plus `setuptools` 84.0.0 (GHSA-xmj3-9gf7-h52w, fixed in 84.1.0) in those two.
 pip-audit reported them before GitHub raised Dependabot alerts. All moved to
 `filelock` 4.2.4 and `setuptools` 84.1.0 or later the same way
 ([issue #57](https://github.com/rahulsharmavishwakarma/vesper/issues/57)).
+The same day the Rust audit began failing on `tokio` 1.53.1: RUSTSEC-2026-0386
+(published 13 October) marks `AsyncFd::new` and related constructors unsound,
+and unsound advisories are denied. `cargo update -p tokio --precise 1.53.3`
+takes the patched release in the same minor series; Vesper's own code does not
+use `AsyncFd`, so the constructors 1.53.3 deprecates do not affect it.
 The audit jobs install only contributor tools, not model runtimes or weights.
 All manifests and lockfiles stay versioned, while `.venv` and `.cache` stay ignored.
 
