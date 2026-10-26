@@ -326,10 +326,17 @@ pub(crate) fn decode_hints(
     )
 }
 
-/// The hint list's uniform boost as the NeMo-Speech.cpp request expects it.
+/// The NeMo-Speech.cpp request boost. The FFI validates the boost (0.1–5.0) even
+/// when the phrase list is empty, so an unbiased decode keeps the previous 2.0.
 pub(crate) fn phrase_boost(hints: &vesper_core::RecognizerHints) -> f32 {
-    hints.boost_milli as f32 / 1000.0
+    if hints.phrases.is_empty() || hints.boost_milli == 0 {
+        UNBIASED_PHRASE_BOOST
+    } else {
+        hints.boost_milli as f32 / 1000.0
+    }
 }
+
+const UNBIASED_PHRASE_BOOST: f32 = 2.0;
 
 pub(crate) fn transcribe_once(
     kind: AdapterKind,
@@ -415,4 +422,19 @@ fn require_runtime(config: &AppConfig) -> Result<()> {
         return Err(InferenceError::UnsupportedAsr(config.models.asr.id()));
     }
     Ok(())
+}
+
+#[cfg(test)]
+mod phrase_boost_tests {
+    #[test]
+    fn unbiased_decodes_keep_a_boost_the_nemo_ffi_accepts() {
+        let none = vesper_core::RecognizerHints::default();
+        assert_eq!(super::phrase_boost(&none), 2.0);
+        let half = vesper_core::RecognizerHints {
+            phrases: vec!["kubectl".into()],
+            boost_milli: 500,
+            ..Default::default()
+        };
+        assert_eq!(super::phrase_boost(&half), 0.5);
+    }
 }
