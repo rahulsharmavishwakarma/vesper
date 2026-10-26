@@ -240,3 +240,76 @@ fn the_salt_is_stable_per_install_and_never_exported_in_debug() {
 fn store_pair() -> (tempfile::TempDir, DatasetStore) {
     store()
 }
+
+/// Opt-in folder → miner (the worker's calls) → inventory → per-recording working
+/// set → correction gate, through the real snapshot path.
+#[test]
+fn an_opted_in_folder_teaches_its_identifiers_to_dictation_in_that_workspace() {
+    use crate::term_mining;
+    use vesper_core::{correction_gate, Language, TermSource};
+    let (_dir, store) = store();
+    let repo = tempfile::tempdir().unwrap();
+    let git = term_mining::git_binary().expect("git is required for workspace mining");
+    let run = |args: &[&str]| {
+        assert!(std::process::Command::new(&git)
+            .args(args)
+            .current_dir(repo.path())
+            .output()
+            .unwrap()
+            .status
+            .success());
+    };
+    run(&["init", "-q"]);
+    // Identifiers count only when the repository defines them (or lists them in a
+    // manifest or heading); imports alone are not the user's spellings.
+    std::fs::write(repo.path().join("a.rs"), "pub struct SherpaOnnx;\n").unwrap();
+    std::fs::write(
+        repo.path().join("b.rs"),
+        "fn load() -> SherpaOnnx { SherpaOnnx }\n",
+    )
+    .unwrap();
+    run(&["add", "a.rs", "b.rs"]);
+    let key = make_visible(&store, "speechapp");
+    store
+        .set_workspace_mining_root(&key, Some(repo.path().to_string_lossy().into_owned()))
+        .unwrap();
+    for workspace in store.workspace_mining_roots().unwrap() {
+        let root = std::path::PathBuf::from(workspace.mining_root.unwrap());
+        let mut cursor = Default::default();
+        let report = term_mining::scan_workspace(
+            &git,
+            &root,
+            &workspace.key,
+            &mut cursor,
+            Default::default(),
+            &|| false,
+        )
+        .unwrap();
+        store
+            .replace_mined_sources(
+                &[
+                    TermSource::Identifier,
+                    TermSource::Manifest,
+                    TermSource::Documentation,
+                ],
+                &workspace.key,
+                &report.admitted.unwrap(),
+                0,
+            )
+            .unwrap();
+    }
+    let correct = |path: &str, raw: &str| {
+        let mut snapshot = dictate(&store, CODE, path, 9);
+        snapshot.select_working_set(Language::English);
+        let set = snapshot.post_asr_working_set(raw, Language::English);
+        correction_gate(raw, &set, Language::English).text
+    };
+    let raw = "Link sherpa onnx before the release";
+    assert_eq!(
+        correct("/Users/tester/work/speechapp/src/b.rs", raw),
+        "Link SherpaOnnx before the release"
+    );
+    // Another workspace never receives this repository's spellings.
+    make_visible(&store, "billing");
+    assert_eq!(correct("/Users/tester/work/billing/a.rs", raw), raw);
+}
