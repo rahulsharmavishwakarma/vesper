@@ -820,7 +820,8 @@ fn add_sample(
         .iter()
         .filter(|term| {
             !targets.iter().any(|t| t.eq_ignore_ascii_case(term))
-                && count_term(text, term, false) > count_term(&sample.reference, term, false)
+                // Case-sensitive: `helm` → `Helm` is an inserted term.
+                && count_term(text, term, true) > count_term(&sample.reference, term, true)
         })
         .count();
     s.spurious_hint_insertions += spurious;
