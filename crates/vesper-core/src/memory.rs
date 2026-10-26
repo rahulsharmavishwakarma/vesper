@@ -45,6 +45,9 @@ pub struct MemoryEvidence {
     /// Hash of the recognizer hint list used for this decode (bias provenance).
     #[serde(default)]
     pub hint_hash: String,
+    /// Near-miss proposals recorded in shadow; never applied to this text.
+    #[serde(default)]
+    pub gate_shadow: Vec<crate::GateChange>,
 }
 
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]

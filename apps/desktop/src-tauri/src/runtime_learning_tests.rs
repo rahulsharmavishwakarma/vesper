@@ -466,3 +466,70 @@ fn automatic_app_failed_edit_keeps_revision_and_retries_once_without_duplicate_f
         Some(EDITED)
     );
 }
+
+#[test]
+fn mined_terms_are_normalized_by_the_gate_and_a_user_revert_suspends_them() {
+    use vesper_core::TermSource;
+    let dir = tempfile::tempdir().unwrap();
+    let root = dir.path().join("dataset");
+    let runtime = Arc::new(Runtime::default());
+    let store = DatasetStore::open(root.clone()).unwrap();
+    store
+        .replace_mined_sources(
+            &[TermSource::Identifier],
+            "",
+            &[vesper_data::term_mining::MinedTerm::new(
+                "sherpa_onnx",
+                TermSource::Identifier,
+                "",
+                3,
+            )],
+            0,
+        )
+        .unwrap();
+    let heard = "Link sherpa onnx in the build";
+    let fixed = "Link sherpa_onnx in the build";
+    let result = complete(
+        &root,
+        &runtime,
+        1,
+        AsrModel::CohereTranscribe,
+        Language::English,
+        heard,
+    );
+    assert_eq!(result.personalized_transcript.as_deref(), Some(fixed));
+    let evidence = result.personalization_evidence.clone().unwrap();
+    assert_eq!(evidence.gate.len(), 1);
+    assert_eq!(evidence.gate[0].heard, "sherpa onnx");
+    // Ordinary speech in the same recording context is never rewritten.
+    let ordinary = complete(
+        &root,
+        &runtime,
+        2,
+        AsrModel::CohereTranscribe,
+        Language::English,
+        "I see the point you are making",
+    );
+    assert_eq!(ordinary.personalized_transcript, None);
+    // The user puts the heard words back: that term stops applying.
+    let result = complete(
+        &root,
+        &runtime,
+        3,
+        AsrModel::CohereTranscribe,
+        Language::English,
+        heard,
+    );
+    runtime
+        .edit_latest_draft(root.clone(), &result.result_id, 0, heard.into())
+        .unwrap();
+    let later = complete(
+        &root,
+        &runtime,
+        4,
+        AsrModel::CohereTranscribe,
+        Language::English,
+        heard,
+    );
+    assert_eq!(later.personalized_transcript, None);
+}

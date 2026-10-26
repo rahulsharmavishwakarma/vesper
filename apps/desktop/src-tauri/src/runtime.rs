@@ -2357,7 +2357,20 @@ impl WorkContext {
             learning_enabled: profile.automatic_learning,
         };
         let baseline = result.cleaned_transcript.as_deref().unwrap_or(&raw);
-        let personalized = post_asr_profile.personalize(baseline, self.config.language);
+        let mut personalized = post_asr_profile.personalize(baseline, self.config.language);
+        // Correction gate over the per-recording working set. Selection reads the raw
+        // hypothesis only; the gate edits the final text. Paused with the breaker.
+        let snapshot = self.personalization_snapshot()?;
+        let set = snapshot.post_asr_working_set(&raw, self.config.language);
+        personalized.evidence.hint_hash = set.hint_hash.clone();
+        if post_asr_profile.apply_corrections && snapshot.learning.breaker_tripped_ms.is_none() {
+            let gate = vesper_core::correction_gate(&personalized.text, &set, self.config.language);
+            personalized.evidence.gate_shadow = gate.near_misses;
+            if !gate.applied.is_empty() {
+                personalized.text = gate.text;
+                personalized.evidence.gate = gate.applied;
+            }
+        }
         if personalized.text != baseline {
             result.personalized_transcript = Some(personalized.text.clone());
         }

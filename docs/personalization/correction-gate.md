@@ -2,7 +2,7 @@
 
 Implementation: [`crates/vesper-core/src/gate.rs`](../../crates/vesper-core/src/gate.rs). Contracts: [`terms.rs`](../../crates/vesper-core/src/terms.rs).
 
-The correction gate is the text-level safety layer shared by every speech model. It runs after recognition, after optional cleanup and after the existing [saved-correction aliases](automatic-dictionary.md). Its input is the per-recording working set's **normalizations**: exact spoken-form → spelling pairs built from the term inventory, such as `sherpa onnx` → `sherpa_onnx`. Sound-alike or fuzzy matching never reaches the gate as a change. It may only propose candidates elsewhere.
+The correction gate is the text-level safety layer shared by every speech model. In the desktop pipeline it runs in `complete_raw` after the saved-correction aliases. It uses the snapshot's post-recognition working set (`post_asr_working_set`, selected from the raw hypothesis only), honors **Apply my saved corrections**, and is skipped entirely while the [policy breaker](automatic-dictionary.md#policy-breaker) is tripped. Near-miss proposals are stored as `gateShadow` in the result's evidence and never change text. A rejected `inv:` term is suspended in the [term inventory](term-inventory.md). It runs after recognition, after optional cleanup and after the existing [saved-correction aliases](automatic-dictionary.md). Its input is the per-recording working set's **normalizations**: exact spoken-form → spelling pairs built from the term inventory, such as `sherpa onnx` → `sherpa_onnx`. Sound-alike or fuzzy matching never reaches the gate as a change. It may only propose candidates elsewhere.
 
 ## Rules
 

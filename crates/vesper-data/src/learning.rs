@@ -907,6 +907,12 @@ impl DatasetStore {
             })
             .map(|c| c.term_id.clone())
             .collect::<Vec<_>>();
+        for id in rejected
+            .iter()
+            .filter_map(|id| id.strip_prefix("inv:")?.parse::<i64>().ok())
+        {
+            self.suspend_inventory_term(id)?;
+        }
         if !rejected.is_empty() {
             let tx = self.connection.unchecked_transaction()?;
             let mut state = self.automatic_learning_state()?;
