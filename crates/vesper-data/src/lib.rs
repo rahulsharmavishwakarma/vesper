@@ -5,6 +5,8 @@ mod personalization;
 pub mod policy;
 mod policy_shadow;
 mod semantic;
+mod term_inventory;
+pub mod term_mining;
 mod workspaces;
 pub use learning::{
     learning_audio_key, AutomaticLearningState, DictationPersonalizationSnapshot, EditSupport,
@@ -17,6 +19,10 @@ pub use policy_shadow::{
     PolicyReservation, PolicyShadowDecision, PolicyShadowJob, PolicyShadowState,
 };
 pub use semantic::SemanticShadowRecord;
+pub use term_inventory::{
+    InventoryRow, InventoryRowView, MergeReport, SourceSummary, TermEvidence, TermInventorySummary,
+    TermMiningRun, TermStatus, TermWorkspaceSummary, MAX_INVENTORY_TERMS,
+};
 pub use workspaces::{workspace_day, WorkspaceSnapshot, WorkspaceSummary, WorkspaceUpdate};
 
 use std::fs::{self, File, OpenOptions};
@@ -235,6 +241,7 @@ impl DatasetStore {
                  report_json TEXT NOT NULL
              );",
         )?;
+        connection.execute_batch(term_inventory::SCHEMA)?;
         let store = Self { root, connection };
         store.prune_semantic_shadow()?;
         store.policy_shadow_state()?;

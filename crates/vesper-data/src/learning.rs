@@ -104,6 +104,10 @@ pub struct DictationPersonalizationSnapshot {
     /// Resolved at capture start by `resolve_context`; empty for imports.
     pub workspace: vesper_core::WorkspaceContext,
     pub(crate) workspaces: crate::workspaces::WorkspaceSnapshot,
+    // Term inventory (see term_inventory.rs): the usable inventory rows and the
+    // per-recording selection made after workspace resolution.
+    pub inventory: Vec<vesper_core::InventoryTerm>,
+    pub working_set: vesper_core::WorkingSet,
 }
 
 impl DictationPersonalizationSnapshot {
@@ -277,6 +281,9 @@ impl DatasetStore {
             learning: self.automatic_learning_state()?,
             workspace: Default::default(),
             workspaces: self.workspace_snapshot()?,
+            // A damaged inventory never blocks dictation; it only loses hints.
+            inventory: self.inventory_terms().unwrap_or_default(),
+            working_set: vesper_core::WorkingSet::default(),
         };
         tx.commit()?;
         Ok(snapshot)

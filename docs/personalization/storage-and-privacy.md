@@ -66,3 +66,24 @@ The future training `improvementMode` setting is unchanged. An ordinary draft or
 The separate local `semantic_shadow` table retains up to 256 bounded edit requests/proposals for 30 days, pruned on store access. It can contain before/after and one earlier-attempt text even when audio collection is off; it stores no audio and creates no training session. Undo removes a result’s evidence; Forget clears all shadow records and invalidates old callbacks. Exact request/revision/epoch checks prevent stale completion from recreating them. Shadow guesses never enter active vocabulary, preferences or reviewed exports. See the [full contract](semantic-shadow.md#persistence-deletion-and-isolation).
 
 Policy shadow storage retains compact pre-event counterfactual scores/source identities, 256 cases, 32 routed scopes and eight decisions per scope for 30 days. It contains no raw transcript/profile snapshot. Its one pending job is never replayed after restart. Neither table enters active vocabulary or reviewed exports. Undo invalidates related evidence; Forget clears shadow tables and pending reservations. The removed TextEdit observer's retained rows are dropped when an existing store is opened; see the [removal note](external-observer.md).
+
+## Term inventory
+
+The [term inventory](term-inventory.md) adds three tables to the same SQLite store. They are created with `CREATE TABLE IF NOT EXISTS` when the store opens; existing data is untouched.
+
+- `term_inventory`: one row per surface spelling. Each row holds:
+  - kind, tier and status (`unconfirmed`, `active`, `suspended`, or the `removed` tombstone)
+  - up to four spoken forms
+  - evidence entries of `(source, workspace scope, count)`
+  - document frequency, and first- and last-seen times
+- `term_mining_state`: per-workspace scan cursors, paused sources and workspace display labels. A cursor holds a SHA-256 fingerprint over tracked paths, sizes and modification times, a file index, and partial candidate counts. It never holds a path or file text.
+- `term_mining_runs`: the last 200 worker runs, with counts and timings only.
+
+Bounds:
+
+- At most **20,000** inventory rows. Beyond that, the unconfirmed tier-B rows with the least evidence and the oldest sighting are evicted. Tombstones and asserted rows are not evicted.
+- At most 4,096 asserted values per source per run.
+
+Removing a word writes a tombstone that clears its evidence and spoken forms. Mining never re-adds that spelling in any letter case. **Forget words from this source** deletes that source's evidence and pauses the source until you resume it. Rows left with no evidence are deleted; suspended rows keep their status. Forgetting a tier-B source also clears scan cursors, so a resume rescans from scratch.
+
+The inventory never stores file paths, document text, URLs or window titles. Workspace scopes are opaque keys, and labels are folder names. Mining roots are explicit opt-in preferences, like folder rules. Deletion is logical; it does not claim forensic erasure of SQLite pages.
