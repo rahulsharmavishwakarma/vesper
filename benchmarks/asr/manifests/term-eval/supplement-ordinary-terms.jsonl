@@ -1,0 +1,36 @@
+{"id":"sup-helm-1","reference":"The captain took the helm during the storm.","workspaceId":"devops","relatedTermId":"devops-helm"}
+{"id":"sup-helm-2","reference":"She stood at the helm and steered us home.","workspaceId":"devops","relatedTermId":"devops-helm"}
+{"id":"sup-helm-3","reference":"Who will be at the helm after the merger?","workspaceId":"devops","relatedTermId":"devops-helm"}
+{"id":"sup-envoy-1","reference":"The envoy arrived in Geneva on Tuesday.","workspaceId":"devops","relatedTermId":"devops-envoy"}
+{"id":"sup-envoy-2","reference":"They sent a special envoy to the talks.","workspaceId":"devops","relatedTermId":"devops-envoy"}
+{"id":"sup-envoy-3","reference":"The envoy refused to comment on the deal.","workspaceId":"devops","relatedTermId":"devops-envoy"}
+{"id":"sup-calico-1","reference":"Our calico cat sleeps on the porch.","workspaceId":"devops","relatedTermId":"devops-calico"}
+{"id":"sup-calico-2","reference":"She sewed a calico quilt for the baby.","workspaceId":"devops","relatedTermId":"devops-calico"}
+{"id":"sup-calico-3","reference":"The calico kitten followed me home.","workspaceId":"devops","relatedTermId":"devops-calico"}
+{"id":"sup-prometheus-1","reference":"In the old myth, Prometheus stole fire from the gods.","workspaceId":"devops","relatedTermId":"devops-prometheus"}
+{"id":"sup-prometheus-2","reference":"We read the story of Prometheus in school.","workspaceId":"devops","relatedTermId":"devops-prometheus"}
+{"id":"sup-loki-1","reference":"Loki is the trickster in the Norse stories.","workspaceId":"devops","relatedTermId":"devops-loki"}
+{"id":"sup-loki-2","reference":"The kids watched a film about Loki and Thor.","workspaceId":"devops","relatedTermId":"devops-loki"}
+{"id":"sup-carpenter-1","reference":"The carpenter fixed the kitchen door.","workspaceId":"devops","relatedTermId":"devops-karpenter"}
+{"id":"sup-customize-1","reference":"You can customize the colors in settings.","workspaceId":"devops","relatedTermId":"devops-kustomize"}
+{"id":"sup-parakeet-1","reference":"Our parakeet learned to whistle a tune.","workspaceId":"rustaudio","relatedTermId":"rustaudio-parakeet"}
+{"id":"sup-parakeet-2","reference":"The green parakeet sat on my shoulder.","workspaceId":"rustaudio","relatedTermId":"rustaudio-parakeet"}
+{"id":"sup-parakeet-3","reference":"She bought a parakeet at the pet shop.","workspaceId":"rustaudio","relatedTermId":"rustaudio-parakeet"}
+{"id":"sup-tokyo-1","reference":"We fly to Tokyo next month.","workspaceId":"rustaudio","relatedTermId":"rustaudio-tokio"}
+{"id":"sup-onyx-1","reference":"She wore a black onyx ring.","workspaceId":"rustaudio","relatedTermId":"rustaudio-onnx"}
+{"id":"sup-cargo-1","reference":"The cargo ship docked at noon.","workspaceId":"rustaudio","relatedTermId":"rustaudio-cargo-deny"}
+{"id":"sup-rust-1","reference":"The old gate was covered in rust.","workspaceId":"rustaudio","relatedTermId":"rustaudio-rustfmt"}
+{"id":"sup-whisper-1","reference":"Please whisper so you do not wake the baby.","workspaceId":"rustaudio","relatedTermId":"rustaudio-whisper-cpp"}
+{"id":"sup-vesper-1","reference":"The vesper bell rang across the valley.","workspaceId":"people","relatedTermId":"people-vesper"}
+{"id":"sup-vesper-2","reference":"They sang vespers in the old chapel.","workspaceId":"people","relatedTermId":"people-vesper"}
+{"id":"sup-neil-1","reference":"Neil called me this morning about the car.","workspaceId":"people","relatedTermId":"people-niall"}
+{"id":"sup-neil-2","reference":"Please kneel down and tie your shoe.","workspaceId":"people","relatedTermId":"people-niall"}
+{"id":"sup-rory-1","reference":"Rory scored the winning goal.","workspaceId":"people","relatedTermId":"people-ruairi"}
+{"id":"sup-brie-1","reference":"I bought some brie for the party.","workspaceId":"people","relatedTermId":"people-bree"}
+{"id":"sup-page-1","reference":"Turn to the next page, please.","workspaceId":"people","relatedTermId":"people-paige"}
+{"id":"sup-win-1","reference":"I hope we win the game tonight.","workspaceId":"people","relatedTermId":"people-nguyen"}
+{"id":"sup-right-1","reference":"Turn right at the second light.","workspaceId":"people","relatedTermId":"people-wright"}
+{"id":"sup-write-1","reference":"I will write it down for you.","workspaceId":"people","relatedTermId":"people-wright"}
+{"id":"sup-monday-1","reference":"See you on Monday then.","workspaceId":"people","relatedTermId":"people-mandy"}
+{"id":"sup-point-1","reference":"I see the point you are making.","workspaceId":"people","relatedTermId":"people-cedar-point"}
+{"id":"sup-cedar-1","reference":"The old cedar tree fell in the storm.","workspaceId":"people","relatedTermId":"people-cedar-point"}
