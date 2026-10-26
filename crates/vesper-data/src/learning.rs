@@ -873,6 +873,37 @@ impl DatasetStore {
         self.suspend_automatic_with(tx, ids, true)
     }
 
+    /// A saved draft that drops a gate-written spelling and restores what was heard
+    /// (or picks a third spelling) rejects that term's automatic use. Returns the
+    /// rejected term ids; each counts toward the policy breaker.
+    pub fn observe_gate_reverts(
+        &self,
+        context: &LearningContext,
+        before: &str,
+        after: &str,
+        changes: &[vesper_core::GateChange],
+    ) -> Result<Vec<String>> {
+        if changes.is_empty() || !permitted(&self.personalization()?, context)? {
+            return Ok(vec![]);
+        }
+        let rejected = changes
+            .iter()
+            .filter(|c| {
+                memory_phrase_occurs(before, &c.spelling)
+                    && !memory_phrase_occurs(after, &c.spelling)
+            })
+            .map(|c| c.term_id.clone())
+            .collect::<Vec<_>>();
+        if !rejected.is_empty() {
+            let tx = self.connection.unchecked_transaction()?;
+            let mut state = self.automatic_learning_state()?;
+            record_reverts(&mut state, rejected.iter().map(|id| id.as_str()));
+            put_state(&tx, &state)?;
+            tx.commit()?;
+        }
+        Ok(rejected)
+    }
+
     /// Clear a tripped breaker after the user reviews their automatic spellings.
     pub fn resume_automatic_spellings(&self) -> Result<()> {
         let tx = self.connection.unchecked_transaction()?;
@@ -2571,5 +2602,49 @@ mod tests {
                 .text,
             "Use kubectl.io for deployment"
         );
+    }
+
+    #[test]
+    fn rejecting_gate_spellings_counts_toward_the_breaker() {
+        let (_dir, store, p) = setup();
+        let ctx = context(&p, "gate");
+        let change = |spelling: &str, id: &str| vesper_core::GateChange {
+            start: 0,
+            end: 0,
+            heard: String::new(),
+            spelling: spelling.into(),
+            term_id: id.into(),
+        };
+        let changes = [change("sherpa_onnx", "t1"), change("Sortformer", "t2")];
+        let before = "Link sherpa_onnx and Sortformer.";
+        // Unrelated edits and kept spellings are not rejections.
+        assert!(store
+            .observe_gate_reverts(
+                &ctx,
+                before,
+                "Link sherpa_onnx and Sortformer now.",
+                &changes
+            )
+            .unwrap()
+            .is_empty());
+        assert_eq!(
+            store
+                .observe_gate_reverts(&ctx, before, "Link sherpa onnx and Sortformer.", &changes)
+                .unwrap(),
+            ["t1"]
+        );
+        assert!(store
+            .automatic_learning_state()
+            .unwrap()
+            .breaker_tripped_ms
+            .is_none());
+        store
+            .observe_gate_reverts(&ctx, before, "Link sherpa_onnx and sort former.", &changes)
+            .unwrap();
+        assert!(store
+            .automatic_learning_state()
+            .unwrap()
+            .breaker_tripped_ms
+            .is_some());
     }
 }

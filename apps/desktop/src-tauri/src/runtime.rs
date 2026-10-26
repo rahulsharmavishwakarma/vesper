@@ -1581,6 +1581,21 @@ impl Runtime {
                 ..Default::default()
             }
         };
+        // Gate-written spellings the user removed are rejections of that term.
+        if let Some(gate) = result
+            .personalization_evidence
+            .as_ref()
+            .map(|e| &e.gate)
+            .filter(|g| !g.is_empty() && result.learning_context.learning_enabled)
+        {
+            if let Err(error) = DatasetStore::open(root.clone()).and_then(|store| {
+                store.observe_gate_reverts(&result.learning_context, before, &text, gate)
+            }) {
+                result
+                    .warnings
+                    .push(format!("Correction feedback could not be saved: {error}"));
+            }
+        }
         result.draft_transcript = Some(text);
         result.draft_revision = next_revision;
         result.learning_outcome = Some(outcome);

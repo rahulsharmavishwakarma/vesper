@@ -38,6 +38,13 @@ pub struct MemoryEvidence {
     pub corrections_enabled: bool,
     #[serde(default)]
     pub budget_exceeded: bool,
+    /// Correction-gate changes in this text, with offsets into the gate input.
+    /// Authorship record: these spans were written by the gate, not the user.
+    #[serde(default)]
+    pub gate: Vec<crate::GateChange>,
+    /// Hash of the recognizer hint list used for this decode (bias provenance).
+    #[serde(default)]
+    pub hint_hash: String,
 }
 
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]

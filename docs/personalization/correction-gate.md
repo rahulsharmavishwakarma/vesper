@@ -32,6 +32,10 @@ The gate therefore has an experimental near-miss rule over the working set's **r
 
 `crates/vesper-data/examples/would_fire_replay.rs` runs the gate over a **copy** of a dataset with a frozen working set. It reports every exact and near-miss change with surrounding context, for private review. It never runs a model or writes to the source store.
 
+## Authorship and rejection
+
+Each result's personalization evidence records the gate's changes (`gate`) and the hash of the recognizer hint list (`hint_hash`). Together with the raw (recognizer), cleaned (writer) and alias (`applied`) stages already stored, this records who wrote each part of the displayed text. A later saved draft that removes a gate-written spelling counts as a rejection of that term: `DatasetStore::observe_gate_reverts`. Each rejection feeds the [policy breaker](automatic-dictionary.md#policy-breaker). Gate output is never positive evidence: an unedited result says nothing about whether a change was right.
+
 ## Lexicon
 
 "Ordinary English word" means membership in a lexicon derived from the [CMU Pronouncing Dictionary](https://github.com/cmusphinx/cmudict). It is pinned at commit `74790861f652b15e4ac49015a90074ad62a27690`, and `cmudict.dict` has SHA-256 `81917843…3d22`.
