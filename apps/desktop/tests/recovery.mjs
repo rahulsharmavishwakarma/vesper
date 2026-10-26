@@ -212,6 +212,7 @@ async function setup({ recording = false, preview = false, main = false, interce
             reviewQueue: [],
           };
         case 'get_correction_suggestions':
+        case 'list_workspaces':
           return [];
         case 'get_selected_adapters':
           return { speech: { capabilities: { contextualPhrases: false, nativeStreaming: false } } };
