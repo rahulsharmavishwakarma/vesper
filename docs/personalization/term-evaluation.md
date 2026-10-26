@@ -75,19 +75,19 @@ Recall is exact spelling, case-sensitive / case-insensitive. FA = target-free ut
 
 ### Correction gate on hook-less models
 
-`gate_exact` uses the condition's normalizations; `gate_near_miss` adds near-miss repairs against up to 16 references. Hint lists never reach these models, so `raw` is identical in every condition.
+`gate_exact` uses the condition's normalizations; `gate_near_miss` adds near-miss repairs against up to 16 references. Hint lists never reach these models, so `raw` is identical in every condition. Gate arms below are rescored from the saved raw rows with the gate at base revision `bd03f38`; the first scoring used `f60e87f`, whose exact arm recovered 2–4 more targets per lane, also with no harmful change.
 
 | Model | Lane | Raw recall | ws32 `gate_exact` | ws32 `gate_near_miss` | Gate changes / harmful (ws32) | Hard-negative FA (any condition) | FLEURS FA |
 | --- | --- | --- | --- | --- | --- | --- | --- |
-| Cohere | positives, clean | 32.7% / 45.2% (4 of 158 failed: duration token limit) | 44.6% / 56.0% | 50.0% / 61.3% | exact 20/0; near-miss 9/0 | 1/350 before the gate, gate adds 0 | 0/92; near-miss 1/92 under `wrong32` |
-| Cohere | positives, pink / babble | 29.8% / 28.0% | 38.7% / 39.3% | 44.6% / 46.4% | no harmful changes | — | — |
+| Cohere | positives, clean | 32.7% / 45.2% (4 of 158 failed: duration token limit) | 42.3% / 53.6% | 47.6% / 58.9% | exact 16/0; near-miss 9/0 | 1/350 before the gate, gate adds 0 | 0/92; near-miss 1/92 under `wrong32` |
+| Cohere | positives, pink / babble | 29.8% / 28.0% | 37.5% / 37.5% | 43.5% / 44.6% | no harmful changes | — | — |
 | Cohere | LibriSpeech | 81.6% / 94.0% (2 failed) | 85.9% / 94.0% | 86.7% / 94.8% | exact 32/0; near-miss 8/1 | — | — |
-| Parakeet | positives, clean | 27.4% / 37.5% | 41.1% / 49.4% | 46.4% / 54.8% | exact 23/0; near-miss 9/0 | 1/350 before the gate, gate adds 0 | 0/92 |
-| Parakeet | positives, pink / babble | 23.8% / 24.4% | 35.7% / 38.1% | 41.7% / 43.5% | no harmful changes | — | — |
+| Parakeet | positives, clean | 27.4% / 37.5% | 39.3% / 47.6% | 44.6% / 53.0% | exact 20/0; near-miss 9/0 | 1/350 before the gate, gate adds 0 | 0/92 |
+| Parakeet | positives, pink / babble | 23.8% / 24.4% | 34.5% / 36.9% | 40.5% / 42.3% | no harmful changes | — | — |
 | Parakeet | LibriSpeech | 76.1% / 90.3% | 80.7% / 90.3% | 83.7% / 93.3% | exact 34/0; near-miss 22/0 | — | — |
 
 - **Text-only negatives:** 0 gate changes and 0 near-miss changes on 2,595 sentences in every condition (≤0.12% at 95%).
-- **Authored tier** (`gate_exact_authored`, which may not rejoin ordinary words) recovers about half as much as the asserted tier (Cohere 38.1%, Parakeet 33.3% at ws32) with no harmful changes either.
+- **Authored tier** (`gate_exact_authored`, which may not rejoin ordinary words) recovers almost nothing on these positives (Cohere 33.9%, Parakeet 29.2% exact at ws32, 2–3 changes), because most spoken forms here are ordinary-word splits; on LibriSpeech it keeps most of the gain (84.6% and 79.2%).
 - **Near-miss harm on real speech.** On FLEURS the Cohere output "Toki Net Radio" (reference "TogiNet Radio") became "Loki Net Radio" under the `wrong32` list: a non-word proper noun one edit from a reference. On LibriSpeech one near-miss change on Cohere and none on Parakeet were harmful. On hinted Nemotron output (already full of inserted terms) near-miss repairs were harmful in 11 of 11 hard-negative cases. On Cohere and Parakeet output, near-miss repairs never touched a synthetic negative.
 - **Gate latency:** p95 under 0.04 ms per utterance in every lane (text work only).
 
@@ -109,12 +109,12 @@ The desktop forces Silero VAD and DPDFNet8 on every recording. Here DPDFNet8 alo
 
 | Model | Audio | Raw: recall (exact / ci), non-target WER | DPDFNet8: recall, non-target WER | ws32 `gate_exact` recall, raw → DPDFNet8 |
 | --- | --- | --- | --- | --- |
-| Cohere | clean | 32.7% / 45.2%, 10.0% | 32.7% / 42.9%, 10.8% | 44.6% → 42.9% |
-| Cohere | pink 10 dB | 29.8% / 39.9%, 11.1% | 23.8% / 33.3%, 10.9% | 38.7% → 33.9% |
-| Cohere | babble 10 dB | 28.0% / 37.5%, 11.9% | 25.6% / 32.7%, 13.2% | 39.3% → 35.7% |
-| Parakeet | clean | 27.4% / 37.5%, 7.8% | 27.4% / 35.7%, 8.3% | 41.1% → 38.1% |
-| Parakeet | pink 10 dB | 23.8% / 33.3%, 10.3% | 20.8% / 28.0%, 12.4% | 35.7% → 28.6% |
-| Parakeet | babble 10 dB | 24.4% / 33.3%, 11.4% | 21.4% / 29.2%, 12.6% | 38.1% → 32.7% |
+| Cohere | clean | 32.7% / 45.2%, 10.0% | 32.7% / 42.9%, 10.8% | 42.3% → 41.1% |
+| Cohere | pink 10 dB | 29.8% / 39.9%, 11.1% | 23.8% / 33.3%, 10.9% | 37.5% → 32.1% |
+| Cohere | babble 10 dB | 28.0% / 37.5%, 11.9% | 25.6% / 32.7%, 13.2% | 37.5% → 33.9% |
+| Parakeet | clean | 27.4% / 37.5%, 7.8% | 27.4% / 35.7%, 8.3% | 39.3% → 36.9% |
+| Parakeet | pink 10 dB | 23.8% / 33.3%, 10.3% | 20.8% / 28.0%, 12.4% | 34.5% → 27.4% |
+| Parakeet | babble 10 dB | 24.4% / 33.3%, 11.4% | 21.4% / 29.2%, 12.6% | 36.9% → 31.5% |
 
 Failures: Cohere 4 / 4 / 4 raw and 4 / 1 / 5 with DPDFNet8 (duration token limit); Parakeet none. DPDFNet8 lowered case-insensitive term recall in all six lanes (by 1.8–6.6 points) and raised non-target WER in five of six. The denominator is 168 target occurrences per lane and no significance test was run, so this is a consistent direction rather than a qualified effect size. It is evidence against learning only from denoised audio, and supports measuring the forced desktop frontend on real dictation before learning depends on it. Silero VAD, which the desktop also forces, was not part of this comparison.
 
@@ -127,7 +127,7 @@ Gates are the predeclared ones in [native qualification](native-qualification.md
 | Nemotron `phrase_bias` | pass (+39.9 / +38.7 pts) | **fail** (ws32 +21.1 pts hard negatives, +33.7 pts FLEURS) | **fail** (+6.9 pts) | pass at ws10/ws32 | **`disabled`** |
 | Qwen3-ASR `prompt_context` | pass (+38.6 / +40.4 pts) | **fail** at ws32 (+2.3 pts, upper bound 4.1%); wrong32 and FLEURS pass | pass (+0.4 pts) | pass at ws10/ws32 | **`disabled`** |
 
-Both hooks raise term recall substantially, which is consistent with the published picture that biasing raises recall while precision falls. Neither passes the false-alarm gate, so neither receives automatic hints. Vocabulary reaches every model through the correction gate, which added 12–14 points of exact recall on Cohere and Parakeet with no measured harm on target-free speech in its exact mode. The Settings opt-in phrase list still reaches Nemotron, as before; the Nemotron result suggests reviewing that switch.
+Both hooks raise term recall substantially, which is consistent with the published picture that biasing raises recall while precision falls. Neither passes the false-alarm gate, so neither receives automatic hints. Vocabulary reaches every model through the correction gate, which added 10–12 points of exact recall on Cohere and Parakeet with no measured harm on target-free speech in its exact mode. The Settings opt-in phrase list still reaches Nemotron, as before; the Nemotron result suggests reviewing that switch.
 
 Candidates for a new, predeclared run (hypotheses, not results): Qwen3-ASR with lists that exclude ordinary-word terms and a 10-phrase cap, measured on fresh ordinary-word negatives; and a guard that rejects a transcript echoing the hint list.
 
