@@ -47,10 +47,10 @@ pub struct PersonalizedText {
     pub evidence: MemoryEvidence,
 }
 
-struct Token<'a> {
-    text: &'a str,
-    start: usize,
-    end: usize,
+pub(crate) struct Token<'a> {
+    pub(crate) text: &'a str,
+    pub(crate) start: usize,
+    pub(crate) end: usize,
 }
 
 fn edge_punctuation(c: char) -> bool {
@@ -79,7 +79,7 @@ fn edge_punctuation(c: char) -> bool {
 }
 
 /// Whitespace tokens preserve combining marks and internal identifier punctuation.
-fn tokens(text: &str) -> Vec<Token<'_>> {
+pub(crate) fn tokens(text: &str) -> Vec<Token<'_>> {
     let mut offset = 0;
     text.split_whitespace()
         .filter_map(|part| {
@@ -139,7 +139,7 @@ pub fn memory_phrase_occurs(text: &str, phrase: &str) -> bool {
         })
 }
 
-fn protected(text: &str) -> bool {
+pub(crate) fn protected(text: &str) -> bool {
     text.chars().any(char::is_numeric)
         || tokens(text).iter().any(|t| {
             let word = t.text.to_lowercase().replace('’', "'");
@@ -259,7 +259,7 @@ fn protected(text: &str) -> bool {
         })
 }
 
-fn crosses_boundary(text: &str, words: &[Token<'_>]) -> bool {
+pub(crate) fn crosses_boundary(text: &str, words: &[Token<'_>]) -> bool {
     words.windows(2).any(|w| {
         text[w[0].end..w[1].start]
             .chars()
@@ -383,7 +383,7 @@ pub fn word_edits(reference: &str, hypothesis: &str) -> Option<usize> {
     Some(row[b.len()])
 }
 
-fn quoted(text: &str, position: usize) -> bool {
+pub(crate) fn quoted(text: &str, position: usize) -> bool {
     let mut open = None;
     let mut previous = ' ';
     let mut escaped = false;

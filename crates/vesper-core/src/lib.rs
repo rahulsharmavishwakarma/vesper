@@ -31,7 +31,7 @@ pub use config::{
 };
 pub use diarization::{SpeakerSegment, SpeakerTimeline};
 pub use error::{Error, Result};
-pub use gate::correction_gate;
+pub use gate::{correction_gate, ordinary_language, ordinary_word};
 pub use generated::runtime_language_code;
 pub use huggingface::{HuggingFaceFile, HuggingFaceProfile, ModelFileRole, ModelRuntime};
 pub use learning::*;

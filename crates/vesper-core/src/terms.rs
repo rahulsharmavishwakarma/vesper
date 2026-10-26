@@ -31,7 +31,9 @@ pub struct WorkspaceContext {
 }
 
 /// Trust tier of a spelling source. Tier C (machine output) is not representable.
-#[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash, Serialize, Deserialize)]
+#[derive(
+    Debug, Clone, Copy, Default, PartialEq, Eq, PartialOrd, Ord, Hash, Serialize, Deserialize,
+)]
 #[serde(rename_all = "snake_case")]
 pub enum TermTier {
     /// The user asserted the spelling: settings, corrections, text replacements,
@@ -39,6 +41,7 @@ pub enum TermTier {
     Asserted,
     /// The user (or their project) authored the spelling: identifiers, manifests,
     /// documentation headings. Needs independent repetition before admission.
+    #[default]
     Authored,
 }
 
@@ -93,6 +96,9 @@ pub struct Normalization {
     pub spoken: String,
     pub spelling: String,
     pub term_id: String,
+    /// Only user-asserted spellings may rejoin ordinary words (`type script` → `TypeScript`).
+    #[serde(default)]
+    pub tier: TermTier,
 }
 
 pub const MAX_HINTS: usize = 32;
