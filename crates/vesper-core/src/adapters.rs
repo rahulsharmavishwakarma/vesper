@@ -70,6 +70,7 @@ pub const NEMOTRON_PHRASE_HOOK: SpeechHook = SpeechHook {
     status: HookStatus::Disabled,
     max_phrases: 32,
     max_bytes: 2048,
+    boost_milli: 2000,
 };
 
 /// sherpa-onnx Qwen3-ASR per-stream `hotwords`: comma-separated, joined with
@@ -84,6 +85,7 @@ pub const QWEN_PROMPT_HOOK: SpeechHook = SpeechHook {
     status: HookStatus::Disabled,
     max_phrases: 32,
     max_bytes: 512,
+    boost_milli: 0,
 };
 
 #[derive(Debug, Clone, Copy, Serialize)]

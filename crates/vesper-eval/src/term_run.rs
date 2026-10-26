@@ -35,6 +35,7 @@ struct DecodeOptions {
     frontend: vesper_core::AudioFrontendConfig,
     cleanup: bool,
     limit: Option<usize>,
+    boost_milli: Option<u32>,
 }
 
 fn list(value: Option<&String>, flag: &str) -> Result<Vec<String>, String> {
@@ -67,6 +68,7 @@ fn parse(arguments: &[String]) -> Result<DecodeOptions, String> {
         frontend: Default::default(),
         cleanup: false,
         limit: None,
+        boost_milli: None,
     };
     let mut index = 5;
     while index < arguments.len() {
@@ -104,6 +106,16 @@ fn parse(arguments: &[String]) -> Result<DecodeOptions, String> {
                     Some("dpdfnet8") => vesper_core::NoiseReduction::Dpdfnet8,
                     _ => return Err("--denoiser needs off, dpdfnet4 or dpdfnet8".into()),
                 }
+            }
+            "--boost" => {
+                let boost: f64 = value
+                    .ok_or("--boost needs a value")?
+                    .parse()
+                    .map_err(|_| "--boost must be a number")?;
+                if !(0.0..=5.0).contains(&boost) {
+                    return Err("--boost must be between 0 and 5".into());
+                }
+                options.boost_milli = Some((boost * 1000.0).round() as u32);
             }
             "--limit" => {
                 options.limit = Some(
@@ -177,13 +189,17 @@ pub fn decode(arguments: &[String]) -> Result<(), Box<dyn std::error::Error>> {
     } else {
         vec![Condition::None]
     };
-    let model_label = format!(
+    let mut model_label = format!(
         "{}@{}",
         config.models.asr.id(),
         serde_json::to_value(selection.config.effective_asr_engine())?
             .as_str()
             .unwrap_or("engine")
     );
+    if let Some(boost) = options.boost_milli {
+        // A separate lane per boost: rows never mix with the default boost.
+        model_label.push_str(&format!("+boost{}", f64::from(boost) / 1000.0));
+    }
     let mut frontend = frontend_label(&options.frontend);
     if options.cleanup {
         // A separate lane: writer rows never replace the plain decode rows.
@@ -266,6 +282,7 @@ pub fn decode(arguments: &[String]) -> Result<(), Box<dyn std::error::Error>> {
                     working_set: working_set(&terms, TermTier::Asserted),
                     evaluate_declared_hooks: true,
                     evaluation_limits: (condition == Condition::Large).then_some(LARGE_HINT_LIMITS),
+                    evaluation_boost_milli: options.boost_milli,
                 }),
                 ..Default::default()
             };

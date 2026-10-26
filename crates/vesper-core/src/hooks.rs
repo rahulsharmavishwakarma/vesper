@@ -44,6 +44,8 @@ pub struct SpeechHook {
     pub status: HookStatus,
     pub max_phrases: usize,
     pub max_bytes: usize,
+    /// Uniform decode-time boost in thousandths (phrase-bias hooks; 0 otherwise).
+    pub boost_milli: u32,
 }
 
 impl SpeechHook {
@@ -52,6 +54,7 @@ impl SpeechHook {
         status: HookStatus::Disabled,
         max_phrases: 0,
         max_bytes: 0,
+        boost_milli: 0,
     };
 
     /// Automatic working-set hints reach only qualified hooks. The development
@@ -81,6 +84,9 @@ pub struct DecodeContext {
     /// hook's (phrases, bytes) limits to measure list-size degradation. Native
     /// runtimes still enforce their own hard limits.
     pub evaluation_limits: Option<(usize, usize)>,
+    /// Development evaluator only, with `evaluate_declared_hooks`: replace the
+    /// hook's uniform boost (thousandths) to measure recall against false alarms.
+    pub evaluation_boost_milli: Option<u32>,
 }
 
 #[derive(Debug, Clone, Copy, Default, PartialEq, Eq, Serialize)]
@@ -101,11 +107,20 @@ pub struct RecognizerHints {
     pub phrases: Vec<String>,
     /// Empty when no phrase was sent.
     pub hint_hash: String,
+    /// Uniform boost in thousandths for phrase-bias hooks; 0 otherwise.
+    pub boost_milli: u32,
 }
 
 /// Choose this decode's hints. Working-set hints win once a working set exists and
 /// the hook is qualified; otherwise the explicit opt-in list keeps working on
 /// phrase-bias hooks. Every list is bounded by the hook's own limits.
+///
+/// Automatic hints never include a surface that already reads as ordinary
+/// English (every word in the CMUdict-derived lexicon, such as `Calico` or
+/// `Cedar Point`): such words are not hard for a recognizer, and biasing toward
+/// them made recognizers capitalize ordinary speech as terms. The correction
+/// gate's references and normalizations keep them. The explicit opt-in list is
+/// the user's own choice and is not filtered.
 pub fn recognizer_hints(
     hook: &SpeechHook,
     profile: &PersonalizationProfile,
@@ -114,15 +129,23 @@ pub fn recognizer_hints(
     let context = profile.decode_context.as_ref();
     if let Some(context) = context.filter(|c| !c.working_set.hints.is_empty()) {
         if hook.accepts_working_set(context.evaluate_declared_hooks) {
-            let limited = match context.evaluation_limits {
-                Some((max_phrases, max_bytes)) if context.evaluate_declared_hooks => SpeechHook {
-                    max_phrases,
-                    max_bytes,
-                    ..*hook
-                },
-                _ => *hook,
-            };
-            return hints(HintSource::WorkingSet, &limited, &context.working_set.hints);
+            let mut limited = *hook;
+            if context.evaluate_declared_hooks {
+                if let Some((max_phrases, max_bytes)) = context.evaluation_limits {
+                    (limited.max_phrases, limited.max_bytes) = (max_phrases, max_bytes);
+                }
+                if let Some(boost) = context.evaluation_boost_milli {
+                    limited.boost_milli = boost;
+                }
+            }
+            let hard = context
+                .working_set
+                .hints
+                .iter()
+                .filter(|hint| !crate::ordinary_language(hint))
+                .cloned()
+                .collect::<Vec<_>>();
+            return hints(HintSource::WorkingSet, &limited, &hard);
         }
     }
     if hook.accepts_manual_phrases() {
@@ -138,6 +161,11 @@ fn hints(source: HintSource, hook: &SpeechHook, phrases: &[String]) -> Recognize
     }
     RecognizerHints {
         source,
+        boost_milli: if hook.kind == SpeechHookKind::PhraseBias {
+            hook.boost_milli
+        } else {
+            0
+        },
         hint_hash: hint_hash(&phrases),
         phrases,
     }
@@ -204,6 +232,7 @@ mod tests {
         status: HookStatus::Qualified,
         max_phrases: 3,
         max_bytes: 24,
+        boost_milli: 2000,
     };
 
     fn profile(hints: &[&str], manual: &[&str], bias: bool) -> PersonalizationProfile {
@@ -227,6 +256,7 @@ mod tests {
                 },
                 evaluate_declared_hooks: false,
                 evaluation_limits: None,
+                evaluation_boost_milli: None,
             }),
             ..PersonalizationProfile::default()
         }
@@ -305,6 +335,58 @@ mod tests {
         assert_eq!(
             recognizer_hints(&QUALIFIED, &both, Language::English).phrases,
             ["kubectl"]
+        );
+    }
+
+    #[test]
+    fn automatic_hints_drop_ordinary_language_surfaces_but_manual_lists_do_not() {
+        let p = profile(
+            &[
+                "Calico",
+                "kubectl",
+                "Cedar Point",
+                "Saoirse Brennan",
+                "Envoy",
+            ],
+            &["Calico"],
+            true,
+        );
+        let wide = SpeechHook {
+            max_phrases: 32,
+            max_bytes: 2048,
+            ..QUALIFIED
+        };
+        let sent = recognizer_hints(&wide, &p, Language::English);
+        assert_eq!(sent.phrases, ["kubectl", "Saoirse Brennan"]);
+        assert_eq!(sent.boost_milli, 2000);
+        let disabled = SpeechHook {
+            status: HookStatus::Disabled,
+            ..wide
+        };
+        let manual = recognizer_hints(&disabled, &p, Language::English);
+        assert_eq!(
+            (manual.source, manual.phrases),
+            (HintSource::Manual, vec!["Calico".to_owned()])
+        );
+    }
+
+    #[test]
+    fn evaluator_can_override_the_uniform_boost() {
+        let mut p = profile(&["kubectl"], &[], false);
+        let context = p.decode_context.as_mut().unwrap();
+        context.evaluate_declared_hooks = true;
+        context.evaluation_boost_milli = Some(500);
+        assert_eq!(
+            recognizer_hints(&QUALIFIED, &p, Language::English).boost_milli,
+            500
+        );
+        let prompt = SpeechHook {
+            kind: SpeechHookKind::PromptContext,
+            ..QUALIFIED
+        };
+        assert_eq!(
+            recognizer_hints(&prompt, &p, Language::English).boost_milli,
+            0
         );
     }
 
