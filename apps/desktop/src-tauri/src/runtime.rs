@@ -1805,6 +1805,10 @@ impl Runtime {
     pub fn is_busy(&self) -> bool {
         self.state.lock().is_ok_and(|state| state.busy)
     }
+    /// A background model download is running (term worker gate).
+    pub fn background_download_running(&self) -> bool {
+        self.background.lock().is_ok_and(|b| b.running)
+    }
     pub fn activity(&self) -> Result<serde_json::Value, String> {
         let state = self.state.lock().map_err(|error| error.to_string())?;
         Ok(

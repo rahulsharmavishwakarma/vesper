@@ -9,6 +9,7 @@ mod settings;
 mod setup;
 mod shortcuts;
 mod storage;
+mod term_worker;
 mod updates;
 mod workspaces;
 
@@ -41,6 +42,7 @@ pub struct AppStorage {
     shortcut_recorder: std::sync::Mutex<shortcuts::Recorder>,
     dictation: dictation::Dictation,
     onboarding: onboarding::OnboardingStore,
+    term_worker: term_worker::TermWorker,
 }
 
 pub fn replace_global_shortcut(
@@ -145,7 +147,9 @@ pub fn run() {
                 shortcut_recorder: std::sync::Mutex::new(shortcuts::Recorder::default()),
                 dictation: dictation::Dictation::default(),
                 onboarding,
+                term_worker: term_worker::TermWorker::default(),
             });
+            term_worker::start(app.handle().clone());
             if let Some(window) = app.get_webview_window("quick-capture") {
                 vesper_desktop_platform::initialize(&window).map_err(std::io::Error::other)?;
             }

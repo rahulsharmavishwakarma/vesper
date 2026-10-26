@@ -517,7 +517,7 @@ async fn start(app: tauri::AppHandle, id: u64) {
         Some((snapshot, observation))
     })
     .await;
-    let snapshot = match setup {
+    let mut snapshot = match setup {
         Ok(Some((snapshot, observation))) => {
             if let Some(observation) = observation {
                 let root = storage.dataset_dir.clone();
@@ -535,6 +535,14 @@ async fn start(app: tauri::AppHandle, id: u64) {
             return;
         }
     };
+    // Term inventory: select this recording's working set after resolution.
+    snapshot.select_working_set(
+        storage
+            .settings
+            .load()
+            .map(|c| c.language)
+            .unwrap_or_default(),
+    );
     if !start_allowed(&storage, id) {
         fail(&app, id, "Recording cancelled.");
         return;
@@ -556,6 +564,14 @@ async fn start(app: tauri::AppHandle, id: u64) {
         }
         Err(error) => fail(&app, id, &error),
     }
+}
+/// A dictation is starting, recording, finishing or pasting (term worker gate).
+pub fn active(storage: &AppStorage) -> bool {
+    storage
+        .dictation
+        .state
+        .lock()
+        .is_ok_and(|s| s.status.phase.active())
 }
 pub fn start_allowed(storage: &AppStorage, id: u64) -> bool {
     storage

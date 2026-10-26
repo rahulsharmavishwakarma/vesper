@@ -4,6 +4,39 @@ Vesper keeps a local **term inventory**: spellings that you asserted (spelling l
 
 Machine output is never a spelling source. ASR text, writer output, recurrence and rule output do not create or confirm inventory rows (see `crates/vesper-core/src/terms.rs`).
 
+```mermaid
+flowchart TB
+  subgraph Sources["User-asserted and user-authored sources (read-only)"]
+    TR["Text Replacements DB"]
+    LD["LocalDictionary"]
+    WS["Opted-in workspace root<br/>cspell · VS Code · JetBrains lists<br/>git-tracked code · manifests · doc headings"]
+  end
+  subgraph Worker["Background worker thread (QoS background, IOPOL_THROTTLE)"]
+    G{"Gates: idle app · thermal ≤ fair ·<br/>no Low Power Mode · AC for workspace scans"}
+    M["Deterministic miners<br/>tier-A parsers · tier-B admission"]
+  end
+  TR --> G
+  LD --> G
+  WS --> G
+  G -->|pass| M
+  G -.->|defer, retry ≤ 30 min| G
+  M --> INV[("term_inventory<br/>spellings · spoken forms · counts per source/scope · status")]
+  M --> LOG[("term_mining_runs<br/>counts and timings only")]
+  UI["Settings: Words Vesper found<br/>Remove = tombstone · Forget source = pause"] --> INV
+  subgraph Dictation["Per recording"]
+    SNAP["Snapshot: profile + usable inventory rows"] --> SEL["select_working_set<br/>workspace → category → global · tier · evidence"]
+    WSC["Resolved WorkspaceContext + project"] --> SEL
+    SEL --> HINTS["hints ≤ 32 + hint_hash"]
+    SEL --> REFS["references ≤ 16"]
+    SEL -->|post-ASR, raw text| NORM["normalizations ≤ 64"]
+  end
+  INV --> SNAP
+  HINTS -.->|"only through a qualified hook (hooks builder; unqualified)"| ASR["Recognizer"]
+  NORM --> GATE["Correction gate decides"]
+  REFS --> GATE
+  ASRTEXT["ASR / writer / rule output"] -.-x|never a spelling source| INV
+```
+
 ## Working-set selection
 
 `vesper_core::select_working_set(terms, context, raw)` is deterministic and allocation-bounded. Its input is every usable inventory row plus `profile_terms(profile)` (manual words and confirmed corrections from the profile; unticked automatic entries contribute a spelling but no alias). The context is the resolved `WorkspaceContext`, the resolved project name, the dictation language and a clock.
@@ -85,3 +118,61 @@ Each spelling has one row in `term_inventory`, carrying evidence entries per `(s
 - `working_set`
 
 After setup resolves the workspace and project, `select_working_set(language)` fills `working_set`. `post_asr_working_set(raw, language)` returns the post-ASR set for the correction gate, with hints and `hint_hash` copied from the pre-ASR set, so provenance describes what the decode actually received. A snapshot that was never selected reports empty hints. Lifecycle, bounds and deletion are described in [storage and privacy](storage-and-privacy.md#term-inventory).
+
+## Background worker
+
+`apps/desktop/src-tauri/src/term_worker.rs` runs one plain thread named `vesper-term-miner`. On start it lowers itself to background QoS (`pthread_set_qos_class_self_np(QOS_CLASS_BACKGROUND)`) with throttled disk I/O (`setiopolicy_np(IOPOL_TYPE_DISK, IOPOL_SCOPE_THREAD, IOPOL_THROTTLE)`). Both are implemented in `crates/vesper-desktop-platform/src/background.m`.
+
+- **Schedule.** The first run is 2 minutes after launch, then one run per hour. If a gate defers a run, it retries every 5 minutes for up to 30 minutes of tolerance, then logs `deferred:<gate>` and waits for the next hour. Resuming a source wakes the worker early; the gates still apply.
+- **Gates, checked at the start of a run:**
+  - the app is closing
+  - a runtime operation is busy (recording, transcribing, rewriting, installing, removing)
+  - a background model download is running
+  - a dictation is starting, recording, finishing or pasting
+  - `ProcessInfo.thermalState` is worse than *fair*
+  - Low Power Mode is on
+- **Workspace scans need AC power.** On battery, or when the power source is unknown, the run mines the global tier-A files only and logs `partial:battery`.
+- **Checks during a scan.** Before every file the worker re-checks:
+  - cancellation
+  - the busy and dictation gates, so a dictation start stops the scan within one file
+  - the CPU budget
+
+  Every 64 files it also re-checks thermal state, Low Power Mode and power source.
+- **Budgets per run:**
+  - 20 CPU-seconds, measured with the thread CPU clock
+  - 2,000 files and 64 MB read across all workspaces
+  - files over 512 KB skipped
+
+  A pass that stops saves its cursor and resumes at the next run. A pass whose file fingerprint changed restarts. An unchanged workspace (same fingerprint as the last completed pass) costs one `git ls-files` plus one `stat` per tracked file, and reads nothing.
+- **Database contention.** The worker opens the store with the 25 ms background lock limit and abstains rather than wait behind a foreground writer.
+- **Run log.** Each run records its outcome (`completed`, `partial:*`, `deferred:*` or a fixed `failed:<category>`) together with counts and timings only:
+  - wall time and CPU time
+  - files read, bytes read and files skipped
+  - workspaces scanned and unchanged
+  - terms added, updated, dropped and in total
+
+**Why a plain thread instead of NSBackgroundActivityScheduler.** The scheduler would add an Objective-C block bridge and completion-handler lifetime across the FFI boundary for little gain. The worker already needs app-specific gates that the system cannot see: dictation and model activity. It also needs per-file cancellation. The system's own deferral signals that matter here are applied directly: thermal state, Low Power Mode and power source. The thread spends nearly all of its life blocked on a condition variable. A later change could move the trigger to the scheduler without touching the miners.
+
+**Opted-in roots (interim).** Tier-B mining runs only for roots the user opted into. Until the workspace store records that opt-in, roots come from the developer variable `VESPER_TERM_MINING_ROOTS`:
+
+- entries are separated by `;`
+- each entry is `scope=/path` or a bare `/path`
+- a bare path's scope is its folder name, which matches a project of the same name
+
+With no roots configured, only the global tier-A sources are mined.
+
+## Privacy boundaries
+
+- **Read:** Text Replacements (read-only SQLite), LocalDictionary, and, inside opted-in roots only, spelling-list files and git-tracked text files.
+- **Not read:** the home folder at large, Mail, Messages, browser data, the screen or the clipboard. Mining requests no permission and needs no Full Disk Access.
+- **Stored:** spellings, spoken forms, counts, opaque scope keys and folder-name labels. Never paths, URLs or file text. Cursors keep only a SHA-256 fingerprint, an index and candidate counts.
+- **Not learned from:** machine output, which never creates, confirms or re-activates an inventory row.
+
+## Limitations
+
+- **Unmeasured benefit.** Recognition and correction gains are not measured here. Hints reach a recognizer only through a qualified hook, and the correction gate makes its own decisions.
+- **Interim scopes.** Until the workspace store supplies opted-in roots and their salted keys, tier-B rows are scoped to the developer-configured scope string.
+- **Main-window path.** Recordings started from the main window, and file transcriptions, load their snapshot lazily in the runtime. They currently get an empty pre-ASR working set, so no hints are used and the post-ASR hints report empty.
+- **Admission is shape-based.** It admits many project identifiers made of ordinary words (`relative_path`). The gate refuses to rewrite ordinary-language spans into authored terms, so these mostly act as hints and references in code contexts.
+- **Lexicon gaps.** English words missing from the lexicon (`reproducible`) can still pass as names or lowercase terms.
+- **Late resume.** A pass interrupted by budget resumes only at the next hourly run.
