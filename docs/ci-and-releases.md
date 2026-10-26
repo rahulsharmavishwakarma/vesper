@@ -36,7 +36,7 @@ in an isolated interpreter, and any failure fails the job. These tests use
 synthetic data and use the `dev` group in `pyproject.toml`, resolved by the
 versioned `uv.lock`. Optional model/inference projects are kept separate.
 `make python-lock-check` checks all Python lockfiles and generated benchmark
-exports. CI installs uv 0.12.15 through a SHA-pinned action and selects Python
+exports. CI installs uv 0.13.5 through a SHA-pinned action and selects Python
 3.12. The frontend job caches downloads under `.cache/uv`, keyed by lockfiles;
 only pushes to `main` save that cache. It also restores pre-commit's hook
 environments (`~/.cache/pre-commit`, keyed on `.pre-commit-config.yaml` and saved
@@ -348,7 +348,14 @@ Apple-silicon macOS matrix jobs audit both isolated Python benchmark graphs;
 one failure does not cancel the other job. Dependabot checks
 npm, Cargo, GitHub Actions, Docker and the three uv projects weekly, with
 routing labels, five open PRs per ecosystem and a seven-day version-update
-cooldown. Security-update behavior is governed separately by Dependabot. The
+cooldown. Security-update behavior is governed separately by Dependabot.
+Dependabot runs its own uv, so the projects' `[tool.uv] required-version` must
+accept it: on 26 October 2026 its uv 0.13.5 met `>=0.12.15,<0.13` and every uv
+update failed with `tool_version_not_supported`, so the projects and CI moved to
+0.13.5 ([issue #338](https://github.com/rahulsharmavishwakarma/vesper/issues/338)).
+Cargo updates skip `sha2` 0.11: `vesper-models` enables 0.10's `asm` feature for
+hardware SHA-256 on aarch64, which 0.11 removed, so moving needs a measured
+change rather than a grouped bump. The
 optional manually dispatched container job scans the
 final runnable image and fails for high or critical vulnerabilities, including
 findings that do not yet have an upstream fix. A temporary exception therefore
@@ -375,6 +382,19 @@ packages (the VibeVoice `pyproject.toml` pins both directly), regeneration of
 `make python-lock-check` compares against (the output path is recorded in the
 file's header), and `make audit-python` plus `make audit-python-vibevoice`
 ([issue #248](https://github.com/rahulsharmavishwakarma/vesper/issues/248)).
+It happened again on 26 October 2026, when Monday's Dependabot pull requests all
+failed `Dependencies` on the same cause: `filelock` 3.32.7 (CVE-2026-112907,
+-112913, -112940, fixed in 4.2.1; root lock, through `virtualenv`, `cachecontrol`
+and `python-discovery`), also 4.1.1 and 4.0.4 in the VibeVoice and cleanup locks,
+plus `setuptools` 84.0.0 (GHSA-xmj3-9gf7-h52w, fixed in 84.1.0) in those two.
+pip-audit reported them before GitHub raised Dependabot alerts. All moved to
+`filelock` 4.2.4 and `setuptools` 84.1.0 or later the same way
+([issue #57](https://github.com/rahulsharmavishwakarma/vesper/issues/57)).
+The same day the Rust audit began failing on `tokio` 1.53.1: RUSTSEC-2026-0386
+(published 13 October) marks `AsyncFd::new` and related constructors unsound,
+and unsound advisories are denied. `cargo update -p tokio --precise 1.53.3`
+takes the patched release in the same minor series; Vesper's own code does not
+use `AsyncFd`, so the constructors 1.53.3 deprecates do not affect it.
 The audit jobs install only contributor tools, not model runtimes or weights.
 All manifests and lockfiles stay versioned, while `.venv` and `.cache` stay ignored.
 
