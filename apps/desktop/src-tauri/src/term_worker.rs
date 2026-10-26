@@ -218,22 +218,28 @@ fn mine(
     let store = DatasetStore::open_shadow_completion(storage.dataset_dir.clone())?;
     let now = chrono_ms();
     if let Some(home) = std::env::var_os("HOME").map(PathBuf::from) {
-        let replacements = term_mining::read_text_replacements(
+        // A read failure skips the source; only a successful read (including a
+        // missing file, which means "no entries") replaces stored evidence.
+        if let Ok(replacements) = term_mining::read_text_replacements(
             &home.join("Library/KeyboardServices/TextReplacements.db"),
-        )
-        .unwrap_or_default();
-        let terms = term_mining::text_replacement_terms(&replacements);
-        add(
-            run,
-            &store.replace_mined_terms(TermSource::TextReplacement, "", &terms, now)?,
-        );
-        let local = std::fs::read_to_string(home.join("Library/Spelling/LocalDictionary"))
-            .map(|text| term_mining::local_dictionary_terms(&text))
-            .unwrap_or_default();
-        add(
-            run,
-            &store.replace_mined_terms(TermSource::SpellingDictionary, "", &local, now)?,
-        );
+        ) {
+            let terms = term_mining::text_replacement_terms(&replacements);
+            add(
+                run,
+                &store.replace_mined_terms(TermSource::TextReplacement, "", &terms, now)?,
+            );
+        }
+        let local = match std::fs::read_to_string(home.join("Library/Spelling/LocalDictionary")) {
+            Ok(text) => Some(term_mining::local_dictionary_terms(&text)),
+            Err(error) if error.kind() == std::io::ErrorKind::NotFound => Some(vec![]),
+            Err(_) => None,
+        };
+        if let Some(local) = local {
+            add(
+                run,
+                &store.replace_mined_terms(TermSource::SpellingDictionary, "", &local, now)?,
+            );
+        }
     }
     let roots = mining_roots();
     if roots.is_empty() {
