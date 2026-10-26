@@ -14,6 +14,8 @@
       · Selected by application.
     {:else if selection.source === 'folder'}
       · Selected by folder.
+    {:else if selection.source === 'workspace'}
+      · Detected workspace.
     {/if}
   </p>
 {/if}

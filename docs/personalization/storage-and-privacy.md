@@ -4,7 +4,7 @@ Implementation: [data-store schema](../../crates/vesper-data/src/lib.rs), [autom
 
 ## Schemas and provenance
 
-Profile schema **4** adds bounded project mode/rules and defaults legacy profiles to manual scope. Results retain the effective project, selection reason and rule ID, never the observed document URL. User-selected folder roots remain explicit local preferences. Schema **3** introduced `automaticLearning`, a store-controlled `learningEpoch`, and vocabulary `automaticSource`/`usageCount`. The desktop reads profiles through `dictation_personalization()`: new profiles and schema 1/2/3/4 profiles carrying the retired off switch are saved with learning enabled. This advances the existing profile revision and learning epoch once, preserving manual words, disabled entries, application/hint choices and reviews. Repeated reads do not write or advance revisions. Desktop saves also enforce learning enabled, including requests from an older client. The generic `personalization()`/`save_personalization()` APIs retain explicit off/frozen controls for offline experiments and legacy-context regression tests; they are not the desktop learning preference. Unknown future schemas are rejected. Existing optimistic profile revisions remain mandatory.
+Profile schema **4** adds bounded project mode/rules and defaults legacy profiles to manual scope. Schema 4 also gained `automaticWorkspaces` (default on when absent); results may now record the `workspace` or `category` selection reason. Results retain the effective project, selection reason and rule ID, never the observed document URL. User-selected folder roots remain explicit local preferences. Schema **3** introduced `automaticLearning`, a store-controlled `learningEpoch`, and vocabulary `automaticSource`/`usageCount`. The desktop reads profiles through `dictation_personalization()`: new profiles and schema 1/2/3/4 profiles carrying the retired off switch are saved with learning enabled. This advances the existing profile revision and learning epoch once, preserving manual words, disabled entries, application/hint choices and reviews. Repeated reads do not write or advance revisions. Desktop saves also enforce learning enabled, including requests from an older client. The generic `personalization()`/`save_personalization()` APIs retain explicit off/frozen controls for offline experiments and legacy-context regression tests; they are not the desktop learning preference. Unknown future schemas are rejected. Existing optimistic profile revisions remain mandatory.
 
 A single-row `automatic_learning` SQLite table holds schema-2 JSON with policy version 5, bounded candidate records and bounded recent events. Policy 5 adds a recognizer family to each support record, plus at most seven days of rule-rejection times for the [policy breaker](automatic-dictionary.md#policy-breaker). Neither contains transcript text. Schemas 1–2 and policy versions 1–5 remain readable: missing `teachingTerms` defaults to an empty list, not reconstructed transcript context. Reads normalize the in-memory version without rewriting the stored row; the next evidence mutation persists schema 2 and the current policy version. Version normalization adds no correction support and does not replay previously rejected edits. Policy 4 withdraws support belonging to a revised result and pauses rejected automatic targets in the existing draft transaction; no additional transcript, audio or model artifact is stored. Unknown future schema/policy versions and oversized context metadata are rejected. It uses the same database, WAL and synchronous settings as the existing profile/session store. This is an application-memory extension, not a new service or a training database.
 
@@ -19,6 +19,24 @@ The store retains at most **128 active vocabulary entries**, **64 reviewed examp
 Active support remains compact after event expiry. Suspended entries keep their negative decision until explicitly changed, removed or displaced by the bounded candidate quota; their disabled vocabulary entries still prevent automatic re-enabling. Expiry and quota eviction are not evidence that a spelling is wrong. The inspector displays up to 32 recent candidates; the underlying store remains separately bounded.
 
 Teaching cues remain with active compact support after recent-event expiry, so a learned word does not lose all context merely because its event aged out. Suspending a candidate clears its cues. Removing/evicting a candidate removes its owned cues; Forget clears the entire automatic state. The term-content maximum is 16 KiB per candidate (384 possible retained candidates give a 6 MiB theoretical term-byte ceiling), plus identifiers and JSON overhead; this is a data bound, not a measured process-RAM budget. One operation snapshots profile and learning state together and neither reads live evidence during cleanup nor mutates that snapshot.
+
+## Automatic workspaces
+
+The `workspace_store` table holds one row: a random per-install salt and a
+bounded JSON state (at most 384 anchor nodes and 64 workspaces). Nodes keep only
+salted folder hashes, up to four salted document hashes, up to eight local day
+numbers and a count. A workspace row adds its kind, category, dictation count and
+first/last day. Its label (a folder's last component or a web host) is written
+only when the workspace becomes visible, and is cleared by Remove or Merge.
+Raw document paths, URLs, URL paths or queries, window titles and document text
+are never stored; the observed path or host exists only in memory during capture
+start and the follow-up write. A `miningRoot` path is stored only after the user
+picks that folder in Settings, and Stop learning, Merge or Remove clears it.
+Removed workspaces keep a suppressed salted key so they are not detected again.
+The salt is never shown, logged (`Debug` redacts it) or included in exports.
+Rename and Merge rewrite the project name on scoped vocabulary, examples and
+learning candidates in the same transaction; learning events and History keep
+their original scope. See [automatic workspaces](context-selection.md#automatic-workspaces).
 
 ## Undo, conflicts and deletion
 

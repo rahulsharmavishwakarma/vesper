@@ -453,6 +453,8 @@ async fn start(app: tauri::AppHandle, id: u64) {
         }
     };
     let desktop = app.clone();
+    let home = std::env::var("HOME").ok();
+    let day = vesper_data::workspace_day();
     let setup = on_main(&app, move || {
         let storage = desktop.state::<AppStorage>();
         let Ok(mut state) = storage.dictation.state.lock() else {
@@ -461,22 +463,42 @@ async fn start(app: tauri::AppHandle, id: u64) {
         if state.status.id != id || state.status.phase != Phase::Starting || state.cancelled {
             return None;
         }
-        if snapshot.profile.project_mode == vesper_core::ProjectMode::Automatic
+        // Automatic workspaces (see docs/personalization/context-selection.md):
+        // one bounded AX read, hashed and resolved in memory; persisted below.
+        let mut observation = None;
+        let automatic = snapshot.profile.automatic_workspaces;
+        if (snapshot.profile.project_mode == vesper_core::ProjectMode::Automatic || automatic)
             && snapshot.profile.active_project.trim().is_empty()
         {
             let application = vesper_desktop_platform::project_application(None);
             let app_id = application
                 .as_ref()
                 .map(|application| application.id.as_str());
-            let needs_document = snapshot.profile.project_rules.iter().any(|rule| {
-                rule.enabled
-                    && Some(rule.application_id.as_str()) == app_id
-                    && rule.folder.is_some()
-            });
+            let needs_document = automatic
+                || snapshot.profile.project_rules.iter().any(|rule| {
+                    rule.enabled
+                        && Some(rule.application_id.as_str()) == app_id
+                        && rule.folder.is_some()
+                });
             let document = app_id
                 .filter(|_| needs_document)
-                .and_then(vesper_desktop_platform::project_document);
-            snapshot.resolve_project(app_id, document.as_deref());
+                .map(|id| {
+                    vesper_desktop_platform::project_context(
+                        id,
+                        automatic && vesper_core::is_browser(id),
+                    )
+                })
+                .unwrap_or_default();
+            use vesper_desktop_platform::DocumentKind;
+            let signal = match document.kind {
+                DocumentKind::File | DocumentKind::Folder => vesper_core::DocumentSignal::File {
+                    path: &document.value,
+                    directory: document.kind == DocumentKind::Folder,
+                },
+                DocumentKind::Web => vesper_core::DocumentSignal::WebHost(&document.value),
+                DocumentKind::None => vesper_core::DocumentSignal::None,
+            };
+            observation = snapshot.resolve_context(app_id, signal, home.as_deref(), day);
         }
         if state.output == DictationOutput::Paste {
             match vesper_desktop_platform::capture_target(id) {
@@ -492,11 +514,21 @@ async fn start(app: tauri::AppHandle, id: u64) {
         {
             show(&desktop);
         }
-        Some(snapshot)
+        Some((snapshot, observation))
     })
     .await;
     let snapshot = match setup {
-        Ok(Some(snapshot)) => snapshot,
+        Ok(Some((snapshot, observation))) => {
+            if let Some(observation) = observation {
+                let root = storage.dataset_dir.clone();
+                // Best effort and off the main thread; never delays recording.
+                tauri::async_runtime::spawn_blocking(move || {
+                    let _ = vesper_data::DatasetStore::open(root)
+                        .and_then(|store| store.record_workspace_observation(&observation, day));
+                });
+            }
+            snapshot
+        }
         Ok(None) => return,
         Err(error) => {
             fail(&app, id, &error);

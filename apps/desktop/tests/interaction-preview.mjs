@@ -88,9 +88,35 @@ if (states) {
     activeProject: '',
     projectMode: 'manual',
     projectRules: [],
+    automaticWorkspaces: true,
     vocabulary: [],
     examples: [],
   };
+  // Synthetic workspace names and folders only.
+  let previewWorkspaces = [
+    {
+      key: 'a'.repeat(32),
+      label: 'synthetic-repo',
+      kind: 'folder',
+      category: 'code',
+      dictations: 12,
+      firstSeenDay: 740000,
+      lastSeenDay: 740003,
+      renamed: false,
+      miningRoot: null,
+    },
+    {
+      key: 'b'.repeat(32),
+      label: 'docs.example.org',
+      kind: 'web',
+      category: 'browser',
+      dictations: 6,
+      firstSeenDay: 740001,
+      lastSeenDay: 740002,
+      renamed: false,
+      miningRoot: null,
+    },
+  ];
   const runtime = {
     busy: false,
     stage: 'idle',
@@ -465,6 +491,31 @@ if (states) {
           await new Promise((r) => setTimeout(r, 450));
           profile = JSON.parse(JSON.stringify(args.profile));
           return profile;
+        case 'list_workspaces':
+          return structuredClone(previewWorkspaces);
+        case 'rename_workspace': {
+          const target = previewWorkspaces.find((w) => w.key === args.key);
+          if (previewWorkspaces.some((w) => w !== target && w.label === args.label))
+            throw new Error('Another workspace already has that name. Merge them instead.');
+          target.label = args.label;
+          target.renamed = true;
+          return { workspaces: structuredClone(previewWorkspaces), profileChanged: false };
+        }
+        case 'merge_workspace': {
+          const from = previewWorkspaces.find((w) => w.key === args.from);
+          const into = previewWorkspaces.find((w) => w.key === args.into);
+          into.dictations += from.dictations;
+          previewWorkspaces = previewWorkspaces.filter((w) => w !== from);
+          return { workspaces: structuredClone(previewWorkspaces), profileChanged: false };
+        }
+        case 'delete_workspace':
+          previewWorkspaces = previewWorkspaces.filter((w) => w.key !== args.key);
+          return { workspaces: structuredClone(previewWorkspaces), profileChanged: false };
+        case 'set_workspace_mining_root': {
+          const target = previewWorkspaces.find((w) => w.key === args.key);
+          target.miningRoot = args.path;
+          return { workspaces: structuredClone(previewWorkspaces), profileChanged: false };
+        }
         case 'get_automatic_learning':
           return {
             schemaVersion: 1,

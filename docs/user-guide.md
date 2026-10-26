@@ -527,7 +527,8 @@ choose **Use application rules**, click **Add application rule**, choose an app,
 and name its project, then save. Shortcut dictation freezes the receiving app's
 project before recording. TextEdit rules can also match a selected folder; the
 most specific matching folder wins. Missing document context or conflicting rules
-uses shared vocabulary. Other apps currently support app rules, not folder detection.
+uses shared vocabulary. Folder rules use the same document reader as automatic
+workspaces, so they are no longer limited to TextEdit.
 A nonempty **Project override** always wins. Main-window recordings and file imports
 use the explicit project name. Results show the project and any fallback reason.
 
@@ -535,8 +536,26 @@ Give vocabulary and examples the same project name to limit their use; leave an
 entry's project blank to share it. Reviewing an older recording keeps its original
 project, including a blank project, rather than borrowing the current selection.
 Changing rules or switching apps cannot move an in-flight recording's feedback
-into another project. Vesper reads app identity and an optional TextEdit document
-URL for folder rules, never document contents to guess the project.
+into another project. Vesper reads app identity and the focused window's document
+location for folder rules and workspaces, never document contents to guess the project.
+
+**Workspaces** (Writing → Workspaces) are detected automatically when you dictate
+with the shortcut and have not entered a project. Vesper notes the folder of the
+file open in the focused window (for example a repository in VS Code or Terminal,
+or a document folder) or, in a browser, only the website's name. A workspace
+appears in the list after about five dictations on two different days; until
+then dictation uses shared vocabulary. A visible workspace works like a project
+named after its folder or website: words you teach while in it stay with it. In
+the list you can **Rename** it (Enter saves, Escape cancels), **Merge…** it into
+another workspace, or **Remove** it so it is never detected again. Renaming or
+merging moves the vocabulary and examples saved under the old name. For a folder
+workspace, **Learn words from this folder…** lets you pick a folder Vesper may
+read later to learn spellings; **Stop learning from folder** withdraws that.
+A project you enter, and any application rule, always wins. Turn off **Detect
+workspaces automatically** to stop detection; existing workspaces stay listed.
+Detection relies on what each app exposes through Accessibility, which has not
+yet been checked app by app; apps that expose nothing (for example Mail or
+Slack) use shared vocabulary.
 
 **Apply my saved corrections** works with all supported speech models, including
 when cleanup is off or the writer fails. **Request extra speech hints when supported**

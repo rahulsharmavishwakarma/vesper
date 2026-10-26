@@ -2,7 +2,10 @@
 //! borrowed window handles never outlive their owner during initialization.
 use raw_window_handle::HasWindowHandle;
 mod projects;
-pub use projects::{project_application, project_document, ProjectApplication};
+pub use projects::{
+    project_application, project_context, project_document, DocumentContext, DocumentKind,
+    ProjectApplication,
+};
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 pub enum PasteResult {

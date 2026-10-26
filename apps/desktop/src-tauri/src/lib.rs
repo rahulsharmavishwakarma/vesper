@@ -10,6 +10,7 @@ mod setup;
 mod shortcuts;
 mod storage;
 mod updates;
+mod workspaces;
 
 use std::path::PathBuf;
 use std::sync::Arc;
@@ -203,6 +204,11 @@ pub fn run() {
             commands::get_app_info,
             commands::read_project_application,
             commands::resolve_project_folder,
+            workspaces::list_workspaces,
+            workspaces::rename_workspace,
+            workspaces::merge_workspace,
+            workspaces::delete_workspace,
+            workspaces::set_workspace_mining_root,
             commands::get_app_status,
             commands::get_engine_diagnostics,
             commands::get_accelerator_capabilities,

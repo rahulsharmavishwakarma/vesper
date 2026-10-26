@@ -5,6 +5,7 @@ mod personalization;
 pub mod policy;
 mod policy_shadow;
 mod semantic;
+mod workspaces;
 pub use learning::{
     learning_audio_key, AutomaticLearningState, DictationPersonalizationSnapshot, EditSupport,
     LearningCandidate, LearningEvent, LearningEventKind,
@@ -16,6 +17,7 @@ pub use policy_shadow::{
     PolicyReservation, PolicyShadowDecision, PolicyShadowJob, PolicyShadowState,
 };
 pub use semantic::SemanticShadowRecord;
+pub use workspaces::{workspace_day, WorkspaceSnapshot, WorkspaceSummary, WorkspaceUpdate};
 
 use std::fs::{self, File, OpenOptions};
 use std::io::{BufWriter, Read, Write};
@@ -220,6 +222,12 @@ impl DatasetStore {
              DROP TABLE IF EXISTS external_shadow;
              CREATE TABLE IF NOT EXISTS policy_shadow (id INTEGER PRIMARY KEY CHECK(id=1), state_json TEXT NOT NULL);
              CREATE TABLE IF NOT EXISTS policy_shadow_job (id INTEGER PRIMARY KEY CHECK(id=1), request_json TEXT NOT NULL);
+             -- Automatic workspaces: per-install salt plus salted keys/counts only.
+             CREATE TABLE IF NOT EXISTS workspace_store (
+                 id INTEGER PRIMARY KEY CHECK(id = 1),
+                 salt TEXT NOT NULL,
+                 state_json TEXT NOT NULL
+             );
              CREATE TABLE IF NOT EXISTS semantic_shadow (
                  result_id TEXT PRIMARY KEY NOT NULL,
                  created_at INTEGER NOT NULL,

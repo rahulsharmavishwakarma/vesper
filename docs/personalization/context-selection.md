@@ -2,7 +2,7 @@
 
 Implementation: [profile phrase selection](../../crates/vesper-core/src/personalization.rs), [memory application](../../crates/vesper-core/src/memory.rs), and [cleanup prompt construction](../../crates/vesper-inference/src/personalization.rs).
 
-One operation freezes one profile and its compact automatic-learning evidence in one SQLite read transaction, after the existing desktop enable migration. A correction learned while another operation is already running applies only to later operations. Context includes a frozen project selection, requested language, available transcript and explicit output settings. Shortcut dictation can resolve the receiving application and, for TextEdit folder rules, its exposed document URL. It does not read document text, clipboard history or the screen to infer a project.
+One operation freezes one profile and its compact automatic-learning evidence in one SQLite read transaction, after the existing desktop enable migration. A correction learned while another operation is already running applies only to later operations. Context includes a frozen project selection, requested language, available transcript and explicit output settings. Shortcut dictation can resolve the receiving application and its focused window's exposed document location (see [automatic workspaces](#automatic-workspaces)). It does not read document text, window titles, clipboard history or the screen to infer a project.
 
 Projects remain names in the existing local profile, not separate databases.
 **Project selection → Choose manually** preserves existing behavior. **Use
@@ -16,11 +16,13 @@ explicit project name, because they have no receiving application.
 
 The profile accepts at most 32 rules. Application identifiers are read from the
 app selected with the existing native file picker; users do not enter bundle IDs.
-Folder paths are explicitly selected roots. Only TextEdit currently has a document
-context adapter. It reads the focused window's file URL with bounded AX calls,
-checks both application and window identity again, and discards the URL after
-resolution. Other apps use application rules or manual scope. No editor-title
-heuristic or directory/content scanning is performed.
+Folder paths are explicitly selected roots. Folder rules match the same generic
+document reader that automatic workspaces use: the focused window's file URL for
+any app, read with bounded AX calls, with application and window identity checked
+again and the path discarded after resolution. The path is read lexically: no
+symlink resolution or path standardization, both of which consult the filesystem;
+only the fixed `/tmp`, `/var` and `/etc` links are mapped to `/private/…`. No
+editor-title heuristic or directory/content scanning is performed.
 
 Blank-scoped vocabulary/examples are shared; nonblank entries match the selected
 project case-insensitively after trimming whitespace. A blank selection uses shared
@@ -108,3 +110,173 @@ reservations still protect completion after Undo/Forget or superseding edits.
 The receipt carries identifiers and scope, not transcript text; expiry or missing
 evidence makes the analyzer abstain. Ordinary edits remain outside reviewed
 training targets.
+
+## Automatic workspaces
+
+Status: implemented on `feature/automatic-workspaces`; resolver, storage and
+settings are covered by unit, store and mocked-browser tests and a synthetic
+replay. **Live per-app accessibility coverage is unmeasured** and needs an
+owner-approved manual check before any app is described as supported.
+
+Vesper detects which workspace a shortcut dictation goes into without rules:
+a code repository, a document folder, a website, or only an app category.
+It is on by default (`automaticWorkspaces` in the profile; **Detect workspaces
+automatically** in Writing → Workspaces) and applies when no project name is
+entered, whether project selection is manual or rule-based.
+
+### Precedence
+
+At shortcut capture start, on the main thread, the resolver applies, in order:
+
+1. a nonempty manual project or project override;
+2. an existing application or folder rule (rule mode only);
+3. a **visible** automatic workspace;
+4. the app category (vocabulary scope stays shared; see below);
+5. shared.
+
+Main-window recordings and file imports never resolve a workspace. The result's
+`projectSelection.source` is `workspace` or `category` for the new cases, and the
+operation snapshot carries a `WorkspaceContext` (application ID, category,
+workspace key and label) for later stages such as the working-set selector.
+
+```mermaid
+flowchart TB
+  subgraph Main["Capture start (main thread, bounded)"]
+    APP["Frontmost app bundle ID"] --> CAT["Fixed category table"]
+    APP --> AX["One AX read: focused window AXDocument<br/>(browsers: focused AXWebArea AXURL → host only)"]
+    AX -->|path or host, transient| OBS["Salted hashes: anchor folder chain,<br/>document leaf, or host"]
+    OBS --> RES{"Resolver<br/>manual → rule → visible workspace → category → shared"}
+    CAT --> RES
+    SNAP[("Frozen snapshot:<br/>profile + workspace state + salt")] --> RES
+  end
+  RES --> SEL["Frozen project selection + WorkspaceContext"]
+  SEL --> PIPE["Existing hints, writer, memory and learning context"]
+  OBS -. "observation (keys + transient folder names)" .-> BG["Off main thread: re-apply to latest stored state"]
+  BG --> STORE[("workspace_store: salt, salted keys,<br/>day stamps, counts; label only when visible")]
+  UI["Settings → Workspaces: rename, merge,<br/>remove, folder opt-in"] --> STORE
+  UI -->|"rename/merge move scoped entries"| PROF[("Profile vocabulary, examples,<br/>learning candidates")]
+  STORE -.->|"mining root (explicit opt-in only)"| MINER["Inventory file miner<br/>(separate component, not part of this change)"]
+```
+
+Failure paths: missing Accessibility trust, a focus or window change during the
+read, a secure (password) field, a non-file URL or a path with `.`/`..`
+components all yield no document; the dictation then resolves by category or
+shared scope. Persisting the observation is best effort and never delays
+recording.
+
+### Reading the document
+
+`project_context` in `vesper-desktop-platform` replaces the TextEdit-only reader.
+For any frontmost app (never Vesper itself) it reads the focused window's
+`AXDocument` with 30 ms messaging timeouts and a 60 ms overall budget, then
+rechecks the focused window and frontmost process. A file URL becomes `File`;
+a trailing-slash URL (Terminal's working directory) becomes `Folder`. Only for
+browsers in the fixed table does it walk at most 48 parents from the focused
+element to the enclosing `AXWebArea` and read `AXURL` (or an `http(s)` window
+document); it returns the lowercase **host only**. No Apple Events, window
+titles, screen capture or text are used. Sources: Apple's
+[`kAXDocumentAttribute`](https://developer.apple.com/documentation/applicationservices/kaxdocumentattribute)
+and [`kAXURLAttribute`](https://developer.apple.com/documentation/applicationservices/kaxurlattribute);
+VS Code sets the window's represented filename to the active file
+(`microsoft/vscode` `src/vs/workbench/electron-browser/window.ts`); Chromium
+(`ax_platform_node_cocoa.mm`) and WebKit (`WebAccessibilityObjectWrapperMac.mm`)
+expose `AXURL` on the web area. These are official capability statements, not
+local qualification of any app.
+
+### Workspace roots
+
+Pure logic lives in `crates/vesper-core/src/workspace.rs`; it never touches the
+filesystem (no `stat`, no walk), so it cannot trigger macOS privacy prompts.
+
+- Paths are split lexically and lowercased (APFS is case-insensitive by default)
+  before hashing. Each key is `SHA-256(salt ‖ domain ‖ value)` truncated to 128
+  bits; document leaves use 64 bits. The salt is a random per-install secret in
+  the local store.
+- Excluded as roots: `/`, the home folder (and any `/Users/<name>`), Desktop,
+  Documents, Downloads, the iCloud Drive root and app iCloud containers (and their
+  Desktop/Documents), `/tmp` and `/Volumes/<name>`. Nothing under `~/Library`
+  (other than iCloud), `/System`, `/Applications`, `/Library`, `/usr`, `/var` or
+  `/private/var` is used.
+- Descending stops at the first project-structure folder (`src`, `lib`, `tests`,
+  `docs`, `crates`, `packages`, `apps`, `cmd`, `internal`, `node_modules`, hidden
+  folders and similar), so `repo/src/x.rs` and `repo/crates/a/src/y.rs` both anchor
+  at `repo`. A Terminal directory inside the repo anchors there too, so editor and
+  terminal dictations share one workspace.
+- Root rule: the anchor folder becomes a (latent) workspace root once at least
+  **2 distinct documents** anchor there on at least **2 days**. A single file never
+  forms a workspace. The deepest registered root on a document's chain owns it.
+- Lifecycle: a root stays **latent** (no name stored) until it has **5 dictations
+  over at least 2 days**; it then becomes visible, named after its folder's last
+  component (deduplicated with a numeric suffix). A latent subfolder root defers to
+  a visible ancestor root until it becomes visible itself.
+- Web hosts (lowercase, `www.` removed) are their own workspaces with the same
+  lifecycle; the host is the label.
+- Bounds: at most 384 anchor nodes (4 document hashes and 8 day stamps each,
+  least recently seen evicted) and 64 workspaces (only latent rows are evicted).
+
+### Project names and scoping (decision)
+
+Vocabulary, examples and learning candidates are scoped by project **name**
+(`project_matches`). The automatic workspace's project string is its **label**,
+which is unique among visible workspaces and stable: it is set once at visibility
+and changes only when the user renames it. A label that equals a manually typed
+project name deliberately shares that project's entries. Rename and merge move
+every vocabulary entry, reviewed example and learning candidate scoped to the old
+name (case-insensitively) to the new one in the same transaction, raising the
+profile revision only when something moved. Learning events and History keep the
+scope they were recorded with, so an edit to a recording made before a rename
+teaches the old name. Remove (suppress) keeps scoped entries, unused, until the
+user removes them, and the folder or site is never detected again.
+
+Categories do not partition vocabulary: with one user's small evidence, splitting
+words by category would hide them from other apps. The category is carried in
+`WorkspaceContext` as a ranking signal only.
+
+### Folder opt-in for the inventory miner
+
+**Learn words from this folder…** opens the native folder picker for a visible
+folder workspace. The canonical folder the user picks is stored as that
+workspace's `miningRoot`; choosing it is the consent for the separate inventory
+file miner (`DatasetStore::workspace_mining_roots`). **Stop learning from folder**,
+Merge and Remove clear it. Detection itself never reads any folder.
+
+### Measurements
+
+Synthetic replay (`cargo run --release -p vesper-data --example workspace_replay -- 20`):
+an invented week of 2,749 dictations over 20 seeds across three repositories,
+one document folder, two websites, Mail, Slack and one-off files, with 10% of
+document reads returning nothing. It exercises the real snapshot, resolver and
+store; it is **not** evidence of live accessibility coverage.
+
+| Measure (local measurement, synthetic input) | Result |
+|---|---|
+| Precision (assigned dictations whose workspace's majority truth matches) | 1,349 / 1,349 |
+| Recall over all workspace dictations (includes the latent period) | 1,349 / 2,259 (59.7%) |
+| Recall after each workspace first became visible (mean over seeds) | 90.1% |
+| Mail, Slack and one-off files assigned a workspace | 0 / 490 |
+| Median time to visibility (repos, document folder, hosts) | day 2–3.5, 5.5–8.5 dictations |
+| Visible within the week (seeds) | vesper 20/20, billing-api 19/20, Acme 19/20, github.com 18/20, docs.rs 12/18, notes-site 7/19 (as `posts`) |
+| A repo split into two workspaces (a non-structure subfolder such as `benchmarks/asr`) | 9 / 20 seeds |
+| Static-site repo (`content/posts`, `layouts`) visible under its own name | 0 / 19 seeds (it surfaces as `posts`, recall 8.6%) |
+| `resolve_context` (main thread), release build | p50 0.003 ms, p95 0.005 ms |
+| Whole personalization snapshot load incl. workspace state | p50 0.015 ms, p95 0.019 ms |
+| Observation persistence (off main thread) | p50 0.044 ms, p95 0.059 ms |
+
+These were measured on an M5 Pro while other builds ran; they exclude the native
+AX read, whose per-app latency and coverage are unmeasured.
+
+### Limitations
+
+- Live `AXDocument`/`AXURL` coverage is unmeasured for every app, including
+  TextEdit, VS Code, Cursor, Terminal, iTerm2, Xcode, Pages, Word, Notes, Safari,
+  Chromium browsers and Mail. Until an owner-approved manual check, treat each as
+  unqualified.
+- Structure detection uses folder names only. Projects without conventional
+  structure folders can split into subfolder workspaces; Merge fixes this, and a
+  merged folder keeps resolving to its target.
+- Remote, SSH and untitled documents, terminals without the working-directory
+  hook, and apps without a document give category scope only.
+- Private browsing windows cannot be detected through Accessibility; a host seen
+  there counts like any other, though it surfaces only after 5 dictations on 2 days.
+- Unicode normalization differences between apps (NFC/NFD) produce different keys.
+- Natural-use routing accuracy has not been measured.
