@@ -21,7 +21,9 @@ attaches it to GitHub Releases for a stable direct download URL.
 ## Contributor checks
 
 After `make setup`, install [uv](https://docs.astral.sh/uv/getting-started/installation/)
-(0.12.15 or a compatible 0.12 release) and run `make setup-checks` and `make hooks`.
+(0.13.5 or a later 0.13 release; the projects refuse other versions) and run
+`make setup-checks` and `make hooks`. An older uv stops with a `required-version`
+error: update it with `uv self update` or your package manager (`brew upgrade uv`).
 uv manages Python 3.12+ and the locked tools in `.venv`; Chromium lives in `.cache/playwright` (override with
 `PLAYWRIGHT_BROWSERS_PATH`). The application still needs no Python runtime.
 `make check` runs all language format/lint checks, Node/Python/browser regressions,
