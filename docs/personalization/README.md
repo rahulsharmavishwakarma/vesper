@@ -17,6 +17,7 @@ The [September 2026 RSI research review](../research-rsi-2026-09.md) compares Dr
 | Editing and feedback capture | [Editable drafts](draft-editing.md): commit points, Copy, revision checks, failures and review separation |
 | Automatic vocabulary | [Dictionary learning](automatic-dictionary.md): candidate admission, independent support, guards and limitations |
 | Context and in-context examples | [Context selection](context-selection.md): pre-ASR hints, post-ASR retrieval, budgets and model support |
+| Term inventory and working set | [Term inventory](term-inventory.md): mined spellings, tiers, background worker, per-recording selection and privacy boundaries |
 | Intent and writing preferences | [Intent and writing](intent-and-writing.md): existing explicit examples and output-form routing; automatic semantic proposals are isolated in [shadow evaluation](semantic-shadow.md) |
 | Repeat dictation | [Retry evidence](retry-evidence.md): temporal/lexical cues, correlated attempts and uncertainty |
 | Lifecycle and privacy | [Storage and privacy](storage-and-privacy.md): schemas, quotas, epochs, undo and deletion |

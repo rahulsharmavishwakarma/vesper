@@ -17,6 +17,7 @@ mod projects;
 mod semantic;
 mod shortcuts;
 mod speech;
+mod term_select;
 mod terms;
 mod transcript;
 mod workspace;
@@ -54,6 +55,7 @@ pub use shortcuts::{recording_shortcut_identity, same_recording_shortcut};
 pub use speech::{
     whisper_no_speech, WHISPER_LOG_PROBABILITY_THRESHOLD, WHISPER_NO_SPEECH_THRESHOLD,
 };
+pub use term_select::*;
 pub use terms::*;
 pub use transcript::{PipelineStage, Transcript};
 pub use workspace::*;
