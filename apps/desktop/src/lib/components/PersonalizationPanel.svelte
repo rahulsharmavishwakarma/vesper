@@ -18,6 +18,7 @@
   } from '../api/personalization';
   import type { Language } from '../config';
   import Select from './Select.svelte';
+  import TermInventory from './TermInventory.svelte';
   import Workspaces from './Workspaces.svelte';
   let {
     desktop,
@@ -739,6 +740,7 @@
               >
             </div>
           </div>
+          <TermInventory disabled={controlsDisabled} />
           {#if profile.examples.length}
             <div class="preference-group" id="remembered-examples">
               <div class="group-heading">

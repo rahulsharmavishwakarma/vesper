@@ -522,6 +522,26 @@ These local corrections do not train model weights or activate a new model. Read
 [personalization guide](personalization/README.md) for the exact learning,
 review and undo behavior.
 
+**Words Vesper found** (under Vocabulary, collapsed) lists spellings that
+Vesper collected on its own. Sources:
+
+- your Mac's **Text Replacements** and learned spelling words
+- spelling lists, code names, package names and documentation headings in
+  project folders you chose
+
+A background check runs about once an hour while the Mac is idle and not too
+warm. It skips Low Power Mode, and it reads project folders only on power. Each
+recording uses only a few relevant words, preferring the current project's
+words. Words found this way are never taken from what the speech model or the
+writer produced.
+
+- Remove a word with ×; it is not added again.
+- **Forget** removes every word from one source and stops reading it until you
+  choose **Resume**.
+
+Choosing project folders for this list is a developer setting for now. See
+[term inventory](personalization/term-inventory.md).
+
 **Project selection** can be manual or use application rules. In Vocabulary,
 choose **Use application rules**, click **Add application rule**, choose an app,
 and name its project, then save. Shortcut dictation freezes the receiving app's

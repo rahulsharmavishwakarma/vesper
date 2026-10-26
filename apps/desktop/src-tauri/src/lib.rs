@@ -10,6 +10,7 @@ mod setup;
 mod shortcuts;
 mod storage;
 mod term_worker;
+mod terms;
 mod updates;
 mod workspaces;
 
@@ -267,6 +268,10 @@ pub fn run() {
             commands::stop_recording,
             commands::cancel_operation,
             commands::transcribe_file,
+            terms::get_term_inventory,
+            terms::remove_inventory_term,
+            terms::forget_term_source,
+            terms::resume_term_source,
         ])
         .build(tauri::generate_context!())
         .expect("failed to build the Vesper desktop application")

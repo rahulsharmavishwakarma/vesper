@@ -161,6 +161,16 @@ After setup resolves the workspace and project, `select_working_set(language)` f
 
 With no roots configured, only the global tier-A sources are mined.
 
+## Settings view
+
+Settings → Your vocabulary and writing → **Words Vesper found** (`TermInventory.svelte`) is collapsed by default and loads only when opened. It shows:
+
+- counts per source and per workspace (folder name)
+- up to 200 of the strongest rows, each with source and workspace chips
+- the last run time
+
+Each row has × (tombstone removal). Each source has **Forget** (delete its evidence and pause it) or **Resume**. The commands are `get_term_inventory`, `remove_inventory_term`, `forget_term_source` and `resume_term_source` in `apps/desktop/src-tauri/src/terms.rs`. They return spellings, counts and labels only.
+
 ## Privacy boundaries
 
 - **Read:** Text Replacements (read-only SQLite), LocalDictionary, and, inside opted-in roots only, spelling-list files and git-tracked text files.
