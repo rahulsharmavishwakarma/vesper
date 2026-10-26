@@ -6,6 +6,7 @@
     savePersonalization,
     getAutomaticLearning,
     forgetAutomaticLearning,
+    resumeAutomaticSpellings,
     suspendAutomaticCandidate,
     approveAutomaticCandidate,
     chooseProjectApplication,
@@ -155,6 +156,20 @@
       savedProfile = $state.snapshot(profile);
       learning = await getAutomaticLearning();
       feedback = 'Automatic learning forgotten.';
+    } catch (cause) {
+      error = String(cause);
+    } finally {
+      pending = null;
+    }
+  }
+  async function resumeSpellings() {
+    if (controlsDisabled) return;
+    pending = 'saving';
+    error = '';
+    feedback = '';
+    try {
+      learning = await resumeAutomaticSpellings();
+      feedback = 'Learned spellings resumed.';
     } catch (cause) {
       error = String(cause);
     } finally {
@@ -690,6 +705,22 @@
                 anything you do not want; removed words never come back.
               </p>
             </details>
+            {#if learning?.breakerTrippedMs}
+              <div class="learn-paused" role="status" id="learned-spellings-paused">
+                <p class="note">
+                  Learned spellings are paused because you undid two of them recently. Words you
+                  added or ticked still apply.
+                </p>
+                <button
+                  type="button"
+                  class="quiet"
+                  disabled={controlsDisabled}
+                  onclick={() => {
+                    void resumeSpellings();
+                  }}>Resume learned spellings</button
+                >
+              </div>
+            {/if}
             <div class="learn-foot">
               <label class="checkbox-field" for="learn-from-edits"
                 ><input
@@ -1038,6 +1069,14 @@
   .word-entry.learning .term-static {
     color: var(--color-muted);
     font-weight: 400;
+  }
+  .learn-paused {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: space-between;
+    gap: var(--space-3);
+    margin-top: var(--space-4);
   }
   .learn-foot {
     display: flex;

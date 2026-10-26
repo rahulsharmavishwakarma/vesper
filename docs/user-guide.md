@@ -501,7 +501,9 @@ The app can learn eligible joined/split names, closely related spellings and
 narrow acronym corrections, even when the edit includes minor formatting.
 Ordinary terms need corrections from two independent recordings before they
 are reused in matching context. Replaying the same recording does not count
-twice. Sentence rewrites and changed decisions are not global dictionary rules,
+twice. A single everyday word changed into another (for example *write* →
+*Wright*) is never applied automatically, because it would also change ordinary
+sentences. Add that spelling in Vocabulary if you want it. Sentence rewrites and changed decisions are not global dictionary rules,
 and some valid corrections still fall outside the current learning rules.
 
 If you restore an earlier spelling in the same draft, its withdrawn correction
@@ -511,8 +513,12 @@ and it will not be learned again. Fresh corrections
 of the original recognition error can then teach its replacement; the app keeps
 your current draft immediately while waiting for that support.
 
-Personal vocabulary persists across model changes. These local corrections do
-not train model weights or activate a new model. Read the
+Personal vocabulary persists across model changes. A correction Vesper learned
+from one speech model's mistakes waits while you use a different model and comes
+back when you return; words you add or tick work with every model. If you undo
+two different learned spellings within a week, Vesper pauses all unticked
+learned spellings and shows **Resume learned spellings** under Vocabulary.
+These local corrections do not train model weights or activate a new model. Read the
 [personalization guide](personalization/README.md) for the exact learning,
 review and undo behavior.
 

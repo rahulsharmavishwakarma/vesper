@@ -141,7 +141,13 @@ export interface AutomaticLearningState {
     project: string;
     context: string;
     state: 'observed' | 'provisional' | 'active' | 'suspended';
-    support: { sourceKey: string; episodeId: string; eventId: string; teachingTerms: string[] }[];
+    support: {
+      sourceKey: string;
+      episodeId: string;
+      eventId: string;
+      teachingTerms: string[];
+      recognizer?: string;
+    }[];
     observedCount: number;
     lastSeenMs: number;
     reason: string;
@@ -150,8 +156,12 @@ export interface AutomaticLearningState {
     kind: 'user_edit' | 'raw_observation' | 'memory_undo';
     retry: 'possible_repair' | 'continuation' | 'changed_intent' | 'uncertain' | null;
   }[];
+  /** Set while automatic spellings are paused after recent rejections. */
+  breakerTrippedMs?: number | null;
 }
 export const getAutomaticLearning = () => invoke<AutomaticLearningState>('get_automatic_learning');
+export const resumeAutomaticSpellings = () =>
+  invoke<AutomaticLearningState>('resume_automatic_spellings');
 export const forgetAutomaticLearning = (revision: number) =>
   invoke<PersonalizationProfile>('forget_automatic_learning', { revision });
 export const suspendAutomaticCandidate = (candidateId: string) =>

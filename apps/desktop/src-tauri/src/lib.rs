@@ -213,6 +213,7 @@ pub fn run() {
             commands::get_automatic_learning,
             commands::get_learning_shadow_diagnostics,
             commands::forget_automatic_learning,
+            commands::resume_automatic_spellings,
             commands::suspend_automatic_candidate,
             commands::approve_automatic_candidate,
             commands::edit_latest_draft,
