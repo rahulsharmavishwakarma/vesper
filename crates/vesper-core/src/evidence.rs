@@ -46,14 +46,28 @@ pub struct PromotionPolicy {
 }
 
 /// Non-word heard forms use r = 4 (t = 0.80). A user-typed identifier replacing a
-/// non-word inside a known project starts from an optimistic Beta(2, 0.5) prior, so
-/// one edit suffices; other spellings use Jeffreys Beta(0.5, 0.5), so two do.
+/// non-word, or rejoining the same letters, inside a known project starts from an
+/// optimistic Beta(2, 0.5) prior, so one edit suffices; other spellings use
+/// Jeffreys Beta(0.5, 0.5), so two do.
 /// Ordinary phrases and capitalized name repairs also need two independent edits
 /// and matching teaching cues. A single lowercase ordinary word (`write` →
 /// `Wright`) is never promoted automatically (r = ∞).
 pub fn promotion_policy(pair: &CorrectionPair, known_project: bool) -> PromotionPolicy {
+    let letters = |s: &str| {
+        s.chars()
+            .filter(|c| c.is_alphanumeric())
+            .flat_map(char::to_lowercase)
+            .collect::<String>()
+    };
+    // Joining the same letters into an identifier (`aster tool` → `AsterTool`)
+    // changes only spacing and case, so it is as low-risk as repairing a non-word.
+    let rejoin = letters(&pair.heard) == letters(&pair.intended);
     match heard_class(pair) {
-        HeardClass::NonWord if known_project && technical_spelling(&pair.intended) => {
+        HeardClass::NonWord | HeardClass::OrdinaryPhrase
+            if known_project
+                && technical_spelling(&pair.intended)
+                && (rejoin || heard_class(pair) == HeardClass::NonWord) =>
+        {
             PromotionPolicy {
                 alpha: 2.0,
                 beta: 0.5,
@@ -183,6 +197,14 @@ mod tests {
         );
         assert_eq!(
             promotion_policy(&pair("cube control", "kubectl"), true).required_support(),
+            Some(2)
+        );
+        assert_eq!(
+            promotion_policy(&pair("aster tool", "AsterTool"), true).required_support(),
+            Some(1)
+        );
+        assert_eq!(
+            promotion_policy(&pair("read me", "README.md"), true).required_support(),
             Some(2)
         );
         for (heard, intended) in [("write", "Wright"), ("monday", "Mandy"), ("notes", "Nots")] {

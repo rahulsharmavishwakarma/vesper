@@ -38,7 +38,7 @@ Policy 5 derives the number of independent edits from an asymmetric promotion ru
 
 | Heard form | Example | Prior | `r` (`t`) | Independent edits |
 | --- | --- | --- | --- | --- |
-| Contains a non-word; identifier target in a known project | `sherpa onnx → sherpa_onnx` | Beta(2, 0.5) | 4 (0.80) | 1 |
+| Contains a non-word, or rejoins the same letters; identifier target in a known project | `sherpa onnx → sherpa_onnx`, `aster tool → AsterTool` | Beta(2, 0.5) | 4 (0.80) | 1 |
 | Contains a non-word, other target | `kube ctl → kubectl` | Beta(0.5, 0.5) | 4 (0.80) | 2 |
 | Several ordinary words | `read me → README.md` | Beta(0.5, 0.5) | 4 (0.80) | 2, and teaching cues must match at use |
 | One capitalized word → capitalized spelling (name repair) | `Jonathon → Jonathan` | Beta(0.5, 0.5) | 4 (0.80) | 2, and teaching cues must match at use |
