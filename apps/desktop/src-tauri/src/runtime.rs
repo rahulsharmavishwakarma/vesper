@@ -17,6 +17,9 @@ use vesper_data::{DatasetStore, SessionRecord};
 mod learning_tests;
 
 #[cfg(test)]
+#[path = "runtime_e2e_tests.rs"]
+mod e2e_tests;
+#[cfg(test)]
 #[path = "runtime_learning_qualification_tests.rs"]
 mod learning_qualification_tests;
 
