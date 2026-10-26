@@ -54,7 +54,7 @@ Outputs and caps (from `terms.rs`):
 | --- | --- | --- |
 | `hints` | 32 phrases, 2,048 bytes | Top-ranked spellings for a qualified recognizer hook |
 | `hint_hash` | — | `fnv1a64:<hex>` over the ordered hints; empty when there are no hints |
-| `references` | 16 | Top-ranked single-token spellings with at least three letters that are **not** ordinary English words. The gate's near-miss repair uses them, so an ordinary word must never be a reference |
+| `references` | 16 | Top-ranked single-token spellings with at least four letters that are **not** ordinary English words. The gate's near-miss repair uses them, so an ordinary word must never be a reference. Three-letter acronyms are excluded because their one-edit neighbours are mostly other acronyms (`NPU` → `GPU`) |
 | `normalizations` | 64 | Post-ASR only: `(spoken form, spelling, term ID, tier)` for every spoken form that occurs as a whole-word n-gram (n ≤ 6) in the raw text |
 
 Spoken forms come from `identifier_spoken_form`: camelCase, snake_case, kebab-case and dotted names split into lowercase words (`fooBarBaz` → `foo bar baz`, `HTTPServer` → `http server`, `vesper_core::terms` → `vesper core terms`). Digits stay attached (`k8s`, `utf8`), and forms longer than six words are dropped. Acronym letter forms are not generated. The selector only proposes normalizations; the [correction gate](correction-gate.md) decides whether each may apply.
@@ -177,6 +177,75 @@ Each row has × (tombstone removal). Each source has **Forget** (delete its evid
 - **Not read:** the home folder at large, Mail, Messages, browser data, the screen or the clipboard. Mining requests no permission and needs no Full Disk Access.
 - **Stored:** spellings, spoken forms, counts, opaque scope keys and folder-name labels. Never paths, URLs or file text. Cursors keep only a SHA-256 fingerprint, an index and candidate counts.
 - **Not learned from:** machine output, which never creates, confirms or re-activates an inventory row.
+
+## Evaluation (local measurement, 27 October 2026)
+
+All figures below are local measurements from the release build of `crates/vesper-data/examples/term_inventory_eval.rs`.
+
+**Setup.**
+
+- **Machine:** Apple M5 Pro, 18 cores, 64 GB, Darwin 27.0.0.
+- **Path measured:** the same miners, store and selector the worker uses, run from a CLI at normal QoS without the gates. The in-app worker was not launched, so in-app QoS and throttling effects are **unmeasured**.
+- **Raw results:** kept outside the repository, because they contain local spellings.
+
+**Sources on this Mac:**
+
+- Text Replacements: 1 live row, the default sentence-style entry, which is rejected, so 0 terms.
+- LocalDictionary: 0 words.
+- VS Code user `cSpell.words`: 0 words.
+
+So tier A contributed **nothing** on this machine.
+
+**Tier B** (default budgets, first full pass, one run each):
+
+| Workspace | Tracked files scanned | Read | Admitted | Identifier / Docs / Manifest | Wall | CPU (user+sys) | Peak RSS |
+| --- | --- | --- | --- | --- | --- | --- | --- |
+| This repository | 585 | 6.4 MB | 1,461 | 1,185 / 203 / 73 | 0.37 s | 0.28 s | 46 MB |
+| Research repo 1 | 139 | 1.5 MB | 468 | 364 / 99 / 5 | 0.13 s | 0.10 s | 44 MB |
+| Research repo 2 | 137 | 1.6 MB | 476 | 361 / 107 / 8 | 0.13 s | 0.10 s | 44 MB |
+
+- **Process overhead.** Wall time, CPU and RSS are for the whole process (`/usr/bin/time -l`). That includes decoding the shared lexicon, and the tier-A-only process already peaks at 41 MB.
+- **Unchanged rescan.** It read 0 files: about 5 ms of scanner time and 0.03 s for the whole process.
+- **Changed rescan.** Any change triggers a full pass of the same size as the first.
+- **Merged inventory.** The three repositories merge to 1,901 distinct rows.
+
+**Dictionary words.** By the gate's `ordinary_word`:
+
+- 37 of the 1,461 admitted terms in this repository are ordinary: 35 hyphenated script names made of English words, plus `GitHub` and `setUp`.
+- 0 in each research repository.
+- By `/usr/share/dict/words`: 31 here, 17 and 18 in the research repositories.
+- Identifiers whose every part is an ordinary word (`relative_path`): 939, 241 and 235.
+
+**Sampled precision.** A seeded random sample of 50 admitted tier-B terms across the three repositories, judged by one non-blind rater:
+
+| Judgment | Count | Wilson 95% interval |
+| --- | --- | --- |
+| A real, project-specific spelling ASR would plausibly get wrong (e.g. `rusqlite`, `EPYC`, `dequantize`) | 9 | 10–31% |
+| A real project identifier made of ordinary words (e.g. `lock_path`, `SettingsStore`): useful only when dictating code; the gate will not apply it to prose | 36 | — |
+| Junk: a library API, an English word missing from the lexicon, or a foreign word | 5 | — |
+
+So 45 of 50 are real project spellings (79–96%), but only about one in five is an ASR-hard term.
+
+**Selector latency.** Per call, 200 iterations, in-memory:
+
+| Input | Pre-ASR p50 / p95 | Post-ASR p50 / p95 |
+| --- | --- | --- |
+| Real inventory, 1,901 rows, code context | 0.15 / 0.21 ms | 0.17 / 0.23 ms |
+| 20,000 rows, mostly in other scopes | 0.57–0.66 / 0.63–0.80 ms | 0.59–0.67 / 0.67–0.83 ms |
+| 20,000 rows, all in the current workspace (worst case) | 1.7 / 4.0 ms | 2.0 / 3.9 ms |
+
+Loading 20,000 usable rows into the snapshot took 10.5–12.7 ms over four runs. FTS5 is not used: an in-memory pass is already below the snapshot load cost.
+
+**Working sets.**
+
+- **This repository in a code app:** 32 hints, led by `ASR`, `GPU`, `macOS`, `WER`, `float32`, `sha256`, `Qwen`, `numpy`, `onnx`, `sherpa` and `MLX`. Many hints are generic technical acronyms rather than personal terms.
+- **Email, or a shared context:** empty, because tier A was empty on this Mac and the profile vocabulary held no words.
+
+**Coverage against real history.** A read-only copy of the local history held 532 sessions with **0** user-edited drafts, so no user-authored spellings were available to check.
+
+- Of 211 distinct non-ordinary tokens in kept (machine-written) text, 21 (10%) match an inventory spelling.
+- 37 of 1,901 inventory terms occur in that text by spelling or spoken form.
+- This cannot show whether the inventory contains the terms the owner *meant* when the recognizer misheard them. That needs labelled audio or user edits. The honest answer is **unknown**, with low overlap on this history: dictation here was mostly not about these repositories.
 
 ## Limitations
 

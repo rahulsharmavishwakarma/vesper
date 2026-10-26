@@ -309,11 +309,12 @@ pub fn select_working_set(
     }
 }
 
-/// One token, at least three letters, and not an ordinary English word in any
-/// letter case (`Vesper` and `NVIDIA` qualify only if the lexicon lacks them).
+/// One token, at least four letters, and not an ordinary English word in any
+/// letter case. Three-letter acronyms are excluded because most of their
+/// one-edit neighbours are other acronyms (`NPU`/`TPU` → `GPU`).
 fn reference_eligible(surface: &str) -> bool {
     !surface.contains(char::is_whitespace)
-        && surface.chars().filter(|c| c.is_alphabetic()).count() >= 3
+        && surface.chars().filter(|c| c.is_alphabetic()).count() >= 4
         && !crate::ordinary_word(surface)
 }
 
@@ -411,6 +412,29 @@ mod tests {
                 "{surface}"
             );
         }
+    }
+
+    #[test]
+    fn short_acronyms_are_hints_but_never_near_miss_references() {
+        let terms = vec![
+            term(
+                "g",
+                "GPU",
+                TermTier::Authored,
+                TermSource::Documentation,
+                "",
+            ),
+            term(
+                "q",
+                "Qwen",
+                TermTier::Authored,
+                TermSource::Documentation,
+                "",
+            ),
+        ];
+        let set = select_working_set(&terms, &context("", AppCategory::Code), None);
+        assert_eq!(set.hints, ["GPU", "Qwen"]);
+        assert_eq!(set.references, ["Qwen"]);
     }
 
     #[test]
