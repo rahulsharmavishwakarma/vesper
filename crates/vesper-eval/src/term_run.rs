@@ -302,6 +302,24 @@ pub fn decode(arguments: &[String]) -> Result<(), Box<dyn std::error::Error>> {
                 Err(error) => Err(error.clone()),
             };
             let asr_ms = started.elapsed().as_secs_f64() * 1000.0;
+            let frontend_evidence = manager.execution_evidence(&operation)["audioFrontend"].clone();
+            // A requested frontend that fell back to original audio is not a
+            // frontend measurement: record it as a failed row, never as a result.
+            let result = match result {
+                Ok(_)
+                    if options.frontend.enabled()
+                        && (frontend_evidence["originalAudioFallback"] == true
+                            || frontend_evidence.is_null()) =>
+                {
+                    Err(format!(
+                        "audio frontend did not run: {}",
+                        frontend_evidence["error"]
+                            .as_str()
+                            .unwrap_or("no frontend evidence")
+                    ))
+                }
+                other => other,
+            };
             let (mut cleaned, mut cleanup_ms, mut cleanup_error) = (None, None, None);
             if let (true, Ok(raw)) = (options.cleanup, &result) {
                 let started = Instant::now();
@@ -342,6 +360,7 @@ pub fn decode(arguments: &[String]) -> Result<(), Box<dyn std::error::Error>> {
                 asr_ms,
                 cleanup_ms,
                 error: result.err(),
+                frontend_evidence: (!frontend_evidence.is_null()).then_some(frontend_evidence),
                 cleanup_error,
             };
             writeln!(output, "{}", serde_json::to_string(&row)?)?;

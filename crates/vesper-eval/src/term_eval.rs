@@ -477,6 +477,9 @@ pub struct DecodeRow {
     pub error: Option<String>,
     #[serde(default)]
     pub cleanup_error: Option<String>,
+    /// The manager's `audioFrontend` execution evidence, when any was recorded.
+    #[serde(default)]
+    pub frontend_evidence: Option<serde_json::Value>,
 }
 
 #[derive(Clone, Debug, Default, Serialize)]
@@ -1051,6 +1054,7 @@ mod tests {
             cleanup_ms: None,
             error: Some("failed".into()),
             cleanup_error: None,
+            frontend_evidence: None,
         };
         let scores = score_rows(&audio, &[row], &[Condition::None], false);
         let raw = scores.iter().find(|(k, _)| k.arm == "raw").unwrap();
