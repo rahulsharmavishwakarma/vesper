@@ -36,7 +36,7 @@ The criterion for applying them in the app was written down before the evaluatio
 - **Positives:** 89 repairs, 1 harmful. A LibriSpeech utterance contains two rare words one letter apart, both in the reference and the list.
 - **Retained local history:** 18 repairs, 0 wrong. This history was also the development set for two earlier rule fixes.
 
-The one harmful change on real speech came from another workspace's list, in a FLEURS clip about the TogiNet radio site. That is why repairs depend on workspace detection, and why a rejected repair suspends its spelling and counts toward the breaker. The desktop therefore applies near-miss repairs.
+The one harmful change on real speech came from another workspace's list, in a FLEURS clip about the TogiNet radio site. That is why repairs depend on workspace detection, and why a rejected repair suspends its spelling and counts toward the breaker. The desktop therefore applies near-miss repairs, except after a hinted decode: when a recognizer received a phrase list (today only the optional Settings list for Nemotron), near-miss repairs stay in shadow. Round 2 of the [term evaluation](term-evaluation.md) found that they compound a biased decode's insertions (`bright room` → `Brightloom`).
 
 `crates/vesper-data/examples/would_fire_replay.rs` runs the gate over a **copy** of a dataset with a frozen working set. It reports every exact and near-miss change with surrounding context, for private review. It never runs a model or writes to the source store.
 

@@ -2380,11 +2380,24 @@ impl WorkContext {
         if post_asr_profile.apply_corrections && snapshot.learning.breaker_tripped_ms.is_none() {
             // Near-miss repairs apply: they met the predeclared evaluator gate (no
             // changes on hard negatives or retained history with the right workspace).
+            // Near-miss repairs compound a biased decode's insertions (term
+            // evaluation round 2), so a hinted decode keeps them in shadow.
+            let hinted = !vesper_core::recognizer_hints(
+                &self.config.speech_adapter().capabilities.speech_hook,
+                self.personalization()?,
+                self.config.language,
+            )
+            .phrases
+            .is_empty();
             let gate = vesper_core::correction_gate_with(
                 &personalized.text,
                 &set,
                 self.config.language,
-                vesper_core::NearMiss::Apply,
+                if hinted {
+                    vesper_core::NearMiss::Shadow
+                } else {
+                    vesper_core::NearMiss::Apply
+                },
             );
             // Proposals the gate could not apply (overlaps) stay visible for review.
             personalized.evidence.gate_shadow = gate

@@ -588,3 +588,50 @@ fn near_miss_repairs_apply_and_an_undone_repair_pauses_that_spelling() {
         .unwrap();
     assert_eq!(complete_one(4, heard).personalized_transcript, None);
 }
+
+#[test]
+fn a_hinted_decode_keeps_near_miss_repairs_in_shadow() {
+    let dir = tempfile::tempdir().unwrap();
+    let root = dir.path().join("dataset");
+    let runtime = Arc::new(Runtime::default());
+    let store = DatasetStore::open(root.clone()).unwrap();
+    let mut profile = store.dictation_personalization().unwrap();
+    profile.speech_bias_enabled = true;
+    profile.vocabulary.push(vesper_core::VocabularyEntry {
+        id: "nvidia".into(),
+        phrase: "NVIDIA".into(),
+        language: Language::English,
+        enabled: true,
+        confirmed: true,
+        ..Default::default()
+    });
+    store.save_dictation_personalization(profile).unwrap();
+    let heard = "Run the encoder on Envidia hardware";
+    // Nemotron receives the Settings phrase list, so its output may carry bias.
+    let hinted = complete(
+        &root,
+        &runtime,
+        1,
+        AsrModel::Nemotron35AsrStreaming06b,
+        Language::English,
+        heard,
+    );
+    assert_eq!(hinted.personalized_transcript, None);
+    assert_eq!(
+        hinted.personalization_evidence.unwrap().gate_shadow.len(),
+        1
+    );
+    // A recognizer without a phrase hook decodes unbiased: the repair applies.
+    let plain = complete(
+        &root,
+        &runtime,
+        2,
+        AsrModel::CohereTranscribe,
+        Language::English,
+        heard,
+    );
+    assert_eq!(
+        plain.personalized_transcript.as_deref(),
+        Some("Run the encoder on NVIDIA hardware")
+    );
+}
