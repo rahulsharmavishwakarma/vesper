@@ -375,6 +375,14 @@ packages (the VibeVoice `pyproject.toml` pins both directly), regeneration of
 `make python-lock-check` compares against (the output path is recorded in the
 file's header), and `make audit-python` plus `make audit-python-vibevoice`
 ([issue #248](https://github.com/rahulsharmavishwakarma/vesper/issues/248)).
+It happened again on 26 October 2026, when Monday's Dependabot pull requests all
+failed `Dependencies` on the same cause: `filelock` 3.32.7 (CVE-2026-112907,
+-112913, -112940, fixed in 4.2.1; root lock, through `virtualenv`, `cachecontrol`
+and `python-discovery`), also 4.1.1 and 4.0.4 in the VibeVoice and cleanup locks,
+plus `setuptools` 84.0.0 (GHSA-xmj3-9gf7-h52w, fixed in 84.1.0) in those two.
+pip-audit reported them before GitHub raised Dependabot alerts. All moved to
+`filelock` 4.2.4 and `setuptools` 84.1.0 or later the same way
+([issue #57](https://github.com/rahulsharmavishwakarma/vesper/issues/57)).
 The audit jobs install only contributor tools, not model runtimes or weights.
 All manifests and lockfiles stay versioned, while `.venv` and `.cache` stay ignored.
 
