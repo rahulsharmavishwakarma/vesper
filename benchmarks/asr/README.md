@@ -146,6 +146,8 @@ OMP_NUM_THREADS=1 OPENBLAS_NUM_THREADS=1 VECLIB_MAXIMUM_THREADS=1 \
 
 Uhm uses `uhm-raw` and `uhm-normalized` as separate modes with the filler manifest; it does not require `--golden`. The probe is single-window (up to30s), validates the actual six-class graph and annotates spans without deleting audio. `scripts/summarize-audio-frontends.py` regenerates the dated suite's transcript-free aggregate from its versioned raw report filenames, keeping failed/missing cases and separate language/corpus lanes.
 
+[Term evaluation](../../docs/personalization/term-evaluation.md) runs `vesper-eval term-decode`/`term-score` on the frozen synthetic term corpus from [`python/term-eval`](python/term-eval/README.md) to qualify recognizer vocabulary hooks and the correction gate per model.
+
 [Local correction-memory corpus protocol](personalization.md) measures frozen application memory on separate calibration and holdout recordings, with a smaller real-time replay subset. It is distinct from base-model qualification.
 
 [16 September 2026 local memory results](2026-09-16-personalization.md) report real public audio, paired correction/cleanup measurements, normal-speed replay, regressions and remaining personal-learning coverage gaps.

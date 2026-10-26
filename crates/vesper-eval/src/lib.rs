@@ -6,6 +6,7 @@
 mod manifest;
 mod metrics;
 mod recommendation;
+pub mod term_eval;
 
 pub use manifest::{
     BenchmarkEnvironment, BenchmarkManifest, BenchmarkSample, CorpusSource, ReplayKind, Scenario,

@@ -10,14 +10,32 @@ This fixed evaluator decides, per speech model, whether per-recording vocabulary
   - `ws10`, `ws32`: the sample's workspace, with its target terms first, at 10 and 32 hints.
   - `wrong32`: all terms of a different workspace (targets absent).
   - `large`: every workspace term plus distractors (150 entries), with the hook's limits lifted by the evaluator; native runtime limits still apply.
-- **Arms.** `raw` is the recognizer output. `gate` is `vesper_core::correction_gate(raw, &working_set, English)`, with normalizations built from each hint term's spoken forms (identifier splits) as user-asserted spellings. It is recomputed from saved raw outputs without re-decoding. Hook-less models decode once; their `gate` arm applies each condition's working set to that decode.
+- **Arms.** All arms are recomputed from saved raw outputs by `term-score`, without re-decoding. Hook-less models decode once; their gate arms apply each condition's working set to that decode.
+  - `raw`: the recognizer output.
+  - `gate_exact`: `correction_gate_with(raw, &set, English, NearMiss::Off)`. Normalizations come from each hint term's spoken forms (identifier splits), as user-asserted spellings.
+  - `gate_exact_authored`: the same, as project-authored spellings, which may not rejoin ordinary words.
+  - `gate_near_miss`: exact plus `NearMiss::Apply`, with up to 16 of the condition's spellings as `references`. Near-miss changes are counted separately.
+  - `cleaned`, `cleaned_gate_exact`: the optional writer arm (`--cleanup`) on a subset, with the condition's terms as profile vocabulary.
 - **Metrics.**
   - Target-term recall, exact spelling, case-sensitive and case-insensitive.
   - Non-target WER (U-WER, after Le et al. 2021): errors on reference words outside target-term spans; insertions of hint words count against targets.
   - False alarms per target-free utterance: any hint term absent from the reference appearing in the output, or any gate change. Reported with a 95% one-sided Clopper–Pearson upper bound.
-  - Harmful gate edits per 1,000 reference words, and hint-induced regressions (utterances whose WER rises with hints compared with `none`).
+  - Harmful gate edits per 1,000 reference words (a change whose spelling is absent from the reference, or whose heard span was in it), with near-miss changes and near-miss false alarms reported separately.
+  - Hint-induced regressions: utterances whose WER rises with hints compared with the paired `none` decode.
   - Added latency p50/p95 against the paired `none` decode, and gate time.
   - Failed decodes stay in every denominator: a failed positive counts as a miss.
+
+## Running it
+
+```sh
+. ./scripts/dev-env.sh
+cargo build --release --locked -p vesper-eval
+target/release/vesper-eval term-decode TERM_MANIFEST CORPUS_ROOT MODEL_ROOT ENVIRONMENT OUT.jsonl \
+  --model Qwen/Qwen3-ASR-0.6B [--conditions none,ws10,ws32,wrong32,large] [--denoiser dpdfnet8] [--cleanup]
+target/release/vesper-eval term-score TERM_MANIFEST SCORES.json OUT.jsonl [MORE.jsonl ...]
+```
+
+`term-decode` appends one JSON row per sample and condition, resumes an interrupted run, verifies audio hashes and writes `OUT.meta.json` with the environment, hook descriptor, model versions and artifact provenance. It sends hints to `declared` hooks (evaluator only) and lifts hook limits only for `large`. `term-score` adds text-only samples as the `reference-text` lane, where the hypothesis is the reference itself.
 
 ## Results
 

@@ -1,4 +1,5 @@
 mod memory;
+mod term_run;
 use chrono::Utc;
 use serde::Serialize;
 use sha2::{Digest, Sha256};
@@ -129,6 +130,8 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
             memory::build(&arguments[1], &arguments[2], &arguments[3])
         }
         Some("run") => run(parse_run(&arguments[1..])?),
+        Some("term-decode") => term_run::decode(&arguments[1..]),
+        Some("term-score") => term_run::score(&arguments[1..]),
         _ => Err(usage().into()),
     }
 }
@@ -746,7 +749,7 @@ fn parse_backend(value: &str) -> Result<ComputeBackend, String> {
 }
 
 fn usage() -> String {
-    "usage:\n  vesper-eval validate MANIFEST\n  vesper-eval run MANIFEST CORPUS_ROOT MODEL_ROOT ENVIRONMENT OUTPUT [--model MODEL_ID | --asr-profile PROFILE_JSON] [--asr-engine automatic|standard|unified_gguf|neural_engine] [--streaming] [--realtime] [--cleanup] [--vad] [--auto-level] [--denoiser off|dpdfnet4|dpdfnet8] [--language auto|LANGUAGE_CODE] [--chunk-ms 20] [--profile EVALUATION_MEMORY]\n  vesper-eval build-memory CALIBRATION_MANIFEST BASELINE_REPORT OUTPUT\n  vesper-eval recommend REQUEST_JSON CAPABILITIES_JSON EVIDENCE_JSON".into()
+    "usage:\n  vesper-eval validate MANIFEST\n  vesper-eval run MANIFEST CORPUS_ROOT MODEL_ROOT ENVIRONMENT OUTPUT [--model MODEL_ID | --asr-profile PROFILE_JSON] [--asr-engine automatic|standard|unified_gguf|neural_engine] [--streaming] [--realtime] [--cleanup] [--vad] [--auto-level] [--denoiser off|dpdfnet4|dpdfnet8] [--language auto|LANGUAGE_CODE] [--chunk-ms 20] [--profile EVALUATION_MEMORY]\n  vesper-eval build-memory CALIBRATION_MANIFEST BASELINE_REPORT OUTPUT\n  vesper-eval recommend REQUEST_JSON CAPABILITIES_JSON EVIDENCE_JSON\n  vesper-eval term-decode TERM_MANIFEST CORPUS_ROOT MODEL_ROOT ENVIRONMENT OUTPUT_JSONL [--model MODEL_ID] [--asr-engine ENGINE] [--conditions none,ws10,ws32,wrong32,large] [--categories LIST] [--noise LIST] [--split test|dev|all] [--vad] [--denoiser off|dpdfnet4|dpdfnet8] [--cleanup] [--limit N]\n  vesper-eval term-score TERM_MANIFEST OUTPUT_JSON DECODE_JSONL...".into()
 }
 
 #[cfg(test)]
