@@ -84,6 +84,9 @@ pub struct DictationPersonalizationSnapshot {
     pub profile: PersonalizationProfile,
     pub learning: AutomaticLearningState,
     pub project_selection: vesper_core::ProjectSelection,
+    /// Resolved at capture start by `resolve_context`; empty for imports.
+    pub workspace: vesper_core::WorkspaceContext,
+    pub(crate) workspaces: crate::workspaces::WorkspaceSnapshot,
 }
 
 impl DictationPersonalizationSnapshot {
@@ -220,6 +223,7 @@ impl DatasetStore {
     pub fn dictation_personalization_snapshot(&self) -> Result<DictationPersonalizationSnapshot> {
         // Persist the existing desktop enable migration before the read transaction.
         self.dictation_personalization()?;
+        self.ensure_workspace_store()?;
         let tx = rusqlite::Transaction::new_unchecked(
             &self.connection,
             rusqlite::TransactionBehavior::Deferred,
@@ -236,6 +240,8 @@ impl DatasetStore {
             profile,
             project_selection,
             learning: self.automatic_learning_state()?,
+            workspace: Default::default(),
+            workspaces: self.workspace_snapshot()?,
         };
         tx.commit()?;
         Ok(snapshot)
@@ -1060,7 +1066,7 @@ fn prune(state: &mut AutomaticLearningState, timestamp: i64) {
         }
     }
 }
-fn put_state(tx: &Connection, state: &AutomaticLearningState) -> Result<()> {
+pub(crate) fn put_state(tx: &Connection, state: &AutomaticLearningState) -> Result<()> {
     if state
         .events
         .iter()
@@ -1073,7 +1079,7 @@ fn put_state(tx: &Connection, state: &AutomaticLearningState) -> Result<()> {
     tx.execute("INSERT INTO automatic_learning(id,state_json) VALUES(1,?1) ON CONFLICT(id) DO UPDATE SET state_json=excluded.state_json", [serde_json::to_string(state)?])?;
     Ok(())
 }
-fn put_profile(tx: &Connection, profile: &mut PersonalizationProfile) -> Result<()> {
+pub(crate) fn put_profile(tx: &Connection, profile: &mut PersonalizationProfile) -> Result<()> {
     profile.schema_version = 4;
     profile.revision = profile
         .revision
