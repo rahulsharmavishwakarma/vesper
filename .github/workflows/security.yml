@@ -99,7 +99,7 @@ jobs:
         run: rustup show active-toolchain
       - uses: astral-sh/setup-uv@1c37ad07a6a961277cf70c0d37d6f313000f5884 # v10.3.0
         with:
-          version: '0.12.15'
+          version: '0.13.5'
           python-version: '3.12'
           enable-cache: false
       - name: Audit all locked Python contributor groups
@@ -161,7 +161,7 @@ jobs:
           persist-credentials: false
       - uses: astral-sh/setup-uv@1c37ad07a6a961277cf70c0d37d6f313000f5884 # v10.3.0
         with:
-          version: '0.12.15'
+          version: '0.13.5'
           python-version: '3.12'
           enable-cache: false
       - name: Audit the locked benchmark graph on its supported platform
