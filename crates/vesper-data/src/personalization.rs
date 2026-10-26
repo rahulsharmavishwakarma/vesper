@@ -409,7 +409,7 @@ impl DatasetStore {
         self.invalidate_shadow_session(id)?;
         record.personalization_rejected = true;
         if let Some(evidence) = &record.personalization_evidence {
-            self.suspend_automatic_in_transaction(
+            self.reject_automatic_in_transaction(
                 &tx,
                 &evidence
                     .applied

@@ -49,7 +49,7 @@ fn automatic_project_completion_and_delayed_edits_keep_receiving_scope_after_set
     store.save_dictation_personalization(changed).unwrap();
     let audio = MonoPcm::new(vec![0.1; 1600], 16000).unwrap();
     let mut result = context
-        .complete_raw(&audio, &mut None, "Open read me for deployment".into())
+        .complete_raw(&audio, &mut None, "Open readme for deployment".into())
         .unwrap();
     context.observe_result(&mut result, false);
     runtime.publish(result.clone());
@@ -101,7 +101,7 @@ fn automatic_app_context_guard_applies_to_later_raw_context_and_freezes_per_oper
         pending_speakers: Default::default(),
     };
     assert!(frozen.personalization().unwrap().vocabulary.is_empty());
-    let heard = "Open read me for deployment";
+    let heard = "Open readme for deployment";
     let edited = "Open README.md for deployment";
     let result = complete(
         &root,
@@ -124,16 +124,16 @@ fn automatic_app_context_guard_applies_to_later_raw_context_and_freezes_per_oper
         &root,
         &runtime,
         2,
-        AsrModel::Nemotron35AsrStreaming06b,
+        AsrModel::CohereTranscribe,
         Language::English,
         heard,
     );
     assert_eq!(later.personalized_transcript.as_deref(), Some(edited));
     for (i, raw) in [
-        "Open read me for shopping",
-        "Open read me in repo",
-        "Open 'read me' for deployment",
-        "Open read me for 'deployment'",
+        "Open readme for shopping",
+        "Open readme in repo",
+        "Open 'readme' for deployment",
+        "Open readme for 'deployment'",
     ]
     .iter()
     .enumerate()
@@ -150,7 +150,7 @@ fn automatic_app_context_guard_applies_to_later_raw_context_and_freezes_per_oper
         assert!(output.personalization_evidence.unwrap().applied.is_empty());
     }
     let snapshot = store.dictation_personalization_snapshot().unwrap();
-    let cleanup_input = snapshot.post_asr_profile("Open read me for shopping", Language::English);
+    let cleanup_input = snapshot.post_asr_profile("Open readme for shopping", Language::English);
     assert!(!cleanup_input.vocabulary[0].enabled);
     assert_eq!(
         cleanup_input.personalize(heard, Language::English).text,
@@ -161,7 +161,7 @@ fn automatic_app_context_guard_applies_to_later_raw_context_and_freezes_per_oper
     assert_eq!(
         positive_input
             .personalize(
-                "Do not open read me for deployment on 21 June",
+                "Do not open readme for deployment on 21 June",
                 Language::English
             )
             .text,
@@ -173,7 +173,7 @@ fn automatic_app_context_guard_applies_to_later_raw_context_and_freezes_per_oper
         20,
         AsrModel::CohereTranscribe,
         Language::English,
-        "Open read me for shopping",
+        "Open readme for shopping",
     );
     runtime
         .edit_latest_draft(
@@ -186,7 +186,7 @@ fn automatic_app_context_guard_applies_to_later_raw_context_and_freezes_per_oper
     assert!(store.personalization().unwrap().revision > snapshot.profile.revision);
     assert!(
         !snapshot
-            .post_asr_profile("Open read me for shopping", Language::English)
+            .post_asr_profile("Open readme for shopping", Language::English)
             .vocabulary[0]
             .enabled
     );
@@ -194,9 +194,9 @@ fn automatic_app_context_guard_applies_to_later_raw_context_and_freezes_per_oper
         &root,
         &runtime,
         21,
-        AsrModel::Nemotron35AsrStreaming06b,
+        AsrModel::CohereTranscribe,
         Language::English,
-        "Open read me for shopping",
+        "Open readme for shopping",
     );
     assert_eq!(
         learned_context.personalized_transcript.as_deref(),
@@ -276,11 +276,21 @@ fn automatic_app_learning_survives_restart_model_switch_and_forget_epoch() {
     }
     drop(runtime);
     let runtime = Arc::new(Runtime::default());
+    // Learned from Cohere's errors: Nemotron does not use the alias, Cohere still does.
     let result = complete(
         &root,
         &runtime,
         3,
         AsrModel::Nemotron35AsrStreaming06b,
+        Language::English,
+        HEARD,
+    );
+    assert_eq!(result.personalized_transcript, None);
+    let result = complete(
+        &root,
+        &runtime,
+        4,
+        AsrModel::CohereTranscribe,
         Language::English,
         HEARD,
     );

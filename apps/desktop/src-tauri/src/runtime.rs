@@ -55,7 +55,7 @@ mod tests {
     fn editable_result(profile: &vesper_core::PersonalizationProfile, id: &str) -> PipelineResult {
         PipelineResult {
             result_id: id.into(),
-            raw_transcript: "Open read me in the repo".into(),
+            raw_transcript: "Open readme in the repo".into(),
             cleaned_transcript: None,
             speaker_timeline: None,
             personalized_transcript: None,
@@ -445,7 +445,7 @@ mod tests {
         let state = runtime.state.lock().unwrap();
         let partial = state.partial.as_ref().unwrap();
         assert_eq!(partial.sequence, 4);
-        assert_eq!(partial.committed_text, "Open read me in the repo");
+        assert_eq!(partial.committed_text, "Open readme in the repo");
         assert!(partial.provisional_text.is_empty());
         assert!(partial.is_final);
         assert!(state.partial_invalidated_for.is_none());
@@ -636,14 +636,15 @@ mod tests {
         let inference = Arc::new(vesper_inference::InferenceManager::new().unwrap());
         let before = "Deploy kubernets to the cluster";
         let after = "Deploy kubernetes to the cluster";
-        for attempt in 0..3 {
+        for attempt in 0..4 {
             let mut config = AppConfig {
                 cleanup_enabled: false,
                 collect_training_data: false,
                 language: Language::English,
                 ..Default::default()
             };
-            // Third recording uses the other recognizer, without changing memory ownership.
+            // The third recording uses another recognizer: the learned alias belongs to
+            // the family whose errors taught it, so it waits until Cohere is used again.
             config.models.asr = if attempt == 2 {
                 vesper_core::AsrModel::Nemotron35AsrStreaming06b
             } else {
@@ -672,6 +673,8 @@ mod tests {
                 runtime
                     .edit_latest_draft(root.clone(), &result.result_id, 0, after.into())
                     .unwrap();
+            } else if attempt == 2 {
+                assert_eq!(result.personalized_transcript, None);
             } else {
                 assert_eq!(result.personalized_transcript.as_deref(), Some(after));
             }
@@ -2262,9 +2265,11 @@ impl WorkContext {
             self.annotate_speakers(audio, session, &mut result)?;
         }
         // Freeze eligibility from the raw hypothesis. Cleanup cannot generate its own cues.
-        let post_asr_profile = self
-            .personalization_snapshot()?
-            .post_asr_profile(&raw, self.config.language);
+        let post_asr_profile = self.personalization_snapshot()?.post_asr_profile_for(
+            &raw,
+            self.config.language,
+            self.config.asr_name(),
+        );
         if self.config.cleanup_enabled && !raw.trim().is_empty() {
             self.runtime.progress(
                 "rewriting",
