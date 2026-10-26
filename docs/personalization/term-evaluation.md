@@ -35,12 +35,108 @@ target/release/vesper-eval term-decode TERM_MANIFEST CORPUS_ROOT MODEL_ROOT ENVI
 target/release/vesper-eval term-score TERM_MANIFEST SCORES.json OUT.jsonl [MORE.jsonl ...]
 ```
 
-`term-decode` appends one JSON row per sample and condition, resumes an interrupted run, verifies audio hashes and writes `OUT.meta.json` with the environment, hook descriptor, model versions and artifact provenance. It sends hints to `declared` hooks (evaluator only) and lifts hook limits only for `large`. `term-score` adds text-only samples as the `reference-text` lane, where the hypothesis is the reference itself.
+`term-decode` appends one JSON row per sample and condition, resumes an interrupted run, verifies audio hashes and writes `OUT.meta.json` with the environment, hook descriptor, model versions and artifact provenance. It sends hints to unqualified (`declared` or `disabled`) hooks (evaluator only), lifts hook limits only for `large`, records the audio frontend's execution evidence and turns a requested frontend that did not run into a failed row. A model root must hold the frontend artifacts as real files, not symbolic links. `term-score` adds text-only samples as the `reference-text` lane, where the hypothesis is the reference itself.
 
-## Results
+## Results — 27 October 2026
 
-Pending the first frozen run.
+Evidence class: **local measurement** on synthetic TTS and public speech. It does not transfer to natural dictation, other hardware or other checkpoints.
+
+**Setup.** M5 Pro (18 cores, 64 GB), macOS 27.0.1 (26A434), backend `auto` (sherpa adapters on CPU, NeMo-Speech.cpp on Metal), on battery with other builds running, so latency is indicative only. Application revision `a028f07`, evaluator binary SHA-256 `54029b7b…` (DPDFNet8 reruns: `346ef56`, `6fb9d0a2…`). Artifacts: Cohere Transcribe int8 ONNX `156a470`, Qwen3-ASR 0.6B int8 ONNX `68818b2`, Nemotron 3.5 streaming q8_0 GGUF `ea30d66` (completed-audio decode, not the live stream), Parakeet TDT 0.6B v3 q8_0 GGUF `541d1f9` through the unified GGUF engine (the evaluator was built without the MLX feature, so the Neural Engine path was not measured), writer Qwen3.5-0.8B Q4_0 `8fea620`. Full hashes and per-run environment are in the local `*.meta.json` files beside the raw rows.
+
+**Corpus (test split only).** Frozen term manifest SHA-256 `388cc295…`; with the [ordinary-word supplement](../../benchmarks/asr/python/term-eval/README.md#ordinary-word-supplement) `960663b1…`.
+
+| Lane | Utterances | Notes |
+| --- | --- | --- |
+| Positives, synthetic TTS | 158 (168 target occurrences) | six English voices; clean, pink noise 10 dB, FLEURS babble 10 dB |
+| Target-free hard negatives, rendered | 350 | 278 frozen (homophone, sub-word, protected, ordinary, review cases) + 72 ordinary-word supplement |
+| Target-free hard negatives, text only | 2,595 | gate arms only; hypothesis = reference |
+| FLEURS en-US, real speech, target-free | 92 | |
+| LibriSpeech test-clean with Le et al. N=100 lists | 271 (732 target occurrences) | real speech; lists lowercase, so case-insensitive recall is the meaningful column |
+
+### Recognizer hooks (raw recognizer output)
+
+Recall is exact spelling, case-sensitive / case-insensitive. FA = target-free utterances containing a hint term absent from the reference (case-sensitive), with the 95% upper bound.
+
+| Model, condition | Positive recall | Non-target WER | Hard-negative FA | FLEURS FA | FLEURS WER | Added ASR ms p50/p95 |
+| --- | --- | --- | --- | --- | --- | --- |
+| Nemotron, none | 13.7% / 25.0% | 12.4% | 3/350 (0.9%, ≤2.2%) | 0/92 (≤3.2%) | 10.7% | — |
+| Nemotron, ws10 | 53.6% / 59.5% | 14.1% | 55/350 (15.7%, ≤19.3%) | 19/92 (20.7%) | 14.9% | 6 / 11 |
+| Nemotron, ws32 | 52.4% / 57.1% | 16.1% | 77/350 (22.0%, ≤26.0%) | 31/92 (33.7%) | 17.6% | 6 / 11 |
+| Nemotron, wrong32 | 9.5% / 16.7% | 19.7% | 51/350 (14.6%) | 38/92 (41.3%) | 19.6% | 6 / 12 |
+| Nemotron, large (150) | all 158 failed | — | all failed | all failed | — | — |
+| Qwen3-ASR, none | 18.5% / 29.2% | 10.8% | 0/350 (≤0.9%) | 0/92 (≤3.2%) | 7.2% | — |
+| Qwen3-ASR, ws10 | 57.1% / 66.7% | 6.8% | 5/350 (1.4%, ≤3.0%) | 1/92 (1.1%) | 8.3% | 24 / 50 |
+| Qwen3-ASR, ws32 | 58.9% / 67.9% | 8.7% | 8/350 (2.3%, ≤4.1%) | 0/92 | 7.6% | 69 / 128 |
+| Qwen3-ASR, wrong32 | 17.3% / 28.0% | 11.2% | 2/350 (0.6%, ≤1.8%) | 0/92 | 7.0% | 67 / 117 |
+| Qwen3-ASR, large (150) | 51.2% / 58.9%, 13 failed | 10.9% | 5/350 (1.4%) | 77/92 failed | — | 468 / 536 |
+
+- **Nemotron.** Boosting the 30-phrase workspace list (boost 2.0) inserted hint terms into ordinary speech: "We launch in May." → "We launch in Vesper.", "Please send the notes now." → "Priyanka Venkataraman.", "studying traffic flow" → "Saoirse Brennan traffic flow", "the box contained" → "the box containerd". Paired against the unhinted decode, ws32 made 110 of 350 negatives worse and 8 better, and 53 of 92 FLEURS clips worse and 1 better. On LibriSpeech the lists raised case-insensitive recall from 85.5% to 92.9% (ws10) but non-target WER rose from 2.1% to 3.6% (ws10) and 5.3% (ws32). The NeMo FFI rejects lists over 32 phrases, so `large` failed every request.
+- **Qwen3-ASR.** Context words raised recall by 38–40 points and lowered non-target WER on positives (10.8% → 6.8% at ws10). The harm is narrower but real: ordinary words that are also terms were capitalized as terms (calico → Calico, envoy → Envoy, parakeet → Parakeet, vesper → Vesper; "low key" → Loki), 7 of 72 ordinary-word supplement clips at ws32 against 1 of 278 frozen negatives. Twice the model emitted the hint list itself as the transcript ("Turn right at the second light." → a list of 30 names at ws32; a FLEURS clip ending in a list of names at ws10). The 150-entry list overflowed the 512-token context on most FLEURS clips (77/92 failed) and added about 0.5 s per decode. Noise-mixed positives behave like clean ones (pink 13.1% → 54.8%, babble 17.9% → 56.5% exact recall at ws32).
+
+### Correction gate on hook-less models
+
+`gate_exact` uses the condition's normalizations; `gate_near_miss` adds near-miss repairs against up to 16 references. Hint lists never reach these models, so `raw` is identical in every condition.
+
+| Model | Lane | Raw recall | ws32 `gate_exact` | ws32 `gate_near_miss` | Gate changes / harmful (ws32) | Hard-negative FA (any condition) | FLEURS FA |
+| --- | --- | --- | --- | --- | --- | --- | --- |
+| Cohere | positives, clean | 32.7% / 45.2% (4 of 158 failed: duration token limit) | 44.6% / 56.0% | 50.0% / 61.3% | exact 20/0; near-miss 9/0 | 1/350 before the gate, gate adds 0 | 0/92; near-miss 1/92 under `wrong32` |
+| Cohere | positives, pink / babble | 29.8% / 28.0% | 38.7% / 39.3% | 44.6% / 46.4% | no harmful changes | — | — |
+| Cohere | LibriSpeech | 81.6% / 94.0% (2 failed) | 85.9% / 94.0% | 86.7% / 94.8% | exact 32/0; near-miss 8/1 | — | — |
+| Parakeet | positives, clean | 27.4% / 37.5% | 41.1% / 49.4% | 46.4% / 54.8% | exact 23/0; near-miss 9/0 | 1/350 before the gate, gate adds 0 | 0/92 |
+| Parakeet | positives, pink / babble | 23.8% / 24.4% | 35.7% / 38.1% | 41.7% / 43.5% | no harmful changes | — | — |
+| Parakeet | LibriSpeech | 76.1% / 90.3% | 80.7% / 90.3% | 83.7% / 93.3% | exact 34/0; near-miss 22/0 | — | — |
+
+- **Text-only negatives:** 0 gate changes and 0 near-miss changes on 2,595 sentences in every condition (≤0.12% at 95%).
+- **Authored tier** (`gate_exact_authored`, which may not rejoin ordinary words) recovers about half as much as the asserted tier (Cohere 38.1%, Parakeet 33.3% at ws32) with no harmful changes either.
+- **Near-miss harm on real speech.** On FLEURS the Cohere output "Toki Net Radio" (reference "TogiNet Radio") became "Loki Net Radio" under the `wrong32` list: a non-word proper noun one edit from a reference. On LibriSpeech one near-miss change on Cohere and none on Parakeet were harmful. On hinted Nemotron output (already full of inserted terms) near-miss repairs were harmful in 11 of 11 hard-negative cases. On Cohere and Parakeet output, near-miss repairs never touched a synthetic negative.
+- **Gate latency:** p95 under 0.04 ms per utterance in every lane (text work only).
+
+### Writer arm (Cohere, Qwen3.5-0.8B cleanup)
+
+Subset: 60 positives, 80 hard negatives, 40 FLEURS, conditions `none` and `ws32` only, with the condition's terms as profile vocabulary. Cleanup failed and kept the raw text on 9 of 360 requests (fidelity-check rejections and output limits); those rows are excluded from the `cleaned` columns below and listed here.
+
+| Lane | Raw | Cleaned (ws32 vocabulary) | Cleaned + `gate_exact` |
+| --- | --- | --- | --- |
+| Positives exact recall | 35.9% (23/64) | 36.8% (21/57) | 50.9% (29/57) |
+| Hard-negative FA | 0/80 | 0/80 | 0/80 |
+| FLEURS FA | 0/40 | 0/38 | 0/38 |
+
+With these spellings available the writer neither repaired nor introduced terms; the gate after cleanup added the same repairs as on raw text. Cleanup took about 90 ms p50 per request.
+
+### DPDFNet8 versus raw audio
+
+The desktop forces Silero VAD and DPDFNet8 on every recording. Here DPDFNet8 alone (no VAD) runs through the same manager frontend as the app, on all 158 positives in each noise variant; every row carries the frontend's execution evidence and none fell back to the original audio. Noise is synthetic: pink noise and three-talker FLEURS babble mixed at 10 dB SNR into TTS speech.
+
+| Model | Audio | Raw: recall (exact / ci), non-target WER | DPDFNet8: recall, non-target WER | ws32 `gate_exact` recall, raw → DPDFNet8 |
+| --- | --- | --- | --- | --- |
+| Cohere | clean | 32.7% / 45.2%, 10.0% | 32.7% / 42.9%, 10.8% | 44.6% → 42.9% |
+| Cohere | pink 10 dB | 29.8% / 39.9%, 11.1% | 23.8% / 33.3%, 10.9% | 38.7% → 33.9% |
+| Cohere | babble 10 dB | 28.0% / 37.5%, 11.9% | 25.6% / 32.7%, 13.2% | 39.3% → 35.7% |
+| Parakeet | clean | 27.4% / 37.5%, 7.8% | 27.4% / 35.7%, 8.3% | 41.1% → 38.1% |
+| Parakeet | pink 10 dB | 23.8% / 33.3%, 10.3% | 20.8% / 28.0%, 12.4% | 35.7% → 28.6% |
+| Parakeet | babble 10 dB | 24.4% / 33.3%, 11.4% | 21.4% / 29.2%, 12.6% | 38.1% → 32.7% |
+
+Failures: Cohere 4 / 4 / 4 raw and 4 / 1 / 5 with DPDFNet8 (duration token limit); Parakeet none. DPDFNet8 lowered case-insensitive term recall in all six lanes (by 1.8–6.6 points) and raised non-target WER in five of six. The denominator is 168 target occurrences per lane and no significance test was run, so this is a consistent direction rather than a qualified effect size. It is evidence against learning only from denoised audio, and supports measuring the forced desktop frontend on real dictation before learning depends on it. Silero VAD, which the desktop also forces, was not part of this comparison.
 
 ## Hook decisions
 
-Every hook stays `declared` until this page records a measured decision.
+Gates are the predeclared ones in [native qualification](native-qualification.md#recognizer-hook-qualification).
+
+| Hook | Benefit | ≤1 pt FA increase, upper bound ≤3% | FLEURS WER ≤ +0.5 pt | No new failures | Status |
+| --- | --- | --- | --- | --- | --- |
+| Nemotron `phrase_bias` | pass (+39.9 / +38.7 pts) | **fail** (ws32 +21.1 pts hard negatives, +33.7 pts FLEURS) | **fail** (+6.9 pts) | pass at ws10/ws32 | **`disabled`** |
+| Qwen3-ASR `prompt_context` | pass (+38.6 / +40.4 pts) | **fail** at ws32 (+2.3 pts, upper bound 4.1%); wrong32 and FLEURS pass | pass (+0.4 pts) | pass at ws10/ws32 | **`disabled`** |
+
+Both hooks raise term recall substantially, which is consistent with the published picture that biasing raises recall while precision falls. Neither passes the false-alarm gate, so neither receives automatic hints. Vocabulary reaches every model through the correction gate, which added 12–14 points of exact recall on Cohere and Parakeet with no measured harm on target-free speech in its exact mode. The Settings opt-in phrase list still reaches Nemotron, as before; the Nemotron result suggests reviewing that switch.
+
+Candidates for a new, predeclared run (hypotheses, not results): Qwen3-ASR with lists that exclude ordinary-word terms and a 10-phrase cap, measured on fresh ordinary-word negatives; and a guard that rejects a transcript echoing the hint list.
+
+## Limitations
+
+- Positives and most negatives are synthetic TTS of templated sentences; real dictation, accents and microphones are not covered. Real speech enters only through 92 FLEURS clips and 271 LibriSpeech utterances.
+- The ordinary-word supplement (72 clips) was added after the corpus freeze but before any model output was produced; the frozen negatives alone would have shown Qwen3-ASR at 1/278.
+- Upper bounds on FLEURS are wide (n = 92 gives ≤3.2% even with zero events).
+- Nemotron was measured on completed audio, not the live stream the app uses for drafts.
+- The writer arm uses `none` and `ws32` only, on a 180-utterance subset; it uses profile vocabulary, not working-set references.
+- Latency was measured on a shared machine on battery power.
+- Two scorer defects were fixed after the first runs were scored (case-insensitive harm, and a DPDFNet8 run whose model root lacked frontend artifacts so the manager silently used original audio). No condition, threshold or list was changed; the invalid run is kept locally and excluded.

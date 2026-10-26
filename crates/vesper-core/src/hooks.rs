@@ -22,7 +22,7 @@ pub enum HookStatus {
     Declared,
     /// Passed the term evaluator for this adapter; receives automatic hints.
     Qualified,
-    /// Measured as harmful or unusable; never receives hints.
+    /// Measured as harmful or unusable; never receives automatic hints.
     Disabled,
 }
 
@@ -54,17 +54,18 @@ impl SpeechHook {
         max_bytes: 0,
     };
 
-    /// Automatic working-set hints reach only qualified hooks.
-    pub fn accepts_working_set(&self, evaluate_declared: bool) -> bool {
-        self.kind != SpeechHookKind::None
-            && (self.status == HookStatus::Qualified
-                || (evaluate_declared && self.status == HookStatus::Declared))
+    /// Automatic working-set hints reach only qualified hooks. The development
+    /// evaluator (`evaluate`) may measure any hook that exists, so a disabled
+    /// hook can be re-measured; the application never sets it.
+    pub fn accepts_working_set(&self, evaluate: bool) -> bool {
+        self.kind != SpeechHookKind::None && (self.status == HookStatus::Qualified || evaluate)
     }
 
     /// The explicit Settings opt-in list (`speech_bias_enabled`) keeps its existing
-    /// behavior on phrase-bias hooks unless measurement disabled the hook.
+    /// behavior on phrase-bias hooks. It is the user's own choice, so qualification
+    /// status (which governs automatic hints) does not remove it.
     pub fn accepts_manual_phrases(&self) -> bool {
-        self.kind == SpeechHookKind::PhraseBias && self.status != HookStatus::Disabled
+        self.kind == SpeechHookKind::PhraseBias
     }
 }
 
@@ -73,8 +74,8 @@ impl SpeechHook {
 #[derive(Debug, Clone, Default, PartialEq, Eq)]
 pub struct DecodeContext {
     pub working_set: WorkingSet,
-    /// Development evaluator only: send hints to a `declared` hook so it can be
-    /// measured. The application never sets this.
+    /// Development evaluator only: send hints to an unqualified (declared or
+    /// disabled) hook so it can be measured. The application never sets this.
     pub evaluate_declared_hooks: bool,
     /// Development evaluator only, with `evaluate_declared_hooks`: replace the
     /// hook's (phrases, bytes) limits to measure list-size degradation. Native
@@ -252,22 +253,20 @@ mod tests {
     }
 
     #[test]
-    fn evaluator_can_measure_declared_but_never_disabled_hooks() {
+    fn evaluator_can_measure_unqualified_hooks_but_never_hookless_adapters() {
         let mut p = profile(&["kubectl"], &[], false);
         p.decode_context.as_mut().unwrap().evaluate_declared_hooks = true;
-        let declared = SpeechHook {
-            status: HookStatus::Declared,
-            ..QUALIFIED
-        };
-        assert_eq!(
-            recognizer_hints(&declared, &p, Language::English).phrases,
-            ["kubectl"]
-        );
-        let disabled = SpeechHook {
-            status: HookStatus::Disabled,
-            ..QUALIFIED
-        };
-        assert!(recognizer_hints(&disabled, &p, Language::English)
+        for status in [HookStatus::Declared, HookStatus::Disabled] {
+            let hook = SpeechHook {
+                status,
+                ..QUALIFIED
+            };
+            assert_eq!(
+                recognizer_hints(&hook, &p, Language::English).phrases,
+                ["kubectl"]
+            );
+        }
+        assert!(recognizer_hints(&SpeechHook::NONE, &p, Language::English)
             .phrases
             .is_empty());
     }
@@ -291,6 +290,16 @@ mod tests {
         )
         .phrases
         .is_empty());
+        // Disabling automatic hints leaves the explicit opt-in list in place.
+        let disabled = SpeechHook {
+            status: HookStatus::Disabled,
+            ..QUALIFIED
+        };
+        let both = profile(&["kubectl"], &["Vesper"], true);
+        assert_eq!(
+            recognizer_hints(&disabled, &both, Language::English).phrases,
+            ["Vesper"]
+        );
         // A working set replaces the usage-ranked manual list on a qualified hook.
         let both = profile(&["kubectl"], &["Vesper"], true);
         assert_eq!(
