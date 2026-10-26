@@ -12,7 +12,8 @@ A normalization applies only when all of these hold:
 2. The spoken form occurs as an exact token sequence (ignoring case). It must not cross punctuation, a sentence or line boundary, or sit inside quotes (`boundary`).
 3. Neither side contains a protected class: numbers, weekdays, months, dates, negation, uncertainty, pronouns or auxiliaries (`protected_class`).
 4. **Heard-plausibility gate.** If every heard token is an ordinary English word, the span already makes sense as speech, and the gate refuses to change it into a different word (`ordinary_language`). The one exception is a *user-asserted* spelling with exactly the same letters, such as `type script` → `TypeScript`. A rejoin into an ordinary word is still refused.
-5. Overlapping candidates abstain (`ambiguous`). Replacement is single-pass and does not cascade.
+5. A mined (tier B) term, or any snake_case, dotted or `::` identifier, may rejoin several heard words only when none of them is an ordinary word. `sherpa onnx` → `sherpa_onnx` passes. `ASR models` → `ASR_MODELS` and `ASR model` → `AsrModel` are refused (`ordinary_language`). Before this rule, replaying real dictation history produced these two wrong changes, five times in total.
+6. Overlapping candidates abstain (`ambiguous`). Replacement is single-pass and does not cascade.
 
 Every declined candidate is returned with its reason, so evaluation and diagnostics can count what the gate blocked.
 
@@ -26,7 +27,7 @@ The gate therefore has an experimental near-miss rule over the working set's **r
 
 - the heard token is not an ordinary word, has at least four letters, and is not protected or quoted;
 - it is within one letter edit of exactly one reference (two edits from eight letters), with a unique best match;
-- it is not merely an inflection of that reference (`LLMs` stays `LLMs`).
+- it is not merely an inflection of that reference, in either direction (`LLMs` stays `LLMs`, `tokenizer` stays `tokenizer` against `tokenizers`).
 
 `NearMiss::Shadow` (the default) records proposals in `GateResult::near_misses` without changing text. `NearMiss::Apply` applies them. The default changes only on evaluator evidence: zero would-fire changes on correct words across the hard-negative bank and the retained-history replay. See the [term evaluation](term-evaluation.md).
 

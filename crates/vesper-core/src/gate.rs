@@ -137,9 +137,11 @@ fn near_miss<'a>(heard: &str, references: &'a [String]) -> Option<&'a str> {
         .filter(|r| !r.contains(char::is_whitespace))
         .filter_map(|r| {
             let target = letters(r);
-            let inflection = ["s", "es", "ed", "ing", "er", "ers"]
-                .iter()
-                .any(|suffix| heard_letters == format!("{target}{suffix}"));
+            // Either direction: `LLMs` vs `LLM`, `tokenizer` vs `tokenizers`.
+            let inflection = ["s", "es", "ed", "ing", "er", "ers"].iter().any(|suffix| {
+                heard_letters == format!("{target}{suffix}")
+                    || target == format!("{heard_letters}{suffix}")
+            });
             (target != heard_letters && !inflection)
                 .then(|| (edit_distance(&heard_letters, &target), r.as_str()))
         })
@@ -158,6 +160,10 @@ fn near_miss<'a>(heard: &str, references: &'a [String]) -> Option<&'a str> {
 /// - protected classes, quotes and sentence/line boundaries are never crossed;
 /// - an ordinary-language span changes only to a user-asserted spelling with the
 ///   same letters (`type script` → `TypeScript`), never to a different word;
+/// - a mined (authored) term, or any snake/dotted identifier, rejoins several
+///   words only when none of them is an ordinary word: `sherpa onnx` →
+///   `sherpa_onnx`, never `ASR models` → `ASR_MODELS` (found replaying real
+///   dictation history);
 /// - overlapping candidates abstain. Replacement is single-pass and non-cascading.
 pub fn correction_gate(text: &str, set: &WorkingSet, language: Language) -> GateResult {
     correction_gate_with(text, set, language, NearMiss::default())
@@ -217,10 +223,13 @@ pub fn correction_gate_with(
                 result.declined.push(decline(GateDecline::Boundary));
             } else if protected(heard) || protected(&item.spelling) {
                 result.declined.push(decline(GateDecline::ProtectedClass));
-            } else if ordinary_language(heard)
+            } else if (ordinary_language(heard)
                 && !(item.tier == TermTier::Asserted
                     && letters(heard) == letters(&item.spelling)
-                    && !ordinary_word(&letters(&item.spelling)))
+                    && !ordinary_word(&letters(&item.spelling))))
+                || ((item.tier == TermTier::Authored || item.spelling.contains(['_', '.', ':']))
+                    && slice.len() > 1
+                    && slice.iter().any(|t| ordinary_word(t.text)))
             {
                 result.declined.push(decline(GateDecline::OrdinaryLanguage));
             } else {
@@ -441,6 +450,7 @@ mod tests {
                 "diarization",
                 "LLM",
                 "Canada",
+                "tokenizers",
             ]
             .map(String::from)
             .to_vec(),
@@ -458,6 +468,7 @@ mod tests {
         for raw in [
             "We visited Kannada and Canada.",
             "Compare two LLMs today.",
+            "Check the tokenizer also.",
             "Write vespers at dusk.",
             "Say \"vasper\" slowly.",
             "Send the notes now.",
@@ -476,5 +487,25 @@ mod tests {
         assert!(correction_gate("open vasper", &tied, Language::English)
             .near_misses
             .is_empty());
+    }
+
+    #[test]
+    fn mined_identifiers_never_rejoin_prose_words() {
+        let rules = set(&[
+            ("asr models", "ASR_MODELS", TermTier::Authored),
+            ("asr model", "AsrModel", TermTier::Authored),
+            ("sherpa onnx", "sherpa_onnx", TermTier::Authored),
+        ]);
+        let raw = "We compare ASR models and one ASR model with sherpa onnx.";
+        let out = correction_gate(raw, &rules, Language::English);
+        assert_eq!(
+            out.text,
+            "We compare ASR models and one ASR model with sherpa_onnx."
+        );
+        let asserted = set(&[("asr models", "ASR_MODELS", TermTier::Asserted)]);
+        assert_eq!(
+            correction_gate("compare ASR models", &asserted, Language::English).text,
+            "compare ASR models"
+        );
     }
 }
