@@ -80,7 +80,10 @@ make audit-python-coreml-convert
 ```
 
 Use `uv add --dev PACKAGE` / `uv remove --dev PACKAGE` for contributor tools.
-Ruff configuration lives in the root `pyproject.toml`. Make targets invoke
+Ruff configuration lives in the root `pyproject.toml`. Its `required-version`
+accepts any Ruff 0.17.x so a Dependabot patch bump passes on its own; the exact
+version comes from `uv.lock`, and a minor bump (0.18) must update this range
+together with any formatting changes. Make targets invoke
 Python, Ruff, pre-commit, ShellCheck and shfmt through `uv run --locked`; old
 `.tooling/ci-venv` installations are preserved but no longer selected. Set
 `UV_PYTHON=3.12` to match CI. The Makefile keeps uv's download cache in ignored

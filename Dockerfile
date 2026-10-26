@@ -10,7 +10,7 @@ COPY apps/desktop apps/desktop
 COPY models/presets.json models/presets.json
 RUN npm run build --workspace @vesper/desktop
 
-FROM nginxinc/nginx-unprivileged:1.31.6-alpine@sha256:884e0b7f42f303641b0f4e78755aea647521dca0b89ca3be7992ad78b5c07434
+FROM nginxinc/nginx-unprivileged:1.31.7-alpine@sha256:b5047b9b76845eac124358373c6852377c52e4b05834a47647e955dd91cb8f1e
 ARG APP_VERSION=dev
 LABEL org.opencontainers.image.title="Vesper browser preview" \
       org.opencontainers.image.description="Static UI preview; microphone capture and local inference require the native desktop app" \

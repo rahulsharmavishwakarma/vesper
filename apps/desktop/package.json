@@ -11,7 +11,7 @@
   },
   "dependencies": {
     "@tauri-apps/api": "2.12.3",
-    "@tauri-apps/plugin-dialog": "2.8.2",
+    "@tauri-apps/plugin-dialog": "2.8.3",
     "@tauri-apps/plugin-notification": "2.7.0",
     "@tauri-apps/plugin-process": "2.4.0",
     "@tauri-apps/plugin-updater": "2.13.3"
@@ -20,7 +20,7 @@
     "@sveltejs/vite-plugin-svelte": "7.3.1",
     "@types/node": "26.6.5",
     "svelte": "5.57.2",
-    "svelte-check": "4.7.6",
+    "svelte-check": "4.7.7",
     "typescript": "7.0.2",
     "vite": "8.3.4"
   }
