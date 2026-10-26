@@ -156,7 +156,7 @@ type checking is not claimed; most tooling is unannotated.
 
 Direct development versions are pinned in npm/Python manifests: ESLint 10.12.0,
 typescript-eslint 8.71.1, eslint-plugin-svelte 3.23.1, Prettier 3.9.10 with
-prettier-plugin-svelte 4.1.1, Ruff 0.17.0, ShellCheck 0.11.0 via shellcheck-py
+prettier-plugin-svelte 4.1.1, Ruff 0.17.x, ShellCheck 0.11.0 via shellcheck-py
 0.11.0.1, and shfmt 3.14.1 via shfmt-py 4.2.0. Node 24 is used in CI; the lint
 toolchain requires at least Node 22.13 in the supported 22.x line. ESLint permits
 intentionally unused underscore-prefixed callback arguments; Svelte TypeScript
