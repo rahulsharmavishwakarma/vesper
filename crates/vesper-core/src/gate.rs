@@ -61,13 +61,20 @@ fn lexicon() -> &'static Lexicon {
     VALUE.get_or_init(Lexicon::decode)
 }
 
-/// A single English word the lexicon knows, including simple possessives.
+/// A single English word the lexicon knows, including possessives, contractions
+/// (`don't`, `we'll`, `I'm`) and hyphenated compounds of known words.
 pub fn ordinary_word(word: &str) -> bool {
     let lower = word.to_lowercase().replace('’', "'");
-    let base = lower
-        .strip_suffix("'s")
-        .or_else(|| lower.strip_suffix('\''))
-        .unwrap_or(&lower);
+    if lower.contains('-') {
+        return lower
+            .split('-')
+            .all(|part| !part.is_empty() && ordinary_word(part));
+    }
+    let base = match lower.rsplit_once('\'') {
+        Some((base, "s" | "m" | "ll" | "re" | "ve" | "d" | "t" | "")) => base,
+        Some(_) => return false,
+        None => &lower,
+    };
     !base.is_empty() && base.bytes().all(|b| b.is_ascii_lowercase()) && lexicon().contains(base)
 }
 
@@ -205,10 +212,35 @@ mod tests {
 
     #[test]
     fn lexicon_decodes_and_knows_inflections_but_not_jargon() {
-        for word in ["point", "points", "making", "write", "notes", "Monday's"] {
+        for word in [
+            "point",
+            "points",
+            "making",
+            "write",
+            "notes",
+            "Monday's",
+            "don't",
+            "I'm",
+            "we’ll",
+            "you're",
+            "can't",
+            "self-improvement",
+            "drop-down",
+        ] {
             assert!(ordinary_word(word), "{word}");
         }
-        for word in ["onnx", "kubectl", "sortformer", "etcd", "ctl", ""] {
+        for word in [
+            "onnx",
+            "kubectl",
+            "sortformer",
+            "etcd",
+            "ctl",
+            "",
+            "agents.md",
+            "sherpa-onnx",
+            "x'y",
+            "-",
+        ] {
             assert!(!ordinary_word(word), "{word}");
         }
         assert!(ordinary_language("see the point"));
