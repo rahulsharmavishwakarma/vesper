@@ -12,5 +12,5 @@ dependencies = [
 
 [tool.uv]
 package = false
-required-version = ">=0.12.15,<0.13"
+required-version = ">=0.13.5,<0.14"
 environments = ["sys_platform == 'darwin' and platform_machine == 'arm64'"]
