@@ -4,6 +4,8 @@
 //! propose candidates elsewhere; it never decides here.
 use std::sync::OnceLock;
 
+use serde::{Deserialize, Serialize};
+
 use crate::memory::{crosses_boundary, protected, quoted, tokens};
 use crate::{
     GateChange, GateDecline, GateDeclined, GateResult, Language, TermTier, WorkingSet,
@@ -91,6 +93,66 @@ fn letters(text: &str) -> String {
         .collect()
 }
 
+fn edit_distance(a: &str, b: &str) -> usize {
+    let b = b.chars().collect::<Vec<_>>();
+    let mut row = (0..=b.len()).collect::<Vec<_>>();
+    for (i, x) in a.chars().enumerate() {
+        let mut prior = row[0];
+        row[0] = i + 1;
+        for (j, y) in b.iter().enumerate() {
+            let old = row[j + 1];
+            row[j + 1] = (row[j] + 1).min(old + 1).min(prior + usize::from(x != *y));
+            prior = old;
+        }
+    }
+    row[b.len()]
+}
+
+/// How the gate treats near-miss repairs of non-words (`vasper` → `Vesper`).
+#[derive(Debug, Clone, Copy, Default, PartialEq, Eq, Serialize, Deserialize)]
+#[serde(rename_all = "snake_case")]
+pub enum NearMiss {
+    Off,
+    /// Record proposals in `GateResult::near_misses` without changing text.
+    #[default]
+    Shadow,
+    Apply,
+}
+
+/// One token that is not an ordinary word, at least four letters, one edit from a
+/// single working-set reference (two edits from eight letters), and not merely an
+/// inflection of it. Ordinary words, protected classes and quotes are never touched.
+fn near_miss<'a>(heard: &str, references: &'a [String]) -> Option<&'a str> {
+    let heard_letters = letters(heard);
+    if heard_letters.chars().count() < 4 || ordinary_word(heard) || protected(heard) {
+        return None;
+    }
+    let bound = if heard_letters.chars().count() >= 8 {
+        2
+    } else {
+        1
+    };
+    let mut matches = references
+        .iter()
+        .filter(|r| !r.contains(char::is_whitespace))
+        .filter_map(|r| {
+            let target = letters(r);
+            let inflection = ["s", "es", "ed", "ing", "er", "ers"]
+                .iter()
+                .any(|suffix| heard_letters == format!("{target}{suffix}"));
+            (target != heard_letters && !inflection)
+                .then(|| (edit_distance(&heard_letters, &target), r.as_str()))
+        })
+        .filter(|(distance, _)| *distance <= bound)
+        .collect::<Vec<_>>();
+    matches.sort();
+    match matches.as_slice() {
+        [(_, only)] => Some(only),
+        [(best, spelling), (next, _), ..] if best < next => Some(spelling),
+        _ => None,
+    }
+}
+
 /// Apply the working set's exact spoken-form normalizations under the safety rules:
 /// - non-English or automatic language fails closed;
 /// - protected classes, quotes and sentence/line boundaries are never crossed;
@@ -98,11 +160,22 @@ fn letters(text: &str) -> String {
 ///   same letters (`type script` → `TypeScript`), never to a different word;
 /// - overlapping candidates abstain. Replacement is single-pass and non-cascading.
 pub fn correction_gate(text: &str, set: &WorkingSet, language: Language) -> GateResult {
+    correction_gate_with(text, set, language, NearMiss::default())
+}
+
+pub fn correction_gate_with(
+    text: &str,
+    set: &WorkingSet,
+    language: Language,
+    near_misses: NearMiss,
+) -> GateResult {
     let mut result = GateResult {
         text: text.to_owned(),
         ..GateResult::default()
     };
-    if set.normalizations.is_empty() || text.len() > MAX_GATE_TEXT_BYTES {
+    if (set.normalizations.is_empty() && set.references.is_empty())
+        || text.len() > MAX_GATE_TEXT_BYTES
+    {
         return result;
     }
     let words = tokens(text);
@@ -151,12 +224,40 @@ pub fn correction_gate(text: &str, set: &WorkingSet, language: Language) -> Gate
             {
                 result.declined.push(decline(GateDecline::OrdinaryLanguage));
             } else {
-                candidates.push((start, end, item));
+                candidates.push((start, end, item.spelling.clone(), item.term_id.clone()));
             }
         }
     }
-    candidates.sort_by(|a, b| (a.0, a.1, &a.2.spelling).cmp(&(b.0, b.1, &b.2.spelling)));
-    candidates.dedup_by(|a, b| a.0 == b.0 && a.1 == b.1 && a.2.spelling == b.2.spelling);
+    if language == Language::English && near_misses != NearMiss::Off {
+        for word in &words {
+            let covered = candidates
+                .iter()
+                .any(|(start, end, ..)| word.start < *end && *start < word.end);
+            if covered || quoted(text, word.start) {
+                continue;
+            }
+            if let Some(spelling) = near_miss(word.text, &set.references) {
+                let change = GateChange {
+                    start: word.start,
+                    end: word.end,
+                    heard: word.text.to_owned(),
+                    spelling: spelling.to_owned(),
+                    term_id: format!("reference:{spelling}"),
+                };
+                if near_misses == NearMiss::Apply {
+                    candidates.push((
+                        word.start,
+                        word.end,
+                        spelling.to_owned(),
+                        change.term_id.clone(),
+                    ));
+                }
+                result.near_misses.push(change);
+            }
+        }
+    }
+    candidates.sort();
+    candidates.dedup_by(|a, b| a.0 == b.0 && a.1 == b.1 && a.2 == b.2);
     let mut changes = Vec::new();
     for (i, candidate) in candidates.iter().enumerate() {
         if candidates
@@ -166,24 +267,24 @@ pub fn correction_gate(text: &str, set: &WorkingSet, language: Language) -> Gate
         {
             result.declined.push(GateDeclined {
                 heard: text[candidate.0..candidate.1].to_owned(),
-                spelling: candidate.2.spelling.clone(),
+                spelling: candidate.2.clone(),
                 reason: GateDecline::Ambiguous,
             });
         } else {
-            changes.push(*candidate);
+            changes.push(candidate.clone());
         }
     }
-    for (start, end, item) in changes.iter().rev() {
-        result.text.replace_range(*start..*end, &item.spelling);
+    for (start, end, spelling, _) in changes.iter().rev() {
+        result.text.replace_range(*start..*end, spelling);
     }
     result.applied = changes
         .into_iter()
-        .map(|(start, end, item)| GateChange {
+        .map(|(start, end, spelling, term_id)| GateChange {
             start,
             end,
             heard: text[start..end].to_owned(),
-            spelling: item.spelling.clone(),
-            term_id: item.term_id.clone(),
+            spelling,
+            term_id,
         })
         .collect();
     result
@@ -327,5 +428,53 @@ mod tests {
         let out = correction_gate("sherpa onnx runtime", &overlap, Language::English);
         assert_eq!(out.text, "sherpa onnx runtime");
         assert_eq!(out.declined.len(), 2);
+    }
+
+    #[test]
+    fn near_misses_repair_only_non_words_close_to_one_reference() {
+        let set = WorkingSet {
+            references: [
+                "Vesper",
+                "NVIDIA",
+                "Gemma",
+                "Colab",
+                "diarization",
+                "LLM",
+                "Canada",
+            ]
+            .map(String::from)
+            .to_vec(),
+            ..WorkingSet::default()
+        };
+        let raw = "Open vasper with Envidia GEMA in collab for DRization.";
+        let shadow = correction_gate(raw, &set, Language::English);
+        assert_eq!(shadow.text, raw);
+        assert_eq!(shadow.near_misses.len(), 5);
+        let applied = correction_gate_with(raw, &set, Language::English, NearMiss::Apply);
+        assert_eq!(
+            applied.text,
+            "Open Vesper with NVIDIA Gemma in Colab for diarization."
+        );
+        for raw in [
+            "We visited Kannada and Canada.",
+            "Compare two LLMs today.",
+            "Write vespers at dusk.",
+            "Say \"vasper\" slowly.",
+            "Send the notes now.",
+        ] {
+            let out = correction_gate_with(raw, &set, Language::English, NearMiss::Apply);
+            assert_eq!(out.text, raw, "{raw}");
+        }
+        assert_eq!(
+            correction_gate_with("open vasper", &set, Language::Hindi, NearMiss::Apply).text,
+            "open vasper"
+        );
+        let tied = WorkingSet {
+            references: vec!["Vesper".into(), "Vasser".into()],
+            ..WorkingSet::default()
+        };
+        assert!(correction_gate("open vasper", &tied, Language::English)
+            .near_misses
+            .is_empty());
     }
 }

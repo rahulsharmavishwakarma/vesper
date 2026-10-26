@@ -147,4 +147,7 @@ pub struct GateResult {
     /// Offsets refer to the input text.
     pub applied: Vec<GateChange>,
     pub declined: Vec<GateDeclined>,
+    /// Near-miss repairs of non-words; applied only under `NearMiss::Apply`.
+    #[serde(default)]
+    pub near_misses: Vec<GateChange>,
 }
