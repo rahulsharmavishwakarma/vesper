@@ -13,7 +13,15 @@ export interface ProjectRule {
 }
 export interface ProjectSelection {
   project: string;
-  source: 'manual' | 'application' | 'folder' | 'shared' | 'context_unavailable' | 'ambiguous';
+  source:
+    | 'manual'
+    | 'application'
+    | 'folder'
+    | 'shared'
+    | 'context_unavailable'
+    | 'ambiguous'
+    | 'workspace'
+    | 'category';
   ruleId: string | null;
 }
 export async function chooseProjectApplication(): Promise<{ id: string; name: string } | null> {
@@ -64,6 +72,7 @@ export interface PersonalizationProfile {
   activeProject: string;
   projectMode: 'manual' | 'automatic';
   projectRules: ProjectRule[];
+  automaticWorkspaces: boolean;
   automaticLearning: boolean;
   learningEpoch: number;
   vocabulary: VocabularyEntry[];
@@ -119,6 +128,7 @@ export const getPersonalization = async () => {
     ...profile,
     projectMode: profile.projectMode ?? 'manual',
     projectRules: profile.projectRules ?? [],
+    automaticWorkspaces: profile.automaticWorkspaces ?? true,
   };
 };
 export interface LearningOutcome {
