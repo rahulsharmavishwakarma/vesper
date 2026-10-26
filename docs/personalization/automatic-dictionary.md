@@ -69,6 +69,8 @@ This integrates the stronger fixed-context idea from the benchmarks. It does **n
 
 Each supporting edit records the recognizer family that produced the heard form, such as `cohere`, `parakeet`, `nemotron`, `qwen3-asr` or `whisper`. Runtimes of the same model share a family; fine-tunes such as Phonon-2 or Parakeet Redux have their own. An unconfirmed automatic alias applies only while a recognizer from one of its supporting families is selected, because a confusion learned from one model's errors says little about another's.
 
+The learned *spelling* is still model-independent: it joins the working set's references, so the [correction gate](correction-gate.md#near-miss-repair) can repair a non-word one letter away from it (`kubernets` → `kubernetes`) under any recognizer. Ordinary-word aliases stay with their family.
+
 Support recorded before policy 5 has no family and keeps applying to all models. Confirmed (ticked) and manual words are model-independent. Switching models therefore never deletes evidence: the alias waits in shadow until that model is selected again, or until fresh edits support it for the new one.
 
 ## Policy breaker

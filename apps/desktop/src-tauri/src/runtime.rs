@@ -675,7 +675,12 @@ mod tests {
                     .edit_latest_draft(root.clone(), &result.result_id, 0, after.into())
                     .unwrap();
             } else if attempt == 2 {
-                assert_eq!(result.personalized_transcript, None);
+                // No alias for this recognizer; the near-miss repair of the
+                // non-word against the learned spelling still applies.
+                let evidence = result.personalization_evidence.as_ref().unwrap();
+                assert!(evidence.applied.is_empty());
+                assert_eq!(evidence.gate.len(), 1);
+                assert_eq!(result.personalized_transcript.as_deref(), Some(after));
             } else {
                 assert_eq!(result.personalized_transcript.as_deref(), Some(after));
             }

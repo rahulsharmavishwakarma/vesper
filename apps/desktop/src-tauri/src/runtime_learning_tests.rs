@@ -276,7 +276,9 @@ fn automatic_app_learning_survives_restart_model_switch_and_forget_epoch() {
     }
     drop(runtime);
     let runtime = Arc::new(Runtime::default());
-    // Learned from Cohere's errors: Nemotron does not use the alias, Cohere still does.
+    // Learned from Cohere's errors: Nemotron does not use the alias. The learned
+    // word is still a model-independent spelling, so the gate's near-miss repair
+    // fixes the non-word `kubernets` for any recognizer.
     let result = complete(
         &root,
         &runtime,
@@ -285,7 +287,10 @@ fn automatic_app_learning_survives_restart_model_switch_and_forget_epoch() {
         Language::English,
         HEARD,
     );
-    assert_eq!(result.personalized_transcript, None);
+    let evidence = result.personalization_evidence.clone().unwrap();
+    assert!(evidence.applied.is_empty());
+    assert_eq!(evidence.gate.len(), 1);
+    assert_eq!(result.personalized_transcript.as_deref(), Some(EDITED));
     let result = complete(
         &root,
         &runtime,
