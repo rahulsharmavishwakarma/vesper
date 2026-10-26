@@ -273,11 +273,29 @@ pub fn select_working_set(
         hints.push(term.surface.clone());
     }
     let hint_hash = hint_hash(&hints);
-    let references = ranked
-        .iter()
-        .filter(|t| reference_eligible(&t.surface))
+    // Names and acronyms (`Vesper`, `NVIDIA`) are what a near-miss repair
+    // targets, so they fill references first; identifiers follow. Each group
+    // keeps the hint order.
+    let mut names = Vec::new();
+    let mut others = Vec::new();
+    for term in &ranked {
+        if names.len() == MAX_REFERENCES {
+            break;
+        }
+        let name = matches!(term.kind, TermKind::Name | TermKind::Acronym)
+            && term.surface.chars().any(char::is_uppercase);
+        if (name || others.len() < MAX_REFERENCES) && reference_eligible(term) {
+            if name {
+                names.push(term.surface.clone());
+            } else {
+                others.push(term.surface.clone());
+            }
+        }
+    }
+    let references: Vec<String> = names
+        .into_iter()
+        .chain(others)
         .take(MAX_REFERENCES)
-        .map(|t| t.surface.clone())
         .collect();
     let Some(raw) = raw else {
         return WorkingSet {
@@ -287,6 +305,19 @@ pub fn select_working_set(
             hint_hash,
         };
     };
+    // Post-ASR: spellings a heard non-word could be a near miss of come first,
+    // whatever their rank, so the gate sees every close candidate (and abstains
+    // when two are equally close).
+    let mut near = near_miss_candidates(raw, &ranked);
+    for surface in references {
+        if near.len() == MAX_REFERENCES {
+            break;
+        }
+        if !near.contains(&surface) {
+            near.push(surface);
+        }
+    }
+    let references = near;
     let grams = raw_ngrams(raw);
     let mut normalizations = Vec::new();
     for term in &ranked {
@@ -309,13 +340,88 @@ pub fn select_working_set(
     }
 }
 
-/// One token, at least four letters, and not an ordinary English word in any
-/// letter case. Three-letter acronyms are excluded because most of their
-/// one-edit neighbours are other acronyms (`NPU`/`TPU` → `GPU`).
-fn reference_eligible(surface: &str) -> bool {
+/// One token of at least four letters that is either not an ordinary English
+/// word, or a capitalized name or acronym (`Vesper`, `NVIDIA`) whose lowercase
+/// form happens to be in the lexicon. Near-miss safety rests on the *heard*
+/// token being a non-word; a lowercase ordinary word is never a reference.
+/// Three-letter acronyms are excluded because most of their one-edit neighbours
+/// are other acronyms (`NPU`/`TPU` → `GPU`).
+fn reference_eligible(term: &InventoryTerm) -> bool {
+    let surface = &term.surface;
     !surface.contains(char::is_whitespace)
         && surface.chars().filter(|c| c.is_alphabetic()).count() >= 4
-        && !crate::ordinary_word(surface)
+        && (!crate::ordinary_word(surface)
+            || (surface.chars().any(char::is_uppercase)
+                && matches!(term.kind, TermKind::Name | TermKind::Acronym)))
+}
+
+fn letters(text: &str) -> String {
+    text.chars()
+        .filter(|c| c.is_alphanumeric())
+        .flat_map(char::to_lowercase)
+        .collect()
+}
+
+/// Levenshtein distance, stopping early once it must exceed `limit`.
+fn within_edits(a: &str, b: &str, limit: usize) -> bool {
+    let (a, b) = (a.chars().collect::<Vec<_>>(), b.chars().collect::<Vec<_>>());
+    if a.len().abs_diff(b.len()) > limit {
+        return false;
+    }
+    let mut row = (0..=b.len()).collect::<Vec<_>>();
+    for (i, x) in a.iter().enumerate() {
+        let mut prior = row[0];
+        row[0] = i + 1;
+        for (j, y) in b.iter().enumerate() {
+            let old = row[j + 1];
+            row[j + 1] = (row[j] + 1).min(old + 1).min(prior + usize::from(x != y));
+            prior = old;
+        }
+        if row.iter().min().is_some_and(|m| *m > limit) {
+            return false;
+        }
+    }
+    row[b.len()] <= limit
+}
+
+/// Reference-eligible spellings within the correction gate's near-miss bound
+/// (one edit, two from eight letters) of a heard token that is not an ordinary
+/// word and has at least four letters. Rank order, capped at `MAX_REFERENCES`.
+fn near_miss_candidates(raw: &str, ranked: &[&InventoryTerm]) -> Vec<String> {
+    let heard = tokens(raw)
+        .iter()
+        .map(|t| letters(t.text))
+        .filter(|w| w.chars().count() >= 4 && !crate::ordinary_word(w))
+        .collect::<HashSet<_>>();
+    if heard.is_empty() {
+        return vec![];
+    }
+    let shortest = heard.iter().map(|h| h.chars().count()).min().unwrap_or(0);
+    let longest = heard.iter().map(|h| h.chars().count()).max().unwrap_or(0);
+    let mut found = Vec::new();
+    for term in ranked {
+        // Cheap length window first; letters are never longer than the surface.
+        let length = term.surface.chars().count();
+        if length + 2 < shortest || term.surface.contains(char::is_whitespace) {
+            continue;
+        }
+        let target = letters(&term.surface);
+        let size = target.chars().count();
+        if size + 2 < shortest || size > longest + 2 {
+            continue;
+        }
+        let close = heard.iter().any(|h| {
+            let bound = if h.chars().count() >= 8 { 2 } else { 1 };
+            *h != target && within_edits(h, &target, bound)
+        });
+        if close && reference_eligible(term) {
+            found.push(term.surface.clone());
+            if found.len() == MAX_REFERENCES {
+                break;
+            }
+        }
+    }
+    found
 }
 
 /// Lowercase word n-grams (n ≤ 6) of the raw text, tokenized like the gate.
@@ -438,6 +544,99 @@ mod tests {
     }
 
     #[test]
+    fn capitalized_names_are_references_but_lowercase_ordinary_words_are_not() {
+        let terms = vec![
+            term(
+                "v",
+                "Vesper",
+                TermTier::Authored,
+                TermSource::Documentation,
+                "",
+            ),
+            term(
+                "n",
+                "NVIDIA",
+                TermTier::Authored,
+                TermSource::Documentation,
+                "",
+            ),
+            term(
+                "p",
+                "point",
+                TermTier::Asserted,
+                TermSource::SpellingDictionary,
+                "",
+            ),
+            term(
+                "w",
+                "relative_path",
+                TermTier::Authored,
+                TermSource::Identifier,
+                "",
+            ),
+        ];
+        let set = select_working_set(&terms, &context("", AppCategory::Code), None);
+        assert_eq!(set.references, ["NVIDIA", "Vesper", "relative_path"]);
+        // Names come before higher-ranked identifiers.
+        let mut strong = term(
+            "i",
+            "sherpa_onnx",
+            TermTier::Asserted,
+            TermSource::ProjectDictionary,
+            "",
+        );
+        strong.evidence = 500;
+        let mut all = terms.clone();
+        all.push(strong);
+        let set = select_working_set(&all, &context("", AppCategory::Code), None);
+        assert_eq!(set.hints[0], "sherpa_onnx");
+        assert_eq!(
+            set.references,
+            ["NVIDIA", "Vesper", "sherpa_onnx", "relative_path"]
+        );
+    }
+
+    #[test]
+    fn post_asr_references_lead_with_near_misses_of_heard_non_words() {
+        let mut terms = (0..40)
+            .map(|i| {
+                let mut t = term(
+                    &i.to_string(),
+                    &format!(
+                        "Strongname{}{}",
+                        char::from(b'a' + (i / 26) as u8),
+                        char::from(b'a' + (i % 26) as u8)
+                    ),
+                    TermTier::Authored,
+                    TermSource::Documentation,
+                    "",
+                );
+                t.evidence = 100;
+                t
+            })
+            .collect::<Vec<_>>();
+        let mut weak = term(
+            "v",
+            "Vesper",
+            TermTier::Authored,
+            TermSource::Documentation,
+            "",
+        );
+        weak.evidence = 1;
+        terms.push(weak);
+        let ctx = context("", AppCategory::Code);
+        let pre = select_working_set(&terms, &ctx, None);
+        assert!(!pre.references.contains(&"Vesper".to_owned()));
+        let post = select_working_set(&terms, &ctx, Some("I opened vasper today"));
+        assert_eq!(post.references[0], "Vesper");
+        assert_eq!(post.references.len(), MAX_REFERENCES);
+        assert_eq!(post.hints, pre.hints);
+        // An ordinary heard word pulls in nothing.
+        let ordinary = select_working_set(&terms, &ctx, Some("I opened paper today"));
+        assert_eq!(ordinary.references, pre.references);
+    }
+
+    #[test]
     fn kinds_follow_shape() {
         assert_eq!(term_kind("ASR"), TermKind::Acronym);
         assert_eq!(term_kind("sherpa_onnx"), TermKind::Identifier);
@@ -480,7 +679,8 @@ mod tests {
         ];
         let set = select_working_set(&terms, &context("ws-1", AppCategory::Code), None);
         assert_eq!(set.hints, ["quuxCore", "cspellWord", "Zorblax"]);
-        assert_eq!(set.references, ["quuxCore", "cspellWord", "Zorblax"]);
+        // Capitalized names lead the references; identifiers follow in rank order.
+        assert_eq!(set.references, ["Zorblax", "quuxCore", "cspellWord"]);
         assert!(set.normalizations.is_empty());
         assert!(set.hint_hash.starts_with("fnv1a64:"));
         let email = select_working_set(&terms, &context("", AppCategory::Email), None);
@@ -616,9 +816,9 @@ mod tests {
         );
         assert_eq!(set.normalizations.len(), 1);
         assert_eq!(set.normalizations[0].spelling, "Kubernetes");
-        // "Mandy" is an ordinary name in the lexicon: a hint, never a reference.
+        // A capitalized name is a reference even when the lexicon lists it.
         assert_eq!(set.hints, ["Kubernetes", "Mandy"]);
-        assert_eq!(set.references, ["Kubernetes"]);
+        assert_eq!(set.references, ["Kubernetes", "Mandy"]);
     }
 
     #[test]

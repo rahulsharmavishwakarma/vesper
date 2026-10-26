@@ -494,7 +494,14 @@ fn classify(relative: &str) -> Option<FileClass> {
         "pyproject.toml" => return Some(FileClass::Manifest(ManifestKind::Python)),
         _ => {}
     }
-    if name.contains(".min.") || name.ends_with(".lock") || name.ends_with("-lock.yaml") {
+    let upper = name.to_ascii_uppercase();
+    if name.contains(".min.")
+        || name.ends_with(".lock")
+        || name.ends_with("-lock.yaml")
+        || ["LICENSE", "LICENCE", "COPYING", "NOTICE"]
+            .iter()
+            .any(|prefix| upper.starts_with(prefix))
+    {
         return None;
     }
     let extension = path.extension()?.to_str()?.to_ascii_lowercase();
@@ -560,6 +567,83 @@ fn without_urls(text: &str) -> std::borrow::Cow<'_, str> {
         out.push(' ');
     }
     std::borrow::Cow::Owned(out)
+}
+
+/// Weekday and month names are capitalized by English convention, not by the
+/// project, and are protected classes for correction.
+const CALENDAR_WORDS: &[&str] = &[
+    "monday",
+    "tuesday",
+    "wednesday",
+    "thursday",
+    "friday",
+    "saturday",
+    "sunday",
+    "january",
+    "february",
+    "march",
+    "april",
+    "may",
+    "june",
+    "july",
+    "august",
+    "september",
+    "october",
+    "november",
+    "december",
+];
+
+/// Prose words of one documentation line (backtick spans removed). Records a
+/// capitalized word whose lowercase form is ordinary when it is mid-sentence
+/// (not after sentence punctuation, markup or a line start), and every lowercase
+/// ordinary word, so admission can compare the two spellings.
+fn prose_words(line: &str, names: &mut HashSet<String>, lower: &mut HashSet<String>) {
+    let mut prose = String::with_capacity(line.len());
+    for (i, part) in line.split('`').enumerate() {
+        prose.push_str(if i % 2 == 0 { part } else { " ` " });
+    }
+    let bytes = prose.as_bytes();
+    let mut i = 0;
+    while i < bytes.len() {
+        if !bytes[i].is_ascii_alphabetic() {
+            i += 1;
+            continue;
+        }
+        let start = i;
+        while i < bytes.len() && bytes[i].is_ascii_alphabetic() {
+            i += 1;
+        }
+        let joined =
+            |b: Option<&u8>| b.is_some_and(|b| b.is_ascii_digit() || *b == b'_' || *b == b'-');
+        if joined(start.checked_sub(1).map(|p| &bytes[p])) || joined(bytes.get(i)) {
+            continue;
+        }
+        let word = &prose[start..i];
+        if word.len() < 3 || STOP_TOKENS.contains(&word.to_ascii_lowercase().as_str()) {
+            continue;
+        }
+        let lowercase = word.to_ascii_lowercase();
+        if !ordinary_word(&lowercase) || CALENDAR_WORDS.contains(&lowercase.as_str()) {
+            continue;
+        }
+        if word == lowercase {
+            lower.insert(lowercase);
+            continue;
+        }
+        let first_upper = word.as_bytes()[0].is_ascii_uppercase();
+        let rest = &word[1..];
+        // All capitals only up to six letters (`NVIDIA`); longer runs are
+        // emphasis or legal text (`LIABILITY`).
+        let name_case = first_upper
+            && (rest.bytes().all(|b| b.is_ascii_lowercase())
+                || (word.len() <= 6 && rest.bytes().all(|b| b.is_ascii_uppercase())));
+        let previous = prose[..start].trim_end().chars().next_back();
+        let initial = previous
+            .is_none_or(|c| c.is_ascii_digit() || ".!?:;\"'“‘([{*_|>#-–—/\\=<+~`".contains(c));
+        if name_case && !initial {
+            names.insert(word.to_owned());
+        }
+    }
 }
 
 /// Shape class of a candidate token, or `None` when it is ordinary or junk.
@@ -838,10 +922,19 @@ pub struct Accumulator {
     pub tokens: BTreeMap<String, TokenStat>,
     /// Distinct files containing any spelling that folds to this key.
     pub folded_files: BTreeMap<String, u32>,
+    /// Capitalized words whose lowercase form is ordinary (`Vesper`, `NVIDIA`):
+    /// documentation files where the capitalized form appears mid-sentence.
+    #[serde(default)]
+    pub names: BTreeMap<String, u32>,
+    /// Documentation files using an ordinary word in lowercase prose.
+    #[serde(default)]
+    pub prose_lower: BTreeMap<String, u32>,
 }
 
 #[derive(Default)]
 struct FileTokens {
+    names: HashSet<String>,
+    prose_lower: HashSet<String>,
     seen: HashSet<String>,
     defined: HashSet<String>,
     manifest: HashSet<String>,
@@ -900,6 +993,9 @@ impl Accumulator {
                     let heading = !fenced
                         && (1..=6).contains(&marks)
                         && line.as_bytes().get(marks) == Some(&b' ');
+                    if !fenced && !heading {
+                        prose_words(&line, &mut file.names, &mut file.prose_lower);
+                    }
                     for token in words(&line, false) {
                         if file.add(token) && heading {
                             file.heading.insert(token.to_owned());
@@ -946,6 +1042,12 @@ impl Accumulator {
         }
         for key in folds {
             *self.folded_files.entry(key).or_default() += 1;
+        }
+        for name in file.names {
+            *self.names.entry(name).or_default() += 1;
+        }
+        for word in file.prose_lower {
+            *self.prose_lower.entry(word).or_default() += 1;
         }
     }
 
@@ -995,6 +1097,32 @@ impl Accumulator {
                 TermSource::Identifier
             };
             admitted.push(MinedTerm::new(surface, source, scope, files));
+        }
+        // Consistently capitalized names whose lowercase form is an ordinary
+        // word: the capitalized spelling must appear mid-sentence in at least two
+        // documentation files and in more files than the lowercase prose word.
+        let mut best: HashMap<String, (&String, u32)> = HashMap::new();
+        for (surface, files) in &self.names {
+            let entry = best.entry(surface.to_lowercase()).or_insert((surface, 0));
+            if *files > entry.1 || (*files == entry.1 && surface < entry.0) {
+                *entry = (surface, *files);
+            }
+        }
+        for (lower, (surface, files)) in best {
+            let lowercase_files = self.prose_lower.get(&lower).copied().unwrap_or(0);
+            if files >= 2
+                && files > lowercase_files
+                && !admitted
+                    .iter()
+                    .any(|t| t.surface.eq_ignore_ascii_case(surface))
+            {
+                admitted.push(MinedTerm::new(
+                    surface,
+                    TermSource::Documentation,
+                    scope,
+                    files,
+                ));
+            }
         }
         admitted.sort_by(|a, b| b.count.cmp(&a.count).then(a.surface.cmp(&b.surface)));
         admitted
@@ -1487,6 +1615,48 @@ mod tests {
             .unwrap();
         assert_eq!(vesper.source, TermSource::Manifest);
         assert_eq!(vesper.spoken, ["vesper core"]);
+    }
+
+    #[test]
+    fn consistently_capitalized_names_are_admitted_even_when_ordinary_words() {
+        let mut acc = Accumulator::default();
+        acc.add_file(
+            "a.md",
+            "Install Vesper first. Then Vesper listens.\nWrite the note. I see the point.\n",
+        );
+        acc.add_file("b.md", "Open Vesper and an NVIDIA card. Write it down.\n");
+        acc.add_file("c.md", "We trained on NVIDIA hardware with Gemma.\n");
+        acc.add_file(
+            "d.md",
+            "A vesper is an evening prayer; the point stands. Gemma ran.\n",
+        );
+        acc.add_file(
+            "e.md",
+            "```\nuse Gemma here and Gemma there\n```\n## About Gemma\n**Gemma** | Gemma\n",
+        );
+        let admitted = acc.admit("ws");
+        let get = |s: &str| admitted.iter().find(|t| t.surface == s);
+        // Mid-sentence capitalized in two files, lowercase prose in one.
+        assert_eq!(get("Vesper").unwrap().count, 2);
+        assert_eq!(get("NVIDIA").unwrap().source, TermSource::Documentation);
+        // Sentence-initial only ("Gemma ran." after a semicolon-free sentence
+        // end), headings, fences, bold labels and table cells do not count.
+        assert!(get("Gemma").is_none());
+        assert!(get("Write").is_none());
+        assert!(get("Monday").is_none());
+        let mut legal = Accumulator::default();
+        legal.add_file(
+            "a.md",
+            "Provided without WARRANTY or LIABILITY of any kind.\n",
+        );
+        legal.add_file("b.md", "No WARRANTY and no LIABILITY here either.\n");
+        legal.add_file(
+            "LICENSE.md",
+            "Copyright Zorblax Holdings. Zorblax Holdings.\n",
+        );
+        legal.add_file("LICENSE-APACHE.txt", "Zorblax Holdings again.\n");
+        assert!(legal.admit("ws").is_empty());
+        assert!(get("point").is_none() && get("Point").is_none());
     }
 
     #[test]

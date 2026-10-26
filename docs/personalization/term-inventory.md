@@ -54,7 +54,7 @@ Outputs and caps (from `terms.rs`):
 | --- | --- | --- |
 | `hints` | 32 phrases, 2,048 bytes | Top-ranked spellings for a qualified recognizer hook |
 | `hint_hash` | — | `fnv1a64:<hex>` over the ordered hints; empty when there are no hints |
-| `references` | 16 | Top-ranked single-token spellings with at least four letters that are **not** ordinary English words. The gate's near-miss repair uses them, so an ordinary word must never be a reference. Three-letter acronyms are excluded because their one-edit neighbours are mostly other acronyms (`NPU` → `GPU`) |
+| `references` | 16 | Single-token spellings of at least four letters: names and acronyms first (`Vesper`, `NVIDIA`, `Qwen`), then identifiers, each in hint order. A reference is either not an ordinary English word, or a capitalized name or acronym whose lowercase form is in the lexicon; a lowercase ordinary word never is. The gate's near-miss repair uses them. Three-letter acronyms are excluded because their one-edit neighbours are mostly other acronyms (`NPU` → `GPU`). After ASR, spellings within the gate's near-miss bound (one edit, two from eight letters) of a heard non-word of four or more letters come first, whatever their rank: `vasper` → `Vesper`, `Envidia` → `NVIDIA`, `DRization` → `diarization` |
 | `normalizations` | 64 | Post-ASR only: `(spoken form, spelling, term ID, tier)` for every spoken form that occurs as a whole-word n-gram (n ≤ 6) in the raw text |
 
 Spoken forms come from `identifier_spoken_form`: camelCase, snake_case, kebab-case and dotted names split into lowercase words (`fooBarBaz` → `foo bar baz`, `HTTPServer` → `http server`, `vesper_core::terms` → `vesper core terms`). Digits stay attached (`k8s`, `utf8`), and forms longer than six words are dropped. Acronym letter forms are not generated. The selector only proposes normalizations; the [correction gate](correction-gate.md) decides whether each may apply.
@@ -97,6 +97,20 @@ A token is a candidate only if it has one of these shapes:
 | Lowercase non-dictionary word of 4+ letters | `rusqlite`, `diarization` | Defined, manifest or heading |
 
 "Dictionary" means the shared CMUdict-derived `ordinary_word` lexicon used by the correction gate, extended with regular inflections (`timings`, `retries`, `scoped`), common prefixes (`revalidate`, `denoising`) and, for lowercase words, two-word compounds (`runtime`, `frontend`). A short stoplist removes language keywords, ubiquitous library names (`and_then`, `Deserialize`) and generic tech words (`json`, `config`, `metadata`). Leading underscores, hash-like hex strings and chains of more than five words are rejected.
+
+**Consistently capitalized names.** Some names are also ordinary words in the lexicon: `Vesper`, `NVIDIA`, `Gemma`, `Colab`, `Whisper`, `Parakeet`. Such a name is admitted from documentation prose when all of these hold:
+
+- its capitalized form (an initial capital, or all capitals up to six letters) appears **mid-sentence** in at least two documentation files
+- it appears in more files than the lowercase prose word does
+
+These occurrences do not count:
+
+- a word after sentence punctuation, a line start, or markup (`*`, `|`, `#`, `>`, list numbers)
+- headings, fenced code and backtick spans
+- weekday and month names
+- license files (`LICENSE*`, `COPYING*`, `NOTICE*`)
+
+So "Write" at a sentence start and lowercase "point" are never admitted.
 
 Spellings that differ only in case or separators (`vesper-core`, `vesper_core`, `VesperCore`) are grouped. A group is admitted when **at least two distinct files** contain any of its spellings and the shape evidence holds. The admitted surface is the **majority spelling** by file count. Its evidence count is the group's file count.
 
@@ -200,23 +214,25 @@ So tier A contributed **nothing** on this machine.
 
 | Workspace | Tracked files scanned | Read | Admitted | Identifier / Docs / Manifest | Wall | CPU (user+sys) | Peak RSS |
 | --- | --- | --- | --- | --- | --- | --- | --- |
-| This repository | 585 | 6.4 MB | 1,461 | 1,185 / 203 / 73 | 0.37 s | 0.28 s | 46 MB |
-| Research repo 1 | 139 | 1.5 MB | 468 | 364 / 99 / 5 | 0.13 s | 0.10 s | 44 MB |
-| Research repo 2 | 137 | 1.6 MB | 476 | 361 / 107 / 8 | 0.13 s | 0.10 s | 44 MB |
+| This repository | 584 | 6.4 MB | 1,571 | 1,185 / 313 / 73 | 0.33 s | 0.32 s | 47 MB |
+| Research repo 1 | 139 | 1.5 MB | 506 | 364 / 137 / 5 | 0.11 s | 0.10 s | 44 MB |
+| Research repo 2 | 137 | 1.6 MB | 521 | 361 / 152 / 8 | 0.11 s | 0.10 s | 45 MB |
 
 - **Process overhead.** Wall time, CPU and RSS are for the whole process (`/usr/bin/time -l`). That includes decoding the shared lexicon, and the tier-A-only process already peaks at 41 MB.
 - **Unchanged rescan.** It read 0 files: about 5 ms of scanner time and 0.03 s for the whole process.
 - **Changed rescan.** Any change triggers a full pass of the same size as the first.
-- **Merged inventory.** The three repositories merge to 1,901 distinct rows.
+- **Merged inventory.** The three repositories merge to 2,041 distinct rows.
 
-**Dictionary words.** By the gate's `ordinary_word`:
+**Dictionary words.** By the gate's `ordinary_word`, 148 of the 1,571 admitted terms in this repository are ordinary:
 
-- 37 of the 1,461 admitted terms in this repository are ordinary: 35 hyphenated script names made of English words, plus `GitHub` and `setUp`.
-- 0 in each research repository.
-- By `/usr/share/dict/words`: 31 here, 17 and 18 in the research repositories.
-- Identifiers whose every part is an ordinary word (`relative_path`): 939, 241 and 235.
+- consistently capitalized names such as `Vesper` and `NVIDIA`
+- hyphenated script names made of English words
 
-**Sampled precision.** A seeded random sample of 50 admitted tier-B terms across the three repositories, judged by one non-blind rater:
+The research repositories have 38 and 45. `/usr/share/dict/words` gives 118, 51 and 58. Identifiers whose every part is an ordinary word (`relative_path`) number 1,050, 279 and 280.
+
+**Sampled precision.** One non-blind rater judged two seeded random samples.
+
+*50 tier-B terms*, drawn before name admission was added (the identifier, documentation and manifest rules are unchanged since):
 
 | Judgment | Count | Wilson 95% interval |
 | --- | --- | --- |
@@ -224,28 +240,39 @@ So tier A contributed **nothing** on this machine.
 | A real project identifier made of ordinary words (e.g. `lock_path`, `SettingsStore`): useful only when dictating code; the gate will not apply it to prose | 36 | — |
 | Junk: a library API, an English word missing from the lexicon, or a foreign word | 5 | — |
 
-So 45 of 50 are real project spellings (79–96%), but only about one in five is an ASR-hard term.
+*30 newly admitted capitalized names:*
+
+| Judgment | Count | Wilson 95% interval |
+| --- | --- | --- |
+| A project-relevant name (e.g. `NVIDIA`, `Gemma`, `Parakeet`, `Vesper`, `Chromium`) | 7 | 12–41% |
+| A real but generic proper noun ASR usually gets right (languages, companies, `Unix`) | 19 | — |
+| Junk | 4 | — |
+
+Two of the four junk names were all-capitals legal text from a license file. The six-letter all-capitals limit and the license-file skip, added after the sample was drawn, now exclude them. Overall, 79–96% of identifiers and 70–95% of names are real spellings, but only about one in five is ASR-hard and specific to the project.
 
 **Selector latency.** Per call, 200 iterations, in-memory:
 
 | Input | Pre-ASR p50 / p95 | Post-ASR p50 / p95 |
 | --- | --- | --- |
-| Real inventory, 1,901 rows, code context | 0.15 / 0.21 ms | 0.17 / 0.23 ms |
-| 20,000 rows, mostly in other scopes | 0.57–0.66 / 0.63–0.80 ms | 0.59–0.67 / 0.67–0.83 ms |
-| 20,000 rows, all in the current workspace (worst case) | 1.7 / 4.0 ms | 2.0 / 3.9 ms |
+| Real inventory, 2,041 rows, code context | 0.17 / 0.32 ms | 0.47 / 0.80 ms |
+| 20,000 rows, mostly in other scopes | 0.62 / 0.68 ms | 0.92 / 1.00 ms |
+| 20,000 rows, all in the current workspace, five heard non-words (worst case) | 1.8 / 2.4 ms | 4.0 / 6.6 ms |
 
-Loading 20,000 usable rows into the snapshot took 10.5–12.7 ms over four runs. FTS5 is not used: an in-memory pass is already below the snapshot load cost.
+Loading 20,000 usable rows into the snapshot took 10.6–11.5 ms over four runs. FTS5 is not used: an in-memory pass is about the same order as the snapshot load.
 
 **Working sets.**
 
-- **This repository in a code app:** 32 hints, led by `ASR`, `GPU`, `macOS`, `WER`, `float32`, `sha256`, `Qwen`, `numpy`, `onnx`, `sherpa` and `MLX`. Many hints are generic technical acronyms rather than personal terms.
-- **Email, or a shared context:** empty, because tier A was empty on this Mac and the profile vocabulary held no words.
+- **This repository in a code app:** 32 hints, led by `ASR`, `GPU`, `macOS`, `WER`, `float32`, `sha256`, `English`, `Qwen`, `numpy` and `CPU`. Many hints are generic technical words.
+- **Pre-ASR references:** `English`, `Qwen`, `MUCS`, `Nemotron`, `GGUF`, `Apple`, `CUDA`, `Hindi`, … Rank alone does not reach `Vesper` or `NVIDIA`.
+- **Post-ASR references:** for the heard tokens `vasper`, `Envidia`, `GEMA`, `collab` and `DRization` (recognizer errors reported from the owner's history), the first reference is `Vesper`, `NVIDIA`, `Gemma`, `Colab` and `diarization` respectively.
+- **Email, or a shared context:** empty, because tier A was empty on this Mac and the profile held no words.
 
-**Coverage against real history.** A read-only copy of the local history held 532 sessions with **0** user-edited drafts, so no user-authored spellings were available to check.
+**Coverage against real history.** A read-only copy of the local history held 532 sessions with **0** user-edited drafts, so no user-authored spellings could be checked.
 
 - Of 211 distinct non-ordinary tokens in kept (machine-written) text, 21 (10%) match an inventory spelling.
-- 37 of 1,901 inventory terms occur in that text by spelling or spoken form.
-- This cannot show whether the inventory contains the terms the owner *meant* when the recognizer misheard them. That needs labelled audio or user edits. The honest answer is **unknown**, with low overlap on this history: dictation here was mostly not about these repositories.
+- 75 of 2,041 inventory terms occur in that text by spelling or spoken form.
+- The five reported misrecognition targets are all in the inventory now. Before name admission, four of them were not, because the lexicon lists them as words.
+- Whether the inventory covers the owner's other intended terms remains **unknown**: that needs labelled audio or user edits.
 
 ## Limitations
 
