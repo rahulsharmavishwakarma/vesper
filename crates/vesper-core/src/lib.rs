@@ -5,6 +5,7 @@ mod config;
 mod diarization;
 pub mod environment;
 mod error;
+mod gate;
 mod generated;
 mod huggingface;
 mod learning;
@@ -30,6 +31,7 @@ pub use config::{
 };
 pub use diarization::{SpeakerSegment, SpeakerTimeline};
 pub use error::{Error, Result};
+pub use gate::correction_gate;
 pub use generated::runtime_language_code;
 pub use huggingface::{HuggingFaceFile, HuggingFaceProfile, ModelFileRole, ModelRuntime};
 pub use learning::*;

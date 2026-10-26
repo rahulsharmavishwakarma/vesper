@@ -99,3 +99,46 @@ pub const MAX_HINTS: usize = 32;
 pub const MAX_HINT_BYTES: usize = 2048;
 pub const MAX_REFERENCES: usize = 16;
 pub const MAX_NORMALIZATIONS: usize = 64;
+
+/// Why the correction gate declined a candidate change.
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
+#[serde(rename_all = "snake_case")]
+pub enum GateDecline {
+    /// The heard span already reads as ordinary language.
+    OrdinaryLanguage,
+    /// Numbers, dates, weekdays, months, negation, pronouns or function words.
+    ProtectedClass,
+    /// Overlapping candidates disagree.
+    Ambiguous,
+    /// Inside quotes or across a sentence/line boundary.
+    Boundary,
+    /// The language has no plausibility lexicon; non-exact changes fail closed.
+    UnsupportedLanguage,
+}
+
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct GateChange {
+    pub start: usize,
+    pub end: usize,
+    pub heard: String,
+    pub spelling: String,
+    pub term_id: String,
+}
+
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct GateDeclined {
+    pub heard: String,
+    pub spelling: String,
+    pub reason: GateDecline,
+}
+
+#[derive(Debug, Clone, Default, PartialEq, Eq, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct GateResult {
+    pub text: String,
+    /// Offsets refer to the input text.
+    pub applied: Vec<GateChange>,
+    pub declined: Vec<GateDeclined>,
+}
