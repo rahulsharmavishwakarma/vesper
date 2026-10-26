@@ -626,7 +626,16 @@ pub fn score_rows(
                         None => continue,
                     }
                 } else {
-                    baseline
+                    // Writer lanes decode every condition; plain lanes reuse `none`.
+                    decoded
+                        .get(&(
+                            model.clone(),
+                            frontend.clone(),
+                            sample.id.clone(),
+                            condition,
+                        ))
+                        .copied()
+                        .or(baseline)
                 };
                 let terms = condition_terms(manifest, sample, condition);
                 let hint_spellings = terms.iter().map(|t| t.spelling.clone()).collect::<Vec<_>>();

@@ -171,7 +171,8 @@ pub fn decode(arguments: &[String]) -> Result<(), Box<dyn std::error::Error>> {
     let hook = selection.config.speech_adapter().capabilities.speech_hook;
     let hooked = hook.kind != vesper_core::SpeechHookKind::None;
     // Hints cannot reach a hook-less model: one decode stands for every condition.
-    let conditions = if hooked {
+    // The writer arm still needs each condition's vocabulary, so it decodes all.
+    let conditions = if hooked || options.cleanup {
         options.conditions.clone()
     } else {
         vec![Condition::None]
@@ -183,7 +184,11 @@ pub fn decode(arguments: &[String]) -> Result<(), Box<dyn std::error::Error>> {
             .as_str()
             .unwrap_or("engine")
     );
-    let frontend = frontend_label(&options.frontend);
+    let mut frontend = frontend_label(&options.frontend);
+    if options.cleanup {
+        // A separate lane: writer rows never replace the plain decode rows.
+        frontend.push_str("+writer");
+    }
     let mut done = HashSet::new();
     if let Ok(file) = fs::File::open(&options.output) {
         for line in std::io::BufReader::new(file).lines() {
