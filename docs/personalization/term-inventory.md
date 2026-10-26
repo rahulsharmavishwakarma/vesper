@@ -167,13 +167,15 @@ After setup resolves the workspace and project, `select_working_set(language)` f
 
 **Why a plain thread instead of NSBackgroundActivityScheduler.** The scheduler would add an Objective-C block bridge and completion-handler lifetime across the FFI boundary for little gain. The worker already needs app-specific gates that the system cannot see: dictation and model activity. It also needs per-file cancellation. The system's own deferral signals that matter here are applied directly: thermal state, Low Power Mode and power source. The thread spends nearly all of its life blocked on a condition variable. A later change could move the trigger to the scheduler without touching the miners.
 
-**Opted-in roots (interim).** Tier-B mining runs only for roots the user opted into. Until the workspace store records that opt-in, roots come from the developer variable `VESPER_TERM_MINING_ROOTS`:
+**Opted-in roots.** Tier-B mining runs only for folder workspaces whose mining root you chose in Settings → Workspaces (`workspace_mining_roots` in the [workspace store](../../crates/vesper-data/src/workspaces.rs)). Their rows are scoped to the workspace key, which is the same key `resolve_context` puts in `WorkspaceContext.workspace_key` at capture start, and labelled with the workspace's name.
+
+When a root is cleared or its workspace removed, the next run drops that scope's mined evidence and cursor (`forget_term_workspace`). A merged-away workspace's rows are dropped the same way. The developer variable `VESPER_TERM_MINING_ROOTS` adds extra roots for testing:
 
 - entries are separated by `;`
 - each entry is `scope=/path` or a bare `/path`
-- a bare path's scope is its folder name, which matches a project of the same name
+- a bare path's scope is its folder name
 
-With no roots configured, only the global tier-A sources are mined.
+With no roots, only the global tier-A sources are mined.
 
 ## Settings view
 
@@ -277,7 +279,6 @@ Loading 20,000 usable rows into the snapshot took 10.6–11.5 ms over four runs.
 ## Limitations
 
 - **Unmeasured benefit.** Recognition and correction gains are not measured here. Hints reach a recognizer only through a qualified hook, and the correction gate makes its own decisions.
-- **Interim scopes.** Until the workspace store supplies opted-in roots and their salted keys, tier-B rows are scoped to the developer-configured scope string.
 - **Main-window path.** Recordings started from the main window, and file transcriptions, load their snapshot lazily in the runtime. They currently get an empty pre-ASR working set, so no hints are used and the post-ASR hints report empty.
 - **Admission is shape-based.** It admits many project identifiers made of ordinary words (`relative_path`). The gate refuses to rewrite ordinary-language spans into authored terms, so these mostly act as hints and references in code contexts.
 - **Lexicon gaps.** English words missing from the lexicon (`reproducible`) can still pass as names or lowercase terms.

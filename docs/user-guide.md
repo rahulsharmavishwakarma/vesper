@@ -539,8 +539,9 @@ writer produced.
 - **Forget** removes every word from one source and stops reading it until you
   choose **Resume**.
 
-Choosing project folders for this list is a developer setting for now. See
-[term inventory](personalization/term-inventory.md).
+Project folders are the ones you chose with **Learn words from this folder…**
+under Workspaces; clearing that choice removes the words found there on the
+next check. See [term inventory](personalization/term-inventory.md).
 
 **Project selection** can be manual or use application rules. In Vocabulary,
 choose **Use application rules**, click **Add application rule**, choose an app,

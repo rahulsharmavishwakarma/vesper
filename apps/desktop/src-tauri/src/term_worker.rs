@@ -94,10 +94,10 @@ fn gate(storage: &AppStorage) -> Option<Gate> {
     conditions.low_power_mode.then_some(Gate::LowPower)
 }
 
-/// Opted-in mining roots as `(scope, label, path)`. Until the workspace store
-/// records opt-ins, this reads `VESPER_TERM_MINING_ROOTS`: entries separated by
-/// `;`, each `scope=path` or a bare path (scope = folder name, which then
-/// matches a project of the same name).
+/// Developer-only extra mining roots as `(scope, label, path)` from
+/// `VESPER_TERM_MINING_ROOTS`: entries separated by `;`, each `scope=path` or a
+/// bare path (scope = folder name, which then matches a project of that name).
+/// Ordinary opt-in comes from the workspace store's mining roots.
 pub fn mining_roots() -> Vec<(String, String, PathBuf)> {
     parse_mining_roots(&std::env::var("VESPER_TERM_MINING_ROOTS").unwrap_or_default())
 }
@@ -241,7 +241,23 @@ fn mine(
             );
         }
     }
-    let roots = mining_roots();
+    // Opted-in roots from the workspace store (scope = workspace key), plus the
+    // developer variable. Scopes no longer opted in lose their mined evidence.
+    let mut roots = store
+        .workspace_mining_roots()?
+        .into_iter()
+        .filter_map(|w| {
+            let path = PathBuf::from(w.mining_root?).canonicalize().ok()?;
+            Some((w.key, w.label, path))
+        })
+        .collect::<Vec<_>>();
+    roots.extend(mining_roots());
+    roots.truncate(32);
+    for scope in store.mined_workspace_scopes()? {
+        if !roots.iter().any(|(key, _, _)| *key == scope) {
+            add(run, &store.forget_term_workspace(&scope, now)?);
+        }
+    }
     if roots.is_empty() {
         run.terms_total = store.inventory_terms()?.len();
         return Ok(());

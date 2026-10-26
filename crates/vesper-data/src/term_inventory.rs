@@ -517,6 +517,37 @@ impl DatasetStore {
         Ok(())
     }
 
+    /// Workspace scopes that have a scan cursor (mined at least once).
+    pub fn mined_workspace_scopes(&self) -> Result<Vec<String>> {
+        let mut statement = self
+            .connection
+            .prepare("SELECT key FROM term_mining_state WHERE key LIKE 'cursor:%' ORDER BY key")?;
+        let rows = statement.query_map([], |r| r.get::<_, String>(0))?;
+        rows.map(|r| Ok(r?.trim_start_matches("cursor:").to_owned()))
+            .collect()
+    }
+
+    /// Drop every workspace-scoped source's evidence for `scope` and its cursor,
+    /// for a workspace whose mining root was cleared or that was removed.
+    pub fn forget_term_workspace(&self, scope: &str, now_ms: i64) -> Result<MergeReport> {
+        let report = self.replace_mined_sources(
+            &[
+                TermSource::Identifier,
+                TermSource::Manifest,
+                TermSource::Documentation,
+                TermSource::ProjectDictionary,
+            ],
+            scope,
+            &[],
+            now_ms,
+        )?;
+        self.connection.execute(
+            "DELETE FROM term_mining_state WHERE key = ?1",
+            [format!("cursor:{scope}")],
+        )?;
+        Ok(report)
+    }
+
     pub fn workspace_mining_cursor(&self, scope: &str) -> Result<WorkspaceCursor> {
         Ok(self
             .mining_state(&format!("cursor:{scope}"))?
@@ -931,6 +962,54 @@ mod tests {
         assert_eq!(post.hint_hash, snapshot.working_set.hint_hash);
         assert_eq!(post.normalizations.len(), 1);
         assert_eq!(post.normalizations[0].spelling, "sherpa_onnx");
+    }
+
+    #[test]
+    fn forgetting_a_workspace_drops_only_its_scoped_evidence_and_cursor() {
+        let (_dir, store) = store();
+        store
+            .replace_mined_terms(
+                TermSource::TextReplacement,
+                "",
+                &[mined("Zorblax", TermSource::TextReplacement, "", 1)],
+                1,
+            )
+            .unwrap();
+        for scope in ["ws-1", "ws-2"] {
+            store
+                .replace_mined_sources(
+                    &[TermSource::Identifier],
+                    scope,
+                    &[
+                        mined("Zorblax", TermSource::Identifier, scope, 2),
+                        mined(
+                            &format!("only_{}", scope.replace('-', "")),
+                            TermSource::Identifier,
+                            scope,
+                            2,
+                        ),
+                    ],
+                    1,
+                )
+                .unwrap();
+            store
+                .save_workspace_mining_cursor(scope, &WorkspaceCursor::default())
+                .unwrap();
+        }
+        assert_eq!(store.mined_workspace_scopes().unwrap(), ["ws-1", "ws-2"]);
+        let report = store.forget_term_workspace("ws-1", 2).unwrap();
+        assert_eq!(report.dropped, 1);
+        assert_eq!(store.mined_workspace_scopes().unwrap(), ["ws-2"]);
+        let terms = store.inventory_terms().unwrap();
+        assert_eq!(
+            terms
+                .iter()
+                .find(|t| t.surface == "Zorblax")
+                .unwrap()
+                .scopes,
+            ["", "ws-2"]
+        );
+        assert!(terms.iter().all(|t| t.surface != "only_ws1"));
     }
 
     #[test]
