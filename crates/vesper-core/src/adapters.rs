@@ -1,6 +1,9 @@
 //! Compiled architecture contracts. Model repositories supply data, never code.
 //! Resolve at request/load boundaries; native runtimes own all frame/token kernels.
-use crate::{AppConfig, AsrEngine, AsrModel, ComputeBackend, Language, ModelRole};
+use crate::{
+    AppConfig, AsrEngine, AsrModel, ComputeBackend, ConfidenceKind, HookStatus, Language,
+    ModelRole, SpeechHook, SpeechHookKind,
+};
 use serde::Serialize;
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize)]
@@ -36,7 +39,10 @@ pub enum CacheState {
 pub struct AdapterCapabilities {
     pub offline: bool,
     pub native_streaming: bool,
-    pub contextual_phrases: bool,
+    /// Per-recording vocabulary hook with its qualification status and limits.
+    pub speech_hook: SpeechHook,
+    /// Token confidence the pinned runtime actually reports to Vesper.
+    pub confidence: ConfidenceKind,
     pub completion_report: bool,
     pub cache_state: CacheState,
     /// Runtime capability; activation still requires local equivalence tests.
@@ -45,6 +51,34 @@ pub struct AdapterCapabilities {
     pub backends: &'static [ComputeBackend],
     pub resident_weights: bool,
 }
+
+impl AdapterCapabilities {
+    /// Legacy view: the adapter takes decode-time phrase bias at all (the explicit
+    /// Settings opt-in list). Automatic hints additionally require qualification.
+    pub fn contextual_phrases(&self) -> bool {
+        self.speech_hook.accepts_manual_phrases()
+    }
+}
+
+/// NeMo-Speech.cpp RNN-T context-graph boosting: the Rust FFI rejects more than
+/// 32 phrases or 2048 bytes. Status is set from the term evaluator.
+pub const NEMOTRON_PHRASE_HOOK: SpeechHook = SpeechHook {
+    kind: SpeechHookKind::PhraseBias,
+    status: HookStatus::Declared,
+    max_phrases: 32,
+    max_bytes: 2048,
+};
+
+/// sherpa-onnx Qwen3-ASR per-stream `hotwords`: comma-separated, joined with
+/// spaces into the chat template's system turn and counted against the 512-token
+/// context (`offline-recognizer-qwen3-asr-impl.cc`). 512 bytes keeps prompt, a
+/// 10 s segment and its output inside that context.
+pub const QWEN_PROMPT_HOOK: SpeechHook = SpeechHook {
+    kind: SpeechHookKind::PromptContext,
+    status: HookStatus::Declared,
+    max_phrases: 32,
+    max_bytes: 512,
+};
 
 #[derive(Debug, Clone, Copy, Serialize)]
 #[serde(rename_all = "camelCase")]
@@ -216,7 +250,8 @@ const fn caps(
     AdapterCapabilities {
         offline: true,
         native_streaming: false,
-        contextual_phrases: false,
+        speech_hook: SpeechHook::NONE,
+        confidence: ConfidenceKind::None,
         completion_report: false,
         cache_state: state,
         complete_prefix_state: false,
@@ -236,7 +271,9 @@ pub const ADAPTERS: &[AdapterRegistration] = &[
         runtime_revision: "4f9676226f667d14608487df744f375db87127f8",
         capabilities: AdapterCapabilities {
             native_streaming: true,
-            contextual_phrases: true,
+            speech_hook: NEMOTRON_PHRASE_HOOK,
+            // NeMo-Speech.cpp docs: RNN-T results currently report 1.0.
+            confidence: ConfidenceKind::Constant,
             resident_weights: true,
             ..caps(CacheState::Rnnt, NEMOTRON_LANGUAGES, ALL_BACKENDS)
         },
@@ -272,6 +309,7 @@ pub const ADAPTERS: &[AdapterRegistration] = &[
         runtime: "sherpa-onnx",
         runtime_revision: SHERPA,
         capabilities: AdapterCapabilities {
+            speech_hook: QWEN_PROMPT_HOOK,
             resident_weights: true,
             completion_report: true,
             ..caps(CacheState::EncoderDecoder, QWEN_ASR_LANGUAGES, CPU)
@@ -563,7 +601,7 @@ mod tests {
             assert!(
                 capability.offline && capability.resident_weights && capability.completion_report
             );
-            assert!(!capability.native_streaming && !capability.contextual_phrases);
+            assert!(!capability.native_streaming && !capability.contextual_phrases());
             for language in ALL_LANGUAGES {
                 config.language = *language;
                 assert_eq!(
@@ -591,7 +629,7 @@ mod tests {
         assert!(capability.offline && capability.resident_weights && capability.completion_report);
         assert!(
             !capability.native_streaming
-                && !capability.contextual_phrases
+                && !capability.contextual_phrases()
                 && !capability.complete_prefix_state
         );
         for language in ALL_LANGUAGES {
@@ -770,11 +808,9 @@ mod tests {
                 .capabilities
                 .complete_prefix_state
         );
-        assert!(
-            adapter(AdapterKind::NemoRnnt)
-                .capabilities
-                .contextual_phrases
-        );
+        assert!(adapter(AdapterKind::NemoRnnt)
+            .capabilities
+            .contextual_phrases());
         let default = AppConfig::default();
         default.validate().unwrap();
         assert_eq!(default.speech_adapter().kind, AdapterKind::CohereAsr);
@@ -916,5 +952,33 @@ mod tests {
         assert_eq!(config.speech_adapter().kind, AdapterKind::SherpaTransducer);
         config.compute_backend = ComputeBackend::Cuda;
         assert!(config.validate().is_err());
+    }
+
+    #[test]
+    fn vocabulary_hooks_are_typed_and_only_declared_where_the_runtime_has_one() {
+        for registration in ADAPTERS {
+            let caps = registration.capabilities;
+            let expected = match (registration.kind, registration.runtime) {
+                (AdapterKind::NemoRnnt, _) => SpeechHookKind::PhraseBias,
+                (AdapterKind::QwenAsr, "sherpa-onnx") => SpeechHookKind::PromptContext,
+                _ => SpeechHookKind::None,
+            };
+            assert_eq!(caps.speech_hook.kind, expected, "{:?}", registration.kind);
+            if expected == SpeechHookKind::None {
+                assert!(!caps.speech_hook.accepts_working_set(true));
+                assert!(!caps.contextual_phrases());
+            }
+        }
+        // Legacy behavior: only Nemotron takes the explicit opt-in phrase list.
+        assert!(adapter(AdapterKind::NemoRnnt)
+            .capabilities
+            .contextual_phrases());
+        assert!(!adapter(AdapterKind::QwenAsr)
+            .capabilities
+            .contextual_phrases());
+        assert_eq!(
+            adapter(AdapterKind::NemoRnnt).capabilities.confidence,
+            ConfidenceKind::Constant
+        );
     }
 }

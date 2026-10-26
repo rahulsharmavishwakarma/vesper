@@ -158,6 +158,7 @@ impl Recognizer {
         root: &Path,
         cancelled: &AtomicBool,
         progress: &dyn Fn(TranscriptionProgress),
+        hints: &[String],
     ) -> Result<String> {
         self.decode(
             audio,
@@ -166,6 +167,7 @@ impl Recognizer {
             cancelled,
             progress,
             offline_asr::DecodePurpose::Completed,
+            hints,
         )
     }
 
@@ -175,6 +177,7 @@ impl Recognizer {
         config: &AppConfig,
         root: &Path,
         cancelled: &AtomicBool,
+        hints: &[String],
     ) -> Result<String> {
         self.decode(
             audio,
@@ -183,6 +186,7 @@ impl Recognizer {
             cancelled,
             &|_| {},
             offline_asr::DecodePurpose::Preview,
+            hints,
         )
     }
 
@@ -195,6 +199,7 @@ impl Recognizer {
         cancelled: &AtomicBool,
         progress: &dyn Fn(TranscriptionProgress),
         purpose: offline_asr::DecodePurpose,
+        hints: &[String],
     ) -> Result<String> {
         *self.metrics.borrow_mut() = Metrics::default();
         check_cancelled(cancelled)?;
@@ -217,6 +222,7 @@ impl Recognizer {
                 Some(&self.healthy),
                 &|observation| self.metrics.borrow_mut().segments.push(observation),
                 purpose,
+                hints,
             )
         };
         {
@@ -432,7 +438,7 @@ mod tests {
             );
             assert_eq!(
                 model
-                    .transcribe(&a, &config, &root, &fresh, &|_| {})
+                    .transcribe(&a, &config, &root, &fresh, &|_| {}, &[])
                     .unwrap(),
                 expected_a
             );

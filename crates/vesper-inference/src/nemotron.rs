@@ -117,7 +117,10 @@ impl Recognizer {
         phrases: &[String],
     ) -> Result<String> {
         validate_audio(audio, config, cancelled)?;
-        let phrases = if config.speech_adapter().capabilities.contextual_phrases {
+        // Callers pass `recognizer_hints`, already gated by hook status.
+        let phrases = if config.speech_adapter().capabilities.speech_hook.kind
+            == vesper_core::SpeechHookKind::PhraseBias
+        {
             phrases
         } else {
             &[]

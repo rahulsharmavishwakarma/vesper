@@ -46,7 +46,44 @@ it uses synthetic transcripts and is not native ASR accuracy or latency evidence
 
 Native phrase hints can use only context available before ASR. Enabled entries must match the requested language and selected project; a nonempty lexical context must also match the project text at this stage. Selection prioritizes project-specific entries, then observed usage, reviewed-source count and stable ID. Canonical spellings are case-insensitively deduplicated.
 
-The existing limit is **32 phrases / 2,048 bytes**, with opt-in uniform boost 2. Only canonical spellings are boosted. The pinned Nemotron adapter accepts these public speech-context hints; the selected Cohere adapter does not. A shared profile does not create unsupported decoder functionality. No runtime or weight revision changes in phase A.
+The existing limit is **32 phrases / 2,048 bytes**, with opt-in uniform boost 2. Only canonical spellings are boosted. A shared profile does not create unsupported decoder functionality. No runtime or weight revision changes.
+
+### Typed recognizer hooks
+
+Each speech adapter declares one typed vocabulary hook (`AdapterCapabilities.speech_hook` in [`adapters.rs`](../../crates/vesper-core/src/adapters.rs), selection in [`hooks.rs`](../../crates/vesper-core/src/hooks.rs)) instead of the former `contextual_phrases` flag:
+
+| Field | Values |
+| --- | --- |
+| Kind | `none`, `phrase_bias` (decode-time boosting), `prompt_context` (text in the model prompt) |
+| Status | `declared` (code path exists), `qualified` (passed the [term evaluator](term-evaluation.md)), `disabled` (measured harmful or unusable) |
+| Limits | maximum phrases and bytes the hook accepts |
+| Confidence | `none`, `token_logprob`, `ctc_posterior`, `constant` (reported but unusable, such as Nemotron's 1.0) |
+
+| Adapter (runtime) | Hook | Limits | Status |
+| --- | --- | --- | --- |
+| Nemotron 3.5 streaming (NeMo-Speech.cpp) | `phrase_bias`, boost 2.0 | 32 phrases / 2,048 B (FFI limit) | see [term evaluation](term-evaluation.md#hook-decisions) |
+| Qwen3-ASR 0.6B (sherpa-onnx) | `prompt_context`: per-stream `hotwords` | 32 phrases / 512 B | see [term evaluation](term-evaluation.md#hook-decisions) |
+| Every other adapter, including Cohere, Parakeet (GGUF, sherpa, Neural Engine) and Qwen3-ASR on MLX | `none` | — | text-level [correction gate](correction-gate.md) only |
+
+Only a `qualified` hook receives automatic working-set hints. The explicit Settings opt-in list (`speech_bias_enabled`, usage-ranked as above) keeps its previous behavior on a `phrase_bias` hook unless the hook is `disabled`; once a per-recording working set exists and the hook is qualified, the working set replaces that list. Every list is re-bounded by the hook's own limits, deduplicated case-insensitively and stripped of unsafe phrases (and of commas for prompt hooks). The development evaluator can send hints to a `declared` hook to measure it; the application never does.
+
+Qwen3-ASR context words use the pinned sherpa-onnx contract: `set_option("hotwords", "a,b,c")` on each fresh segment stream. The native code splits on ASCII commas, trims, joins with single spaces and places the text in the chat template's system turn (`offline-recognizer-qwen3-asr-impl.cc`, `Qwen3FormatHotwordsForPrompt` lines 55–59, `BuildSourceIds` lines 459–465 and the per-stream override at lines 817–821 of upstream revision `11afbd0`; Vesper's decode-report patch shifts the override to lines 839–843). The prompt counts against the 512-token context; overflow truncates audio, which the completion report then rejects, so the 512-byte hint limit leaves room for a 10-second segment and its output.
+
+**Bias provenance.** The exact phrases a decode received and their hash (`fnv1a64:…`) are recorded in the result's learning context (`hintHash`, `hintedPhrases`) and the execution evidence (`speechHook`, `hintSource`, `hintCount`, `hintHash`; never the phrases). A phrase in that decode's hint list never increments `usage_count` and never enters the observed-candidate pool from that decode, because it may appear only because it was boosted. Before this change a boosted Nemotron phrase raised its own usage rank and so kept itself in the boost list.
+
+```mermaid
+flowchart LR
+  WS["Working set<br/>(per recording, bounded)"] --> HR{"Hook router<br/>speech_hook.kind + status"}
+  MAN["Settings opt-in list<br/>(speech_bias_enabled)"] --> HR
+  HR -->|"qualified phrase_bias / prompt_context"| ASR["Recognizer decode"]
+  HR -->|"declared / disabled / none:<br/>no automatic hints"| ASR
+  ASR --> RAW["Raw text"]
+  HR -. "hint hash + phrases (provenance)" .-> LC["Learning context"]
+  RAW --> OBS["observe_learning"]
+  LC --> OBS
+  OBS -->|"hinted phrases excluded"| USE["usage_count / observed candidates"]
+  RAW --> GATE["Correction gate (all models)"]
+```
 
 ## After recognition, before cleanup
 
@@ -64,7 +101,7 @@ The model-independent memory stage applies exact aliases, including with cleanup
 
 The additional automatic-context selector has the narrower 8,192-byte raw-hypothesis budget of ordinary learning. Above that size, automatic entries are withheld from post-ASR use; manual memory follows its existing larger bounds. This is a conservative limit, not evidence that long recordings improve. Pre-ASR hints were already selected from the original frozen profile and remain a separate opt-in path; withholding a post-ASR entry does not undo acoustic hint effects.
 
-Usage ranking chooses which existing memory fits a bounded prompt or hint list; it does not increase replacement authority or bypass meaning guards. Local learning runs automatically. Alias application, recognition hints and example-based output intent retain separate settings. Disabling final alias application does not change an independently enabled recognition-hint setting.
+Usage ranking chooses which existing memory fits a bounded prompt or hint list; it does not increase replacement authority or bypass meaning guards, and a biased decode never adds to the usage of its own hints. Local learning runs automatically. Alias application, recognition hints and example-based output intent retain separate settings. Disabling final alias application does not change an independently enabled recognition-hint setting.
 
 Pinned artifacts and exact native API sources are recorded in [ADR-0015](../adrs/0015-model-independent-local-memory.md#evidence-and-boundaries). The new feature changes application records and selection order, not inference ownership, decoder internals or model weights.
 
