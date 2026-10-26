@@ -1,7 +1,11 @@
 //! Narrow native desktop boundary. Every native entry checks the main thread;
 //! borrowed window handles never outlive their owner during initialization.
 use raw_window_handle::HasWindowHandle;
+mod background;
 mod projects;
+pub use background::{
+    enter_background_thread, system_conditions, thread_cpu_time, SystemConditions, ThermalState,
+};
 pub use projects::{
     project_application, project_context, project_document, DocumentContext, DocumentKind,
     ProjectApplication,
