@@ -695,6 +695,11 @@ impl crate::DictationPersonalizationSnapshot {
             &self.selection_context(language),
             None,
         );
+        // Every decode path reads hints from here; only a qualified hook sends them.
+        self.profile.decode_context = Some(vesper_core::DecodeContext {
+            working_set: self.working_set.clone(),
+            ..Default::default()
+        });
     }
 
     /// Post-ASR selection over the raw text: references prefer heard terms and
