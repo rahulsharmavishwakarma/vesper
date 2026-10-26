@@ -36,7 +36,7 @@ in an isolated interpreter, and any failure fails the job. These tests use
 synthetic data and use the `dev` group in `pyproject.toml`, resolved by the
 versioned `uv.lock`. Optional model/inference projects are kept separate.
 `make python-lock-check` checks all Python lockfiles and generated benchmark
-exports. CI installs uv 0.12.15 through a SHA-pinned action and selects Python
+exports. CI installs uv 0.13.5 through a SHA-pinned action and selects Python
 3.12. The frontend job caches downloads under `.cache/uv`, keyed by lockfiles;
 only pushes to `main` save that cache. It also restores pre-commit's hook
 environments (`~/.cache/pre-commit`, keyed on `.pre-commit-config.yaml` and saved
@@ -348,7 +348,14 @@ Apple-silicon macOS matrix jobs audit both isolated Python benchmark graphs;
 one failure does not cancel the other job. Dependabot checks
 npm, Cargo, GitHub Actions, Docker and the three uv projects weekly, with
 routing labels, five open PRs per ecosystem and a seven-day version-update
-cooldown. Security-update behavior is governed separately by Dependabot. The
+cooldown. Security-update behavior is governed separately by Dependabot.
+Dependabot runs its own uv, so the projects' `[tool.uv] required-version` must
+accept it: on 26 October 2026 its uv 0.13.5 met `>=0.12.15,<0.13` and every uv
+update failed with `tool_version_not_supported`, so the projects and CI moved to
+0.13.5 ([issue #338](https://github.com/rahulsharmavishwakarma/vesper/issues/338)).
+Cargo updates skip `sha2` 0.11: `vesper-models` enables 0.10's `asm` feature for
+hardware SHA-256 on aarch64, which 0.11 removed, so moving needs a measured
+change rather than a grouped bump. The
 optional manually dispatched container job scans the
 final runnable image and fails for high or critical vulnerabilities, including
 findings that do not yet have an upstream fix. A temporary exception therefore
