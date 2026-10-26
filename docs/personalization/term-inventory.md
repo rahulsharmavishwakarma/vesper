@@ -11,7 +11,7 @@ flowchart TB
     LD["LocalDictionary"]
     WS["Opted-in workspace root<br/>cspell · VS Code · JetBrains lists<br/>git-tracked code · manifests · doc headings"]
   end
-  subgraph Worker["Background worker thread (QoS background, IOPOL_THROTTLE)"]
+  subgraph Worker["Background worker thread (QoS background: efficiency cores, throttled I/O)"]
     G{"Gates: idle app · thermal ≤ fair ·<br/>no Low Power Mode · AC for workspace scans"}
     M["Deterministic miners<br/>tier-A parsers · tier-B admission"]
   end
@@ -135,7 +135,7 @@ After setup resolves the workspace and project, `select_working_set(language)` f
 
 ## Background worker
 
-`apps/desktop/src-tauri/src/term_worker.rs` runs one plain thread named `vesper-term-miner`. On start it lowers itself to background QoS (`pthread_set_qos_class_self_np(QOS_CLASS_BACKGROUND)`) with throttled disk I/O (`setiopolicy_np(IOPOL_TYPE_DISK, IOPOL_SCOPE_THREAD, IOPOL_THROTTLE)`). Both are implemented in `crates/vesper-desktop-platform/src/background.m`.
+`apps/desktop/src-tauri/src/term_worker.rs` runs one plain thread named `vesper-term-miner`. On start it lowers itself to background QoS (`pthread_set_qos_class_self_np(QOS_CLASS_BACKGROUND)`), which also places its disk I/O in the throttled tier, and verifies the resulting class with `qos_class_self()`. This is implemented in `crates/vesper-desktop-platform/src/background.m`. An earlier version also called thread-scope `setiopolicy_np(IOPOL_THROTTLE)`. On macOS 27 that call silently reset the thread's QoS to unspecified, even though both calls reported success, so the worker ran at default QoS. Kernel per-QoS CPU accounting (`proc_pid_rusage`, `ri_cpu_time_qos_*`) found the problem, and the extra call was removed.
 
 - **Schedule.** The first run is 2 minutes after launch, then one run per hour. If a gate defers a run, it retries every 5 minutes for up to 30 minutes of tolerance, then logs `deferred:<gate>` and waits for the next hour. Resuming a source wakes the worker early; the gates still apply.
 - **Gates, checked at the start of a run:**
@@ -202,6 +202,11 @@ All figures below are local measurements from the release build of `crates/vespe
 
 - **Machine:** Apple M5 Pro, 18 cores, 64 GB, Darwin 27.0.0.
 - **Path measured:** the same miners, store and selector the worker uses, run from a CLI at normal QoS without the gates. The in-app worker was not launched, so in-app QoS and throttling effects are **unmeasured**.
+- **Worker thread policy and energy** (27 October 2026, local measurement on AC power at nominal thermal state). The measurement ran the worker's thread setup and `scan_workspace` over 3 repositories. Per-QoS CPU accounting confirms that 100% of worker CPU is booked at background QoS after the fix; before the fix it was 0%.
+  - One full pass over 3 repositories costs **0.55 J** and 1.1 CPU-s on the efficiency cores. Before the fix it cost 2.39 J and 0.45 CPU-s at default QoS.
+  - Energy comes from the kernel's per-process counter (`ri_energy_nj`) and needs no root access.
+  - Dictation-path work (store open, snapshot, selection, gate) measured p95 2.75 ms with the worker idle and 2.91 ms with it scanning nonstop.
+  - At one pass per hour the worker averages well under 1 mW.
 - **Raw results:** kept outside the repository, because they contain local spellings.
 
 **Sources on this Mac:**

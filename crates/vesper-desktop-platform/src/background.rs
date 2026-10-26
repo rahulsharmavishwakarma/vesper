@@ -63,8 +63,8 @@ pub fn system_conditions() -> SystemConditions {
     }
 }
 
-/// Put the calling thread at background QoS with throttled disk I/O. Returns
-/// whether both policies were applied.
+/// Put the calling thread at background QoS (which throttles its disk I/O).
+/// Returns whether the thread now runs at background QoS.
 pub fn enter_background_thread() -> bool {
     #[cfg(target_os = "macos")]
     // SAFETY: Changes only the calling thread's scheduling and I/O policy.

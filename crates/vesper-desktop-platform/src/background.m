@@ -34,11 +34,14 @@ int32_t td_on_ac_power(void) {
     return result;
 }
 
-// Lower the calling thread to background QoS with throttled disk I/O.
+// Lower the calling thread to background QoS, which also puts its disk I/O in
+// the throttled tier. Do not add a thread-scope setiopolicy_np: on macOS 27 it
+// resets the thread's QoS to unspecified (and blocks a later QoS change), which
+// left the worker at default priority despite both calls succeeding. Verify the
+// resulting class rather than trusting the return code.
 bool td_background_thread(void) {
-    bool qos = pthread_set_qos_class_self_np(QOS_CLASS_BACKGROUND, 0) == 0;
-    bool io = setiopolicy_np(IOPOL_TYPE_DISK, IOPOL_SCOPE_THREAD, IOPOL_THROTTLE) == 0;
-    return qos && io;
+    return pthread_set_qos_class_self_np(QOS_CLASS_BACKGROUND, 0) == 0 &&
+           qos_class_self() == QOS_CLASS_BACKGROUND;
 }
 
 // CPU time consumed by the calling thread, in nanoseconds.
