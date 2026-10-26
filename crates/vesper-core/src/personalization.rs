@@ -99,6 +99,10 @@ pub struct PersonalizationProfile {
     pub learning_epoch: u64,
     pub vocabulary: Vec<VocabularyEntry>,
     pub examples: Vec<CleanupExample>,
+    /// Transient per-recording decode input (working-set hints). Never stored,
+    /// serialized or accepted from the frontend.
+    #[serde(skip)]
+    pub decode_context: Option<crate::DecodeContext>,
 }
 
 impl Default for PersonalizationProfile {
@@ -120,6 +124,7 @@ impl Default for PersonalizationProfile {
             learning_epoch: 0,
             vocabulary: vec![],
             examples: vec![],
+            decode_context: None,
         }
     }
 }

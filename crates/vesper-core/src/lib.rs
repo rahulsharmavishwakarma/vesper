@@ -8,6 +8,7 @@ mod error;
 mod evidence;
 mod gate;
 mod generated;
+mod hooks;
 mod huggingface;
 mod learning;
 mod memory;
@@ -37,6 +38,10 @@ pub use error::{Error, Result};
 pub use evidence::*;
 pub use gate::{correction_gate, correction_gate_with, ordinary_language, ordinary_word, NearMiss};
 pub use generated::runtime_language_code;
+pub use hooks::{
+    bounded_hints, hint_hash, hinted, recognizer_hints, ConfidenceKind, DecodeContext, HintSource,
+    HookStatus, RecognizerHints, SpeechHook, SpeechHookKind,
+};
 pub use huggingface::{HuggingFaceFile, HuggingFaceProfile, ModelFileRole, ModelRuntime};
 pub use learning::*;
 pub use memory::{
