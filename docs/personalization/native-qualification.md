@@ -37,6 +37,8 @@ A typed recognizer hook (see [context selection](context-selection.md#typed-reco
 3. **No ordinary-word damage.** Non-target WER on FLEURS under `ws32` rises by at most 0.5 percentage points absolute over `none`.
 4. **No new failures** under any hint condition relative to `none`.
 
+Measurement note (27 October, after round 1, gates unchanged): with 92 FLEURS clips the one-sided 95% bound is 3.2% even with zero false alarms, so the bound in gate 2 cannot be met on that lane alone. The [term evaluation](term-evaluation.md#round-2-ordinary-word-filter-and-lower-nemotron-boosts) reports both the per-lane and the pooled reading and qualifies nothing on the pooled reading without an owner decision.
+
 All four pass: `qualified`. Benefit fails but harm gates pass: stays `declared` (no reason to send hints). Any harm gate fails: `disabled`, with the measured reason recorded on the term-evaluation page. The `large` condition documents list-size degradation and is not a gate, because the application never sends more than the hook's limits. Synthetic TTS positives cannot qualify a hook for natural speech on their own; a qualified status remains subject to the natural-use evidence above.
 
 ## Learning opportunity coverage
