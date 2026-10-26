@@ -1,6 +1,6 @@
 # Automatic dictionary admission
 
-Implementation: [core learning policy](../../crates/vesper-core/src/learning.rs), [existing memory guards](../../crates/vesper-core/src/memory.rs), and [evidence/admission transactions](../../crates/vesper-data/src/learning.rs). Policy version: **4**. These deterministic rules are not calibrated probabilities or acoustic confidence.
+Implementation: [core learning policy](../../crates/vesper-core/src/learning.rs), [existing memory guards](../../crates/vesper-core/src/memory.rs), and [evidence/admission transactions](../../crates/vesper-data/src/learning.rs). Policy version: **5**. These deterministic rules are not calibrated probabilities or acoustic confidence.
 
 Learning is automatic desktop behavior: no enable switch or separate Remember action is needed. Completed edits and result observations use the existing background workers. This changes when the existing policy is available, not its admission thresholds or evidence requirements.
 
@@ -34,8 +34,21 @@ A term must look like an identifier or a related spelling. Identifier evidence r
 
 ## Automatic activation
 
-- A supplied identifier spelling in a known project can activate after one completed eligible edit.
-- Other eligible spellings require at least two independent user edits. A lowercase command such as `kubectl` follows this second route unless its spelling meets the identifier-shape rule.
+Policy 5 derives the number of independent edits from an asymmetric promotion rule ([`evidence.rs`](../../crates/vesper-core/src/evidence.rs)). A spelling activates only when the posterior mean that it is intended exceeds `t = r / (1 + r)`, where `r` is the cost of a wrong automatic change divided by the cost of a missed one. How much harm a wrong change can do depends on what the recognizer heard, which the [correction gate's lexicon](correction-gate.md#lexicon) classifies:
+
+| Heard form | Example | Prior | `r` (`t`) | Independent edits |
+| --- | --- | --- | --- | --- |
+| Contains a non-word; identifier target in a known project | `sherpa onnx → sherpa_onnx` | Beta(2, 0.5) | 4 (0.80) | 1 |
+| Contains a non-word, other target | `kube ctl → kubectl` | Beta(0.5, 0.5) | 4 (0.80) | 2 |
+| Several ordinary words | `read me → README.md` | Beta(0.5, 0.5) | 4 (0.80) | 2, and teaching cues must match at use |
+| One capitalized word → capitalized spelling (name repair) | `Jonathon → Jonathan` | Beta(0.5, 0.5) | 4 (0.80) | 2, and teaching cues must match at use |
+| One lowercase ordinary word | `write → Wright` | — | ∞ | never; add the word in Vocabulary instead |
+
+The priors and cost ratios are design assumptions, not calibrated probabilities. With `r = 9` (`t = 0.90`), every route above would need five independent edits under the Jeffreys prior, which a single user who rarely edits would almost never supply. The strict "never" row is where the review found real harm (`write → Wright`, `notes → Nots`). Policy 4 activated `read me → README.md` after one edit. Policy 5 needs two, because `read me` is ordinary speech ("read me the list").
+
+Any rejection of an applied rule suspends it outright: one strike, with no posterior update.
+
+- `Language::Auto` cannot activate an automatic alias because the actual language has not been established by this layer. The evidence can remain provisional.
 - `Language::Auto` cannot activate an automatic alias because the actual language has not been established by this layer. The evidence can remain provisional.
 - A candidate needs project or lexical context. Without a project, up to three informative terms from the original context limit its later application.
 - Conflicting existing aliases suspend the candidate. The store does not overwrite or re-enable an equivalent manually managed entry. Full vocabulary capacity leaves the candidate unactivated.
@@ -51,6 +64,18 @@ Each independent supporting edit retains at most **16 deduplicated lexical terms
 Legacy support with no teaching cues stays stored but cannot satisfy this added guard. A fresh independent edit can supply cues. At the 16-support cap, a fresh cue-bearing record can replace one cue-less legacy record without increasing the support count; repeated audio/episode support cannot add cues this way. Once all records carry cues, new context is not appended beyond that bound. Adding cues to an active entry advances the profile revision in the same transaction. Undo/suspension clears cues. Removing an automatic entry suspends its candidate as negative evidence while keeping past events; review adoption consumes the candidate and its support into the manual entry. Forget deletes all automatic evidence. Policy 4 clears the first-edit context tags only on automatic entries enabled in the operation-local post-ASR snapshot: the validated raw teaching cues authorize both cleanup retrieval and final application. Stored tags and optional pre-ASR hint scope stay unchanged; manual entries keep their existing context rules. This resolves the first-context veto reproduced in the [pipeline review](evaluation.md#pipeline-review-and-learning-opportunities).
 
 This integrates the stronger fixed-context idea from the benchmarks. It does **not** enable the experimental adaptive controller or transfer its reported gains to real use. It can prevent unrelated replacements and can also miss useful paraphrases; [evaluation](evaluation.md) records both.
+
+## Recognizer-keyed aliases
+
+Each supporting edit records the recognizer family that produced the heard form, such as `cohere`, `parakeet`, `nemotron`, `qwen3-asr` or `whisper`. Runtimes of the same model share a family; fine-tunes such as Phonon-2 or Parakeet Redux have their own. An unconfirmed automatic alias applies only while a recognizer from one of its supporting families is selected, because a confusion learned from one model's errors says little about another's.
+
+Support recorded before policy 5 has no family and keeps applying to all models. Confirmed (ticked) and manual words are model-independent. Switching models therefore never deletes evidence: the alias waits in shadow until that model is selected again, or until fresh edits support it for the new one.
+
+## Policy breaker
+
+When the user rejects applied output from **two distinct** automatic rules within seven days (Undo on a result, or a saved draft that restores the heard form or picks a third spelling), the breaker trips. Every unconfirmed automatic alias then stops applying, and no new alias activates. This protects against a faulty policy rather than one bad word. Manual and confirmed words keep working.
+
+The breaker clears when the user resumes automatic spellings (`resume_automatic_spellings`), after Forget, or when a newer learning policy version is installed. Removing a word from the Vocabulary list is housekeeping and does not count as a rejection.
 
 ## Independence and self-reinforcement
 

@@ -5,6 +5,7 @@ mod config;
 mod diarization;
 pub mod environment;
 mod error;
+mod evidence;
 mod gate;
 mod generated;
 mod huggingface;
@@ -31,6 +32,7 @@ pub use config::{
 };
 pub use diarization::{SpeakerSegment, SpeakerTimeline};
 pub use error::{Error, Result};
+pub use evidence::*;
 pub use gate::{correction_gate, ordinary_language, ordinary_word};
 pub use generated::runtime_language_code;
 pub use huggingface::{HuggingFaceFile, HuggingFaceProfile, ModelFileRole, ModelRuntime};

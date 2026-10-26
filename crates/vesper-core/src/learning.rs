@@ -6,7 +6,7 @@ use crate::{
 };
 use serde::{Deserialize, Serialize};
 
-pub const LEARNING_POLICY_VERSION: u32 = 4;
+pub const LEARNING_POLICY_VERSION: u32 = 5;
 pub const MAX_LEARNING_TEXT_BYTES: usize = 8192;
 pub const MAX_TEACHING_TERMS: usize = 16;
 pub const MAX_TEACHING_TERM_BYTES: usize = 64;
