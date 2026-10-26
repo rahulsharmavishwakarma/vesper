@@ -86,6 +86,14 @@ pub struct LearningContext {
     pub model_id: String,
     pub learning_epoch: u64,
     pub learning_enabled: bool,
+    /// Bias provenance: hash of the hint list this decode received; empty when
+    /// the recognizer was not biased.
+    #[serde(default, skip_serializing_if = "String::is_empty")]
+    pub hint_hash: String,
+    /// Phrases this decode was biased toward. Their appearance in its output is
+    /// never counted as an observation or usage.
+    #[serde(default, skip_serializing_if = "Vec::is_empty")]
+    pub hinted_phrases: Vec<String>,
 }
 
 #[derive(Debug, Clone, Default, PartialEq, Eq, Serialize, Deserialize)]

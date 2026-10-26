@@ -73,6 +73,7 @@ mod tests {
                 model_id: "fixture".into(),
                 learning_epoch: profile.learning_epoch,
                 learning_enabled: profile.automatic_learning,
+                ..Default::default()
             },
             session: None,
             warnings: vec![],
@@ -2342,7 +2343,15 @@ impl WorkContext {
         }
         let profile = self.personalization()?;
         result.project_selection = self.personalization_snapshot()?.project_selection.clone();
+        // Bias provenance: the exact hints this recording's decode received.
+        let bias = vesper_core::recognizer_hints(
+            &self.config.speech_adapter().capabilities.speech_hook,
+            profile,
+            self.config.language,
+        );
         result.learning_context = vesper_core::LearningContext {
+            hint_hash: bias.hint_hash,
+            hinted_phrases: bias.phrases,
             result_id: result.result_id.clone(),
             source_key: if profile.automatic_learning {
                 vesper_data::learning_audio_key(audio.samples())

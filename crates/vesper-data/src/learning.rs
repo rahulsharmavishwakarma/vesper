@@ -697,6 +697,9 @@ impl DatasetStore {
                 )
                 && (memory_phrase_occurs(raw, &word.phrase)
                     || word.aliases.iter().any(|a| memory_phrase_occurs(raw, a)))
+                // A phrase this decode was biased toward may appear because of
+                // the bias; counting it would make the hint list confirm itself.
+                && !vesper_core::hinted(&word.phrase, &context.hinted_phrases)
             {
                 word.usage_count = word.usage_count.saturating_add(1);
                 changed = true;
@@ -711,6 +714,7 @@ impl DatasetStore {
                     && s.len() <= 128
                     && vesper_core::technical_spelling(s)
                     && memory_phrase_occurs(raw, s)
+                    && !vesper_core::hinted(s, &context.hinted_phrases)
             })
             .take(8)
         {
@@ -1609,6 +1613,7 @@ mod tests {
             model_id: "model-a".into(),
             learning_epoch: p.learning_epoch,
             learning_enabled: true,
+            ..Default::default()
         }
     }
     fn teach(store: &DatasetStore, p: &PersonalizationProfile, id: &str) -> LearningOutcome {
@@ -2020,6 +2025,51 @@ mod tests {
         assert!(state.candidates.iter().any(|c| c.phrase == "NewTool"
             && c.state == CandidateState::Observed
             && c.support.is_empty()));
+    }
+    #[test]
+    fn a_biased_decode_never_counts_its_own_hints_as_usage_or_observations() {
+        let (_dir, store, p) = setup();
+        teach(&store, &p, "teach");
+        let phrase = store.personalization().unwrap().vocabulary[0]
+            .phrase
+            .clone();
+        let raw = format!("Open {phrase} with NewTool");
+        let hints = vec![phrase.clone(), "NewTool".to_owned()];
+        for n in 0..3 {
+            let mut biased = context(&p, &format!("biased-{n}"));
+            biased.hint_hash = vesper_core::hint_hash(&hints);
+            biased.hinted_phrases = hints.clone();
+            store.observe_learning(&biased, &raw, None).unwrap();
+        }
+        assert_eq!(
+            store.personalization().unwrap().vocabulary[0].usage_count,
+            0
+        );
+        let state = store.automatic_learning_state().unwrap();
+        assert!(!state.candidates.iter().any(|c| c.phrase == "NewTool"));
+        // The observation is still recorded, with its bias provenance.
+        assert_eq!(
+            state
+                .events
+                .iter()
+                .filter(|e| e.context.hint_hash == vesper_core::hint_hash(&hints))
+                .count(),
+            3
+        );
+        // An unbiased decode of the same text remains ordinary evidence.
+        store
+            .observe_learning(&context(&p, "plain"), &raw, None)
+            .unwrap();
+        assert_eq!(
+            store.personalization().unwrap().vocabulary[0].usage_count,
+            1
+        );
+        assert!(store
+            .automatic_learning_state()
+            .unwrap()
+            .candidates
+            .iter()
+            .any(|c| c.phrase == "NewTool"));
     }
     #[test]
     fn changing_learning_permission_invalidates_old_callbacks_and_preserves_memory() {

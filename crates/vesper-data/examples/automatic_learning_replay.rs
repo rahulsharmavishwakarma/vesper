@@ -89,6 +89,7 @@ fn main() -> std::result::Result<(), Box<dyn std::error::Error>> {
                 model_id: episode.model_id.clone(),
                 learning_epoch: profile.learning_epoch,
                 learning_enabled: profile.automatic_learning,
+                ..Default::default()
             };
             let mut retry = None;
             if let Some((prior, id)) = &previous {

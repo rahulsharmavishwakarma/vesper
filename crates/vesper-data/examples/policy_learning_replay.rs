@@ -157,6 +157,7 @@ impl Learner {
             model_id: input.model_id.clone(),
             learning_epoch: p.learning_epoch,
             learning_enabled: true,
+            ..Default::default()
         };
         self.store.learn_from_edit(&context, 0, before, edited)?;
         // This experiment compares eligibility policies; the live policy breaker

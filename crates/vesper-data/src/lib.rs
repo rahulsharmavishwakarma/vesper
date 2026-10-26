@@ -581,6 +581,7 @@ impl DatasetStore {
             model_id: record.config_snapshot.asr_name().into(),
             learning_epoch: profile.learning_epoch,
             learning_enabled: profile.automatic_learning,
+            ..Default::default()
         };
         let outcome = if profile.automatic_learning {
             self.learn_from_edit(&context, revision, &before, &corrected_text)?
