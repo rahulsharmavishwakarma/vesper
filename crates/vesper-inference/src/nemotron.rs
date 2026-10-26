@@ -105,7 +105,7 @@ impl Recognizer {
         request_id: Option<&str>,
         cancelled: &AtomicBool,
     ) -> Result<String> {
-        self.transcribe_with_phrases(audio, config, request_id, cancelled, &[])
+        self.transcribe_with_phrases(audio, config, request_id, cancelled, &[], 2.0)
     }
 
     pub(crate) fn transcribe_with_phrases(
@@ -115,6 +115,7 @@ impl Recognizer {
         request_id: Option<&str>,
         cancelled: &AtomicBool,
         phrases: &[String],
+        boost: f32,
     ) -> Result<String> {
         validate_audio(audio, config, cancelled)?;
         // Callers pass `recognizer_hints`, already gated by hook status.
@@ -158,7 +159,7 @@ impl Recognizer {
                 language_code(config.language),
                 request_id,
                 phrases,
-                2.0,
+                boost,
             )
             .map_err(|error| native("NeMo-Speech.cpp transcription", error))?;
         check_cancelled(cancelled)?;
@@ -171,6 +172,7 @@ impl Recognizer {
         request_id: &str,
         cancelled: &AtomicBool,
         phrases: &[String],
+        boost: f32,
     ) -> Result<vesper_nemo::Stream<'a>> {
         check_cancelled(cancelled)?;
         self.inner
@@ -178,7 +180,7 @@ impl Recognizer {
                 language_code(config.language),
                 Some(request_id),
                 phrases,
-                2.0,
+                boost,
             )
             .map_err(|error| native("NeMo-Speech.cpp streaming start", error))
     }

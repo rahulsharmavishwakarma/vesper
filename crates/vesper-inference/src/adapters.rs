@@ -194,13 +194,17 @@ impl SpeechModel {
         match self {
             #[cfg(feature = "mlx")]
             Self::Mlx(model) => model.transcribe(audio, config, root, cancelled, &**progress),
-            Self::Nemo(model) => model.transcribe_with_phrases(
-                audio,
-                config,
-                Some(id),
-                cancelled,
-                &decode_hints(config, profile).phrases,
-            ),
+            Self::Nemo(model) => {
+                let hints = decode_hints(config, profile);
+                model.transcribe_with_phrases(
+                    audio,
+                    config,
+                    Some(id),
+                    cancelled,
+                    &hints.phrases,
+                    phrase_boost(&hints),
+                )
+            }
             Self::Lfm(model) => model.transcribe(audio, cancelled, &**progress),
             Self::Sherpa(model) => model.transcribe(
                 audio,
@@ -228,14 +232,18 @@ impl SpeechModel {
         match self {
             #[cfg(feature = "mlx")]
             Self::Mlx(model) => model.stream().map(Box::new).map(NativeStream::Mlx),
-            Self::Nemo(model) => model
-                .stream_with_phrases(
-                    config,
-                    id,
-                    cancelled,
-                    &decode_hints(config, profile).phrases,
-                )
-                .map(NativeStream::Nemo),
+            Self::Nemo(model) => {
+                let hints = decode_hints(config, profile);
+                model
+                    .stream_with_phrases(
+                        config,
+                        id,
+                        cancelled,
+                        &hints.phrases,
+                        phrase_boost(&hints),
+                    )
+                    .map(NativeStream::Nemo)
+            }
             Self::Lfm(_) | Self::Sherpa(_) | Self::PerJob(_) => {
                 Err(InferenceError::UnsupportedAsr(config.models.asr.id()))
             }
@@ -302,7 +310,7 @@ impl SpeechModel {
             ) => Some("cpu"),
             Self::Lfm(_) | Self::Sherpa(_) | Self::PerJob(_) => None,
         };
-        serde_json::json!({"requestedBackend":config.compute_backend, "initializedProvider":initialized, "nativeGraphThreads":if matches!(self, Self::Nemo(_)) { Some(4) } else { None }, "streamingPolicy":if matches!(self, Self::Nemo(_)) && config.speech_adapter().capabilities.native_streaming { serde_json::json!({"rightContextPolicy":"artifact-default", "artifactRightContextFrames":3, "artifactLeftContextFrames":56, "nominalEncoderAdvanceMs":320, "evidence":"pinned-model-and-runtime-source"}) } else { serde_json::Value::Null }, "operatorPlacement":"unknown", "profileRevision":profile.revision, "contextualPhrasesSupported":config.speech_adapter().capabilities.contextual_phrases(), "contextualPhraseCount":decode_hints(config, profile).phrases.len(), "phraseBoost":2.0, "evidence":"adapter-initialization-or-explicit-cpu-contract"})
+        serde_json::json!({"requestedBackend":config.compute_backend, "initializedProvider":initialized, "nativeGraphThreads":if matches!(self, Self::Nemo(_)) { Some(4) } else { None }, "streamingPolicy":if matches!(self, Self::Nemo(_)) && config.speech_adapter().capabilities.native_streaming { serde_json::json!({"rightContextPolicy":"artifact-default", "artifactRightContextFrames":3, "artifactLeftContextFrames":56, "nominalEncoderAdvanceMs":320, "evidence":"pinned-model-and-runtime-source"}) } else { serde_json::Value::Null }, "operatorPlacement":"unknown", "profileRevision":profile.revision, "contextualPhrasesSupported":config.speech_adapter().capabilities.contextual_phrases(), "contextualPhraseCount":decode_hints(config, profile).phrases.len(), "phraseBoost":phrase_boost(&decode_hints(config, profile)), "evidence":"adapter-initialization-or-explicit-cpu-contract"})
     }
 }
 
@@ -317,6 +325,18 @@ pub(crate) fn decode_hints(
         config.language,
     )
 }
+
+/// The NeMo-Speech.cpp request boost. The FFI validates the boost (0.1–5.0) even
+/// when the phrase list is empty, so an unbiased decode keeps the previous 2.0.
+pub(crate) fn phrase_boost(hints: &vesper_core::RecognizerHints) -> f32 {
+    if hints.phrases.is_empty() || hints.boost_milli == 0 {
+        UNBIASED_PHRASE_BOOST
+    } else {
+        hints.boost_milli as f32 / 1000.0
+    }
+}
+
+const UNBIASED_PHRASE_BOOST: f32 = 2.0;
 
 pub(crate) fn transcribe_once(
     kind: AdapterKind,
@@ -402,4 +422,19 @@ fn require_runtime(config: &AppConfig) -> Result<()> {
         return Err(InferenceError::UnsupportedAsr(config.models.asr.id()));
     }
     Ok(())
+}
+
+#[cfg(test)]
+mod phrase_boost_tests {
+    #[test]
+    fn unbiased_decodes_keep_a_boost_the_nemo_ffi_accepts() {
+        let none = vesper_core::RecognizerHints::default();
+        assert_eq!(super::phrase_boost(&none), 2.0);
+        let half = vesper_core::RecognizerHints {
+            phrases: vec!["kubectl".into()],
+            boost_milli: 500,
+            ..Default::default()
+        };
+        assert_eq!(super::phrase_boost(&half), 0.5);
+    }
 }

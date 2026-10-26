@@ -64,12 +64,15 @@ impl AdapterCapabilities {
 /// 32 phrases or 2048 bytes. Disabled for automatic hints by the 27 Oct 2026 term
 /// evaluation: 30 workspace phrases at boost 2.0 inserted hint terms into 22% of
 /// target-free synthetic sentences and 34% of real FLEURS clips
-/// (docs/personalization/term-evaluation.md). The explicit opt-in list still works.
+/// (docs/personalization/term-evaluation.md). Round 2 with the ordinary-word filter:
+/// boost 1.0 still fails; boost 0.5 fails only the FLEURS-lane bound that 92 clips
+/// cannot meet, so it is not qualified as written. The explicit opt-in list still works.
 pub const NEMOTRON_PHRASE_HOOK: SpeechHook = SpeechHook {
     kind: SpeechHookKind::PhraseBias,
     status: HookStatus::Disabled,
     max_phrases: 32,
     max_bytes: 2048,
+    boost_milli: 2000,
 };
 
 /// sherpa-onnx Qwen3-ASR per-stream `hotwords`: comma-separated, joined with
@@ -77,13 +80,15 @@ pub const NEMOTRON_PHRASE_HOOK: SpeechHook = SpeechHook {
 /// context (`offline-recognizer-qwen3-asr-impl.cc`). 512 bytes keeps prompt, a
 /// 10 s segment and its output inside that context. Disabled by the 27 Oct 2026
 /// term evaluation: recall rose but ordinary words that are also terms were
-/// capitalized as terms and the prompt list was sometimes emitted as text
-/// (docs/personalization/term-evaluation.md).
+/// capitalized as terms and the prompt list was sometimes emitted as text. With
+/// the ordinary-word filter (round 2) the list was still emitted and FLEURS WER
+/// rose 1.6 points (docs/personalization/term-evaluation.md).
 pub const QWEN_PROMPT_HOOK: SpeechHook = SpeechHook {
     kind: SpeechHookKind::PromptContext,
     status: HookStatus::Disabled,
     max_phrases: 32,
     max_bytes: 512,
+    boost_milli: 0,
 };
 
 #[derive(Debug, Clone, Copy, Serialize)]

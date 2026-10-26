@@ -125,11 +125,45 @@ Gates are the predeclared ones in [native qualification](native-qualification.md
 | Hook | Benefit | ≤1 pt FA increase, upper bound ≤3% | FLEURS WER ≤ +0.5 pt | No new failures | Status |
 | --- | --- | --- | --- | --- | --- |
 | Nemotron `phrase_bias` | pass (+39.9 / +38.7 pts) | **fail** (ws32 +21.1 pts hard negatives, +33.7 pts FLEURS) | **fail** (+6.9 pts) | pass at ws10/ws32 | **`disabled`** |
-| Qwen3-ASR `prompt_context` | pass (+38.6 / +40.4 pts) | **fail** at ws32 (+2.3 pts, upper bound 4.1%); wrong32 and FLEURS pass | pass (+0.4 pts) | pass at ws10/ws32 | **`disabled`** |
+| Qwen3-ASR `prompt_context` | pass (+38.6 / +40.4 pts) | **fail** at ws32 (+2.3 pts, upper bound 4.1%); wrong32 passes on hard negatives | pass (+0.3 pts) | pass at ws10/ws32 | **`disabled`** |
+
+The upper bound in the false-alarm gate cannot be met on the FLEURS lane by any configuration: 92 clips with zero events still give a 3.2% bound. Read per lane, that gate fails every hook on FLEURS; the decisions above rest on failures that do not depend on that reading. See [round 2](#round-2-ordinary-word-filter-and-lower-nemotron-boosts) for both readings.
 
 Both hooks raise term recall substantially, which is consistent with the published picture that biasing raises recall while precision falls. Neither passes the false-alarm gate, so neither receives automatic hints. Vocabulary reaches every model through the correction gate, which added 10–12 points of exact recall on Cohere and Parakeet with no measured harm on target-free speech in its exact mode. The Settings opt-in phrase list still reaches Nemotron, as before; the Nemotron result suggests reviewing that switch.
 
-Candidates for a new, predeclared run (hypotheses, not results): Qwen3-ASR with lists that exclude ordinary-word terms and a 10-phrase cap, measured on fresh ordinary-word negatives; and a guard that rejects a transcript echoing the hint list.
+## Round 2: ordinary-word filter and lower Nemotron boosts
+
+Same frozen corpus (with the supplement), same predeclared gates and thresholds, conditions `none`, `ws10`, `ws32` and `wrong32` on clean positives (n=158), rendered hard negatives (n=350) and FLEURS (n=92). Two principled changes, both in the application code (`c1252b6`):
+
+- **Ordinary-word filter.** Automatic hints drop every surface whose words are all in the gate's ordinary-English lexicon (`ordinary_language`). From the 90 synthetic terms this removes 24: Helm, Prometheus, kube-proxy, Envoy, Calico, Jaeger, Thanos; tokio, Svelte, NeMo, cargo-deny, Parakeet; Vesper, Nguyen, Wright, Mandy, Cedar Point, Joaquin Phelan, Paige, Bree, Niall, Sloane Ferreira, Tadeusz Kowalczyk, Dashiell. The lexicon includes CMUdict's names, so several real names are dropped too; their targets still count in recall. The gate keeps all of them.
+- **Lower uniform Nemotron boosts** (1.0 and 0.5, plus 2.0 with the filter), through the evaluator's `--boost`.
+
+Decoded with evaluator `c1252b6` (`3e4f1d16…`). That revision sent boost 0 with an empty list, which the NeMo FFI rejects, so all 600 Nemotron `none` rows failed; the fix (`8efb24b`, an application bug that would have broken every unbiased Nemotron decode) restored 2.0 for unbiased decodes, and those rows were re-decoded with `8efb24b` (`vesper-eval-v4`). The failed rows are kept locally.
+
+| Configuration | Exact recall, none → ws10 / ws32 | Non-target WER ws32 | Hard-negative FA ws32 (wrong32) | FLEURS FA ws32 (wrong32) | Pooled FA ws32, 442 utt. | FLEURS WER Δ ws32 | Paired hard-negative regressions / improvements ws32 |
+| --- | --- | --- | --- | --- | --- | --- | --- |
+| Qwen3-ASR, round 1 (no filter) | 18.5% → 57.1% / 58.9% | 8.7% | 8/350, ≤4.1% (2/350) | 0/92 (0/92) | 8, ≤3.2% | +0.34 pts | 20 / 16 |
+| **Qwen3-ASR, filtered** | 18.5% → 45.8% / 47.6% | 9.6% | 1/350, ≤1.3% (0/350) | 1/92 (1/92) | 2, ≤1.4% | **+1.62 pts** | 17 / 17 |
+| Nemotron 2.0, round 1 (no filter) | 13.7% → 53.6% / 52.4% | 16.1% | 77/350, ≤26.0% (51/350) | 31/92 (38/92) | 108, ≤28.0% | +6.97 pts | 110 / 8 |
+| Nemotron 2.0, filtered | 13.7% → 44.6% / 43.5% | 16.9% | 57/350, ≤19.9% (42/350) | 31/92 (34/92) | 88, ≤23.3% | +6.73 pts | 95 / 5 |
+| Nemotron 1.0, filtered | 13.7% → 32.1% / 32.1% | 11.3% | 7/350, ≤3.7% (4/350) | 3/92 (0/92) | 10, ≤3.8% | +0.64 pts | 21 / 4 |
+| **Nemotron 0.5, filtered** | 13.7% → 20.8% / 20.8% | 12.0% | 4/350, ≤2.6% (0/350) | 0/92, ≤3.2% (0/92) | 4, ≤2.1% | −0.05 pts | 2 / 3 |
+
+`none` baselines: Qwen3-ASR 0/350 and 0/92; Nemotron 3/350 and 0/92 (the model itself capitalizes "calico" in the supplement). No hinted condition failed a decode.
+
+| Configuration | 1 Benefit | 2 False alarms, per lane as written | 2 False alarms, lanes pooled | 3 FLEURS WER | 4 Failures | Decision |
+| --- | --- | --- | --- | --- | --- | --- |
+| Qwen3-ASR, filtered | pass (+27.3 / +29.1 pts) | **fail** (FLEURS +1.1 pts and bound 5.1%) | pass | **fail** (+1.62 pts) | pass | **`disabled`** |
+| Nemotron 2.0, filtered | pass | **fail** | **fail** | **fail** | pass | `disabled` |
+| Nemotron 1.0, filtered | pass | **fail** | **fail** (bound 3.8%) | **fail** (+0.64 pts) | pass | `disabled` |
+| Nemotron 0.5, filtered | pass (+7.1 / +7.1 pts) | **fail only on the FLEURS bound** (0/92 → 3.2%) | pass | pass | pass | not qualified as written; see below |
+
+- **Qwen3-ASR stays `disabled`.** The filter removed most ordinary-word false alarms (8 → 1 hard negatives at ws32) at the cost of about 11 recall points, but the prompt still changes decoding outside the terms: on FLEURS it emitted the whole hint list as text (in place of "radio site TogiNet Radio" at ws32, and inside another clip at wrong32), and it dropped spans of ordinary speech ("along with an extra set in the roof of its mouth"). FLEURS WER rose by 1.6 points. This failure does not depend on how the bound is read.
+- **Nemotron 0.5 with the filter** adds 7.1 points of exact recall with no measurable change on FLEURS and one extra hard-negative false alarm. It passes every gate except the FLEURS upper bound read per lane, which no configuration can pass with 92 clips. Under the predeclared text it is **not qualified**, and the hook stays `disabled` at its configured boost 2.0. Qualifying it needs either an owner decision that the bound applies to the pooled target-free set (4/442, ≤2.1%), or at least 99 more fresh real-speech negatives added as a new predeclared lane. Its recall gain is also modest: on the same positives, the exact correction gate alone added 9.6–11.9 points on Cohere and Parakeet.
+- **Recall against false alarms for Nemotron (ws32, filtered):** boost 0.5 gives 20.8% recall with 1.1% / 0.0% false alarms (hard negatives / FLEURS); 1.0 gives 32.1% with 2.0% / 3.3%; 2.0 gives 43.5% with 16.3% / 33.7%. The filter alone at 2.0 lowered hard-negative false alarms from 22.0% to 16.3% and left FLEURS unchanged.
+- **Correction gate on these decodes** (current gate): on Nemotron 0.5 ws32 the exact gate raised exact recall from 20.8% to 32.1% (19 changes, 0 harmful) with no added false alarms; near-miss raised it to 39.9% (13 near-miss changes, 0 harmful on positives) but made 4 harmful near-miss repairs on biased hard negatives ("bright room" → "Brightloom"). On filtered Qwen3-ASR ws32 the exact gate reached 53.6% exact recall and made one harmful change on a hard negative. Near-miss repairs on biased decodes compound the bias; the shadow default stays the safer reading.
+
+Remaining candidates, as hypotheses only: a guard that rejects a transcript echoing the hint list (Qwen3-ASR); a larger real-speech negative lane so the bound can be met.
 
 ## Limitations
 
