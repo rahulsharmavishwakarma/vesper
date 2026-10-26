@@ -24,7 +24,7 @@ flowchart TB
     SEL -->|"hints (qualified hook only)"| ASR["Any speech model"]
     ASR --> CL["Writer cleanup (optional)"]
     CL --> AL["Saved-correction aliases<br/>recognizer-keyed, cue-gated"]
-    AL --> G["Correction gate<br/>exact normalizations · heard-plausibility<br/>near-miss: shadow by default"]
+    AL --> G["Correction gate<br/>exact normalizations · heard-plausibility<br/>near-miss repair"]
     G --> OUT["Displayed text<br/>stage authorship recorded"]
   end
   OUT -->|"user edit / Undo"| EV["Evidence rules<br/>asymmetric promotion · one-strike suspend"]
@@ -47,7 +47,7 @@ All results are **local measurements**. The positives are synthetic TTS, and the
 | Component | Status in the app | Evidence |
 | --- | --- | --- |
 | Correction gate, exact normalizations | **On** for every model (English) | Cohere, at 32 workspace terms: positive recall 32.7% → 42.3%. Parakeet: 27.4% → 39.3%. 0 harmful edits. 0 added false alarms across 350 rendered and 2,595 text hard negatives and 92 real FLEURS clips. Replay over 725 real local transcripts: 0 changes after two rule fixes; before the fixes it made 5 wrong `ASR models` → `ASR_MODELS` style changes. |
-| Near-miss repair | **Shadow**: proposals recorded, text unchanged | Adds about 5 points of recall on top (Cohere 42.3% → 47.6%, Parakeet 39.3% → 44.6%). Real local history: 18 repairs, all judged correct (`GEMA` → Gemma, `collab` → Colab, `vasper` → Vesper, `Envidia` → NVIDIA, `DRization` → diarization). That history was also the development set. Held-out FLEURS: 1 harmful change in 92 clips under a wrong-workspace list (upper bound 5.1%). Not enough evidence to apply by default. |
+| Near-miss repair | **On** (only with a working set; an undone repair suspends that spelling) | Adds about 5 points of recall on top (Cohere 42.3% → 47.6%, Parakeet 39.3% → 44.6%). With the correct workspace: 0 changes on 350 hard negatives and 92 FLEURS clips; 89 repairs on positives, 1 harmful. Real local history: 18 repairs, all judged correct (`GEMA` → Gemma, `collab` → Colab, `vasper` → Vesper, `Envidia` → NVIDIA, `DRization` → diarization); that history was also the development set. Under a wrong workspace's list: 1 harmful change in 92 FLEURS clips. Meets the predeclared criterion. |
 | Recognizer hooks: Nemotron phrase bias, Qwen3-ASR prompt hotwords | **Disabled** for automatic hints | Both raise recall: Nemotron 25% → 60%, Qwen3-ASR 29% → 67%. Nemotron inserts hint terms into ordinary speech on 16–22% of hard negatives and 21–34% of FLEURS clips. Qwen3-ASR exceeds the 3% false-alarm gate at 32 hints (upper bound 4.1%), mostly by capitalizing ordinary words that are also term names. Each decode still records its hint provenance. |
 | Policy 5 learning from edits | **On** | Stricter than policy 4. On the authored episode replay it gave fewer fixes than policy 4 (word errors 15 against 7, raw 16), with 0 harm in both. Local history holds 0 in-app edits, so this path has had no real input. |
 | Automatic workspaces | **On** (folder/host keys) | Synthetic week, 20 seeds: precision 1,349/1,349, recall 59.7% (90.1% once a workspace is visible), median visibility after day 2–3. Live per-app document reading is **unmeasured**: running it means opening apps, which needs the owner's approval. |

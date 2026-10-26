@@ -2373,8 +2373,20 @@ impl WorkContext {
         let set = snapshot.post_asr_working_set(&raw, self.config.language);
         personalized.evidence.hint_hash = set.hint_hash.clone();
         if post_asr_profile.apply_corrections && snapshot.learning.breaker_tripped_ms.is_none() {
-            let gate = vesper_core::correction_gate(&personalized.text, &set, self.config.language);
-            personalized.evidence.gate_shadow = gate.near_misses;
+            // Near-miss repairs apply: they met the predeclared evaluator gate (no
+            // changes on hard negatives or retained history with the right workspace).
+            let gate = vesper_core::correction_gate_with(
+                &personalized.text,
+                &set,
+                self.config.language,
+                vesper_core::NearMiss::Apply,
+            );
+            // Proposals the gate could not apply (overlaps) stay visible for review.
+            personalized.evidence.gate_shadow = gate
+                .near_misses
+                .into_iter()
+                .filter(|n| !gate.applied.iter().any(|a| a.start == n.start))
+                .collect();
             if !gate.applied.is_empty() {
                 personalized.text = gate.text;
                 personalized.evidence.gate = gate.applied;

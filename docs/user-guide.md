@@ -518,6 +518,7 @@ from one speech model's mistakes waits while you use a different model and comes
 back when you return; words you add or tick work with every model. If you undo
 two different learned spellings within a week, Vesper pauses all unticked
 learned spellings and shows **Resume learned spellings** under Vocabulary.
+In a detected workspace, Vesper also fixes a misheard non-word that is one letter away from one of that workspace's names or terms, such as *vasper* → *Vesper*. It never changes ordinary English words. If you change a fixed word back, Vesper stops using that spelling for automatic fixes.
 These local corrections do not train model weights or activate a new model. Read the
 [personalization guide](personalization/README.md) for the exact learning,
 review and undo behavior.

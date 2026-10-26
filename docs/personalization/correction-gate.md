@@ -2,7 +2,7 @@
 
 Implementation: [`crates/vesper-core/src/gate.rs`](../../crates/vesper-core/src/gate.rs). Contracts: [`terms.rs`](../../crates/vesper-core/src/terms.rs).
 
-The correction gate is the text-level safety layer shared by every speech model. In the desktop pipeline it runs in `complete_raw` after the saved-correction aliases. It uses the snapshot's post-recognition working set (`post_asr_working_set`, selected from the raw hypothesis only), honors **Apply my saved corrections**, and is skipped entirely while the [policy breaker](automatic-dictionary.md#policy-breaker) is tripped. Near-miss proposals are stored as `gateShadow` in the result's evidence and never change text. A rejected `inv:` term is suspended in the [term inventory](term-inventory.md). It runs after recognition, after optional cleanup and after the existing [saved-correction aliases](automatic-dictionary.md). Its input is the per-recording working set's **normalizations**: exact spoken-form → spelling pairs built from the term inventory, such as `sherpa onnx` → `sherpa_onnx`. Sound-alike or fuzzy matching never reaches the gate as a change. It may only propose candidates elsewhere.
+The correction gate is the text-level safety layer shared by every speech model. In the desktop pipeline it runs in `complete_raw` after the saved-correction aliases. It uses the snapshot's post-recognition working set (`post_asr_working_set`, selected from the raw hypothesis only), honors **Apply my saved corrections**, and is skipped entirely while the [policy breaker](automatic-dictionary.md#policy-breaker) is tripped. The desktop applies near-miss repairs (`NearMiss::Apply`). A proposal that overlaps another candidate is not applied; it is stored as `gateShadow` in the result's evidence. A rejected change suspends its term in the [term inventory](term-inventory.md): an exact normalization names its `inv:` row, and a near-miss repair suspends every row spelled like its reference. It runs after recognition, after optional cleanup and after the existing [saved-correction aliases](automatic-dictionary.md). Its input is the per-recording working set's **normalizations**: exact spoken-form → spelling pairs built from the term inventory, such as `sherpa onnx` → `sherpa_onnx`. Sound-alike or fuzzy matching never reaches the gate as a change. It may only propose candidates elsewhere.
 
 ## Rules
 
@@ -19,7 +19,7 @@ Every declined candidate is returned with its reason, so evaluation and diagnost
 
 The heard-plausibility gate is what blocks the failures found in the [proposer review](evaluation.md): "I see the point" → "Cedar Point", "Monday" → "Mandy", "May" → "Mae", "write" → "Wright", "notes" → "Nots". Each heard span is ordinary language, so none of them can be rewritten by any tier. Phonetic distance cannot make this decision: "write", "right" and "Wright" are pronounced identically.
 
-## Near-miss repair (experimental, shadow by default)
+## Near-miss repair
 
 Exact normalizations cannot repair a misrecognition such as `vasper` → `Vesper`, `Envidia` → `NVIDIA` or `GEMA` → `Gemma`. Those misrecognitions do occur in local dictation history. Learned aliases need user edits, and in-app edits are rare.
 
@@ -29,7 +29,14 @@ The gate therefore has an experimental near-miss rule over the working set's **r
 - it is within one letter edit of exactly one reference (two edits from eight letters), with a unique best match;
 - it is not merely an inflection of that reference, in either direction (`LLMs` stays `LLMs`, `tokenizer` stays `tokenizer` against `tokenizers`).
 
-`NearMiss::Shadow` (the default) records proposals in `GateResult::near_misses` without changing text. `NearMiss::Apply` applies them. The default changes only on evaluator evidence: zero would-fire changes on correct words across the hard-negative bank and the retained-history replay. See the [term evaluation](term-evaluation.md).
+`NearMiss::Shadow`, the library default, records proposals in `GateResult::near_misses` without changing text. `NearMiss::Apply` applies them.
+
+The criterion for applying them in the app was written down before the evaluation: zero would-fire changes on correct words across the hard-negative bank and the retained-history replay. It was met on 27 October 2026 with the correct workspace's references (local measurement, [term evaluation](term-evaluation.md)):
+- **Target-free lanes:** 0 changes on 350 rendered hard negatives and 92 FLEURS clips. This holds for Cohere and Parakeet, clean and noise-mixed.
+- **Positives:** 89 repairs, 1 harmful. A LibriSpeech utterance contains two rare words one letter apart, both in the reference and the list.
+- **Retained local history:** 18 repairs, 0 wrong. This history was also the development set for two earlier rule fixes.
+
+The one harmful change on real speech came from another workspace's list, in a FLEURS clip about the TogiNet radio site. That is why repairs depend on workspace detection, and why a rejected repair suspends its spelling and counts toward the breaker. The desktop therefore applies near-miss repairs.
 
 `crates/vesper-data/examples/would_fire_replay.rs` runs the gate over a **copy** of a dataset with a frozen working set. It reports every exact and near-miss change with surrounding context, for private review. It never runs a model or writes to the source store.
 

@@ -533,3 +533,53 @@ fn mined_terms_are_normalized_by_the_gate_and_a_user_revert_suspends_them() {
     );
     assert_eq!(later.personalized_transcript, None);
 }
+
+#[test]
+fn near_miss_repairs_apply_and_an_undone_repair_pauses_that_spelling() {
+    use vesper_core::TermSource;
+    let dir = tempfile::tempdir().unwrap();
+    let root = dir.path().join("dataset");
+    let runtime = Arc::new(Runtime::default());
+    let store = DatasetStore::open(root.clone()).unwrap();
+    store
+        .replace_mined_sources(
+            &[TermSource::Documentation],
+            "",
+            &[vesper_data::term_mining::MinedTerm::new(
+                "NVIDIA",
+                TermSource::Documentation,
+                "",
+                4,
+            )],
+            0,
+        )
+        .unwrap();
+    let heard = "Run the encoder on Envidia hardware";
+    let fixed = "Run the encoder on NVIDIA hardware";
+    let complete_one = |source: u16, text: &str| {
+        complete(
+            &root,
+            &runtime,
+            source,
+            AsrModel::CohereTranscribe,
+            Language::English,
+            text,
+        )
+    };
+    let result = complete_one(1, heard);
+    assert_eq!(result.personalized_transcript.as_deref(), Some(fixed));
+    assert_eq!(
+        result.personalization_evidence.unwrap().gate[0].term_id,
+        "reference:NVIDIA"
+    );
+    // Ordinary words near the reference stay untouched.
+    assert_eq!(
+        complete_one(2, "We visited a media lab").personalized_transcript,
+        None
+    );
+    let result = complete_one(3, heard);
+    runtime
+        .edit_latest_draft(root.clone(), &result.result_id, 0, heard.into())
+        .unwrap();
+    assert_eq!(complete_one(4, heard).personalized_transcript, None);
+}

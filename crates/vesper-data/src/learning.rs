@@ -911,10 +911,25 @@ impl DatasetStore {
             })
             .map(|c| c.term_id.clone())
             .collect::<Vec<_>>();
-        for id in rejected
+        // Exact normalizations name their inventory row; near-miss repairs name
+        // the reference spelling, which suspends every inventory row with it.
+        let mut suspend = rejected
             .iter()
             .filter_map(|id| id.strip_prefix("inv:")?.parse::<i64>().ok())
-        {
+            .collect::<Vec<_>>();
+        let references = rejected
+            .iter()
+            .filter_map(|id| id.strip_prefix("reference:"))
+            .collect::<Vec<_>>();
+        if !references.is_empty() {
+            suspend.extend(
+                self.inventory_terms()?
+                    .into_iter()
+                    .filter(|t| references.contains(&t.surface.as_str()))
+                    .filter_map(|t| t.id.strip_prefix("inv:")?.parse::<i64>().ok()),
+            );
+        }
+        for id in suspend {
             self.suspend_inventory_term(id)?;
         }
         if !rejected.is_empty() {
