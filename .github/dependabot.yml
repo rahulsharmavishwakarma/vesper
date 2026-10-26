@@ -23,6 +23,12 @@ updates:
     groups:
       rust-dependencies:
         patterns: ["*"]
+    ignore:
+      # vesper-models enables sha2's `asm` feature for hardware SHA-256 on
+      # aarch64; 0.11 removed it, so the grouped update cannot resolve (#338).
+      # Move deliberately, after measuring 0.11's hashing speed on Apple silicon.
+      - dependency-name: sha2
+        update-types: ["version-update:semver-major", "version-update:semver-minor"]
 
   - package-ecosystem: github-actions
     directory: /
