@@ -17,6 +17,7 @@
   } from '../api/personalization';
   import type { Language } from '../config';
   import Select from './Select.svelte';
+  import Workspaces from './Workspaces.svelte';
   let {
     desktop,
     disabled = false,
@@ -484,6 +485,7 @@
               </p>
             </div>
           </div>
+          <Workspaces bind:profile disabled={controlsDisabled} onprofilechange={load} />
           <div class="preference-group" id="vocabulary">
             <div class="group-heading">
               <h3 id="vocabulary">Vocabulary</h3>

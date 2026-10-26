@@ -49,3 +49,50 @@ test('project rules save, keep overrides, cancel pickers and fit a narrow screen
   await page.getByRole('button', { name: 'Remove TextEdit project rule', exact: true }).click();
   await expect(page.locator('.project-rule')).toHaveCount(0);
 });
+
+test('automatic workspaces rename, merge, opt into folder learning and remove', async ({
+  page,
+}) => {
+  await writing(page);
+  const toggle = page.getByRole('checkbox', { name: 'Detect workspaces automatically' });
+  await expect(toggle).toBeChecked();
+  const rows = page.locator('.workspace');
+  await expect(rows).toHaveCount(2);
+  await expect(rows.first()).toContainText('synthetic-repo');
+  await expect(rows.first()).toContainText('Code · 12 dictations');
+  await expect(rows.nth(1)).toContainText('Website · 6 dictations');
+  // Rename: Escape cancels and returns focus; Enter saves.
+  await page.getByRole('button', { name: 'Rename', exact: true }).first().click();
+  const field = page.getByRole('textbox', { name: 'New name for synthetic-repo' });
+  await expect(field).toBeFocused();
+  await field.fill('Other name');
+  await field.press('Escape');
+  await expect(rows.first()).toContainText('synthetic-repo');
+  await expect(page.getByRole('button', { name: 'Rename', exact: true }).first()).toBeFocused();
+  await page.getByRole('button', { name: 'Rename', exact: true }).first().click();
+  await field.fill('docs.example.org');
+  await field.press('Enter');
+  await expect(page.locator('.workspace .invalid')).toContainText('Use Merge instead');
+  await field.fill('Synthetic app');
+  await field.press('Enter');
+  await expect(rows.first()).toContainText('Synthetic app');
+  // Folder learning is an explicit opt-in through the folder picker.
+  await page.getByRole('button', { name: 'Learn words from this folder…' }).click();
+  await expect(rows.first()).toContainText('Learning words from Synthetic');
+  await page.getByRole('button', { name: 'Stop learning from folder' }).click();
+  await expect(rows.first()).not.toContainText('Learning words from');
+  // Websites never offer folder learning.
+  await expect(rows.nth(1).getByRole('button', { name: /Learn words/ })).toHaveCount(0);
+  // Merge the website into the repo.
+  await rows.nth(1).getByRole('button', { name: 'Merge…' }).click();
+  await rows.nth(1).getByRole('button', { name: 'Merge', exact: true }).click();
+  await expect(rows).toHaveCount(1);
+  await expect(rows.first()).toContainText('18 dictations');
+  await page.setViewportSize({ width: 320, height: 720 });
+  expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true);
+  await page.getByRole('button', { name: 'Remove workspace Synthetic app' }).click();
+  await expect(rows).toHaveCount(0);
+  await expect(page.getByText('No workspaces yet.')).toBeVisible();
+  await toggle.uncheck();
+  await expect(page.locator('.save-status')).toContainText(/Saved/, { timeout: 10_000 });
+});
