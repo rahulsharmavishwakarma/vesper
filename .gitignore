@@ -118,3 +118,6 @@ transcribe-export-*/
 *.safetensors
 *.nemo
 /models/downloads/
+
+# Regenerated deterministically by benchmarks/asr/python/term-eval; pinned by hash in FROZEN.json.
+benchmarks/asr/manifests/term-eval/sentences.jsonl

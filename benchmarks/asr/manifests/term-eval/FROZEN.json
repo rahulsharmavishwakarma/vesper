@@ -1,0 +1,712 @@
+{
+  "schemaVersion": 1,
+  "corpus": "term-eval-2026-10-26",
+  "frozenDate": "2026-10-27",
+  "statement": "Generated and frozen before any model output was seen.",
+  "files": {
+    "terms.json": "d4762e2b83475d409035b0758de6e09c4912e464c30d2136bbd4754d33ee3351",
+    "sentences.jsonl": "4c768e7923840ca8fc6bc761a8585e0cdac6fd9010f9e82c27a5e8e4d5f08edb"
+  },
+  "generator": {
+    "files": {
+      "build_corpus.py": "ad6440e5274df88839167975122e17e16191a75fa1f553d17dd74b00b7788bf5",
+      "terms_data.py": "3dee7ed71f83c2ac38786568029bc329574a35efa443088889b822a11bc43af0",
+      "sentence_data.py": "e40352162131aa42e35a72ccedd39a47403812ade17b982315b0c9cbe7e24df2",
+      "generate.py": "77ba9876328a72995f58a5d9b2751414af3b0501521cdc98f37262045e22e7e1"
+    },
+    "seed": "vesper-term-eval-2026-10-26",
+    "homophoneMaxDistance": 0.34,
+    "homophoneDistance": "Levenshtein over CMUdict phones (stress removed) / phones of the term spoken form or spoken-form word",
+    "split": "sha256(id) mod 10 == 0 -> dev, else test",
+    "targets": {
+      "homophone": 1000,
+      "subword": 900,
+      "ordinary": 550,
+      "protected": 700
+    },
+    "protectedQuotas": {
+      "weekday": 140,
+      "month": 130,
+      "number": 130,
+      "time": 110,
+      "money": 100,
+      "negation": 90
+    }
+  },
+  "cmudict": {
+    "url": "https://raw.githubusercontent.com/cmusphinx/cmudict/74790861f652b15e4ac49015a90074ad62a27690/cmudict.dict",
+    "repository": "https://github.com/cmusphinx/cmudict",
+    "revision": "74790861f652b15e4ac49015a90074ad62a27690",
+    "sha256": "81917843c7f44ce2b094ac63873c2c7a4cf802040792c455ba3ca406891c3d22",
+    "license": "BSD-2-Clause-style (CMU); LICENSE sha256 bd4ce8e44170a5f9f481310ca85c51de3c4f851a65e679b40e603b143bd3542a"
+  },
+  "termCounts": {
+    "devops": 30,
+    "rustaudio": 30,
+    "people": 30,
+    "distractors": 60
+  },
+  "counts": {
+    "total": 3336,
+    "byCategory": {
+      "hard_negative": 3156,
+      "positive": 180
+    },
+    "bySubcategory": {
+      "hard_negative/homophone": 1000,
+      "hard_negative/ordinary": 550,
+      "hard_negative/protected": 700,
+      "hard_negative/review_case": 6,
+      "hard_negative/subword": 900,
+      "positive/carrier": 180
+    },
+    "bySplit": {
+      "dev": 347,
+      "test": 2989
+    },
+    "bySubcategorySplit": {
+      "carrier/dev": 22,
+      "carrier/test": 158,
+      "homophone/dev": 95,
+      "homophone/test": 905,
+      "ordinary/dev": 62,
+      "ordinary/test": 488,
+      "protected/dev": 78,
+      "protected/test": 622,
+      "review_case/test": 6,
+      "subword/dev": 90,
+      "subword/test": 810
+    },
+    "byWorkspace": {
+      "devops": 1161,
+      "people": 1158,
+      "rustaudio": 1017
+    }
+  },
+  "homophoneEvidence": [
+    {
+      "termId": "devops-argocd",
+      "homophone": "cargo",
+      "matchedForm": "argo",
+      "termPhones": "AA R G OW",
+      "homophonePhones": "K AA R G OW",
+      "distance": 0.25
+    },
+    {
+      "termId": "devops-cilium",
+      "homophone": "silly",
+      "matchedForm": "silly",
+      "termPhones": "S IH L IY",
+      "homophonePhones": "S IH L IY",
+      "distance": 0.0
+    },
+    {
+      "termId": "devops-containerd",
+      "homophone": "contained",
+      "matchedForm": "container",
+      "termPhones": "K AH N T EY N ER",
+      "homophonePhones": "K AH N T EY N D",
+      "distance": 0.1429
+    },
+    {
+      "termId": "devops-coredns",
+      "homophone": "course",
+      "matchedForm": "core",
+      "termPhones": "K AO R",
+      "homophonePhones": "K AO R S",
+      "distance": 0.3333
+    },
+    {
+      "termId": "devops-cri-o",
+      "homophone": "crow",
+      "matchedForm": "cry oh",
+      "termPhones": "K R AY OW",
+      "homophonePhones": "K R OW",
+      "distance": 0.25
+    },
+    {
+      "termId": "devops-cri-o",
+      "homophone": "cry",
+      "matchedForm": "cry",
+      "termPhones": "K R AY",
+      "homophonePhones": "K R AY",
+      "distance": 0.0
+    },
+    {
+      "termId": "devops-envoy",
+      "homophone": "enjoy",
+      "matchedForm": "envoy",
+      "termPhones": "EH N V OY",
+      "homophonePhones": "EH N JH OY",
+      "distance": 0.25
+    },
+    {
+      "termId": "devops-envoy",
+      "homophone": "envy",
+      "matchedForm": "envoy",
+      "termPhones": "EH N V OY",
+      "homophonePhones": "EH N V IY",
+      "distance": 0.25
+    },
+    {
+      "termId": "devops-fluentd",
+      "homophone": "fluency",
+      "matchedForm": "fluent dee",
+      "termPhones": "F L UW AH N T D IY",
+      "homophonePhones": "F L UW AH N S IY",
+      "distance": 0.25
+    },
+    {
+      "termId": "devops-helm",
+      "homophone": "elm",
+      "matchedForm": "helm",
+      "termPhones": "HH EH L M",
+      "homophonePhones": "EH L M",
+      "distance": 0.25
+    },
+    {
+      "termId": "devops-helm",
+      "homophone": "held",
+      "matchedForm": "helm",
+      "termPhones": "HH EH L M",
+      "homophonePhones": "HH EH L D",
+      "distance": 0.25
+    },
+    {
+      "termId": "devops-helm",
+      "homophone": "help",
+      "matchedForm": "helm",
+      "termPhones": "HH EH L M",
+      "homophonePhones": "HH EH L P",
+      "distance": 0.25
+    },
+    {
+      "termId": "devops-ingress-nginx",
+      "homophone": "engine",
+      "matchedForm": "engine",
+      "termPhones": "EH N JH AH N",
+      "homophonePhones": "EH N JH AH N",
+      "distance": 0.0
+    },
+    {
+      "termId": "devops-jaeger",
+      "homophone": "jogger",
+      "matchedForm": "jaeger",
+      "termPhones": "JH EH G ER",
+      "homophonePhones": "JH AA G ER",
+      "distance": 0.25
+    },
+    {
+      "termId": "devops-k9s",
+      "homophone": "canines",
+      "matchedForm": "k nines",
+      "termPhones": "K EY N AY N Z",
+      "homophonePhones": "K EY N AY N Z",
+      "distance": 0.0
+    },
+    {
+      "termId": "devops-k9s",
+      "homophone": "nines",
+      "matchedForm": "nines",
+      "termPhones": "N AY N Z",
+      "homophonePhones": "N AY N Z",
+      "distance": 0.0
+    },
+    {
+      "termId": "devops-karpenter",
+      "homophone": "carpenter",
+      "matchedForm": "carpenter",
+      "termPhones": "K AA R P AH N T ER",
+      "homophonePhones": "K AA R P AH N T ER",
+      "distance": 0.0
+    },
+    {
+      "termId": "devops-karpenter",
+      "homophone": "carpet",
+      "matchedForm": "carpenter",
+      "termPhones": "K AA R P AH N T ER",
+      "homophonePhones": "K AA R P AH T",
+      "distance": 0.25
+    },
+    {
+      "termId": "devops-kube-proxy",
+      "homophone": "cube",
+      "matchedForm": "kube",
+      "termPhones": "K Y UW B",
+      "homophonePhones": "K Y UW B",
+      "distance": 0.0
+    },
+    {
+      "termId": "devops-kubectl",
+      "homophone": "control",
+      "matchedForm": "control",
+      "termPhones": "K AH N T R OW L",
+      "homophonePhones": "K AH N T R OW L",
+      "distance": 0.0
+    },
+    {
+      "termId": "devops-kubectl",
+      "homophone": "couple",
+      "matchedForm": "cuddle",
+      "termPhones": "K AH D AH L",
+      "homophonePhones": "K AH P AH L",
+      "distance": 0.2
+    },
+    {
+      "termId": "devops-kubectl",
+      "homophone": "cube",
+      "matchedForm": "kube",
+      "termPhones": "K Y UW B",
+      "homophonePhones": "K Y UW B",
+      "distance": 0.0
+    },
+    {
+      "termId": "devops-kubectl",
+      "homophone": "cuddle",
+      "matchedForm": "cuddle",
+      "termPhones": "K AH D AH L",
+      "homophonePhones": "K AH D AH L",
+      "distance": 0.0
+    },
+    {
+      "termId": "devops-kubelet",
+      "homophone": "cube",
+      "matchedForm": "kube",
+      "termPhones": "K Y UW B",
+      "homophonePhones": "K Y UW B",
+      "distance": 0.0
+    },
+    {
+      "termId": "devops-kustomize",
+      "homophone": "custom",
+      "matchedForm": "customize",
+      "termPhones": "K AH S T AH M AY Z",
+      "homophonePhones": "K AH S T AH M",
+      "distance": 0.25
+    },
+    {
+      "termId": "devops-kustomize",
+      "homophone": "customize",
+      "matchedForm": "customize",
+      "termPhones": "K AH S T AH M AY Z",
+      "homophonePhones": "K AH S T AH M AY Z",
+      "distance": 0.0
+    },
+    {
+      "termId": "devops-kustomize",
+      "homophone": "customs",
+      "matchedForm": "customize",
+      "termPhones": "K AH S T AH M AY Z",
+      "homophonePhones": "K AH S T AH M Z",
+      "distance": 0.125
+    },
+    {
+      "termId": "devops-linkerd",
+      "homophone": "linger",
+      "matchedForm": "linker",
+      "termPhones": "L IH NG K ER",
+      "homophonePhones": "L IH NG G ER",
+      "distance": 0.2
+    },
+    {
+      "termId": "devops-loki",
+      "homophone": "low key",
+      "matchedForm": "low key",
+      "termPhones": "L OW K IY",
+      "homophonePhones": "L OW K IY",
+      "distance": 0.0
+    },
+    {
+      "termId": "devops-loki",
+      "homophone": "lucky",
+      "matchedForm": "low key",
+      "termPhones": "L OW K IY",
+      "homophonePhones": "L AH K IY",
+      "distance": 0.25
+    },
+    {
+      "termId": "devops-minikube",
+      "homophone": "mini cube",
+      "matchedForm": "mini kube",
+      "termPhones": "M IH N IY K Y UW B",
+      "homophonePhones": "M IH N IY K Y UW B",
+      "distance": 0.0
+    },
+    {
+      "termId": "devops-prometheus",
+      "homophone": "previous",
+      "matchedForm": "prometheus",
+      "termPhones": "P R AH M IY TH IY AH S",
+      "homophonePhones": "P R IY V IY AH S",
+      "distance": 0.3333
+    },
+    {
+      "termId": "devops-tekton",
+      "homophone": "taken",
+      "matchedForm": "tech ton",
+      "termPhones": "T EH K T AH N",
+      "homophonePhones": "T EY K AH N",
+      "distance": 0.3333
+    },
+    {
+      "termId": "devops-terraform",
+      "homophone": "tear a form",
+      "matchedForm": "terra form",
+      "termPhones": "T EH R AA F AO R M",
+      "homophonePhones": "T EH R AH F AO R M",
+      "distance": 0.125
+    },
+    {
+      "termId": "devops-terraform",
+      "homophone": "terror",
+      "matchedForm": "terra",
+      "termPhones": "T EH R AA",
+      "homophonePhones": "T EH R ER",
+      "distance": 0.25
+    },
+    {
+      "termId": "people-anneliese",
+      "homophone": "lease",
+      "matchedForm": "lease",
+      "termPhones": "L IY S",
+      "homophonePhones": "L IY S",
+      "distance": 0.0
+    },
+    {
+      "termId": "people-bree",
+      "homophone": "breeze",
+      "matchedForm": "bree",
+      "termPhones": "B R IY",
+      "homophonePhones": "B R IY Z",
+      "distance": 0.3333
+    },
+    {
+      "termId": "people-bree",
+      "homophone": "brie",
+      "matchedForm": "bree",
+      "termPhones": "B R IY",
+      "homophonePhones": "B R IY",
+      "distance": 0.0
+    },
+    {
+      "termId": "people-brightloom",
+      "homophone": "bright room",
+      "matchedForm": "bright loom",
+      "termPhones": "B R AY T L UW M",
+      "homophonePhones": "B R AY T R UW M",
+      "distance": 0.1429
+    },
+    {
+      "termId": "people-cedar-point",
+      "homophone": "see the point",
+      "matchedForm": "cedar point",
+      "termPhones": "S IY D ER P OY N T",
+      "homophonePhones": "S IY DH AH P OY N T",
+      "distance": 0.25
+    },
+    {
+      "termId": "people-joaquin-phelan",
+      "homophone": "fallen",
+      "matchedForm": "phelan",
+      "termPhones": "F EH L AH N",
+      "homophonePhones": "F AA L AH N",
+      "distance": 0.2
+    },
+    {
+      "termId": "people-joaquin-phelan",
+      "homophone": "fell in",
+      "matchedForm": "phelan",
+      "termPhones": "F EH L AH N",
+      "homophonePhones": "F EH L IH N",
+      "distance": 0.2
+    },
+    {
+      "termId": "people-joaquin-phelan",
+      "homophone": "felon",
+      "matchedForm": "phelan",
+      "termPhones": "F EH L AH N",
+      "homophonePhones": "F EH L AH N",
+      "distance": 0.0
+    },
+    {
+      "termId": "people-mandy",
+      "homophone": "Monday",
+      "matchedForm": "mandy",
+      "termPhones": "M AE N D IY",
+      "homophonePhones": "M AH N D IY",
+      "distance": 0.2
+    },
+    {
+      "termId": "people-mandy",
+      "homophone": "candy",
+      "matchedForm": "mandy",
+      "termPhones": "M AE N D IY",
+      "homophonePhones": "K AE N D IY",
+      "distance": 0.2
+    },
+    {
+      "termId": "people-mandy",
+      "homophone": "handy",
+      "matchedForm": "mandy",
+      "termPhones": "M AE N D IY",
+      "homophonePhones": "HH AE N D IY",
+      "distance": 0.2
+    },
+    {
+      "termId": "people-nguyen",
+      "homophone": "new yen",
+      "matchedForm": "new yen",
+      "termPhones": "N UW Y EH N",
+      "homophonePhones": "N UW Y EH N",
+      "distance": 0.0
+    },
+    {
+      "termId": "people-nguyen",
+      "homophone": "win",
+      "matchedForm": "win",
+      "termPhones": "W IH N",
+      "homophonePhones": "W IH N",
+      "distance": 0.0
+    },
+    {
+      "termId": "people-niall",
+      "homophone": "Nile",
+      "matchedForm": "nile",
+      "termPhones": "N AY L",
+      "homophonePhones": "N AY L",
+      "distance": 0.0
+    },
+    {
+      "termId": "people-niall",
+      "homophone": "kneel",
+      "matchedForm": "neil",
+      "termPhones": "N IY L",
+      "homophonePhones": "N IY L",
+      "distance": 0.0
+    },
+    {
+      "termId": "people-niall",
+      "homophone": "nail",
+      "matchedForm": "neil",
+      "termPhones": "N IY L",
+      "homophonePhones": "N EY L",
+      "distance": 0.3333
+    },
+    {
+      "termId": "people-orvana",
+      "homophone": "Havana",
+      "matchedForm": "or vana",
+      "termPhones": "AO R V AE N AH",
+      "homophonePhones": "HH AH V AE N AH",
+      "distance": 0.3333
+    },
+    {
+      "termId": "people-paige",
+      "homophone": "page",
+      "matchedForm": "paige",
+      "termPhones": "P EY JH",
+      "homophonePhones": "P EY JH",
+      "distance": 0.0
+    },
+    {
+      "termId": "people-priyanka-venkataraman",
+      "homophone": "Roman",
+      "matchedForm": "raman",
+      "termPhones": "R EY M AH N",
+      "homophonePhones": "R OW M AH N",
+      "distance": 0.2
+    },
+    {
+      "termId": "people-quillstack",
+      "homophone": "will stack",
+      "matchedForm": "quill stack",
+      "termPhones": "K W IH L S T AE K",
+      "homophonePhones": "W IH L S T AE K",
+      "distance": 0.125
+    },
+    {
+      "termId": "people-ruairi",
+      "homophone": "lorry",
+      "matchedForm": "rory",
+      "termPhones": "R AO R IY",
+      "homophonePhones": "L AO R IY",
+      "distance": 0.25
+    },
+    {
+      "termId": "people-ruairi",
+      "homophone": "roar",
+      "matchedForm": "rory",
+      "termPhones": "R AO R IY",
+      "homophonePhones": "R AO R",
+      "distance": 0.25
+    },
+    {
+      "termId": "people-sloane-ferreira",
+      "homophone": "loan",
+      "matchedForm": "slone",
+      "termPhones": "S L OW N",
+      "homophonePhones": "L OW N",
+      "distance": 0.25
+    },
+    {
+      "termId": "people-sloane-ferreira",
+      "homophone": "slow",
+      "matchedForm": "slone",
+      "termPhones": "S L OW N",
+      "homophonePhones": "S L OW",
+      "distance": 0.25
+    },
+    {
+      "termId": "people-tidewell",
+      "homophone": "tied well",
+      "matchedForm": "tide well",
+      "termPhones": "T AY D W EH L",
+      "homophonePhones": "T AY D W EH L",
+      "distance": 0.0
+    },
+    {
+      "termId": "people-wright",
+      "homophone": "right",
+      "matchedForm": "wright",
+      "termPhones": "R AY T",
+      "homophonePhones": "R AY T",
+      "distance": 0.0
+    },
+    {
+      "termId": "people-wright",
+      "homophone": "rite",
+      "matchedForm": "wright",
+      "termPhones": "R AY T",
+      "homophonePhones": "R AY T",
+      "distance": 0.0
+    },
+    {
+      "termId": "people-wright",
+      "homophone": "write",
+      "matchedForm": "wright",
+      "termPhones": "R AY T",
+      "homophonePhones": "R AY T",
+      "distance": 0.0
+    },
+    {
+      "termId": "people-ximena",
+      "homophone": "he meant",
+      "matchedForm": "he mena",
+      "termPhones": "HH IY M IY N AH",
+      "homophonePhones": "HH IY M EH N T",
+      "distance": 0.3333
+    },
+    {
+      "termId": "rustaudio-cpal",
+      "homophone": "see Paul",
+      "matchedForm": "see pal",
+      "termPhones": "S IY P AE L",
+      "homophonePhones": "S IY P AO L",
+      "distance": 0.2
+    },
+    {
+      "termId": "rustaudio-kaldi",
+      "homophone": "called",
+      "matchedForm": "call dee",
+      "termPhones": "K AO L D IY",
+      "homophonePhones": "K AO L D",
+      "distance": 0.2
+    },
+    {
+      "termId": "rustaudio-nemo",
+      "homophone": "narrow",
+      "matchedForm": "nemo",
+      "termPhones": "N EH M OW",
+      "homophonePhones": "N EH R OW",
+      "distance": 0.25
+    },
+    {
+      "termId": "rustaudio-onnx",
+      "homophone": "onyx",
+      "matchedForm": "onyx",
+      "termPhones": "AA N IH K S",
+      "homophonePhones": "AA N IH K S",
+      "distance": 0.0
+    },
+    {
+      "termId": "rustaudio-rustfmt",
+      "homophone": "format",
+      "matchedForm": "format",
+      "termPhones": "F AO R M AE T",
+      "homophonePhones": "F AO R M AE T",
+      "distance": 0.0
+    },
+    {
+      "termId": "rustaudio-rustfmt",
+      "homophone": "trust",
+      "matchedForm": "rust",
+      "termPhones": "R AH S T",
+      "homophonePhones": "T R AH S T",
+      "distance": 0.25
+    },
+    {
+      "termId": "rustaudio-serde-json",
+      "homophone": "Jason",
+      "matchedForm": "jason",
+      "termPhones": "JH EY S AH N",
+      "homophonePhones": "JH EY S AH N",
+      "distance": 0.0
+    },
+    {
+      "termId": "rustaudio-sherpa-onnx",
+      "homophone": "onyx",
+      "matchedForm": "onyx",
+      "termPhones": "AA N IH K S",
+      "homophonePhones": "AA N IH K S",
+      "distance": 0.0
+    },
+    {
+      "termId": "rustaudio-sincfixedin",
+      "homophone": "sink",
+      "matchedForm": "sink",
+      "termPhones": "S IH NG K",
+      "homophonePhones": "S IH NG K",
+      "distance": 0.0
+    },
+    {
+      "termId": "rustaudio-sortformer",
+      "homophone": "short form",
+      "matchedForm": "sort former",
+      "termPhones": "S AO R T F AO R M ER",
+      "homophonePhones": "SH AO R T F AO R M",
+      "distance": 0.2222
+    },
+    {
+      "termId": "rustaudio-svelte",
+      "homophone": "smelt",
+      "matchedForm": "svelte",
+      "termPhones": "S V EH L T",
+      "homophonePhones": "S M EH L T",
+      "distance": 0.2
+    },
+    {
+      "termId": "rustaudio-tauri",
+      "homophone": "Tory",
+      "matchedForm": "tory",
+      "termPhones": "T AO R IY",
+      "homophonePhones": "T AO R IY",
+      "distance": 0.0
+    },
+    {
+      "termId": "rustaudio-tauri",
+      "homophone": "story",
+      "matchedForm": "tory",
+      "termPhones": "T AO R IY",
+      "homophonePhones": "S T AO R IY",
+      "distance": 0.25
+    },
+    {
+      "termId": "rustaudio-tokio",
+      "homophone": "Tokyo",
+      "matchedForm": "tokyo",
+      "termPhones": "T OW K IY OW",
+      "homophonePhones": "T OW K IY OW",
+      "distance": 0.0
+    }
+  ]
+}
