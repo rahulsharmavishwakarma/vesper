@@ -831,9 +831,7 @@ fn add_sample(
     let mut near = 0;
     if let Some(gate) = &outcome.gate {
         for change in &gate.applied {
-            let wanted = contains_term(&sample.reference, &change.spelling, false);
-            let heard_was_right = contains_term(&sample.reference, &change.heard, false);
-            let bad = !wanted || heard_was_right;
+            let bad = harmful_change(sample, &change.heard, &change.spelling);
             harmful += usize::from(bad);
             if change.term_id.starts_with(NEAR_MISS_PREFIX) {
                 near += 1;
@@ -866,6 +864,19 @@ fn add_sample(
             s.paired_improvements += 1;
         }
     }
+}
+
+/// A change is harmful when its spelling is not what the reference says, or the
+/// heard form already was. Case matters (`helm` → `Helm` is harmful in ordinary
+/// text) except in the lowercase LibriSpeech biasing-list lane.
+fn harmful_change(sample: &TermSample, heard: &str, spelling: &str) -> bool {
+    if sample.biasing_list.is_some() {
+        let case_only = heard.to_lowercase() == spelling.to_lowercase();
+        return !contains_term(&sample.reference, spelling, false)
+            || (!case_only && contains_term(&sample.reference, heard, false));
+    }
+    !contains_term(&sample.reference, spelling, true)
+        || contains_term(&sample.reference, heard, true)
 }
 
 #[cfg(test)]
@@ -971,6 +982,22 @@ mod tests {
             &["Wright".into()],
         );
         assert_eq!((e.other_errors, e.target_errors), (1, 0));
+    }
+
+    #[test]
+    fn case_repairs_toward_the_reference_are_not_harmful() {
+        let m = manifest();
+        let p = &m.samples[0];
+        assert!(!harmful_change(p, "kube control", "kubectl"));
+        assert!(harmful_change(&m.samples[1], "write", "Wright"));
+        let mut q = p.clone();
+        q.reference = "Open the Grafana board".into();
+        assert!(!harmful_change(&q, "grafana", "Grafana"));
+        q.reference = "He took the helm".into();
+        assert!(harmful_change(&q, "helm", "Helm"));
+        q.biasing_list = Some(vec!["bertie".into()]);
+        q.reference = "BERTIE SAT DOWN".into();
+        assert!(!harmful_change(&q, "Bertie", "bertie"));
     }
 
     #[test]
