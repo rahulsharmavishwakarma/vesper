@@ -18,6 +18,7 @@ mod shortcuts;
 mod speech;
 mod terms;
 mod transcript;
+mod workspace;
 
 pub use adapters::{
     adapter, mlx_speech_only, mlx_speech_supported, nemo_gguf_supported, neural_engine_supported,
@@ -53,3 +54,4 @@ pub use speech::{
 };
 pub use terms::*;
 pub use transcript::{PipelineStage, Transcript};
+pub use workspace::*;

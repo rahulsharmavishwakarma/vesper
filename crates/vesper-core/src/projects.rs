@@ -32,6 +32,10 @@ pub enum ProjectSource {
     Shared,
     ContextUnavailable,
     Ambiguous,
+    /// An automatically detected, visible workspace (folder or web host).
+    Workspace,
+    /// No workspace: the app category is known, vocabulary scope stays shared.
+    Category,
 }
 
 #[derive(Debug, Clone, Default, PartialEq, Eq, Serialize, Deserialize)]
