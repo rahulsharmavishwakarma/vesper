@@ -53,6 +53,35 @@ pub struct WorkspaceUpdate {
     pub profile_changed: bool,
 }
 
+/// What one dictation's bounded Accessibility read found in the frontmost app.
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum DetectedDocument {
+    None,
+    File,
+    Folder,
+    Web,
+}
+
+/// Per-app detection coverage measured on real dictations while automatic
+/// workspaces are on: the app identifier, counts by result and read-latency
+/// buckets only. Never a path, host, title or text. Cleared when detection is
+/// turned off.
+#[derive(Debug, Clone, Default, PartialEq, Eq, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct DetectionCoverage {
+    pub application: String,
+    pub dictations: u32,
+    pub file: u32,
+    pub folder: u32,
+    pub web: u32,
+    pub none: u32,
+    /// Read latency: under 1 ms, under 5 ms, under 30 ms, slower.
+    pub latency: [u32; 4],
+}
+
+/// Distinct apps kept in the coverage table; further apps are not recorded.
+pub const MAX_DETECTION_APPS: usize = 64;
+
 /// Local calendar day used for the "seen on two days" rules.
 pub fn workspace_day() -> u32 {
     use chrono::Datelike;
@@ -161,6 +190,80 @@ impl DatasetStore {
         self.write_workspace_state(&state)?;
         tx.commit()?;
         Ok(key)
+    }
+
+    /// Count one dictation's detection result for its frontmost app.
+    pub fn record_detection(
+        &self,
+        application: &str,
+        found: DetectedDocument,
+        read_ms: f64,
+    ) -> Result<()> {
+        let known: Option<i64> = self
+            .connection
+            .query_row(
+                "SELECT 1 FROM workspace_detection WHERE application = ?1",
+                [application],
+                |row| row.get(0),
+            )
+            .optional()?;
+        let apps: i64 =
+            self.connection
+                .query_row("SELECT COUNT(*) FROM workspace_detection", [], |row| {
+                    row.get(0)
+                })?;
+        if application.is_empty() || (known.is_none() && apps as usize >= MAX_DETECTION_APPS) {
+            return Ok(());
+        }
+        let kind = match found {
+            DetectedDocument::None => "none",
+            DetectedDocument::File => "file",
+            DetectedDocument::Folder => "folder",
+            DetectedDocument::Web => "web",
+        };
+        let bucket = match read_ms {
+            ms if ms < 1.0 => "under_1ms",
+            ms if ms < 5.0 => "under_5ms",
+            ms if ms < 30.0 => "under_30ms",
+            _ => "slower",
+        };
+        self.connection.execute(
+            "INSERT OR IGNORE INTO workspace_detection VALUES (?1, 0, 0, 0, 0, 0, 0, 0, 0, 0)",
+            [application],
+        )?;
+        self.connection.execute(
+            &format!(
+                "UPDATE workspace_detection SET dictations = dictations + 1, \
+                 {kind} = {kind} + 1, {bucket} = {bucket} + 1 WHERE application = ?1"
+            ),
+            [application],
+        )?;
+        Ok(())
+    }
+
+    pub fn detection_coverage(&self) -> Result<Vec<DetectionCoverage>> {
+        let mut statement = self.connection.prepare(
+            "SELECT application, dictations, file, folder, web, none, under_1ms, under_5ms, \
+             under_30ms, slower FROM workspace_detection ORDER BY dictations DESC, application",
+        )?;
+        let rows = statement.query_map([], |row| {
+            Ok(DetectionCoverage {
+                application: row.get(0)?,
+                dictations: row.get(1)?,
+                file: row.get(2)?,
+                folder: row.get(3)?,
+                web: row.get(4)?,
+                none: row.get(5)?,
+                latency: [row.get(6)?, row.get(7)?, row.get(8)?, row.get(9)?],
+            })
+        })?;
+        Ok(rows.collect::<std::result::Result<_, _>>()?)
+    }
+
+    pub fn clear_detection_coverage(&self) -> Result<()> {
+        self.connection
+            .execute("DELETE FROM workspace_detection", [])?;
+        Ok(())
     }
 
     pub fn list_workspaces(&self) -> Result<Vec<WorkspaceSummary>> {

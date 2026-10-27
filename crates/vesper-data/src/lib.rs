@@ -23,7 +23,10 @@ pub use term_inventory::{
     InventoryRow, InventoryRowView, MergeReport, SourceSummary, TermEvidence, TermInventorySummary,
     TermMiningRun, TermStatus, TermWorkspaceSummary, MAX_INVENTORY_TERMS,
 };
-pub use workspaces::{workspace_day, WorkspaceSnapshot, WorkspaceSummary, WorkspaceUpdate};
+pub use workspaces::{
+    workspace_day, DetectedDocument, DetectionCoverage, WorkspaceSnapshot, WorkspaceSummary,
+    WorkspaceUpdate, MAX_DETECTION_APPS,
+};
 
 use std::fs::{self, File, OpenOptions};
 use std::io::{BufWriter, Read, Write};
@@ -233,6 +236,19 @@ impl DatasetStore {
                  id INTEGER PRIMARY KEY CHECK(id = 1),
                  salt TEXT NOT NULL,
                  state_json TEXT NOT NULL
+             );
+             -- Detection coverage from real dictations: app identifier and counts only.
+             CREATE TABLE IF NOT EXISTS workspace_detection (
+                 application TEXT PRIMARY KEY NOT NULL,
+                 dictations INTEGER NOT NULL,
+                 file INTEGER NOT NULL,
+                 folder INTEGER NOT NULL,
+                 web INTEGER NOT NULL,
+                 none INTEGER NOT NULL,
+                 under_1ms INTEGER NOT NULL,
+                 under_5ms INTEGER NOT NULL,
+                 under_30ms INTEGER NOT NULL,
+                 slower INTEGER NOT NULL
              );
              CREATE TABLE IF NOT EXISTS semantic_shadow (
                  result_id TEXT PRIMARY KEY NOT NULL,

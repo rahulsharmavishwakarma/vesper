@@ -8,7 +8,50 @@ const CODE: &str = "com.microsoft.VSCode";
 fn store() -> (tempfile::TempDir, DatasetStore) {
     let dir = tempfile::tempdir().unwrap();
     let store = DatasetStore::open(dir.path().into()).unwrap();
+    let mut profile = store.personalization().unwrap();
+    profile.automatic_workspaces = true;
+    store.save_personalization(profile).unwrap();
     (dir, store)
+}
+
+#[test]
+fn detection_coverage_counts_results_and_clears_when_turned_off() {
+    let (_dir, store) = store();
+    store
+        .record_detection("com.apple.Safari", DetectedDocument::Web, 0.4)
+        .unwrap();
+    store
+        .record_detection("com.apple.Safari", DetectedDocument::None, 12.0)
+        .unwrap();
+    store
+        .record_detection(CODE, DetectedDocument::File, 80.0)
+        .unwrap();
+    let coverage = store.detection_coverage().unwrap();
+    assert_eq!(
+        coverage[0],
+        DetectionCoverage {
+            application: "com.apple.Safari".into(),
+            dictations: 2,
+            web: 1,
+            none: 1,
+            latency: [1, 0, 1, 0],
+            ..Default::default()
+        }
+    );
+    assert_eq!((coverage[1].file, coverage[1].latency), (1, [0, 0, 0, 1]));
+    for n in 0..MAX_DETECTION_APPS {
+        store
+            .record_detection(&format!("app.{n}"), DetectedDocument::None, 0.1)
+            .unwrap();
+    }
+    assert_eq!(
+        store.detection_coverage().unwrap().len(),
+        MAX_DETECTION_APPS
+    );
+    let mut profile = store.personalization().unwrap();
+    profile.automatic_workspaces = false;
+    store.save_personalization(profile).unwrap();
+    assert!(store.detection_coverage().unwrap().is_empty());
 }
 
 /// One dictation through the real snapshot path, persisted like the desktop does.

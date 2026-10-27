@@ -70,6 +70,9 @@ impl DatasetStore {
             ));
         }
         profile.schema_version = 4;
+        if current.automatic_workspaces && !profile.automatic_workspaces {
+            self.clear_detection_coverage()?;
+        }
         self.reconcile_automatic_profile(&current, &mut profile)?;
         for word in &mut profile.vocabulary {
             let previous = current.vocabulary.iter().find(|p| p.id == word.id);

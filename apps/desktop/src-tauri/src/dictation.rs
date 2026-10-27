@@ -466,6 +466,7 @@ async fn start(app: tauri::AppHandle, id: u64) {
         // Automatic workspaces (see docs/personalization/context-selection.md):
         // one bounded AX read, hashed and resolved in memory; persisted below.
         let mut observation = None;
+        let mut detection = None;
         let automatic = snapshot.profile.automatic_workspaces;
         if (snapshot.profile.project_mode == vesper_core::ProjectMode::Automatic || automatic)
             && snapshot.profile.active_project.trim().is_empty()
@@ -480,6 +481,7 @@ async fn start(app: tauri::AppHandle, id: u64) {
                         && Some(rule.application_id.as_str()) == app_id
                         && rule.folder.is_some()
                 });
+            let started = std::time::Instant::now();
             let document = app_id
                 .filter(|_| needs_document)
                 .map(|id| {
@@ -489,7 +491,20 @@ async fn start(app: tauri::AppHandle, id: u64) {
                     )
                 })
                 .unwrap_or_default();
+            let read_ms = started.elapsed().as_secs_f64() * 1000.0;
             use vesper_desktop_platform::DocumentKind;
+            // Coverage of real dictations only: app identifier, result kind, latency.
+            if automatic {
+                detection = app_id.map(|id| {
+                    let found = match document.kind {
+                        DocumentKind::None => vesper_data::DetectedDocument::None,
+                        DocumentKind::File => vesper_data::DetectedDocument::File,
+                        DocumentKind::Folder => vesper_data::DetectedDocument::Folder,
+                        DocumentKind::Web => vesper_data::DetectedDocument::Web,
+                    };
+                    (id.to_owned(), found, read_ms)
+                });
+            }
             let signal = match document.kind {
                 DocumentKind::File | DocumentKind::Folder => vesper_core::DocumentSignal::File {
                     path: &document.value,
@@ -514,17 +529,24 @@ async fn start(app: tauri::AppHandle, id: u64) {
         {
             show(&desktop);
         }
-        Some((snapshot, observation))
+        Some((snapshot, observation, detection))
     })
     .await;
     let mut snapshot = match setup {
-        Ok(Some((snapshot, observation))) => {
-            if let Some(observation) = observation {
+        Ok(Some((snapshot, observation, detection))) => {
+            if observation.is_some() || detection.is_some() {
                 let root = storage.dataset_dir.clone();
                 // Best effort and off the main thread; never delays recording.
                 tauri::async_runtime::spawn_blocking(move || {
-                    let _ = vesper_data::DatasetStore::open(root)
-                        .and_then(|store| store.record_workspace_observation(&observation, day));
+                    let Ok(store) = vesper_data::DatasetStore::open(root) else {
+                        return;
+                    };
+                    if let Some(observation) = observation {
+                        let _ = store.record_workspace_observation(&observation, day);
+                    }
+                    if let Some((application, found, read_ms)) = detection {
+                        let _ = store.record_detection(&application, found, read_ms);
+                    }
                 });
             }
             snapshot
