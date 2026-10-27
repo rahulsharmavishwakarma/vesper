@@ -1,1 +1,8 @@
 blank_issues_enabled: false
+contact_links:
+  - name: Report a security vulnerability
+    url: https://github.com/rahulsharmavishwakarma/vesper/security/advisories/new
+    about: Report vulnerabilities privately, never in a public issue.
+  - name: User guide and troubleshooting
+    url: https://github.com/rahulsharmavishwakarma/vesper/blob/main/docs/user-guide.md
+    about: Installation, permissions, models, updates and common problems.

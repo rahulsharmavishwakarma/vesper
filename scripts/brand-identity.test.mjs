@@ -186,7 +186,7 @@ test('current product copy consistently names Vesper', () => {
   const expected = [
     ['README.md', 'alt="Vesper"'],
     ['CONTRIBUTING.md', '# Contributing to Vesper'],
-    ['SECURITY.md', 'Until Vesper publishes stable releases'],
+    ['SECURITY.md', 'the Vesper app and its update mechanism'],
     ['.github/ISSUE_TEMPLATE/bug_report.yml', 'Start Vesper with'],
     ['.github/ISSUE_TEMPLATE/feature_request.yml', 'improvement to Vesper'],
     ['apps/desktop/src/lib/components/PersonalizationPanel.svelte', 'Vesper automatically learns'],

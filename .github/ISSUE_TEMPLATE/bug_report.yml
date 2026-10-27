@@ -23,30 +23,38 @@ body:
         3. Observe ...
     validations:
       required: true
-  - type: dropdown
-    id: platform
-    attributes:
-      label: Platform
-      options:
-        - macOS
-        - Linux
-        - Windows
-        - Browser preview
-        - Other
-    validations:
-      required: true
   - type: input
     id: version
     attributes:
-      label: Version or commit
-      placeholder: Release version or Git commit SHA
+      label: Vesper version
+      description: Shown in About. For a source build, give the Git commit.
+      placeholder: 0.1.1
     validations:
       required: true
-  - type: textarea
-    id: environment
+  - type: dropdown
+    id: channel
     attributes:
-      label: Environment details
-      description: Include OS version, architecture, microphone or file format, and selected model profile where relevant.
+      label: Release channel
+      options:
+        - Stable
+        - Beta or release candidate
+        - Nightly
+        - Built from source
+    validations:
+      required: true
+  - type: input
+    id: mac
+    attributes:
+      label: Mac and macOS version
+      placeholder: MacBook Air M2, macOS 26.1
+    validations:
+      required: true
+  - type: input
+    id: model
+    attributes:
+      label: Speech and writing model
+      description: From the Models tab, if the problem involves transcription or cleanup.
+      placeholder: Cohere Transcribe, Qwen3.5 writer
   - type: textarea
     id: logs
     attributes:

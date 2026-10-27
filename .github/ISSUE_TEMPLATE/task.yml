@@ -1,5 +1,5 @@
-name: Maintenance, tests, or documentation
-description: Track repository work that is not a bug report or feature request
+name: Maintenance or larger task
+description: Track multi-step repository work. Small fixes can go straight to a pull request.
 title: "[Task]: "
 labels: [task]
 body:
