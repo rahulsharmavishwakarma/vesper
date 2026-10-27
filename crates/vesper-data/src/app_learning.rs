@@ -14,7 +14,49 @@ pub(crate) const SCHEMA: &str = "
         field_reads INTEGER NOT NULL DEFAULT 0,
         field_unreadable INTEGER NOT NULL DEFAULT 0,
         field_terms INTEGER NOT NULL DEFAULT 0
+    );
+    -- Automatic paste outcomes per app; `last_failure` holds AX role names only.
+    CREATE TABLE IF NOT EXISTS paste_coverage (
+        application TEXT PRIMARY KEY NOT NULL,
+        attempts INTEGER NOT NULL DEFAULT 0,
+        sent INTEGER NOT NULL DEFAULT 0,
+        no_field INTEGER NOT NULL DEFAULT 0,
+        no_permission INTEGER NOT NULL DEFAULT 0,
+        secure INTEGER NOT NULL DEFAULT 0,
+        field_changed INTEGER NOT NULL DEFAULT 0,
+        clipboard INTEGER NOT NULL DEFAULT 0,
+        other INTEGER NOT NULL DEFAULT 0,
+        last_failure TEXT NOT NULL DEFAULT ''
     );";
+
+/// How one automatic paste ended, for the per-app paste counts.
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum PasteOutcome {
+    Sent,
+    /// Capture found no editable field (`last_failure` says what had focus).
+    NoField,
+    NoPermission,
+    Secure,
+    /// The field or focus changed before delivery.
+    FieldChanged,
+    Clipboard,
+    Other,
+}
+
+#[derive(Debug, Clone, Default, PartialEq, Eq, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct PasteCoverage {
+    pub application: String,
+    pub attempts: u32,
+    pub sent: u32,
+    pub no_field: u32,
+    pub no_permission: u32,
+    pub secure: u32,
+    pub field_changed: u32,
+    pub clipboard: u32,
+    pub other: u32,
+    pub last_failure: String,
+}
 
 /// What reading back one paste found.
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
@@ -126,6 +168,75 @@ impl DatasetStore {
         Ok(rows.collect::<std::result::Result<_, _>>()?)
     }
 
+    /// Count one automatic paste. `failure` is the capture diagnostic (AX role
+    /// names and flags), kept only as the app's latest failure.
+    pub fn record_paste(
+        &self,
+        application: &str,
+        outcome: PasteOutcome,
+        failure: Option<&str>,
+    ) -> Result<()> {
+        let known: Option<i64> = self
+            .connection
+            .query_row(
+                "SELECT 1 FROM paste_coverage WHERE application = ?1",
+                [application],
+                |row| row.get(0),
+            )
+            .optional()?;
+        let apps: i64 =
+            self.connection
+                .query_row("SELECT COUNT(*) FROM paste_coverage", [], |row| row.get(0))?;
+        if application.is_empty() || (known.is_none() && apps as usize >= MAX_DETECTION_APPS) {
+            return Ok(());
+        }
+        let column = match outcome {
+            PasteOutcome::Sent => "sent",
+            PasteOutcome::NoField => "no_field",
+            PasteOutcome::NoPermission => "no_permission",
+            PasteOutcome::Secure => "secure",
+            PasteOutcome::FieldChanged => "field_changed",
+            PasteOutcome::Clipboard => "clipboard",
+            PasteOutcome::Other => "other",
+        };
+        self.connection.execute(
+            "INSERT OR IGNORE INTO paste_coverage (application) VALUES (?1)",
+            [application],
+        )?;
+        let failure: String = failure.unwrap_or("").chars().take(192).collect();
+        self.connection.execute(
+            &format!(
+                "UPDATE paste_coverage SET attempts = attempts + 1, {column} = {column} + 1, \
+                 last_failure = CASE WHEN ?2 = '' THEN last_failure ELSE ?2 END \
+                 WHERE application = ?1"
+            ),
+            rusqlite::params![application, failure],
+        )?;
+        Ok(())
+    }
+
+    pub fn paste_coverage(&self) -> Result<Vec<PasteCoverage>> {
+        let mut statement = self.connection.prepare(
+            "SELECT application, attempts, sent, no_field, no_permission, secure, field_changed, \
+             clipboard, other, last_failure FROM paste_coverage ORDER BY attempts DESC, application",
+        )?;
+        let rows = statement.query_map([], |row| {
+            Ok(PasteCoverage {
+                application: row.get(0)?,
+                attempts: row.get(1)?,
+                sent: row.get(2)?,
+                no_field: row.get(3)?,
+                no_permission: row.get(4)?,
+                secure: row.get(5)?,
+                field_changed: row.get(6)?,
+                clipboard: row.get(7)?,
+                other: row.get(8)?,
+                last_failure: row.get(9)?,
+            })
+        })?;
+        Ok(rows.collect::<std::result::Result<_, _>>()?)
+    }
+
     pub fn clear_app_learning_coverage(&self) -> Result<()> {
         self.connection
             .execute("DELETE FROM app_learning_coverage", [])?;
@@ -178,5 +289,30 @@ mod tests {
         off.learn_from_app_edits = false;
         store.save_personalization(off).unwrap();
         assert!(store.app_learning_coverage().unwrap().is_empty());
+    }
+
+    #[test]
+    fn paste_counts_keep_the_latest_failure_reason() {
+        let dir = tempfile::tempdir().unwrap();
+        let store = DatasetStore::open(dir.path().into()).unwrap();
+        let brave = "com.brave.Browser";
+        store
+            .record_paste(
+                brave,
+                PasteOutcome::NoField,
+                Some("no-editable-field role=AXGroup"),
+            )
+            .unwrap();
+        store.record_paste(brave, PasteOutcome::Sent, None).unwrap();
+        let rows = store.paste_coverage().unwrap();
+        assert_eq!(
+            (
+                rows[0].attempts,
+                rows[0].sent,
+                rows[0].no_field,
+                rows[0].last_failure.as_str()
+            ),
+            (2, 1, 1, "no-editable-field role=AXGroup")
+        );
     }
 }

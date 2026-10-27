@@ -9,7 +9,7 @@ mod semantic;
 mod term_inventory;
 pub mod term_mining;
 mod workspaces;
-pub use app_learning::{AppLearningCoverage, Readback};
+pub use app_learning::{AppLearningCoverage, PasteCoverage, PasteOutcome, Readback};
 pub use learning::{
     learning_audio_key, AutomaticLearningState, DictationPersonalizationSnapshot, EditSupport,
     LearningCandidate, LearningEvent, LearningEventKind,

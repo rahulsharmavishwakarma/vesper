@@ -346,9 +346,32 @@ bool td_secure_input(void) {
     if (![NSThread isMainThread]) return false;
     return IsSecureEventInputEnabled();
 }
+// Why the last capture found no field: AX roles and flags only, never text.
+static char captureFailure[192];
+static void noteCaptureFailure(AXUIElementRef element, const char *reason) {
+    if (!element) { snprintf(captureFailure, sizeof captureFailure, "%s", reason); return; }
+    NSString *role = attribute(element, kAXRoleAttribute), *subrole = attribute(element, kAXSubroleAttribute);
+    NSNumber *enabled = attribute(element, kAXEnabledAttribute);
+    Boolean settable = false;
+    AXError settableError = AXUIElementIsAttributeSettable(element, kAXValueAttribute, &settable);
+    CFRange range;
+    snprintf(captureFailure, sizeof captureFailure, "%s role=%s subrole=%s enabled=%s valueSettable=%s range=%s",
+        reason, [role isKindOfClass:NSString.class] ? role.UTF8String : "-",
+        [subrole isKindOfClass:NSString.class] ? subrole.UTF8String : "-",
+        [enabled isKindOfClass:NSNumber.class] ? (enabled.boolValue ? "yes" : "no") : "missing",
+        settableError ? "error" : (settable ? "yes" : "no"), selectedRange(element, &range) ? "yes" : "no");
+}
+int td_capture_failure(char *output, size_t size) {
+    if (![NSThread isMainThread] || !output || !size || !captureFailure[0]) return -1;
+    size_t length = strnlen(captureFailure, sizeof captureFailure);
+    if (length >= size) return -1;
+    memcpy(output, captureFailure, length + 1);
+    return (int)length;
+}
 int td_target_capture(uint64_t token) {
     if (![NSThread isMainThread]) return -1;
     td_target_clear(0);
+    captureFailure[0] = '\0';
     if ((td_permissions(false) & 6) != 6) return -1;
     // Secure input is a separate, global state (any password prompt, Touch ID,
     // or sudo session anywhere); attributing it to Accessibility sends users
@@ -358,13 +381,19 @@ int td_target_capture(uint64_t token) {
     // Terminals require independent bracketed-paste/command execution qualification.
     if (!front || front.processIdentifier == getpid() ||
         [@[@"com.apple.Terminal", @"com.googlecode.iterm2", @"dev.warp.Warp-Stable"]
-            containsObject:front.bundleIdentifier ?: @""]) return -2;
+            containsObject:front.bundleIdentifier ?: @""]) {
+        noteCaptureFailure(NULL, front ? "terminal-excluded" : "no-app");
+        return -2;
+    }
     // Recover a request skipped before Accessibility permission was granted.
     // This never waits or adopts a field later in the recording: an unready
     // destination still uses Copy fallback for this operation.
     preparePasteApplication(front);
     AXUIElementRef element = focused(front.processIdentifier);
-    if (!element) return -2;
+    if (!element) {
+        noteCaptureFailure(NULL, "no-focused-element");
+        return -2;
+    }
     CFRange selection = {0, 0};
     AXUIElementRef field = resolveField(element, &selection, true);
     if (field) {
@@ -378,6 +407,7 @@ int td_target_capture(uint64_t token) {
         targetIsCell = true;
         return 0;
     }
+    noteCaptureFailure(element, "no-editable-field");
     CFRelease(element);
     return -2;
 }

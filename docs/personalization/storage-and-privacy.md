@@ -91,3 +91,5 @@ The inventory never stores file paths, document text, URLs or window titles. Wor
 ## Learning from other apps
 
 Both features are opt-in (`appFieldWords`, `learnFromAppEdits`, off when absent). Field words are read before the caret and held in memory for one recording; nothing is stored. A read-back stores only the corrected pasted span, as that result's draft, through the same path as an in-app edit. The `app_learning_coverage` table keeps per-app counts (bundle identifier and counts only) and is deleted when both features are off. See [app learning](app-learning.md).
+
+The `paste_coverage` table counts automatic paste outcomes per bundle identifier (sent, no field, no permission, secure input, field changed, clipboard, other). For a capture that found no field it keeps that app's latest diagnostic: a reason and the focused element's Accessibility role, subrole and editability flags, never text. It is local, bounded to 64 apps and used to find apps where paste fails.

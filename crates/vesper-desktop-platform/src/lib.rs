@@ -44,6 +44,7 @@ mod ffi {
         pub fn td_target_context(token: u64, limit: usize, output: *mut c_char, size: usize)
             -> i32;
         pub fn td_paste_receipts_enabled(enabled: bool);
+        pub fn td_capture_failure(output: *mut c_char, size: usize) -> i32;
         pub fn td_receipt_read(
             token: u64,
             pasted: *mut u64,
@@ -251,6 +252,18 @@ fn capture_message(code: i32) -> Result<(), String> {
         ),
     }
 }
+/// Why the last `capture_target` found no field: a reason plus the focused
+/// element's AX role, subrole and editability flags. Never any text.
+pub fn capture_failure() -> Option<String> {
+    #[cfg(target_os = "macos")]
+    {
+        // SAFETY: The buffer outlives the synchronous call; native code bounds writes.
+        read_native(|out, size| unsafe { ffi::td_capture_failure(out, size) })
+    }
+    #[cfg(not(target_os = "macos"))]
+    None
+}
+
 /// Field text the opt-in field-words feature may read: at most this many UTF-16
 /// units before the caret of the captured paste target.
 pub const FIELD_CONTEXT_CHARS: usize = 4000;

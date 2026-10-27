@@ -539,6 +539,7 @@ async fn start(app: tauri::AppHandle, id: u64) {
         state.read_back = snapshot.profile.learn_from_app_edits;
         vesper_desktop_platform::set_paste_receipts_enabled(state.read_back);
         let mut field = None;
+        let mut capture = None;
         if state.output == DictationOutput::Paste {
             match vesper_desktop_platform::capture_target(id) {
                 Ok(()) => {
@@ -552,7 +553,17 @@ async fn start(app: tauri::AppHandle, id: u64) {
                         field = front.clone().map(|app| (app, terms.map(|t| t.len())));
                     }
                 }
-                Err(message) => state.status.message = message,
+                Err(message) => {
+                    // Per-app paste counts: why no field was captured (AX roles only).
+                    let failure = vesper_desktop_platform::capture_failure();
+                    let outcome = match (&failure, message.contains("secure")) {
+                        (Some(_), _) => vesper_data::PasteOutcome::NoField,
+                        (None, true) => vesper_data::PasteOutcome::Secure,
+                        (None, false) => vesper_data::PasteOutcome::NoPermission,
+                    };
+                    capture = front.clone().map(|app| (app, outcome, failure));
+                    state.status.message = message;
+                }
             }
         }
         drop(state);
@@ -563,12 +574,13 @@ async fn start(app: tauri::AppHandle, id: u64) {
         {
             show(&desktop);
         }
-        Some((snapshot, observation, detection, field))
+        Some((snapshot, observation, detection, field, capture))
     })
     .await;
     let mut snapshot = match setup {
-        Ok(Some((snapshot, observation, detection, field))) => {
-            if observation.is_some() || detection.is_some() || field.is_some() {
+        Ok(Some((snapshot, observation, detection, field, capture))) => {
+            if observation.is_some() || detection.is_some() || field.is_some() || capture.is_some()
+            {
                 let root = storage.dataset_dir.clone();
                 // Best effort and off the main thread; never delays recording.
                 tauri::async_runtime::spawn_blocking(move || {
@@ -583,6 +595,9 @@ async fn start(app: tauri::AppHandle, id: u64) {
                     }
                     if let Some((application, terms)) = field {
                         let _ = store.record_field_read(&application, terms);
+                    }
+                    if let Some((application, outcome, failure)) = capture {
+                        let _ = store.record_paste(&application, outcome, failure.as_deref());
                     }
                 });
             }
@@ -853,8 +868,26 @@ pub async fn completed(
                         });
                     }
                 }
-                state.status.message =
-                    paste_message(outcome, vesper_desktop_platform::secure_input()).into();
+                let secure = vesper_desktop_platform::secure_input();
+                state.status.message = paste_message(outcome, secure).into();
+                if let Some(application) = state.target_app.clone() {
+                    use vesper_data::PasteOutcome;
+                    let counted = match outcome {
+                        PasteResult::Sent => PasteOutcome::Sent,
+                        PasteResult::TargetChanged if secure => PasteOutcome::Secure,
+                        PasteResult::TargetChanged => PasteOutcome::FieldChanged,
+                        PasteResult::ClipboardUnavailable => PasteOutcome::Clipboard,
+                        PasteResult::ModifiersHeld | PasteResult::Unavailable => {
+                            PasteOutcome::Other
+                        }
+                    };
+                    let root = storage.dataset_dir.clone();
+                    tauri::async_runtime::spawn_blocking(move || {
+                        if let Ok(store) = vesper_data::DatasetStore::open(root) {
+                            let _ = store.record_paste(&application, counted, None);
+                        }
+                    });
+                }
             }
         }
     }

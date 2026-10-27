@@ -62,6 +62,8 @@ The `app_learning_coverage` table keeps, per bundle identifier:
 
 It stores no text, holds at most 64 apps, and is deleted when both features are off. These counts are the measure of where each feature works.
 
+Separately, `paste_coverage` counts every automatic paste per app by outcome and keeps the latest no-field diagnostic (Accessibility role names and flags only), so apps where paste fails can be identified from ordinary use ([storage and privacy](storage-and-privacy.md)).
+
 ## Validation
 
 - Unit tests cover `field_terms` (names, identifiers, acronyms, repeated lowercase non-words; prose, addresses and single typos excluded; bound of 24) and `aligned_edit` (fixed word with text typed after, identical text, rewritten, empty and joined-word cases).
