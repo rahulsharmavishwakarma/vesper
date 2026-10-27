@@ -319,7 +319,13 @@ AX read, whose per-app latency and coverage are unmeasured.
   0.7 ms, p95 1.5 ms, max 75 ms; 414 samples had no web area above the focused
   element and 4 were accessibility errors. The samples record no focus role, so
   whether the misses were the address bar, a blank tab or another control is
-  unknown. Every other app remains unmeasured.
+  unknown. A third run (94 frontmost samples, 27 October 2026) also recorded
+  the focused element's role: Safari resolved the web host in 31 of 31 samples
+  with a focused element (web area, group, button, menu item), and all 63 misses
+  had no focused element at all, where dictation has no insertion target. Its
+  window pass saw a background VS Code window exposing a file `AXDocument`;
+  Finder and Discord windows exposed none. The owner stopped further sampling,
+  so Cursor, Terminal, iTerm2, Mail, Notes and Brave remain unmeasured.
 - Structure detection uses folder names only. Projects without conventional
   structure folders can split into subfolder workspaces; Merge fixes this, and a
   merged folder keeps resolving to its target.
