@@ -208,7 +208,9 @@ recording.
 
 `project_context` in `vesper-desktop-platform` replaces the TextEdit-only reader.
 For any frontmost app (never Vesper itself) it reads the focused window's
-`AXDocument` with 30 ms messaging timeouts and a 60 ms overall budget, then
+`AXDocument` with a 150 ms timeout on the app-level reads (an app's first
+request after a pause took 30–50 ms in Brave and VS Code), 30 ms per element
+beyond that and a 200 ms overall budget, then
 rechecks the focused window and frontmost process. A file URL becomes `File`;
 a trailing-slash URL (Terminal's working directory) becomes `Folder`. Only for
 browsers in the fixed table does it walk at most 48 parents from the focused

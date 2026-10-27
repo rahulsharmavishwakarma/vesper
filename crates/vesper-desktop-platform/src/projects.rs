@@ -107,7 +107,8 @@ pub fn project_application(path: Option<&str>) -> Option<ProjectApplication> {
     }
 }
 /// Read the focused window's document for any frontmost app with bounded
-/// (30 ms) Accessibility calls, abstaining on focus changes and secure fields.
+/// Accessibility calls (150 ms app-level, 30 ms per element, 200 ms in all),
+/// abstaining on focus changes and secure fields.
 /// `web` also reads the focused web area's host (browsers only).
 pub fn project_context(application: &str, web: bool) -> DocumentContext {
     #[cfg(target_os = "macos")]

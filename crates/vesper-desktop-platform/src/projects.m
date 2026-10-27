@@ -79,9 +79,12 @@ int td_project_context(const char *application, bool web, char *output, size_t s
     NSRunningApplication *app = NSWorkspace.sharedWorkspace.frontmostApplication;
     if (!expected || !app || ![app.bundleIdentifier isEqualToString:expected] || app.processIdentifier == getpid()) return -1;
     pid_t pid = app.processIdentifier;
-    CFAbsoluteTime deadline = CFAbsoluteTimeGetCurrent() + 0.06;
+    // An app's first Accessibility request after a pause can take 30-50 ms
+    // (measured in Brave and VS Code), so the app-level reads get the same
+    // 150 ms timeout as paste capture; the whole read stays under 200 ms.
+    CFAbsoluteTime deadline = CFAbsoluteTimeGetCurrent() + 0.2;
     AXUIElementRef axApp = AXUIElementCreateApplication(pid);
-    AXUIElementSetMessagingTimeout(axApp, 0.03);
+    AXUIElementSetMessagingTimeout(axApp, 0.15);
     CFTypeRef window = NULL, document = NULL;
     NSString *value = nil;
     int kind = 0;
