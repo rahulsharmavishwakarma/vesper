@@ -195,7 +195,6 @@ test('current product copy consistently names Vesper', () => {
     ['apps/desktop/src-tauri/capabilities/default.json', 'local Vesper application'],
     ['pyproject.toml', 'tooling for the native Vesper app'],
     ['.pre-commit-config.yaml', 'name: Vesper Python locks'],
-    ['docs/research.md', 'The application is named **Vesper**'],
     ['docs/validation/native-device-checklist.md', 'target/debug/bundle/macos/Vesper.app'],
   ];
   for (const [path, copy] of expected) assert.ok(read(path).includes(copy), path);

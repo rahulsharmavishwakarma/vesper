@@ -232,11 +232,9 @@ These are interaction precedents, not evidence that Vesper implements the produc
 
 ## About and updates studies
 
-The [standalone HTML samples](design/about-updates/index.html) compare three
-proposed layouts: A01 Quiet settings, A02 Split view and A03 About sheet. See the
-[preview guide](design/about-updates/README.md) for the interactive states and
-selection export. These are local review artifacts in the ignored `docs/design/`
-directory, consistent with the repository's treatment of exploratory studies.
+Three layouts (A01 Quiet settings, A02 Split view and A03 About sheet) were
+compared as local HTML studies. They live in the ignored `docs/design/` directory,
+like the repository's other exploratory studies, and are not published.
 Settings → About shows the logo, the installed version and one update pill in the
 content panel (no tagline, platform, build type or copy button; this is a
 macOS-only app, issue #181). Native About menu entries open the
