@@ -395,6 +395,9 @@ The same day the Rust audit began failing on `tokio` 1.53.1: RUSTSEC-2026-0386
 and unsound advisories are denied. `cargo update -p tokio --precise 1.53.3`
 takes the patched release in the same minor series; Vesper's own code does not
 use `AsyncFd`, so the constructors 1.53.3 deprecates do not affect it.
+On 27 October 2026 the root lock's `msgpack` 1.2.2 (CVE-2026-114613, fixed in
+1.2.3) failed `make audit-python` and moved to 1.2.4 the same way, alongside the
+zstd advisories described below ([issue #348](https://github.com/rahulsharmavishwakarma/vesper/issues/348)).
 The audit jobs install only contributor tools, not model runtimes or weights.
 All manifests and lockfiles stay versioned, while `.venv` and `.cache` stay ignored.
 
@@ -444,7 +447,7 @@ and checksum in a temporary audit-only lockfile, then runs `cargo audit --file
 <temporary-lock> --deny unsound --ignore RUSTSEC-2024-0429`. The actual build
 lockfile remains untouched. This deliberately preserves matching against every
 other present or future GLib advisory; a synthetic second advisory tests that
-failure with the real client. Six existing maintenance warnings remain visible;
+failure with the real client. Unmaintained-crate warnings remain visible;
 all other vulnerabilities and unsoundness findings remain fatal. Direct
 cargo-audit omits both source verification and GLib registry-advisory coverage
 and is not a substitute for this wrapper.
@@ -472,6 +475,19 @@ version, so upgrading could not clear it. The wrapper verifies the lockfile stil
 shows exactly webpki-roots 0.26.11 used only by ureq 2.12.1, itself used only by
 sherpa-onnx-sys, and refuses any other webpki-roots below 1.0.10 before auditing.
 Remove the ignore and guard when sherpa-onnx-sys moves to ureq 3.
+
+A fourth owner-approved scoped ignore (2026-10-27, [issue #348](https://github.com/rahulsharmavishwakarma/vesper/issues/348))
+covers the zstd advisories RustSec published on 16 October 2026: RUSTSEC-2026-0391
+against `zstd` 0.13.3 (patched in 0.14.3) and RUSTSEC-2026-0395 to -0406 against
+`zstd-safe` 7.3.0 (patched in 8.2.0; two vulnerabilities and ten unsoundness
+findings). Both are reached only through zip 2.6.1, the sherpa-onnx-sys build
+dependency above, so they are never compiled into the application, and zip 2.x
+cannot use the patched releases. The wrapper verifies the lockfile still shows
+exactly zstd 0.13.3 used only by zip 2.6.1 and zstd-safe 7.3.0 used only by that
+zstd, and refuses any other unpatched copy before auditing. `zstd-sys` moved to
+2.1.2 for RUSTSEC-2026-0410 and needs no exception. sherpa-onnx-sys 2.0 uses
+zip 9 and zstd 0.14; moving to it removes this ignore (and likely the zip one),
+but it is a speech-runtime upgrade that needs its own qualification.
 
 The end-of-file formatter excludes only GLib's upstream `LICENSE` and
 `.cargo_vcs_info.json`, preserving their original end-of-file whitespace. Their hashes
