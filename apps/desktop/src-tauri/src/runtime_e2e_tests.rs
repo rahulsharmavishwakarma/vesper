@@ -99,6 +99,9 @@ fn e2e_desktop_pipeline_on_term_corpus() {
                 ..Default::default()
             });
             config.models.asr = asr;
+            if std::env::var("VESPER_E2E_PRESET").as_deref() == Ok("balanced") {
+                config.cleanup_preset = vesper_core::CleanupPreset::Balanced;
+            }
             let context = WorkContext {
                 operation_id: format!("e2e-{n}"),
                 config,
