@@ -1,6 +1,7 @@
 //! Shared types for local dictation, independent of desktop and inference runtimes.
 
 mod adapters;
+mod app_text;
 mod config;
 mod diarization;
 pub mod environment;
@@ -28,6 +29,7 @@ pub use adapters::{
     resolve_adapter, AdapterCapabilities, AdapterKind, AdapterRegistration, CacheState, LiveMode,
     ADAPTERS, MLX_REVISION, MLX_RUNTIME,
 };
+pub use app_text::{aligned_edit, field_terms, MAX_ALIGNED_WORDS, MAX_FIELD_TERMS};
 pub use config::{
     AppConfig, AsrEngine, AudioFrontendConfig, CaptureDesign, CleanupPreset, ComputeBackend,
     DictationOutput, ImprovementMode, Language, ModelSelection, NoiseReduction, RecordingMode,

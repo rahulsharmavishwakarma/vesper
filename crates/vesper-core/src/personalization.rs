@@ -95,6 +95,12 @@ pub struct PersonalizationProfile {
     /// Detect repo/folder/website workspaces at shortcut capture start. Opt-in:
     /// it reads the frontmost app's open document, so it is off until enabled.
     pub automatic_workspaces: bool,
+    /// Opt-in: read back a pasted span once and treat the user's changes there as
+    /// a draft edit (docs/personalization/app-learning.md).
+    pub learn_from_app_edits: bool,
+    /// Opt-in: use unusual spellings already in the destination field, before the
+    /// caret, as references for that recording only. Never stored.
+    pub app_field_words: bool,
     pub automatic_learning: bool,
     /// Changes when learning permission changes or all automatic evidence is forgotten.
     pub learning_epoch: u64,
@@ -121,6 +127,8 @@ impl Default for PersonalizationProfile {
             project_mode: crate::ProjectMode::Manual,
             project_rules: vec![],
             automatic_workspaces: false,
+            learn_from_app_edits: false,
+            app_field_words: false,
             automatic_learning: false,
             learning_epoch: 0,
             vocabulary: vec![],
