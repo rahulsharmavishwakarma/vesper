@@ -145,11 +145,11 @@ upsampled to 48 kHz and paced in real time in 20 ms packets, like a microphone
 (`installed_live_frontend_final_parity`). "Before" is the previous path: the
 same recording decoded through a completed-audio frontend pass.
 
-| Model (CPU) | Final text identical | Stop→final, 4.6 s clip | 23.6 s clip | 108 s recording |
-| --- | ---: | ---: | ---: | ---: |
-| Cohere Transcribe | 14/14 | 1.23 s → 0.29 s | 5.76 s → 1.45 s | 26.4 s → 6.2 s |
-| Qwen3-ASR 0.6B | 14/14 | 1.23 s → 0.29 s | 5.75 s → 1.20 s | 27.3 s → 7.2 s |
-| Parakeet TDT v3 | 14/14 | 1.04 s → 0.11 s | 5.21 s → 0.47 s | 23.3 s → 2.7 s |
+| Model (CPU)       | Final text identical | Stop→final, 4.6 s clip |     23.6 s clip | 108 s recording |
+| ----------------- | -------------------: | ---------------------: | --------------: | --------------: |
+| Cohere Transcribe |                14/14 |        1.23 s → 0.29 s | 5.76 s → 1.45 s |  26.4 s → 6.2 s |
+| Qwen3-ASR 0.6B    |                14/14 |        1.23 s → 0.29 s | 5.75 s → 1.20 s |  27.3 s → 7.2 s |
+| Parakeet TDT v3   |                14/14 |        1.04 s → 0.11 s | 5.21 s → 0.47 s |  23.3 s → 2.7 s |
 
 Every final came from the live session. Normalized final words matched the
 previous path in all 42 recordings, so this change does not alter WER on this
@@ -168,11 +168,11 @@ macOS 27.0.1, release build with MLX, on battery power. Set
 Cohere has no Metal path and ran on CPU. All 42 finals were identical to the
 previous path.
 
-| Model (Automatic) | Executed | Stop→final, 3.8–10.9 s clips | 63 s recording | 108 s recording (0 dB noise) |
-| --- | --- | ---: | ---: | ---: |
-| Parakeet TDT v3 | Metal | 0.06–0.18 s (was 1.6–4.3 s) | 0.39 s (was 23.3 s) | 0.53 s (was 28.2 s) |
-| Qwen3-ASR 0.6B | Metal | 0.14–0.35 s (was 1.3–4.0 s) | 1.5 s (was 21.7 s) | 3.3 s (was 40.4 s) |
-| Cohere Transcribe | CPU | 0.32–1.04 s (was 1.6–4.8 s) | 3.7 s (was 15.5 s) | 9.5 s (was 39.4 s) |
+| Model (Automatic) | Executed | Stop→final, 3.8–10.9 s clips |      63 s recording | 108 s recording (0 dB noise) |
+| ----------------- | -------- | ---------------------------: | ------------------: | ---------------------------: |
+| Parakeet TDT v3   | Metal    |  0.06–0.18 s (was 1.6–4.3 s) | 0.39 s (was 23.3 s) |          0.53 s (was 28.2 s) |
+| Qwen3-ASR 0.6B    | Metal    |  0.14–0.35 s (was 1.3–4.0 s) |  1.5 s (was 21.7 s) |           3.3 s (was 40.4 s) |
+| Cohere Transcribe | CPU      |  0.32–1.04 s (was 1.6–4.8 s) |  3.7 s (was 15.5 s) |           9.5 s (was 39.4 s) |
 
 The first clip per model (4.6 s) was a warm-up outlier at 0.6–1.1 s and is
 excluded from the ranges. Physical-microphone recordings on 20 October (Parakeet
@@ -182,12 +182,14 @@ Automatic) also reported `previewFrontend: live-frontend` with the final reusing
 On a 108 s recording with 0 dB noise, paced in real time
 (`installed_live_long_recording_draft_coverage`), every buffered path drafted
 throughout with no preview failures, incomplete drafts or reloads:
+
 - Cohere, Qwen and Parakeet on CPU: 137–175 drafts.
 - Parakeet on Metal: 191 drafts.
 - Qwen on Metal (native): 421 drafts.
 
 A 57 s synthetic clip (macOS speech synthesis) with 9 s silences and 70
 repeated words was also tested:
+
 - Qwen CPU previews stopped on repetition three times. With the part-splitting
   fix they were skipped (`previewIncompleteDrafts: 3`, 75 drafts, no reload).
   Before it, the same clip recorded two failures and a reload, and drafting
@@ -204,11 +206,11 @@ DPDFNet8, public audio upsampled to 48 kHz and streamed in real time, single run
 `installed_live_commit_timing`). Main without pause commits is compared with
 pause-closed segments.
 
-| Recording | First committed text | Mean committed words over time | Committed words at Stop | Segments (pause-closed) |
-| --- | ---: | ---: | ---: | ---: |
-| FLEURS clean, 63 s | 11.1 → 7.8 s | 60.0 → 65.8 | 142 → 150 | 10 → 12 (12) |
-| FLEURS 0 dB noise, 108 s | 8.9 → 5.2 s | 102.5 → 112.2 | 206 → 213 | 17 → 21 (14) |
-| AMI meeting, 45 s | 9.2 → 2.8 s | 35.8 → 44.2 | 83 → 97 | 7 → 10 (8) |
+| Recording                | First committed text | Mean committed words over time | Committed words at Stop | Segments (pause-closed) |
+| ------------------------ | -------------------: | -----------------------------: | ----------------------: | ----------------------: |
+| FLEURS clean, 63 s       |         11.1 → 7.8 s |                    60.0 → 65.8 |               142 → 150 |            10 → 12 (12) |
+| FLEURS 0 dB noise, 108 s |          8.9 → 5.2 s |                  102.5 → 112.2 |               206 → 213 |            17 → 21 (14) |
+| AMI meeting, 45 s        |          9.2 → 2.8 s |                    35.8 → 44.2 |                 83 → 97 |              7 → 10 (8) |
 
 Committed text appears sooner and breaks at speech pauses. The completed-audio
 final is unchanged. Physical microphones, other languages and slower Macs are not
@@ -232,12 +234,12 @@ semantics. Backend selection happens at model admission, not on every audio pack
 
 The current application routes are adapter-specific:
 
-| Adapter | GPU route | Automatic behavior and limits |
-| --- | --- | --- |
-| Qwen3-ASR 0.6B, Parakeet v3, Whisper Small | MLX on Apple Silicon/Metal for the qualified English variants | Uses the compatible MLX build and artifacts; CPU fallback requires the same model's verified CPU export. Other languages retain their catalog restrictions. |
-| Cohere and the remaining Sherpa-only profiles | CPU in the current application | GPU detection does not enable an ONNX GPU provider. |
-| Nemotron ASR | Packaged Metal, CUDA or Vulkan runtime | Automatic chooses Metal on Apple Silicon, detected CUDA on Linux/Windows, otherwise CPU. Vulkan requires an explicit selection; the ROCm profile maps speech to Vulkan. Initialization can retry CPU within the installed runtime. |
-| LFM audio and Qwen writing | llama.cpp Metal, or compiled CUDA/Vulkan/ROCm | Selects a detected supported device and requests GPU offload; Automatic retries CPU on load/context initialization failure. Explicit GPU requests retain errors. |
+| Adapter                                       | GPU route                                                     | Automatic behavior and limits                                                                                                                                                                                                      |
+| --------------------------------------------- | ------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Qwen3-ASR 0.6B, Parakeet v3, Whisper Small    | MLX on Apple Silicon/Metal for the qualified English variants | Uses the compatible MLX build and artifacts; CPU fallback requires the same model's verified CPU export. Other languages retain their catalog restrictions.                                                                        |
+| Cohere and the remaining Sherpa-only profiles | CPU in the current application                                | GPU detection does not enable an ONNX GPU provider.                                                                                                                                                                                |
+| Nemotron ASR                                  | Packaged Metal, CUDA or Vulkan runtime                        | Automatic chooses Metal on Apple Silicon, detected CUDA on Linux/Windows, otherwise CPU. Vulkan requires an explicit selection; the ROCm profile maps speech to Vulkan. Initialization can retry CPU within the installed runtime. |
+| LFM audio and Qwen writing                    | llama.cpp Metal, or compiled CUDA/Vulkan/ROCm                 | Selects a detected supported device and requests GPU offload; Automatic retries CPU on load/context initialization failure. Explicit GPU requests retain errors.                                                                   |
 
 Nemotron's Automatic CUDA probe respects `CUDA_VISIBLE_DEVICES` and requires a
 successful `nvidia-smi` query. This differs from llama.cpp's device enumeration;
@@ -359,22 +361,22 @@ can be a fragment or an incorrect revisable hypothesis. In particular, Qwen's
 sub-second event time is **not** an established correct-word latency. No aligned
 word-emission or acoustic-endpoint measurement was made. Stop is explicit.
 
-| Path | Drafts before Stop | Mean first draft after ready (ms) | Mean Stop-to-final, short / repeated (ms) | Final parity | Live process peak RSS (GiB) |
-| --- | --- | --- | --- | --- | --- |
-| cohere | 3/3 | 2563 | 1892 / 5391 | 3/3 | 4.21 |
-| fastconformer-en-de-es-fr | 3/3 | 2423 | 1575 / 4438 | 3/3 | 0.88 |
-| lfm-cpu | 3/3 | 2508 | 1774 / 5054 | 3/3 | 1.73 |
-| lfm-metal | 3/3 | 2498 | 1679 / 4693 | 3/3 | 1.15 |
-| nemotron-metal | 3/3 | 1352 | 54 / 51 | 2/3 | 1.08 |
-| parakeet-cpu | 3/3 | 2440 | 1622 / 4620 | 3/3 | 1.19 |
-| parakeet-mlx | 3/3 | 2484 | 1551 / 4361 | 3/3 | 2.49 |
-| parakeet-tdt-0.6b-v2-int8 | 3/3 | 2454 | 1657 / 4718 | 3/3 | 1.18 |
-| parakeet-unified-en-0.6b-int8 | 3/3 | 2442 | 1657 / 4630 | 3/3 | 1.36 |
-| qwen-cpu | 3/3 | 2542 | 1865 / 5307 | 3/3 | 1.87 |
-| qwen-mlx | 3/3 | 92 | 1627 / 4596 | 3/3 | 1.20 |
-| whisper-small-cpu | 3/3 | 2584 | 2346 / 5783 | 3/3 | 1.28 |
-| whisper-small-mlx | 3/3 | 2507 | 1765 / 4866 | 3/3 | 0.67 |
-| whisper-turbo-cpu | 3/3 | 2924 | 2495 / 6134 | 3/3 | 2.40 |
+| Path                          | Drafts before Stop | Mean first draft after ready (ms) | Mean Stop-to-final, short / repeated (ms) | Final parity | Live process peak RSS (GiB) |
+| ----------------------------- | ------------------ | --------------------------------- | ----------------------------------------- | ------------ | --------------------------- |
+| cohere                        | 3/3                | 2563                              | 1892 / 5391                               | 3/3          | 4.21                        |
+| fastconformer-en-de-es-fr     | 3/3                | 2423                              | 1575 / 4438                               | 3/3          | 0.88                        |
+| lfm-cpu                       | 3/3                | 2508                              | 1774 / 5054                               | 3/3          | 1.73                        |
+| lfm-metal                     | 3/3                | 2498                              | 1679 / 4693                               | 3/3          | 1.15                        |
+| nemotron-metal                | 3/3                | 1352                              | 54 / 51                                   | 2/3          | 1.08                        |
+| parakeet-cpu                  | 3/3                | 2440                              | 1622 / 4620                               | 3/3          | 1.19                        |
+| parakeet-mlx                  | 3/3                | 2484                              | 1551 / 4361                               | 3/3          | 2.49                        |
+| parakeet-tdt-0.6b-v2-int8     | 3/3                | 2454                              | 1657 / 4718                               | 3/3          | 1.18                        |
+| parakeet-unified-en-0.6b-int8 | 3/3                | 2442                              | 1657 / 4630                               | 3/3          | 1.36                        |
+| qwen-cpu                      | 3/3                | 2542                              | 1865 / 5307                               | 3/3          | 1.87                        |
+| qwen-mlx                      | 3/3                | 92                                | 1627 / 4596                               | 3/3          | 1.20                        |
+| whisper-small-cpu             | 3/3                | 2584                              | 2346 / 5783                               | 3/3          | 1.28                        |
+| whisper-small-mlx             | 3/3                | 2507                              | 1765 / 4866                               | 3/3          | 0.67                        |
+| whisper-turbo-cpu             | 3/3                | 2924                              | 2495 / 6134                               | 3/3          | 2.40                        |
 
 Cohere initially returned no live drafts because its first short window reached
 a duration-token limit. Provisional-only acceptance fixed that case without

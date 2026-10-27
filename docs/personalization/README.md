@@ -12,16 +12,16 @@ The separately approved fixed [teaching-context guard](automatic-dictionary.md#c
 
 The [September 2026 RSI research review](../research-rsi-2026-09.md) compares Dream-RSI, related recent papers and lab posts with this implementation. It prioritizes retaining past failure cases and evaluating memory-specific outcomes before integrating a live policy optimizer.
 
-| Component | Detailed contract |
-| --- | --- |
-| Editing and feedback capture | [Editable drafts](draft-editing.md): commit points, Copy, revision checks, failures and review separation |
-| Automatic vocabulary | [Dictionary learning](automatic-dictionary.md): candidate admission, independent support, guards and limitations |
-| Context and in-context examples | [Context selection](context-selection.md): pre-ASR hints, post-ASR retrieval, budgets and model support |
-| Intent and writing preferences | [Intent and writing](intent-and-writing.md): existing explicit examples and output-form routing; automatic semantic proposals are isolated in [shadow evaluation](semantic-shadow.md) |
-| Repeat dictation | [Retry evidence](retry-evidence.md): temporal/lexical cues, correlated attempts and uncertainty |
-| Lifecycle and privacy | [Storage and privacy](storage-and-privacy.md): schemas, quotas, epochs, undo and deletion |
-| Evidence of benefit | [Evaluation](evaluation.md): replay, comparison limits, timing and qualification |
-| Native qualification procedure | [Protocol](native-qualification.md): frozen controls, installed-model replay, natural sessions and acceptance gates |
+| Component                       | Detailed contract                                                                                                                                                                     |
+| ------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Editing and feedback capture    | [Editable drafts](draft-editing.md): commit points, Copy, revision checks, failures and review separation                                                                             |
+| Automatic vocabulary            | [Dictionary learning](automatic-dictionary.md): candidate admission, independent support, guards and limitations                                                                      |
+| Context and in-context examples | [Context selection](context-selection.md): pre-ASR hints, post-ASR retrieval, budgets and model support                                                                               |
+| Intent and writing preferences  | [Intent and writing](intent-and-writing.md): existing explicit examples and output-form routing; automatic semantic proposals are isolated in [shadow evaluation](semantic-shadow.md) |
+| Repeat dictation                | [Retry evidence](retry-evidence.md): temporal/lexical cues, correlated attempts and uncertainty                                                                                       |
+| Lifecycle and privacy           | [Storage and privacy](storage-and-privacy.md): schemas, quotas, epochs, undo and deletion                                                                                             |
+| Evidence of benefit             | [Evaluation](evaluation.md): replay, comparison limits, timing and qualification                                                                                                      |
+| Native qualification procedure  | [Protocol](native-qualification.md): frozen controls, installed-model replay, natural sessions and acceptance gates                                                                   |
 
 Automatic local learning is core desktop behavior, including for existing profiles. There is no **Learn as I dictate** switch and no setup or per-word confirmation is needed. Settings → Your vocabulary and writing explains the behavior and retains inspection, removal and **Forget automatic learning**. Forget clears learned evidence; fresh recordings can teach again, while old result contexts cannot recreate forgotten evidence. This product requirement supersedes the earlier off-by-default rollout choice; broad personal benefit still needs qualification. **Apply my saved corrections** controls the final alias-replacement stage. Recognition hints have a separate opt-in switch and depend on the adapter.
 

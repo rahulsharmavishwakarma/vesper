@@ -5,7 +5,6 @@
 > and `VESPER_*` override names; legacy environment aliases remain supported.
 > See [current naming and compatibility](../../docs/development.md#product-name-and-compatibility). No measurement has been requalified by renaming.
 
-
 Phase A learns eligible scoped spellings from ordinary edits without a per-word Remember action. **All 54 automatic expected-output checks passed in 27 constructed episodes. The public replay activated no automatic memories and produced no held-out accuracy gain.** Automatic learning therefore remains an explicit setting, off by default. These results qualify implementation behavior, not long-term personal benefit.
 
 The [implementation guide](../../docs/personalization/README.md) documents each component. [ADR-0016](../../docs/adrs/0016-automatic-local-spelling-learning.md) records approval and architecture. The local debug report at `.cache/benchmarks/results/2026-09-16-automatic-learning/debug-summary.json` preserves source/binary/fixture hashes, timing distributions, failures, public attribution and the cached recognizer's exact artifacts. Work remains tracked in [#34](https://github.com/rahulsharmavishwakarma/transcribe/issues/34).
@@ -18,12 +17,12 @@ The [constructed fixture](fixtures/automatic-learning-episodes.json) covers one-
 
 The public fixture combines **192 calibration recordings** (64 FLEURS US English, 64 FLEURS Hindi, 64 Svarah Indian English) followed by **48 held-out recordings** (24 FLEURS US English and 24 Hindi). It reuses the cached Nemotron Q8 hypotheses from the [prior native screen](2026-09-16-personalization.md) and [fresh held-out run](2026-09-16-memory-regressions.md). Each calibration reference supplies exactly one simulated ordinary edit; held-out references are used only to score. Every recording is unique by ID and audio hash. Synthetic timestamps are three minutes apart, so unrelated corpus sentences do not become fabricated retry episodes.
 
-| Public replay mode | Stored vocabulary | Candidates | Held-out word edits | Improved / worsened clips |
-| --- | ---: | ---: | ---: | ---: |
-| Off | 0 | 0 | 181 | 0 / 0 |
-| Manual, oracle remember labels | 50 | 0 | 175 | 6 / 0 |
-| Automatic edits | 0 | 14 | 181 | 0 / 0 |
-| Automatic edits + usage/retry | 0 | 16 | 181 | 0 / 0 |
+| Public replay mode             | Stored vocabulary | Candidates | Held-out word edits | Improved / worsened clips |
+| ------------------------------ | ----------------: | ---------: | ------------------: | ------------------------: |
+| Off                            |                 0 |          0 |                 181 |                     0 / 0 |
+| Manual, oracle remember labels |                50 |          0 |                 175 |                     6 / 0 |
+| Automatic edits                |                 0 |         14 |                 181 |                     0 / 0 |
+| Automatic edits + usage/retry  |                 0 |         16 |                 181 |                     0 / 0 |
 
 No store/replay execution failures occurred in either fixture. The public screen contains no natural longitudinal feedback, and many reference edits alter multiple spans or punctuation. The conservative single-spelling policy abstains; repeated independent confirmation is also absent. This is evidence of limited coverage, not demonstrated automatic improvement. No threshold was relaxed using held-out results. The manual comparator receives explicit oracle labels and a broader suggestion policy; it does not equalize approval effort or represent actual user behavior.
 
@@ -33,13 +32,13 @@ Here “word edits” means the core memory helper's lowercase whitespace-token 
 
 Apple M5 Pro, 64 GiB, macOS 26.6.2 (25G83), release build. The replay runs sequentially on CPU with no loaded speech/writing model. These are single-run component measurements with growing profiles/stores and ordinary OS caching.
 
-| Automatic usage/retry mode | Count | Mean | p50 | p95 | p99 |
-| --- | ---: | ---: | ---: | ---: | ---: |
-| Constructed: apply remembered corrections | 27 | 0.0035 ms | 0.0032 ms | 0.0052 ms | 0.0072 ms |
-| Constructed: edit feedback | 11 | 0.2010 ms | 0.1922 ms | 0.2757 ms | 0.2757 ms |
-| Public: apply remembered corrections | 240 | 0.0098 ms | 0.0082 ms | 0.0206 ms | 0.0243 ms |
-| Public: edit feedback | 192 | 0.3966 ms | 0.3796 ms | 0.6079 ms | 0.8419 ms |
-| Public: usage/retry observation | 240 | 0.4598 ms | 0.4623 ms | 0.7147 ms | 0.8801 ms |
+| Automatic usage/retry mode                | Count |      Mean |       p50 |       p95 |       p99 |
+| ----------------------------------------- | ----: | --------: | --------: | --------: | --------: |
+| Constructed: apply remembered corrections |    27 | 0.0035 ms | 0.0032 ms | 0.0052 ms | 0.0072 ms |
+| Constructed: edit feedback                |    11 | 0.2010 ms | 0.1922 ms | 0.2757 ms | 0.2757 ms |
+| Public: apply remembered corrections      |   240 | 0.0098 ms | 0.0082 ms | 0.0206 ms | 0.0243 ms |
+| Public: edit feedback                     |   192 | 0.3966 ms | 0.3796 ms | 0.6079 ms | 0.8419 ms |
+| Public: usage/retry observation           |   240 | 0.4598 ms | 0.4623 ms | 0.7147 ms | 0.8801 ms |
 
 Application timing covers only in-memory final correction. Mutation timing includes a fresh SQLite connection, transaction, commit and connection closure. Percentiles use nearest rank. Public application timing contains **zero active automatic memories**, so it is not a loaded-dictionary performance result; the constructed run covers two active entries. Maximum-quota sustained latency was not measured. The earlier warm-connection exploration is excluded from this table.
 

@@ -78,10 +78,10 @@ boundary policies with today's completed-audio final. Today's final already
 splits audio into balanced parts of at most 10 s, but it places boundaries
 using the total length, which is unknown during recording.
 
-| WER (clean / 0 dB) | Current final | Causal 4–8 s (phase A) | Fixed 10 s, last 20 s re-split | Pause-first 4–10 s |
-| --- | ---: | ---: | ---: | ---: |
-| Cohere CPU | 9.05% / 14.31% | 12.83% / 16.12% | 11.02% / 14.14% | 8.06% / 15.62% |
-| Qwen3-ASR CPU | 10.03% / 15.62% | 11.18% / 17.76% | 11.84% / 19.24% | 11.18% / 18.09% |
+| WER (clean / 0 dB) |   Current final | Causal 4–8 s (phase A) | Fixed 10 s, last 20 s re-split | Pause-first 4–10 s |
+| ------------------ | --------------: | ---------------------: | -----------------------------: | -----------------: |
+| Cohere CPU         |  9.05% / 14.31% |        12.83% / 16.12% |                11.02% / 14.14% |     8.06% / 15.62% |
+| Qwen3-ASR CPU      | 10.03% / 15.62% |        11.18% / 17.76% |                11.84% / 19.24% |    11.18% / 18.09% |
 
 No causal policy matches the current final on both lanes for both models. Every
 policy worsens Qwen3-ASR by 1.2–3.6 points. Fixing boundaries live would cut

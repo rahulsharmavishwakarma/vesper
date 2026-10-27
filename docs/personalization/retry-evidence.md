@@ -10,12 +10,12 @@ The comparison uses requested language, selected project and learning permission
 
 ## Current labels
 
-| Label | Version-1 rule |
-| --- | --- |
+| Label             | Version-1 rule                                                                                                                          |
+| ----------------- | --------------------------------------------------------------------------------------------------------------------------------------- |
 | `possible_repair` | Same known scope and bounded time, at least two shared informative terms, and an English repair cue such as “I said” or “let me repeat” |
-| `continuation` | Bounded same-scope follow-up starting with an English continuation cue such as “also” |
-| `changed_intent` | Bounded same-scope follow-up starting with a cue such as “actually” or “instead” |
-| `uncertain` | Missing evidence, incompatible scope, expired window, oversized input, ordinary repetition or an unsupported pattern |
+| `continuation`    | Bounded same-scope follow-up starting with an English continuation cue such as “also”                                                   |
+| `changed_intent`  | Bounded same-scope follow-up starting with a cue such as “actually” or “instead”                                                        |
+| `uncertain`       | Missing evidence, incompatible scope, expired window, oversized input, ordinary repetition or an unsupported pattern                    |
 
 Inputs over 8,192 bytes are not analyzed. These cue rules are intentionally a narrow English baseline. They are not a multilingual classifier; there is no predicted error cause, spelling resolution or new-task certainty. A spoken “actually” can have another meaning, so no persistent correction is derived from this label.
 

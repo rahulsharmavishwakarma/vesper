@@ -5,7 +5,6 @@
 > and `VESPER_*` override names; legacy environment aliases remain supported.
 > See [current naming and compatibility](../../docs/development.md#product-name-and-compatibility). No measurement has been requalified by renaming.
 
-
 **The proposed failure-bank variant is not an improvement over our current controller on the primary held-out score.** It increases held-out word edits from **2,599 to 2,625 (+1.0%)**, despite slightly reducing errors over the complete replay and final partition. Both adaptive controllers remain substantially worse than the previously identified fixed context policy, which scores **1,464** on this fresh-seed comparison. Keep this variant isolated from live dictation.
 
 This evaluates our application of the feedback idea discussed in the [Z.ai research assessment](../../docs/research-rsi-2026-09.md#zai-inspiration-diagnose-replay-and-verify). It is not a reproduction of Z.ai's GLM agent, infrastructure or throughput claims. All computation uses the local Rust learner and temporary SQLite stores; no model call, training or production profile change occurs. The [canonical experiment contract](../../docs/personalization/policy-experiment.md#observed-failure-replay-variant) defines the mechanism. [Issue #34](https://github.com/rahulsharmavishwakarma/transcribe/issues/34#issuecomment-5733700652) records the requested scope.
@@ -26,36 +25,36 @@ The `(support=1, context=1)` fixed comparator was already identified by the earl
 
 These are total word-edit distances, **not normalized WER**. Fewer is better. An output described as worse than raw has greater edit distance to the reference; that is not an independent semantic judgment.
 
-| Partition | Episodes | Raw input | Starting policy | Current adaptive | Failure bank |
-| --- | ---: | ---: | ---: | ---: | ---: |
-| Complete replay, including feedback collection | 23,809 | 19,554 | 19,010 | 18,110 | 18,036 |
-| Hidden audits plus final | 7,300 | 3,311 | 3,183 | **2,599** | 2,625 |
-| Final only | 2,692 | 1,895 | 1,947 | 1,745 | **1,739** |
+| Partition                                      | Episodes | Raw input | Starting policy | Current adaptive | Failure bank |
+| ---------------------------------------------- | -------: | --------: | --------------: | ---------------: | -----------: |
+| Complete replay, including feedback collection |   23,809 |    19,554 |          19,010 |           18,110 |       18,036 |
+| Hidden audits plus final                       |    7,300 |     3,311 |           3,183 |        **2,599** |        2,625 |
+| Final only                                     |    2,692 |     1,895 |           1,947 |            1,745 |    **1,739** |
 
 Compared directly with current adaptive, the variant improves **22** held-out episodes, regresses **35**, and ties **7,243**. At the history level it improves two, regresses seven and ties 88. All differences are in the support-shift family. The final-only result improves 14 episodes and regresses 11; the favorable six-edit final difference must not hide the unfavorable combined held-out result.
 
-| Held-out scenario | Episodes | Current adaptive | Failure bank |
-| --- | ---: | ---: | ---: |
-| Stable | 912 | 244 | 244 |
-| Context shift | 912 | 38 | 38 |
-| Support shift | 912 | **292** | 318 |
-| Misleading feedback | 912 | 382 | 382 |
-| Sparse feedback | 912 | 390 | 390 |
-| Correlated retries | 912 | 398 | 398 |
-| Scope/language | 912 | 285 | 285 |
-| No feedback | 912 | 570 | 570 |
-| Capacity protected queries | 4 | 0 | 0 |
+| Held-out scenario          | Episodes | Current adaptive | Failure bank |
+| -------------------------- | -------: | ---------------: | -----------: |
+| Stable                     |      912 |              244 |          244 |
+| Context shift              |      912 |               38 |           38 |
+| Support shift              |      912 |          **292** |          318 |
+| Misleading feedback        |      912 |              382 |          382 |
+| Sparse feedback            |      912 |              390 |          390 |
+| Correlated retries         |      912 |              398 |          398 |
+| Scope/language             |      912 |              285 |          285 |
+| No feedback                |      912 |              570 |          570 |
+| Capacity protected queries |        4 |                0 |            0 |
 
-| Policy across the entire suite | Held-out word edits | Held-out outputs worse than raw |
-| --- | ---: | ---: |
-| Fixed support 1, no context requirement | 3,183 | 1,132 |
-| Fixed support 1, context required | **1,464** | 192 |
-| Fixed support 2, no context requirement | 3,181 | 508 |
-| Fixed support 2, context required | 2,812 | 189 |
-| Fixed support 3, no context requirement | 3,308 | 114 |
-| Fixed support 3, context required | 3,308 | 114 |
-| Current adaptive | 2,599 | 816 |
-| Failure-bank adaptive | 2,625 | 794 |
+| Policy across the entire suite          | Held-out word edits | Held-out outputs worse than raw |
+| --------------------------------------- | ------------------: | ------------------------------: |
+| Fixed support 1, no context requirement |               3,183 |                           1,132 |
+| Fixed support 1, context required       |           **1,464** |                             192 |
+| Fixed support 2, no context requirement |               3,181 |                             508 |
+| Fixed support 2, context required       |               2,812 |                             189 |
+| Fixed support 3, no context requirement |               3,308 |                             114 |
+| Fixed support 3, context required       |               3,308 |                             114 |
+| Current adaptive                        |               2,599 |                             816 |
+| Failure-bank adaptive                   |               2,625 |                             794 |
 
 The variant makes 26 promotions, no rollbacks and eight rejections, compared with 32 promotions, ten rollbacks and 16 rejections for current adaptive. Retaining old errors prevents the known regression in the development fixture, but also prevents useful adaptation when support requirements change. Fewer rollbacks are therefore not a success metric by themselves. It produces 22 fewer held-out outputs worse than raw while increasing overall error, demonstrating the tradeoff between cautious application and missed useful corrections.
 
@@ -65,10 +64,10 @@ The suite admits 701 historical cases in total, with at most 24 retained in any 
 
 These checks use **previously measured native ASR hypotheses**, with reference text simulating correction feedback on 192 calibration recordings. They do not rerun audio or represent naturally occurring longitudinal user feedback.
 
-| Cached held-out corpus | Recordings | Current adaptive | Failure bank | Outcome |
-| --- | ---: | ---: | ---: | --- |
-| Original FLEURS/Svarah control | 48 | 181 edits | 181 edits | No improvement |
-| Svarah expanded accent screen | 304 | 977 edits | 977 edits | Every emitted output identical |
+| Cached held-out corpus         | Recordings | Current adaptive | Failure bank | Outcome                        |
+| ------------------------------ | ---------: | ---------------: | -----------: | ------------------------------ |
+| Original FLEURS/Svarah control |         48 |        181 edits |    181 edits | No improvement                 |
+| Svarah expanded accent screen  |        304 |        977 edits |    977 edits | Every emitted output identical |
 
 The Svarah set covers the same 19 language-background groups documented in the [native accent report](2026-09-18-accent-personalization.md). Those are accent proxies, not detected accents or verified separate speakers. No automatic memory became active and neither controller changed policy. The bank retains 40 calibration failures, but remembering those failures creates no useful correction in these controls. This is a negative applicability result; it is not evidence that adding more history will improve acoustic recognition. Existing model/runtime, corpus revisions and native failure accounting remain in the linked accent report.
 
@@ -78,15 +77,15 @@ Apple M5 Pro, Mac17,8, 64 GiB, macOS 27.0 (26A428), Rust/Cargo 1.98.1; release b
 
 To reduce fixed run-order effects, one history from each of the eight families was rerun **three times per variant**, alternating order by family/repeat: **24 pairs, 48 executions**. Every repeat reproduced its original quality, decisions and bank state. Component means below are weighted by invocation count across those repeated runs.
 
-| Component | Current mean | Failure-bank mean |
-| --- | ---: | ---: |
-| Filter/apply memory | 0.0241 ms | 0.0241 ms |
-| Feedback transaction and metadata | 0.2673 ms | 0.2718 ms |
-| Propose policy | 1.0325 ms | 1.0932 ms |
-| Validate/rollback | 0.3548 ms | 0.3737 ms |
-| Update failure history, once per round | — | 0.5649 ms |
-| Adaptive plus baseline replay, per complete history | 111.84 ms | 116.88 ms |
-| Whole executable including six fixed controls, per history | 434.52 ms | 442.79 ms |
+| Component                                                  | Current mean | Failure-bank mean |
+| ---------------------------------------------------------- | -----------: | ----------------: |
+| Filter/apply memory                                        |    0.0241 ms |         0.0241 ms |
+| Feedback transaction and metadata                          |    0.2673 ms |         0.2718 ms |
+| Propose policy                                             |    1.0325 ms |         1.0932 ms |
+| Validate/rollback                                          |    0.3548 ms |         0.3737 ms |
+| Update failure history, once per round                     |            — |         0.5649 ms |
+| Adaptive plus baseline replay, per complete history        |    111.84 ms |         116.88 ms |
+| Whole executable including six fixed controls, per history |    434.52 ms |         442.79 ms |
 
 The paired adaptive-plus-baseline duration increases by a mean **5.04 ms per complete history** (median 3.45 ms; range 0.03–34.17 ms), about 4.5% of the current mean. This includes setup, SQLite snapshots, both trajectories and reporting rows, and is not a per-dictation delay. Individual application timings exclude SQLite snapshot reads; feedback timing excludes connection setup. The extra history-update mean is per experimental round, not per word or utterance. These are descriptive shared-host timings, without a statistical latency guarantee.
 

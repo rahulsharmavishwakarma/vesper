@@ -17,7 +17,7 @@ otherwise the raw transcript.
 
 - **CPU activity** is this desktop backend process's share of total logical CPU
   capacity: `100 × Δprocess CPU milliseconds / Δmonotonic wall milliseconds /
-  logical CPU count`. One fully busy core on an 18-core logical machine is about
+logical CPU count`. One fully busy core on an 18-core logical machine is about
   5.6%. The initial reading is unavailable until an interval has been measured.
 - **Memory in use** is current resident RAM (RSS), displayed in GiB. It includes
   shared models, runtime, and allocator overhead. These are process readings, not

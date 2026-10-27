@@ -84,11 +84,11 @@ state-isolation or fault-recovery tests.
 
 Byte-verified source SHA-256 values:
 
-| Cohere source | Upstream | Local patched build |
-| --- | --- | --- |
+| Cohere source             | Upstream                                                           | Local patched build                                                |
+| ------------------------- | ------------------------------------------------------------------ | ------------------------------------------------------------------ |
 | Recognizer implementation | `06dbee9a2ac4bedf9426ac463b4dd03f7209ac86490c77e06d3a1b165a13c50a` | `54a0f39e564c6ca7a21a7e37cfda2719e8b4603588dab35aeed21f1629513038` |
-| Model implementation | `21e4325f177367e325bc37cdba71ae87f019b93a455acdd45b8c3940a0048ad0` | Same |
-| Greedy decoder | `981ecc91f445a4b2b0072219693c11bda1b6904f4eb6eb502661de4c5da481c0` | `4f02b80b05d13c3db895bb3377e50cdb55a6bb0475bd8108370ff1cc35212e58` |
+| Model implementation      | `21e4325f177367e325bc37cdba71ae87f019b93a455acdd45b8c3940a0048ad0` | Same                                                               |
+| Greedy decoder            | `981ecc91f445a4b2b0072219693c11bda1b6904f4eb6eb502661de4c5da481c0` | `4f02b80b05d13c3db895bb3377e50cdb55a6bb0475bd8108370ff1cc35212e58` |
 
 ## Consequences and qualification
 

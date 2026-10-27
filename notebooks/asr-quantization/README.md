@@ -5,11 +5,11 @@ weight-only encoder is not smaller or faster than the old INT8, and whether a gr
 They are development research tools. They do not touch the application, its catalog or its defaults, and they are not part of
 CI or the desktop runtime.
 
-| Notebook | Question | Output |
-| --- | --- | --- |
-| [01-wo4-graph-diagnosis](01-wo4-graph-diagnosis.ipynb) | Which operators hold the bytes and the milliseconds, and does `accuracy_level` matter? | `01-wo4-graph-diagnosis.json` |
+| Notebook                                               | Question                                                                                                                     | Output                                          |
+| ------------------------------------------------------ | ---------------------------------------------------------------------------------------------------------------------------- | ----------------------------------------------- |
+| [01-wo4-graph-diagnosis](01-wo4-graph-diagnosis.ipynb) | Which operators hold the bytes and the milliseconds, and does `accuracy_level` matter?                                       | `01-wo4-graph-diagnosis.json`                   |
 | [02-conv-to-matmul-int4](02-conv-to-matmul-int4.ipynb) | Does rewriting pointwise convolutions as `MatMul` before 4-bit quantization shrink the file, and what do RTN and HQQ change? | `02-conv-to-matmul-int4.json`, variant encoders |
-| [03-wer-fleurs-en](03-wer-fleurs-en.ipynb) | What is the word error rate of each variant on public FLEURS English? | `03-wer-fleurs-en.json` |
+| [03-wer-fleurs-en](03-wer-fleurs-en.ipynb)             | What is the word error rate of each variant on public FLEURS English?                                                        | `03-wer-fleurs-en.json`                         |
 
 Results from the first full run are in [the 22 October 2026 record](../../docs/validation/parakeet-conv-rewrite-2026-10-22.md).
 

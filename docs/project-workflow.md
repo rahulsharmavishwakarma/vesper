@@ -60,13 +60,13 @@ project update.
 The board is a user-owned project, so only its built-in rules can act without a
 personal token, and those set Status alone. In practice:
 
-| Field | How it changes |
-|-------|----------------|
-| Item exists | Automatic (built-in auto-add) |
-| Status = Done | Automatic when a pull request merges; set it by hand when an issue closes without one |
-| Area | **Manual**: set it when the item is created |
-| Status = In progress | **Manual**: set it when work starts or the first PR opens |
-| Status = Validation, Blocked, Backlog | **Manual**: follow the semantics above |
+| Field                                 | How it changes                                                                        |
+| ------------------------------------- | ------------------------------------------------------------------------------------- |
+| Item exists                           | Automatic (built-in auto-add)                                                         |
+| Status = Done                         | Automatic when a pull request merges; set it by hand when an issue closes without one |
+| Area                                  | **Manual**: set it when the item is created                                           |
+| Status = In progress                  | **Manual**: set it when work starts or the first PR opens                             |
+| Status = Validation, Blocked, Backlog | **Manual**: follow the semantics above                                                |
 
 Agents set these at each lifecycle point (start, PR opened, blocked, merged,
 closed) with names rather than hard-coded option IDs, and read the result back
@@ -211,20 +211,20 @@ does not reconcile divergence with its remote; that is a separate operation.
 
 Every issue should have at least one truthful work-type label. Use `enhancement` for both features and enhancements so the repository does not maintain duplicate concepts.
 
-| Label | Use for |
-| --- | --- |
-| `bug` | Incorrect or regressed behavior |
-| `enhancement` | New or improved user-visible capability |
-| `documentation` | Documentation as a primary deliverable |
-| `task` | Scoped work that does not fit a more specific type |
-| `maintenance` | Repository hygiene and routine upkeep |
-| `refactor` | Internal restructuring without intended behavior changes |
-| `testing` | Test coverage, fixtures, benchmarks, or validation infrastructure |
-| `research` | Evidence gathering and synthesis |
-| `security` | Security, privacy, secrets, or supply-chain work |
-| `performance` | Latency, throughput, memory, power, or efficiency work |
-| `ci` | Continuous integration, builds, containers, or releases |
-| `dependencies` | Dependency and lockfile maintenance |
+| Label           | Use for                                                           |
+| --------------- | ----------------------------------------------------------------- |
+| `bug`           | Incorrect or regressed behavior                                   |
+| `enhancement`   | New or improved user-visible capability                           |
+| `documentation` | Documentation as a primary deliverable                            |
+| `task`          | Scoped work that does not fit a more specific type                |
+| `maintenance`   | Repository hygiene and routine upkeep                             |
+| `refactor`      | Internal restructuring without intended behavior changes          |
+| `testing`       | Test coverage, fixtures, benchmarks, or validation infrastructure |
+| `research`      | Evidence gathering and synthesis                                  |
+| `security`      | Security, privacy, secrets, or supply-chain work                  |
+| `performance`   | Latency, throughput, memory, power, or efficiency work            |
+| `ci`            | Continuous integration, builds, containers, or releases           |
+| `dependencies`  | Dependency and lockfile maintenance                               |
 
 Combine work-type labels when the deliverables genuinely span categories, such as `performance` plus `research`. Add an existing area, platform, priority, or status label only when it improves routing. Prefer the existing taxonomy; create a missing label only when it will be reused, and never add an issue-specific synonym.
 
@@ -242,8 +242,8 @@ dark setting, followed by a link to the source:
 
 ```html
 <picture>
-  <source media="(prefers-color-scheme: dark)" srcset="assets/diagrams/NAME.dark.svg">
-  <img alt="What the diagram shows" src="assets/diagrams/NAME.light.svg">
+  <source media="(prefers-color-scheme: dark)" srcset="assets/diagrams/NAME.dark.svg" />
+  <img alt="What the diagram shows" src="assets/diagrams/NAME.light.svg" />
 </picture>
 ```
 
@@ -312,16 +312,16 @@ For multiline content, write the exact body to a temporary file outside the sour
 
 Documentation should explain what future users and maintainers need to know after the job:
 
-| Change area | Typical canonical documentation |
-| --- | --- |
-| User-visible behavior | `docs/user-guide.md`, owning feature guide, relevant README overview/setup changes, and limitations |
+| Change area               | Typical canonical documentation                                                                                                      |
+| ------------------------- | ------------------------------------------------------------------------------------------------------------------------------------ |
+| User-visible behavior     | `docs/user-guide.md`, owning feature guide, relevant README overview/setup changes, and limitations                                  |
 | Architecture or data flow | `docs/architecture.md`, `docs/inference-architecture.md` (inference backend diagrams), `docs/internals.md`, and an ADR when required |
-| Model/runtime behavior | Model guide, inference-performance evidence, benchmark contract, and provenance |
-| Bug fix | Owning behavior page plus regression/validation evidence |
-| Testing or CI | `docs/development.md`, `docs/validation.md`, or `docs/ci-and-releases.md` |
-| Security or privacy | `SECURITY.md` and the closest security/privacy document under `docs/` |
-| Research | Research synthesis with primary sources, evidence class, implementation boundary, and issue link |
-| Documentation-only work | The corrected canonical page and any necessary index links |
+| Model/runtime behavior    | Model guide, inference-performance evidence, benchmark contract, and provenance                                                      |
+| Bug fix                   | Owning behavior page plus regression/validation evidence                                                                             |
+| Testing or CI             | `docs/development.md`, `docs/validation.md`, or `docs/ci-and-releases.md`                                                            |
+| Security or privacy       | `SECURITY.md` and the closest security/privacy document under `docs/`                                                                |
+| Research                  | Research synthesis with primary sources, evidence class, implementation boundary, and issue link                                     |
+| Documentation-only work   | The corrected canonical page and any necessary index links                                                                           |
 
 Do not create a per-issue Markdown file or chronological local work log solely to satisfy documentation completion. The GitHub issue owns task state; `docs/` owns durable project truth.
 

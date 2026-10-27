@@ -19,12 +19,12 @@ and the probe's preflight hashes. Filesystem/shader caches were not flushed.
 These are completed-file times, **not microphone, first-speaker, endpoint or
 stop-to-final latency**. CPU and Metal were sequential, with no concurrent build.
 
-| Sample | Audio duration | Reference / detected speakers, both backends | CPU wall | Metal wall | CPU / Metal peak RSS |
-| --- | ---: | --- | ---: | ---: | ---: |
-| AMI ES2004a, 600–645 s | 45.00 s | 4 / 4; end-boundary failure | 10.456 s | 1.057 s | 238.0 / 193.2 MiB |
-| AMI ES2004a, 675–705 s | 30.00 s | 4 / 4 | 2.581 s | 0.594 s | 200.2 / 179.1 MiB |
-| FLEURS en-US single speaker | 4.62 s | 1 / 1 | 0.561 s | 0.566 s | 163.5 / 159.4 MiB |
-| Generated digital silence | 10.00 s | 0 / 0 | 0.569 s | 0.567 s | 173.0 / 163.5 MiB |
+| Sample                      | Audio duration | Reference / detected speakers, both backends | CPU wall | Metal wall | CPU / Metal peak RSS |
+| --------------------------- | -------------: | -------------------------------------------- | -------: | ---------: | -------------------: |
+| AMI ES2004a, 600–645 s      |        45.00 s | 4 / 4; end-boundary failure                  | 10.456 s |    1.057 s |    238.0 / 193.2 MiB |
+| AMI ES2004a, 675–705 s      |        30.00 s | 4 / 4                                        |  2.581 s |    0.594 s |    200.2 / 179.1 MiB |
+| FLEURS en-US single speaker |         4.62 s | 1 / 1                                        |  0.561 s |    0.566 s |    163.5 / 159.4 MiB |
+| Generated digital silence   |        10.00 s | 0 / 0                                        |  0.569 s |    0.567 s |    173.0 / 163.5 MiB |
 
 The four-sample arithmetic mean is 3.542 s CPU and 0.696 s Metal; the mixed
 durations and silence make that a smoke-matrix average, not expected dictation
@@ -154,12 +154,12 @@ SHA-256 `ff3f24289273e664640d6b00387a81aa135e61e4b62095ffd16a4b9819c92d5a`.
 It was converted from float WAV to PCM16 without changing rate or duration.
 Silence is 160,000 exact-zero mono PCM16 samples at 16 kHz. Derived WAV hashes:
 
-| Sample | SHA-256 |
-| --- | --- |
-| AMI 600–645 | `6b623d3d09bfd3044ebd8e5b825dee0d49a6723c74b930859d0e3c7483a494c0` |
-| AMI 675–705 | `de8ceba48b4659a2269ff32a39578754d21a11427291afdacc2ac821aba12e34` |
+| Sample       | SHA-256                                                            |
+| ------------ | ------------------------------------------------------------------ |
+| AMI 600–645  | `6b623d3d09bfd3044ebd8e5b825dee0d49a6723c74b930859d0e3c7483a494c0` |
+| AMI 675–705  | `de8ceba48b4659a2269ff32a39578754d21a11427291afdacc2ac821aba12e34` |
 | FLEURS PCM16 | `6d16ef2f8527820892ec01bc8251771fdf617e0bff2cb3b5b0ed8ba8e73e5f67` |
-| Silence | `ee7bea4232762775f8fce9b3e27e4d3948c8ac6a45a87ca769f703d6eed0b448` |
+| Silence      | `ee7bea4232762775f8fce9b3e27e4d3948c8ac6a45a87ca769f703d6eed0b448` |
 
 An initial preparation attempt failed because Python's WAV reader rejected the
 existing floating-point FLEURS fixture; a subsequent launch stopped before
@@ -271,13 +271,13 @@ matrix. Filesystem/shader caches were not cleared. Rust uses its debug test
 profile; the separately compiled native bundle uses Release. These are neither
 microphone stop-to-final nor algorithmic latency measurements.
 
-| Sample | CPU, ASR loaded first | CPU, diarizer loaded first | Metal, ASR loaded first | Metal, diarizer loaded first |
-| --- | ---: | ---: | ---: | ---: |
-| AMI 45 s | 3.865 s | 3.844 s | .612 s | .613 s |
-| AMI 30 s | 2.127 s | 2.130 s | .395 s | .396 s |
-| FLEURS 4.62 s | .177 s | .174 s | .102 s | .102 s |
-| Silence 10 s | .402 s | .393 s | .155 s | .160 s |
-| Four-case mean | 1.643 s | 1.635 s | .316 s | .318 s |
+| Sample         | CPU, ASR loaded first | CPU, diarizer loaded first | Metal, ASR loaded first | Metal, diarizer loaded first |
+| -------------- | --------------------: | -------------------------: | ----------------------: | ---------------------------: |
+| AMI 45 s       |               3.865 s |                    3.844 s |                  .612 s |                       .613 s |
+| AMI 30 s       |               2.127 s |                    2.130 s |                  .395 s |                       .396 s |
+| FLEURS 4.62 s  |                .177 s |                     .174 s |                  .102 s |                       .102 s |
+| Silence 10 s   |                .402 s |                     .393 s |                  .155 s |                       .160 s |
+| Four-case mean |               1.643 s |                    1.635 s |                  .316 s |                       .318 s |
 
 The initial successful worker run, before independent-process order checks, had
 a **21.124 s** first CPU meeting result; its subsequent CPU repeat was 3.836 s.
@@ -286,12 +286,12 @@ were not isolated. There are too few independent observations for p95 or stable
 cold-latency claims. CPU/Metal averages are not combined with each other or with
 the earlier standalone CLI measurements.
 
-| Desktop successful pair | ASR-only complete-file path | With speakers | Measured speaker stage |
-| --- | ---: | ---: | ---: |
-| Cohere CPU / FLEURS | 3.188 s | 2.987 s | 2.701 s CPU |
-| Nemotron Metal / FLEURS | .498 s | .181 s | .100 s Metal |
-| Nemotron Metal / AMI 30 s | .366 s | .753 s | .397 s Metal |
-| Nemotron Metal / AMI 45 s | .549 s | 1.137 s | .605 s Metal |
+| Desktop successful pair   | ASR-only complete-file path | With speakers | Measured speaker stage |
+| ------------------------- | --------------------------: | ------------: | ---------------------: |
+| Cohere CPU / FLEURS       |                     3.188 s |       2.987 s |            2.701 s CPU |
+| Nemotron Metal / FLEURS   |                      .498 s |        .181 s |           .100 s Metal |
+| Nemotron Metal / AMI 30 s |                      .366 s |        .753 s |           .397 s Metal |
+| Nemotron Metal / AMI 45 s |                      .549 s |       1.137 s |           .605 s Metal |
 
 Desktop times surround `process_file`: decode, ASR, optional speakers,
 personalization and persistence; export assertions run afterwards. Writing
@@ -311,15 +311,15 @@ their namespaced closure and Apple system libraries. The tested local manifest
 SHA-256 is `553147502c6eb918aba6d8c7f52d6ec43b5459da695dbaa55997a317e61d29f6`.
 It records generated local provenance, not a publisher attestation.
 
-| Library component (`libvesper_diar_97a15afa_*.dylib`) | SHA-256 |
-| --- | --- |
-| api | `6d2e8b1afb4b57c64182300a98036085834a7eebcd5a4027cdec51aa8ec9273c` |
-| asr | `a58cdc98d9a163d30b4e8c3f8a1ceb3887a2669b2f7a147af10a26e1dd48201d` |
-| ggml | `bd074a03827f34457e8b87c0dc56da3def7cc45a0ec7d66c5b615b5c90cf82b9` |
-| base | `7b9030b9eecedfb0354f469cc27860e0909717a74e0ab465b204f3df784f8774` |
-| cpu | `9e125716be982e2c95e293b0ecf47480bf24d0ae8ae7acfe652fc08aaf8d1798` |
-| blas | `4b58309b87ea57de123c6be8dcbb23ca2bbe693d0f9d3708d9838efaba2a75ab` |
-| metal | `d105b3eefdfd9b69a24f1247eeeda0313ad290a33ed1e735400a1626db26a15b` |
+| Library component (`libvesper_diar_97a15afa_*.dylib`) | SHA-256                                                            |
+| ----------------------------------------------------- | ------------------------------------------------------------------ |
+| api                                                   | `6d2e8b1afb4b57c64182300a98036085834a7eebcd5a4027cdec51aa8ec9273c` |
+| asr                                                   | `a58cdc98d9a163d30b4e8c3f8a1ceb3887a2669b2f7a147af10a26e1dd48201d` |
+| ggml                                                  | `bd074a03827f34457e8b87c0dc56da3def7cc45a0ec7d66c5b615b5c90cf82b9` |
+| base                                                  | `7b9030b9eecedfb0354f469cc27860e0909717a74e0ab465b204f3df784f8774` |
+| cpu                                                   | `9e125716be982e2c95e293b0ecf47480bf24d0ae8ae7acfe652fc08aaf8d1798` |
+| blas                                                  | `4b58309b87ea57de123c6be8dcbb23ca2bbe693d0f9d3708d9838efaba2a75ab` |
+| metal                                                 | `d105b3eefdfd9b69a24f1247eeeda0313ad290a33ed1e735400a1626db26a15b` |
 
 ASR uses the existing pinned `models/artifacts.json`: Nemotron 3.5 Q8_0 model
 revision `ea30d66debe3740a08b573244286791d423d6b3e` with v0.1.0 macOS arm64 Metal

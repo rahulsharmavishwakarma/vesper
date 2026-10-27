@@ -10,10 +10,10 @@ On 19 September the user approved integrating the **fixed teaching-context guard
 
 The real `DatasetStore` still extracts guarded spellings, stores ordinary-edit provenance and performs its existing admission/suspension checks. The experiment applies an additional eligibility filter to a copied profile before calling the real deterministic matcher. It does not relax number/date/negation/quote guards, change acoustic decoding, rewrite code, or train weights.
 
-| Experimental parameter | Allowed values | Meaning |
-| --- | --- | --- |
-| `supportFloor` | 1, 2, 3 | Additional minimum independent correction support before an automatically learned entry can be used. Existing stricter admission rules still apply. |
-| `contextOverlap` | 0, 1 | Require no extra lexical context or at least one shared informative term from an eligible teaching edit. |
+| Experimental parameter | Allowed values | Meaning                                                                                                                                             |
+| ---------------------- | -------------- | --------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `supportFloor`         | 1, 2, 3        | Additional minimum independent correction support before an automatically learned entry can be used. Existing stricter admission rules still apply. |
+| `contextOverlap`       | 0, 1           | Require no extra lexical context or at least one shared informative term from an eligible teaching edit.                                            |
 
 The starting policy is `(1, 0)`, which represents the existing eligibility behavior on this corpus. A proposal changes one coordinate by one step. At most three neighbors are examined per round; there are six policies total. Every fixed policy is also run as a separate comparison after the adaptive trajectory. Hidden scores and the best fixed comparator never influence the controller.
 

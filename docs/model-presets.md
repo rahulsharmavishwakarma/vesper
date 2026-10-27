@@ -30,20 +30,20 @@ Live means words emitted during microphone capture, before Stop, in Dictate or
 the floating recorder. This table describes the adapters wired into Vesper, not
 every capability of an upstream architecture or checkpoint.
 
-| Speech model or preset                                            | Words while speaking | Current application path                                                        |
-| ----------------------------------------------------------------- | -------------------- | ------------------------------------------------------------------------------- |
-| NVIDIA Nemotron 3.5 ASR Streaming 0.6B                            | Yes                  | Incremental microphone chunks and revisable partial events                      |
-| Cohere Transcribe (default)                                       | Yes                  | Buffered drafts; authoritative completed-audio pass after Stop                  |
-| NVIDIA Parakeet TDT 0.6B v3                                       | Yes                  | Buffered drafts on CPU or qualified MLX                                         |
-| Qwen3-ASR 0.6B                                                    | Yes                  | Native MLX drafts for English/Metal; buffered CPU drafts; completed-audio final |
-| Liquid LFM2.5 Audio 1.5B                                          | Yes                  | Buffered drafts through its current CPU/GPU runtime                             |
-| Parakeet TDT v2, Parakeet Unified, FastConformer European presets | Yes                  | Buffered drafts with the selected transducer export                             |
-| Whisper Small / Turbo                                             | Yes                  | Buffered drafts; English/French only; quality gates failed (see language guide)  |
-| Moonshine Base (English)                                          | Yes                  | Buffered drafts; English only; completed-audio final in parts of at most 15 s   |
-| IBM Granite Speech 5.0 TurboCTC                                   | Yes                  | Buffered drafts; Apple GPU only; completed-audio final in parts of at most 30 s |
-| Fermion Phonon-2 (English)                                        | Yes                  | Buffered drafts; Apple GPU only; English; completed-audio final in parts of at most 30 s |
+| Speech model or preset                                            | Words while speaking | Current application path                                                                      |
+| ----------------------------------------------------------------- | -------------------- | --------------------------------------------------------------------------------------------- |
+| NVIDIA Nemotron 3.5 ASR Streaming 0.6B                            | Yes                  | Incremental microphone chunks and revisable partial events                                    |
+| Cohere Transcribe (default)                                       | Yes                  | Buffered drafts; authoritative completed-audio pass after Stop                                |
+| NVIDIA Parakeet TDT 0.6B v3                                       | Yes                  | Buffered drafts on CPU or qualified MLX                                                       |
+| Qwen3-ASR 0.6B                                                    | Yes                  | Native MLX drafts for English/Metal; buffered CPU drafts; completed-audio final               |
+| Liquid LFM2.5 Audio 1.5B                                          | Yes                  | Buffered drafts through its current CPU/GPU runtime                                           |
+| Parakeet TDT v2, Parakeet Unified, FastConformer European presets | Yes                  | Buffered drafts with the selected transducer export                                           |
+| Whisper Small / Turbo                                             | Yes                  | Buffered drafts; English/French only; quality gates failed (see language guide)               |
+| Moonshine Base (English)                                          | Yes                  | Buffered drafts; English only; completed-audio final in parts of at most 15 s                 |
+| IBM Granite Speech 5.0 TurboCTC                                   | Yes                  | Buffered drafts; Apple GPU only; completed-audio final in parts of at most 30 s               |
+| Fermion Phonon-2 (English)                                        | Yes                  | Buffered drafts; Apple GPU only; English; completed-audio final in parts of at most 30 s      |
 | Moondream Parakeet Redux                                          | Yes                  | Buffered drafts; Apple GPU only; 25 languages; completed-audio final in parts of at most 30 s |
-| Imported custom ASR profiles                                      | Yes                  | Buffered drafts for compatible validated transducer profiles                    |
+| Imported custom ASR profiles                                      | Yes                  | Buffered drafts for compatible validated transducer profiles                                  |
 
 The common live interface selects native sessions or buffered previews after
 resolving the actual backend. Only Nemotron and the qualified Qwen MLX path
