@@ -510,13 +510,6 @@ h3 {
 .sidebar nav .icon {
   transition: transform 180ms var(--ease);
 }
-.draft-dot {
-  width: 5px;
-  height: 5px;
-  border-radius: var(--radius-pill);
-  background: var(--color-accent);
-  margin-left: auto;
-}
 .sidebar-foot {
   margin-top: auto;
   padding: var(--space-8) var(--space-3) 0;
@@ -680,12 +673,6 @@ h3 {
   .app-shell.settings-rail .sidebar nav button {
     justify-content: center;
     padding-inline: 0;
-  }
-  .app-shell.settings-rail .draft-dot {
-    position: absolute;
-    top: 7px;
-    right: 7px;
-    margin-left: 0;
   }
   .app-shell.settings-rail .sidebar-foot {
     padding-inline: 0;
@@ -2210,11 +2197,6 @@ textarea:focus:enabled {
   }
   .sidebar-foot {
     display: none;
-  }
-  .draft-dot {
-    position: absolute;
-    top: 7px;
-    right: 7px;
   }
   .studio-main {
     padding: var(--space-4) 18px var(--space-8);

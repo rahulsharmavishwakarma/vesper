@@ -456,6 +456,11 @@ conflicts with the running operation (issue #273).
     shared area above the cards keeps progress only for downloads without a
     card, such as automatic audio setup.
   - Content below an expanding card still moves; content above it never does.
+  - Autosave never disables controls or blinks them: Writing saves in the
+    background, and an edit made while a save runs is kept and saved next
+    instead of being replaced by the stored copy (Settings and Writing).
+  - The sidebar shows saving only in its status pill; the accent dot on the
+    Models and Settings icons was removed.
   - Tests: `settings-layout.spec.mjs` and `downloads.spec.mjs` assert the
     options do not move.
 

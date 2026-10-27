@@ -502,9 +502,16 @@
   // status pill on "Saving" and schedules a silent retry.
   async function saveNow(): Promise<boolean> {
     if (pending || pipelineBusy || !loaded || validationErrors.length) return false;
-    if (JSON.stringify(draft) === savedJson) return true;
+    const sentJson = JSON.stringify(draft);
+    if (sentJson === savedJson) return true;
     try {
-      acceptSettings(await saveSettings(draft));
+      const stored = await saveSettings(JSON.parse(sentJson) as AppConfig);
+      // An edit made while the save ran is kept and saves next, not overwritten.
+      if (JSON.stringify(draft) === sentJson) acceptSettings(stored);
+      else {
+        savedJson = JSON.stringify(stored);
+        engineSettings = JSON.parse(savedJson) as AppConfig;
+      }
     } catch {
       return false;
     }
@@ -705,11 +712,7 @@
               name={view.icon}
               active={activeView === view.id}
               motionKey={activeView === view.id ? navigationRevision : 0}
-            /><span class:visually-hidden={activeView === 'settings'}>{view.label}</span
-            >{#if saveInFlight && (view.id === 'settings' || view.id === 'models')}<span
-                class="draft-dot"
-                aria-label="Saving settings"
-              ></span>{/if}</button
+            /><span class:visually-hidden={activeView === 'settings'}>{view.label}</span></button
           >
         {/each}
       </nav>

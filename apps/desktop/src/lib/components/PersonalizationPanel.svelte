@@ -131,19 +131,24 @@
     if (writable && snapshot !== saved) panelSaver.notify();
     onSaveActivity?.(panelSaver.status === 'saving', panelSaver.savedAt);
   });
+  // Background save: controls stay enabled (disabling them made the whole panel
+  // blink on every toggle), and an edit made while it runs is kept, not
+  // overwritten by the stored copy; it saves on the next pass.
   async function saveNow(): Promise<boolean> {
     if (!profile || controlsDisabled) return false;
-    if (JSON.stringify(profile) === JSON.stringify(savedProfile)) return true;
-    pending = 'saving';
+    const sent = $state.snapshot(profile);
+    const sentJson = JSON.stringify(sent);
+    if (sentJson === JSON.stringify(savedProfile)) return true;
     try {
-      profile = await savePersonalization($state.snapshot(profile));
-      savedProfile = $state.snapshot(profile);
+      const stored = await savePersonalization(sent);
+      savedProfile = $state.snapshot(stored);
+      const unchanged = profile !== null && JSON.stringify(profile) === sentJson;
+      if (unchanged) profile = stored;
+      else if (profile) profile.revision = stored.revision;
       learning = await getAutomaticLearning();
-      panelSaver.noteSaved();
+      if (unchanged) panelSaver.noteSaved();
     } catch {
       return false;
-    } finally {
-      pending = null;
     }
     return true;
   }

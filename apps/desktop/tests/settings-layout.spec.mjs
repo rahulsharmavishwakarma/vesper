@@ -317,6 +317,23 @@ test('Saving shows only in the status pill and never moves the options', async (
   const box = async (selector) => (await page.locator(selector).boundingBox())?.y;
   // Application settings. Scroll first: a click scrolls its target into view.
   await page.locator('#collect-training').scrollIntoViewIfNeeded();
+  // Entrance animations slide content by a few pixels; measure once they end.
+  const settled = () =>
+    expect
+      .poll(() =>
+        page.evaluate(
+          () =>
+            document
+              .getAnimations()
+              .filter(
+                (a) =>
+                  a.playState === 'running' &&
+                  a.effect?.getComputedTiming().iterations !== Infinity,
+              ).length,
+        ),
+      )
+      .toBe(0);
+  await settled();
   const below = await box('#collect-training');
   await page.locator('#collect-training').click();
   await expect(pill).toHaveAttribute('data-state', 'saving');
@@ -326,9 +343,34 @@ test('Saving shows only in the status pill and never moves the options', async (
   // Writing preferences autosave through the same pill.
   await section(page, 'Writing').click();
   await page.locator('#personal-corrections').scrollIntoViewIfNeeded();
+  await settled();
   const format = await box('#personal-format');
   await page.locator('#personal-corrections').click();
   await expect(inlineSaving).toHaveCount(0);
   await expect(page.locator('.preferences-footer')).toBeHidden();
   expect(await box('#personal-format')).toBe(format);
+});
+
+test('Autosave keeps controls enabled, keeps edits made during a save and adds no nav dot', async ({
+  page,
+}) => {
+  await openSettings(page);
+  await section(page, 'Writing').click();
+  const corrections = page.locator('#personal-corrections');
+  const format = page.locator('#personal-format');
+  const saves = () =>
+    page.evaluate(() => window.previewCommands.filter((c) => c === 'save_personalization').length);
+  const before = await corrections.isChecked();
+  const count = await saves();
+  await corrections.click();
+  // The preview holds each save for 450 ms; act while one is running.
+  await expect.poll(saves, { timeout: 5_000, intervals: [20] }).toBeGreaterThan(count);
+  expect(await corrections.isEnabled()).toBe(true);
+  expect(await format.isEnabled()).toBe(true);
+  await expect(page.locator('.draft-dot')).toHaveCount(0);
+  await format.click({ timeout: 300 });
+  await expect(page.locator('.save-status')).toContainText(/Saved \d/, { timeout: 10_000 });
+  await expect(corrections).toBeChecked({ checked: !before });
+  await expect(format).toBeChecked({ checked: false });
+  await expect.poll(saves).toBeGreaterThan(count + 1);
 });
