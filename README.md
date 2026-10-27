@@ -116,7 +116,7 @@ Tauri IPC. Nothing is sent to a server.
   <img alt="How Vesper works: audio capture, the inference worker, on-device runtimes, history and the UI" src="docs/assets/diagrams/overview.light.svg">
 </picture>
 
-<sub>Diagram source: [overview.mmd](docs/diagrams/overview.mmd)</sub>
+<sub>Diagram source: [overview.mjs](docs/diagrams/overview.mjs)</sub>
 
 Automatic picks the engine for each model and Mac (CPU, Apple GPU or Neural
 Engine). See [architecture](docs/architecture.md) and the

@@ -1,8 +1,0 @@
-flowchart LR
-  bundle[App bundle Resources/diarization-runtime/rev] -->|startup pre-check, non-fatal| inst[model root nemotron-diarization-runtime/rev]
-  w[(Nemotron-3-Diarization q8_0 GGUF, 107 MB)] --> ver
-  inst --> ver[verify: full sha256 of GGUF + 7 dylibs, ~38 ms]
-  ver --> load[dlopen RTLD_LOCAL + Diarizer::load<br/>Metal; Auto retries on CPU]
-  load --> run[diarize original 16 kHz audio<br/>~0.56 s per 45 s on Metal]
-  run --> tl[SpeakerTimeline -> complete_speaker_timeline]
-  load -. "per recording, ~14-55 ms; first-ever Metal shader compile ~7 s" .-> note[not resident by design]
