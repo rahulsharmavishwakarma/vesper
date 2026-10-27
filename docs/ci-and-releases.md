@@ -395,6 +395,9 @@ The same day the Rust audit began failing on `tokio` 1.53.1: RUSTSEC-2026-0386
 and unsound advisories are denied. `cargo update -p tokio --precise 1.53.3`
 takes the patched release in the same minor series; Vesper's own code does not
 use `AsyncFd`, so the constructors 1.53.3 deprecates do not affect it.
+On 27 October 2026 the root lock's `msgpack` 1.2.2 (CVE-2026-114613, fixed in
+1.2.3) failed `make audit-python` and moved to 1.2.4 the same way, alongside the
+zstd advisories described below ([issue #348](https://github.com/rahulsharmavishwakarma/vesper/issues/348)).
 The audit jobs install only contributor tools, not model runtimes or weights.
 All manifests and lockfiles stay versioned, while `.venv` and `.cache` stay ignored.
 
