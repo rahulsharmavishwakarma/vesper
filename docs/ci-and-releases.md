@@ -66,12 +66,12 @@ would change (`git diff HEAD^1 HEAD` on the merge commit) and
 [`scripts/ci-scope.mjs`](../scripts/ci-scope.mjs) decides which heavy jobs they
 need:
 
-| Job | Skipped when every changed file is… |
-| --- | --- |
-| `Rust (macOS)` | documentation, Markdown, notebooks, the Pages `site/`, Python benchmark projects, or the browser-only frontend (`apps/desktop/src/`, `apps/desktop/tests/`, Playwright/ESLint config) |
-| `Browser regressions` | documentation, Markdown, notebooks, `site/`, Python benchmark projects, or Rust/native-only paths (`crates/`, `native/`, `patches/`, `vendor/`, `apps/desktop/src-tauri/`, Cargo and toolchain files) |
-| `Python benchmarks (…)` | anything other than a benchmark project, its exported requirements, the root `pyproject.toml`/`uv.lock` or the `Makefile` |
-| GLib backport step in `Dependencies` | anything other than `vendor/glib/`, `tests/glib-backport/`, Cargo manifests and lockfile, the toolchain file, `scripts/audit-rust.py`/`test_rust_audit.py` or the `Makefile` |
+| Job                                  | Skipped when every changed file is…                                                                                                                                                                   |
+| ------------------------------------ | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `Rust (macOS)`                       | documentation, Markdown, notebooks, the Pages `site/`, Python benchmark projects, or the browser-only frontend (`apps/desktop/src/`, `apps/desktop/tests/`, Playwright/ESLint config)                 |
+| `Browser regressions`                | documentation, Markdown, notebooks, `site/`, Python benchmark projects, or Rust/native-only paths (`crates/`, `native/`, `patches/`, `vendor/`, `apps/desktop/src-tauri/`, Cargo and toolchain files) |
+| `Python benchmarks (…)`              | anything other than a benchmark project, its exported requirements, the root `pyproject.toml`/`uv.lock` or the `Makefile`                                                                             |
+| GLib backport step in `Dependencies` | anything other than `vendor/glib/`, `tests/glib-backport/`, Cargo manifests and lockfile, the toolchain file, `scripts/audit-rust.py`/`test_rust_audit.py` or the `Makefile`                          |
 
 The rules list what each job can ignore, so a path nobody anticipated still runs
 the job. Rust embeds files from `models/` and `benchmarks/`, so those always run
@@ -111,15 +111,16 @@ app packaging follows [Tauri's macOS bundle documentation](https://v2.tauri.app/
 
 ### Language coverage
 
-| Source | Formatting | Lint/type/build checks | Tests |
-| --- | --- | --- | --- |
-| Rust workspace | `cargo fmt --all -- --check` | Locked `cargo check` and Clippy across all targets; Clippy/rustdoc deny warnings; native app build | `cargo test --workspace --all-targets --locked` plus a separate `--doc` run |
-| Isolated Rust integrity probe | Its own manifest's rustfmt check | Locked all-target/all-feature check and strict Clippy | Its own all-target/all-feature test harness |
-| TypeScript/Svelte | Prettier with the Svelte plugin | ESLint recommended JS/TS/Svelte rules, zero warnings; strict `svelte-check`, including the interaction preview fixture; Vite build | Node helper tests and mocked-native Playwright regressions |
-| JavaScript/Node tools | Prettier | ESLint recommended rules, zero warnings | All existing `scripts/*.test.mjs` and frontend helper suites |
-| Python tooling | Ruff format | Ruff syntax, Pyflakes, style-error and import-order rules | Every existing Python test naming convention in `scripts/` |
-| POSIX shell scripts | shfmt syntax/format check | ShellCheck, including sourced project files | Exercised by native reporting/build/release checks where applicable |
-| JSON/YAML/TOML/Actions | Root JSON uses Prettier; generic whitespace hooks | Syntax hooks, actionlint/ShellCheck and zizmor | Workflow checks and version/publication tooling tests |
+| Source                        | Formatting                                                                                                                                       | Lint/type/build checks                                                                                                             | Tests                                                                       |
+| ----------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------ | ---------------------------------------------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------- |
+| Rust workspace                | `cargo fmt --all -- --check`                                                                                                                     | Locked `cargo check` and Clippy across all targets; Clippy/rustdoc deny warnings; native app build                                 | `cargo test --workspace --all-targets --locked` plus a separate `--doc` run |
+| Isolated Rust integrity probe | Its own manifest's rustfmt check                                                                                                                 | Locked all-target/all-feature check and strict Clippy                                                                              | Its own all-target/all-feature test harness                                 |
+| TypeScript/Svelte             | Prettier with the Svelte plugin                                                                                                                  | ESLint recommended JS/TS/Svelte rules, zero warnings; strict `svelte-check`, including the interaction preview fixture; Vite build | Node helper tests and mocked-native Playwright regressions                  |
+| JavaScript/Node tools         | Prettier                                                                                                                                         | ESLint recommended rules, zero warnings                                                                                            | All existing `scripts/*.test.mjs` and frontend helper suites                |
+| Python tooling                | Ruff format                                                                                                                                      | Ruff syntax, Pyflakes, style-error and import-order rules                                                                          | Every existing Python test naming convention in `scripts/`                  |
+| POSIX shell scripts           | shfmt syntax/format check                                                                                                                        | ShellCheck, including sourced project files                                                                                        | Exercised by native reporting/build/release checks where applicable         |
+| JSON/YAML/TOML/Actions        | Root JSON uses Prettier; generic whitespace hooks                                                                                                | Syntax hooks, actionlint/ShellCheck and zizmor                                                                                     | Workflow checks and version/publication tooling tests                       |
+| Markdown                      | Prettier for the README, community files, `docs/`, `benchmarks/`, `models/` and `notebooks/` (`vendor/` and `patches/` keep upstream formatting) | Diagram freshness and inline-Mermaid test                                                                                          |
 
 All targets includes Rust example test harnesses that plain `cargo test` only
 compiled. Cargo's `--all-targets` excludes doctests, so the separate `--doc`
@@ -275,14 +276,14 @@ qualification before attributing them to changed environments.
 
 Frontend coverage is shared between local hooks and CI:
 
-| Check | Local command | Hook stage |
-| --- | --- | --- |
-| TypeScript/Svelte/JavaScript formatting (Prettier) | `make fmt-web-check` | pre-commit |
-| TypeScript/Svelte/JavaScript lint (ESLint, warnings denied) | `make lint-web` | pre-commit |
-| Svelte and TypeScript diagnostics | `make check-web` | pre-commit |
-| Frontend helper and repository tests (Node) | `make test-tools` | pre-commit |
-| Version consistency | `make version-check` | pre-push |
-| Mocked-native UI regressions (Playwright/Chromium) | `make test-browser` | Explicit local check and CI |
+| Check                                                       | Local command        | Hook stage                  |
+| ----------------------------------------------------------- | -------------------- | --------------------------- |
+| TypeScript/Svelte/JavaScript formatting (Prettier)          | `make fmt-web-check` | pre-commit                  |
+| TypeScript/Svelte/JavaScript lint (ESLint, warnings denied) | `make lint-web`      | pre-commit                  |
+| Svelte and TypeScript diagnostics                           | `make check-web`     | pre-commit                  |
+| Frontend helper and repository tests (Node)                 | `make test-tools`    | pre-commit                  |
+| Version consistency                                         | `make version-check` | pre-push                    |
+| Mocked-native UI regressions (Playwright/Chromium)          | `make test-browser`  | Explicit local check and CI |
 
 `make hooks` installs both stages. CI runs those checks independently of local
 hook installation; the portable job also builds frontend assets.
@@ -392,12 +393,12 @@ known advisories.
 The VibeVoice environment, its compatibility patch and its probe were
 removed on 27 October 2026 because Vesper does not support VibeVoice models; the table and the next paragraph record the 2026-09-19 remediation as history.
 
-| Optional VibeVoice dependency | Result | Dependabot alerts addressed |
-| --- | --- | --- |
-| Accelerate 1.10.1 | Removed; the CPU probe does not use its APIs or device dispatch | 17 |
-| Torch 2.8.0 | Updated to 2.13.0 | 11, 12, 15 |
-| Diffusers 0.35.1 | Updated to 0.38.0, requiring Safetensors 0.8.0 | 9, 10 |
-| Transformers 4.51.3 | Updated to 4.57.6, with Tokenizers 0.22.2 | 2–7 |
+| Optional VibeVoice dependency | Result                                                          | Dependabot alerts addressed |
+| ----------------------------- | --------------------------------------------------------------- | --------------------------- |
+| Accelerate 1.10.1             | Removed; the CPU probe does not use its APIs or device dispatch | 17                          |
+| Torch 2.8.0                   | Updated to 2.13.0                                               | 11, 12, 15                  |
+| Diffusers 0.35.1              | Updated to 0.38.0, requiring Safetensors 0.8.0                  | 9, 10                       |
+| Transformers 4.51.3           | Updated to 4.57.6, with Tokenizers 0.22.2                       | 2–7                         |
 
 The earlier compatible-only update still left Transformers 4.57.6 findings and
 GLib 0.18.5 / RUSTSEC-2024-0429 in the maintained graphs. The owner approved the
@@ -1009,13 +1010,13 @@ The official updater **v2.11.0** source establishes these API limits; they were
 not re-verified against the pinned 2.13.3 plugin. This is upstream source
 evidence, not a tested project integration or a dependency choice:
 
-| Planned behavior | Verified limit and design consequence |
-| --- | --- |
-| Cancel a download | The [JS API](https://github.com/tauri-apps/plugins-workspace/blob/updater-v2.11.0/plugins/updater/guest-js/index.ts) has no cancellation/AbortSignal. Resource `close()` does not cancel the cloned native transfer. True cancellation needs separately scoped implementation; do not label dismissal as cancellation. |
-| Show download size in advance | Standard check metadata lacks size. Publish optional per-platform size metadata or obtain asset metadata separately; otherwise omit the estimate. During download, total length may be absent, requiring indeterminate progress. |
-| Show ready after transfer | The [native download implementation](https://github.com/tauri-apps/plugins-workspace/blob/updater-v2.11.0/plugins/updater/src/updater.rs) emits transfer completion before signature verification. Await successful `download()` resolution before offering installation. |
-| Install later | macOS `install()` replaces the app bundle immediately; restarting is separate. Guard installation and restart together against active recording, transcription, model operations and unsaved changes. |
-| Keep a downloaded update after quitting | [JS-backed downloads](https://github.com/tauri-apps/plugins-workspace/blob/updater-v2.11.0/plugins/updater/src/commands.rs) live in an in-memory resource. Session-only deferral is available; persistent caching/resume requires additional design. |
+| Planned behavior                        | Verified limit and design consequence                                                                                                                                                                                                                                                                                  |
+| --------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Cancel a download                       | The [JS API](https://github.com/tauri-apps/plugins-workspace/blob/updater-v2.11.0/plugins/updater/guest-js/index.ts) has no cancellation/AbortSignal. Resource `close()` does not cancel the cloned native transfer. True cancellation needs separately scoped implementation; do not label dismissal as cancellation. |
+| Show download size in advance           | Standard check metadata lacks size. Publish optional per-platform size metadata or obtain asset metadata separately; otherwise omit the estimate. During download, total length may be absent, requiring indeterminate progress.                                                                                       |
+| Show ready after transfer               | The [native download implementation](https://github.com/tauri-apps/plugins-workspace/blob/updater-v2.11.0/plugins/updater/src/updater.rs) emits transfer completion before signature verification. Await successful `download()` resolution before offering installation.                                              |
+| Install later                           | macOS `install()` replaces the app bundle immediately; restarting is separate. Guard installation and restart together against active recording, transcription, model operations and unsaved changes.                                                                                                                  |
+| Keep a downloaded update after quitting | [JS-backed downloads](https://github.com/tauri-apps/plugins-workspace/blob/updater-v2.11.0/plugins/updater/src/commands.rs) live in an in-memory resource. Session-only deferral is available; persistent caching/resume requires additional design.                                                                   |
 
 Private release assets require authorized access according to
 [GitHub's asset API](https://docs.github.com/en/rest/releases/assets#get-a-release-asset).

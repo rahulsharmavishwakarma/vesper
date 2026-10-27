@@ -29,7 +29,7 @@ the resulting `pyproject.toml` and `uv.lock` changes together. For an independen
 [uv](https://docs.astral.sh/uv/getting-started/installation/) first, then run:
 
 ```sh
-uv tool install pre-commit==4.6.1
+uv tool install pre-commit==4.7.0
 pre-commit --version
 make hooks
 ```
@@ -48,23 +48,23 @@ with `make precommit` and the quick pre-push stage with `make prepush`. See the
 
 Use the narrowest relevant test while developing, then run `make check` before submitting:
 
-| Command | Purpose |
-| --- | --- |
-| `make check-fast` | All source formatting, portable lints, Svelte/TypeScript diagnostics and Node tests |
-| `make fmt` / `make fmt-check` | Apply / verify Rust, Python, frontend and shell formatting |
-| `make check-portable` | Frontend/Node/Python/shell format, lint, type, test and build checks |
-| `make test-python` | All deterministic Python tooling test modules |
-| `make python-lock-check` | Verify Python lockfiles and generated benchmark requirements |
-| `make audit-python` | Audit the locked contributor dependencies |
-| `make test-browser` | Existing mocked-native UI scenarios in Chromium |
-| `make workflows` | Actionlint/ShellCheck and zizmor workflow validation |
-| `make test` / `make test-rust` | All Rust workspace targets, doctests and the isolated probe |
-| `make lint` | ESLint, Ruff, ShellCheck and strict Clippy |
-| `make check-rust` / `make doc-rust` | Compile all Rust targets / verify rustdoc with warnings denied |
-| `make check` | Complete local and CI validation |
-| `make version-check` | Verify Cargo, npm, lockfile, and Tauri versions agree |
-| `make build-debug` | Debug desktop application and platform bundle |
-| `make diagrams` | Render `docs/diagrams/*.mmd` to SVGs styled with the app's design tokens |
+| Command                             | Purpose                                                                             |
+| ----------------------------------- | ----------------------------------------------------------------------------------- |
+| `make check-fast`                   | All source formatting, portable lints, Svelte/TypeScript diagnostics and Node tests |
+| `make fmt` / `make fmt-check`       | Apply / verify Rust, Python, frontend and shell formatting                          |
+| `make check-portable`               | Frontend/Node/Python/shell format, lint, type, test and build checks                |
+| `make test-python`                  | All deterministic Python tooling test modules                                       |
+| `make python-lock-check`            | Verify Python lockfiles and generated benchmark requirements                        |
+| `make audit-python`                 | Audit the locked contributor dependencies                                           |
+| `make test-browser`                 | Existing mocked-native UI scenarios in Chromium                                     |
+| `make workflows`                    | Actionlint/ShellCheck and zizmor workflow validation                                |
+| `make test` / `make test-rust`      | All Rust workspace targets, doctests and the isolated probe                         |
+| `make lint`                         | ESLint, Ruff, ShellCheck and strict Clippy                                          |
+| `make check-rust` / `make doc-rust` | Compile all Rust targets / verify rustdoc with warnings denied                      |
+| `make check`                        | Complete local and CI validation                                                    |
+| `make version-check`                | Verify Cargo, npm, lockfile, and Tauri versions agree                               |
+| `make build-debug`                  | Debug desktop application and platform bundle                                       |
+| `make diagrams`                     | Render `docs/diagrams/*.mmd` to SVGs styled with the app's design tokens            |
 
 Tests must not open a microphone, download model weights, access user application data, or depend on a network service. Use temporary directories and small synthetic fixtures. Model-backed and microphone checks belong in the explicit manual validation flow described in [docs/validation.md](docs/validation.md).
 
