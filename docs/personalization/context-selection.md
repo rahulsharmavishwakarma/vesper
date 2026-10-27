@@ -308,6 +308,9 @@ AX read, whose per-app latency and coverage are unmeasured.
   TextEdit, VS Code, Cursor, Terminal, iTerm2, Xcode, Pages, Word, Notes, Safari,
   Chromium browsers and Mail. Until an owner-approved manual check, treat each as
   unqualified.
+  A passive read-only sampler of the frontmost app (no activation, no opened
+  windows) ran for 4 hours on 27 October 2026 but saw only the login window,
+  because the Mac stayed locked; it yielded no per-app coverage.
 - Structure detection uses folder names only. Projects without conventional
   structure folders can split into subfolder workspaces; Merge fixes this, and a
   merged folder keeps resolving to its target.
