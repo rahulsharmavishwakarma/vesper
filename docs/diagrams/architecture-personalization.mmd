@@ -1,0 +1,17 @@
+flowchart TD
+    P["Manual override, app/folder rules, language and memory"] --> S["Frozen operation snapshot"]
+    S --> A["Selected ASR; optional supported hints"]
+    A --> R["Durable raw transcript"]
+    R --> C["Select memory using raw text and scope"]
+    S --> C
+    C --> W["Optional compatible writer and fidelity checks"]
+    R -->|"Writer off or failed"| M["Shared saved-correction stage"]
+    W --> M
+    C --> M
+    M --> O["Output with recording scope"]
+    O --> E["Edits in Your text"]
+    E --> G["Independent support, language and context gates"]
+    G -->|"Eligible spelling"| P
+    E --> Q["Semantic and policy shadow evaluation only"]
+    R --> H["Separate explicit human review"]
+    H --> D["Reviewed ASR or cleanup export"]

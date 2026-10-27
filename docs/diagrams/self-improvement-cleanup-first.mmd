@@ -1,0 +1,10 @@
+flowchart TD
+    R["Explicitly reviewed cleanup targets"] --> S["PROPOSED: immutable grouped snapshots"]
+    S --> T["Optional local trainer; pinned base"]
+    T --> C["Separate adapter artifact and provenance"]
+    C --> V["Native conversion and load proof"]
+    V --> E["Paired held-out quality and resource gates"]
+    E -->|"All required gates pass"| H["Review candidate report"]
+    E -->|"Fail or missing evidence"| K["Retain or restore prior model"]
+    H -->|"Approve between requests"| A["Atomic activation; retain previous artifact"]
+    A -->|"Failure or user rollback"| K

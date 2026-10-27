@@ -1,0 +1,30 @@
+flowchart TB
+  req[Requested backend: Auto / Cpu / Metal / Cuda / Vulkan / Rocm]
+  req --> auto{Auto?}
+  auto -->|no| exact[Use the explicit backend; error if unavailable]
+  auto -->|yes| unified{Effective engine is the unified GGUF?<br/>Automatic for Parakeet v3}
+  unified -->|yes| nemosel[NeMo-Speech.cpp package for Metal on Apple Silicon,<br/>CUDA if an NVIDIA GPU is visible, else CPU]
+  nemosel --> nload[Load the one GGUF]
+  nload -->|GPU load fails| nretry[Retry once on CPU with the same file]
+  nload -->|ok| run
+  nretry --> run
+  unified -->|no| ane{Neural Engine engine?<br/>Parakeet v3, English, MLX build}
+  ane -->|yes| anesel[Select neural-engine/parakeet files<br/>prepared for this Mac at install]
+  anesel --> aload[Load Core ML encoder + MLX decoder]
+  aload -->|fails| aerr[Error; no CPU fallback for this engine]
+  aload -->|ok| run
+  ane -->|no| gpuonly{Apple-GPU-only model<br/>Granite, Phonon-2 or Redux, MLX build?}
+  gpuonly -->|yes| gpusel[Select MLX / Metal artifacts,<br/>any declared language]
+  gpusel --> gload[Load on Metal]
+  gload -->|AcceleratorInitialization| gerr[Error: no CPU version;<br/>never another model]
+  gload -->|ok| run
+  gpuonly -->|no| mlxq{English, built-in, MLX-supported model,<br/>MLX runtime hashes + device probe OK?}
+  mlxq -->|yes| mlxsel[Select MLX / Metal artifacts]
+  mlxq -->|no| cpu[Select CPU / backend-less artifacts]
+  mlxsel --> files{MLX files present?}
+  files -->|no, CPU files present| cpu
+  files -->|yes| load[Load on Metal]
+  load -->|AcceleratorInitialization| fallback[InitializationFallback:<br/>reload once on CPU, remember failed key]
+  load -->|ok| run[Resident model]
+  cpu --> run
+  fallback --> run

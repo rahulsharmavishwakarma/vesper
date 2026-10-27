@@ -1,0 +1,22 @@
+flowchart LR
+    A[Microphone] --> B[Original audio archive]
+    A --> C[Bounded native-rate mono chunks]
+    A2[Audio file] --> B
+    A2 --> C2[Decode / mono 16 kHz]
+    C --> D[Selected ASR adapter]
+    C2 --> D
+    D --> D1[NeMo-Speech.cpp: Nemotron, Parakeet v3]
+    D --> D2[sherpa-onnx: Parakeet, Qwen3-ASR, Cohere,<br/>Whisper, Moonshine, custom profiles]
+    D --> D3[MLX Swift: Granite, Phonon-2, Redux,<br/>MLX Parakeet, Qwen3-ASR, Whisper]
+    D --> D5[Core ML + MLX: Parakeet v3 on the Neural Engine]
+    D --> D4[llama.cpp mtmd: LFM2.5 Audio]
+    D --> E[Durable raw transcript]
+    E --> F[Writing model / llama.cpp]
+    F --> G[Conservative output checks]
+    E --> H[Raw / cleaned result]
+    G --> H
+    B --> I[SQLite session + model provenance]
+    E --> I
+    G --> I
+    I --> J[Separate human ASR / cleanup labels]
+    J --> K[JSONL + original audio export]

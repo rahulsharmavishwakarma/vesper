@@ -1,0 +1,9 @@
+flowchart LR
+  err[Native error] --> drop[Drop that resident handle]
+  drop --> next[Next request: full verify + reload]
+  cancel[Cancel flag] --> checks[Checked before and after native calls]
+  checks --> discard[Discard partial output]
+  press[Memory pressure] --> rel[Release idle writer before recording;<br/>back off previews]
+  fe[Frontend failure] --> origa[Original audio + warning]
+  wr[Writer failure / time limit / fidelity] --> rawk[Raw transcript kept]
+  di[Diarization failure] --> textk[Transcript kept + warning]
