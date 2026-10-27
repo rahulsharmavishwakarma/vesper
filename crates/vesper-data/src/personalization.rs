@@ -73,6 +73,11 @@ impl DatasetStore {
         if current.automatic_workspaces && !profile.automatic_workspaces {
             self.clear_detection_coverage()?;
         }
+        if (current.learn_from_app_edits || current.app_field_words)
+            && !(profile.learn_from_app_edits || profile.app_field_words)
+        {
+            self.clear_app_learning_coverage()?;
+        }
         self.reconcile_automatic_profile(&current, &mut profile)?;
         for word in &mut profile.vocabulary {
             let previous = current.vocabulary.iter().find(|p| p.id == word.id);

@@ -1,5 +1,6 @@
 //! Local audio and correction storage. This crate does not run inference or training.
 
+mod app_learning;
 mod learning;
 mod personalization;
 pub mod policy;
@@ -8,6 +9,7 @@ mod semantic;
 mod term_inventory;
 pub mod term_mining;
 mod workspaces;
+pub use app_learning::{AppLearningCoverage, Readback};
 pub use learning::{
     learning_audio_key, AutomaticLearningState, DictationPersonalizationSnapshot, EditSupport,
     LearningCandidate, LearningEvent, LearningEventKind,
@@ -258,6 +260,7 @@ impl DatasetStore {
              );",
         )?;
         connection.execute_batch(term_inventory::SCHEMA)?;
+        connection.execute_batch(app_learning::SCHEMA)?;
         let store = Self { root, connection };
         store.prune_semantic_shadow()?;
         store.policy_shadow_state()?;
