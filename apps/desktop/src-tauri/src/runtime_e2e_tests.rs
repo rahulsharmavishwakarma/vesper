@@ -26,6 +26,7 @@ fn e2e_desktop_pipeline_on_term_corpus() {
     let out = PathBuf::from(std::env::var("VESPER_E2E_OUT").unwrap());
     let asr = match std::env::var("VESPER_E2E_ASR").as_deref() {
         Ok("cohere") => AsrModel::CohereTranscribe,
+        Ok("phonon") => AsrModel::Phonon2,
         _ => AsrModel::ParakeetTdt06bV3,
     };
     let manifest: Value =
