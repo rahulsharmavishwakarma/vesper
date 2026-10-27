@@ -523,7 +523,9 @@ int td_paste(uint64_t token, const char *text) {
 // Text of `element` in [location, location + length), clamped to the field.
 // Uses the parameterized range read; falls back to a bounded AXValue slice.
 static NSString *rangeText(AXUIElementRef element, CFIndex location, CFIndex length) {
-    if (location < 0 || length <= 0) return nil;
+    if (location < 0 || length < 0) return nil;
+    // An empty range (an empty field, or the caret at its start) is readable text.
+    if (length == 0) return @"";
     NSNumber *count = attribute(element, kAXNumberOfCharactersAttribute);
     if ([count isKindOfClass:NSNumber.class]) {
         CFIndex total = count.longValue;

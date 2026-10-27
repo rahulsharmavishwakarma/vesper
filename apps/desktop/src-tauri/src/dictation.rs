@@ -927,9 +927,10 @@ async fn read_back_paste(app: &tauri::AppHandle, token: u64) {
     .ok()
     .flatten();
     let corrected = match receipt {
-        Some((pasted, region)) if pasted == record.token => {
-            Some(vesper_core::aligned_edit(&record.pasted, &region))
-        }
+        Some((pasted, region)) if pasted == record.token => Some((
+            region.trim().is_empty(),
+            vesper_core::aligned_edit(&record.pasted, &region),
+        )),
         _ => None,
     };
     let root = storage.dataset_dir.clone();
@@ -938,9 +939,10 @@ async fn read_back_paste(app: &tauri::AppHandle, token: u64) {
         use vesper_data::Readback;
         let outcome = match corrected {
             None => Readback::Unreadable,
-            Some(None) => Readback::Unaligned,
-            Some(Some(text)) if text == record.pasted => Readback::Unchanged,
-            Some(Some(text)) => {
+            Some((true, _)) => Readback::Cleared,
+            Some((false, None)) => Readback::Unaligned,
+            Some((false, Some(text))) if text == record.pasted => Readback::Unchanged,
+            Some((false, Some(text))) => {
                 let draft = record.draft.replacen(&record.pasted, &text, 1);
                 match runtime.edit_latest_draft(
                     root.clone(),

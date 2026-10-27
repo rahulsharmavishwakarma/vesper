@@ -11,6 +11,7 @@ pub(crate) const SCHEMA: &str = "
         edited INTEGER NOT NULL DEFAULT 0,
         unaligned INTEGER NOT NULL DEFAULT 0,
         unreadable INTEGER NOT NULL DEFAULT 0,
+        cleared INTEGER NOT NULL DEFAULT 0,
         field_reads INTEGER NOT NULL DEFAULT 0,
         field_unreadable INTEGER NOT NULL DEFAULT 0,
         field_terms INTEGER NOT NULL DEFAULT 0
@@ -67,6 +68,8 @@ pub enum Readback {
     Edited,
     /// The text no longer lines up with what was pasted (rewritten, moved, deleted).
     Unaligned,
+    /// The span is now empty: the text was sent or cleared (a chat box after Return).
+    Cleared,
     /// The field could not be read (closed, secure, or no text access).
     Unreadable,
 }
@@ -80,10 +83,24 @@ pub struct AppLearningCoverage {
     pub edited: u32,
     pub unaligned: u32,
     pub unreadable: u32,
+    pub cleared: u32,
     pub field_reads: u32,
     pub field_unreadable: u32,
     /// Total spellings taken from fields in this app.
     pub field_terms: u32,
+}
+
+/// Columns added after the table first shipped locally; added in place when missing.
+pub(crate) fn migrate(connection: &Connection) -> Result<()> {
+    let present: bool = connection
+        .prepare("SELECT 1 FROM pragma_table_info('app_learning_coverage') WHERE name = 'cleared'")?
+        .exists([])?;
+    if !present {
+        connection.execute_batch(
+            "ALTER TABLE app_learning_coverage ADD COLUMN cleared INTEGER NOT NULL DEFAULT 0;",
+        )?;
+    }
+    Ok(())
 }
 
 impl DatasetStore {
@@ -126,6 +143,7 @@ impl DatasetStore {
             Readback::Edited => "edited",
             Readback::Unaligned => "unaligned",
             Readback::Unreadable => "unreadable",
+            Readback::Cleared => "cleared",
         };
         self.bump_app_learning(application, &[("readbacks", 1), (column, 1)])
     }
@@ -149,7 +167,7 @@ impl DatasetStore {
     pub fn app_learning_coverage(&self) -> Result<Vec<AppLearningCoverage>> {
         let mut statement = self.connection.prepare(
             "SELECT application, readbacks, unchanged, edited, unaligned, unreadable, field_reads, \
-             field_unreadable, field_terms FROM app_learning_coverage \
+             field_unreadable, field_terms, cleared FROM app_learning_coverage \
              ORDER BY readbacks + field_reads DESC, application",
         )?;
         let rows = statement.query_map([], |row| {
@@ -163,6 +181,7 @@ impl DatasetStore {
                 field_reads: row.get(6)?,
                 field_unreadable: row.get(7)?,
                 field_terms: row.get(8)?,
+                cleared: row.get(9)?,
             })
         })?;
         Ok(rows.collect::<std::result::Result<_, _>>()?)

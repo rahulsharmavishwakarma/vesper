@@ -261,6 +261,7 @@ impl DatasetStore {
         )?;
         connection.execute_batch(term_inventory::SCHEMA)?;
         connection.execute_batch(app_learning::SCHEMA)?;
+        app_learning::migrate(&connection)?;
         let store = Self { root, connection };
         store.prune_semantic_shadow()?;
         store.policy_shadow_state()?;

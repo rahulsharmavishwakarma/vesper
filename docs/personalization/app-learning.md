@@ -57,7 +57,7 @@ The corrected span becomes that result's draft in History; nothing else from the
 ## Per-app counts
 
 The `app_learning_coverage` table keeps, per bundle identifier:
-- read-backs, split into unchanged, edited, unaligned and unreadable
+- read-backs, split into unchanged, edited, unaligned, cleared (the span is empty: the text was sent or removed) and unreadable
 - field reads, unreadable field reads, and the number of spellings taken
 
 It stores no text, holds at most 64 apps, and is deleted when both features are off. These counts are the measure of where each feature works.
@@ -74,6 +74,9 @@ Separately, `paste_coverage` counts every automatic paste per app by outcome and
 **Unmeasured:** which apps expose readable field text or a stable insertion offset. Electron editors, web editors and terminals may not; those show as unreadable or unaligned counts.
 
 ## Limitations
+
+- Chat and prompt boxes send their text on Return and empty the field, so a read-back finds nothing to learn from (`cleared`). Fixes are only observed where the text stays, such as documents, notes and email drafts.
+- First real use (28 October 2026, VS Code and Brave): 5 of 5 pastes sent; field words read nothing because an empty field (caret at position 0) was treated as unreadable, which is fixed; both read-backs were unaligned, before `cleared` was counted separately.
 
 - An app that rewrites pasted text (autocorrect, smart quotes) can look like a user edit. Only word changes that pass the promotion rules teach.
 - The read-back sees only the latest paste. A fix made after a later paste in another field is not observed.
