@@ -34,6 +34,18 @@ WEBPKI_ADVISORY = "RUSTSEC-2026-0381"
 PINNED_WEBPKI = "0.26.11"
 PINNED_UREQ = "2.12.1"
 PINNED_UREQ_DEPENDENT = "sherpa-onnx-sys"
+# Owner-approved scoped exception (issue #348, 2026-10-27). The zstd 0.13.3 and
+# zstd-safe 7.3.0 advisories are patched in zstd >= 0.14.3 / zstd-safe >= 8.2.0,
+# which zip 2.x cannot use. Both are reached only through zip 2.6.1, the
+# sherpa-onnx-sys build dependency guarded above, so they are never compiled
+# into the application. The ignores apply only while verify_zstd_exception
+# confirms exactly that shape. Remove both when sherpa-onnx-sys moves to zip 9.
+ZSTD_ADVISORIES = (
+    "RUSTSEC-2026-0391",
+    *(f"RUSTSEC-2026-{number:04d}" for number in range(395, 407)),
+)
+PINNED_ZSTD = "0.13.3"
+PINNED_ZSTD_SAFE = "7.3.0"
 ARCHIVE_SHA256 = "233daaf6e83ae6a12a52055f568f9d7cf4671dabb78ff9560ab6da230ce00ee5"
 PROVENANCE_SHA256 = "afce59aee5239ed3c48389fa4f089a39ae9efc16a0eabec16706f1aea3ebc7fb"
 ROOT = Path(__file__).resolve().parents[1]
@@ -190,6 +202,29 @@ def verify_webpki_exception(lock):
             )
 
 
+def verify_zstd_exception(lock):
+    """Refuse the scoped zstd ignores for anything but the reviewed shape.
+
+    zstd >= 0.14.3 and zstd-safe >= 8.2.0 are patched and need no exception.
+    Below those, only PINNED_ZSTD used solely by zip 2.6.1 and PINNED_ZSTD_SAFE
+    used solely by that zstd may appear; anything else fails here.
+    """
+    pins = {
+        "zstd": ((0, 14, 3), PINNED_ZSTD, ("zip", "2.6.1")),
+        "zstd-safe": ((8, 2, 0), PINNED_ZSTD_SAFE, ("zstd", PINNED_ZSTD)),
+    }
+    for name, (patched, pinned, parent) in pins.items():
+        dependents = lock_dependents(lock, name)
+        for version, users in dependents.items():
+            if tuple(int(part) for part in version.split(".")) >= patched:
+                continue
+            if version != pinned or users != {parent}:
+                raise ValueError(
+                    f"{name} {version} is outside the scoped audit exception "
+                    f"(dependents: {sorted(users)})"
+                )
+
+
 def registry_audit_lock(lock_text):
     """Restore only GLib's registry identity so future advisories still match.
 
@@ -227,12 +262,13 @@ def run_audit(root):
     lock = tomllib.loads((root / "Cargo.lock").read_text())
     verify_zip_exceptions(lock)
     verify_webpki_exception(lock)
+    verify_zstd_exception(lock)
     with tempfile.TemporaryDirectory(prefix="vesper-rust-audit-") as directory:
         shadow = Path(directory) / "Cargo.lock"
         shadow.write_text(registry_audit_lock((root / "Cargo.lock").read_text()))
         ignores = [
             argument
-            for advisory in (ADVISORY, *ZIP_ADVISORIES, WEBPKI_ADVISORY)
+            for advisory in (ADVISORY, *ZIP_ADVISORIES, WEBPKI_ADVISORY, *ZSTD_ADVISORIES)
             for argument in ("--ignore", advisory)
         ]
         subprocess.run(
