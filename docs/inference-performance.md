@@ -120,9 +120,7 @@ Frozen reports retain the environment names actually used for those runs.
 The denoising, accent and frontend-integration runners also write Vesper
 baseline overrides. Where a runner sanitizes inherited settings it removes
 both namespaces; recorded prior runtime environments remain historical input.
-Automatic-level qualification writes the same Vesper baseline switch. The
-VibeVoice benchmark emits `VESPER_PEAK_RSS_KIB` on Linux and still recognizes
-the prior `TRANSCRIBE_PEAK_RSS_KIB` marker when reading older timing output.
+Automatic-level qualification writes the same Vesper baseline switch.
 
 One build detail matters: `default-features = false` does **not** mean Metal is absent. The `llama-cpp-2` manifest had an Apple ARM target dependency enabling `metal` as reviewed for 0.1.156; not re-checked for the pinned 0.1.159. Application features forward `cuda`, `rocm`, and `vulkan`; there is no direct `sycl` feature in this release. Explicitly selecting an unavailable backend fails with a device-selection error. Automatic selection uses a detected native GPU or CPU; failed GPU initialization retries CPU and records its reason. [Pinned Rust binding manifest](https://docs.rs/crate/llama-cpp-2/0.1.156/source/Cargo.toml).
 

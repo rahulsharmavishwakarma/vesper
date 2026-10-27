@@ -18,11 +18,10 @@ the same checks before packaging. Stable PR check names are:
 4. `Security / Secrets`
 5. `Security / Dependencies`
 6. `Security / Python benchmarks (audio-frontend)`
-7. `Security / Python benchmarks (vibevoice)`
-8. `Security / Python benchmarks (onnx-quantize)`
-9. `Security / Python benchmarks (mlx-convert)`
-10. `Security / Python benchmarks (nemo-convert)`
-11. `Security / Python benchmarks (coreml-convert)`
+7. `Security / Python benchmarks (onnx-quantize)`
+8. `Security / Python benchmarks (mlx-convert)`
+9. `Security / Python benchmarks (nemo-convert)`
+10. `Security / Python benchmarks (coreml-convert)`
 
 The benchmark names come from the `security.yml` matrix, so adding or removing a
 benchmark project adds or removes a check.
@@ -92,26 +91,6 @@ job skipped by its condition as successful, so required checks still pass, while
 a workflow that never starts would leave them pending forever. The condition is
 `!cancelled() && needs.scope.outputs.<job> != 'false'`, so if the scope job itself
 fails, the jobs run instead of being skipped as passed.
-
-Native-protocol tests in `scripts/test-vibevoice-bitnet.py` launch synthetic
-children through the real resource wrapper. It uses BSD `/usr/bin/time -l` on
-macOS and GNU `/usr/bin/time -f` on the Ubuntu portable runner. GNU peak RSS is
-reported in KiB and converted to bytes; macOS already reports bytes. The GNU
-format is an explicit marker, so parsing does not depend on localized labels or
-the caller's `TIME` environment variable. Missing memory evidence stays absent.
-See GNU time's [format options](https://www.gnu.org/software/time/manual/html_node/Setting-Format.html)
-and [memory fields](https://www.gnu.org/software/time/manual/html_node/Memory-Resources.html).
-Using `-l` on Ubuntu exits before the child emits its protocol record and causes
-misleading missing-measurement failures. Do not skip those assertions or move the
-portable suite to macOS to conceal the failure. The full benchmark's macOS power
-sampling remains platform-specific; this wrapper portability does not qualify
-Linux inference or change the supported desktop platform.
-
-The portability correction was validated locally on macOS with the complete
-`make check-portable` gate, including nine passing protocol/resource tests and
-all nine Python suites. Platform-selection and byte-conversion fixtures cover
-both BSD and GNU output; the real subprocess test checks memory evidence on the
-current host. This is local evidence, not a successful Ubuntu Actions rerun.
 
 The browser job runs the existing `tests/recovery.html` scenarios in Chromium
 with mocked Tauri commands through Playwright. It fails on scenario failures,
@@ -286,7 +265,6 @@ copy each export to its corresponding `benchmarks/asr/` requirements file:
 ```sh
 mkdir -p .cache
 uv export --locked --project benchmarks/asr/python/audio-frontend --no-dev --no-emit-project --output-file .cache/audio-frontend-requirements.txt
-uv export --locked --project benchmarks/asr/python/vibevoice --no-dev --no-emit-project --output-file .cache/vibevoice-reference-requirements.txt
 ```
 
 The export commands intentionally match `make python-lock-check`, including the
@@ -366,8 +344,8 @@ filtered.
 locked contributor groups (`dev` and `benchmark`), then runs
 `uv run --locked pip-audit --strict --require-hashes
 --disable-pip` against it. The audit cannot silently resolve newer transitive
-versions. `make audit-python-audio-frontend` and `make audit-python-vibevoice`
-use the same auditor against fresh exports of their owning locks. They require
+versions. `make audit-python-audio-frontend` and the other `audit-python-*` benchmark
+targets use the same auditor against fresh exports of their owning locks. They require
 Apple-silicon macOS: running these exports through a Linux auditor would skip
 their platform-marked dependencies and could produce an empty, misleading pass.
 
@@ -390,6 +368,7 @@ plus `setuptools` 84.0.0 (GHSA-xmj3-9gf7-h52w, fixed in 84.1.0) in those two.
 pip-audit reported them before GitHub raised Dependabot alerts. All moved to
 `filelock` 4.2.4 and `setuptools` 84.1.0 or later the same way
 ([issue #57](https://github.com/rahulsharmavishwakarma/vesper/issues/57)).
+The VibeVoice lock in these incidents was removed on 27 October 2026 because Vesper does not support VibeVoice models.
 The same day the Rust audit began failing on `tokio` 1.53.1: RUSTSEC-2026-0386
 (published 13 October) marks `AsyncFd::new` and related constructors unsound,
 and unsound advisories are denied. `cargo update -p tokio --precise 1.53.3`
@@ -410,6 +389,9 @@ marker removed, or advisory ignored. [Issue #57](https://github.com/rahulsharmav
 tracks the remaining work; this is not a claim that the repository is free of
 known advisories.
 
+The VibeVoice environment, its compatibility patch and its probe were
+removed on 27 October 2026 because Vesper does not support VibeVoice models; the table and the next paragraph record the 2026-09-19 remediation as history.
+
 | Optional VibeVoice dependency | Result | Dependabot alerts addressed |
 | --- | --- | --- |
 | Accelerate 1.10.1 | Removed; the CPU probe does not use its APIs or device dispatch | 17 |
@@ -421,11 +403,10 @@ The earlier compatible-only update still left Transformers 4.57.6 findings and
 GLib 0.18.5 / RUSTSEC-2024-0429 in the maintained graphs. The owner approved the
 following source-level remediation in [issue #57](https://github.com/rahulsharmavishwakarma/vesper/issues/57).
 
-The isolated VibeVoice environment now uses Transformers 5.10.1 and Hub 1.5.0.
-A [pinned compatibility patch](../patches/vibevoice/README.md) adapts the exact
-publisher source to tokenizer, loader initialization and tied-weight APIs. It
-preserves the existing checkpoint. The probe refuses altered source/patches,
-checks every loaded tensor against the checkpoint, and records patch provenance.
+The isolated VibeVoice environment used Transformers 5.10.1 and Hub 1.5.0.
+A pinned compatibility patch adapted the exact
+publisher source to tokenizer, loader initialization and tied-weight APIs,
+verified every loaded tensor against the checkpoint, and recorded patch provenance.
 The original publisher source requires Transformers <5: this is a maintained
 port, not a claim of upstream compatibility. Version 5.10.0 was yanked; 5.10.1
 is the candidate validated here. Historical benchmark reports retain their
@@ -497,8 +478,7 @@ the vendor tree.
 The Python audit does not use advisory exceptions. Both package audits must
 pass independently of model qualification. The [compatibility validation](validation/dependency-security-compat-2026-09-19.md)
 records the security regressions and model checks. See the patch READMEs for update and
-removal conditions, and `docs/research-vibevoice.md` for the reference runtime's
-scope. Do not replace the checks with `continue-on-error` or a global ignore.
+removal conditions. Do not replace the checks with `continue-on-error` or a global ignore.
 
 Primary sources: [Microsoft's pinned dependency contract](https://github.com/microsoft/VibeVoice/blob/1541f590c7099820f10ea012f48d2399282df69f/pyproject.toml),
 [Transformers 5.10.1](https://github.com/huggingface/transformers/releases/tag/v5.10.1),

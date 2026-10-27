@@ -1,5 +1,7 @@
 # VibeVoice-ASR-BitNet CPU benchmark — 18 September 2026
 
+> **History.** Vesper does not support VibeVoice models. The VibeVoice probe, BitNet benchmark scripts, environment and compatibility patch were removed on 27 October 2026; paths and commands below refer to the repository before that removal.
+
 The official quantized BitNet checkpoint runs on the tested CPU and is useful
 for short completed recordings. It does not yet qualify as this application's
 default, native continuous-audio streaming model, or a low-memory long-recording

@@ -29,7 +29,7 @@ and [models/presets.json](../models/presets.json).
 | IBM | Granite Speech 5.0 TurboCTC | Apache-2.0; files are installed unmodified from IBM's repository |
 | Moonshine AI | Moonshine Base (English) | MIT for the English model. Non-English Moonshine models use the Moonshine Community License and are not offered |
 | Google | Gemma 3 1B (`ggml-org/gemma-3-1b-it-GGUF`, from `google/gemma-3-1b-it`) | [Gemma Terms of Use](https://ai.google.dev/gemma/terms) (last modified 1 April 2026), including its Prohibited Use Policy. The app downloads the file directly from Hugging Face and does not redistribute it. Anyone who redistributes Gemma or a modified copy must pass on the use restrictions and a copy of the terms, mark modified files, and include a `NOTICE` file stating "Gemma is provided under and subject to the Gemma Terms of Use found at ai.google.dev/gemma/terms" (section 3.1) |
-| Microsoft | VibeVoice ASR checkpoints (`microsoft/VibeVoice-ASR`, `-ASR-BitNet`, `-ASR-Streaming-1.5B`) | MIT according to each model card's license field (checked 22 October 2026). These are used only by the optional benchmark adapters under `benchmarks/asr/`, not offered in the app catalog |
+| Microsoft | VibeVoice ASR checkpoints (`microsoft/VibeVoice-ASR`, `-ASR-BitNet`, `-ASR-Streaming-1.5B`) | MIT according to each model card's license field (checked 22 October 2026). Their benchmark tooling was removed on 27 October 2026 because Vesper does not support VibeVoice models; they were never offered in the app catalog |
 | HuggingFaceTB | SmolLM2 presets | Upstream SmolLM terms apply |
 
 Before redistributing any checkpoint or bundling weights with the app, confirm

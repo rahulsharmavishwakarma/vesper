@@ -1,5 +1,7 @@
 # VibeVoice variants, streaming contract, and CPU qualification
 
+> **History.** Vesper does not support VibeVoice models. The VibeVoice probe, BitNet benchmark scripts, environment and compatibility patch were removed on 27 October 2026; paths and commands below refer to the repository before that removal.
+
 The complete Microsoft VibeVoice inventory was checked on 18 September 2026.
 **No complete ASR model in this inventory satisfies a strict limit of fewer than
 two billion total parameters.** The specifically requested Streaming-1.5B remains

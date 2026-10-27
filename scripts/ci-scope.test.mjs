@@ -35,7 +35,7 @@ test('files Rust embeds keep the Rust job', () => {
 });
 
 test('Python benchmark projects run only the benchmark audits', () => {
-  assert.deepEqual(ciScope(['benchmarks/asr/python/vibevoice/uv.lock']), {
+  assert.deepEqual(ciScope(['benchmarks/asr/python/audio-frontend/uv.lock']), {
     rust: false,
     browser: false,
     python: true,

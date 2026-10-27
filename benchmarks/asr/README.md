@@ -51,15 +51,10 @@ fields must only be counted once per lifetime. Full source/artifact hashes,
 
 The [18 September Whisper native screen](../../docs/validation/whisper-2026-09-18.md) uses the development `whisper_probe`, pinned [ONNX artifacts](whisper-artifacts.json), and `scripts/qualify-whisper.py`. It preserves completed-audio, writing, language/noise and duration-guard outcomes. Observed contention prevents an isolated latency claim, and the probe is not production Whisper support. Preparation, source fingerprints, failed attempts and remaining integration gates are in the report.
 
-The [18 September VibeVoice CPU reference screen](../../docs/validation/vibevoice-2026-09-18.md) uses the pinned Microsoft step API, `scripts/probe-vibevoice.py`, and the canonical Rust `score_json` helper. The [family inventory](vibevoice-inventory.json) separates total parameters from backbone labels and quantized file sizes. No complete official VibeVoice ASR model satisfies a strict <2B total limit; the requested Streaming-1.5B is an out-of-budget reference, with no production adapter.
+The [18 September VibeVoice CPU reference screen](../../docs/validation/vibevoice-2026-09-18.md) uses the pinned Microsoft step API, `scripts/probe-vibevoice.py`, and the canonical Rust `score_json` helper. The family inventory separated total parameters from backbone labels and quantized file sizes. No complete official VibeVoice ASR model satisfies a strict <2B total limit; the requested Streaming-1.5B is an out-of-budget reference, with no production adapter.
 
-The maintained Python probe now uses Transformers 5.10.1 with a
-[verified publisher-source patch](../../patches/vibevoice/README.md). Follow the
-[current compatibility checks](../../docs/development.md#python-tooling-policy)
-before replaying those plans. The source/checkpoint revisions remain pinned;
-the probe verifies all loaded tensors, tying and streaming cache progression.
-Historical reports describe their original environments and do not transfer
-unchanged to this port.
+The VibeVoice probe, BitNet benchmark scripts, inventory and environment were
+removed on 27 October 2026 because Vesper does not support VibeVoice models; these reports are history.
 
 The subsequent [quantized BitNet CPU benchmark](../../docs/validation/vibevoice-bitnet-2026-09-18.md) executes the verified specialized GGUF pair using the official native CLI and resident-file server. It includes matching corpus controls, thread and normalization ablations, a fresh Cohere comparison, raw-output/completion instrumentation and a separately measured decoder-position correction. Memory-blocked long input and failed hotword/JSON output remain visible. The native server's token output is not an incremental-audio streaming adapter; this development benchmark does not make the capability entry executable in the application.
 
@@ -76,7 +71,6 @@ Use uv and the versioned `pyproject.toml` / `uv.lock` for each environment:
 | Repository root, `dev` group           | Tests, NumPy/soundfile preparation and summaries        | Python 3.12+                     |
 | Repository root, `benchmark` group     | PyArrow corpus preparation                              | Python 3.12+                     |
 | `benchmarks/asr/python/audio-frontend` | ONNX Runtime and LiteRT frontend probes                 | Python 3.12, macOS Apple silicon |
-| `benchmarks/asr/python/vibevoice`      | Frozen Torch/Transformers reference probe               | Python 3.12, macOS Apple silicon |
 | `benchmarks/asr/python/onnx-quantize`  | Weight-only conversion of published sherpa-onnx exports | Python 3.12, macOS Apple silicon |
 
 Run scripts from the repository root with `uv run --locked python scripts/SCRIPT.py`,
@@ -84,12 +78,12 @@ adding `--group benchmark` for PyArrow or `--project` for an isolated probe.
 `--project` selects the environment while retaining the caller's working directory.
 Each project is non-distributable and keeps its `.venv` ignored. Direct versions
 are pinned; resolving the environment is not model qualification. Run
-`make audit-python-audio-frontend` and `make audit-python-vibevoice` on
+`make audit-python-audio-frontend` and the other `audit-python-*` targets on
 Apple-silicon macOS before new benchmark work. See the
 [known dependency advisories and upstream blockers](../../docs/ci-and-releases.md#dependency-security-status-and-upstream-limits).
 
-The two requirements files are generated compatibility exports, not editable
-dependency sources. Update the owning manifest and lockfile first, regenerate
+`audio-frontend-requirements.txt` is a generated compatibility export, not an
+editable dependency source. Update the owning manifest and lockfile first, regenerate
 the export as described in [CI and releases](../../docs/ci-and-releases.md), and
 run `make python-lock-check`. Dated reports preserve their original setup commands
 as historical evidence; use this section for new runs. The normal contributor

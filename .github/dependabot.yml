@@ -55,7 +55,6 @@ updates:
     directories:
       - /
       - /benchmarks/asr/python/audio-frontend
-      - /benchmarks/asr/python/vibevoice
     labels: [dependencies, testing]
     open-pull-requests-limit: 5
     cooldown:
