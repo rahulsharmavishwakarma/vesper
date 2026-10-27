@@ -79,3 +79,24 @@ test('a model download locks only what conflicts with it', async ({ page }) => {
   await nav(page, 'Models').click();
   await expect(page.locator('#models-asr-model')).toBeEnabled();
 });
+
+test('a download shows progress in its own card and never moves the page above it', async ({
+  page,
+}) => {
+  await page.goto('/tests/interaction-preview.html');
+  await nav(page, 'Models').click();
+  const verify = page.getByRole('button', { name: /Verify files/ }).first();
+  await verify.scrollIntoViewIfNeeded();
+  const speech = page.locator('#models-asr-model');
+  const top = async () => (await speech.boundingBox())?.y;
+  const before = await top();
+  await verify.click();
+  const card = page.getByLabel('Speech model download');
+  await expect(card.getByRole('progressbar', { name: 'Model download progress' })).toBeVisible();
+  await expect(card.getByRole('button', { name: 'Cancel download' })).toBeVisible();
+  await expect(page.locator('.model-download-feedback .download-progress')).toHaveCount(0);
+  expect(await top()).toBe(before);
+  await page.evaluate(() => window.previewFinishDownload());
+  await expect(card.getByRole('progressbar')).toHaveCount(0);
+  expect(await top()).toBe(before);
+});

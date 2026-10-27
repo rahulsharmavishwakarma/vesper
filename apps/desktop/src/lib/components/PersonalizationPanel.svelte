@@ -818,11 +818,12 @@
           {/if}
         </fieldset>
       {/if}
-      <div class="preferences-footer" hidden={!error && pending === null && !feedback}>
+      <!-- Saving shows only in the sidebar status; an inline note here pushed the
+           options around on every toggle. -->
+      <div class="preferences-footer" hidden={!error && pending !== 'loading' && !feedback}>
         <div class="preference-feedback" aria-live="polite">
           {#if error}<p class="error" role="alert">{error}</p>
           {:else if pending === 'loading'}<p class="note">Loading personal preferences…</p>
-          {:else if pending === 'saving'}<p class="note">Saving personal preferences…</p>
           {:else if feedback}<p class="success">{feedback}</p>{/if}
         </div>
         <div class="form-actions">

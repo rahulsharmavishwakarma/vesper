@@ -119,6 +119,8 @@
   let installingModelKey = $state<string | null>(null);
   let downloadError = $state<string | null>(null);
   let downloadFeedback = $state<string | null>(null);
+  // The download the current feedback or error is about, so its card can show it.
+  let downloadResultKey = $state<string | null>(null);
   let refreshing = $state(false);
   let cancelling = $state(false);
   let error = $state<string | null>(null);
@@ -595,6 +597,7 @@
     feedback = null;
     downloadError = null;
     downloadFeedback = null;
+    downloadResultKey = key;
     startPolling();
     try {
       const updated = await installModel(target.modelId, target.quantization);
@@ -844,6 +847,7 @@
       progress: runtime?.stage === 'installing' ? runtime.message : '',
       error: downloadError ?? modelError,
       feedback: downloadFeedback,
+      resultKey: downloadResultKey,
       audioSetupPaused,
       audioSetupFailedKey: audioFailedTarget,
     });

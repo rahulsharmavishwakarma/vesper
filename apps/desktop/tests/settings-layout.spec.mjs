@@ -305,3 +305,30 @@ test('About update preferences persist, gate install and skip the automatic chec
   await expect(page.locator('.about-inline .pill .lab.rest')).toHaveText('Up to date');
   expect(await page.evaluate(() => window.updaterChecks)).toBe(1);
 });
+
+test('Saving shows only in the status pill and never moves the options', async ({ page }) => {
+  await openSettings(page);
+  const pill = page.locator('.save-status');
+  // Visible text only: hidden views also live in the main area.
+  const inlineSaving = page
+    .locator('.studio-main')
+    .getByText(/Saving/)
+    .filter({ visible: true });
+  const box = async (selector) => (await page.locator(selector).boundingBox())?.y;
+  // Application settings. Scroll first: a click scrolls its target into view.
+  await page.locator('#collect-training').scrollIntoViewIfNeeded();
+  const below = await box('#collect-training');
+  await page.locator('#collect-training').click();
+  await expect(pill).toHaveAttribute('data-state', 'saving');
+  await expect(inlineSaving).toHaveCount(0);
+  expect(await box('#collect-training')).toBe(below);
+  await expect(pill).toHaveCount(0, { timeout: 10_000 });
+  // Writing preferences autosave through the same pill.
+  await section(page, 'Writing').click();
+  await page.locator('#personal-corrections').scrollIntoViewIfNeeded();
+  const format = await box('#personal-format');
+  await page.locator('#personal-corrections').click();
+  await expect(inlineSaving).toHaveCount(0);
+  await expect(page.locator('.preferences-footer')).toBeHidden();
+  expect(await box('#personal-format')).toBe(format);
+});

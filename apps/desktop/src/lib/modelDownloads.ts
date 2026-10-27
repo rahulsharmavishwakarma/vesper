@@ -23,6 +23,8 @@ export interface ModelDownloadState {
   progress: string;
   error: string | null;
   feedback: string | null;
+  /** The download that `feedback`/`error` describe, when it was a single model. */
+  resultKey?: string | null;
   audioSetupPaused?: boolean;
   audioSetupFailedKey?: string | null;
 }
