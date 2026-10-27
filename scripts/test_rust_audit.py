@@ -114,7 +114,12 @@ class RustAuditTests(unittest.TestCase):
             self.assertEqual(command[:3], ["cargo", "audit", "--file"])
             expected_ignores = [
                 argument
-                for advisory in (AUDIT.ADVISORY, *AUDIT.ZIP_ADVISORIES, AUDIT.WEBPKI_ADVISORY)
+                for advisory in (
+                    AUDIT.ADVISORY,
+                    *AUDIT.ZIP_ADVISORIES,
+                    AUDIT.WEBPKI_ADVISORY,
+                    *AUDIT.ZSTD_ADVISORIES,
+                )
                 for argument in ("--ignore", advisory)
             ]
             self.assertEqual(command[4:], ["--deny", "unsound", *expected_ignores])
@@ -210,6 +215,38 @@ class RustAuditTests(unittest.TestCase):
         ):
             with self.assertRaises(ValueError):
                 AUDIT.verify_webpki_exception(bad)
+
+    def test_zstd_exception_accepts_only_the_reviewed_shape(self):
+        def lock_with(zstd="0.13.3", zstd_parent=("zip", "2.6.1"), safe="7.3.0", extra=()):
+            return {
+                "package": [
+                    {"name": "zstd", "version": zstd, "dependencies": ["zstd-safe"]},
+                    {"name": "zstd-safe", "version": safe},
+                    {"name": zstd_parent[0], "version": zstd_parent[1], "dependencies": ["zstd"]},
+                    *extra,
+                ]
+            }
+
+        AUDIT.verify_zstd_exception(lock_with())
+        # Patched releases need no exception, whoever uses them.
+        AUDIT.verify_zstd_exception(
+            lock_with(zstd="0.14.3", zstd_parent=("vesper-models", "0.1.0"), safe="8.2.0")
+        )
+        for bad in (
+            # A version bump under the pin must be re-reviewed.
+            lock_with(zstd="0.13.2"),
+            lock_with(safe="7.2.4"),
+            # zstd reached from anything but zip 2.6.1 is no longer build-only.
+            lock_with(zstd_parent=("vesper-models", "0.1.0")),
+            # A new user of the old zstd-safe widens the exception.
+            lock_with(
+                extra=(
+                    {"name": "vesper-models", "version": "0.1.0", "dependencies": ["zstd-safe"]},
+                )
+            ),
+        ):
+            with self.assertRaises(ValueError):
+                AUDIT.verify_zstd_exception(bad)
 
     def test_run_audit_rejects_unscoped_webpki_before_auditing(self):
         lock = self.root / "Cargo.lock"
