@@ -2,7 +2,7 @@
 """Run an isolated Whisper native screen and the production Cohere baseline.
 
 Requires preverified artifact JSONs and frozen binaries; no downloads or builds.
-Use the dated protocol in docs/validation/whisper-2026-09-18.md.
+The 18 September 2026 protocol report was removed on 27 October 2026; see Git history.
 """
 
 import argparse
