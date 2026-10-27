@@ -1,0 +1,12 @@
+flowchart LR
+  raw[Interleaved device PCM] --> cm[ChannelMixer:<br/>average channels within 30 dB of loudest]
+  cm --> rs[StreamingResampler -> 16 kHz]
+  rs --> vad[Silero v6.2, 1 thread:<br/>speech intervals, min silence 0.25 s]
+  rs --> dn[DPDFNet8, 1 thread:<br/>~0.19x real time on M5 Pro CPU]
+  dn --> out[Enhanced 16 kHz PCM]
+  vad -. pause marks (live) .-> live[Preview mailbox]
+  vad -. evidence .-> ev[(audioFrontend evidence)]
+  out --> live
+  out --> store[(EnhancedStore for the final)]
+  out --> asr[Completed-audio ASR when no live session matched]
+  dn -. failure .-> orig[Original audio fallback + warning]

@@ -4,30 +4,12 @@ The Tauri application runs native inference from Rust and renders Svelte 5 in th
 
 The [backend inference architecture](inference-architecture.md) gives the detailed component diagrams: worker ownership, adapters and backends, live pipeline, audio frontend, writer, diarization, model installation and failure policy. Accepted decisions are indexed in [Architecture Decision Records](adrs/README.md). Exact database, filesystem, settings, model-storage, privacy, and failure semantics live in the canonical [Application internals](internals.md) document.
 
-```mermaid
-flowchart LR
-    A[Microphone] --> B[Original audio archive]
-    A --> C[Bounded native-rate mono chunks]
-    A2[Audio file] --> B
-    A2 --> C2[Decode / mono 16 kHz]
-    C --> D[Selected ASR adapter]
-    C2 --> D
-    D --> D1[NeMo-Speech.cpp: Nemotron, Parakeet v3]
-    D --> D2[sherpa-onnx: Parakeet, Qwen3-ASR, Cohere,<br/>Whisper, Moonshine, custom profiles]
-    D --> D3[MLX Swift: Granite, Phonon-2, Redux,<br/>MLX Parakeet, Qwen3-ASR, Whisper]
-    D --> D5[Core ML + MLX: Parakeet v3 on the Neural Engine]
-    D --> D4[llama.cpp mtmd: LFM2.5 Audio]
-    D --> E[Durable raw transcript]
-    E --> F[Writing model / llama.cpp]
-    F --> G[Conservative output checks]
-    E --> H[Raw / cleaned result]
-    G --> H
-    B --> I[SQLite session + model provenance]
-    E --> I
-    G --> I
-    I --> J[Separate human ASR / cleanup labels]
-    J --> K[JSONL + original audio export]
-```
+<picture>
+  <source media="(prefers-color-scheme: dark)" srcset="assets/diagrams/architecture-data-flow.dark.svg">
+  <img alt="Data flow from microphone or file through the speech adapter, writing model and local storage" src="assets/diagrams/architecture-data-flow.light.svg">
+</picture>
+
+<sub>Diagram source: [architecture-data-flow.mmd](diagrams/architecture-data-flow.mmd)</sub>
 
 Collection is configurable. With it disabled, recording and inference run without an audio/session archive. Explicit recording cancellation discards the in-progress capture. Closing the main window hides it and leaves ongoing capture running; reopen it from the menu bar or use the recording shortcut to stop. Quit is blocked until active work finishes or is explicitly cancelled. Force termination or power loss cannot preserve a buffer held in memory.
 
@@ -50,18 +32,12 @@ Collection is configurable. With it disabled, recording and inference run withou
 
 Model availability and the active inference pipeline are related but independent:
 
-```mermaid
-flowchart LR
-    A[Built-in model enums] --> C[Install catalog]
-    B[Pinned artifact manifest] --> C
-    P[Saved custom profiles] --> C
-    C --> D[Inspect every entry]
-    C --> E[Install one allow-listed entry]
-    S[Saved model selection] --> F[Selected-pipeline inventory]
-    B --> F
-    P --> F
-    F --> G[Pre-inference verification]
-```
+<picture>
+  <source media="(prefers-color-scheme: dark)" srcset="assets/diagrams/architecture-model-catalog.dark.svg">
+  <img alt="How the install catalog and the selected-pipeline inventory are built and verified" src="assets/diagrams/architecture-model-catalog.light.svg">
+</picture>
+
+<sub>Diagram source: [architecture-model-catalog.mmd](diagrams/architecture-model-catalog.mmd)</sub>
 
 `vesper-core` enumerates runnable built-ins; `models/artifacts.json` is the authoritative executable file manifest. `vesper-models` combines them with up to one selected custom profile per role. `list_model_installations` reports every installable entry, while `install_model` accepts only an entry from that catalog and never changes settings. Qwen Q4 and Q8 are separate downloads. `install_models` remains the convenience operation for the complete selected pipeline.
 
@@ -114,25 +90,12 @@ language and memory before using them. Projects resolve from an explicit manual
 override or bounded app/folder rules. Semantic/policy evaluations do not activate memory
 or train models. Detailed contracts live in the [personalization guide](personalization/README.md).
 
-```mermaid
-flowchart TD
-    P["Manual override, app/folder rules, language and memory"] --> S["Frozen operation snapshot"]
-    S --> A["Selected ASR; optional supported hints"]
-    A --> R["Durable raw transcript"]
-    R --> C["Select memory using raw text and scope"]
-    S --> C
-    C --> W["Optional compatible writer and fidelity checks"]
-    R -->|"Writer off or failed"| M["Shared saved-correction stage"]
-    W --> M
-    C --> M
-    M --> O["Output with recording scope"]
-    O --> E["Edits in Your text"]
-    E --> G["Independent support, language and context gates"]
-    G -->|"Eligible spelling"| P
-    E --> Q["Semantic and policy shadow evaluation only"]
-    R --> H["Separate explicit human review"]
-    H --> D["Reviewed ASR or cleanup export"]
-```
+<picture>
+  <source media="(prefers-color-scheme: dark)" srcset="assets/diagrams/architecture-personalization.dark.svg">
+  <img alt="Current personalization boundaries" src="assets/diagrams/architecture-personalization.light.svg">
+</picture>
+
+<sub>Diagram source: [architecture-personalization.mmd](diagrams/architecture-personalization.mmd)</sub>
 
 The shared correction stage remains available with writing disabled or failed;
 unsupported decoder hints do not disable memory. Ordinary edits are spelling

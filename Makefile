@@ -23,7 +23,7 @@ HF_REVISION ?= main
 HF_OUTPUT ?= models/custom-profile.json
 export HF_REPO HF_WEIGHTS HF_REVISION HF_OUTPUT
 
-.PHONY: help setup setup-checks hooks precommit prepush workflows dev web model-profile build build-debug build-web check check-fast check-web test-tools test-python test-browser benchmark-contract version-check version-set container-build container-smoke fmt fmt-check lint test smoke-native models sherpa-runtime test-native-report
+.PHONY: help setup setup-checks hooks precommit prepush workflows dev web model-profile build build-debug build-web check check-fast check-web test-tools test-python test-browser benchmark-contract diagrams version-check version-set container-build container-smoke fmt fmt-check lint test smoke-native models sherpa-runtime test-native-report
 .PHONY: check-portable check-rust fmt-rust fmt-rust-check fmt-web fmt-web-check fmt-python fmt-python-check fmt-shell fmt-shell-check lint-rust lint-web lint-python lint-shell test-rust doc-rust
 .PHONY: python-lock-check audit-python audit-python-audio-frontend audit-python-onnx-quantize audit-python-mlx-convert audit-python-nemo-convert audit-python-coreml-convert audit-rust test-glib-backport test-cleanup-bridge
 
@@ -161,6 +161,9 @@ container-smoke: container-build ## Manually health-check the optional browser-p
 	done; \
 	[ "$$(docker inspect --format '{{.State.Health.Status}}' "$$container_id")" = healthy ]; \
 	docker exec "$$container_id" wget -qO- http://127.0.0.1:8080/healthz | grep -qx ok
+
+diagrams: ## Render docs/diagrams/*.mmd to SVGs styled with the app's design tokens (needs make setup-checks)
+	node scripts/render-diagrams.mjs
 
 check-web: ## Check Svelte and TypeScript
 	$(RUN) npm run check

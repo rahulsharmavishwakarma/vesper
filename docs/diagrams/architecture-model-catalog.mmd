@@ -1,0 +1,10 @@
+flowchart LR
+    A[Built-in model enums] --> C[Install catalog]
+    B[Pinned artifact manifest] --> C
+    P[Saved custom profiles] --> C
+    C --> D[Inspect every entry]
+    C --> E[Install one allow-listed entry]
+    S[Saved model selection] --> F[Selected-pipeline inventory]
+    B --> F
+    P --> F
+    F --> G[Pre-inference verification]

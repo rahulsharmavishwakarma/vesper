@@ -230,8 +230,27 @@ Combine work-type labels when the deliverables genuinely span categories, such a
 
 ## Architecture diagram workflow
 
-Mermaid fenced blocks in the owning `docs/` page are the reviewable source for
-architecture diagrams. Use a component/data-flow diagram for ownership and data
+Architecture diagrams are Mermaid files in [`docs/diagrams/`](diagrams/), the
+reviewable source. `make diagrams` (after `make setup-checks`, which installs
+the Chromium it uses) renders each one to `docs/assets/diagrams/NAME.light.svg`
+and `NAME.dark.svg` with `scripts/render-diagrams.mjs`. The renderer builds a
+Mermaid theme from the app's design tokens in `apps/desktop/src/tokens.css`
+(the Ember dark palette and its light variant) and embeds a small subset of the
+app's Bricolage Grotesque font, so diagrams match the app on GitHub too. Pages
+embed both files with a `<picture>` element, which follows the reader's light or
+dark setting, followed by a link to the source:
+
+```html
+<picture>
+  <source media="(prefers-color-scheme: dark)" srcset="assets/diagrams/NAME.dark.svg">
+  <img alt="What the diagram shows" src="assets/diagrams/NAME.light.svg">
+</picture>
+```
+
+Each SVG records the hashes of its source and of `tokens.css`;
+`scripts/render-diagrams.test.mjs` fails when an SVG is stale, when a source has
+no SVGs, or when a page still has an inline Mermaid block. Changing the design
+tokens therefore means running `make diagrams` in the same change. Use a component/data-flow diagram for ownership and data
 boundaries, or a sequence diagram when ordering, cancellation and asynchronous
 callbacks determine correctness. Update the existing diagram with its related
 implementation; avoid another diagram for a change that leaves these boundaries
@@ -252,7 +271,7 @@ can produce elements for supported syntax. Unsupported conversions need an
 equivalent element layout checked against the source; do not silently drop
 edges or treat an image fallback as an editable diagram.
 
-Render the Mermaid source and inspect labels, arrow direction, boundary labels
+Render with `make diagrams` and inspect both themes for labels, arrow direction, boundary labels
 and clipping. Inspect the Excalidraw view too when one is produced. If a visual
 artifact is retained, keep its editable `.excalidraw` file beside the owning
 source and update them together. An expiring MCP checkpoint or shared URL is

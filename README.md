@@ -111,25 +111,12 @@ Vesper is a single Tauri 2 desktop app. A Rust core captures audio and runs ever
 model in-process on one inference worker; the Svelte interface talks to it over
 Tauri IPC. Nothing is sent to a server.
 
-```mermaid
-flowchart TB
-  subgraph App["Vesper app (Tauri 2)"]
-    ui["Svelte UI<br/>Dictate · History · Models · Settings"]
-    audio["Audio capture and decoding<br/>vesper-audio"]
-    worker["Inference worker<br/>vesper-inference"]
-    store[("Local history<br/>SQLite + audio")]
-  end
-  subgraph Runtimes["Native runtimes (on device)"]
-    asr["Speech recognition<br/>sherpa-onnx · NeMo-Speech.cpp<br/>MLX · Core ML · llama.cpp"]
-    writer["Optional text cleanup<br/>llama.cpp"]
-  end
-  mic(["Microphone or audio file"]) --> audio --> worker
-  worker <-->|audio → text → cleaned text| Runtimes
-  worker -->|live drafts and final text| ui
-  worker --> store
-  ui -->|copy or paste| target(["The app you were typing in"])
-  models[("Models<br/>downloaded once, hash-verified")] -.-> Runtimes
-```
+<picture>
+  <source media="(prefers-color-scheme: dark)" srcset="docs/assets/diagrams/overview.dark.svg">
+  <img alt="How Vesper works: audio capture, the inference worker, on-device runtimes, history and the UI" src="docs/assets/diagrams/overview.light.svg">
+</picture>
+
+<sub>Diagram source: [overview.mmd](docs/diagrams/overview.mmd)</sub>
 
 Automatic picks the engine for each model and Mac (CPU, Apple GPU or Neural
 Engine). See [architecture](docs/architecture.md) and the

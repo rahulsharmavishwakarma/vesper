@@ -77,16 +77,12 @@ Those component timings exclude snapshot loading, recording startup and renderin
 See [the exact native envelope](native-qualification.md#automatic-projects-and-external-correction-component-check--27-september-2026).
 Natural-use routing accuracy and end-to-end capture latency remain unqualified.
 
-```mermaid
-flowchart LR
-    A["Receiving app at capture start"] --> R["Bounded rule resolver"]
-    F["Optional qualified document URL"] --> R
-    P["Saved app or folder rules"] --> R
-    O["Explicit manual override"] --> R
-    R --> S["Frozen effective project and provenance"]
-    S --> M["Existing ASR hints, writer and memory"]
-    S --> E["Feedback tied to original operation"]
-```
+<picture>
+  <source media="(prefers-color-scheme: dark)" srcset="../assets/diagrams/personalization-project-routing.dark.svg">
+  <img alt="Automatic project routing boundary" src="../assets/diagrams/personalization-project-routing.light.svg">
+</picture>
+
+<sub>Diagram source: [personalization-project-routing.mmd](../diagrams/personalization-project-routing.mmd)</sub>
 
 Apple's [frontmost application](https://developer.apple.com/documentation/appkit/nsworkspace/frontmostapplication)
 and [bundle identifier](https://developer.apple.com/documentation/appkit/nsrunningapplication/bundleidentifier)

@@ -1,0 +1,9 @@
+flowchart LR
+    mic[Recorder: authoritative audio] -->|bounded copy| open[Open buffer <= 8 s]
+    vad[Silero end of speech, frontend thread] -.->|pause after >= 2 s| open
+    open -->|close at pause, or quietest point 4-8 s| pending[Closed segments FIFO <= 2]
+    pending -->|decode once| committed[committedText - append only]
+    open -->|re-decode tail >= 2 s| provisional[provisionalText - replaced]
+    pending -. oldest dropped when decoder lags .-> dropped[previewSegmentsDropped]
+    mic -->|Stop| final[Completed-audio final - authoritative]
+    final -->|replaces draft| result[Final transcript]

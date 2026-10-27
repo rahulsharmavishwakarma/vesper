@@ -1,0 +1,8 @@
+flowchart LR
+    A["Receiving app at capture start"] --> R["Bounded rule resolver"]
+    F["Optional qualified document URL"] --> R
+    P["Saved app or folder rules"] --> R
+    O["Explicit manual override"] --> R
+    R --> S["Frozen effective project and provenance"]
+    S --> M["Existing ASR hints, writer and memory"]
+    S --> E["Feedback tied to original operation"]

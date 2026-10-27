@@ -44,17 +44,12 @@ decoding; if the decoder falls behind, the oldest is dropped from the draft
 eight-second buffers (about 1.5 MiB; frontend/model allocations are separate).
 No overlap-string deduplication removes intentional repeated words.
 
-```mermaid
-flowchart LR
-    mic[Recorder: authoritative audio] -->|bounded copy| open[Open buffer <= 8 s]
-    vad[Silero end of speech, frontend thread] -.->|pause after >= 2 s| open
-    open -->|close at pause, or quietest point 4-8 s| pending[Closed segments FIFO <= 2]
-    pending -->|decode once| committed[committedText - append only]
-    open -->|re-decode tail >= 2 s| provisional[provisionalText - replaced]
-    pending -. oldest dropped when decoder lags .-> dropped[previewSegmentsDropped]
-    mic -->|Stop| final[Completed-audio final - authoritative]
-    final -->|replaces draft| result[Final transcript]
-```
+<picture>
+  <source media="(prefers-color-scheme: dark)" srcset="assets/diagrams/live-recording-results.dark.svg">
+  <img alt="Recording, live drafts and final results" src="assets/diagrams/live-recording-results.light.svg">
+</picture>
+
+<sub>Diagram source: [live-recording-results.mmd](diagrams/live-recording-results.mmd)</sub>
 
 Preview scheduling allows one running decode, bounded pending audio and coalesced
 wakeups. Closed segments are decoded as soon as the decoder is free. The interval
@@ -134,18 +129,12 @@ use original audio and the final runs the completed-audio frontend as before.
 Cancellation discards the retained audio. VAD remains advisory: this implementation adds no silence deletion
 or automatic endpointing. The recorder still retains the original audio.
 
-```mermaid
-flowchart LR
-  M[Microphone chunks] --> R[Recorder<br/>original audio]
-  M --> F[Live frontend session<br/>Silero + DPDFNet8, one per recording]
-  F -->|enhanced 16 kHz| P[Preview mailbox<br/>lossy, bounded]
-  P --> W[Inference worker<br/>preview drafts]
-  F -->|enhanced recording| E[Retained for this operation]
-  R -->|Stop: completed audio| C{Same operation,<br/>settings, length?}
-  E --> C
-  C -->|yes| D[Final decode on enhanced audio]
-  C -->|no, or frontend failed| O[Final decode on original audio<br/>with warning on failure]
-```
+<picture>
+  <source media="(prefers-color-scheme: dark)" srcset="assets/diagrams/live-ownership-cancellation.dark.svg">
+  <img alt="Ownership, cancellation and preprocessing in live sessions" src="assets/diagrams/live-ownership-cancellation.light.svg">
+</picture>
+
+<sub>Diagram source: [live-ownership-cancellation.mmd](diagrams/live-ownership-cancellation.mmd)</sub>
 
 ### Live frontend reuse evidence
 

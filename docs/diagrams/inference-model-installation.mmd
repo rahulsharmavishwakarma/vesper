@@ -1,0 +1,15 @@
+flowchart TB
+  cat[(models/artifacts.json + mlx-artifacts.json + diarization artifact)] --> sel[selected_exact: model, backend, platform]
+  sel --> have{File present and hash ok?}
+  have -->|yes| skip[Skip]
+  have -->|no| hub{HF hub cache has it?}
+  hub -->|yes| reuse[Copy from hub cache]
+  hub -->|no| dl[Download to temp file:<br/>stream SHA-256 + size check]
+  dl --> pub[Atomic publish into model root]
+  reuse --> pub
+  pub --> rt{Runtime archive?}
+  rt -->|NeMo-Speech tar.gz / zip| ext[Extract to staging, check binary + C ABI lib,<br/>atomic swap into nemo-speech-runtime/0.1.0]
+  rt -->|no| done[Ready]
+  ext --> done
+  done --> inspect[inspect: size only, for UI polling]
+  done --> verify[verify_asr / verify_rewriter / verify_frontend:<br/>full hash before every native load]
