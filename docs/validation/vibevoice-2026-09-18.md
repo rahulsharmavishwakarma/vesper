@@ -1,5 +1,7 @@
 # VibeVoice reference CPU screen — 18 September 2026
 
+> **History.** Vesper does not support VibeVoice models. The VibeVoice probe, BitNet benchmark scripts, environment and compatibility patch were removed on 27 October 2026; paths and commands below refer to the repository before that removal.
+
 > Historical evidence: names and commands below describe the recorded revision.
 > For the current checkout, use the corresponding `vesper-*` package/executable
 > and `VESPER_*` override names; legacy environment aliases remain supported.
