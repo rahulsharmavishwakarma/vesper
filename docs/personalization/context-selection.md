@@ -323,10 +323,17 @@ cargo run --release -p vesper-data --example workspace_detection_report -- DATAS
 
 - Per-app `AXDocument`/`AXURL` coverage comes only from the user's own
   dictations with detection on; apps without counts are unmeasured. Earlier
-  passive frontmost-app sampling (27 October 2026) was stopped at the owner's
-  request and its data deleted. Before deletion it showed Safari resolving the
-  web host whenever an element had focus (31 of 31) and a VS Code window
-  exposing its file; Finder and Discord exposed nothing.
+  passive frontmost-app sampling (27 October 2026) is **not valid evidence**:
+  the command-line sampler never ran its run loop, so `NSWorkspace` kept
+  reporting the app that was frontmost when it started, and its per-app
+  attribution (including the earlier Safari figures) is unreliable. It was
+  stopped at the owner's request and its data deleted.
+- User-triggered checks that call the unchanged `td_project_context` (27
+  October 2026): VS Code returned its open file (first read 32–38 ms, then
+  0.2 ms); Brave returned nothing. The first three real dictations with
+  detection on (iTerm2, Safari, Brave, one each) all recorded no document.
+  A first read above 30 ms means some apps need longer than one messaging
+  timeout on their first request.
 - Structure detection uses folder names only. Projects without conventional
   structure folders can split into subfolder workspaces; Merge fixes this, and a
   merged folder keeps resolving to its target.
