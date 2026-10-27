@@ -1,6 +1,8 @@
 # Repository work tracking and documentation
 
-Every repository-related job is tracked in GitHub Issues through the GitHub CLI. This applies to bugs, tasks, features, refactors, maintenance, tests, research, security, performance, dependencies, build/release work, documentation changes, and read-only repository investigations. A job's size does not exempt it.
+The repository is public and follows common open-source practice. GitHub Issues track bugs, feature and enhancement requests, proposals that need a decision or approval, work spanning several pull requests, research and model qualification, release blockers, security work, and sensitive repository operations. Small self-contained changes (typo and wording fixes, small documentation updates, routine dependency bumps, lint, format and configuration tweaks, small CI fixes, test-only changes) go straight to a pull request that explains what changed and why. Read-only investigations need no issue.
+
+Issues and their comments are public. Comment on material events only (accepted scope, decisions and approvals, blockers, a merged pull request, final verification) and keep each comment short; an issue is not a step-by-step work log.
 
 GitHub Issues is the only task tracker. Project documentation records current behavior, decisions, procedures, evidence, and limitations; it does not mirror issue status or become a local backlog.
 
@@ -14,15 +16,17 @@ evidence as historical, with a current-name note where needed; see
 
 ## Required lifecycle
 
+For work that needs an issue (steps 1–5 and 10 do not apply to a pull-request-only change):
+
 1. Inspect the configured Git remote and search open and closed issues with explicit `--repo` arguments when repository identity could be ambiguous.
 2. Read the matching issue and reuse it. If none exists, create one containing the problem, proposed scope, completion criteria, validation plan, and the documentation affected by the work.
 3. Apply the relevant work-type label and any useful existing routing labels. Keep them accurate when scope changes.
 4. Record any architectural proposal and its approval status. Creating an issue does not itself authorize a major architectural change.
-5. Update the issue when scope, decisions, progress, blockers, or completion criteria change.
+5. Update the issue when scope, decisions, blockers or completion criteria change. Do not post routine progress.
 6. Before the first repository edit, create and check out a new feature branch from the freshly fetched default branch. Preserve existing local work separately when needed. Implement or investigate there, then prepare small local commits under the owner's standing authorization and the rules below.
 7. Update canonical documentation alongside the implementation, in the same change. Prefer an existing owner page; otherwise add a focused page and link it from the nearest index or README. Include related docs in the implementation commit when practical.
-8. Run proportionate validation and publish the result, documentation location, limitations, and deferred work to the issue.
-9. Open the pull request from the [template](../.github/PULL_REQUEST_TEMPLATE.md): link the issue, apply the same work-type labels as the issue, make sure the issue and the PR each have a project item with Status and Area set (see [Keeping Status and Area current](#keeping-status-and-area-current)), state validation honestly, add no attribution lines, and do not title it `Release vX.Y.Z` (only the release bot's version PR may; that subject makes it tag a release on merge).
+8. Run proportionate validation and state the result, documentation location, limitations and deferred work in the pull request, with one short completion comment on the issue.
+9. Open the pull request from the [template](../.github/PULL_REQUEST_TEMPLATE.md): link the issue if there is one, apply work-type labels (the issue's, when there is one), keep the issue's project Status and Area current and set the PR's Area (see [Keeping Status and Area current](#keeping-status-and-area-current)), state validation honestly, add no attribution lines, and do not title it `Release vX.Y.Z` (only the release bot's version PR may; that subject makes it tag a release on merge).
 10. Confirm labels still represent the completed scope, then close only when every completion criterion—including documentation—is complete. Leave incomplete work open with an explicit status.
 
 ## GitHub Project progress view
@@ -170,8 +174,9 @@ weights and local tool state outside Git. A first baseline assembled in small
 commits may depend on later commits in that baseline series; the completed
 series is the reproducible validation point.
 
-Every commit references its GitHub issue using `Refs #NUMBER` or a title suffix.
-Record resulting commit identifiers and validation in the issue. Use `Refs`
+A commit for tracked work references its GitHub issue using `Refs #NUMBER` or a
+title suffix; the pull request links the commits, so they are not posted to the
+issue one by one. Use `Refs`
 while completion criteria remain open; a checkpoint must not silently close
 unfinished research or features. GitHub will resolve local commit links only
 after the owner separately authorizes a push.
@@ -325,6 +330,6 @@ Follow [UI interaction design](ui-design.md) when adding or changing controls. F
 - Major architectural changes still require the user's explicit approval after a concrete proposal. An issue is necessary but not sufficient approval.
 - Local commits follow the owner's small-commit and attribution convention above; remote publication requires separate authorization.
 - Research-grounded inference work must preserve paper results, official capabilities, local measurements, and unverified hypotheses as separate evidence classes.
-- A completed code change without documentation is incomplete; a documentation update without issue status and validation is also incomplete.
+- A completed code change without documentation is incomplete; a documentation update without validation is also incomplete.
 
 This workflow was formalized under [GitHub issue #44](https://github.com/rahulsharmavishwakarma/vesper/issues/44).
