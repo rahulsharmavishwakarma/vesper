@@ -5,19 +5,18 @@
 > and `VESPER_*` override names; legacy environment aliases remain supported.
 > See [current naming and compatibility](../../docs/development.md#product-name-and-compatibility). No measurement has been requalified by renaming.
 
-
 This follow-up reuses cached public recordings and adds controlled simulations for the learning features. **778 deterministic cases now pass, 72 fresh native ASR executions completed without failures, and eight native cleanup calls selected and isolated the expected memories.** Six real-corpus storage workflows, browser error recovery, and native cancellation/profile reset also passed. The [earlier 444-execution screen](2026-09-16-personalization.md) is preserved.
 
 Work and outstanding qualification remain in [#34](https://github.com/rahulsharmavishwakarma/transcribe/issues/34); model/runtime limitations remain under [#33](https://github.com/rahulsharmavishwakarma/transcribe/issues/33). The local debug report at `.cache/benchmarks/results/2026-09-16-memory-regressions/debug-summary.json` records before/after failures, examples, native scores, hashes, artifacts, execution metadata, resource measurements and validation. No private audio, user database, cloud inference, training or model-default change was involved.
 
 ## Reproduced failures and fixes
 
-| Finding | Reproduction | Focused fix |
-| --- | --- | --- |
-| Quoted text could be corrected | An internal apostrophe in `'don't change UN'` closed the quote early; an escaped double quote could also expose an alias. | Distinguish word-internal apostrophes and escaped delimiters from quote boundaries. Test both protected text and an eligible alias after the closing quote. |
-| Negation could become a replacement | Curly-apostrophe `don’t → do` and additional negative contractions such as `won't → will` produced suggestions. | Normalize apostrophes for protection and reject negative `n't` forms, including application of unsafe manually stored aliases. |
+| Finding                                                  | Reproduction                                                                                                                                      | Focused fix                                                                                                                                                           |
+| -------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Quoted text could be corrected                           | An internal apostrophe in `'don't change UN'` closed the quote early; an escaped double quote could also expose an alias.                         | Distinguish word-internal apostrophes and escaped delimiters from quote boundaries. Test both protected text and an eligible alias after the closing quote.           |
+| Negation could become a replacement                      | Curly-apostrophe `don’t → do` and additional negative contractions such as `won't → will` produced suggestions.                                   | Normalize apostrophes for protection and reject negative `n't` forms, including application of unsafe manually stored aliases.                                        |
 | Some suggested memories were unusable or formatting-only | Extraction offered multiword spans crossing punctuation, while application correctly abstained; `UN → U.N.` was mined as a recognition confusion. | Share the boundary check between extraction/application; suppress initialism punctuation-only suggestions. Explicitly entered formatting preferences remain explicit. |
-| Dataset parsing misread literal quotes | FLEURS en-US has 647 valid seven-field TSV rows; normal CSV quote handling produced two malformed six-field rows. | Treat quotes literally in both Python preparers. Auditing prior selected calibration/holdout references found **zero affected references**. |
+| Dataset parsing misread literal quotes                   | FLEURS en-US has 647 valid seven-field TSV rows; normal CSV quote handling produced two malformed six-field rows.                                 | Treat quotes literally in both Python preparers. Auditing prior selected calibration/holdout references found **zero affected references**.                           |
 
 The same final 778 golden case definitions failed 155 times with the pre-fix executable and zero times afterward: 49 straight-quote contraction cases, 49 curly-quote contraction cases, 49 escaped-quote cases, two cross-punctuation suggestions and six negation/initialism suggestions. These are repeated probes of the bugs above, not 155 independent product defects. Four expectations in the initial draft incorrectly demanded cross-punctuation substitutions; the final oracle correctly expects abstention. Both the draft and corrected baseline remain in the ignored local artifacts.
 
@@ -29,11 +28,11 @@ Selected **48 previously unused FLEURS recordings, 496.48 seconds (8.27 minutes)
 
 The corrected extractor rebuilt and froze **45 entries** from the original separate calibration predictions/references. The six removed entries were one initialism and five source/target spans crossing punctuation. Native phrase boosting and model cleanup were off. Raw and personalized scores use the identical ASR output.
 
-| Recognizer / locale | Scored / attempted | Raw WER | Memory WER | Changed / worsened |
-| --- | ---: | ---: | ---: | ---: |
-| Nemotron Q8 / US English | 24/24 | 85/597 = 14.24% | 84/597 = 14.07% | 1 / 0 |
-| Nemotron Q8 / Hindi | 24/24 | 81/554 = 14.62% | 76/554 = 13.72% | 5 / 0 |
-| Cohere int8 / US English | 24/24 | 69/597 = 11.56% | 68/597 = 11.39% | 1 / 0 |
+| Recognizer / locale      | Scored / attempted |         Raw WER |      Memory WER | Changed / worsened |
+| ------------------------ | -----------------: | --------------: | --------------: | -----------------: |
+| Nemotron Q8 / US English |              24/24 | 85/597 = 14.24% | 84/597 = 14.07% |              1 / 0 |
+| Nemotron Q8 / Hindi      |              24/24 | 81/554 = 14.62% | 76/554 = 13.72% |              5 / 0 |
+| Cohere int8 / US English |              24/24 | 69/597 = 11.56% | 68/597 = 11.39% |              1 / 0 |
 
 Both recognizers produced the same English name confusion, `Martelli's → Martelly's`, which the same application memory corrected. The Hindi changes were five `ज्यादा → ज़्यादा` spelling substitutions. These results demonstrate a narrow recurring-name/spelling benefit without changing weights; they do not establish personal longitudinal learning or acoustic adaptation.
 

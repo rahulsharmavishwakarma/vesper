@@ -6,14 +6,14 @@ The menus contain ten ASR and six cleanup choices. Additional options include
 Qwen3-ASR, Cohere, Parakeet v2, Parakeet Unified, FastConformer, Qwen2.5, SmolLM2, and Gemma 3.
 See [preset files, compatibility evidence, and validation limits](../docs/model-presets.md).
 
-| Role | Installed runtime | Files / status |
-| --- | --- | --- |
-| NVIDIA Nemotron 3.5 Streaming ASR 0.6B | NeMo-Speech.cpp 0.1.0 | Official Q8 GGUF, 742 MB; pinned CPU/Metal/CUDA/Vulkan runtime selected per platform |
-| NVIDIA Parakeet-TDT-0.6B-v3 (fallback) | sherpa-onnx 1.13.8 | INT8 encoder, decoder, joiner, vocabulary; approximately 670 MB |
-| Qwen3-ASR 0.6B | Patched sherpa-onnx 1.13.8, CPU | Six pinned files, 987,015,347 bytes; long audio processed in segments |
-| Cohere Transcribe (default) | Patched sherpa-onnx 1.13.8, CPU | Four pinned files, 2,888,052,036 bytes; long audio processed in segments; select English/French |
-| Liquid LFM2.5 Audio 1.5B | llama-cpp-2/mtmd 0.1.156, CPU | Q4 backbone and projector, 915,262,016 bytes; English-only completed audio; resident weights |
-| Qwen3.5-0.8B cleanup | llama-cpp-2 0.1.156 | Q4_0 563 MB by default; Q8_0 834 MB selectable |
+| Role                                   | Installed runtime               | Files / status                                                                                  |
+| -------------------------------------- | ------------------------------- | ----------------------------------------------------------------------------------------------- |
+| NVIDIA Nemotron 3.5 Streaming ASR 0.6B | NeMo-Speech.cpp 0.1.0           | Official Q8 GGUF, 742 MB; pinned CPU/Metal/CUDA/Vulkan runtime selected per platform            |
+| NVIDIA Parakeet-TDT-0.6B-v3 (fallback) | sherpa-onnx 1.13.8              | INT8 encoder, decoder, joiner, vocabulary; approximately 670 MB                                 |
+| Qwen3-ASR 0.6B                         | Patched sherpa-onnx 1.13.8, CPU | Six pinned files, 987,015,347 bytes; long audio processed in segments                           |
+| Cohere Transcribe (default)            | Patched sherpa-onnx 1.13.8, CPU | Four pinned files, 2,888,052,036 bytes; long audio processed in segments; select English/French |
+| Liquid LFM2.5 Audio 1.5B               | llama-cpp-2/mtmd 0.1.156, CPU   | Q4 backbone and projector, 915,262,016 bytes; English-only completed audio; resident weights    |
+| Qwen3.5-0.8B cleanup                   | llama-cpp-2 0.1.156             | Q4_0 563 MB by default; Q8_0 834 MB selectable                                                  |
 
 Nemotron repository: [nvidia/nemotron-3.5-asr-streaming-0.6b](https://huggingface.co/nvidia/nemotron-3.5-asr-streaming-0.6b), pinned revision `ea30d66debe3740a08b573244286791d423d6b3e`, OpenMDW-1.1. Its Q8 GGUF is loaded by NVIDIA's [NeMo-Speech.cpp](https://github.com/NVIDIA/NeMo-Speech.cpp) release 0.1.0. The current app uses the versioned C ABI with a resident recognizer, fresh per-recording streams for live captions, and an offline path for imported files.
 

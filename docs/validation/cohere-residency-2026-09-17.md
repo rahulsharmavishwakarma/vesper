@@ -5,7 +5,6 @@
 > and `VESPER_*` override names; legacy environment aliases remain supported.
 > See [current naming and compatibility](../development.md#product-name-and-compatibility). No measurement has been requalified by renaming.
 
-
 Retaining Cohere in the existing worker materially reduces repeated-recording
 latency on this CPU. Across 30 English recordings/build, ASR+writing p50 falls
 **3.279→.805 seconds (75.5% lower)**. All **43 Cohere pairs** preserve raw,
@@ -74,14 +73,14 @@ audio decode, capture, archive, persistence and UI. The p50/p95 values below use
 nearest rank over mixed recording lengths. This sample supports a local
 comparison, not a population p95, confidence interval or cross-device estimate.
 
-| English metric | Per-job Cohere | Resident Cohere |
-| --- | ---: | ---: |
-| ASR p50 / p95, all 30 | 2.912 / 3.550 s | .447 / 2.685 s |
-| ASR+writer p50 / p95, all 30 | 3.279 / 4.177 s | **.805 / 3.514 s** |
-| ASR p50 / p95, matched 28 later requests | 2.915 / 3.550 s | .443 / 1.150 s |
+| English metric                                  |  Per-job Cohere |    Resident Cohere |
+| ----------------------------------------------- | --------------: | -----------------: |
+| ASR p50 / p95, all 30                           | 2.912 / 3.550 s |     .447 / 2.685 s |
+| ASR+writer p50 / p95, all 30                    | 3.279 / 4.177 s | **.805 / 3.514 s** |
+| ASR p50 / p95, matched 28 later requests        | 2.915 / 3.550 s |     .443 / 1.150 s |
 | ASR+writer p50 / p95, matched 28 later requests | 3.267 / 4.100 s | **.776 / 1.697 s** |
-| Maximum process RSS | 5.748 GB | 5.750 GB |
-| Inference errors / writer fidelity rejections | 0 / 1 | 0 / 1 |
+| Maximum process RSS                             |        5.748 GB |           5.750 GB |
+| Inference errors / writer fidelity rejections   |           0 / 1 |              0 / 1 |
 
 The first ASR request in each resident process takes **2.685 and 2.871 s**;
 the matching baseline requests take 2.709 and 2.912 s. Residency does not remove

@@ -6,12 +6,12 @@ This development-only test uses the application's Rust/native inference APIs and
 
 `scripts/prepare-personalization-benchmark.py` prepares a fixed selection without reading model predictions:
 
-| Pack | Calibration | Holdout | Source |
-| --- | --- | --- | --- |
-| US English | 64 development clips | 32 test clips | [FLEURS](https://huggingface.co/datasets/google/fleurs), CC-BY-4.0 |
-| Hindi | 64 development clips | 32 test clips | FLEURS, CC-BY-4.0 |
-| Indian English | 64 reserved clips | 48 separate clips | [Svarah](https://huggingface.co/datasets/ai4bharat/Svarah), CC-BY-4.0 |
-| Hindi-English code switching | None | Existing 16-clip screen | [MUCS / OpenSLR104](https://www.openslr.org/104), CC-BY-SA-4.0 |
+| Pack                         | Calibration          | Holdout                 | Source                                                                |
+| ---------------------------- | -------------------- | ----------------------- | --------------------------------------------------------------------- |
+| US English                   | 64 development clips | 32 test clips           | [FLEURS](https://huggingface.co/datasets/google/fleurs), CC-BY-4.0    |
+| Hindi                        | 64 development clips | 32 test clips           | FLEURS, CC-BY-4.0                                                     |
+| Indian English               | 64 reserved clips    | 48 separate clips       | [Svarah](https://huggingface.co/datasets/ai4bharat/Svarah), CC-BY-4.0 |
+| Hindi-English code switching | None                 | Existing 16-clip screen | [MUCS / OpenSLR104](https://www.openslr.org/104), CC-BY-SA-4.0        |
 
 The preparer hashes source archives/shards and audio, selects 4–20-second natural recordings in fixed hash order, and deduplicates normalized reference text. Previously prepared FLEURS test prompts are excluded. FLEURS calibration uses its official development split; test references never create memory.
 

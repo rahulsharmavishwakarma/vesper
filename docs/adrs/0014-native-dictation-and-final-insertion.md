@@ -94,6 +94,7 @@ one final paste; live external-field insertion below is still a separate proposa
 - [VoiceInk interaction modes](https://tryvoiceink.com/docs/shortcuts), [documented clipboard delivery limitations](https://tryvoiceink.com/docs/clipboard-issues)
 
 Implementation inspection used Tauri 2.11.5, tauri-runtime-wry 2.11.4, Tao 0.35.3, Wry 0.55.1, and the installed Apple SDK. ASR/runtime pins and capability evidence remain in ADR-0006/0012 and the canonical inference research map; this decision changes none of them.
+
 ## Proposal: live text in the original field — approval pending
 
 Problem: the approved ADR-0014 path shows Nemotron partials in the recorder and inserts final text once. The user now requests visible words inside the focused external field during recording, with no Copy click in the normal path.

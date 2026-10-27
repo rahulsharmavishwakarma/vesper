@@ -29,14 +29,14 @@ the Automatic default for Parakeet ([ADR-0026](../adrs/0026-automatic-speech-eng
 
 ## Results
 
-| Set | Engine, device | WER | vs current [95% CI] | Same transcript as current | Median ASR per clip |
-| --- | --- | ---: | --- | ---: | ---: |
-| en-US 100 | Current ONNX, CPU | 5.86% | — | — | 255 ms |
-| en-US 100 | Unified GGUF, CPU | **4.86%** | **−1.01 [−1.75, −0.31]** | 59 / 100 | 284 ms |
-| en-US 100 | Unified GGUF, Metal | **4.86%** | **−1.01 [−1.75, −0.31]** | 59 / 100 | **58 ms** |
-| de-DE 50 | Current ONNX, CPU | 6.62% | — | — | 358 ms |
-| de-DE 50 | Unified GGUF, CPU | 5.99% | −0.63 [−1.58, +0.33] | 25 / 50 | 354 ms |
-| de-DE 50 | Unified GGUF, Metal | 5.99% | −0.63 [−1.58, +0.33] | 25 / 50 | **74 ms** |
+| Set       | Engine, device      |       WER | vs current [95% CI]      | Same transcript as current | Median ASR per clip |
+| --------- | ------------------- | --------: | ------------------------ | -------------------------: | ------------------: |
+| en-US 100 | Current ONNX, CPU   |     5.86% | —                        |                          — |              255 ms |
+| en-US 100 | Unified GGUF, CPU   | **4.86%** | **−1.01 [−1.75, −0.31]** |                   59 / 100 |              284 ms |
+| en-US 100 | Unified GGUF, Metal | **4.86%** | **−1.01 [−1.75, −0.31]** |                   59 / 100 |           **58 ms** |
+| de-DE 50  | Current ONNX, CPU   |     6.62% | —                        |                          — |              358 ms |
+| de-DE 50  | Unified GGUF, CPU   |     5.99% | −0.63 [−1.58, +0.33]     |                    25 / 50 |              354 ms |
+| de-DE 50  | Unified GGUF, Metal |     5.99% | −0.63 [−1.58, +0.33]     |                    25 / 50 |           **74 ms** |
 
 CPU and Metal produced the same scores on both sets. No clip failed. The current engine's 6.62% German result matches
 its #251 record on the same set.
@@ -46,13 +46,13 @@ its #251 record on the same set.
 The [16 September regression corpus](audio-regression-2026-09-16.md) (`asr.json`: 28 FLEURS en-US sentences per
 condition plus 8 non-speech clips), explicit English, same runner and build:
 
-| Lane | Current ONNX, CPU | Unified GGUF, CPU [vs current, 95% CI] | Unified GGUF, Metal [vs current, 95% CI] |
-| --- | ---: | ---: | ---: |
-| Clean, 662 words | 8.01% | 6.34% [−4.47, +0.47] | 6.04% [−4.74, +0.28] |
-| Natural noise 0 dB | 10.57% | 9.52% [−3.62, +0.92] | 9.37% [−3.71, +0.62] |
-| Natural noise 10 dB | 7.55% | 6.95% [−2.30, +0.79] | 6.95% [−2.30, +0.79] |
-| **Quiet, −30 dB** | **64.05%** | **7.25% [−72.91, −37.21]** | **7.25% [−72.91, −37.21]** |
-| Non-speech noise, 8 clips | 0 false transcripts | 0 false transcripts | 0 false transcripts |
+| Lane                      |   Current ONNX, CPU | Unified GGUF, CPU [vs current, 95% CI] | Unified GGUF, Metal [vs current, 95% CI] |
+| ------------------------- | ------------------: | -------------------------------------: | ---------------------------------------: |
+| Clean, 662 words          |               8.01% |                   6.34% [−4.47, +0.47] |                     6.04% [−4.74, +0.28] |
+| Natural noise 0 dB        |              10.57% |                   9.52% [−3.62, +0.92] |                     9.37% [−3.71, +0.62] |
+| Natural noise 10 dB       |               7.55% |                   6.95% [−2.30, +0.79] |                     6.95% [−2.30, +0.79] |
+| **Quiet, −30 dB**         |          **64.05%** |             **7.25% [−72.91, −37.21]** |               **7.25% [−72.91, −37.21]** |
+| Non-speech noise, 8 clips | 0 false transcripts |                    0 false transcripts |                      0 false transcripts |
 
 The current engine loses most words on quiet speech, as its #251 record already showed (68.75% there); the unified
 engine does not. The cause was not isolated: NeMo-Speech.cpp's feature front end may normalize level differently from
@@ -76,13 +76,13 @@ rounds in alternating order. Writer: llama.cpp at the pinned `d8123504`, Qwen3.5
 248 tok/s generation). The speech engines ran as continuous loops; the NeMo lanes used `nemo-speech bench` on 94
 held-out FLEURS clips with the CLI's default thread count, not the app's 4 graph threads.
 
-| Speech engine running alongside | Writer generation | Writer prompt processing | Speech latency with writer running |
-| --- | ---: | ---: | ---: |
-| Core ML on the Neural Engine | −8% | −4% | ×1.32 |
-| Core ML on GPU | −48% | −29% | ×1.52 |
-| MLX on GPU (current Apple GPU engine) | −61% | −33% | ×1.40 |
-| **Unified GGUF, Metal** | **−25%** | **−17%** | **×2.84** (58.6 → 161-172 ms per clip) |
-| **Unified GGUF, CPU** | **−3%** | **−2%** | ×1.96 (300 → 446-740 ms per clip) |
+| Speech engine running alongside       | Writer generation | Writer prompt processing |     Speech latency with writer running |
+| ------------------------------------- | ----------------: | -----------------------: | -------------------------------------: |
+| Core ML on the Neural Engine          |               −8% |                      −4% |                                  ×1.32 |
+| Core ML on GPU                        |              −48% |                     −29% |                                  ×1.52 |
+| MLX on GPU (current Apple GPU engine) |              −61% |                     −33% |                                  ×1.40 |
+| **Unified GGUF, Metal**               |          **−25%** |                 **−17%** | **×2.84** (58.6 → 161-172 ms per clip) |
+| **Unified GGUF, CPU**                 |           **−3%** |                  **−2%** |      ×1.96 (300 → 446-740 ms per clip) |
 
 The unified engine on Metal slows the writer less than the current MLX engine, but its own latency is the most
 sensitive to a concurrent writer; on CPU it barely affects the writer. Vesper's inference worker runs requests one at a

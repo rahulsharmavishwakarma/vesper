@@ -6,10 +6,10 @@ JSON import section. Hugging Face hosts many unrelated architectures; a reposito
 being on the Hub does not make its files compatible with a particular inference
 engine. Profiles describe files for the adapters the application actually runs.
 
-| Purpose | Native adapter | Accepted files |
-| --- | --- | --- |
+| Purpose            | Native adapter                             | Accepted files                                                                                                                 |
+| ------------------ | ------------------------------------------ | ------------------------------------------------------------------------------------------------------------------------------ |
 | Speech recognition | sherpa-onnx 1.13.8 offline NeMo transducer | Exactly one encoder ONNX, decoder ONNX, joiner ONNX and tokens TXT, exported for sherpa-onnx; 16 kHz audio and 80 feature bins |
-| Transcript cleanup | llama-cpp-2 0.1.159 / bundled llama.cpp | One complete, unsplit GGUF instruction model whose architecture and embedded chat template are supported by that build |
+| Transcript cleanup | llama-cpp-2 0.1.159 / bundled llama.cpp    | One complete, unsplit GGUF instruction model whose architecture and embedded chat template are supported by that build         |
 
 Raw Transformers `.safetensors`, PyTorch checkpoints, `.nemo` bundles, arbitrary
 ONNX graphs, split GGUF sets, models with external ONNX tensor files, and other

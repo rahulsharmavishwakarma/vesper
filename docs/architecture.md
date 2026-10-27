@@ -15,18 +15,18 @@ Collection is configurable. With it disabled, recording and inference run withou
 
 ## Boundaries
 
-| Module | Responsibility |
-| --- | --- |
-| `vesper-core` | Validated configuration and shared model/transcript types |
-| `vesper-audio` | CPAL capture on an owning thread; bounded callback ring; native-rate/channel float WAV; Symphonia decoding and filtered resampling |
-| `vesper-models` | Per-model and selected-pipeline inventories, explicit allow-listed downloads, atomic publication, size/SHA-256 verification, provenance |
-| `vesper-nemo` | Safe recognizer/stream/result ownership over the pinned NeMo-Speech.cpp versioned C ABI; the only crate allowed to contain NeMo C ABI FFI code; `vesper-mlx` and `vesper-desktop-platform` carry their own audited unsafe boundaries |
-| `vesper-inference` | Bounded inference worker; Nemotron, Parakeet/Qwen3-ASR/Cohere through sherpa-onnx, LFM2.5 Audio through llama.cpp/mtmd, and Qwen cleanup; per-request state isolation, cancellation and output guards |
-| `vesper-mlx` | Optional (`mlx` feature) safe wrapper over the MLX Swift bridge dylib |
-| `vesper-desktop-platform` | macOS native recorder panel, final-text insertion and project detection bridge |
-| `vesper-data` | Original audio, SQLite metadata, immutable predictions, append-only human reviews, portable exports |
-| `src-tauri/runtime.rs` | One active job, progress, config snapshot, durable raw output before cleanup, failure handling |
-| Svelte frontend | Main workspace plus the compact quick-capture window; model installation, record/stop/cancel, file transcription, results, settings, review/export |
+| Module                    | Responsibility                                                                                                                                                                                                                       |
+| ------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| `vesper-core`             | Validated configuration and shared model/transcript types                                                                                                                                                                            |
+| `vesper-audio`            | CPAL capture on an owning thread; bounded callback ring; native-rate/channel float WAV; Symphonia decoding and filtered resampling                                                                                                   |
+| `vesper-models`           | Per-model and selected-pipeline inventories, explicit allow-listed downloads, atomic publication, size/SHA-256 verification, provenance                                                                                              |
+| `vesper-nemo`             | Safe recognizer/stream/result ownership over the pinned NeMo-Speech.cpp versioned C ABI; the only crate allowed to contain NeMo C ABI FFI code; `vesper-mlx` and `vesper-desktop-platform` carry their own audited unsafe boundaries |
+| `vesper-inference`        | Bounded inference worker; Nemotron, Parakeet/Qwen3-ASR/Cohere through sherpa-onnx, LFM2.5 Audio through llama.cpp/mtmd, and Qwen cleanup; per-request state isolation, cancellation and output guards                                |
+| `vesper-mlx`              | Optional (`mlx` feature) safe wrapper over the MLX Swift bridge dylib                                                                                                                                                                |
+| `vesper-desktop-platform` | macOS native recorder panel, final-text insertion and project detection bridge                                                                                                                                                       |
+| `vesper-data`             | Original audio, SQLite metadata, immutable predictions, append-only human reviews, portable exports                                                                                                                                  |
+| `src-tauri/runtime.rs`    | One active job, progress, config snapshot, durable raw output before cleanup, failure handling                                                                                                                                       |
+| Svelte frontend           | Main workspace plus the compact quick-capture window; model installation, record/stop/cancel, file transcription, results, settings, review/export                                                                                   |
 
 ## Model catalog, installation, and selection
 

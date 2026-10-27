@@ -11,6 +11,7 @@ owner reviewed it and made it public on 23 October 2026.
 ## What is published
 
 One row per transcription:
+
 - **Clip:** its public dataset ID and source.
 - **Conditions:** language and condition.
 - **What ran:** speech model, runtime, backend and precision.
@@ -46,6 +47,7 @@ are in `docs/validation/`. What remains in the reports is process logs, hashes, 
 
   The 23 October 2026 audit (#324) traced every audio folder in `.cache/benchmarks` to its declared source and found no
   recording of the owner. Rows without a declared source are dropped.
+
 - **Reference text only under compatible licences.** FLEURS, AMI and Vesper's own text are CC BY 4.0. Svarah (gated, no
   stated licence) and MUCS (CC BY-SA 4.0) keep IDs, transcripts and scores, but not their reference text.
 - **Synthetic audio stays private.** The dictation controls were spoken by macOS system voices, so that audio isn't
@@ -62,6 +64,7 @@ uv run --locked python scripts/export-benchmark-dataset.py \
 ```
 
 The script writes:
+
 - `data/transcripts.jsonl`
 - `data/reports.jsonl`
 - `summary.json`, with counts and skipped rows by reason

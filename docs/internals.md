@@ -6,16 +6,16 @@ This document is the canonical description of the current desktop application's 
 
 The application deliberately does not put every kind of state in one database.
 
-| State | Persistence | Logical location | Lifetime |
-| --- | --- | --- | --- |
-| User settings and selected models | Pretty-printed JSON | Tauri `app_config_dir/settings.json` | Until reset or manually removed |
-| First-run state | Pretty-printed JSON | Tauri `app_config_dir/onboarding.json` | Permanent for the profile; survives updates and Restore defaults |
-| Session metadata and review history | SQLite | Tauri `app_data_dir/dataset/sessions.sqlite3` | Until the dataset is manually removed |
-| Original imported/captured audio | Ordinary files | Tauri `app_data_dir/dataset/audio/` | Same as its session record |
-| Model weights and native sidecars | Ordinary files | Selected model directory | Until manually removed or repaired |
-| Current operation, progress, microphone level, live partial, cancellation flag, resident models, and latest result | Process memory | None | Lost when the process exits |
-| Browser-preview settings | Web storage | `localStorage` key `vesper.browser-preview.settings.v1` | Browser-profile lifetime |
-| Portable dataset output | JSON, JSONL, and audio files | User-selected export parent | Independent of application state |
+| State                                                                                                              | Persistence                  | Logical location                                        | Lifetime                                                         |
+| ------------------------------------------------------------------------------------------------------------------ | ---------------------------- | ------------------------------------------------------- | ---------------------------------------------------------------- |
+| User settings and selected models                                                                                  | Pretty-printed JSON          | Tauri `app_config_dir/settings.json`                    | Until reset or manually removed                                  |
+| First-run state                                                                                                    | Pretty-printed JSON          | Tauri `app_config_dir/onboarding.json`                  | Permanent for the profile; survives updates and Restore defaults |
+| Session metadata and review history                                                                                | SQLite                       | Tauri `app_data_dir/dataset/sessions.sqlite3`           | Until the dataset is manually removed                            |
+| Original imported/captured audio                                                                                   | Ordinary files               | Tauri `app_data_dir/dataset/audio/`                     | Same as its session record                                       |
+| Model weights and native sidecars                                                                                  | Ordinary files               | Selected model directory                                | Until manually removed or repaired                               |
+| Current operation, progress, microphone level, live partial, cancellation flag, resident models, and latest result | Process memory               | None                                                    | Lost when the process exits                                      |
+| Browser-preview settings                                                                                           | Web storage                  | `localStorage` key `vesper.browser-preview.settings.v1` | Browser-profile lifetime                                         |
+| Portable dataset output                                                                                            | JSON, JSONL, and audio files | User-selected export parent                             | Independent of application state                                 |
 
 Tauri resolves platform-specific configuration and data directories; application code does not hard-code an operating-system home path. The current application identifier is `com.vesper.desktop`. If that root has no explicit state, the app can continue using an existing sibling root from `com.transcribe.desktop`, then `com.ukti.desktop`, then `com.stt.desktop`. It does not move, merge, or delete legacy data. A settings entry, nonempty dataset/model tree, or symlink counts as explicit state; empty directories and `.DS_Store` do not.
 
@@ -72,22 +72,22 @@ WAL mode means `sessions.sqlite3-wal` and `sessions.sqlite3-shm` may exist while
 
 ### Session JSON fields
 
-| Field | Meaning |
-| --- | --- |
-| `id` | UUID for the session and audio filename stem |
-| `createdAt` | UTC RFC 3339 timestamp with millisecond precision |
-| `originalFilename` | Original leaf filename shown to the user |
-| `audioRelativePath` | Managed path in the exact form `audio/<session UUID>.<extension>` |
-| `audioSha256` / `audioBytes` | Integrity and length of the archived original |
-| `rawTranscript` | First machine ASR prediction, or `null` before inference |
-| `cleanedTranscript` | First accepted machine cleanup result, or `null` |
-| `verifiedTranscript` | Latest human-approved verbatim speech label, or `null` |
-| `correctedTranscript` | Latest human-approved edited cleanup target, or `null` |
-| `reviewHistory` | Append-only review revisions with UUID, target kind, text, and timestamp |
-| `reviewStatus` | `pending` or `approved` |
-| `configSnapshot` | Full validated configuration used for the operation |
-| `modelVersions` | JSON object containing pinned artifacts and actual inference runtime provenance |
-| `pipelineEvents` | Timestamped stage/message records such as completion, interruption, or cleanup error |
+| Field                        | Meaning                                                                              |
+| ---------------------------- | ------------------------------------------------------------------------------------ |
+| `id`                         | UUID for the session and audio filename stem                                         |
+| `createdAt`                  | UTC RFC 3339 timestamp with millisecond precision                                    |
+| `originalFilename`           | Original leaf filename shown to the user                                             |
+| `audioRelativePath`          | Managed path in the exact form `audio/<session UUID>.<extension>`                    |
+| `audioSha256` / `audioBytes` | Integrity and length of the archived original                                        |
+| `rawTranscript`              | First machine ASR prediction, or `null` before inference                             |
+| `cleanedTranscript`          | First accepted machine cleanup result, or `null`                                     |
+| `verifiedTranscript`         | Latest human-approved verbatim speech label, or `null`                               |
+| `correctedTranscript`        | Latest human-approved edited cleanup target, or `null`                               |
+| `reviewHistory`              | Append-only review revisions with UUID, target kind, text, and timestamp             |
+| `reviewStatus`               | `pending` or `approved`                                                              |
+| `configSnapshot`             | Full validated configuration used for the operation                                  |
+| `modelVersions`              | JSON object containing pinned artifacts and actual inference runtime provenance      |
+| `pipelineEvents`             | Timestamped stage/message records such as completion, interruption, or cleanup error |
 
 Machine outputs and human labels are separate by design. `set_transcripts` writes original predictions once. `complete_cleanup` requires an existing raw transcript and can write cleanup once. Approval can update the current human label, but every approval appends a new revision. Model output is never inferred to be ground truth.
 
@@ -243,12 +243,12 @@ vesper-export-<uuid>/
 
 For every included record it copies and verifies the original audio, serializes the complete session, and adds:
 
-| Field | Source |
-| --- | --- |
-| `taskEligibility` | `asr`, `cleanup`, both, or neither based on valid human labels |
-| `asrTarget` | Human-verified verbatim speech only |
-| `cleanupInput` | Original raw machine prediction when a cleanup pair is eligible |
-| `cleanupTarget` | Human-approved edited text when a cleanup pair is eligible |
+| Field             | Source                                                          |
+| ----------------- | --------------------------------------------------------------- |
+| `taskEligibility` | `asr`, `cleanup`, both, or neither based on valid human labels  |
+| `asrTarget`       | Human-verified verbatim speech only                             |
+| `cleanupInput`    | Original raw machine prediction when a cleanup pair is eligible |
+| `cleanupTarget`   | Human-approved edited text when a cleanup pair is eligible      |
 
 `metadata.json` currently declares export schema version 1, creation time, filtering mode, session count, manifest/audio paths, and label policy. Files and staging directories are synchronized before the staging directory is renamed into place. Nonempty destinations are never merged or overwritten; failed staging is removed. A reviewed export includes only task-eligible records, while an archive export preserves pending records with null targets.
 
@@ -272,17 +272,17 @@ There is no cloud recovery, automatic backup, database repair UI, session deleti
 
 ## Enforced limits
 
-| Item | Limit/current behavior |
-| --- | --- |
-| Imported audio | 512 MiB per file |
-| Transcript, label, or pipeline-event message | 100,000 Unicode scalar values |
-| Custom cleanup instruction | 4,000 characters |
-| Imported model-profile JSON | 32 KiB |
-| Recording duration | No application time quota; ADR-0011 uses internal Qwen/Cohere segments and preserves resource bounds |
-| Concurrent high-level operations | One |
-| SQLite busy wait | Five seconds |
-| Settings schema | Version 1 |
-| Export schema | Version 1 |
+| Item                                         | Limit/current behavior                                                                               |
+| -------------------------------------------- | ---------------------------------------------------------------------------------------------------- |
+| Imported audio                               | 512 MiB per file                                                                                     |
+| Transcript, label, or pipeline-event message | 100,000 Unicode scalar values                                                                        |
+| Custom cleanup instruction                   | 4,000 characters                                                                                     |
+| Imported model-profile JSON                  | 32 KiB                                                                                               |
+| Recording duration                           | No application time quota; ADR-0011 uses internal Qwen/Cohere segments and preserves resource bounds |
+| Concurrent high-level operations             | One                                                                                                  |
+| SQLite busy wait                             | Five seconds                                                                                         |
+| Settings schema                              | Version 1                                                                                            |
+| Export schema                                | Version 1                                                                                            |
 
 These limits are enforced in code and should be changed there first; documentation must follow the implementation.
 

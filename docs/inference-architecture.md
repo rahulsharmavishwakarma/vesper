@@ -29,15 +29,15 @@ device after the models are installed.
 
 <sub>Diagram source: [inference-high-level.mmd](diagrams/inference-high-level.mmd)</sub>
 
-| Crate | Responsibility |
-| --- | --- |
-| `vesper-core` | Config, model ids, adapter registry (`AdapterKind`, `AdapterCapabilities`), personalization types; no workspace dependencies |
-| `vesper-audio` | Capture, WAV storage, decoding, `ChannelMixer`, resampling, completed-audio segmentation |
-| `vesper-models` | Pinned artifact catalog, install, SHA-256 verification, speech/backend selection |
-| `vesper-inference` | Single worker, adapters, audio frontend, live previews, writer, diarization adapter |
-| `vesper-nemo` / `vesper-mlx` | Safe wrappers over the NeMo-Speech.cpp C ABI and the MLX Swift bridge |
-| `vesper-data` | Local SQLite sessions, transcripts, labels, learning (no inference) |
-| `vesper-desktop` | Tauri app: commands, orchestration, paste, diagnostics |
+| Crate                        | Responsibility                                                                                                               |
+| ---------------------------- | ---------------------------------------------------------------------------------------------------------------------------- |
+| `vesper-core`                | Config, model ids, adapter registry (`AdapterKind`, `AdapterCapabilities`), personalization types; no workspace dependencies |
+| `vesper-audio`               | Capture, WAV storage, decoding, `ChannelMixer`, resampling, completed-audio segmentation                                     |
+| `vesper-models`              | Pinned artifact catalog, install, SHA-256 verification, speech/backend selection                                             |
+| `vesper-inference`           | Single worker, adapters, audio frontend, live previews, writer, diarization adapter                                          |
+| `vesper-nemo` / `vesper-mlx` | Safe wrappers over the NeMo-Speech.cpp C ABI and the MLX Swift bridge                                                        |
+| `vesper-data`                | Local SQLite sessions, transcripts, labels, learning (no inference)                                                          |
+| `vesper-desktop`             | Tauri app: commands, orchestration, paste, diagnostics                                                                       |
 
 ## 2. Recording lifecycle
 
@@ -195,13 +195,13 @@ plus the recorded hash, and every new load re-verifies the full hash.
 
 ## 10. Threads, memory and failure policy
 
-| Thread | Work | Native threads |
-| --- | --- | --- |
-| CPAL callback | Lock-free ring write only | — |
-| `vesper-live-audio` | Forwards capture chunks to the session | — |
-| `vesper-live-frontend` | Silero + DPDFNet8 per buffered recording | ONNX Runtime 1 each |
-| `vesper-inference` | All model work, serially | sherpa-onnx and llama.cpp up to clamp(cores − 2, 1, 8); NeMo and MLX use their runtime defaults |
-| Caller and Tauri threads | Orchestration, persistence, paste | — |
+| Thread                   | Work                                     | Native threads                                                                                  |
+| ------------------------ | ---------------------------------------- | ----------------------------------------------------------------------------------------------- |
+| CPAL callback            | Lock-free ring write only                | —                                                                                               |
+| `vesper-live-audio`      | Forwards capture chunks to the session   | —                                                                                               |
+| `vesper-live-frontend`   | Silero + DPDFNet8 per buffered recording | ONNX Runtime 1 each                                                                             |
+| `vesper-inference`       | All model work, serially                 | sherpa-onnx and llama.cpp up to clamp(cores − 2, 1, 8); NeMo and MLX use their runtime defaults |
+| Caller and Tauri threads | Orchestration, persistence, paste        | —                                                                                               |
 
 <picture>
   <source media="(prefers-color-scheme: dark)" srcset="assets/diagrams/inference-threads-failure.dark.svg">

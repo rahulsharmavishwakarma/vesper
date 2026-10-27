@@ -85,9 +85,9 @@ Afterwards, in **Dictate**:
 
 Default shortcuts while the app is running:
 
-| Action | Shortcut |
-| --- | --- |
-| Hold to talk | `⌥ Shift D` |
+| Action                 | Shortcut        |
+| ---------------------- | --------------- |
+| Hold to talk           | `⌥ Shift D`     |
 | Start / stop recording | `⌘ Shift Space` |
 
 Change these in **Settings → Shortcuts**. Pasting into the original text

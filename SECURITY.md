@@ -2,11 +2,11 @@
 
 ## Supported versions
 
-| Version | Supported |
-| --- | --- |
-| Latest stable release ([Releases](https://github.com/rahulsharmavishwakarma/vesper/releases/latest)) | Yes |
-| `main` | Yes |
-| Older releases, release candidates and nightly builds | No |
+| Version                                                                                              | Supported |
+| ---------------------------------------------------------------------------------------------------- | --------- |
+| Latest stable release ([Releases](https://github.com/rahulsharmavishwakarma/vesper/releases/latest)) | Yes       |
+| `main`                                                                                               | Yes       |
+| Older releases, release candidates and nightly builds                                                | No        |
 
 Fixes ship in the next release. Update to the latest stable version before reporting.
 

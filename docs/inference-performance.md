@@ -50,14 +50,14 @@ for current measurements and their scope.
 
 The user-selected default is Cohere Transcribe INT8 through sherpa-onnx 1.13.8, with completed-recording CPU inference and Qwen writing cleanup. This preference is not a fastest-model claim. Selectable Nemotron 3.5 Q8 uses the official NeMo-Speech.cpp 0.1.0 C ABI and supports live partials. Parakeet v3 INT8 through `sherpa-onnx = 1.13.8` remains an offline CPU fallback. Cleanup uses Qwen3.5-0.8B Q4_0/Q8_0 through `llama-cpp-2 = 0.1.159`. Hugging Face profile selection changes compatible artifacts; it does not make an arbitrary architecture compatible with these runtimes.
 
-| Component       | Current behavior                                                                                                                                         | Consequence                                                                                                                                                                                                                                            |
-| --------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
-| Speech runtime  | Default Cohere uses pinned CPU sherpa-onnx; selectable Nemotron uses CPU/Metal/CUDA/Vulkan NeMo-Speech.cpp with 20 ms capture packets                    | Cohere uses buffered live drafts plus a completed-audio final; NeMo owns cache-aware RNNT state and native partials                                                                                                                                                                 |
-| Cleanup runtime | Metal on Apple Silicon; CUDA/Vulkan/ROCm when compiled with the matching feature; otherwise CPU                                                          | Requests layer, K/Q/V and operator offload; `Auto` retries the complete initialization on CPU after GPU model-load or context-probe failure and records the reason. Explicit GPU selection fails if unavailable; operator placement remains unverified |
-| CPU budget      | Available parallelism minus two, clamped to 1–8, fallback 2; NeMo runtime controls its own threading                                                           | Portable baseline, not a measured optimum                                                                                                                                                                                                              |
+| Component       | Current behavior                                                                                                                                                                                                                                               | Consequence                                                                                                                                                                                                                                            |
+| --------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| Speech runtime  | Default Cohere uses pinned CPU sherpa-onnx; selectable Nemotron uses CPU/Metal/CUDA/Vulkan NeMo-Speech.cpp with 20 ms capture packets                                                                                                                          | Cohere uses buffered live drafts plus a completed-audio final; NeMo owns cache-aware RNNT state and native partials                                                                                                                                    |
+| Cleanup runtime | Metal on Apple Silicon; CUDA/Vulkan/ROCm when compiled with the matching feature; otherwise CPU                                                                                                                                                                | Requests layer, K/Q/V and operator offload; `Auto` retries the complete initialization on CPU after GPU model-load or context-probe failure and records the reason. Explicit GPU selection fails if unavailable; operator placement remains unverified |
+| CPU budget      | Available parallelism minus two, clamped to 1–8, fallback 2; NeMo runtime controls its own threading                                                                                                                                                           | Portable baseline, not a measured optimum                                                                                                                                                                                                              |
 | Object lifetime | One bounded worker retains at most one selected Cohere/Whisper/Nemotron/LFM ASR and one Qwen writer; CPU Qwen-ASR and Parakeet also retain verified recognizers; MLX retains the selected Qwen/Parakeet/Whisper Small model in compatible Apple Silicon builds | Residency is adapter-specific; each recording/segment and Qwen pass starts isolated request state                                                                                                                                                      |
-| Cleanup limits  | Up to 4096 context tokens, bounded output up to 2048 tokens; logical batch 512, physical microbatch 128                                                  | Memory and latency depend on actual prompt/output lengths                                                                                                                                                                                              |
-| Integrity       | Full role-specific verification on resident load; per-job speech adapters verify every request                                                           | Cohere verifies on native load and checks observed identity on reuse; Apple aarch64/macOS enables sha2's supported hardware dispatch while retaining all size/hash checks                                                                              |
+| Cleanup limits  | Up to 4096 context tokens, bounded output up to 2048 tokens; logical batch 512, physical microbatch 128                                                                                                                                                        | Memory and latency depend on actual prompt/output lengths                                                                                                                                                                                              |
+| Integrity       | Full role-specific verification on resident load; per-job speech adapters verify every request                                                                                                                                                                 | Cohere verifies on native load and checks observed identity on reuse; Apple aarch64/macOS enables sha2's supported hardware dispatch while retaining all size/hash checks                                                                              |
 
 These observations come from [Nemotron inference](../crates/vesper-inference/src/nemotron.rs), [cleanup inference](../crates/vesper-inference/src/qwen.rs), [model/runtime selection](../crates/vesper-models/src/lib.rs), and [desktop orchestration](../apps/desktop/src-tauri/src/runtime.rs).
 
@@ -100,12 +100,12 @@ Qwen3.5-0.8B Q4_0, warm resident weights, alternating order). Cached output
 equals uncached output in all 208 pairs, and every cached request restored
 the prefix.
 
-| Backend, preset | Median rewrite, uncached → cached | P90 | Median prefill |
-| --- | ---: | ---: | ---: |
-| CPU, Minimal (default) | 412 → 201 ms | 587 → 371 ms | 243 → 41 ms |
-| CPU, Balanced | 549 → 218 ms | 730 → 398 ms | 368 → 42 ms |
-| Metal, Minimal | 194 → 155 ms | 324 → 286 ms | 55 → 16 ms |
-| Metal, Balanced | 222 → 167 ms | 375 → 317 ms | 72 → 16 ms |
+| Backend, preset        | Median rewrite, uncached → cached |          P90 | Median prefill |
+| ---------------------- | --------------------------------: | -----------: | -------------: |
+| CPU, Minimal (default) |                      412 → 201 ms | 587 → 371 ms |    243 → 41 ms |
+| CPU, Balanced          |                      549 → 218 ms | 730 → 398 ms |    368 → 42 ms |
+| Metal, Minimal         |                      194 → 155 ms | 324 → 286 ms |     55 → 16 ms |
+| Metal, Balanced        |                      222 → 167 ms | 375 → 317 ms |     72 → 16 ms |
 
 Generation time is unchanged; the gain is prompt prefill only. Prompts that
 contain retrieved personal examples and custom GGUF templates still bypass the
@@ -141,7 +141,7 @@ after cancellation and final editing/copy/insertion retain their existing paths.
 This is a frozen-weight application change: no additional inference, model
 lifetime changes, decoder changes, checkpoint changes or concurrent GPU work.
 Status polling during postprocessing remains 500 ms, so a short job can complete
-without an intermediate render. It can reduce the wait to *see recognized text*
+without an intermediate render. It can reduce the wait to _see recognized text_
 when postprocessing is slow; it does not reduce recognition time or stop-to-final
 latency. It is not a new streaming decoder and does not make Cohere live-capable.
 
@@ -438,11 +438,11 @@ Vesper's MLX speech adapters on a 12.6 s FLEURS clip (release build, warm, M5
 Pro). For the three Parakeet TDT models, features took under 0.5 ms. Decoding
 took roughly 45% of each request:
 
-| Model | Total | Encoder | Decode steps | Decode per step |
-| --- | --- | --- | --- | --- |
-| Parakeet v3 | 65 ms | 36 ms | 92 | 0.33 ms |
-| Phonon-2 | 75 ms | 36 ms | 116 | 0.34 ms |
-| Parakeet Redux (float32) | 78 ms | 26 ms | 109 | 0.48 ms |
+| Model                    | Total | Encoder | Decode steps | Decode per step |
+| ------------------------ | ----- | ------- | ------------ | --------------- |
+| Parakeet v3              | 65 ms | 36 ms   | 92           | 0.33 ms         |
+| Phonon-2                 | 75 ms | 36 ms   | 116          | 0.34 ms         |
+| Parakeet Redux (float32) | 78 ms | 26 ms   | 109          | 0.48 ms         |
 
 Each greedy TDT step does about 12M multiply-adds. The upstream serial loop
 waited for the GPU after every step to read the token and duration, so
@@ -459,11 +459,11 @@ to the serial loop for Parakeet v3, Phonon-2 and Redux on 31 clips. Through the
 application on the 94-clip FLEURS en-US held-out set, transcripts were identical
 on 94/94 for each model:
 
-| Model | Median before → after | p95 before → after |
-| --- | --- | --- |
-| Parakeet v3 | 48.2 → 40.8 ms | 70.5 → 63.1 ms |
-| Phonon-2 | 54.5 → 43.9 ms | 86.3 → 68.0 ms |
-| Parakeet Redux | 51.4 → 43.7 ms | 79.7 → 68.4 ms |
+| Model          | Median before → after | p95 before → after |
+| -------------- | --------------------- | ------------------ |
+| Parakeet v3    | 48.2 → 40.8 ms        | 70.5 → 63.1 ms     |
+| Phonon-2       | 54.5 → 43.9 ms        | 86.3 → 68.0 ms     |
+| Parakeet Redux | 51.4 → 43.7 ms        | 79.7 → 68.4 ms     |
 
 Longer recordings gain more: 24–27% on the 12.6 s profiling clip.
 
@@ -819,11 +819,11 @@ Promote a performance profile only after it passes existing tests, the held-out 
 
 All 252 completed-audio requests succeeded: the same 84 English clean/quiet/noise/control cases for each model below. Every transcript exactly matched its final isolated MLX baseline. Exact parity preserves the earlier quality limitations rather than erasing them.
 
-| MLX variant | Clean / quiet / noisy word errors, each /689 | False transcripts on eight non-speech controls | Warm clean median ASR | First ASR request |
-| --- | --- | --- | --- | --- |
-| Parakeet v3, BF16 compute | 29 / 35 / 45 | 0/8 | 55.20 ms | 4.762 s |
-| Qwen-ASR 0.6B, 8-bit | 47 / 52 / 85 | 4/8 | 234.45 ms | 3.380 s |
-| Whisper Small, FP16 | 42 / 79 / 115 | 2/8 | 232.50 ms | 1.736 s |
+| MLX variant               | Clean / quiet / noisy word errors, each /689 | False transcripts on eight non-speech controls | Warm clean median ASR | First ASR request |
+| ------------------------- | -------------------------------------------- | ---------------------------------------------- | --------------------- | ----------------- |
+| Parakeet v3, BF16 compute | 29 / 35 / 45                                 | 0/8                                            | 55.20 ms              | 4.762 s           |
+| Qwen-ASR 0.6B, 8-bit      | 47 / 52 / 85                                 | 4/8                                            | 234.45 ms             | 3.380 s           |
+| Whisper Small, FP16       | 42 / 79 / 115                                | 2/8                                            | 232.50 ms             | 1.736 s           |
 
 Warm clean medians use 23 clean requests after excluding the first request. First requests include integrity verification, model load and initial native execution. Separate verification/load timings in microseconds were Parakeet 973147/797215, Qwen 394444/479056 and Whisper 210109/163760. The host remains M5 Pro/64 GiB/macOS27, fixed request order, uncontrolled power/thermal state and previously used shader caches. These are ASR request timings, excluding capture/frontends/writing/UI; they are neither live latency nor backend-only speedups against differently quantized CPU exports. MLX uses its runtime thread defaults. The existing evaluator's positive `threads=8` field describes the other native runtime worker setting; the environment notes explicitly distinguish it from an MLX graph-thread count.
 
@@ -851,12 +851,12 @@ screen; all rows exclude their first request. Earlier Qwen/Parakeet CPU clean
 medians included all 24 cases; the table below recalculates both CPU paths over
 the same 23 cases as the packaged MLX medians.
 
-| Model | CPU median | Metal median | Comparison boundary |
-| --- | --- | --- | --- |
-| LFM2.5 Audio | 407.28 ms | 205.25 ms | Same Q4 native artifacts, resident weights on both paths |
-| Whisper Small | 730.23 ms | 232.50 ms | Resident Sherpa INT8 versus resident MLX FP16 |
-| Qwen-ASR 0.6B | 1816.46 ms | 234.45 ms | Sherpa INT8 with per-job load versus resident MLX 8-bit |
-| Parakeet v3 | 953.33 ms | 55.20 ms | Sherpa INT8 with per-job load versus resident MLX BF16 compute |
+| Model         | CPU median | Metal median | Comparison boundary                                            |
+| ------------- | ---------- | ------------ | -------------------------------------------------------------- |
+| LFM2.5 Audio  | 407.28 ms  | 205.25 ms    | Same Q4 native artifacts, resident weights on both paths       |
+| Whisper Small | 730.23 ms  | 232.50 ms    | Resident Sherpa INT8 versus resident MLX FP16                  |
+| Qwen-ASR 0.6B | 1816.46 ms | 234.45 ms    | Sherpa INT8 with per-job load versus resident MLX 8-bit        |
+| Parakeet v3   | 953.33 ms  | 55.20 ms     | Sherpa INT8 with per-job load versus resident MLX BF16 compute |
 
 Only LFM keeps the runtime/artifacts/ownership comparable, and even that screen
 has uncontrolled host state and small quality differences. The other rows compare
@@ -875,11 +875,11 @@ A real Metal regression failed before this change because all three variants rep
 
 One unloaded, one-second digital-zero request per variant gave these observations on the same M5 Pro/macOS27 host. The test binary uses the Rust development profile with the unchanged release Swift runtime. These are single observations, not latency distributions:
 
-| Model | Before | After | Speech weights loaded afterward |
-| --- | --- | --- | --- |
-| Parakeet | 3970.22 ms | 855.04 ms | No |
-| Qwen-ASR | 732.79 ms | 373.55 ms | No |
-| Whisper Small | 391.13 ms | 195.84 ms | No |
+| Model         | Before     | After     | Speech weights loaded afterward |
+| ------------- | ---------- | --------- | ------------------------------- |
+| Parakeet      | 3970.22 ms | 855.04 ms | No                              |
+| Qwen-ASR      | 732.79 ms  | 373.55 ms | No                              |
+| Whisper Small | 391.13 ms  | 195.84 ms | No                              |
 
 Timings include integrity verification. The first request can also include worker/driver startup, and processes ran sequentially with uncontrolled host state and existing shader caches. Therefore the Parakeet difference cannot be attributed solely to weight loading. Avoiding speech weight construction is directly observed; general speech latency, ordinary microphone silence, noise hallucinations and model accuracy are not changed or requalified by this diagnostic. Raw before/after logs, binary identities, generated-input description and environment are retained in the ignored `application-mlx-zero-*` results.
 
@@ -895,11 +895,11 @@ Local release evaluator at `8db742410ed538ca644bc31859238817d3f2d7fb` plus the u
 
 The exact same 84-case English manifest has SHA256 `7b32ed77e4481c9d901200c8d5b10ecae95915e8f142c9dbb07444307940f451`: 24 distinct FLEURS utterances in clean, −30dB and noise0dB conditions plus12 controls. Automatic and explicit Metal each ran all 84 cases for each model, for 504 completed ASR requests with zero execution failures. Automatic transcripts matched explicit Metal exactly in all 252 paired cases and also matched the retained September23 explicit outputs. Actual per-request provider was Metal and matched the preferred artifacts. Whisper Small remains evaluation-only.
 
-| Model | Warm clean Automatic median | Warm clean explicit Metal median | First Automatic request | Clean WER | Quiet WER | Noise WER | Non-speech false transcripts |
-| --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: |
-| Parakeet TDT v3 | 73.40ms | 76.60ms | 5772.70ms | 29/689 (4.21%) | 35/689 (5.08%) | 45/689 (6.53%) | 0/8 |
-| Qwen3-ASR 0.6B | 293.90ms | 292.90ms | 4830.65ms | 47/689 (6.82%) | 52/689 (7.55%) | 85/689 (12.34%) | 4/8 |
-| Whisper Small | 252.52ms | 223.84ms | 1700.35ms | 42/689 (6.10%) | 79/689 (11.47%) | 115/689 (16.69%) | 2/8 |
+| Model           | Warm clean Automatic median | Warm clean explicit Metal median | First Automatic request |      Clean WER |       Quiet WER |        Noise WER | Non-speech false transcripts |
+| --------------- | --------------------------: | -------------------------------: | ----------------------: | -------------: | --------------: | ---------------: | ---------------------------: |
+| Parakeet TDT v3 |                     73.40ms |                          76.60ms |               5772.70ms | 29/689 (4.21%) |  35/689 (5.08%) |   45/689 (6.53%) |                          0/8 |
+| Qwen3-ASR 0.6B  |                    293.90ms |                         292.90ms |               4830.65ms | 47/689 (6.82%) |  52/689 (7.55%) |  85/689 (12.34%) |                          4/8 |
+| Whisper Small   |                    252.52ms |                         223.84ms |               1700.35ms | 42/689 (6.10%) | 79/689 (11.47%) | 115/689 (16.69%) |                          2/8 |
 
 Warm medians use 23 clean cases after the first case, not 23 independent cold starts. `asrMs` is completed-audio manager wall time from submission to returned raw text, excluding file decode, installation and writer time. The first includes model verification/loading; the device probe can already have run during readiness. First-request shader/OS caches and fixed run order differ, so cold differences are not attributable to Automatic. Process maximum RSS from `time -l` for Automatic was about 2.61GiB/1.13GiB/0.64GiB respectively; these are process measurements, not complete GPU/unified-memory accounting. No power or sustained thermal measurements were taken. The unchanged non-speech errors remain visible and are not converted into successes by backend retries.
 
@@ -962,18 +962,18 @@ comparisons of complete runtime/artifact/ownership configurations, not isolated
 GPU kernel speedups. CPU Parakeet and Qwen retained per-job model loads in this historical run; the later live-adapter implementation changes that ownership.
 
 | English configuration / actual provider | Failures / 32 | WER, failure as empty | Subsequent ASR mean / p95 |
-| --- | ---: | ---: | ---: |
-| Cohere / CPU | 1 | 11.09% | 550.2 / 806.8 ms |
-| Parakeet / CPU | 0 | 9.15% | 911.3 / 1015.2 ms |
-| Parakeet Automatic / Metal MLX | 0 | 5.55% | 48.2 / 67.6 ms |
-| Qwen-ASR / CPU | 0 | 6.30% | 1724.3 / 1934.3 ms |
-| Qwen-ASR Automatic / Metal MLX | 0 | 3.15% | 182.0 / 288.3 ms |
-| LFM / CPU | 0 | 7.35% | 336.3 / 514.7 ms |
-| LFM Automatic / Metal | 0 | 6.90% | 168.1 / 267.4 ms |
-| Whisper Small / CPU | 0 | 6.45% | 647.7 / 999.4 ms |
-| Whisper Small Automatic / Metal MLX | 0 | 5.85% | 191.0 / 282.1 ms |
-| Whisper Turbo / CPU | 0 | 5.10% | 1154.6 / 1615.4 ms |
-| Nemotron / Metal | 0 | 12.29% | 92.7 / 154.2 ms |
+| --------------------------------------- | ------------: | --------------------: | ------------------------: |
+| Cohere / CPU                            |             1 |                11.09% |          550.2 / 806.8 ms |
+| Parakeet / CPU                          |             0 |                 9.15% |         911.3 / 1015.2 ms |
+| Parakeet Automatic / Metal MLX          |             0 |                 5.55% |            48.2 / 67.6 ms |
+| Qwen-ASR / CPU                          |             0 |                 6.30% |        1724.3 / 1934.3 ms |
+| Qwen-ASR Automatic / Metal MLX          |             0 |                 3.15% |          182.0 / 288.3 ms |
+| LFM / CPU                               |             0 |                 7.35% |          336.3 / 514.7 ms |
+| LFM Automatic / Metal                   |             0 |                 6.90% |          168.1 / 267.4 ms |
+| Whisper Small / CPU                     |             0 |                 6.45% |          647.7 / 999.4 ms |
+| Whisper Small Automatic / Metal MLX     |             0 |                 5.85% |          191.0 / 282.1 ms |
+| Whisper Turbo / CPU                     |             0 |                 5.10% |        1154.6 / 1615.4 ms |
+| Nemotron / Metal                        |             0 |                12.29% |           92.7 / 154.2 ms |
 
 All English rows use the same 667 reference words. Cohere's `duration_token_limit`
 failure discarded an incomplete result; its 31 scored outputs have 42 edits / 635
@@ -981,11 +981,11 @@ words (6.61%). The failure-as-empty diagnostic counts the missing 32-word output
 as deletions, giving 74/667. Both views and the execution failure are retained;
 the scoring convention does not turn a failed request into a qualified one.
 
-| Hindi configuration / actual provider | Failures / 32 | WER | Subsequent ASR mean / p95 |
-| --- | ---: | ---: | ---: |
-| Qwen-ASR / CPU | 0 | 25.17% | 2573.1 / 3653.4 ms |
-| Qwen-ASR Automatic / CPU | 0 | 25.17% | 2553.0 / 3613.6 ms |
-| Nemotron / Metal | 0 | 14.42% | 107.5 / 189.4 ms |
+| Hindi configuration / actual provider | Failures / 32 |    WER | Subsequent ASR mean / p95 |
+| ------------------------------------- | ------------: | -----: | ------------------------: |
+| Qwen-ASR / CPU                        |             0 | 25.17% |        2573.1 / 3653.4 ms |
+| Qwen-ASR Automatic / CPU              |             0 | 25.17% |        2553.0 / 3613.6 ms |
+| Nemotron / Metal                      |             0 | 14.42% |          107.5 / 189.4 ms |
 
 Hindi has 735 reference words. Automatic Qwen selects the compatible CPU path;
 all 32 outputs match explicit CPU exactly. The original requested-lane environment

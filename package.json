@@ -21,8 +21,8 @@
     "rust:lint": "make lint-rust",
     "rust:fmt": "make fmt-rust-check",
     "lint": "eslint scripts apps/desktop *.mjs --max-warnings 0",
-    "format:check": "prettier --ignore-path .gitignore --check \"apps/desktop/**/*.{js,mjs,ts,svelte,css,html}\" \"scripts/**/*.{js,mjs,ts}\" \"*.mjs\" \"*.json\"",
-    "format": "prettier --ignore-path .gitignore --write \"apps/desktop/**/*.{js,mjs,ts,svelte,css,html}\" \"scripts/**/*.{js,mjs,ts}\" \"*.mjs\" \"*.json\""
+    "format:check": "prettier --ignore-path .gitignore --check \"apps/desktop/**/*.{js,mjs,ts,svelte,css,html}\" \"scripts/**/*.{js,mjs,ts}\" \"*.mjs\" \"*.json\" \"*.md\" \".github/**/*.md\" \"docs/**/*.md\" \"benchmarks/**/*.md\" \"models/**/*.md\" \"notebooks/**/*.md\"",
+    "format": "prettier --ignore-path .gitignore --write \"apps/desktop/**/*.{js,mjs,ts,svelte,css,html}\" \"scripts/**/*.{js,mjs,ts}\" \"*.mjs\" \"*.json\" \"*.md\" \".github/**/*.md\" \"docs/**/*.md\" \"benchmarks/**/*.md\" \"models/**/*.md\" \"notebooks/**/*.md\""
   },
   "devDependencies": {
     "@eslint/js": "10.0.1",
