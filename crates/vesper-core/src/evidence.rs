@@ -18,7 +18,8 @@ pub enum HeardClass {
     /// One capitalized dictionary word replaced by another capitalized spelling:
     /// a name-spelling repair (`Jonathon` → `Jonathan`). Treated like a phrase.
     NameSpelling,
-    /// One ordinary word (`write`, `Monday`). Never activated automatically.
+    /// One ordinary word (`data`, `write`). Policy 6: learned only as a term
+    /// (capitalized, acronym or identifier) after three independent edits.
     OrdinaryWord,
 }
 
@@ -50,8 +51,11 @@ pub struct PromotionPolicy {
 /// optimistic Beta(2, 0.5) prior, so one edit suffices; other spellings use
 /// Jeffreys Beta(0.5, 0.5), so two do.
 /// Ordinary phrases and capitalized name repairs also need two independent edits
-/// and matching teaching cues. A single lowercase ordinary word (`write` →
-/// `Wright`) is never promoted automatically (r = ∞).
+/// and matching teaching cues. A single ordinary word becomes a term (`data` →
+/// `Detta`, `rack` → `RAG`) only inside a known project, with r = 6 (t ≈ 0.86),
+/// so three independent edits, and like every automatic alias it applies only
+/// when the current text shares a teaching cue. An ordinary word corrected to
+/// another lowercase word (`write` → `right`) is never promoted (r = ∞).
 pub fn promotion_policy(pair: &CorrectionPair, known_project: bool) -> PromotionPolicy {
     let letters = |s: &str| {
         s.chars()
@@ -79,6 +83,13 @@ pub fn promotion_policy(pair: &CorrectionPair, known_project: bool) -> Promotion
                 alpha: 0.5,
                 beta: 0.5,
                 cost_ratio: Some(4.0),
+            }
+        }
+        HeardClass::OrdinaryWord if known_project && term_like(&pair.intended) && !rejoin => {
+            PromotionPolicy {
+                alpha: 0.5,
+                beta: 0.5,
+                cost_ratio: Some(6.0),
             }
         }
         HeardClass::OrdinaryWord => PromotionPolicy {
@@ -112,6 +123,15 @@ impl PromotionPolicy {
         self.threshold()?;
         (1..=64).find(|s| self.promotes(*s, 0))
     }
+}
+
+/// A spelling that reads as a term rather than prose: capitalized, an acronym or
+/// an identifier, one token.
+fn term_like(text: &str) -> bool {
+    !text.contains(char::is_whitespace)
+        && (technical_spelling(text)
+            || text.chars().next().is_some_and(char::is_uppercase)
+            || text.chars().any(|c| c.is_ascii_digit()) && text.chars().any(char::is_alphabetic))
 }
 
 /// Error patterns differ between recognizers, so learned heard→meant aliases are
@@ -207,10 +227,34 @@ mod tests {
             promotion_policy(&pair("read me", "README.md"), true).required_support(),
             Some(2)
         );
-        for (heard, intended) in [("write", "Wright"), ("monday", "Mandy"), ("notes", "Nots")] {
+        // Policy 6: an ordinary word may become a term after three edits in a project.
+        for (heard, intended) in [
+            ("data", "Detta"),
+            ("rack", "RAG"),
+            ("west", "Vesper"),
+            ("write", "Wright"),
+        ] {
             assert_eq!(
                 promotion_policy(&pair(heard, intended), true).required_support(),
-                None
+                Some(3),
+                "{heard} -> {intended}"
+            );
+            assert_eq!(
+                promotion_policy(&pair(heard, intended), false).required_support(),
+                None,
+                "{heard} -> {intended} outside a project"
+            );
+        }
+        for (heard, intended) in [
+            ("write", "right"),
+            ("data", "date"),
+            ("notes", "Notes"),
+            ("rack", "rag"),
+        ] {
+            assert_eq!(
+                promotion_policy(&pair(heard, intended), true).required_support(),
+                None,
+                "{heard} -> {intended}"
             );
         }
         assert!(!identifier.promotes(10, 1));

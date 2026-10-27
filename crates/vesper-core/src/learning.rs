@@ -6,7 +6,7 @@ use crate::{
 };
 use serde::{Deserialize, Serialize};
 
-pub const LEARNING_POLICY_VERSION: u32 = 5;
+pub const LEARNING_POLICY_VERSION: u32 = 6;
 pub const MAX_LEARNING_TEXT_BYTES: usize = 8192;
 pub const MAX_TEACHING_TERMS: usize = 16;
 pub const MAX_TEACHING_TERM_BYTES: usize = 64;
@@ -46,6 +46,8 @@ pub fn teaching_context_terms(before: &str, pair: &CorrectionPair, project: &str
 }
 
 /// Matching also uses pre-cleanup text, never model-generated context or feedback targets.
+/// A single ordinary word heard (policy 6, `data` → `Detta`) needs two distinct
+/// shared cues: one shared everyday word matched most unrelated sentences.
 pub fn teaching_context_matches<'a>(
     teaching: impl IntoIterator<Item = &'a String>,
     raw: &str,
@@ -53,7 +55,27 @@ pub fn teaching_context_matches<'a>(
     project: &str,
 ) -> bool {
     let current = teaching_context_terms(raw, pair, project);
-    teaching.into_iter().any(|term| current.contains(term))
+    let word = crate::heard_class(pair) == crate::HeardClass::OrdinaryWord;
+    let shared: std::collections::BTreeSet<&String> = teaching
+        .into_iter()
+        .filter(|term| current.contains(*term) && (!word || informative_cue(term)))
+        .collect();
+    shared.len() >= if word { 2 } else { 1 }
+}
+
+/// Function words and short words say nothing about the topic, so they never
+/// count as a cue for a single ordinary word (`getting the data from it … how`).
+fn informative_cue(term: &str) -> bool {
+    const FUNCTION: &[&str] = &[
+        "about", "above", "after", "again", "also", "because", "been", "before", "being", "both",
+        "could", "does", "done", "down", "each", "even", "from", "have", "having", "here", "into",
+        "just", "know", "like", "made", "make", "many", "more", "most", "much", "must", "need",
+        "only", "other", "over", "said", "same", "should", "some", "such", "than", "that", "their",
+        "them", "then", "there", "these", "they", "thing", "things", "this", "those", "through",
+        "very", "want", "were", "what", "when", "where", "which", "while", "will", "with", "would",
+        "your", "yeah", "okay", "really", "actually", "going",
+    ];
+    term.chars().count() >= 4 && !FUNCTION.contains(&term)
 }
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
@@ -113,7 +135,15 @@ pub fn automatic_spelling_pair(before: &str, after: &str) -> Option<CorrectionPa
     if before.len().max(after.len()) > MAX_LEARNING_TEXT_BYTES {
         return None;
     }
-    let pair = correction_suggestions(before, after).pop()?;
+    let mut pair = correction_suggestions(before, after).pop()?;
+    // `Data is…` → `Detta is…`: a capital that only marks the sentence start is the
+    // same heard word as mid-sentence `data`, so both count toward one rule.
+    if sentence_initial_only(before, &pair.heard)
+        && crate::ordinary_word(&pair.heard)
+        && !pair.heard.eq_ignore_ascii_case(&pair.intended)
+    {
+        pair.heard = pair.heard.to_lowercase();
+    }
     let intended_words = pair.intended.split_whitespace().count();
     if pair.heard.split_whitespace().count() > 3 || intended_words > 3 {
         return None;
@@ -168,7 +198,50 @@ pub fn technical_spelling(text: &str) -> bool {
                 .any(|(a, b)| a.is_lowercase() && b.is_uppercase()))
 }
 
+/// `word` is one capitalized word that appears in `text` only at sentence starts.
+fn sentence_initial_only(text: &str, word: &str) -> bool {
+    let mut chars = word.chars();
+    if word.contains(char::is_whitespace)
+        || !chars.next().is_some_and(char::is_uppercase)
+        || !chars.all(char::is_lowercase)
+    {
+        return false;
+    }
+    let mut seen = false;
+    for (i, _) in text.match_indices(word) {
+        let end = i + word.len();
+        if text[end..]
+            .chars()
+            .next()
+            .is_some_and(char::is_alphanumeric)
+            || text[..i]
+                .chars()
+                .next_back()
+                .is_some_and(char::is_alphanumeric)
+        {
+            continue;
+        }
+        let before = text[..i].trim_end();
+        if !(before.is_empty() || before.ends_with(['.', '!', '?'])) {
+            return false;
+        }
+        seen = true;
+    }
+    seen
+}
+
 fn related_spelling(a: &str, b: &str) -> bool {
+    // A short acronym for a misheard word with the same first letter (`rack` → `RAG`).
+    if (2..=6).contains(&b.len())
+        && b.bytes().all(|c| c.is_ascii_uppercase())
+        && a.len() >= 2
+        && a.chars().all(char::is_alphabetic)
+        && a.chars().next().map(|c| c.to_ascii_lowercase())
+            == b.chars().next().map(|c| c.to_ascii_lowercase())
+        && crate::gate::edit_distance(&a.to_lowercase(), &b.to_lowercase()) <= 2
+    {
+        return true;
+    }
     // Short acronym repairs still need ordinary independent correction support.
     // Lowercase short words never inherit this exception.
     if (3..=8).contains(&a.len())
@@ -301,6 +374,49 @@ mod tests {
         ] {
             assert!(!teaching_context_matches(&cues, text, &pair, "repo"));
         }
+    }
+
+    #[test]
+    fn a_single_ordinary_word_needs_two_topical_cues() {
+        let pair = CorrectionPair {
+            heard: "data".into(),
+            intended: "Detta".into(),
+        };
+        let teaching: Vec<String> = ["currency", "formatting", "fermion", "from", "how"]
+            .map(String::from)
+            .to_vec();
+        let matches = |text: &str| teaching_context_matches(&teaching, text, &pair, "repo");
+        assert!(matches("Check how data handles currency formatting"));
+        // One topical cue, or only function words, is not enough.
+        assert!(!matches("Fix the data formatting first"));
+        assert!(!matches("Getting the data from it and learning how"));
+        // A phrase keeps the one-cue rule.
+        let phrase = CorrectionPair {
+            heard: "cube control".into(),
+            intended: "kubectl".into(),
+        };
+        assert!(teaching_context_matches(
+            &["deployment".to_string()],
+            "Run cube control for the deployment",
+            &phrase,
+            "repo"
+        ));
+    }
+
+    #[test]
+    fn sentence_start_capitals_and_short_acronyms_make_one_rule() {
+        let pair = automatic_spelling_pair(
+            "Data is doing the formatting",
+            "Detta is doing the formatting",
+        );
+        assert_eq!(pair.map(|p| p.heard).as_deref(), Some("data"));
+        let pair = automatic_spelling_pair("the agentic rack system", "the agentic RAG system");
+        assert_eq!(
+            pair.map(|p| (p.heard, p.intended)),
+            Some(("rack".into(), "RAG".into()))
+        );
+        // Different first letter: not a misheard acronym.
+        assert!(automatic_spelling_pair("we use the format", "we ISO the format").is_none());
     }
 
     #[test]

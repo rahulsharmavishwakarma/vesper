@@ -93,7 +93,7 @@ fn letters(text: &str) -> String {
         .collect()
 }
 
-fn edit_distance(a: &str, b: &str) -> usize {
+pub(crate) fn edit_distance(a: &str, b: &str) -> usize {
     let b = b.chars().collect::<Vec<_>>();
     let mut row = (0..=b.len()).collect::<Vec<_>>();
     for (i, x) in a.chars().enumerate() {

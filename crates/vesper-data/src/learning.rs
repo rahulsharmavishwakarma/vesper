@@ -2563,23 +2563,40 @@ mod tests {
             .activated,
             ["README.md"]
         );
-        // A single lowercase ordinary word is never promoted automatically.
+        // Policy 6: one ordinary word becomes a term only after three independent
+        // edits in a project; earlier edits stay provisional.
+        for (id, activated) in [("d1", false), ("d2", false), ("d3", true)] {
+            let outcome = teach(
+                id,
+                "The data formatting page for Fermion",
+                "The Detta formatting page for Fermion",
+            );
+            assert_eq!(outcome.activated == ["Detta"], activated, "{id}");
+        }
+        // Corrected to another lowercase word: never automatic, however often.
         for id in ["w1", "w2", "w3", "w4", "w5"] {
             let outcome = teach(
                 id,
                 "I will write the repo docs",
-                "I will Wright the repo docs",
+                "I will right the repo docs",
             );
             assert!(outcome.activated.is_empty(), "{id}");
         }
+        // Word-to-word rewrites are not spelling evidence at all: no candidate.
         let state = store.automatic_learning_state().unwrap();
-        let wright = state
+        assert!(state
             .candidates
             .iter()
-            .find(|c| c.phrase == "Wright")
+            .all(|c| c.phrase != "right" || c.state != CandidateState::Active));
+        let data = state
+            .candidates
+            .iter()
+            .find(|c| c.phrase == "Detta")
             .unwrap();
-        assert_eq!(wright.state, CandidateState::Provisional);
-        assert!(wright.reason.contains("single common word"));
+        assert_eq!(
+            (data.state, data.support.len()),
+            (CandidateState::Active, 3)
+        );
     }
 
     #[test]

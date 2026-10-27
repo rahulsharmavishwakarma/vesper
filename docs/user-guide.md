@@ -501,9 +501,12 @@ The app can learn eligible joined/split names, closely related spellings and
 narrow acronym corrections, even when the edit includes minor formatting.
 Ordinary terms need corrections from two independent recordings before they
 are reused in matching context. Replaying the same recording does not count
-twice. A single everyday word changed into another (for example *write* →
-*Wright*) is never applied automatically, because it would also change ordinary
-sentences. Add that spelling in Vocabulary if you want it. Sentence rewrites and changed decisions are not global dictionary rules,
+twice. An everyday word that was really a name or acronym (for example *data* →
+*Detta*, *rack* → *RAG*) is learned after three corrections in the same project.
+It is then used only when the sentence shares at least two topic words with the
+sentences you corrected, so "the training data" stays as it is. An everyday word
+changed into another everyday word (*write* → *right*) is never applied
+automatically. Add that spelling in Vocabulary if you want it. Sentence rewrites and changed decisions are not global dictionary rules,
 and some valid corrections still fall outside the current learning rules.
 
 If you restore an earlier spelling in the same draft, its withdrawn correction
