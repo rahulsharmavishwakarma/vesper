@@ -73,6 +73,8 @@ export interface PersonalizationProfile {
   projectMode: 'manual' | 'automatic';
   projectRules: ProjectRule[];
   automaticWorkspaces: boolean;
+  learnFromAppEdits: boolean;
+  appFieldWords: boolean;
   automaticLearning: boolean;
   learningEpoch: number;
   vocabulary: VocabularyEntry[];
@@ -129,6 +131,8 @@ export const getPersonalization = async () => {
     projectMode: profile.projectMode ?? 'manual',
     projectRules: profile.projectRules ?? [],
     automaticWorkspaces: profile.automaticWorkspaces ?? false,
+    learnFromAppEdits: profile.learnFromAppEdits ?? false,
+    appFieldWords: profile.appFieldWords ?? false,
   };
 };
 export interface LearningOutcome {

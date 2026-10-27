@@ -87,3 +87,7 @@ Bounds:
 Removing a word writes a tombstone that clears its evidence and spoken forms. Mining never re-adds that spelling in any letter case. **Forget words from this source** deletes that source's evidence and pauses the source until you resume it. Rows left with no evidence are deleted; suspended rows keep their status. Forgetting a tier-B source also clears scan cursors, so a resume rescans from scratch.
 
 The inventory never stores file paths, document text, URLs or window titles. Workspace scopes are opaque keys, and labels are folder names. Mining roots are explicit opt-in preferences, like folder rules. Deletion is logical; it does not claim forensic erasure of SQLite pages.
+
+## Learning from other apps
+
+Both features are opt-in (`appFieldWords`, `learnFromAppEdits`, off when absent). Field words are read before the caret and held in memory for one recording; nothing is stored. A read-back stores only the corrected pasted span, as that result's draft, through the same path as an in-app edit. The `app_learning_coverage` table keeps per-app counts (bundle identifier and counts only) and is deleted when both features are off. See [app learning](app-learning.md).

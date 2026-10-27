@@ -690,7 +690,12 @@ The app may retain bounded before/after text and one recent attempt locally for 
 
 ### Corrections in other applications
 
-Vesper does not watch text you edit outside the app. A former TextEdit-only correction observer was removed because dictation pastes into any application; see the [removal note](personalization/external-observer.md). To teach a spelling, correct the draft inside Vesper instead — ordinary in-app spelling learning remains automatic.
+Two optional settings in Writing → Workspaces let Vesper learn from the app you dictate into. Both are off until you turn them on.
+
+- **Use words already in the field:** when you dictate into a text field, Vesper reads the text before the cursor and uses names and terms written there to fix misheard words in that dictation. Nothing it reads is saved.
+- **Learn from fixes in other apps:** after pasting, Vesper reads back only the text it pasted, at your next dictation or two minutes later. Words you changed there teach spellings the same way an edit in Vesper does, and the corrected text becomes that dictation's draft in History.
+
+Neither reads password fields. Apps that do not expose their text show as unreadable in the per-app counts. See [learning from the app you dictate into](personalization/app-learning.md). Correcting the draft inside Vesper still teaches as before. The former TextEdit-only observer is described in the [removal note](personalization/external-observer.md).
 
 **IBM Granite Speech 5.0 TurboCTC** is an optional fast model for Apple Silicon. It supports English, French, German, Spanish, Portuguese, Italian and Japanese, and writes punctuation. It runs only on the Mac's GPU: keep **Automatic** (or choose **Metal**), select its language, save, and use **Download** (about 948 MB). CPU is unavailable for this model, and it is not offered on other computers. See [its evaluation](validation/granite-speech5-turboctc-2026-10-21.md).
 

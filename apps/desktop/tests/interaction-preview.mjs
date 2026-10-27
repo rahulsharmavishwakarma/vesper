@@ -89,6 +89,8 @@ if (states) {
     projectMode: 'manual',
     projectRules: [],
     automaticWorkspaces: true,
+    learnFromAppEdits: false,
+    appFieldWords: false,
     vocabulary: [],
     examples: [],
   };

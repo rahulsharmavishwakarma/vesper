@@ -56,6 +56,13 @@ test('automatic workspaces rename, merge, opt into folder learning and remove', 
   await writing(page);
   const toggle = page.getByRole('checkbox', { name: 'Detect workspaces automatically' });
   await expect(toggle).toBeChecked();
+  // Reading other apps' text is opt-in.
+  await expect(
+    page.getByRole('checkbox', { name: 'Use words already in the field' }),
+  ).not.toBeChecked();
+  await expect(
+    page.getByRole('checkbox', { name: 'Learn from fixes in other apps' }),
+  ).not.toBeChecked();
   const rows = page.locator('.workspace');
   await expect(rows).toHaveCount(2);
   await expect(rows.first()).toContainText('synthetic-repo');

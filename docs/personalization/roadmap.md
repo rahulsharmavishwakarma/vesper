@@ -121,7 +121,7 @@ The [concrete shadow proposal](https://github.com/rahulsharmavishwakarma/vesper/
 
 ## C: external-editor learning (removed)
 
-Users often correct text after dictating into another application, so a TextEdit-only adapter covered almost none of real corrections, and per-application adapters do not scale. The optional TextEdit observer was therefore removed on 29 September 2026; the dated design and qualification record is preserved in the [removal note](external-observer.md), and the decision record is [#61](https://github.com/rahulsharmavishwakarma/vesper/issues/61). Copy/paste success is not correction feedback. In-app draft edits remain the app-agnostic learning path.
+Users often correct text after dictating into another application, so a TextEdit-only adapter covered almost none of real corrections, and per-application adapters do not scale. The optional TextEdit observer was therefore removed on 29 September 2026; the dated design and qualification record is preserved in the [removal note](external-observer.md), and the decision record is [#61](https://github.com/rahulsharmavishwakarma/vesper/issues/61). Copy/paste success is not correction feedback. In-app draft edits remain the app-agnostic learning path; the opt-in [fix read-back](app-learning.md) (27 October 2026) feeds fixes made in the destination app into that same path through generic Accessibility reads rather than per-app adapters.
 
 ## D: optional own-model and acoustic adaptation
 

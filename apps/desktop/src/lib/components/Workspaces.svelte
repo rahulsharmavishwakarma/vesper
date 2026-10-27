@@ -149,6 +149,38 @@
       you enter above always wins.
     </p>
   </div>
+  <div class="setting-toggle">
+    <label class="checkbox-field" for="app-field-words"
+      ><input
+        id="app-field-words"
+        type="checkbox"
+        bind:checked={profile.appFieldWords}
+        {disabled}
+        aria-describedby="app-field-words-help"
+      /><span>Use words already in the field</span></label
+    >
+    <p id="app-field-words-help" class="note checkbox-help">
+      Off until you turn it on. When you dictate into a text field, Vesper reads the text before the
+      cursor and uses names and terms written there to fix misheard words in that dictation. Nothing
+      it reads is saved.
+    </p>
+  </div>
+  <div class="setting-toggle">
+    <label class="checkbox-field" for="learn-from-app-edits"
+      ><input
+        id="learn-from-app-edits"
+        type="checkbox"
+        bind:checked={profile.learnFromAppEdits}
+        {disabled}
+        aria-describedby="learn-from-app-edits-help"
+      /><span>Learn from fixes in other apps</span></label
+    >
+    <p id="learn-from-app-edits-help" class="note checkbox-help">
+      Off until you turn it on. After pasting, Vesper reads back only the text it pasted, at your
+      next dictation or two minutes later. Words you changed there teach spellings, just like an
+      edit here.
+    </p>
+  </div>
   {#if workspaces.length === 0}
     <p class="note">No workspaces yet.</p>
   {/if}

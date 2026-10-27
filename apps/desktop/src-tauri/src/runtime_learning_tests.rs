@@ -635,3 +635,46 @@ fn a_hinted_decode_keeps_near_miss_repairs_in_shadow() {
         Some("Run the encoder on NVIDIA hardware")
     );
 }
+
+/// Fix read-back (opt-in): a word the user changed in another app after the paste
+/// reaches learning as a draft edit, and teaches like an in-app edit would.
+#[test]
+fn a_fix_made_in_another_app_teaches_through_the_draft_edit_path() {
+    let dir = tempfile::tempdir().unwrap();
+    let root = dir.path().join("dataset");
+    let runtime = Arc::new(Runtime::default());
+    let heard = "Deploy it with kube ctl tonight";
+    let complete_one = |source: u16| {
+        complete(
+            &root,
+            &runtime,
+            source,
+            AsrModel::CohereTranscribe,
+            Language::English,
+            heard,
+        )
+    };
+    let result = complete_one(1);
+    let pasted = result
+        .personalized_transcript
+        .as_deref()
+        .unwrap_or(&result.raw_transcript)
+        .to_owned();
+    // What the destination field holds later: the user's fix, then more typing.
+    let region = "Deploy it with kubectl tonight\nThen check the pods";
+    let corrected = vesper_core::aligned_edit(&pasted, region).unwrap();
+    assert_eq!(corrected, "Deploy it with kubectl tonight");
+    runtime
+        .edit_latest_draft(root.clone(), &result.result_id, 0, corrected)
+        .unwrap();
+    // A second independent fix of the same non-word activates the spelling.
+    let result = complete_one(2);
+    let corrected = vesper_core::aligned_edit(heard, region).unwrap();
+    runtime
+        .edit_latest_draft(root.clone(), &result.result_id, 0, corrected)
+        .unwrap();
+    assert_eq!(
+        complete_one(3).personalized_transcript.as_deref(),
+        Some("Deploy it with kubectl tonight")
+    );
+}
