@@ -7,6 +7,7 @@ mod diarization;
 pub mod environment;
 mod error;
 mod evidence;
+mod formatting;
 mod gate;
 mod generated;
 mod hooks;
@@ -38,6 +39,7 @@ pub use config::{
 pub use diarization::{SpeakerSegment, SpeakerTimeline};
 pub use error::{Error, Result};
 pub use evidence::*;
+pub use formatting::{format_dictation, Formatted};
 pub use gate::{correction_gate, correction_gate_with, ordinary_language, ordinary_word, NearMiss};
 pub use generated::runtime_language_code;
 pub use hooks::{
