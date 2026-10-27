@@ -314,6 +314,12 @@ AX read, whose per-app latency and coverage are unmeasured.
   app's window list while locked found 0 windows in 8 of 11 running apps and no
   `AXDocument` in the other 3, so coverage can only be measured in an unlocked,
   in-use session.
+  A second passive run after unlock (720 samples, 27 October 2026) saw only
+  Safari frontmost: the web host resolved in 302 of 720 samples (42%), read p50
+  0.7 ms, p95 1.5 ms, max 75 ms; 414 samples had no web area above the focused
+  element and 4 were accessibility errors. The samples record no focus role, so
+  whether the misses were the address bar, a blank tab or another control is
+  unknown. Every other app remains unmeasured.
 - Structure detection uses folder names only. Projects without conventional
   structure folders can split into subfolder workspaces; Merge fixes this, and a
   merged folder keeps resolving to its target.
