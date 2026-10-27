@@ -1,6 +1,6 @@
 # Architecture
 
-The Tauri application runs native inference from Rust and renders Svelte 5 in the system WebView. The selected speech adapter always runs locally: all current ASR adapters expose recording previews through a common session. Nemotron uses native cache-aware streaming; English/Metal Qwen uses native MLX previews; completed-audio adapters use bounded buffered previews followed by an authoritative full-recording pass. See [live adapters](live-transcription.md). Python is not in the runtime dependency path.
+The Tauri application runs native inference from Rust and renders Svelte 5 in the system WebView. The selected speech adapter always runs locally: all current ASR adapters expose recording previews through a common session. Nemotron uses native cache-aware streaming; English/Metal Qwen uses native MLX previews; completed-audio adapters use bounded buffered previews followed by an authoritative full-recording pass. Automatic picks the runtime for each model and Mac (CPU, Apple GPU or Neural Engine). See [live adapters](live-transcription.md). Python is not in the runtime dependency path.
 
 The [backend inference architecture](inference-architecture.md) gives the detailed component diagrams: worker ownership, adapters and backends, live pipeline, audio frontend, writer, diarization, model installation and failure policy. Accepted decisions are indexed in [Architecture Decision Records](adrs/README.md). Exact database, filesystem, settings, model-storage, privacy, and failure semantics live in the canonical [Application internals](internals.md) document.
 
@@ -12,11 +12,13 @@ flowchart LR
     A2 --> C2[Decode / mono 16 kHz]
     C --> D[Selected ASR adapter]
     C2 --> D
-    D --> D1[Nemotron, Parakeet unified GGUF / NeMo-Speech.cpp]
-    D --> D3[Parakeet, Qwen3-ASR, Cohere / sherpa-onnx]
-    D --> D4[LFM2.5 Audio / llama.cpp mtmd]
+    D --> D1[NeMo-Speech.cpp: Nemotron, Parakeet v3]
+    D --> D2[sherpa-onnx: Parakeet, Qwen3-ASR, Cohere,<br/>Whisper, Moonshine, custom profiles]
+    D --> D3[MLX Swift: Granite, Phonon-2, Redux,<br/>MLX Parakeet, Qwen3-ASR, Whisper]
+    D --> D5[Core ML + MLX: Parakeet v3 on the Neural Engine]
+    D --> D4[llama.cpp mtmd: LFM2.5 Audio]
     D --> E[Durable raw transcript]
-    E --> F[Qwen / llama.cpp]
+    E --> F[Writing model / llama.cpp]
     F --> G[Conservative output checks]
     E --> H[Raw / cleaned result]
     G --> H

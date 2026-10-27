@@ -22,6 +22,7 @@
   <a href="#getting-started">Get&nbsp;started</a> ·
   <a href="docs/user-guide.md">User&nbsp;guide</a> ·
   <a href="#development">Build&nbsp;from&nbsp;source</a> ·
+  <a href="docs/README.md">Docs</a> ·
   <a href="https://github.com/rahulsharmavishwakarma/vesper/issues">Issues</a>
 </p>
 
@@ -59,16 +60,14 @@ Intel Macs, Windows and Linux are not current release targets.
 The app is **not yet notarized** with an Apple Developer ID, so macOS warns on
 the first launch. Drag Vesper to Applications and open it; if macOS says it cannot
 verify the app, go to **System Settings → Privacy & Security** and choose **Open
-Anyway**. If it instead says **"Vesper" is damaged and can't be opened** (the
-0.1.0 download, which is only partly signed), run
-`xattr -cr /Applications/Vesper.app` in Terminal and open it again. Later releases
-seal the whole app, so they show the normal warning. Verify the download against
-`SHA256SUMS` if you want to confirm it.
+Anyway**. If the older 0.1.0 download says **"Vesper" is damaged**,
+run `xattr -cr /Applications/Vesper.app` in Terminal and open it again. You can
+verify any download against `SHA256SUMS`.
 Signing and notarization are tracked in
 [issue #64](https://github.com/rahulsharmavishwakarma/vesper/issues/64).
 
-You can also [run from source](#development). Packaging details are in the
-[release guide](docs/ci-and-releases.md#release-workflow-and-download-url).
+What changed in each version is in the [changelog](CHANGELOG.md). You can also
+[run from source](#development).
 
 ## Getting started
 
@@ -106,6 +105,36 @@ transcripts** in Settings to stop archiving new sessions. Personal vocabulary
 and compact correction evidence are stored separately on the device. Read the
 [storage and privacy details](docs/user-guide.md#privacy-and-storage).
 
+## How it works
+
+Vesper is a single Tauri 2 desktop app. A Rust core captures audio and runs every
+model in-process on one inference worker; the Svelte interface talks to it over
+Tauri IPC. Nothing is sent to a server.
+
+```mermaid
+flowchart TB
+  subgraph App["Vesper app (Tauri 2)"]
+    ui["Svelte UI<br/>Dictate · History · Models · Settings"]
+    audio["Audio capture and decoding<br/>vesper-audio"]
+    worker["Inference worker<br/>vesper-inference"]
+    store[("Local history<br/>SQLite + audio")]
+  end
+  subgraph Runtimes["Native runtimes (on device)"]
+    asr["Speech recognition<br/>sherpa-onnx · NeMo-Speech.cpp<br/>MLX · Core ML · llama.cpp"]
+    writer["Optional text cleanup<br/>llama.cpp"]
+  end
+  mic(["Microphone or audio file"]) --> audio --> worker
+  worker <-->|audio → text → cleaned text| Runtimes
+  worker -->|live drafts and final text| ui
+  worker --> store
+  ui -->|copy or paste| target(["The app you were typing in"])
+  models[("Models<br/>downloaded once, hash-verified")] -.-> Runtimes
+```
+
+Automatic picks the engine for each model and Mac (CPU, Apple GPU or Neural
+Engine). See [architecture](docs/architecture.md) and the
+[inference architecture](docs/inference-architecture.md) for the details.
+
 ## Development
 
 The app uses Rust, Tauri, Svelte and TypeScript. Install the
@@ -133,8 +162,7 @@ make check
 
 For builds, formatting, tests and release commands, see the
 [development guide](docs/development.md) and [CI documentation](docs/ci-and-releases.md).
-See the [architecture](docs/architecture.md), [inference backend architecture](docs/inference-architecture.md) and [research](docs/research.md)
-guides for technical background.
+All guides are listed in the [documentation index](docs/README.md).
 
 ## Contributing and support
 
