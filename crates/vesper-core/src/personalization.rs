@@ -92,7 +92,8 @@ pub struct PersonalizationProfile {
     pub active_project: String,
     pub project_mode: crate::ProjectMode,
     pub project_rules: Vec<crate::ProjectRule>,
-    /// Detect repo/folder/website workspaces at shortcut capture start.
+    /// Detect repo/folder/website workspaces at shortcut capture start. Opt-in:
+    /// it reads the frontmost app's open document, so it is off until enabled.
     pub automatic_workspaces: bool,
     pub automatic_learning: bool,
     /// Changes when learning permission changes or all automatic evidence is forgotten.
@@ -119,7 +120,7 @@ impl Default for PersonalizationProfile {
             active_project: String::new(),
             project_mode: crate::ProjectMode::Manual,
             project_rules: vec![],
-            automatic_workspaces: true,
+            automatic_workspaces: false,
             automatic_learning: false,
             learning_epoch: 0,
             vocabulary: vec![],

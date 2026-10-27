@@ -15,6 +15,16 @@ fn store() -> (tempfile::TempDir, DatasetStore) {
 }
 
 #[test]
+fn detection_is_off_until_enabled() {
+    let dir = tempfile::tempdir().unwrap();
+    let store = DatasetStore::open(dir.path().into()).unwrap();
+    assert!(!store.personalization().unwrap().automatic_workspaces);
+    let s = dictate(&store, CODE, "/Users/tester/work/alpha/a.rs", 1);
+    assert!(s.workspace.workspace_key.is_empty());
+    assert_eq!(store.workspace_state().unwrap(), WorkspaceState::default());
+}
+
+#[test]
 fn detection_coverage_counts_results_and_clears_when_turned_off() {
     let (_dir, store) = store();
     store

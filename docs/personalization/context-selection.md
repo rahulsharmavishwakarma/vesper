@@ -152,13 +152,16 @@ training targets.
 
 Status: implemented on `feature/automatic-workspaces`; resolver, storage and
 settings are covered by unit, store and mocked-browser tests and a synthetic
-replay. **Live per-app accessibility coverage is unmeasured** and needs an
-owner-approved manual check before any app is described as supported.
+replay. Per-app accessibility coverage is measured only from real dictations
+while the user has detection switched on ([coverage](#coverage-from-real-dictations));
+an app is not described as supported until those counts show it.
 
 Vesper detects which workspace a shortcut dictation goes into without rules:
 a code repository, a document folder, a website, or only an app category.
-It is on by default (`automaticWorkspaces` in the profile; **Detect workspaces
-automatically** in Writing → Workspaces) and applies when no project name is
+It is **off by default** (`automaticWorkspaces` in the profile; **Detect workspaces
+automatically** in Writing → Workspaces): it reads the frontmost app's open
+document location, so the user opts in. A profile without the field reads as
+off. When on, it applies when no project name is
 entered, whether project selection is manual or rule-based.
 
 ### Precedence
@@ -302,30 +305,28 @@ store; it is **not** evidence of live accessibility coverage.
 These were measured on an M5 Pro while other builds ran; they exclude the native
 AX read, whose per-app latency and coverage are unmeasured.
 
+### Coverage from real dictations
+
+While detection is on, each shortcut dictation adds one count for its frontmost
+app to the `workspace_detection` table: the bundle identifier, whether the
+bounded read found a file, folder, web host or nothing, and a read-latency
+bucket (under 1, 5 or 30 ms, or slower). No path, host, title or text is
+stored, at most 64 apps are kept, and turning detection off deletes the table's
+rows. The read is the one dictation already performs, timed around
+`project_context`; nothing is sampled between dictations. To summarize:
+
+```sh
+cargo run --release -p vesper-data --example workspace_detection_report -- DATASET_DIR
+```
+
 ### Limitations
 
-- Live `AXDocument`/`AXURL` coverage is unmeasured for every app, including
-  TextEdit, VS Code, Cursor, Terminal, iTerm2, Xcode, Pages, Word, Notes, Safari,
-  Chromium browsers and Mail. Until an owner-approved manual check, treat each as
-  unqualified.
-  A passive read-only sampler of the frontmost app (no activation, no opened
-  windows) ran for 4 hours on 27 October 2026 but saw only the login window,
-  because the Mac stayed locked; it yielded no per-app coverage. A read of every
-  app's window list while locked found 0 windows in 8 of 11 running apps and no
-  `AXDocument` in the other 3, so coverage can only be measured in an unlocked,
-  in-use session.
-  A second passive run after unlock (720 samples, 27 October 2026) saw only
-  Safari frontmost: the web host resolved in 302 of 720 samples (42%), read p50
-  0.7 ms, p95 1.5 ms, max 75 ms; 414 samples had no web area above the focused
-  element and 4 were accessibility errors. The samples record no focus role, so
-  whether the misses were the address bar, a blank tab or another control is
-  unknown. A third run (94 frontmost samples, 27 October 2026) also recorded
-  the focused element's role: Safari resolved the web host in 31 of 31 samples
-  with a focused element (web area, group, button, menu item), and all 63 misses
-  had no focused element at all, where dictation has no insertion target. Its
-  window pass saw a background VS Code window exposing a file `AXDocument`;
-  Finder and Discord windows exposed none. The owner stopped further sampling,
-  so Cursor, Terminal, iTerm2, Mail, Notes and Brave remain unmeasured.
+- Per-app `AXDocument`/`AXURL` coverage comes only from the user's own
+  dictations with detection on; apps without counts are unmeasured. Earlier
+  passive frontmost-app sampling (27 October 2026) was stopped at the owner's
+  request and its data deleted. Before deletion it showed Safari resolving the
+  web host whenever an element had focus (31 of 31) and a VS Code window
+  exposing its file; Finder and Discord exposed nothing.
 - Structure detection uses folder names only. Projects without conventional
   structure folders can split into subfolder workspaces; Merge fixes this, and a
   merged folder keeps resolving to its target.

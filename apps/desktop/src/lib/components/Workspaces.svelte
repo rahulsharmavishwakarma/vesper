@@ -143,10 +143,10 @@
       /><span>Detect workspaces automatically</span></label
     >
     <p id="automatic-workspaces-help" class="note checkbox-help">
-      When you dictate with the shortcut, Vesper notes the folder of the open file or the website
-      you are on, never its contents. A repository, document folder or site appears here after about
-      five dictations on two days and keeps its own vocabulary. A project you enter above always
-      wins.
+      Off until you turn it on. When you dictate with the shortcut, Vesper notes the folder of the
+      open file or the website you are on, never its contents. A repository, document folder or site
+      appears here after about five dictations on two days and keeps its own vocabulary. A project
+      you enter above always wins.
     </p>
   </div>
   {#if workspaces.length === 0}

@@ -128,7 +128,7 @@ export const getPersonalization = async () => {
     ...profile,
     projectMode: profile.projectMode ?? 'manual',
     projectRules: profile.projectRules ?? [],
-    automaticWorkspaces: profile.automaticWorkspaces ?? true,
+    automaticWorkspaces: profile.automaticWorkspaces ?? false,
   };
 };
 export interface LearningOutcome {

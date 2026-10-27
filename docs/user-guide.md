@@ -561,7 +561,8 @@ Changing rules or switching apps cannot move an in-flight recording's feedback
 into another project. Vesper reads app identity and the focused window's document
 location for folder rules and workspaces, never document contents to guess the project.
 
-**Workspaces** (Writing → Workspaces) are detected automatically when you dictate
+**Workspaces** (Writing → Workspaces) are off until you turn on **Detect
+workspaces automatically**. Then they are detected when you dictate
 with the shortcut and have not entered a project. Vesper notes the folder of the
 file open in the focused window (for example a repository in VS Code or Terminal,
 or a document folder) or, in a browser, only the website's name. A workspace
@@ -575,9 +576,12 @@ workspace, **Learn words from this folder…** lets you pick a folder Vesper may
 read later to learn spellings; **Stop learning from folder** withdraws that.
 A project you enter, and any application rule, always wins. Turn off **Detect
 workspaces automatically** to stop detection; existing workspaces stay listed.
-Detection relies on what each app exposes through Accessibility, which has not
-yet been checked app by app; apps that expose nothing (for example Mail or
-Slack) use shared vocabulary.
+Detection relies on what each app exposes through Accessibility; apps that
+expose nothing (for example Mail or Slack) use shared vocabulary. While
+detection is on, Vesper counts, for each app you dictate into, how often it
+found a file, folder or website and how long the read took. Only the app's
+identifier and the counts are kept, never what was found, and turning detection
+off deletes them.
 
 **Apply my saved corrections** works with all supported speech models, including
 when cleanup is off or the writer fails. **Request extra speech hints when supported**

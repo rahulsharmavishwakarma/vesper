@@ -168,6 +168,10 @@ fn run(seed: u64, dir: &std::path::Path, timings: &mut BTreeMap<&'static str, Ve
     let root = dir.join(format!("seed-{seed}"));
     let _ = std::fs::remove_dir_all(&root);
     let store = DatasetStore::open(root.clone()).unwrap();
+    // Detection is opt-in; the replay measures it switched on.
+    let mut profile = store.personalization().unwrap();
+    profile.automatic_workspaces = true;
+    store.save_personalization(profile).unwrap();
     let mut rng = Rng(seed.wrapping_mul(0x9E3779B97F4A7C15) | 1);
     let total: u32 = ACTIVITIES.iter().map(|a| a.weight).sum();
     let mut rows = Vec::new();
