@@ -714,6 +714,12 @@ impl crate::DictationPersonalizationSnapshot {
         );
         set.hints = self.working_set.hints.clone();
         set.hint_hash = self.working_set.hint_hash.clone();
+        // Opt-in field words: spellings the user already wrote in this field.
+        for term in &self.field_terms {
+            if !set.references.contains(term) {
+                set.references.push(term.clone());
+            }
+        }
         set
     }
 }
@@ -730,6 +736,34 @@ mod tests {
 
     fn mined(surface: &str, source: TermSource, scope: &str, count: u32) -> MinedTerm {
         MinedTerm::new(surface, source, scope, count)
+    }
+
+    #[test]
+    fn field_words_become_references_that_repair_a_near_miss() {
+        let (_dir, store) = store();
+        let mut snapshot = store.dictation_personalization_snapshot().unwrap();
+        snapshot.field_terms =
+            vesper_core::field_terms("We moved Kubernetes to the new Vesper runner.");
+        let raw = "the cubernetes job runs on vasper";
+        let set = snapshot.post_asr_working_set(raw, Language::English);
+        assert!(set.references.iter().any(|r| r == "Kubernetes"));
+        let gate = vesper_core::correction_gate_with(
+            raw,
+            &set,
+            Language::English,
+            vesper_core::NearMiss::Apply,
+        );
+        assert_eq!(gate.text, "the Kubernetes job runs on Vesper");
+        // Without field words nothing is known, so nothing changes.
+        snapshot.field_terms.clear();
+        let set = snapshot.post_asr_working_set(raw, Language::English);
+        let gate = vesper_core::correction_gate_with(
+            raw,
+            &set,
+            Language::English,
+            vesper_core::NearMiss::Apply,
+        );
+        assert_eq!(gate.text, raw);
     }
 
     #[test]

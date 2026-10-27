@@ -108,6 +108,8 @@ pub struct DictationPersonalizationSnapshot {
     // per-recording selection made after workspace resolution.
     pub inventory: Vec<vesper_core::InventoryTerm>,
     pub working_set: vesper_core::WorkingSet,
+    /// Opt-in field words read at capture start; references for this recording only.
+    pub field_terms: Vec<String>,
 }
 
 impl DictationPersonalizationSnapshot {
@@ -284,6 +286,7 @@ impl DatasetStore {
             // A damaged inventory never blocks dictation; it only loses hints.
             inventory: self.inventory_terms().unwrap_or_default(),
             working_set: vesper_core::WorkingSet::default(),
+            field_terms: vec![],
         };
         tx.commit()?;
         Ok(snapshot)
