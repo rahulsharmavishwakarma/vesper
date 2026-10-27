@@ -64,7 +64,7 @@ Use the narrowest relevant test while developing, then run `make check` before s
 | `make check`                        | Complete local and CI validation                                                    |
 | `make version-check`                | Verify Cargo, npm, lockfile, and Tauri versions agree                               |
 | `make build-debug`                  | Debug desktop application and platform bundle                                       |
-| `make diagrams`                     | Render `docs/diagrams/*.mmd` to SVGs styled with the app's design tokens            |
+| `make diagrams`                     | Render the overview diagrams in `docs/diagrams/*.mjs` to SVGs in the app's style    |
 
 Tests must not open a microphone, download model weights, access user application data, or depend on a network service. Use temporary directories and small synthetic fixtures. Model-backed and microphone checks belong in the explicit manual validation flow described in [docs/validation.md](docs/validation.md).
 

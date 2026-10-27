@@ -162,7 +162,7 @@ container-smoke: container-build ## Manually health-check the optional browser-p
 	[ "$$(docker inspect --format '{{.State.Health.Status}}' "$$container_id")" = healthy ]; \
 	docker exec "$$container_id" wget -qO- http://127.0.0.1:8080/healthz | grep -qx ok
 
-diagrams: ## Render docs/diagrams/*.mmd to SVGs styled with the app's design tokens (needs make setup-checks)
+diagrams: ## Render the overview diagrams in docs/diagrams/*.mjs to SVGs in the app's style
 	node scripts/render-diagrams.mjs
 
 check-web: ## Check Svelte and TypeScript
