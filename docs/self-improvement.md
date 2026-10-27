@@ -84,12 +84,18 @@ Qwen3.5-0.8B writer. Preserve the existing fidelity checks and raw fallback.
 The earlier technical-tail pass was retired on 14 October 2026 (ADR-0008); an
 ordinary custom-writer profile still uses its own single-pass route.
 
-<picture>
-  <source media="(prefers-color-scheme: dark)" srcset="assets/diagrams/self-improvement-cleanup-first.dark.svg">
-  <img alt="Proposed cleanup-first improvement loop (not implemented)" src="assets/diagrams/self-improvement-cleanup-first.light.svg">
-</picture>
-
-<sub>Diagram source: [self-improvement-cleanup-first.mmd](diagrams/self-improvement-cleanup-first.mmd)</sub>
+```mermaid
+flowchart TD
+    R["Explicitly reviewed cleanup targets"] --> S["PROPOSED: immutable grouped snapshots"]
+    S --> T["Optional local trainer; pinned base"]
+    T --> C["Separate adapter artifact and provenance"]
+    C --> V["Native conversion and load proof"]
+    V --> E["Paired held-out quality and resource gates"]
+    E -->|"All required gates pass"| H["Review candidate report"]
+    E -->|"Fail or missing evidence"| K["Retain or restore prior model"]
+    H -->|"Approve between requests"| A["Atomic activation; retain previous artifact"]
+    A -->|"Failure or user rollback"| K
+```
 
 Reuse reviewed exports, adding per-target withdrawal, immutable source/review
 hashes, grouped and temporal holdouts, and candidate dependency tracking. Add a

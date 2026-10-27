@@ -77,12 +77,10 @@ Those component timings exclude snapshot loading, recording startup and renderin
 See [the exact native envelope](native-qualification.md#automatic-projects-and-external-correction-component-check--27-september-2026).
 Natural-use routing accuracy and end-to-end capture latency remain unqualified.
 
-<picture>
-  <source media="(prefers-color-scheme: dark)" srcset="../assets/diagrams/personalization-project-routing.dark.svg">
-  <img alt="Automatic project routing boundary" src="../assets/diagrams/personalization-project-routing.light.svg">
-</picture>
-
-<sub>Diagram source: [personalization-project-routing.mmd](../diagrams/personalization-project-routing.mmd)</sub>
+The resolver takes the receiving app at capture start, an optional qualified
+document URL, saved app or folder rules and any manual override. It freezes one
+effective project, with its provenance, for the whole operation; ASR hints, the
+writer, memory and later feedback all use that snapshot.
 
 Apple's [frontmost application](https://developer.apple.com/documentation/appkit/nsworkspace/frontmostapplication)
 and [bundle identifier](https://developer.apple.com/documentation/appkit/nsrunningapplication/bundleidentifier)

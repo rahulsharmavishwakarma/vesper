@@ -747,12 +747,28 @@ the GPG-signed annotated tag that [issue #62](https://github.com/rahulsharmavish
 describes; the changelog lists commit subjects, and the published release notes
 still come from GitHub's generated notes; nightly builds are out of scope.
 
-<picture>
-  <source media="(prefers-color-scheme: dark)" srcset="assets/diagrams/release-bot.dark.svg">
-  <img alt="Release sequence from version bump through tag, approved build, approved publish and verification" src="assets/diagrams/release-bot.light.svg">
-</picture>
-
-<sub>Diagram source: [release-bot.mmd](diagrams/release-bot.mmd)</sub>
+```mermaid
+sequenceDiagram
+    actor Maintainer
+    participant Prep as Prepare release (App token)
+    participant PR as Release PR
+    participant Main as main
+    participant Rel as Release workflow
+    participant Prod as production environment
+    Maintainer->>Prep: dispatch bump or version
+    Prep->>PR: set version, open release/vX.Y.Z
+    Maintainer->>PR: review checks, squash-merge
+    PR->>Main: "Release vX.Y.Z"
+    Main->>Prep: push event, tag job
+    Prep->>Rel: push tag vX.Y.Z
+    Rel->>Prod: desktop build waits for approval
+    Maintainer->>Prod: approve build
+    Prod->>Rel: build, stage draft
+    Rel->>Prod: dispatch promote, waits for approval
+    Maintainer->>Prod: approve publish
+    Prod->>Rel: publish draft, then verify
+    Note over Prep,Rel: Mismatched version, existing tag, or unmerged PR means no tag
+```
 
 ### Manual release sequence (fallback)
 

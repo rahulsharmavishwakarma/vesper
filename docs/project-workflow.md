@@ -230,15 +230,26 @@ Combine work-type labels when the deliverables genuinely span categories, such a
 
 ## Architecture diagram workflow
 
-Architecture diagrams are Mermaid files in [`docs/diagrams/`](diagrams/), the
-reviewable source. `make diagrams` (after `make setup-checks`, which installs
-the Chromium it uses) renders each one to `docs/assets/diagrams/NAME.light.svg`
-and `NAME.dark.svg` with `scripts/render-diagrams.mjs`. The renderer builds a
-Mermaid theme from the app's design tokens in `apps/desktop/src/tokens.css`
-(the Ember dark palette and its light variant) and embeds a small subset of the
-app's Bricolage Grotesque font, so diagrams match the app on GitHub too. Pages
-embed both files with a `<picture>` element, which follows the reader's light or
-dark setting, followed by a link to the source:
+Diagrams come in two kinds:
+
+- **Overview diagrams** are the few that readers meet first: the README, the
+  [architecture](architecture.md), [backend](inference-architecture.md) and
+  [live transcription](live-transcription.md) overviews. Each is laid out by
+  hand as coordinates in [`docs/diagrams/NAME.mjs`](diagrams/), so boxes line
+  up and arrows never cross labels. `make diagrams` renders it with
+  `scripts/render-diagrams.mjs` to `docs/assets/diagrams/NAME.light.svg` and
+  `NAME.dark.svg`, using the app's design tokens in
+  `apps/desktop/src/tokens.css` and a 20 KB subset of its Bricolage Grotesque
+  font. Colour shows what each box is: accent for Vesper's own code, amber for
+  native runtimes, neutral cylinders for data on the Mac, and dashed outlines
+  for things outside Vesper.
+- **Detailed diagrams** stay fenced Mermaid in the owning page, which GitHub
+  renders in the reader's theme. Prefer a table for mappings (model to
+  runtime) and failure lists, and add a diagram only when ordering or
+  branching is hard to follow in prose.
+
+Pages embed an overview diagram with a `<picture>` element, which follows the
+reader's light or dark setting, followed by a link to the source:
 
 ```html
 <picture>
@@ -247,10 +258,10 @@ dark setting, followed by a link to the source:
 </picture>
 ```
 
-Each SVG records the hashes of its source and of `tokens.css`;
-`scripts/render-diagrams.test.mjs` fails when an SVG is stale, when a source has
-no SVGs, or when a page still has an inline Mermaid block. Changing the design
-tokens therefore means running `make diagrams` in the same change. Use a component/data-flow diagram for ownership and data
+`scripts/render-diagrams.test.mjs` renders every source again and fails when a
+committed SVG differs, when an SVG has no source, or when a page embeds a
+missing SVG. Changing the design tokens or a layout therefore means running
+`make diagrams` in the same change; it needs only Node. Use a component/data-flow diagram for ownership and data
 boundaries, or a sequence diagram when ordering, cancellation and asynchronous
 callbacks determine correctness. Update the existing diagram with its related
 implementation; avoid another diagram for a change that leaves these boundaries
@@ -271,7 +282,7 @@ can produce elements for supported syntax. Unsupported conversions need an
 equivalent element layout checked against the source; do not silently drop
 edges or treat an image fallback as an editable diagram.
 
-Render with `make diagrams` and inspect both themes for labels, arrow direction, boundary labels
+Render changed diagrams and inspect both themes for overlapping labels, arrow direction, boundary labels
 and clipping. Inspect the Excalidraw view too when one is produced. If a visual
 artifact is retained, keep its editable `.excalidraw` file beside the owning
 source and update them together. An expiring MCP checkpoint or shared URL is
