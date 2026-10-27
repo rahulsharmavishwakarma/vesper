@@ -57,3 +57,22 @@ The lexicon includes inflections and many proper names. This makes the gate *mor
 - English only. Supporting other languages needs a per-language lexicon and its own evaluation.
 - A term whose spoken form is entirely ordinary words (`user id` → `user_id`, `cube control` → `kubectl`) is not normalized. It improves only through a recognizer hint, or through a correction the user taught (exact aliases in the [automatic dictionary](automatic-dictionary.md)). Results are in the [term evaluation](term-evaluation.md).
 - Membership is not frequency. Rare dictionary words count as ordinary, which favors missed corrections over wrong ones.
+
+## Rejected: automatic sound-alike replacement of ordinary words (28 October 2026)
+
+Some recognition errors are real words that sound like a term: `data` for Detta, `rack` for RAG, `Bray` for Brave. A model-free rule that replaced an ordinary word with a known term of the same rule-based sound key (within two letter edits) was tested as a dry run. It used all 1,814 terms mined from the Vesper repository over 465 local transcripts.
+
+| Measure | Value |
+| --- | --- |
+| Ordinary words checked | 8,397 |
+| Changes it would make | 733 |
+| Distinct word → term pairs | 91 |
+| Most frequent | `etc` → UTC (100), `use` → ISO (61), `data` → Detta (38), `any` → ANE (36), `from` → VRAM (32), `where` → WER (28), `go` → GUI (26) |
+
+Nearly all were wrong, including most `data` → Detta, because sound cannot tell the intended word from the term. The gate therefore keeps its rule that ordinary words are never rewritten automatically.
+
+The writer is not a substitute. In the term evaluation it neither repaired nor inserted terms, and on the formatting phrases its Balanced preset changed 2 of 24, one of them harmfully.
+
+A second dry run required context as well. The other words of the sentence had to be much more typical of the term than of the heard word, using word co-occurrence within eight words in the repository's 279,040 words of documentation. That kept 39, 7 or 3 of the 733 changes at log-ratio thresholds 0.5, 1.0 and 1.5. None were correct (`I am using` → Uhm, `the CPU` → GPU, `can you hear me` → Ear, `able to` → Apple). It correctly left every `data` alone, but found none of the real errors: those terms (RAG, agentic, HotpotQA) were absent from the documents, or the sentence held no clue. Guessing them from context needs general language knowledge that rules and the user's own documents do not supply.
+
+The remaining route is user-taught: an alias learned from the user's own corrections, scoped to the workspace where they were made (see [automatic dictionary](automatic-dictionary.md)).
