@@ -101,6 +101,9 @@ pub struct PersonalizationProfile {
     /// Opt-in: use unusual spellings already in the destination field, before the
     /// caret, as references for that recording only. Never stored.
     pub app_field_words: bool,
+    /// Rule-based formatting of numbers, times, dates, emails, web addresses,
+    /// hesitations and spoken self-corrections (English). Same for every model.
+    pub format_dictation: bool,
     pub automatic_learning: bool,
     /// Changes when learning permission changes or all automatic evidence is forgotten.
     pub learning_epoch: u64,
@@ -129,6 +132,7 @@ impl Default for PersonalizationProfile {
             automatic_workspaces: false,
             learn_from_app_edits: false,
             app_field_words: false,
+            format_dictation: true,
             automatic_learning: false,
             learning_epoch: 0,
             vocabulary: vec![],

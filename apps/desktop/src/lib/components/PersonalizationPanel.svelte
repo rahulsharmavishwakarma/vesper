@@ -464,6 +464,22 @@
               </p>
             </div>
             <div class="setting-toggle">
+              <label class="checkbox-field" for="personal-format"
+                ><input
+                  id="personal-format"
+                  type="checkbox"
+                  bind:checked={profile.formatDictation}
+                  aria-describedby="personal-format-help"
+                /><span>Format numbers, times, emails and links</span></label
+              >
+              <p id="personal-format-help" class="note checkbox-help">
+                Writes “two thousand dollars” as $2,000, “ten thirty a m” as 10:30 AM and “john dot
+                smith at gmail dot com” as john.smith@gmail.com, removes “um” and repeated words,
+                and keeps the corrected value in “Tuesday, no, Wednesday”. English only. Works the
+                same with every speech model.
+              </p>
+            </div>
+            <div class="setting-toggle">
               <label class="checkbox-field" for="personal-remember-intent"
                 ><input
                   id="personal-remember-intent"

@@ -12,6 +12,8 @@ The separately approved fixed [teaching-context guard](automatic-dictionary.md#c
 
 The [September 2026 RSI research review](../research-rsi-2026-09.md) compares Dream-RSI, related recent papers and lab posts with this implementation. It prioritizes retaining past failure cases and evaluating memory-specific outcomes before integrating a live policy optimizer.
 
+[Dictation formatting](formatting.md) covers the rule-based formatting of numbers, times, dates, emails, links, hesitations and self-corrections.
+
 [Learning from the app you dictate into](app-learning.md) covers the opt-in field words and fix read-back.
 
 The [self-improving dictation system](self-improving-system.md) page summarizes how automatic workspaces, the term inventory, recognizer hooks, the correction gate and policy-5 learning fit together, with the measured status of each.

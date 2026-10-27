@@ -75,6 +75,7 @@ export interface PersonalizationProfile {
   automaticWorkspaces: boolean;
   learnFromAppEdits: boolean;
   appFieldWords: boolean;
+  formatDictation: boolean;
   automaticLearning: boolean;
   learningEpoch: number;
   vocabulary: VocabularyEntry[];
@@ -133,6 +134,7 @@ export const getPersonalization = async () => {
     automaticWorkspaces: profile.automaticWorkspaces ?? false,
     learnFromAppEdits: profile.learnFromAppEdits ?? false,
     appFieldWords: profile.appFieldWords ?? false,
+    formatDictation: profile.formatDictation ?? true,
   };
 };
 export interface LearningOutcome {

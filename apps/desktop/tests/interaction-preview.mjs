@@ -91,6 +91,7 @@ if (states) {
     automaticWorkspaces: true,
     learnFromAppEdits: false,
     appFieldWords: false,
+    formatDictation: true,
     vocabulary: [],
     examples: [],
   };

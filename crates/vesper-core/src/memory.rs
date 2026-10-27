@@ -48,6 +48,9 @@ pub struct MemoryEvidence {
     /// Near-miss proposals recorded in shadow; never applied to this text.
     #[serde(default)]
     pub gate_shadow: Vec<crate::GateChange>,
+    /// Formatting rules applied after the gate (`format_dictation`), by name.
+    #[serde(default)]
+    pub formatting: Vec<String>,
 }
 
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]

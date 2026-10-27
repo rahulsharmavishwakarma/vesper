@@ -2413,6 +2413,19 @@ impl WorkContext {
                 personalized.evidence.gate = gate.applied;
             }
         }
+        // Rule-based formatting, independent of the recognizer and writer
+        // (docs/personalization/formatting.md).
+        if self.config.language == Language::English && post_asr_profile.format_dictation {
+            let formatted = vesper_core::format_dictation(&personalized.text);
+            if !formatted.rules.is_empty() {
+                personalized.text = formatted.text;
+                personalized.evidence.formatting = formatted
+                    .rules
+                    .iter()
+                    .map(|rule| (*rule).to_owned())
+                    .collect();
+            }
+        }
         if personalized.text != baseline {
             result.personalized_transcript = Some(personalized.text.clone());
         }

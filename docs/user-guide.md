@@ -688,6 +688,10 @@ When you save a correction inside Vesper, the app also attempts a small local an
 
 The app may retain bounded before/after text and one recent attempt locally for up to 30 days, even when saving audio for training is off. At most 256 results are retained, with expiry applied when the store is next accessed. Undo learning removes that result’s analysis; Forget automatic learning also removes all of this analysis. No audio or training labels are created by it. See [semantic personalization](personalization/semantic-shadow.md) for details and current evidence.
 
+### Formatting
+
+**Format numbers, times, emails and links** (Writing, on by default) writes spoken forms the way you would type them: “two thousand five hundred dollars” → $2,500, “ten thirty a m” → 10:30 AM, “john dot smith at gmail dot com” → john.smith@gmail.com, “github dot com slash vesper” → github.com/vesper. It removes “um”, “uh” and repeated words, and in “Tuesday no Wednesday” keeps only the corrected value. It works the same with every speech model and is English only. See [dictation formatting](personalization/formatting.md).
+
 ### Corrections in other applications
 
 Two optional settings in Writing → Workspaces let Vesper learn from the app you dictate into. Both are off until you turn them on.
