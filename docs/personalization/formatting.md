@@ -17,7 +17,7 @@ Status: implemented on the local branch `feature/self-improving-dictation` (28 O
 | Money, percentages | `two thousand five hundred dollars` → `$2,500`; `one point two million dollars` → `$1.2 million`; `three point five percent` → `3.5%` (dollars, rupees, euros) |
 | Numbers | 10 and above, decimals and multi-word numbers become digits (`twelve thousand words` → `12,000 words`); one to nine stay words; two numbers in a row (`forty nine ninety nine`) stay words because they are ambiguous |
 
-`like` and `you know` are never removed: they can carry meaning.
+`like` and `you know` are never removed: they can carry meaning. With **Keep fillers and repetition** on, the first three rules (hesitations, repeated words, cut-off starts) are skipped and the rest still run.
 
 ## Evaluation (28 October 2026)
 

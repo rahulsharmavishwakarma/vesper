@@ -2416,7 +2416,10 @@ impl WorkContext {
         // Rule-based formatting, independent of the recognizer and writer
         // (docs/personalization/formatting.md).
         if self.config.language == Language::English && post_asr_profile.format_dictation {
-            let formatted = vesper_core::format_dictation(&personalized.text);
+            let formatted = vesper_core::format_dictation(
+                &personalized.text,
+                post_asr_profile.preserve_fillers,
+            );
             if !formatted.rules.is_empty() {
                 personalized.text = formatted.text;
                 personalized.evidence.formatting = formatted

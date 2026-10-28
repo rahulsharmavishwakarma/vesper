@@ -1008,10 +1008,14 @@ fn numbers(toks: &mut Vec<Tok>, rules: &mut Vec<&'static str>) {
 }
 
 /// Format one English dictation. Returns the text unchanged when no rule applies.
-pub fn format_dictation(text: &str) -> Formatted {
+/// `keep_fillers` (the profile's "Keep fillers and repetition") skips hesitations,
+/// repeats and cut-off starts; the other rules still run.
+pub fn format_dictation(text: &str, keep_fillers: bool) -> Formatted {
     let mut toks = tokenize(text);
     let mut rules = vec![];
-    disfluencies(&mut toks, &mut rules);
+    if !keep_fillers {
+        disfluencies(&mut toks, &mut rules);
+    }
     self_corrections(&mut toks, &mut rules);
     addresses(&mut toks, &mut rules);
     times(&mut toks, &mut rules);
@@ -1044,7 +1048,7 @@ mod tests {
     use super::*;
 
     fn f(text: &str) -> String {
-        format_dictation(text).text
+        format_dictation(text, false).text
     }
 
     /// Detta's published examples and the same kinds, as two recognizers wrote them.
@@ -1193,7 +1197,7 @@ mod tests {
             "تيري ماك به به به ؟",
             "The score was Monday's best.",
         ] {
-            let out = format_dictation(text);
+            let out = format_dictation(text, false);
             if text == "There are twelve of them." {
                 assert_eq!(out.text, "There are 12 of them.");
                 continue;
@@ -1204,9 +1208,19 @@ mod tests {
 
     #[test]
     fn records_rule_names_and_is_idempotent() {
-        let once = format_dictation("Um call me at ten thirty a m about the two thousand dollars.");
+        let once = format_dictation(
+            "Um call me at ten thirty a m about the two thousand dollars.",
+            false,
+        );
         assert_eq!(once.text, "Call me at 10:30 AM about the $2,000.");
         assert!(once.rules.contains(&"filler") && once.rules.contains(&"time"));
         assert_eq!(f(&once.text), once.text);
+    }
+
+    #[test]
+    fn keep_fillers_skips_only_the_disfluency_rules() {
+        let out = format_dictation("Um we we have uh twelve thousand words.", true);
+        assert_eq!(out.text, "Um we we have uh 12,000 words.");
+        assert_eq!(out.rules, ["number"]);
     }
 }

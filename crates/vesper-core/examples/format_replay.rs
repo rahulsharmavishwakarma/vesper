@@ -10,7 +10,7 @@ fn main() {
             continue;
         };
         total += 1;
-        let out = vesper_core::format_dictation(&text);
+        let out = vesper_core::format_dictation(&text, false);
         if out.text != text {
             changed += 1;
             println!(

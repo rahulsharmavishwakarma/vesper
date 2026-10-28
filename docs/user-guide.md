@@ -693,7 +693,7 @@ The app may retain bounded before/after text and one recent attempt locally for 
 
 ### Formatting
 
-**Format numbers, times, emails and links** (Writing, on by default) writes spoken forms the way you would type them: “two thousand five hundred dollars” → $2,500, “ten thirty a m” → 10:30 AM, “john dot smith at gmail dot com” → john.smith@gmail.com, “github dot com slash vesper” → github.com/vesper. It removes “um”, “uh” and repeated words, and in “Tuesday no Wednesday” keeps only the corrected value. It works the same with every speech model and is English only. See [dictation formatting](personalization/formatting.md).
+**Format numbers, times, emails and links** (Writing, on by default) writes spoken forms the way you would type them: “two thousand five hundred dollars” → $2,500, “ten thirty a m” → 10:30 AM, “john dot smith at gmail dot com” → john.smith@gmail.com, “github dot com slash vesper” → github.com/vesper. It removes “um”, “uh” and repeated words (unless **Keep fillers and repetition** is on), and in “Tuesday no Wednesday” keeps only the corrected value. It works the same with every speech model and is English only. See [dictation formatting](personalization/formatting.md).
 
 ### Corrections in other applications
 
