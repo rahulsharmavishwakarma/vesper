@@ -58,22 +58,23 @@ test('a model download locks only what conflicts with it', async ({ page }) => {
 
   // Settings that do not touch models save while the download runs.
   await nav(page, 'Settings').click();
+  await section(page, 'Privacy').click();
   const pill = page.locator('.save-status');
   const saved = await page.locator('#collect-training').isChecked();
   await page.locator('#collect-training').setChecked(!saved);
   await expect(pill).toContainText(/Saved \d/, { timeout: 10_000 });
   await expect(page.locator('#collect-training')).toBeChecked({ checked: !saved });
   await expect(page.getByRole('alert')).toHaveCount(0);
-  await section(page, 'Shortcuts').click();
+  await section(page, 'Dictation').click();
   await expect(page.locator('#hold-shortcut')).toBeEnabled();
   await section(page, 'Appearance').click();
   await expect(page.locator('#floating-bar')).toBeEnabled();
-  await section(page, 'Recording').click();
-  await expect(page.locator('.settings-defaults button')).toBeDisabled();
+  await section(page, 'Privacy').click();
+  await expect(page.getByRole('button', { name: 'Restore defaults' })).toBeDisabled();
 
   // Everything unlocks when the download finishes.
   await page.evaluate(() => window.previewFinishDownload());
-  await expect(page.locator('.settings-defaults button')).toBeEnabled();
+  await expect(page.getByRole('button', { name: 'Restore defaults' })).toBeEnabled();
   await nav(page, 'Dictate').click();
   await expect(page.getByRole('button', { name: 'Record', exact: true })).toBeEnabled();
   await nav(page, 'Models').click();

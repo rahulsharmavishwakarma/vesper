@@ -124,164 +124,133 @@
   }
 </script>
 
-<div class="preference-group workspaces" id="workspaces">
+<div class="settings-group workspaces" id="workspaces">
   <div class="group-heading">
     <h3>Workspaces</h3>
     {#if workspaces.length}<span class="entry-count">{workspaces.length}</span>{/if}
   </div>
-  <div class="setting-toggle">
-    <label class="checkbox-field" for="automatic-workspaces"
-      ><input
-        id="automatic-workspaces"
-        type="checkbox"
-        bind:checked={profile.automaticWorkspaces}
-        {disabled}
-        aria-describedby="automatic-workspaces-help"
-      /><span>Detect workspaces automatically</span></label
-    >
-    <p id="automatic-workspaces-help" class="note checkbox-help">
-      Notes the folder or website you dictate in, never its contents. Each keeps its own words.
-    </p>
-  </div>
-  <div class="setting-toggle">
-    <label class="checkbox-field" for="app-field-words"
-      ><input
-        id="app-field-words"
-        type="checkbox"
-        bind:checked={profile.appFieldWords}
-        {disabled}
-        aria-describedby="app-field-words-help"
-      /><span>Use words already in the field</span></label
-    >
-    <p id="app-field-words-help" class="note checkbox-help">
-      Reads names in the text before the cursor. Nothing is saved.
-    </p>
-  </div>
-  <div class="setting-toggle">
-    <label class="checkbox-field" for="learn-from-app-edits"
-      ><input
-        id="learn-from-app-edits"
-        type="checkbox"
-        bind:checked={profile.learnFromAppEdits}
-        {disabled}
-        aria-describedby="learn-from-app-edits-help"
-      /><span>Learn from fixes in other apps</span></label
-    >
-    <p id="learn-from-app-edits-help" class="note checkbox-help">
-      Reads back only what Vesper pasted, to learn the words you fix.
-    </p>
-  </div>
-  {#if workspaces.length === 0 && profile.automaticWorkspaces}
-    <p class="note">None yet. One appears after about five dictations on two days.</p>
-  {/if}
-  {#each workspaces as workspace (workspace.key)}
-    <div class="workspace">
-      {#if renaming === workspace.key}
-        <div class="rename-bar">
-          <input
-            id={`workspace-name-${workspace.key}`}
-            aria-label={`New name for ${workspace.label}`}
-            aria-invalid={renameError ? 'true' : undefined}
-            aria-describedby={renameError ? `workspace-name-error-${workspace.key}` : undefined}
-            bind:value={draftName}
-            maxlength="64"
-            disabled={locked}
-            onkeydown={(event) => renameKey(event, workspace)}
-          />
-          <button
-            type="button"
-            class="primary"
-            disabled={locked}
-            onclick={() => saveRename(workspace)}>Save</button
-          >
-          <button
-            type="button"
-            class="quiet"
-            disabled={locked}
-            onclick={() => stopRename(workspace.key)}>Cancel</button
-          >
-        </div>
-        {#if renameError}<p
-            id={`workspace-name-error-${workspace.key}`}
-            class="note invalid"
-            role="alert"
-          >
-            {renameError}
-          </p>{/if}
-      {:else}
-        <div class="workspace-heading">
-          <span class="workspace-label">{workspace.label}</span>
-          <span class="entry-count"
-            >{workspaceKindLabel(workspace)} · {workspace.dictations}
-            {workspace.dictations === 1 ? 'dictation' : 'dictations'}</span
-          >
-        </div>
-      {/if}
-      {#if merging === workspace.key}
-        <div class="merge-bar">
-          <label for={`workspace-merge-${workspace.key}`}>Merge {workspace.label} into</label>
-          <Select
-            id={`workspace-merge-${workspace.key}`}
-            bind:value={mergeTarget}
-            options={workspaces
-              .filter((other) => other.key !== workspace.key)
-              .map((other) => ({ value: other.key, label: other.label }))}
-            disabled={locked}
-          />
-          <div class="actions">
+  <div class="group-box">
+    <div class="setting-toggle">
+      <label class="checkbox-field" for="automatic-workspaces"
+        ><input
+          id="automatic-workspaces"
+          type="checkbox"
+          bind:checked={profile.automaticWorkspaces}
+          {disabled}
+          aria-describedby="automatic-workspaces-help"
+        /><span>Detect workspaces automatically</span></label
+      >
+      <p id="automatic-workspaces-help" class="note checkbox-help">
+        Notes the folder or website you dictate in, never its contents. Each keeps its own words.
+      </p>
+    </div>
+    {#if workspaces.length === 0 && profile.automaticWorkspaces}
+      <p class="note">None yet. One appears after about five dictations on two days.</p>
+    {/if}
+    {#each workspaces as workspace (workspace.key)}
+      <div class="workspace">
+        {#if renaming === workspace.key}
+          <div class="rename-bar">
+            <input
+              id={`workspace-name-${workspace.key}`}
+              aria-label={`New name for ${workspace.label}`}
+              aria-invalid={renameError ? 'true' : undefined}
+              aria-describedby={renameError ? `workspace-name-error-${workspace.key}` : undefined}
+              bind:value={draftName}
+              maxlength="64"
+              disabled={locked}
+              onkeydown={(event) => renameKey(event, workspace)}
+            />
             <button
               type="button"
               class="primary"
-              disabled={locked || !mergeTarget}
-              onclick={() => confirmMerge(workspace)}>Merge</button
+              disabled={locked}
+              onclick={() => saveRename(workspace)}>Save</button
             >
-            <button type="button" class="quiet" disabled={locked} onclick={() => (merging = '')}
-              >Cancel</button
-            >
-          </div>
-        </div>
-      {:else if renaming !== workspace.key}
-        <div class="actions">
-          <button
-            id={`workspace-rename-${workspace.key}`}
-            type="button"
-            class="quiet"
-            disabled={locked}
-            onclick={() => startRename(workspace)}>Rename</button
-          >
-          {#if workspaces.length > 1}
             <button
               type="button"
               class="quiet"
               disabled={locked}
-              onclick={() => startMerge(workspace)}>Merge…</button
+              onclick={() => stopRename(workspace.key)}>Cancel</button
             >
-          {/if}
-          <button
-            type="button"
-            class="quiet"
-            aria-label={`Remove workspace ${workspace.label}`}
-            disabled={locked}
-            onclick={() =>
-              run(
-                () => deleteWorkspace(workspace.key),
-                `Removed ${workspace.label}. It will not be detected again.`,
-              )}>Remove</button
-          >
-        </div>
-      {/if}
-    </div>
-  {/each}
+          </div>
+          {#if renameError}<p
+              id={`workspace-name-error-${workspace.key}`}
+              class="note invalid"
+              role="alert"
+            >
+              {renameError}
+            </p>{/if}
+        {:else}
+          <div class="workspace-heading">
+            <span class="workspace-label">{workspace.label}</span>
+            <span class="entry-count"
+              >{workspaceKindLabel(workspace)} · {workspace.dictations}
+              {workspace.dictations === 1 ? 'dictation' : 'dictations'}</span
+            >
+          </div>
+        {/if}
+        {#if merging === workspace.key}
+          <div class="merge-bar">
+            <label for={`workspace-merge-${workspace.key}`}>Merge {workspace.label} into</label>
+            <Select
+              id={`workspace-merge-${workspace.key}`}
+              bind:value={mergeTarget}
+              options={workspaces
+                .filter((other) => other.key !== workspace.key)
+                .map((other) => ({ value: other.key, label: other.label }))}
+              disabled={locked}
+            />
+            <div class="actions">
+              <button
+                type="button"
+                class="primary"
+                disabled={locked || !mergeTarget}
+                onclick={() => confirmMerge(workspace)}>Merge</button
+              >
+              <button type="button" class="quiet" disabled={locked} onclick={() => (merging = '')}
+                >Cancel</button
+              >
+            </div>
+          </div>
+        {:else if renaming !== workspace.key}
+          <div class="actions">
+            <button
+              id={`workspace-rename-${workspace.key}`}
+              type="button"
+              class="quiet"
+              disabled={locked}
+              onclick={() => startRename(workspace)}>Rename</button
+            >
+            {#if workspaces.length > 1}
+              <button
+                type="button"
+                class="quiet"
+                disabled={locked}
+                onclick={() => startMerge(workspace)}>Merge…</button
+              >
+            {/if}
+            <button
+              type="button"
+              class="quiet"
+              aria-label={`Remove workspace ${workspace.label}`}
+              disabled={locked}
+              onclick={() =>
+                run(
+                  () => deleteWorkspace(workspace.key),
+                  `Removed ${workspace.label}. It will not be detected again.`,
+                )}>Remove</button
+            >
+          </div>
+        {/if}
+      </div>
+    {/each}
+  </div>
   {#if error}<p class="note invalid" role="alert">{error}</p>{/if}
   {#if feedback}<p class="note" role="status">{feedback}</p>{/if}
 </div>
 
 <style>
-  .preference-group {
-    margin-top: var(--space-6);
-    padding-top: var(--space-6);
-    border-top: 1px solid var(--color-line);
-  }
   .group-heading,
   .workspace-heading {
     display: flex;
@@ -301,9 +270,6 @@
     font-size: 11px;
     font-variant-numeric: tabular-nums;
   }
-  .setting-toggle {
-    margin-bottom: var(--space-4);
-  }
   /* One line per workspace: name and details left, actions right. */
   .workspace {
     display: flex;
@@ -312,7 +278,6 @@
     justify-content: space-between;
     gap: var(--space-2) var(--space-4);
     padding-block: var(--space-3);
-    border-top: 1px solid var(--color-line);
   }
   .workspace-heading {
     flex: 1 1 160px;

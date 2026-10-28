@@ -2795,10 +2795,6 @@ button:is(
 }
 .settings-content {
   min-width: 0;
-  padding: 28px;
-  background: var(--color-raised);
-  border: 1px solid var(--color-line);
-  border-radius: var(--radius-md);
 }
 .settings-content .settings-section {
   padding: 0;
@@ -2833,12 +2829,84 @@ button:is(
 .settings-content .settings-notice .form-actions {
   flex-direction: row-reverse;
 }
-.settings-content .personalization,
-.settings-content [aria-labelledby='storage-heading'],
-.capture-appearance {
+/* Settings grouping (docs/ui-design.md#settings-grouping): every tab is a
+   heading, one line of description and groups. A group is a small muted
+   label above one rounded box whose rows are separated by hairlines. */
+.settings-group {
   margin-top: var(--space-6);
+}
+.settings-description + .settings-group,
+.personalization-heading + form .settings-group:first-child {
+  margin-top: 0;
+}
+.settings-content .settings-group > h3,
+.settings-content .settings-group > .group-heading {
+  margin: 0 0 var(--space-2);
+  padding-inline: var(--space-1);
+}
+.settings-content .settings-group > h3,
+.settings-content .settings-group > .group-heading h3 {
+  color: var(--color-muted);
+  font-size: 12px;
+  font-weight: 500;
+  letter-spacing: 0.02em;
+}
+.group-box {
+  display: block;
+  min-width: 0;
+  margin: 0;
+  padding: 0 var(--space-5);
+  background: var(--color-raised);
+  border: 1px solid var(--color-line);
+  border-radius: var(--radius-md);
+}
+.settings-content .group-box > * {
+  margin: 0;
+  padding-block: var(--space-4);
+}
+.settings-content .group-box > * + *,
+.settings-content .group-box > .setting-toggle + .setting-toggle {
   border-top: 1px solid var(--color-line);
-  padding-top: var(--space-6);
+}
+.settings-content .group-box > .field,
+.settings-content .group-box .cleanup-options > .field {
+  margin-bottom: 0;
+}
+.settings-content .group-box > [hidden] + * {
+  border-top: 0;
+}
+.settings-content .group-box .preference-fields > .field {
+  margin-bottom: 0;
+}
+/* The word list reads as one block: spacing, not hairlines, between parts. */
+.settings-content .words-box {
+  padding-block: var(--space-3);
+}
+.settings-content .words-box > * {
+  padding-block: var(--space-2);
+}
+.settings-content .words-box > * + * {
+  border-top: 0;
+}
+.settings-content .words-box > details {
+  margin-top: var(--space-2);
+  border-top: 1px solid var(--color-line);
+}
+.settings-content .words-box > .term-list:empty {
+  display: none;
+}
+.settings-content .appearance-motion {
+  font-size: 13px;
+}
+.settings-row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-3) var(--space-4);
+}
+.settings-row > .note {
+  margin: 0;
 }
 .settings-content .personalization-heading h2,
 .settings-content h3 {
@@ -2962,61 +3030,6 @@ button:is(
 }
 .settings-content .setting-toggle .checkbox-help {
   margin-left: 0;
-}
-/* The learn-from-edits row speaks the same switch language (Refs #85). */
-.settings-content .learn-foot .checkbox-field {
-  align-items: center;
-  min-height: 0;
-  gap: var(--space-3);
-}
-.settings-content .learn-foot input[type='checkbox'] {
-  appearance: none;
-  -webkit-appearance: none;
-  display: block;
-  position: relative;
-  width: 38px;
-  height: 22px;
-  flex: 0 0 38px;
-  padding: 0;
-  border: 0;
-  border-radius: var(--radius-pill);
-  background: var(--color-control-edge);
-  cursor: pointer;
-  transform: none;
-  transition: background-color var(--duration-state) var(--ease-out);
-}
-.settings-content .learn-foot input[type='checkbox']::before {
-  content: '';
-  position: absolute;
-  top: 3px;
-  left: 3px;
-  width: 16px;
-  height: 16px;
-  border-radius: 50%;
-  background: oklch(93% 0.01 100);
-  clip-path: none;
-  opacity: 1;
-  transform: none;
-  transition: transform var(--duration-state) var(--ease-out);
-}
-.settings-content .learn-foot input[type='checkbox']:checked {
-  background: var(--color-accent);
-  border-color: var(--color-accent);
-}
-.settings-content .learn-foot input[type='checkbox']:checked::before {
-  transform: translateX(16px);
-  background: var(--color-on-accent);
-  opacity: 1;
-}
-.settings-content .learn-foot input[type='checkbox']:disabled {
-  opacity: 0.45;
-  cursor: not-allowed;
-}
-@media (prefers-reduced-motion: reduce) {
-  .settings-content .learn-foot input[type='checkbox'],
-  .settings-content .learn-foot input[type='checkbox']::before {
-    transition: none;
-  }
 }
 .settings-content .settings-notice {
   position: sticky;
@@ -3198,8 +3211,23 @@ button:is(
   }
 }
 @media (max-width: 480px) {
-  .settings-content {
-    padding: var(--space-4);
+  /* Groups carry their own boxes; keep the first controls in a short window. */
+  .settings-group {
+    margin-top: var(--space-5);
+  }
+  .group-box {
+    padding-inline: var(--space-4);
+  }
+  .settings-content .group-box > * {
+    padding-block: var(--space-3);
+  }
+  /* The heading and group labels say enough in a phone-sized window. */
+  .settings-content .settings-description {
+    display: none;
+  }
+  .settings-content .settings-section > h2,
+  .settings-content .personalization-heading h2 {
+    margin-bottom: var(--space-3);
   }
   .settings-nav {
     gap: 2px;
@@ -3208,7 +3236,7 @@ button:is(
     padding: 8px;
     font-size: 11px;
   }
-  .settings-content [aria-labelledby='speech-heading'] > .field {
+  .settings-content [aria-labelledby='speech-heading'] .field {
     grid-template-columns: minmax(0, 1fr);
     gap: var(--space-2);
   }

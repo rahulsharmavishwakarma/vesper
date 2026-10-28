@@ -547,7 +547,7 @@ await test('Shortcut and output preferences save together and permission reads d
     .find((button) => button.textContent.trim() === 'Settings')
     .click();
   await tick();
-  await settingsSection('Shortcuts');
+  await settingsSection('Dictation');
   assert(grants === 0, 'Reading settings prompted for access');
   const field = target.querySelector('#hold-shortcut');
   field.click();
@@ -616,7 +616,7 @@ await test('Shortcut recorder captures keys, rejects duplicates, cancels, and re
     .find((button) => button.textContent.trim() === 'Settings')
     .click();
   await tick();
-  await settingsSection('Shortcuts');
+  await settingsSection('Dictation');
   const begin = async (id) => {
     const field = target.querySelector(`#${id}`);
     field.click();
@@ -712,7 +712,7 @@ await test('Shortcut recorder captures keys, rejects duplicates, cancels, and re
     .find((button) => button.textContent.trim() === 'Settings')
     .click();
   await tick();
-  await settingsSection('Shortcuts');
+  await settingsSection('Dictation');
   assert(
     hold.textContent.includes('Ctrl + Shift + K') && toggle.textContent.includes('F8'),
     'Bindings disappeared after navigation',
@@ -745,7 +745,7 @@ await test('Shortcut recorder abandons delayed setup and handles native register
     .find((button) => button.textContent.trim() === 'Settings')
     .click();
   await tick();
-  await settingsSection('Shortcuts');
+  await settingsSection('Dictation');
   const field = target.querySelector('#hold-shortcut');
   field.click();
   await until(() => nativeSession, 'Begin not requested');
@@ -810,7 +810,7 @@ await test('Personal preference drafts survive navigation and save independently
   };
   await until(() => target.querySelector('#settings-language'), 'Settings did not load');
   await navigate('Settings');
-  await settingsSection('Writing');
+  await settingsSection('Projects');
   await until(() => target.querySelector('#personal-project'), 'Preferences did not load');
   assert(
     !target.querySelector('#improvement-mode'),
@@ -839,7 +839,7 @@ await test('Personal preference drafts survive navigation and save independently
   await until(() => saveStatus()?.dataset.state === 'saving', 'Editing did not schedule autosave');
   await navigate('Models');
   await navigate('Settings');
-  await settingsSection('Writing');
+  await settingsSection('Projects');
   assert(project().value === 'Synthetic project', 'Navigation lost the unsaved draft');
   await until(
     () => !target.querySelector('#personal-speech-hints').disabled,
@@ -886,7 +886,7 @@ await test('Personal preference drafts survive navigation and save independently
   saved.activeProject = 'Updated from History';
   await navigate('History');
   await navigate('Settings');
-  await settingsSection('Writing');
+  await settingsSection('Projects');
   await until(
     () => project().value === 'Updated from History',
     'Clean preferences did not refresh changes made elsewhere',
@@ -1154,7 +1154,7 @@ await test('Learning forget preserves manual words, flushes dirty preferences, a
   [...target.querySelectorAll('nav button')]
     .find((b) => b.textContent.trim() === 'Settings')
     .click();
-  await settingsSection('Writing');
+  await settingsSection('Vocabulary');
   await until(() => target.querySelector('#personal-project'), 'Personal preferences did not load');
   const panel = () => target.querySelector('.personalization');
   const forget = () =>
@@ -1316,7 +1316,7 @@ await test('Vocabulary and example dropdowns preserve edits through shared keybo
     .find((button) => button.textContent.trim() === 'Settings')
     .click();
   await tick();
-  await settingsSection('Writing');
+  await settingsSection('Vocabulary');
   await until(() => target.querySelector('#personal-project'), 'Preferences did not load');
   target.querySelector('#add-vocabulary').click();
   await until(() => target.querySelector('.word-entry input'), 'Word not added');
@@ -1688,7 +1688,7 @@ await test('language menus follow the writer and preserve incompatible selection
     'Changing writer silently saved a language',
   );
   await navigate('Settings');
-  await settingsSection('Recording');
+  await settingsSection('Dictation');
   let options = await openOptions('settings-language');
   assert(
     options.length === 1 && options[0].textContent.includes('English'),
@@ -1701,7 +1701,7 @@ await test('language menus follow the writer and preserve incompatible selection
   await settingsSection('Writing');
   target.querySelector('#cleanup-enabled').click();
   await tick();
-  await settingsSection('Recording');
+  await settingsSection('Dictation');
   options = await openOptions('settings-language');
   // Vendor-declared language lists change independently of this behavior:
   // assert restoration by content (full ASR list incl. Hindi and automatic
@@ -1716,7 +1716,7 @@ await test('language menus follow the writer and preserve incompatible selection
   await settingsSection('Writing');
   target.querySelector('#cleanup-enabled').click();
   await tick();
-  await settingsSection('Recording');
+  await settingsSection('Dictation');
   assert(
     target.textContent.includes('Fix these settings before they can save'),
     'Re-enabling incompatible writer allowed saving',
@@ -2410,7 +2410,7 @@ await test('Saved model summaries stay synchronized and navigate to the model se
     for (const view of ['Dictate', 'History', 'Settings']) {
       button(view).click();
       await tick();
-      if (view === 'Settings') await settingsSection('Recording');
+      if (view === 'Settings') await settingsSection('Dictation');
       const summary = target.querySelector(
         view === 'Dictate'
           ? '.studio-recorder .configured-models'

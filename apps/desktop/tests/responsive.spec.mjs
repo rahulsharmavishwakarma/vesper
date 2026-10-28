@@ -49,6 +49,10 @@ test('minimum window shows Settings controls and preserves drafts, menus and dia
   await page.setViewportSize({ width: 701, height: 480 });
   await expect(page.getByRole('listbox')).toHaveCount(0);
 
+  await page
+    .getByRole('navigation', { name: 'Settings sections' })
+    .getByRole('button', { name: 'Privacy', exact: true })
+    .click();
   const collection = page.locator('#collect-training');
   const original = await collection.isChecked();
   await collection.setChecked(!original);

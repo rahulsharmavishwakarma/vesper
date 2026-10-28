@@ -60,7 +60,6 @@
     </button>
   {/each}
 </div>
-<p class="note">Applies immediately. System follows your device’s appearance.</p>
 {#if error}<p class="error" role="alert">{error}</p>{/if}
 <div class="appearance-motion">
   <span>Reduce motion</span><span class="note"

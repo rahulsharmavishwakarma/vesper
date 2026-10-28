@@ -14,7 +14,8 @@ async function openSettings(page, path = '/tests/interaction-preview.html') {
 
 test('Settings sections autosave application and vocabulary drafts', async ({ page }) => {
   await openSettings(page);
-  await expect(section(page, 'Recording')).toHaveAttribute('aria-current', 'page');
+  await expect(section(page, 'Dictation')).toHaveAttribute('aria-current', 'page');
+  await section(page, 'Privacy').click();
   const pill = page.locator('.save-status');
   const saves = (command) =>
     page.evaluate(
@@ -28,22 +29,22 @@ test('Settings sections autosave application and vocabulary drafts', async ({ pa
   await expect(pill).toContainText(/Saved \d/, { timeout: 10_000 });
   await expect.poll(() => saves('save_settings'), { timeout: 10_000 }).toBeGreaterThan(0);
   await expect(pill).toHaveCount(0, { timeout: 10_000 });
-  await section(page, 'Writing').click();
+  await section(page, 'Projects').click();
   await page.locator('#personal-project').fill('Synthetic writing project');
   await expect.poll(() => saves('save_personalization'), { timeout: 10_000 }).toBeGreaterThan(0);
   await expect(pill).toContainText(/Saved \d/, { timeout: 10_000 });
   await expect(pill).toHaveCount(0, { timeout: 10_000 });
-  await section(page, 'Shortcuts').click();
+  await section(page, 'Dictation').click();
   await expect(page.locator('#hold-shortcut')).toBeVisible();
-  await section(page, 'Recording').click();
+  await section(page, 'Privacy').click();
   await expect(page.locator('#collect-training')).toBeChecked({ checked: !saved });
-  await section(page, 'Writing').click();
+  await section(page, 'Projects').click();
   await expect(page.locator('#personal-project')).toHaveValue('Synthetic writing project');
   await expect(page.locator('.preferences-footer')).toBeHidden();
   await section(page, 'Appearance').click();
   await page.locator('#floating-bar').uncheck();
   await expect.poll(() => saves('save_settings'), { timeout: 10_000 }).toBeGreaterThan(1);
-  await section(page, 'Recording').click();
+  await section(page, 'Dictation').click();
   await section(page, 'Appearance').click();
   await expect(page.locator('#floating-bar')).not.toBeChecked();
   await section(page, 'About').click();
@@ -72,14 +73,14 @@ test('Model switches preserve an incompatible transcription language for repair'
   await page.getByRole('combobox', { name: 'Speech model' }).click();
   await page.getByRole('option', { name: /Parakeet TDT 0.6B v3/ }).click();
   await app.getByRole('button', { name: 'Settings', exact: true }).click();
-  await section(page, 'Recording').click();
+  await section(page, 'Dictation').click();
   await page.getByRole('combobox', { name: 'Transcription language' }).click();
   await page.getByRole('option', { name: /Detect automatically/ }).click();
   await app.getByRole('button', { name: 'Models', exact: true }).click();
   await page.getByRole('combobox', { name: 'Speech model' }).click();
   await page.getByRole('option', { name: /Cohere Transcribe/ }).click();
   await app.getByRole('button', { name: 'Settings', exact: true }).click();
-  await section(page, 'Recording').click();
+  await section(page, 'Dictation').click();
   // Changing models does not silently change the language (docs/user-guide.md):
   // the stranded selection stays put, marked invalid, with repair guidance.
   const language = page.getByRole('combobox', { name: 'Transcription language' });
@@ -142,9 +143,7 @@ test('Appearance persists, follows system changes and recovers from unavailable 
   );
 });
 
-test('All five Settings sections fit narrow and desktop layouts in both themes', async ({
-  page,
-}) => {
+test('All Settings sections fit narrow and desktop layouts in both themes', async ({ page }) => {
   await openSettings(page);
   await page.emulateMedia({ reducedMotion: 'reduce' });
   for (const theme of ['Light', 'Dark']) {
@@ -152,7 +151,15 @@ test('All five Settings sections fit narrow and desktop layouts in both themes',
     await page.getByRole('button', { name: theme, exact: true }).click();
     for (const width of [320, 360, 375, 414, 768, 1280]) {
       await page.setViewportSize({ width, height: width === 360 ? 480 : 900 });
-      for (const name of ['Recording', 'Writing', 'Shortcuts', 'Appearance', 'About']) {
+      for (const name of [
+        'Dictation',
+        'Writing',
+        'Vocabulary',
+        'Projects',
+        'Appearance',
+        'Privacy',
+        'About',
+      ]) {
         await section(page, name).click();
         await expect(section(page, name)).toHaveAttribute('aria-current', 'page');
         const layout = await page.evaluate(() => ({
@@ -185,7 +192,7 @@ test('All five Settings sections fit narrow and desktop layouts in both themes',
 
 test('Denied paste access explains the restart requirement', async ({ page }) => {
   await openSettings(page);
-  await section(page, 'Shortcuts').click();
+  await section(page, 'Dictation').click();
   await page.getByRole('combobox', { name: 'After shortcut dictation' }).click();
   await page.getByRole('option', { name: 'Paste into the original text field' }).click();
   const state = page.locator('.permission-state');
@@ -214,7 +221,7 @@ test('Persisted paste mode explains the restart requirement after a quiet check'
   page,
 }) => {
   await openSettings(page, '/tests/interaction-preview.html?paste=1');
-  await section(page, 'Shortcuts').click();
+  await section(page, 'Dictation').click();
   const state = page.locator('.permission-state');
   await expect(state).toContainText('Allow access to paste');
   await expect(state.locator('.status-radio')).toHaveAttribute('data-state', 'denied');
@@ -224,7 +231,7 @@ test('Persisted paste mode explains the restart requirement after a quiet check'
 
 test('Granted paste access shows the Ember ready status', async ({ page }) => {
   await openSettings(page);
-  await section(page, 'Shortcuts').click();
+  await section(page, 'Dictation').click();
   await page.getByRole('combobox', { name: 'After shortcut dictation' }).click();
   await page.getByRole('option', { name: 'Paste into the original text field' }).click();
   const state = page.locator('.permission-state');
@@ -316,6 +323,7 @@ test('Saving shows only in the status pill and never moves the options', async (
     .filter({ visible: true });
   const box = async (selector) => (await page.locator(selector).boundingBox())?.y;
   // Application settings. Scroll first: a click scrolls its target into view.
+  await section(page, 'Privacy').click();
   await page.locator('#collect-training').scrollIntoViewIfNeeded();
   // Entrance animations slide content by a few pixels; measure once they end.
   const settled = () =>
@@ -342,10 +350,10 @@ test('Saving shows only in the status pill and never moves the options', async (
   await expect(pill).toHaveCount(0, { timeout: 10_000 });
   // Writing preferences autosave through the same pill.
   await section(page, 'Writing').click();
-  await page.locator('#personal-corrections').scrollIntoViewIfNeeded();
+  await page.locator('#personal-fillers').scrollIntoViewIfNeeded();
   await settled();
   const format = await box('#personal-format');
-  await page.locator('#personal-corrections').click();
+  await page.locator('#personal-fillers').click();
   await expect(inlineSaving).toHaveCount(0);
   await expect(page.locator('.preferences-footer')).toBeHidden();
   expect(await box('#personal-format')).toBe(format);
@@ -356,7 +364,8 @@ test('Autosave keeps controls enabled, keeps edits made during a save and adds n
 }) => {
   await openSettings(page);
   await section(page, 'Writing').click();
-  const corrections = page.locator('#personal-corrections');
+  // Both on the Writing tab.
+  const corrections = page.locator('#personal-fillers');
   const format = page.locator('#personal-format');
   const saves = () =>
     page.evaluate(() => window.previewCommands.filter((c) => c === 'save_personalization').length);

@@ -104,8 +104,8 @@
   />
   <p id="dictation-output-help" class="note">
     {settings.dictationOutput === 'paste'
-      ? 'Release Hold, or stop Toggle, to paste the finished transcript automatically. Keep the original text field focused until it finishes.'
-      : 'Automatic paste is off. Choose Paste into the original text field to insert your words after releasing the shortcut.'}
+      ? 'Pastes when you finish. Keep the text field focused.'
+      : 'Your words stay in Vesper to copy.'}
   </p>
 </div>
 {#if desktop && settings.dictationOutput === 'paste'}

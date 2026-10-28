@@ -1,6 +1,6 @@
 import { expect, test } from '@playwright/test';
 
-async function writing(page) {
+async function writing(page, name = 'Projects') {
   await page.goto('/tests/interaction-preview.html');
   await page
     .getByRole('navigation', { name: 'Application', exact: true })
@@ -8,7 +8,7 @@ async function writing(page) {
     .click();
   await page
     .getByRole('navigation', { name: 'Settings sections' })
-    .getByRole('button', { name: 'Writing', exact: true })
+    .getByRole('button', { name, exact: true })
     .click();
 }
 
@@ -51,16 +51,20 @@ test('project rules save, keep overrides, cancel pickers and fit a narrow screen
 });
 
 test('automatic workspaces rename, merge and remove', async ({ page }) => {
-  await writing(page);
-  const toggle = page.getByRole('checkbox', { name: 'Detect workspaces automatically' });
-  await expect(toggle).toBeChecked();
-  // Reading other apps' text is opt-in.
+  // Reading other apps' text is opt-in, under Vocabulary → Learning.
+  await writing(page, 'Vocabulary');
   await expect(
     page.getByRole('checkbox', { name: 'Use words already in the field' }),
   ).not.toBeChecked();
   await expect(
     page.getByRole('checkbox', { name: 'Learn from fixes in other apps' }),
   ).not.toBeChecked();
+  await page
+    .getByRole('navigation', { name: 'Settings sections' })
+    .getByRole('button', { name: 'Projects', exact: true })
+    .click();
+  const toggle = page.getByRole('checkbox', { name: 'Detect workspaces automatically' });
+  await expect(toggle).toBeChecked();
   const rows = page.locator('.workspace');
   await expect(rows).toHaveCount(2);
   await expect(rows.first()).toContainText('synthetic-repo');

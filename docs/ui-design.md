@@ -124,8 +124,8 @@ When a report-style panel needs optional methodology or caveat prose that most u
 ## Settings section navigation
 
 The selected HTML Settings study is integrated into the application: an interior
-sidebar for **Recording**, **Writing**, **Shortcuts**, **Appearance** and **About**,
-with one shared content surface. Selected sections have a tonal background and
+navigation for **Dictation**, **Writing**, **Vocabulary**, **Projects**,
+**Appearance**, **Privacy** and **About** (see [Settings grouping](#settings-grouping)). Selected sections have a tonal background and
 no underline. The native application sidebar keeps its existing treatment.
 Sections use extra-bold Bricolage headings with natural tracking, a 1.4 line height
 and shared description spacing; the main page title stays visually distinct.
@@ -194,6 +194,22 @@ repeating both selected models. Do not add a separate batch-verification card;
 automatic integrity checks and each model's Download/Verify files action own that
 flow. Keep these removals independent of changes to page width or card layout.
 
+### Settings grouping
+
+Settings has one tab per task, never a tab that mixes topics: **Dictation**
+(language, notifications, shortcuts, after-dictation paste, speech hints,
+configured models), **Writing** (writing model, output style, formatting),
+**Vocabulary** (words, how Vesper learns them, words found, examples),
+**Projects** (project selection, app rules, workspaces), **Appearance**,
+**Privacy** (storage, reset) and **About**. This follows macOS System Settings:
+each tab is a heading and one line of description, then groups; a group is a
+small muted label above one rounded box (`.settings-group` > `h3` +
+`.group-box`) whose rows are separated by hairlines. Do not nest another card
+inside a group box, and do not put a section's controls in a big outer card.
+A control that reads or controls other apps belongs with the feature it serves
+(Vocabulary → Learning), not with detection. In phone-sized windows the tab
+description is hidden so the first controls stay in view.
+
 ### Option text
 
 A setting's label says what it does; help text under it is at most one short
@@ -201,7 +217,7 @@ line, and is left out when the label is enough. Examples beat explanations
 (`“two thousand dollars” → $2,000`). Opt-ins that read other apps keep one line
 saying what is read and that nothing is saved. Details belong in the user
 guide, not the screen. Short related fields share one row (Writing: project
-selection, project and output style). Lists of items, such as workspaces, are
+selection and project on Projects). Lists of items, such as workspaces, are
 compact rows: name and details on the left, quiet text actions on the right,
 not one card per item. Do not ask people to pick folders for Vesper to read.
 
@@ -211,7 +227,7 @@ The main window supports 360 × 480 logical pixels. At widths up to 700 px,
 navigation becomes a compact header: reduce its surrounding space and wordmark
 size while retaining 44 px button targets. Keep the same page order and cards.
 Use tighter heading/card spacing and put the saved model labels beside their
-full names in Settings → Recording and History. Names wrap within the available width;
+full names in Settings → Dictation and History. Names wrap within the available width;
 do not hide either model or truncate it to make the window fit.
 
 At the minimum window size, the first Settings control should be fully visible
@@ -227,7 +243,7 @@ save reachability, dropdowns, dialog bounds and draft preservation on resize.
 
 ## Shortcut recording
 
-Settings → Shortcuts has one shortcut field for each action. Click the field (or focus it and activate it with Enter/Space), press the desired combination; it autosaves. The field displays the captured combination with platform-appropriate modifier names. A valid capture changes only the draft. Escape restores the values present when editing began; Tab, clicking away, or switching windows stops recording keys and keeps a valid draft, which autosaves. Restore defaults remains the existing settings action.
+Settings → Dictation has one shortcut field for each action. Click the field (or focus it and activate it with Enter/Space), press the desired combination; it autosaves. The field displays the captured combination with platform-appropriate modifier names. A valid capture changes only the draft. Escape restores the values present when editing began; Tab, clicking away, or switching windows stops recording keys and keeps a valid draft, which autosaves. Restore defaults remains the existing settings action.
 
 The recorder provides a preparing state before native capture is ready, inline unsupported/duplicate feedback, visible keyboard focus, and disabled behavior during an operation. Modifier selection buttons, key dropdowns, the Customize panel, and the extra Use shortcut step are not part of this flow. A shortcut recorder must not start the action it is configuring: the existing native callback routes already-registered combinations to the active main-window editor, while browser key events capture other supported combinations. Editing is session-scoped and stops on blur/close; late callbacks cannot change another field. No additional global keyboard hook is introduced.
 

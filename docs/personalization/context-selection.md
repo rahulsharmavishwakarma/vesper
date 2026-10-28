@@ -159,7 +159,7 @@ an app is not described as supported until those counts show it.
 Vesper detects which workspace a shortcut dictation goes into without rules:
 a code repository, a document folder, a website, or only an app category.
 It is **off by default** (`automaticWorkspaces` in the profile; **Detect workspaces
-automatically** in Writing → Workspaces): it reads the frontmost app's open
+automatically** in Settings → Projects): it reads the frontmost app's open
 document location, so the user opts in. A profile without the field reads as
 off. When on, it applies when no project name is
 entered, whether project selection is manual or rule-based.

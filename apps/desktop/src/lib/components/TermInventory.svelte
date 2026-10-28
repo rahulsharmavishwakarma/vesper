@@ -37,14 +37,11 @@
   const label = (source: TermSource) => SOURCE_LABELS[source] ?? source;
 </script>
 
-<details class="preference-group term-inventory" ontoggle={toggled}>
+<details class="group-box term-inventory" ontoggle={toggled}>
   <summary>
     Words Vesper found{#if summary}<span class="entry-count">{summary.usable}</span>{/if}
   </summary>
-  <p class="note">
-    Spellings from your Mac’s Text Replacements and spelling dictionary, and from project folders
-    you chose. Vesper offers a few relevant ones to each recording; nothing leaves this Mac.
-  </p>
+  <p class="note">Spellings from your Mac’s Text Replacements and spelling dictionary.</p>
   {#if error}<p class="error" role="alert">{error}</p>{/if}
   {#if summary}
     {#if summary.sources.length}
@@ -131,8 +128,6 @@
 <style>
   .term-inventory {
     margin-top: var(--space-6);
-    padding-top: var(--space-6);
-    border-top: 1px solid var(--color-line);
   }
   .term-inventory summary .entry-count {
     margin-left: var(--space-2);
