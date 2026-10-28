@@ -572,7 +572,6 @@ h3 {
 }
 .status-radio[data-state='ready'] {
   color: var(--color-accent);
-  border-color: var(--color-accent);
 }
 .status-radio[data-state='denied'] {
   color: var(--color-danger);
@@ -3009,6 +3008,19 @@ button:is(
 }
 .settings-content .group-box .field > * {
   min-width: 0;
+}
+/* About keeps its own card, as before the grouped layout. */
+.settings-content #settings-about-panel:not([hidden]) {
+  display: block;
+  padding: 28px;
+  background: var(--color-raised);
+  border: 1px solid var(--color-line);
+  border-radius: var(--radius-md);
+}
+@media (max-width: 480px) {
+  .settings-content #settings-about-panel:not([hidden]) {
+    padding: var(--space-4);
+  }
 }
 .settings-row {
   display: flex;

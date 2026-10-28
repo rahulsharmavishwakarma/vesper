@@ -110,15 +110,15 @@
 </div>
 {#if desktop && settings.dictationOutput === 'paste'}
   <div class="permission-state" role="status">
-    <span
-      class="status-radio"
-      data-state={checking ? 'checking' : ready ? 'ready' : 'denied'}
-      aria-hidden="true"
-      >{#if ready}<Icon name="check" />{:else if checking}<span class="spinning"
-          ><Icon name="refresh" /></span
-        >{:else}<Icon name="warning" />{/if}</span
-    >
     <div class="permission-copy">
+      <span
+        class="status-radio"
+        data-state={checking ? 'checking' : ready ? 'ready' : 'denied'}
+        aria-hidden="true"
+        >{#if ready}<Icon name="check" />{:else if checking}<span class="spinning"
+            ><Icon name="refresh" /></span
+          >{:else}<Icon name="warning" />{/if}</span
+      >
       <strong
         >{checking
           ? 'Checking paste access…'
@@ -128,10 +128,10 @@
       >
       <p class="note">
         {ready
-          ? 'Your original clipboard is restored when available.'
+          ? 'Your clipboard is put back after pasting.'
           : permissions?.accessibility && permissions?.eventPosting
-            ? 'Allow clipboard access in macOS Privacy & Security so your original clipboard can be preserved.'
-            : 'Enable Vesper in macOS System Settings → Privacy & Security → Accessibility, then check access.'}
+            ? 'Allow clipboard access in Privacy & Security to keep your clipboard.'
+            : 'Turn on Vesper in System Settings → Privacy & Security → Accessibility.'}
       </p>
     </div>
     <div class="permission-actions">
@@ -149,40 +149,37 @@
           >{checking ? 'Checking…' : 'Check access'}</button
         >{/if}
     </div>
-    {#if checked && permissions && !permissions.accessibility}<p class="note">
-        If you just turned this on, quit and reopen Vesper, then check again — macOS can keep
-        reporting the old state until the app restarts.
+    {#if checked && permissions && !permissions.accessibility}<p class="note restart-hint">
+        Just turned it on? Then quit and reopen Vesper and check again.
       </p>{/if}
   </div>
 {/if}
 {#if error}<p class="error" role="alert">{error}</p>{/if}
 
 <style>
+  /* A row of the Shortcuts box like any other: status and help on the left,
+     actions on the right. No box of its own (docs/ui-design.md#settings-grouping). */
   .permission-state {
     display: flex;
     flex-wrap: wrap;
     align-items: center;
-    justify-content: space-between;
-    gap: var(--space-4);
-    padding: var(--space-4);
-    margin-bottom: var(--space-6);
-    border: 1px solid var(--color-line);
-    border-radius: var(--radius-sm);
-    background: var(--color-raised);
+    gap: var(--space-2) var(--space-3);
   }
   .permission-copy {
+    display: grid;
+    grid-template-columns: auto minmax(0, 1fr);
+    column-gap: var(--space-2);
+    align-items: center;
     flex: 1 1 240px;
+    min-width: 0;
   }
   .status-radio {
     display: inline-flex;
     flex: none;
     align-items: center;
     justify-content: center;
-    width: 30px;
-    height: 30px;
-    border: 1px solid var(--color-line);
-    border-radius: 50%;
-    background: var(--color-raised);
+    width: 18px;
+    height: 18px;
     color: var(--color-warning);
   }
   .permission-state strong {
@@ -190,11 +187,23 @@
     font-weight: 500;
   }
   .permission-state p {
-    margin-bottom: 0;
+    grid-column: 2;
+    margin: 2px 0 0;
+  }
+  /* Lines up with the status text, past the icon. */
+  .permission-state .restart-hint {
+    flex-basis: 100%;
+    margin: 0;
+    padding-left: calc(18px + var(--space-2));
   }
   .permission-actions {
     display: flex;
     flex-wrap: wrap;
     gap: var(--space-2);
+  }
+  .permission-actions :global(button) {
+    min-height: 32px;
+    padding: 6px 12px;
+    font-size: 13px;
   }
 </style>

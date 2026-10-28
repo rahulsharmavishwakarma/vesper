@@ -210,7 +210,9 @@ Every row uses one pattern: label and its one-line help on the left, the
 control on the right (switch, menu, shortcut field or text field, all 44 px and
 13 px text); a label without help is centred on its control. Buttons inside a
 box are compact 13 px text buttons whose last one ends on the same edge as the
-switches. A disclosure inside a box is a plain row. Settings does not repeat
+switches. A disclosure or status (such as paste access) inside a box is a plain
+row with a small icon, never a box in a box. About is the one tab that keeps a
+single card around its content. Settings does not repeat
 the configured model names; Models owns them.
 A control that reads or controls other apps belongs with the feature it serves
 (Vocabulary → Learning), not with detection. In phone-sized windows the tab
