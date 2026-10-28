@@ -1,6 +1,6 @@
 # Self-improving dictation system
 
-Status: implemented on the local branch `feature/self-improving-dictation`. It is not published, and its tracking issue is pending the owner's approval to publish. This page describes the design, what each part does today and the measured results.
+Status: implemented on the branch `feature/self-improving-dictation` and under review; it has not shipped in a release. This page describes the design, what each part does today and the measured results.
 
 Vesper learns as a **system**, not as a model. Speech models are swappable, so what Vesper learns lives in an application-owned term memory. A small working set is handed to whichever recognizer is loaded, through that recognizer's own hook when the hook is qualified. Every model passes through the same text-level safety layer afterwards.
 
@@ -15,6 +15,15 @@ Vesper learns as a **system**, not as a model. Speech models are swappable, so w
 
 ## Architecture
 
+<picture>
+  <source media="(prefers-color-scheme: dark)" srcset="../assets/diagrams/self-learning.dark.svg">
+  <img alt="Self-learning overview: every dictation reads the workspace, term inventory and vocabulary; only your fixes and Undo update the vocabulary through the evidence rules and the policy breaker; an offline evaluator gates every rule change" src="../assets/diagrams/self-learning.light.svg">
+</picture>
+
+<sub>Diagram source: [self-learning.mjs](../diagrams/self-learning.mjs)</sub>
+
+The overview shows the two loops. Every dictation reads the memory; only your fixes and Undo write to it, and only through the evidence rules. The detailed flow below adds the bounds, the opt-in paths and each stage's authorship record.
+
 ```mermaid
 flowchart TB
   subgraph Capture["Per dictation"]
@@ -26,7 +35,8 @@ flowchart TB
     ASR --> CL["Writer cleanup (optional)"]
     CL --> AL["Saved-correction aliases<br/>recognizer-keyed, cue-gated"]
     AL --> G["Correction gate<br/>exact normalizations · heard-plausibility<br/>near-miss repair"]
-    G --> OUT["Displayed text<br/>stage authorship recorded"]
+    G --> FMT["Formatting (English)<br/>numbers · dates · links · hesitations"]
+    FMT --> OUT["Displayed text<br/>stage authorship recorded"]
   end
   OUT -.->|"fix in the destination app<br/>(opt-in read-back)"| EV
   OUT -->|"user edit / Undo"| EV["Evidence rules<br/>asymmetric promotion · one-strike suspend"]
@@ -34,7 +44,7 @@ flowchart TB
   BRK -->|tripped| PAUSE["Unconfirmed learned spellings paused<br/>until Resume or new policy"]
   EV --> VOC
   subgraph Background["Background learner (low priority, gated)"]
-    MINE["Miners: Text Replacements · spelling dictionaries<br/>cspell · opted-in folders"] --> INV
+    MINE["Miners: Text Replacements · spelling dictionaries<br/>cspell · developer folders (VESPER_TERM_MINING_ROOTS)"] --> INV
   end
   subgraph Offline["Policy loop (versioned, owner-approved)"]
     EVAL["Fixed evaluator<br/>hard negatives · real speech · per model"] -.->|"qualifies hooks and defaults"| SEL
@@ -56,7 +66,7 @@ All results are **local measurements**. The positives are synthetic TTS, and the
 | Rule-based formatting (numbers, times, dates, emails, links, hesitations, self-corrections) | **On** (English)                                                          | Detta-style phrases through the full pipeline: Phonon-2 1/24 → 15/24, Parakeet 7/24 → 18/24 exact. Real history: 140 of 465 transcripts changed, every non-hesitation change reviewed; three faults fixed. Same for every model ([formatting](formatting.md)).                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                        |
 | Learning from the app you dictate into (field words, fix read-back)                         | **Opt-in**, off by default                                                | Unit and integration tests pass, including two read-back fixes teaching `kubectl` through the draft-edit path. Real-app coverage is unmeasured; per-app counts will show it ([app learning](app-learning.md)). Before this, the first 17 real dictations made 0 corrections because nothing was known and no edits happen inside Vesper.                                                                                                                                                                                                                                                                                                                                                                                                                                              |
 | Automatic workspaces                                                                        | **Opt-in** (off by default; folder/host keys)                             | Synthetic week, 20 seeds: precision 1,349/1,349, recall 59.7% (90.1% once a workspace is visible), median visibility after day 2–3. The real snapshot → resolve → persist path is tested. Real-app coverage is measured only from the user's own dictations while detection is on, as per-app counts ([coverage](context-selection.md#coverage-from-real-dictations)). Earlier passive sampling was invalid (it never refreshed the frontmost app) and was deleted. User-triggered checks of the real detection call: VS Code returns its file; Brave returns nothing. The first real dictations (iTerm2, Safari, Brave) recorded no document. Other apps are unmeasured.                                                                                                             |
-| Term inventory and background miner                                                         | **On** (tier A from user lists; tier B only for opted-in folders)         | Tier A yields 0 terms on the development Mac. Tier B, Vesper repo: 1,571 terms. The worker runs at background QoS (efficiency cores, throttled I/O), verified with kernel per-QoS accounting after fixing a binding bug that had left it at default QoS. One full pass over 3 repositories costs 0.55 J; at one pass per hour that averages under 1 mW. Dictation-path p95 is 2.75 ms with the worker idle and 2.91 ms while it scans nonstop.                                                                                                                                                                                                                                                                                                                                        |
+| Term inventory and background miner                                                         | **On** (tier A from user lists; tier B only for developer folders)        | Tier A yields 0 terms on the development Mac. Tier B, Vesper repo: 1,571 terms. The worker runs at background QoS (efficiency cores, throttled I/O), verified with kernel per-QoS accounting after fixing a binding bug that had left it at default QoS. One full pass over 3 repositories costs 0.55 J; at one pass per hour that averages under 1 mW. Dictation-path p95 is 2.75 ms with the worker idle and 2.91 ms while it scans nonstop.                                                                                                                                                                                                                                                                                                                                        |
 | DPDFNet8, forced on                                                                         | Unchanged (owner decision)                                                | Lowered term recall in all six model and noise lanes (1.8–6.6 points case-insensitive) and raised non-target WER in five of six. Consistent direction, small samples.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                 |
 
 What did **not** work:
