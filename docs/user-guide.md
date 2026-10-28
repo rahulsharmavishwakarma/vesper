@@ -501,8 +501,8 @@ edit** with **Undo**, which returns the card to needs-review and clears the
 vote without removing already taught vocabulary. **Details** lists the audio
 file facts, the project, and per-recording speaker ranges when available.
 
-Manage spellings, recurring corrections and writing preferences in
-**Settings → Vocabulary**. The Vocabulary list holds
+Manage spellings and recurring corrections in **Settings → Vocabulary**
+(writing preferences are in **Settings → Writing**). The Vocabulary list holds
 words you add, words Vesper learned from your edits, and proposals it is still
 learning (badged Learning, not applied yet). Listed words are used until you
 remove them. Tick a learned word to confirm it: confirmed words always apply,
@@ -561,13 +561,13 @@ writer produced.
 
 See [term inventory](personalization/term-inventory.md).
 
-**Project selection** can be manual or use application rules. In Vocabulary,
-choose **Use application rules**, click **Add application rule**, choose an app,
+**Project selection** can be manual or use application rules. In **Settings →
+Projects**, choose **Use application rules**, click **Add application rule**, choose an app,
 and name its project, then save. Shortcut dictation freezes the receiving app's
-project before recording. TextEdit rules can also match a selected folder; the
+project before recording. TextEdit rules can also match a folder you choose with **Choose folder**; the
 most specific matching folder wins. Missing document context or conflicting rules
-uses shared vocabulary. Folder rules use the same document reader as automatic
-workspaces, so they are no longer limited to TextEdit.
+uses shared vocabulary. Folder matching uses the same document reader as automatic
+workspaces.
 A nonempty **Project override** always wins. Main-window recordings and file imports
 use the explicit project name. Results show the project and any fallback reason.
 
@@ -605,12 +605,11 @@ Nemotron adapter can use those hints; other adapters ignore the request and stil
 use saved corrections afterward. Learning evidence from independent recordings
 can accumulate across model changes; replaying the same audio with another model
 does not count as independent support. A manually added term
-needs a **Heard as** alias to replace a recurring mistake after recognition;
+needs what Vesper hears (the first Vocabulary field) and **Should be** to replace a recurring mistake after recognition;
 listing its preferred spelling alone does not create that replacement.
 
 If learning appears inactive, Vesper probably has not received the relevant
-feedback. (The **Learning on this device** report in History was removed on
-28 October 2026.) Edit
+feedback. Edit
 **Your text** and leave the field or copy to save it. Dictation frequency and Copy
 do not verify spellings; corrections made in another app count only with **Learn
 from fixes in other apps** on. Candidate messages

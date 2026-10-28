@@ -187,7 +187,7 @@ flowchart TB
   SEL --> PIPE["Existing hints, writer, memory and learning context"]
   OBS -. "observation (keys + transient folder names)" .-> BG["Off main thread: re-apply to latest stored state"]
   BG --> STORE[("workspace_store: salt, salted keys,<br/>day stamps, counts; label only when visible")]
-  UI["Settings → Workspaces: rename, merge,<br/>remove"] --> STORE
+  UI["Settings → Projects → Workspaces:<br/>rename, merge, remove"] --> STORE
   UI -->|"rename/merge move scoped entries"| PROF[("Profile vocabulary, examples,<br/>learning candidates")]
 ```
 
