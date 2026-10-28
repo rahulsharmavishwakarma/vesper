@@ -179,7 +179,7 @@ With no roots, only the global tier-A sources are mined.
 
 ## Settings view
 
-Settings → Your vocabulary and writing → **Words Vesper found** (`TermInventory.svelte`) is collapsed by default and loads only when opened. It shows:
+Settings → Vocabulary → **Words Vesper found** (`TermInventory.svelte`) is collapsed by default and loads only when opened. It shows:
 
 - counts per source and per workspace (folder name)
 - up to 200 of the strongest rows, each with source and workspace chips

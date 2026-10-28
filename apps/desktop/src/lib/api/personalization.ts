@@ -104,27 +104,6 @@ export interface CorrectionSuggestion {
   reviewRevisionId: string;
   pair: { heard: string; intended: string };
 }
-export interface LearningDashboard {
-  profileRevision: number;
-  inspectedSessions: number;
-  reviewedSessions: number;
-  appliedSessions: number;
-  appliedOccurrences: number;
-  undoneSessions: number;
-  replayExcluded: number;
-  replay: {
-    modelId: string;
-    evidenceKey: string;
-    language: Language;
-    samples: number;
-    referenceWords: number;
-    baselineEdits: number;
-    memoryEdits: number;
-    improved: number;
-    worsened: number;
-  }[];
-  reviewQueue: { sessionId: string; reason: string }[];
-}
 export const getPersonalization = async () => {
   const profile = await invoke<PersonalizationProfile>('get_personalization');
   return {
@@ -203,7 +182,6 @@ export const rememberCorrection = (request: {
   pronunciation: boolean;
   profileRevision: number;
 }) => invoke<PersonalizationProfile>('remember_correction', { request });
-export const getLearningDashboard = () => invoke<LearningDashboard>('get_learning_dashboard');
 export const undoPersonalization = (id: string) =>
   invoke<SessionRecord>('undo_personalization', { id });
 export const undoUnsavedPersonalization = (resultId: string) =>

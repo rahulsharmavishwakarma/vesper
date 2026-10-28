@@ -149,8 +149,9 @@
   </div>
   <div class="preview-controls">
     <p id="capture-design-help" class="note">
-      Simulated preview · microphone off. This design saves automatically.{#if reducedMotion}
-        Animation is off with Reduce Motion.{/if}
+      Simulated preview · microphone off.{#if reducedMotion}<span>
+          Animation is off with Reduce Motion.</span
+        >{/if}
     </p>
     <button
       type="button"

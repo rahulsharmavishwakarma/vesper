@@ -11,7 +11,6 @@ export interface WorkspaceSummary {
   firstSeenDay: number;
   lastSeenDay: number;
   renamed: boolean;
-  miningRoot: string | null;
 }
 export interface WorkspaceUpdate {
   workspaces: WorkspaceSummary[];
@@ -24,19 +23,6 @@ export const mergeWorkspace = (from: string, into: string) =>
   invoke<WorkspaceUpdate>('merge_workspace', { from, into });
 export const deleteWorkspace = (key: string) =>
   invoke<WorkspaceUpdate>('delete_workspace', { key });
-/** Opens the native folder picker; choosing a folder is the opt-in. */
-export async function chooseMiningRoot(key: string): Promise<WorkspaceUpdate | null> {
-  const { open } = await import('@tauri-apps/plugin-dialog');
-  const path = await open({
-    title: 'Choose a folder to learn words from',
-    multiple: false,
-    directory: true,
-  });
-  if (typeof path !== 'string') return null;
-  return invoke<WorkspaceUpdate>('set_workspace_mining_root', { key, path });
-}
-export const clearMiningRoot = (key: string) =>
-  invoke<WorkspaceUpdate>('set_workspace_mining_root', { key, path: null });
 export const workspaceKindLabel = (workspace: WorkspaceSummary) =>
   workspace.kind === 'web'
     ? 'Website'

@@ -64,29 +64,39 @@ remain valid and are never renamed automatically; their data format is unchanged
 ### Small windows
 
 When the window is narrow, navigation moves to the top and spacing becomes
-more compact. Both configured model names remain visible in Settings → Recording and
+more compact. Both configured model names remain visible on Dictate and
 History. Settings section navigation moves above its content when space is tight.
 Scroll vertically to reach the remaining controls. Resizing preserves unsaved preferences; an open dropdown closes and can
 be reopened in its new position.
 
 ### Settings
 
-Use the interior sidebar to switch between Recording, Writing, Shortcuts,
-Appearance and About. Changing sections keeps unsaved preferences intact.
+Settings has one tab per task, and every tab uses the same layout: a short
+heading, then groups, each a small label above one box of options.
+
+| Tab            | What it holds                                                                                                                                                               |
+| -------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **Dictation**  | Transcription language, notifications, shortcuts and what happens after a shortcut dictation (paste or keep), speech hints                                                  |
+| **Writing**    | The writing model and style, output style, formatting, keeping fillers                                                                                                      |
+| **Vocabulary** | Your words, learning settings (saved corrections, learn from my edits, learn from fixes in other apps, words already in the field), words Vesper found, remembered examples |
+| **Projects**   | Project selection, application rules and workspaces                                                                                                                         |
+| **Appearance** | Theme, reduced motion and the floating capture                                                                                                                              |
+| **Privacy**    | Saving recordings, storage details and Restore defaults                                                                                                                     |
+| **About**      | Version and updates                                                                                                                                                         |
+
+Changing tabs keeps unsaved preferences intact.
 Preferences save automatically about a second after each change, across
 sections, with no Save or Discard action. A small pill at the bottom of the
 sidebar slides in showing Saving…, flips to a tick with the save time, then
 slides away on its own. Invalid choices are never written: they stay on
 screen with guidance until fixed. Downloading a model first flushes any
-pending edit so the saved selection is what downloads. Personal vocabulary
-in Writing saves the same way.
+pending edit so the saved selection is what downloads. Vocabulary and project
+preferences save the same way.
 
-Recording contains language, notifications, saved recordings and model names.
-Its language choices follow both the speech model and the enabled writer. Change
-polishing in Writing, then return to Recording to choose from the updated list.
-Less-used storage options and Restore defaults are under **Advanced storage and
-improvement**. Restore defaults saves the default application preferences; it
-does not remove recordings or vocabulary.
+Transcription language choices follow both the speech model and the enabled
+writer. Change polishing in Writing, then return to Dictation to choose from the
+updated list. Restore defaults (Privacy) saves the default application
+preferences; it does not remove recordings or vocabulary.
 
 In **Appearance**, choose Light, Dark or System. The color theme applies immediately
 throughout the app and is remembered locally; System follows device appearance.
@@ -405,7 +415,7 @@ The desktop app must be running for its global shortcuts to work.
 | Hold to talk    | `⌥ Shift D`          | Hold while speaking; release to finish.  |
 | Press to toggle | `⌘ Shift Space`      | Press once to start and again to finish. |
 
-Both shortcuts can be changed in **Settings → Shortcuts**. Any combination
+Both shortcuts can be changed in **Settings → Dictation**. Any combination
 with a modifier works — letters, numbers, function keys and editing keys such
 as Enter, Tab, Backspace or Delete. A bare key is not accepted, since it would
 fire while you type. Existing
@@ -413,7 +423,7 @@ installations keep their saved shortcuts. Wait for the floating controls to
 show **Listening** before speaking.
 
 To insert a finished transcript into another app, select **Paste into the
-original text field** in Settings → Shortcuts, enable the requested macOS
+original text field** in Settings → Dictation, enable the requested macOS
 Accessibility access and save. If you just enabled it, quit and reopen Vesper
 before checking again — macOS can keep reporting the old state until the app
 restarts. The same restart applies after toggling the switch off and on again.
@@ -425,7 +435,7 @@ transcription and writing complete. Keep the original field and caret selected
 until it finishes. **Keep in app** deliberately disables automatic paste;
 main-window Record and imported files also keep their result in the app.
 
-Check **Ready to paste** in Settings → Shortcuts before recording. On macOS
+Check **Ready to paste** in Settings → Dictation before recording. On macOS
 versions that request clipboard access, allow automatic clipboard access so
 Vesper can preserve your clipboard without opening a prompt during delivery.
 With automatic paste enabled, Vesper prepares supported Electron editors such
@@ -469,6 +479,14 @@ recording appears here, including shortcut dictations finished in other apps:
 the list refreshes itself when a recording completes, and returning to History
 reloads it.
 
+**Your recording rhythm** (top of History, last 7 or 30 days) shows **Time
+saved**, **Time recorded**, **Words** and **Recordings**, a recordings-per-day
+chart (pick a day to filter the list), active days, speaking pace and words per
+recording. Durations read like **2h 50min**, with the units in smaller text.
+Time saved is how much longer typing the same words at 40 words a
+minute would have taken than saying them; a recording without a known length
+adds nothing.
+
 Expanding a recording shows its transcript card, also used for the latest
 result in Dictate. The card plays the saved audio (play/pause, seek bar,
 1×–2× speed) and shows **Heard** beside **Polished · edit to teach**;
@@ -483,8 +501,8 @@ edit** with **Undo**, which returns the card to needs-review and clears the
 vote without removing already taught vocabulary. **Details** lists the audio
 file facts, the project, and per-recording speaker ranges when available.
 
-Manage spellings, recurring corrections and writing preferences in
-**Settings → Writing → Your vocabulary and writing**. The Vocabulary list holds
+Manage spellings and recurring corrections in **Settings → Vocabulary**
+(writing preferences are in **Settings → Writing**). The Vocabulary list holds
 words you add, words Vesper learned from your edits, and proposals it is still
 learning (badged Learning, not applied yet). Listed words are used until you
 remove them. Tick a learned word to confirm it: confirmed words always apply,
@@ -543,13 +561,13 @@ writer produced.
 
 See [term inventory](personalization/term-inventory.md).
 
-**Project selection** can be manual or use application rules. In Vocabulary,
-choose **Use application rules**, click **Add application rule**, choose an app,
+**Project selection** can be manual or use application rules. In **Settings →
+Projects**, choose **Use application rules**, click **Add application rule**, choose an app,
 and name its project, then save. Shortcut dictation freezes the receiving app's
-project before recording. TextEdit rules can also match a selected folder; the
+project before recording. TextEdit rules can also match a folder you choose with **Choose folder**; the
 most specific matching folder wins. Missing document context or conflicting rules
-uses shared vocabulary. Folder rules use the same document reader as automatic
-workspaces, so they are no longer limited to TextEdit.
+uses shared vocabulary. Folder matching uses the same document reader as automatic
+workspaces.
 A nonempty **Project override** always wins. Main-window recordings and file imports
 use the explicit project name. Results show the project and any fallback reason.
 
@@ -560,7 +578,7 @@ Changing rules or switching apps cannot move an in-flight recording's feedback
 into another project. Vesper reads app identity and the focused window's document
 location for folder rules and workspaces, never document contents to guess the project.
 
-**Workspaces** (Writing → Workspaces) are off until you turn on **Detect
+**Workspaces** (Settings → Projects) are off until you turn on **Detect
 workspaces automatically**. Then they are detected when you dictate
 with the shortcut and have not entered a project. Vesper notes the folder of the
 file open in the focused window (for example a repository in VS Code or Terminal,
@@ -570,7 +588,8 @@ then dictation uses shared vocabulary. A visible workspace works like a project
 named after its folder or website: words you teach while in it stay with it. In
 the list you can **Rename** it (Enter saves, Escape cancels), **Merge…** it into
 another workspace, or **Remove** it so it is never detected again. Renaming or
-merging moves the vocabulary and examples saved under the old name. A project you enter, and any application rule, always wins. Turn off **Detect
+merging moves the vocabulary and examples saved under the old name.
+A project you enter, and any application rule, always wins. Turn off **Detect
 workspaces automatically** to stop detection; existing workspaces stay listed.
 Detection relies on what each app exposes through Accessibility; apps that
 expose nothing (for example Mail or Slack) use shared vocabulary. While
@@ -586,13 +605,14 @@ Nemotron adapter can use those hints; other adapters ignore the request and stil
 use saved corrections afterward. Learning evidence from independent recordings
 can accumulate across model changes; replaying the same audio with another model
 does not count as independent support. A manually added term
-needs a **Heard as** alias to replace a recurring mistake after recognition;
+needs what Vesper hears (the first Vocabulary field) and **Should be** to replace a recurring mistake after recognition;
 listing its preferred spelling alone does not create that replacement.
 
-If learning appears inactive, open **Learning on this device** (History). No recent
-in-app corrections means Vesper has not received the relevant feedback: edit
-**Your text** and leave the field or copy to save it. Dictation frequency, Copy,
-and corrections made in another app do not verify spellings. Candidate messages
+If learning appears inactive, Vesper probably has not received the relevant
+feedback. Edit
+**Your text** and leave the field or copy to save it. Dictation frequency and Copy
+do not verify spellings; corrections made in another app count only with **Learn
+from fixes in other apps** on. Candidate messages
 explain missing independent support, automatic-language mode, a full vocabulary
 or an existing manually managed entry. Select a recording language and correct
 new recordings to teach automatic aliases; older automatic-language observations
@@ -602,7 +622,7 @@ or train models.
 
 Ordinary recordings also collect conspicuous technical terms automatically as
 observed candidates (up to 8 per result, bounded storage). They appear in the
-**Vocabulary** list (Settings → Writing → Your vocabulary and writing) as
+**Vocabulary** list (Settings → Vocabulary) as
 suggested words with their observation count, project and language, and never
 activate correction rules until you confirm them with the tick. Use the
 filter pills to show only suggested words.
@@ -690,7 +710,7 @@ The app may retain bounded before/after text and one recent attempt locally for 
 
 ### Corrections in other applications
 
-Two optional settings in Writing → Workspaces let Vesper learn from the app you dictate into. Both are off until you turn them on.
+Two optional settings in Settings → Vocabulary → Learning let Vesper learn from the app you dictate into. Both are off until you turn them on.
 
 - **Use words already in the field:** when you dictate into a text field, Vesper reads the text before the cursor and uses names and terms written there to fix misheard words in that dictation. Nothing it reads is saved.
 - **Learn from fixes in other apps:** after pasting, Vesper reads back only the text it pasted, at your next dictation or two minutes later. Words you changed there teach spellings the same way an edit in Vesper does, and the corrected text becomes that dictation's draft in History.

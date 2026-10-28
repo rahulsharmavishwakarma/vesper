@@ -90,7 +90,7 @@ Default shortcuts while the app is running:
 | Hold to talk           | `⌥ Shift D`     |
 | Start / stop recording | `⌘ Shift Space` |
 
-Change these in **Settings → Shortcuts**. Pasting into the original text
+Change these in **Settings → Dictation**. Pasting into the original text
 field is optional and requires macOS Accessibility permission; Copy remains
 available. See [quick capture and permissions](docs/user-guide.md#quick-capture).
 

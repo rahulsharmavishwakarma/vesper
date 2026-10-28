@@ -23,14 +23,24 @@
   let {
     desktop,
     disabled = false,
-    visible = true,
+    section = '',
     onSaveActivity,
   }: {
     desktop: boolean;
     disabled?: boolean;
-    visible?: boolean;
+    /** The open Settings tab; the panel renders its controls for that tab. */
+    section?: string;
     onSaveActivity?: (saving: boolean, savedAt: number | null) => void;
   } = $props();
+  const PANEL_HEADINGS: Record<string, [string, string]> = {
+    vocabulary: [
+      'Vocabulary',
+      'Vesper learns spellings from your fixes. Everything stays on this Mac.',
+    ],
+    projects: ['Projects', 'Words you teach in a project stay with it.'],
+  };
+  const visible = $derived(['dictation', 'writing', 'vocabulary', 'projects'].includes(section));
+  const heading = $derived(PANEL_HEADINGS[section]);
   let profile = $state<PersonalizationProfile | null>(null);
   let savedProfile = $state<PersonalizationProfile | null>(null);
   let learning = $state<AutomaticLearningState | null>(null);
@@ -324,13 +334,9 @@
   class="settings-section personalization"
   hidden={!visible}
 >
-  <header class="personalization-heading">
-    <h2 id="personalization-heading">Your vocabulary and writing</h2>
-    <p class="note">
-      Vesper automatically learns eligible spellings from your edits in Your text and uses dictation
-      usage to rank saved words. Learning stays on this device, even when audio collection is off.
-      You can remove or forget learned words below.
-    </p>
+  <header class="personalization-heading" class:visually-hidden={!heading}>
+    <h2 id="personalization-heading">{heading?.[0] ?? 'Personal preferences'}</h2>
+    {#if heading}<p class="settings-description">{heading[1]}</p>{/if}
   </header>
   {#if !desktop}
     <p class="note">Personal preferences are available in the desktop app.</p>
@@ -344,483 +350,526 @@
       {#if profile}
         <fieldset disabled={controlsDisabled}>
           <legend class="visually-hidden">Personal preferences</legend>
-          <div class="preference-fields">
-            <div class="field">
-              <label for="project-mode">Project selection</label>
-              <Select
-                id="project-mode"
-                bind:value={profile.projectMode}
-                options={projectModes}
-                disabled={controlsDisabled}
-              />
-            </div>
-            <div class="field">
-              <label for="personal-project"
-                >{profile.projectMode === 'automatic' ? 'Project override' : 'Current project'}
-                <span class="optional">(optional)</span></label
-              >
-              <input
-                id="personal-project"
-                bind:value={profile.activeProject}
-                maxlength="64"
-                placeholder="For example, work or a project name"
-                aria-describedby="personal-project-help"
-              />
-              <p id="personal-project-help" class="note">
-                {#if profile.projectMode === 'automatic'}
-                  Leave blank to use the app where you start shortcut dictation. Enter a name to
-                  override the rules.
-                {:else}
-                  Enter a project name before recording. Leave blank to use shared vocabulary and
-                  examples.
-                {/if}
-                Imports and recordings started here use this name. Each recording keeps its original project.
-              </p>
-            </div>
-            {#if profile.projectMode === 'automatic'}
-              <div class="field project-rules">
-                <h3>Application rules</h3>
-                <p class="note">
-                  Choose an app and name its project. TextEdit can also match a folder. Missing or
-                  conflicting context uses shared vocabulary.
+          <div class="settings-group" hidden={section !== 'dictation'}>
+            <h3>Recognition</h3>
+            <div class="group-box">
+              <div class="setting-toggle">
+                <label class="checkbox-field" for="personal-speech-hints"
+                  ><input
+                    id="personal-speech-hints"
+                    type="checkbox"
+                    bind:checked={profile.speechBiasEnabled}
+                    aria-describedby="personal-speech-hints-help"
+                  /><span>Request extra speech hints when supported</span></label
+                >
+                <p id="personal-speech-hints-help" class="note checkbox-help">
+                  Some speech models only. Can slow dictation.
                 </p>
-                {#each profile.projectRules as rule (rule.id)}
-                  <div class="project-rule">
-                    <label class="checkbox-field"
-                      ><input
-                        type="checkbox"
-                        bind:checked={rule.enabled}
-                      />{rule.applicationName}</label
+              </div>
+            </div>
+          </div>
+          <div class="settings-group" hidden={section !== 'writing'}>
+            <h3>Output</h3>
+            <div class="group-box">
+              <div class="field">
+                <label for="personal-intent">Output style</label>
+                <Select
+                  id="personal-intent"
+                  bind:value={profile.outputIntent}
+                  options={outputOptions}
+                  disabled={controlsDisabled}
+                />
+              </div>
+              <div class="setting-toggle">
+                <label class="checkbox-field" for="personal-format"
+                  ><input
+                    id="personal-format"
+                    type="checkbox"
+                    bind:checked={profile.formatDictation}
+                    aria-describedby="personal-format-help"
+                  /><span>Format numbers, times, emails and links</span></label
+                >
+                <p id="personal-format-help" class="note checkbox-help">
+                  “two thousand dollars” → $2,000, “ten thirty a m” → 10:30 AM. English only.
+                </p>
+              </div>
+              <div class="setting-toggle">
+                <label class="checkbox-field" for="personal-fillers"
+                  ><input
+                    id="personal-fillers"
+                    type="checkbox"
+                    bind:checked={profile.preserveFillers}
+                  /><span>Keep fillers and repetition</span></label
+                >
+              </div>
+              <div class="setting-toggle">
+                <label class="checkbox-field" for="personal-remember-intent"
+                  ><input
+                    id="personal-remember-intent"
+                    type="checkbox"
+                    bind:checked={profile.useRememberedIntent}
+                  /><span>Match the style of similar reviewed examples</span></label
+                >
+              </div>
+            </div>
+          </div>
+          <div hidden={section !== 'projects'}>
+            <div class="settings-group">
+              <h3>Project</h3>
+              <div class="group-box">
+                <div class="preference-fields">
+                  <div class="field">
+                    <label for="project-mode">Project selection</label>
+                    <Select
+                      id="project-mode"
+                      bind:value={profile.projectMode}
+                      options={projectModes}
+                      disabled={controlsDisabled}
+                    />
+                  </div>
+                  <div class="field">
+                    <label for="personal-project"
+                      >{profile.projectMode === 'automatic'
+                        ? 'Project override'
+                        : 'Current project'}
+                      <span class="optional">(optional)</span></label
                     >
-                    <label for={`project-${rule.id}`}>Project for {rule.applicationName}</label>
                     <input
-                      id={`project-${rule.id}`}
-                      bind:value={rule.project}
+                      id="personal-project"
+                      bind:value={profile.activeProject}
                       maxlength="64"
                       placeholder="Project name"
-                      required
+                      aria-describedby="personal-project-help"
                     />
-                    {#if rule.folder}<p class="note project-folder">Folder: {rule.folder}</p>{/if}
-                    <div class="actions">
-                      {#if rule.applicationId === 'com.apple.TextEdit'}
-                        <button
-                          type="button"
-                          class="secondary"
-                          onclick={() => setProjectFolder(rule)}
-                          >{rule.folder ? 'Change folder' : 'Choose folder'}</button
-                        >
-                      {/if}
-                      {#if rule.folder}<button
-                          type="button"
-                          class="secondary"
-                          onclick={() => {
-                            rule.folder = null;
-                          }}>Use entire app</button
-                        >{/if}
+                    <p id="personal-project-help" class="note">
+                      {profile.projectMode === 'automatic'
+                        ? 'Leave blank to follow the app rules.'
+                        : 'Leave blank to use shared vocabulary.'}
+                    </p>
+                  </div>
+                  {#if profile.projectMode === 'automatic'}
+                    <div class="field project-rules">
+                      <h3>Application rules</h3>
+                      <p class="note">Name a project for each app.</p>
+                      {#each profile.projectRules as rule (rule.id)}
+                        <div class="project-rule">
+                          <label class="checkbox-field"
+                            ><input
+                              type="checkbox"
+                              bind:checked={rule.enabled}
+                            />{rule.applicationName}</label
+                          >
+                          <label for={`project-${rule.id}`}
+                            >Project for {rule.applicationName}</label
+                          >
+                          <input
+                            id={`project-${rule.id}`}
+                            bind:value={rule.project}
+                            maxlength="64"
+                            placeholder="Project name"
+                            required
+                          />
+                          {#if rule.folder}<p class="note project-folder">
+                              Folder: {rule.folder}
+                            </p>{/if}
+                          <div class="actions">
+                            {#if rule.applicationId === 'com.apple.TextEdit'}
+                              <button
+                                type="button"
+                                class="secondary"
+                                onclick={() => setProjectFolder(rule)}
+                                >{rule.folder ? 'Change folder' : 'Choose folder'}</button
+                              >
+                            {/if}
+                            {#if rule.folder}<button
+                                type="button"
+                                class="secondary"
+                                onclick={() => {
+                                  rule.folder = null;
+                                }}>Use entire app</button
+                              >{/if}
+                            <button
+                              type="button"
+                              class="secondary"
+                              aria-label={`Remove ${rule.applicationName} project rule`}
+                              onclick={() => {
+                                if (profile)
+                                  profile.projectRules = profile.projectRules.filter(
+                                    (item) => item.id !== rule.id,
+                                  );
+                              }}>Remove rule</button
+                            >
+                          </div>
+                        </div>
+                      {/each}
                       <button
                         type="button"
                         class="secondary"
-                        aria-label={`Remove ${rule.applicationName} project rule`}
-                        onclick={() => {
-                          if (profile)
-                            profile.projectRules = profile.projectRules.filter(
-                              (item) => item.id !== rule.id,
-                            );
-                        }}>Remove rule</button
+                        disabled={controlsDisabled || profile.projectRules.length >= 32}
+                        onclick={addProjectRule}>Add application rule</button
                       >
                     </div>
-                  </div>
-                {/each}
-                <button
-                  type="button"
-                  class="secondary"
-                  disabled={controlsDisabled || profile.projectRules.length >= 32}
-                  onclick={addProjectRule}>Add application rule</button
-                >
+                  {/if}
+                </div>
               </div>
-            {/if}
-            <div class="field">
-              <label for="personal-intent">Output style</label>
-              <Select
-                id="personal-intent"
-                bind:value={profile.outputIntent}
-                options={outputOptions}
-                disabled={controlsDisabled}
-                describedBy="personal-intent-help"
-              />
-              <p id="personal-intent-help" class="note">
-                Guides punctuation and layout while preserving your meaning.
-              </p>
             </div>
+            <Workspaces bind:profile disabled={controlsDisabled} onprofilechange={load} />
           </div>
-          <div class="preference-toggles">
-            <div class="setting-toggle">
-              <label class="checkbox-field" for="personal-corrections"
-                ><input
-                  id="personal-corrections"
-                  type="checkbox"
-                  bind:checked={profile.applyCorrections}
-                  aria-describedby="personal-corrections-help"
-                /><span>Apply my saved corrections</span></label
-              >
-              <p id="personal-corrections-help" class="note checkbox-help">
-                Use saved spellings and pronunciation corrections, even when the writing model is
-                off. Works with every supported speech model.
-              </p>
-            </div>
-            <div class="setting-toggle">
-              <label class="checkbox-field" for="personal-format"
-                ><input
-                  id="personal-format"
-                  type="checkbox"
-                  bind:checked={profile.formatDictation}
-                  aria-describedby="personal-format-help"
-                /><span>Format numbers, times, emails and links</span></label
-              >
-              <p id="personal-format-help" class="note checkbox-help">
-                Writes “two thousand dollars” as $2,000, “ten thirty a m” as 10:30 AM and “john dot
-                smith at gmail dot com” as john.smith@gmail.com, removes “um” and repeated words,
-                and keeps the corrected value in “Tuesday, no, Wednesday”. English only. Works the
-                same with every speech model.
-              </p>
-            </div>
-            <div class="setting-toggle">
-              <label class="checkbox-field" for="personal-remember-intent"
-                ><input
-                  id="personal-remember-intent"
-                  type="checkbox"
-                  bind:checked={profile.useRememberedIntent}
-                  aria-describedby="personal-remember-intent-help"
-                /><span>Use the output style from similar reviewed examples</span></label
-              >
-              <p id="personal-remember-intent-help" class="note checkbox-help">
-                Falls back to your selected style when there is no clear match.
-              </p>
-            </div>
-            <div class="setting-toggle">
-              <label class="checkbox-field" for="personal-fillers"
-                ><input
-                  id="personal-fillers"
-                  type="checkbox"
-                  bind:checked={profile.preserveFillers}
-                /><span>Keep fillers and repetition</span></label
-              >
-            </div>
-            <div class="setting-toggle">
-              <label class="checkbox-field" for="personal-speech-hints"
-                ><input
-                  id="personal-speech-hints"
-                  type="checkbox"
-                  bind:checked={profile.speechBiasEnabled}
-                  aria-describedby="personal-speech-hints-help"
-                /><span>Request extra speech hints when supported</span></label
-              >
-              <p id="personal-speech-hints-help" class="note checkbox-help">
-                Optional recognition help where available; may slow processing or affect other
-                words. Saved corrections and spelling learning work with every speech model without
-                this option. Your preference stays saved when you switch models.
-              </p>
-            </div>
-          </div>
-          <Workspaces bind:profile disabled={controlsDisabled} onprofilechange={load} />
-          <div class="preference-group" id="vocabulary">
-            <div class="group-heading">
-              <h3 id="vocabulary">Vocabulary</h3>
-              <span class="entry-count">{profile.vocabulary.length} / 128</span>
-            </div>
-            <p class="note">Everything here is used. Remove anything you do not want.</p>
-            <div class="add-bar">
-              <input
-                id="new-word"
-                bind:value={newWord}
-                placeholder="Add a word, or what Vesper hears"
-                aria-label="Word"
-                maxlength="128"
-              />
-              <input
-                id="new-fix"
-                bind:value={newFix}
-                placeholder="Should be (optional)"
-                aria-label="Correct spelling"
-                maxlength="128"
-              />
-              <button
-                id="add-vocabulary"
-                type="button"
-                class="primary"
-                onclick={() => {
-                  void addWord();
-                }}
-                disabled={controlsDisabled || profile.vocabulary.length >= 128}>Add</button
-              >
-            </div>
-            {#if addError}<p class="error" role="alert">{addError}</p>{/if}
-            <div class="filter-pills" role="group" aria-label="Filter vocabulary">
-              <button
-                type="button"
-                aria-pressed={vocabFilter === 'all'}
-                onclick={() => (vocabFilter = 'all')}>All</button
-              >
-              <button
-                type="button"
-                aria-pressed={vocabFilter === 'mine'}
-                onclick={() => (vocabFilter = 'mine')}>Yours</button
-              >
-              <button
-                type="button"
-                aria-pressed={vocabFilter === 'learned'}
-                onclick={() => (vocabFilter = 'learned')}
-                >Learned{#if learningRows.length}<span class="count-badge"
-                    >{learningRows.length}</span
-                  >{/if}</button
-              >
-            </div>
-            {#if showLearning && learningRows.length}
-              <ul class="term-list" aria-label="Learning words">
-                {#each learningRows as candidate (candidate.id)}
-                  <li class="word-entry learning">
-                    <div class="entry-heading">
-                      <button
-                        type="button"
-                        class="icon-btn tick"
-                        aria-label={`Confirm ${candidate.phrase}`}
-                        title="Confirm this spelling"
-                        disabled={controlsDisabled}
-                        onclick={() => {
-                          void approveCandidate(candidate.id);
-                        }}
-                        ><svg
-                          viewBox="0 0 16 16"
-                          fill="none"
-                          stroke="currentColor"
-                          stroke-width="1.8"
-                          aria-hidden="true"><path d="M3 8.5l3.5 3.5L13 4.5" /></svg
-                        ></button
-                      >
-                      <span class="term-static"
-                        >{#if candidate.alias}<span class="pair-from">{candidate.alias}</span><span
-                            class="pair-arrow"
-                            aria-hidden="true">→</span
-                          >{/if}{candidate.phrase}</span
-                      >
-                      <span class="row-badge">Learning</span>
-                      <button
-                        type="button"
-                        class="icon-btn"
-                        aria-label={`Remove ${candidate.phrase}`}
-                        title="Remove; it will not be learned again"
-                        disabled={controlsDisabled}
-                        onclick={() => {
-                          void dismissCandidate(candidate.id);
-                        }}
-                        ><svg
-                          viewBox="0 0 16 16"
-                          fill="none"
-                          stroke="currentColor"
-                          stroke-width="1.8"
-                          aria-hidden="true"><path d="M4 4l8 8M12 4l-8 8" /></svg
-                        ></button
-                      >
-                    </div>
-                  </li>
-                {/each}
-              </ul>
-            {/if}
-            {#if !visibleWords.length && !(showLearning && learningRows.length)}<p class="note">
-                {vocabFilter === 'all'
-                  ? 'Add names or terms you want Vesper to get right.'
-                  : vocabFilter === 'mine'
-                    ? 'Words you add yourself will appear here.'
-                    : 'Words Vesper picks up on its own will appear here.'}
-              </p>{/if}
-            <ul class="term-list">
-              {#each visibleWords as word (word.id)}
-                <li class="word-entry">
-                  <div class="entry-heading">
-                    {#if word.automaticSource === null}
-                      <span
-                        class="tick-static"
-                        title="Words you add are always confirmed"
-                        aria-label={`${word.phrase || 'Word'} confirmed`}
-                        role="img"
-                        ><svg
-                          viewBox="0 0 16 16"
-                          fill="none"
-                          stroke="currentColor"
-                          stroke-width="1.8"
-                          aria-hidden="true"><path d="M3 8.5l3.5 3.5L13 4.5" /></svg
-                        ></span
-                      >
-                    {:else}
-                      <button
-                        type="button"
-                        class="icon-btn tick"
-                        aria-pressed={word.confirmed}
-                        aria-label={word.confirmed
-                          ? `Unconfirm ${word.phrase || 'word'}`
-                          : `Confirm ${word.phrase || 'word'}`}
-                        title={word.confirmed
-                          ? 'Confirmed: always trusted'
-                          : 'Confirm this spelling'}
-                        disabled={controlsDisabled}
-                        onclick={() => toggleConfirmed(word.id)}
-                        ><svg
-                          viewBox="0 0 16 16"
-                          fill="none"
-                          stroke="currentColor"
-                          stroke-width="1.8"
-                          aria-hidden="true"><path d="M3 8.5l3.5 3.5L13 4.5" /></svg
-                        ></button
-                      >
-                    {/if}
-                    {#if word.aliases[0]}<span class="pair-from">{word.aliases[0]}</span><span
-                        class="pair-arrow"
-                        aria-hidden="true">→</span
-                      >{/if}
-                    <input
-                      id={`word-${word.id}`}
-                      class="term-input"
-                      aria-label="Preferred spelling"
-                      bind:value={word.phrase}
-                      oninput={() => {
-                        word.sources = [];
-                        word.automaticSource = null;
-                      }}
-                      placeholder="Project or person’s name"
-                      maxlength="128"
-                      required
-                    />
-                    <span class="lang-select"
-                      ><Select
-                        id={`word-language-${word.id}`}
-                        bind:value={word.language}
-                        options={languageOptions}
-                        disabled={controlsDisabled}
-                        onChange={() => {
-                          word.sources = [];
-                          word.automaticSource = null;
-                        }}
-                      /></span
+          <div hidden={section !== 'vocabulary'}>
+            <div class="settings-group" id="vocabulary">
+              <div class="group-heading">
+                <h3>Your words</h3>
+                {#if profile.vocabulary.length}<span class="entry-count"
+                    >{profile.vocabulary.length} / 128</span
+                  >{/if}
+              </div>
+              <div class="group-box words-box">
+                <div class="add-bar">
+                  <input
+                    id="new-word"
+                    bind:value={newWord}
+                    placeholder="Add a word, or what Vesper hears"
+                    aria-label="Word"
+                    maxlength="128"
+                  />
+                  <input
+                    id="new-fix"
+                    bind:value={newFix}
+                    placeholder="Should be (optional)"
+                    aria-label="Correct spelling"
+                    maxlength="128"
+                  />
+                  <button
+                    id="add-vocabulary"
+                    type="button"
+                    class="primary"
+                    onclick={() => {
+                      void addWord();
+                    }}
+                    disabled={controlsDisabled || profile.vocabulary.length >= 128}>Add</button
+                  >
+                </div>
+                {#if addError}<p class="error" role="alert">{addError}</p>{/if}
+                {#if profile.vocabulary.length || learningRows.length}<div
+                    class="filter-pills"
+                    role="group"
+                    aria-label="Filter vocabulary"
+                  >
+                    <button
+                      type="button"
+                      aria-pressed={vocabFilter === 'all'}
+                      onclick={() => (vocabFilter = 'all')}>All</button
                     >
                     <button
                       type="button"
-                      class="icon-btn"
-                      aria-label={`Remove ${word.phrase || 'word'}`}
-                      onclick={() => {
-                        void removeWord(word.id);
-                      }}
-                      ><svg
-                        viewBox="0 0 16 16"
-                        fill="none"
-                        stroke="currentColor"
-                        stroke-width="1.8"
-                        aria-hidden="true"><path d="M4 4l8 8M12 4l-8 8" /></svg
-                      ></button
+                      aria-pressed={vocabFilter === 'mine'}
+                      onclick={() => (vocabFilter = 'mine')}>Yours</button
                     >
-                  </div>
-                </li>
-              {/each}
-            </ul>
-            <details>
-              <summary>How does this work?</summary>
-              <p class="note">
-                Everything here is used. Tick a word to confirm it: confirmed words are always
-                trusted. Unticked automatic words are used when they match what you say. Remove
-                anything you do not want; removed words never come back.
-              </p>
-            </details>
-            {#if learning?.breakerTrippedMs}
-              <div class="learn-paused" role="status" id="learned-spellings-paused">
-                <p class="note">
-                  Learned spellings are paused because you undid two of them recently. Words you
-                  added or ticked still apply.
-                </p>
-                <button
-                  type="button"
-                  class="quiet"
-                  disabled={controlsDisabled}
-                  onclick={() => {
-                    void resumeSpellings();
-                  }}>Resume learned spellings</button
-                >
-              </div>
-            {/if}
-            <div class="learn-foot">
-              <label class="checkbox-field" for="learn-from-edits"
-                ><input
-                  id="learn-from-edits"
-                  type="checkbox"
-                  bind:checked={profile.automaticLearning}
-                /><span>Learn from my edits</span></label
-              >
-              <button
-                type="button"
-                class="quiet"
-                disabled={controlsDisabled}
-                onclick={forgetLearning}>Forget automatic learning</button
-              >
-            </div>
-          </div>
-          <TermInventory disabled={controlsDisabled} />
-          {#if profile.examples.length}
-            <div class="preference-group" id="remembered-examples">
-              <div class="group-heading">
-                <h3>Remembered examples</h3>
-                <span class="entry-count">{profile.examples.length}</span>
-              </div>
-              <p class="note">
-                Edit the wording in History. Save here to pause or remove an example.
-              </p>
-              {#each profile.examples as example, index (example.id)}
-                <div class="example-entry">
-                  <div class="entry-heading">
-                    <h4>Example {index + 1}</h4>
+                    <button
+                      type="button"
+                      aria-pressed={vocabFilter === 'learned'}
+                      onclick={() => (vocabFilter = 'learned')}
+                      >Learned{#if learningRows.length}<span class="count-badge"
+                          >{learningRows.length}</span
+                        >{/if}</button
+                    >
+                  </div>{/if}
+                {#if showLearning && learningRows.length}
+                  <ul class="term-list" aria-label="Learning words">
+                    {#each learningRows as candidate (candidate.id)}
+                      <li class="word-entry learning">
+                        <div class="entry-heading">
+                          <button
+                            type="button"
+                            class="icon-btn tick"
+                            aria-label={`Confirm ${candidate.phrase}`}
+                            title="Confirm this spelling"
+                            disabled={controlsDisabled}
+                            onclick={() => {
+                              void approveCandidate(candidate.id);
+                            }}
+                            ><svg
+                              viewBox="0 0 16 16"
+                              fill="none"
+                              stroke="currentColor"
+                              stroke-width="1.8"
+                              aria-hidden="true"><path d="M3 8.5l3.5 3.5L13 4.5" /></svg
+                            ></button
+                          >
+                          <span class="term-static"
+                            >{#if candidate.alias}<span class="pair-from">{candidate.alias}</span
+                              ><span class="pair-arrow" aria-hidden="true">→</span
+                              >{/if}{candidate.phrase}</span
+                          >
+                          <span class="row-badge">Learning</span>
+                          <button
+                            type="button"
+                            class="icon-btn"
+                            aria-label={`Remove ${candidate.phrase}`}
+                            title="Remove; it will not be learned again"
+                            disabled={controlsDisabled}
+                            onclick={() => {
+                              void dismissCandidate(candidate.id);
+                            }}
+                            ><svg
+                              viewBox="0 0 16 16"
+                              fill="none"
+                              stroke="currentColor"
+                              stroke-width="1.8"
+                              aria-hidden="true"><path d="M4 4l8 8M12 4l-8 8" /></svg
+                            ></button
+                          >
+                        </div>
+                      </li>
+                    {/each}
+                  </ul>
+                {/if}
+                {#if !visibleWords.length && !(showLearning && learningRows.length)}<p class="note">
+                    {vocabFilter === 'all'
+                      ? 'Add names or terms you want Vesper to get right.'
+                      : vocabFilter === 'mine'
+                        ? 'Words you add yourself will appear here.'
+                        : 'Words Vesper picks up on its own will appear here.'}
+                  </p>{/if}
+                <ul class="term-list">
+                  {#each visibleWords as word (word.id)}
+                    <li class="word-entry">
+                      <div class="entry-heading">
+                        {#if word.automaticSource === null}
+                          <span
+                            class="tick-static"
+                            title="Words you add are always confirmed"
+                            aria-label={`${word.phrase || 'Word'} confirmed`}
+                            role="img"
+                            ><svg
+                              viewBox="0 0 16 16"
+                              fill="none"
+                              stroke="currentColor"
+                              stroke-width="1.8"
+                              aria-hidden="true"><path d="M3 8.5l3.5 3.5L13 4.5" /></svg
+                            ></span
+                          >
+                        {:else}
+                          <button
+                            type="button"
+                            class="icon-btn tick"
+                            aria-pressed={word.confirmed}
+                            aria-label={word.confirmed
+                              ? `Unconfirm ${word.phrase || 'word'}`
+                              : `Confirm ${word.phrase || 'word'}`}
+                            title={word.confirmed
+                              ? 'Confirmed: always trusted'
+                              : 'Confirm this spelling'}
+                            disabled={controlsDisabled}
+                            onclick={() => toggleConfirmed(word.id)}
+                            ><svg
+                              viewBox="0 0 16 16"
+                              fill="none"
+                              stroke="currentColor"
+                              stroke-width="1.8"
+                              aria-hidden="true"><path d="M3 8.5l3.5 3.5L13 4.5" /></svg
+                            ></button
+                          >
+                        {/if}
+                        {#if word.aliases[0]}<span class="pair-from">{word.aliases[0]}</span><span
+                            class="pair-arrow"
+                            aria-hidden="true">→</span
+                          >{/if}
+                        <input
+                          id={`word-${word.id}`}
+                          class="term-input"
+                          aria-label="Preferred spelling"
+                          bind:value={word.phrase}
+                          oninput={() => {
+                            word.sources = [];
+                            word.automaticSource = null;
+                          }}
+                          placeholder="Project or person’s name"
+                          maxlength="128"
+                          required
+                        />
+                        <span class="lang-select"
+                          ><Select
+                            id={`word-language-${word.id}`}
+                            bind:value={word.language}
+                            options={languageOptions}
+                            disabled={controlsDisabled}
+                            onChange={() => {
+                              word.sources = [];
+                              word.automaticSource = null;
+                            }}
+                          /></span
+                        >
+                        <button
+                          type="button"
+                          class="icon-btn"
+                          aria-label={`Remove ${word.phrase || 'word'}`}
+                          onclick={() => {
+                            void removeWord(word.id);
+                          }}
+                          ><svg
+                            viewBox="0 0 16 16"
+                            fill="none"
+                            stroke="currentColor"
+                            stroke-width="1.8"
+                            aria-hidden="true"><path d="M4 4l8 8M12 4l-8 8" /></svg
+                          ></button
+                        >
+                      </div>
+                    </li>
+                  {/each}
+                </ul>
+                <details>
+                  <summary>How does this work?</summary>
+                  <p class="note">
+                    Every word here is used. Ticked words are always trusted. Removed words never
+                    come back.
+                  </p>
+                </details>
+                {#if learning?.breakerTrippedMs}
+                  <div class="learn-paused" role="status" id="learned-spellings-paused">
+                    <p class="note">
+                      Learned spellings are paused because you undid two of them recently. Words you
+                      added or ticked still apply.
+                    </p>
                     <button
                       type="button"
                       class="quiet"
-                      aria-label={`Remove example ${index + 1}`}
+                      disabled={controlsDisabled}
                       onclick={() => {
-                        if (profile)
-                          profile.examples = profile.examples.filter((e) => e.id !== example.id);
-                      }}>Remove</button
+                        void resumeSpellings();
+                      }}>Resume learned spellings</button
                     >
                   </div>
-                  <dl class="example-text">
-                    <dt>Original</dt>
-                    <dd>{example.input}</dd>
-                    <dt>Reviewed</dt>
-                    <dd>{example.output}</dd>
-                  </dl>
-                  <div class="preference-fields">
-                    <div class="field">
-                      <label for={`example-project-${example.id}`}
-                        >Project <span class="optional">(optional)</span></label
-                      ><input
-                        id={`example-project-${example.id}`}
-                        bind:value={example.project}
-                        maxlength="64"
-                      />
-                    </div>
-                    <div class="field">
-                      <label for={`example-intent-${example.id}`}>Output style</label><Select
-                        id={`example-intent-${example.id}`}
-                        bind:value={example.intent}
-                        options={outputOptions}
-                        disabled={controlsDisabled}
-                      />
-                    </div>
-                  </div>
-                  <label class="checkbox-field" for={`example-enabled-${example.id}`}
+                {/if}
+              </div>
+            </div>
+            <div class="settings-group">
+              <h3>Learning</h3>
+              <div class="group-box">
+                <div class="setting-toggle">
+                  <label class="checkbox-field" for="personal-corrections"
                     ><input
-                      id={`example-enabled-${example.id}`}
+                      id="personal-corrections"
                       type="checkbox"
-                      bind:checked={example.enabled}
-                    /><span>Use this example</span></label
+                      bind:checked={profile.applyCorrections}
+                      aria-describedby="personal-corrections-help"
+                    /><span>Apply my saved corrections</span></label
+                  >
+                  <p id="personal-corrections-help" class="note checkbox-help">
+                    Fixes words you taught Vesper.
+                  </p>
+                </div>
+                <div class="setting-toggle">
+                  <label class="checkbox-field" for="learn-from-edits"
+                    ><input
+                      id="learn-from-edits"
+                      type="checkbox"
+                      bind:checked={profile.automaticLearning}
+                    /><span>Learn from my edits</span></label
                   >
                 </div>
-              {/each}
+                <div class="setting-toggle">
+                  <label class="checkbox-field" for="learn-from-app-edits"
+                    ><input
+                      id="learn-from-app-edits"
+                      type="checkbox"
+                      bind:checked={profile.learnFromAppEdits}
+                      aria-describedby="learn-from-app-edits-help"
+                    /><span>Learn from fixes in other apps</span></label
+                  >
+                  <p id="learn-from-app-edits-help" class="note checkbox-help">
+                    Reads back only what Vesper pasted, to learn the words you fix.
+                  </p>
+                </div>
+                <div class="setting-toggle">
+                  <label class="checkbox-field" for="app-field-words"
+                    ><input
+                      id="app-field-words"
+                      type="checkbox"
+                      bind:checked={profile.appFieldWords}
+                      aria-describedby="app-field-words-help"
+                    /><span>Use words already in the field</span></label
+                  >
+                  <p id="app-field-words-help" class="note checkbox-help">
+                    Reads names in the text before the cursor. Nothing is saved.
+                  </p>
+                </div>
+                <div class="settings-row">
+                  <p class="note">Learned spellings you have not ticked.</p>
+                  <button
+                    type="button"
+                    class="quiet"
+                    disabled={controlsDisabled}
+                    onclick={forgetLearning}>Forget automatic learning</button
+                  >
+                </div>
+              </div>
             </div>
-          {/if}
+            <div class="settings-group">
+              <h3>Found on this Mac</h3>
+              <TermInventory disabled={controlsDisabled} />
+            </div>
+            {#if profile.examples.length}
+              <div class="settings-group" id="remembered-examples">
+                <div class="group-heading">
+                  <h3>Remembered examples</h3>
+                  <span class="entry-count">{profile.examples.length}</span>
+                </div>
+                <p class="note">
+                  Edit the wording in History. Save here to pause or remove an example.
+                </p>
+                {#each profile.examples as example, index (example.id)}
+                  <div class="example-entry">
+                    <div class="entry-heading">
+                      <h4>Example {index + 1}</h4>
+                      <button
+                        type="button"
+                        class="quiet"
+                        aria-label={`Remove example ${index + 1}`}
+                        onclick={() => {
+                          if (profile)
+                            profile.examples = profile.examples.filter((e) => e.id !== example.id);
+                        }}>Remove</button
+                      >
+                    </div>
+                    <dl class="example-text">
+                      <dt>Original</dt>
+                      <dd>{example.input}</dd>
+                      <dt>Reviewed</dt>
+                      <dd>{example.output}</dd>
+                    </dl>
+                    <div class="preference-fields">
+                      <div class="field">
+                        <label for={`example-project-${example.id}`}
+                          >Project <span class="optional">(optional)</span></label
+                        ><input
+                          id={`example-project-${example.id}`}
+                          bind:value={example.project}
+                          maxlength="64"
+                        />
+                      </div>
+                      <div class="field">
+                        <label for={`example-intent-${example.id}`}>Output style</label><Select
+                          id={`example-intent-${example.id}`}
+                          bind:value={example.intent}
+                          options={outputOptions}
+                          disabled={controlsDisabled}
+                        />
+                      </div>
+                    </div>
+                    <label class="checkbox-field" for={`example-enabled-${example.id}`}
+                      ><input
+                        id={`example-enabled-${example.id}`}
+                        type="checkbox"
+                        bind:checked={example.enabled}
+                      /><span>Use this example</span></label
+                    >
+                  </div>
+                {/each}
+              </div>
+            {/if}
+          </div>
         </fieldset>
       {/if}
       <!-- Saving shows only in the sidebar status; an inline note here pushed the
@@ -885,18 +934,6 @@
   .entry-count {
     color: var(--color-muted);
     font-weight: 400;
-  }
-  .preference-toggles {
-    display: grid;
-    gap: var(--space-4);
-  }
-  .preference-toggles .setting-toggle {
-    margin-top: 0;
-  }
-  .preference-group {
-    margin-top: var(--space-6);
-    padding-top: var(--space-6);
-    border-top: 1px solid var(--color-line);
   }
   .group-heading,
   .entry-heading {
@@ -1103,16 +1140,6 @@
     justify-content: space-between;
     gap: var(--space-3);
     margin-top: var(--space-4);
-  }
-  .learn-foot {
-    display: flex;
-    flex-wrap: wrap;
-    align-items: center;
-    justify-content: space-between;
-    gap: var(--space-3);
-    margin-top: var(--space-4);
-    padding-top: var(--space-4);
-    border-top: 1px solid var(--color-line);
   }
   .example-text {
     margin: 0 0 var(--space-4);

@@ -102,6 +102,29 @@ export function recordingDay(value: string | Date): string {
   return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}`;
 }
 
+/** Typing speed that "time saved" is measured against (words per minute). */
+export const TYPING_WPM = 40;
+
+/** `1 h 12 min`, `35 min`, `45 s` or `0 min`. */
+/** Splits a duration into number and unit pairs, such as `[[2, 'h'], [50, 'min']]`. */
+export function durationParts(ms: number): [number, string][] {
+  const minutes = Math.floor(ms / 60_000);
+  if (minutes >= 60) {
+    const parts: [number, string][] = [[Math.floor(minutes / 60), 'h']];
+    if (minutes % 60) parts.push([minutes % 60, 'min']);
+    return parts;
+  }
+  if (minutes >= 1) return [[minutes, 'min']];
+  const seconds = Math.round(ms / 1000);
+  return seconds > 0 ? [[seconds, 's']] : [[0, 'min']];
+}
+
+export function formatDuration(ms: number): string {
+  return durationParts(ms)
+    .map(([value, unit]) => `${value} ${unit}`)
+    .join(' ');
+}
+
 export function historyActivity(records: SessionRecord[], dayCount: 7 | 30, now = new Date()) {
   const days = Array.from({ length: dayCount }, (_, index) => {
     const date = new Date(now);
@@ -111,6 +134,7 @@ export function historyActivity(records: SessionRecord[], dayCount: 7 | 30, now 
       key: recordingDay(date),
       label: new Intl.DateTimeFormat(undefined, { month: 'short', day: 'numeric' }).format(date),
       count: 0,
+      savedMs: 0,
     };
   });
   const byDay = new Map(days.map((day) => [day.key, day]));
@@ -120,6 +144,8 @@ export function historyActivity(records: SessionRecord[], dayCount: 7 | 30, now 
   let reviewed = 0;
   let audioBytes = 0;
   let withText = 0;
+  let recordedMs = 0;
+  let savedMs = 0;
   for (const record of records) {
     if (new Date(record.createdAt).getTime() > now.getTime()) continue;
     const day = byDay.get(recordingDay(record.createdAt));
@@ -131,7 +157,17 @@ export function historyActivity(records: SessionRecord[], dayCount: 7 | 30, now 
       Number.isFinite(record.audioBytes) && record.audioBytes > 0 ? record.audioBytes : 0;
     const transcript = transcriptPreview(record);
     if (transcript) withText += 1;
-    for (const segment of segmenter.segment(transcript)) if (segment.isWordLike) words += 1;
+    let recordWords = 0;
+    for (const segment of segmenter.segment(transcript)) if (segment.isWordLike) recordWords += 1;
+    words += recordWords;
+    const duration = record.speakerTimeline?.durationMs;
+    const spokenMs = Number.isFinite(duration) && duration! > 0 ? duration! : 0;
+    recordedMs += spokenMs;
+    // Typing the same words would have taken this much longer than saying them.
+    // Without a recorded length there is nothing to compare, so nothing counts.
+    const saved = spokenMs ? Math.max(0, (recordWords / TYPING_WPM) * 60_000 - spokenMs) : 0;
+    savedMs += saved;
+    day.savedMs += saved;
   }
   return {
     days,
@@ -143,5 +179,9 @@ export function historyActivity(records: SessionRecord[], dayCount: 7 | 30, now 
     withoutText: recordings - withText,
     averageWords: withText ? words / withText : 0,
     activeDays: days.filter((day) => day.count > 0).length,
+    recordedMs,
+    savedMs,
+    /** Words per minute of recorded speech, or 0 without any duration. */
+    pace: recordedMs ? words / (recordedMs / 60_000) : 0,
   };
 }

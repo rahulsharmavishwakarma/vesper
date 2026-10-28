@@ -6,8 +6,6 @@
     renameWorkspace,
     mergeWorkspace,
     deleteWorkspace,
-    chooseMiningRoot,
-    clearMiningRoot,
     workspaceKindLabel,
     type WorkspaceSummary,
     type WorkspaceUpdate,
@@ -124,202 +122,135 @@
     )
       merging = '';
   }
-  const folderName = (path: string) => path.split('/').filter(Boolean).pop() ?? path;
 </script>
 
-<div class="preference-group workspaces" id="workspaces">
+<div class="settings-group workspaces" id="workspaces">
   <div class="group-heading">
     <h3>Workspaces</h3>
     {#if workspaces.length}<span class="entry-count">{workspaces.length}</span>{/if}
   </div>
-  <div class="setting-toggle">
-    <label class="checkbox-field" for="automatic-workspaces"
-      ><input
-        id="automatic-workspaces"
-        type="checkbox"
-        bind:checked={profile.automaticWorkspaces}
-        {disabled}
-        aria-describedby="automatic-workspaces-help"
-      /><span>Detect workspaces automatically</span></label
-    >
-    <p id="automatic-workspaces-help" class="note checkbox-help">
-      Off until you turn it on. When you dictate with the shortcut, Vesper notes the folder of the
-      open file or the website you are on, never its contents. A repository, document folder or site
-      appears here after about five dictations on two days and keeps its own vocabulary. A project
-      you enter above always wins.
-    </p>
-  </div>
-  <div class="setting-toggle">
-    <label class="checkbox-field" for="app-field-words"
-      ><input
-        id="app-field-words"
-        type="checkbox"
-        bind:checked={profile.appFieldWords}
-        {disabled}
-        aria-describedby="app-field-words-help"
-      /><span>Use words already in the field</span></label
-    >
-    <p id="app-field-words-help" class="note checkbox-help">
-      Off until you turn it on. When you dictate into a text field, Vesper reads the text before the
-      cursor and uses names and terms written there to fix misheard words in that dictation. Nothing
-      it reads is saved.
-    </p>
-  </div>
-  <div class="setting-toggle">
-    <label class="checkbox-field" for="learn-from-app-edits"
-      ><input
-        id="learn-from-app-edits"
-        type="checkbox"
-        bind:checked={profile.learnFromAppEdits}
-        {disabled}
-        aria-describedby="learn-from-app-edits-help"
-      /><span>Learn from fixes in other apps</span></label
-    >
-    <p id="learn-from-app-edits-help" class="note checkbox-help">
-      Off until you turn it on. After pasting, Vesper reads back only the text it pasted, at your
-      next dictation or two minutes later. Words you changed there teach spellings, just like an
-      edit here.
-    </p>
-  </div>
-  {#if workspaces.length === 0}
-    <p class="note">No workspaces yet.</p>
-  {/if}
-  {#each workspaces as workspace (workspace.key)}
-    <div class="workspace">
-      {#if renaming === workspace.key}
-        <div class="rename-bar">
-          <input
-            id={`workspace-name-${workspace.key}`}
-            aria-label={`New name for ${workspace.label}`}
-            aria-invalid={renameError ? 'true' : undefined}
-            aria-describedby={renameError ? `workspace-name-error-${workspace.key}` : undefined}
-            bind:value={draftName}
-            maxlength="64"
-            disabled={locked}
-            onkeydown={(event) => renameKey(event, workspace)}
-          />
-          <button
-            type="button"
-            class="primary"
-            disabled={locked}
-            onclick={() => saveRename(workspace)}>Save</button
-          >
-          <button
-            type="button"
-            class="quiet"
-            disabled={locked}
-            onclick={() => stopRename(workspace.key)}>Cancel</button
-          >
-        </div>
-        {#if renameError}<p
-            id={`workspace-name-error-${workspace.key}`}
-            class="note invalid"
-            role="alert"
-          >
-            {renameError}
-          </p>{/if}
-      {:else}
-        <div class="workspace-heading">
-          <span class="workspace-label">{workspace.label}</span>
-          <span class="entry-count"
-            >{workspaceKindLabel(workspace)} · {workspace.dictations}
-            {workspace.dictations === 1 ? 'dictation' : 'dictations'}</span
-          >
-        </div>
-        {#if workspace.miningRoot}
-          <p class="note mining">Learning words from {folderName(workspace.miningRoot)}</p>
-        {/if}
-      {/if}
-      {#if merging === workspace.key}
-        <div class="merge-bar">
-          <label for={`workspace-merge-${workspace.key}`}>Merge {workspace.label} into</label>
-          <Select
-            id={`workspace-merge-${workspace.key}`}
-            bind:value={mergeTarget}
-            options={workspaces
-              .filter((other) => other.key !== workspace.key)
-              .map((other) => ({ value: other.key, label: other.label }))}
-            disabled={locked}
-          />
-          <div class="actions">
+  <div class="group-box">
+    <div class="setting-toggle">
+      <label class="checkbox-field" for="automatic-workspaces"
+        ><input
+          id="automatic-workspaces"
+          type="checkbox"
+          bind:checked={profile.automaticWorkspaces}
+          {disabled}
+          aria-describedby="automatic-workspaces-help"
+        /><span>Detect workspaces automatically</span></label
+      >
+      <p id="automatic-workspaces-help" class="note checkbox-help">
+        Notes the folder or website you dictate in, never its contents. Each keeps its own words.
+      </p>
+    </div>
+    {#if workspaces.length === 0 && profile.automaticWorkspaces}
+      <p class="note">None yet. One appears after about five dictations on two days.</p>
+    {/if}
+    {#each workspaces as workspace (workspace.key)}
+      <div class="workspace">
+        {#if renaming === workspace.key}
+          <div class="rename-bar">
+            <input
+              id={`workspace-name-${workspace.key}`}
+              aria-label={`New name for ${workspace.label}`}
+              aria-invalid={renameError ? 'true' : undefined}
+              aria-describedby={renameError ? `workspace-name-error-${workspace.key}` : undefined}
+              bind:value={draftName}
+              maxlength="64"
+              disabled={locked}
+              onkeydown={(event) => renameKey(event, workspace)}
+            />
             <button
               type="button"
               class="primary"
-              disabled={locked || !mergeTarget}
-              onclick={() => confirmMerge(workspace)}>Merge</button
+              disabled={locked}
+              onclick={() => saveRename(workspace)}>Save</button
             >
-            <button type="button" class="quiet" disabled={locked} onclick={() => (merging = '')}
-              >Cancel</button
-            >
-          </div>
-        </div>
-      {:else if renaming !== workspace.key}
-        <div class="actions">
-          <button
-            id={`workspace-rename-${workspace.key}`}
-            type="button"
-            class="secondary"
-            disabled={locked}
-            onclick={() => startRename(workspace)}>Rename</button
-          >
-          {#if workspaces.length > 1}
             <button
               type="button"
-              class="secondary"
+              class="quiet"
               disabled={locked}
-              onclick={() => startMerge(workspace)}>Merge…</button
+              onclick={() => stopRename(workspace.key)}>Cancel</button
             >
-          {/if}
-          {#if workspace.kind === 'folder'}
-            {#if workspace.miningRoot}
+          </div>
+          {#if renameError}<p
+              id={`workspace-name-error-${workspace.key}`}
+              class="note invalid"
+              role="alert"
+            >
+              {renameError}
+            </p>{/if}
+        {:else}
+          <div class="workspace-heading">
+            <span class="workspace-label">{workspace.label}</span>
+            <span class="entry-count"
+              >{workspaceKindLabel(workspace)} · {workspace.dictations}
+              {workspace.dictations === 1 ? 'dictation' : 'dictations'}</span
+            >
+          </div>
+        {/if}
+        {#if merging === workspace.key}
+          <div class="merge-bar">
+            <label for={`workspace-merge-${workspace.key}`}>Merge {workspace.label} into</label>
+            <Select
+              id={`workspace-merge-${workspace.key}`}
+              bind:value={mergeTarget}
+              options={workspaces
+                .filter((other) => other.key !== workspace.key)
+                .map((other) => ({ value: other.key, label: other.label }))}
+              disabled={locked}
+            />
+            <div class="actions">
               <button
                 type="button"
-                class="secondary"
-                disabled={locked}
-                onclick={() =>
-                  run(
-                    () => clearMiningRoot(workspace.key),
-                    `Stopped learning words from ${workspace.label}.`,
-                  )}>Stop learning from folder</button
+                class="primary"
+                disabled={locked || !mergeTarget}
+                onclick={() => confirmMerge(workspace)}>Merge</button
               >
-            {:else}
+              <button type="button" class="quiet" disabled={locked} onclick={() => (merging = '')}
+                >Cancel</button
+              >
+            </div>
+          </div>
+        {:else if renaming !== workspace.key}
+          <div class="actions">
+            <button
+              id={`workspace-rename-${workspace.key}`}
+              type="button"
+              class="quiet"
+              disabled={locked}
+              onclick={() => startRename(workspace)}>Rename</button
+            >
+            {#if workspaces.length > 1}
               <button
                 type="button"
-                class="secondary"
+                class="quiet"
                 disabled={locked}
-                onclick={() =>
-                  run(
-                    () => chooseMiningRoot(workspace.key),
-                    `Vesper will learn words from that folder for ${workspace.label}.`,
-                  )}>Learn words from this folder…</button
+                onclick={() => startMerge(workspace)}>Merge…</button
               >
             {/if}
-          {/if}
-          <button
-            type="button"
-            class="quiet"
-            aria-label={`Remove workspace ${workspace.label}`}
-            disabled={locked}
-            onclick={() =>
-              run(
-                () => deleteWorkspace(workspace.key),
-                `Removed ${workspace.label}. It will not be detected again.`,
-              )}>Remove</button
-          >
-        </div>
-      {/if}
-    </div>
-  {/each}
+            <button
+              type="button"
+              class="quiet"
+              aria-label={`Remove workspace ${workspace.label}`}
+              disabled={locked}
+              onclick={() =>
+                run(
+                  () => deleteWorkspace(workspace.key),
+                  `Removed ${workspace.label}. It will not be detected again.`,
+                )}>Remove</button
+            >
+          </div>
+        {/if}
+      </div>
+    {/each}
+  </div>
   {#if error}<p class="note invalid" role="alert">{error}</p>{/if}
   {#if feedback}<p class="note" role="status">{feedback}</p>{/if}
 </div>
 
 <style>
-  .preference-group {
-    margin-top: var(--space-6);
-    padding-top: var(--space-6);
-    border-top: 1px solid var(--color-line);
-  }
   .group-heading,
   .workspace-heading {
     display: flex;
@@ -339,26 +270,33 @@
     font-size: 11px;
     font-variant-numeric: tabular-nums;
   }
-  .setting-toggle {
-    margin-bottom: var(--space-4);
-  }
+  /* One line per workspace: name and details left, actions right. */
   .workspace {
-    display: grid;
-    gap: var(--space-2);
-    padding: var(--space-4);
-    margin-bottom: var(--space-3);
-    background: var(--color-bg);
-    border: 1px solid var(--color-line);
-    border-radius: var(--radius-sm);
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: space-between;
+    gap: var(--space-2) var(--space-4);
+    padding-block: var(--space-3);
+  }
+  .workspace-heading {
+    flex: 1 1 160px;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 2px;
+    min-width: 0;
+  }
+  .workspace > :is(.rename-bar, .merge-bar, .note) {
+    flex-basis: 100%;
+  }
+  .workspace .actions {
+    gap: var(--space-1);
   }
   .workspace-label {
+    font-size: 13px;
     font-weight: 500;
     overflow-wrap: anywhere;
     min-width: 0;
-  }
-  .mining {
-    margin: 0;
-    overflow-wrap: anywhere;
   }
   .actions,
   .rename-bar {

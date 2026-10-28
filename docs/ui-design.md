@@ -117,15 +117,15 @@ feedback and the browser-preview notice retain their own meaningful states.
 
 ## Disclosure chevron convention
 
-Every `<details>`/`<summary>` disclosure (recordings, export, learning, diagnostics, and the bordered rows inside `.preference-group`/`.settings-advanced` such as Vocabulary's "How does this work?", "Advanced storage and improvement", "Advanced writing instructions", "Restore default preferences") shares one CSS-drawn chevron built from `details > summary::after` in `apps/desktop/src/app.css`. The bordered variant switches `summary` to a flex row (`display: flex; align-items: center; justify-content: space-between`) so the chevron is meant to be centered as a normal flex child; that rule must also set `position: static` on the chevron, or the `position: absolute` from the plain (unbordered) convention leaks in, pulls the chevron out of flow, and leaves it pinned near the top of the row instead of centered (issue #128). When adding a new disclosure, reuse this convention rather than a new chevron, and verify the chevron is vertically centered in a rendered screenshot, not just by reading the CSS.
+Every `<details>`/`<summary>` disclosure (recordings, export, learning, diagnostics, and the bordered rows inside `.preference-group`/`.settings-advanced` such as Vocabulary's "How does this work?", "Advanced storage and improvement", "Advanced writing instructions") shares one CSS-drawn chevron built from `details > summary::after` in `apps/desktop/src/app.css`. The bordered variant switches `summary` to a flex row (`display: flex; align-items: center; justify-content: space-between`) so the chevron is meant to be centered as a normal flex child; that rule must also set `position: static` on the chevron, or the `position: absolute` from the plain (unbordered) convention leaks in, pulls the chevron out of flow, and leaves it pinned near the top of the row instead of centered (issue #128). When adding a new disclosure, reuse this convention rather than a new chevron, and verify the chevron is vertically centered in a rendered screenshot, not just by reading the CSS.
 
-When a report-style panel needs optional methodology or caveat prose that most users will not read (for example, how a comparison is computed), nest a second, un-classed `<details>`/`<summary>` inside the panel's own disclosure rather than inlining the prose as visible `<p class="note">` text or inventing a tooltip/popover. `details > summary::after` is a generic descendant selector, so the nested disclosure automatically gets the same chevron with no extra CSS. `LearningSummary.svelte`'s "How this is measured" block (inside the History tab's "Learning on this device" report, issue #133) follows this pattern: it keeps headline stats, the review-queue actions, and the comparison table visible by default, and hides only the multi-sentence methodology paragraph behind the nested disclosure.
+When a report-style panel needs optional methodology or caveat prose that most users will not read (for example, how a comparison is computed), nest a second, un-classed `<details>`/`<summary>` inside the panel's own disclosure rather than inlining the prose as visible `<p class="note">` text or inventing a tooltip/popover. `details > summary::after` is a generic descendant selector, so the nested disclosure automatically gets the same chevron with no extra CSS. (The History tab's former "Learning on this device" report used this pattern; it was removed on 28 October 2026 because its numbers meant nothing to users. History now shows only user-facing figures: time saved, time recorded, words and recordings, then active days, speaking pace and words per recording.)
 
 ## Settings section navigation
 
 The selected HTML Settings study is integrated into the application: an interior
-sidebar for **Recording**, **Writing**, **Shortcuts**, **Appearance** and **About**,
-with one shared content surface. Selected sections have a tonal background and
+navigation for **Dictation**, **Writing**, **Vocabulary**, **Projects**,
+**Appearance**, **Privacy** and **About** (see [Settings grouping](#settings-grouping)). Selected sections have a tonal background and
 no underline. The native application sidebar keeps its existing treatment.
 Sections use extra-bold Bricolage headings with natural tracking, a 1.4 line height
 and shared description spacing; the main page title stays visually distinct.
@@ -133,15 +133,17 @@ At narrow widths the interior navigation becomes a wrapping row of 44 px targets
 
 Keep the real settings controls and their data ownership. Section changes hide
 panels without recreating the application draft or dirty personal preferences.
-Recording owns language, notifications, saved recordings and advanced storage
-options. Writing owns cleanup and the independent vocabulary/preferences form.
-Shortcuts keeps direct key capture and paste permissions. Application edits
+Dictation owns language, notifications, shortcuts, paste access and speech
+hints. Writing owns the writing model, output style and formatting. Vocabulary
+owns your words, the learning switches, words Vesper found and remembered
+examples. Projects owns project selection, rules and workspaces. Privacy owns
+storage and Restore defaults. Application edits
 autosave their shared draft across sections about a second after each change;
 a transient sidebar pill (Saving… sliding in, tick with save time, sliding
 away) confirms each write, and explicit actions such as model downloads flush
 pending edits first. There is no Save or Discard action. Vocabulary saves
 through the same mechanism. Restore
-defaults is under Recording's advanced options and still explicitly saves defaults.
+defaults is in Privacy's Reset group and still explicitly saves defaults.
 
 Appearance offers Light, Dark and System using the shared semantic tokens.
 Light uses white cards over a white canvas with a warm off-white sidebar,
@@ -186,7 +188,7 @@ recovery with the native About sheet. Neither surface exposes simulated updates.
 The HTML study remains a review artifact for the other screens; their layouts
 have not been integrated by this Settings change. `settings-layout.spec.mjs`
 covers section drafts, separate saves, appearance persistence/system/error states
-and all five sections in both themes at desktop and narrow widths.
+and all seven sections in both themes at desktop and narrow widths.
 
 On Models, keep selected model names and file actions in their existing model
 cards. Local engine shows resources, readiness and operation details without
@@ -194,18 +196,61 @@ repeating both selected models. Do not add a separate batch-verification card;
 automatic integrity checks and each model's Download/Verify files action own that
 flow. Keep these removals independent of changes to page width or card layout.
 
+### Settings grouping
+
+Settings has one tab per task, never a tab that mixes topics: **Dictation**
+(language, notifications, shortcuts, after-dictation paste, speech hints),
+**Writing** (writing model, output style, formatting),
+**Vocabulary** (words, how Vesper learns them, words found, examples),
+**Projects** (project selection, app rules, workspaces), **Appearance**,
+**Privacy** (storage, reset) and **About**. This follows macOS System Settings:
+each tab is a heading and one line of description, then groups; a group is a
+small muted label above one rounded box (`.settings-group` > `h3` +
+`.group-box`) whose rows are separated by hairlines. Do not nest another card
+inside a group box, and do not put a section's controls in a big outer card.
+Every row uses one pattern: label and its one-line help on the left, the
+control on the right (switch, menu, shortcut field or text field, all 44 px and
+13 px text); a label without help is centred on its control. Buttons inside a
+box are compact 13 px text buttons whose last one ends on the same edge as the
+switches. A disclosure or status (such as paste access) inside a box is a plain
+row with a small icon, never a box in a box. About is the one tab that keeps a
+single card around its content. Settings does not repeat
+the configured model names; Models owns them.
+A control that reads or controls other apps belongs with the feature it serves
+(Vocabulary → Learning), not with detection. In phone-sized windows the tab
+description is hidden so the first controls stay in view.
+
+### Option text
+
+A setting's label says what it does; help text under it is at most one short
+line, and is left out when the label is enough. Examples beat explanations
+(`“two thousand dollars” → $2,000`). Opt-ins that read other apps keep one line
+saying what is read and that nothing is saved. Details belong in the user
+guide, not the screen. Short related fields share one row (Projects: project
+selection and the project override). Lists of items, such as workspaces, are
+compact rows: name and details on the left, quiet text actions on the right,
+not one card per item. Do not ask people to pick folders for Vesper to read.
+
+## Statistic tiles
+
+A large statistic shows its number at full size and its unit small and muted,
+with no space before the unit: **2h 50min**, **39s**, **4 of 7**. A full-size
+unit such as "2 h 50 min" crowds the tile and makes the neighbouring tiles look
+misaligned. Smaller readouts, such as the chart tooltip, keep plain text
+("2 h 50 min saved").
+
 ## Small windows
 
 The main window supports 360 × 480 logical pixels. At widths up to 700 px,
 navigation becomes a compact header: reduce its surrounding space and wordmark
 size while retaining 44 px button targets. Keep the same page order and cards.
 Use tighter heading/card spacing and put the saved model labels beside their
-full names in Settings → Recording and History. Names wrap within the available width;
+full names on Dictate, History and Models. Names wrap within the available width;
 do not hide either model or truncate it to make the window fit.
 
 At the minimum window size, the first Settings control should be fully visible
-without scrolling past a model summary. The Settings model summary follows its controls. The rest of each page uses
-normal vertical scrolling, including Save. About is reached from its Settings section. Resizing must preserve
+without scrolling past a model summary. The rest of each page uses
+normal vertical scrolling. About is reached from its Settings section. Resizing must preserve
 unsaved values; open dropdowns close on resize and can reopen within the new
 viewport. Dialogs remain height-constrained and scroll internally as needed.
 
@@ -216,7 +261,7 @@ save reachability, dropdowns, dialog bounds and draft preservation on resize.
 
 ## Shortcut recording
 
-Settings → Shortcuts has one shortcut field for each action. Click the field (or focus it and activate it with Enter/Space), press the desired combination; it autosaves. The field displays the captured combination with platform-appropriate modifier names. A valid capture changes only the draft. Escape restores the values present when editing began; Tab, clicking away, or switching windows stops recording keys and keeps a valid draft, which autosaves. Restore defaults remains the existing settings action.
+Settings → Dictation has one shortcut field for each action. Click the field (or focus it and activate it with Enter/Space), press the desired combination; it autosaves. The field displays the captured combination with platform-appropriate modifier names. A valid capture changes only the draft. Escape restores the values present when editing began; Tab, clicking away, or switching windows stops recording keys and keeps a valid draft, which autosaves. Restore defaults remains the existing settings action.
 
 The recorder provides a preparing state before native capture is ready, inline unsupported/duplicate feedback, visible keyboard focus, and disabled behavior during an operation. Modifier selection buttons, key dropdowns, the Customize panel, and the extra Use shortcut step are not part of this flow. A shortcut recorder must not start the action it is configuring: the existing native callback routes already-registered combinations to the active main-window editor, while browser key events capture other supported combinations. Editing is session-scoped and stops on blur/close; late callbacks cannot change another field. No additional global keyboard hook is introduced.
 
@@ -446,7 +491,7 @@ conflicts with the running operation (issue #273).
 
 - **Saving and downloads never push the page around** (28 October 2026):
   - Settings autosave reports only in the sidebar status pill. The inline
-    "Saving…" notes in Settings and Writing were removed, and the empty
+    "Saving…" notes in the Settings form and the personal-preferences panel were removed, and the empty
     notice box no longer appears during a save; it shows only for errors,
     validation messages and action feedback.
   - A model download shows its progress, **Cancel download** and the lock
@@ -456,7 +501,8 @@ conflicts with the running operation (issue #273).
   - Content below an expanding card still moves; content above it never does.
   - Autosave never disables controls or blinks them: Writing saves in the
     background, and an edit made while a save runs is kept and saved next
-    instead of being replaced by the stored copy (Settings and Writing).
+    instead of being replaced by the stored copy (the Settings form and the
+    personal-preferences panel).
   - The sidebar shows saving only in its status pill; the accent dot on the
     Models and Settings icons was removed.
   - Tests: `settings-layout.spec.mjs` and `downloads.spec.mjs` assert the

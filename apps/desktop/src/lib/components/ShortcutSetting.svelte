@@ -165,7 +165,7 @@
         ? captured
           ? 'Shortcut recorded. It saves automatically, or Esc to cancel.'
           : 'Press a key combination. Esc to cancel.'
-        : 'Click the field to change. It saves automatically.')}
+        : '')}
   </p>
 </div>
 

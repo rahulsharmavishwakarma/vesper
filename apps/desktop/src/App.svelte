@@ -190,15 +190,20 @@
   type View = 'dictate' | 'history' | 'models' | 'settings';
   let activeView = $state<View>(window.location.hash === '#settings' ? 'settings' : 'dictate');
   let navigationRevision = $state(0);
+  // One tab per task (docs/ui-design.md#settings-grouping).
   const settingsSections = [
-    { id: 'recording', label: 'Recording' },
+    { id: 'dictation', label: 'Dictation' },
     { id: 'writing', label: 'Writing' },
-    { id: 'shortcuts', label: 'Shortcuts' },
+    { id: 'vocabulary', label: 'Vocabulary' },
+    { id: 'projects', label: 'Projects' },
     { id: 'appearance', label: 'Appearance' },
+    { id: 'privacy', label: 'Privacy' },
     { id: 'about', label: 'About' },
   ] as const;
   type SettingsSection = (typeof settingsSections)[number]['id'];
-  let settingsSection = $state<SettingsSection>('recording');
+  /** Tabs whose controls live in the application settings form. */
+  const APP_FORM_SECTIONS: readonly SettingsSection[] = ['dictation', 'writing', 'privacy'];
+  let settingsSection = $state<SettingsSection>('dictation');
   function showSettingsSection(section: SettingsSection) {
     settingsSection = section;
     const top = document.querySelector('.settings-layout')?.getBoundingClientRect().top ?? 0;
@@ -372,8 +377,8 @@
   const languageOptions = $derived(pipelineLanguageOptions(draft));
   const languageHint = $derived(
     languageOptions.some((option) => option.value === 'auto')
-      ? 'Automatic detection lets the speech model identify the language.'
-      : 'Choose a language supported by the speech model and, when enabled, the writing model.',
+      ? 'Automatic lets the speech model detect it.'
+      : 'Languages your speech and writing models support.',
   );
 
   function modelChoiceContext(role: ModelProfileRole) {
@@ -855,7 +860,7 @@
             id="application-settings"
             hidden={activeView === 'history' ||
               (activeView === 'settings' &&
-                (settingsSection === 'about' || settingsSection === 'appearance') &&
+                !APP_FORM_SECTIONS.includes(settingsSection) &&
                 !dirty &&
                 !error &&
                 loaded)}
@@ -872,41 +877,57 @@
                 <legend class="visually-hidden">Application settings</legend>
                 <section
                   class="settings-section"
-                  hidden={activeView !== 'settings' || settingsSection !== 'recording'}
-                  id="settings-recording-panel"
+                  hidden={activeView !== 'settings' || settingsSection !== 'dictation'}
+                  id="settings-dictation-panel"
                   aria-labelledby="speech-heading"
                 >
-                  <h2 id="speech-heading">Recording</h2>
-                  <p class="settings-description">Choose how you capture and keep your words.</p>
-                  <div class="field">
-                    <label for="settings-language">Transcription language</label>
-                    <Select
-                      id="settings-language"
-                      bind:value={draft.language}
-                      options={languageOptions}
-                      disabled={pending !== null || pipelineBusy}
-                      invalid={languageError !== null}
-                      describedBy={languageError
-                        ? 'settings-language-error'
-                        : 'settings-language-help'}
-                    />
-                    {#if languageError}<p id="settings-language-error" class="error">
-                        {languageError}
-                      </p>{:else}<p id="settings-language-help" class="note">{languageHint}</p>{/if}
+                  <h2 id="speech-heading">Dictation</h2>
+                  <p class="settings-description">How you start dictating and where words go.</p>
+                  <div class="settings-group">
+                    <h3>Language and alerts</h3>
+                    <div class="group-box">
+                      <div class="field">
+                        <label for="settings-language">Transcription language</label>
+                        <Select
+                          id="settings-language"
+                          bind:value={draft.language}
+                          options={languageOptions}
+                          disabled={pending !== null || pipelineBusy}
+                          invalid={languageError !== null}
+                          describedBy={languageError
+                            ? 'settings-language-error'
+                            : 'settings-language-help'}
+                        />
+                        {#if languageError}<p id="settings-language-error" class="error">
+                            {languageError}
+                          </p>{:else}<p id="settings-language-help" class="note">
+                            {languageHint}
+                          </p>{/if}
+                      </div>
+                      <div class="setting-toggle">
+                        <label class="checkbox-field" for="notifications"
+                          ><input
+                            id="notifications"
+                            type="checkbox"
+                            bind:checked={draft.notificationsEnabled}
+                            aria-describedby="notifications-help"
+                          /><span>Notify when transcription finishes or fails</span></label
+                        >
+                        <p id="notifications-help" class="note checkbox-help">
+                          Never shows your text.
+                        </p>
+                      </div>
+                    </div>
                   </div>
-                  <div class="setting-toggle">
-                    <label class="checkbox-field" for="notifications"
-                      ><input
-                        id="notifications"
-                        type="checkbox"
-                        bind:checked={draft.notificationsEnabled}
-                        aria-describedby="notifications-help"
-                      /><span>Notify when transcription finishes or fails</span></label
-                    >
-                    <p id="notifications-help" class="note checkbox-help">
-                      Notifications never include transcript text. Your system may ask for
-                      permission when you save.
-                    </p>
+                  <div class="settings-group">
+                    <h3>Shortcuts</h3>
+                    <div class="group-box">
+                      <DictationPreferences
+                        bind:settings={draft}
+                        desktop={environment === 'desktop'}
+                        disabled={pending !== null || pipelineBusy}
+                      />
+                    </div>
                   </div>
                 </section>
                 <section
@@ -917,83 +938,70 @@
                 >
                   <h2 id="cleanup-heading">Writing</h2>
                   <p class="settings-description">Polish your words while keeping their meaning.</p>
-                  <div class="setting-toggle">
-                    <label class="checkbox-field" for="cleanup-enabled"
-                      ><input
-                        id="cleanup-enabled"
-                        type="checkbox"
-                        bind:checked={draft.cleanupEnabled}
-                        aria-describedby="cleanup-enabled-help"
-                      /><span>Use the writing model to polish transcripts</span></label
-                    >
-                    <p id="cleanup-enabled-help" class="note checkbox-help">
-                      Turn this off to skip writing-model edits. Confirmed vocabulary corrections
-                      can still apply.
-                    </p>
-                  </div>
-                  <fieldset disabled={!draft.cleanupEnabled} class="cleanup-options">
-                    <legend class="visually-hidden">Writing preferences</legend>
-                    <div class="field">
-                      <label for="cleanup-preset">Writing style</label>
-                      <Select
-                        id="cleanup-preset"
-                        bind:value={draft.cleanupPreset}
-                        options={[
-                          {
-                            value: 'minimal',
-                            label: 'Formatting only',
-                            description: 'Punctuation and capitalization without word changes',
-                          },
-                          {
-                            value: 'balanced',
-                            label: 'Context correction',
-                            description: 'Correct recognition errors and improve phrasing',
-                          },
-                        ]}
-                        disabled={pending !== null || pipelineBusy || !draft.cleanupEnabled}
-                        describedBy="cleanup-help"
-                      />
-                      <p id="cleanup-help" class="note">
-                        Formatting only keeps your words. Context correction can change wording. The
-                        original transcript stays available.
-                      </p>
-                    </div>
-                    <details>
-                      <summary>Advanced writing instructions</summary>
-                      <div class="field">
-                        <label for="cleanup-instruction">Custom writing instruction</label>
-                        <textarea
-                          id="cleanup-instruction"
-                          rows="4"
-                          bind:value={draft.customCleanupInstruction}
-                          aria-describedby="instruction-help"
-                          aria-invalid={[...draft.customCleanupInstruction].length > 4000}
-                          placeholder="For example: Use short sentences and retain technical terms."
-                        ></textarea>
-                        <p id="instruction-help" class="note">
-                          Replaces the selected preset; leave blank to use the preset. {[
-                            ...draft.customCleanupInstruction,
-                          ].length.toLocaleString()} / 4,000 characters.
+                  <div class="settings-group">
+                    <h3>Writing model</h3>
+                    <div class="group-box">
+                      <div class="setting-toggle">
+                        <label class="checkbox-field" for="cleanup-enabled"
+                          ><input
+                            id="cleanup-enabled"
+                            type="checkbox"
+                            bind:checked={draft.cleanupEnabled}
+                            aria-describedby="cleanup-enabled-help"
+                          /><span>Use the writing model to polish transcripts</span></label
+                        >
+                        <p id="cleanup-enabled-help" class="note checkbox-help">
+                          Off: your vocabulary still applies.
                         </p>
                       </div>
-                    </details>
-                  </fieldset>
-                </section>
-                <section
-                  class="settings-section"
-                  hidden={activeView !== 'settings' || settingsSection !== 'shortcuts'}
-                  id="settings-shortcuts-panel"
-                  aria-labelledby="quick-capture-heading"
-                >
-                  <h2 id="quick-capture-heading">Shortcuts</h2>
-                  <p class="settings-description">
-                    Click a field, then press your key combination.
-                  </p>
-                  <DictationPreferences
-                    bind:settings={draft}
-                    desktop={environment === 'desktop'}
-                    disabled={pending !== null || pipelineBusy}
-                  />
+                      <fieldset disabled={!draft.cleanupEnabled} class="cleanup-options">
+                        <legend class="visually-hidden">Writing preferences</legend>
+                        <div class="field">
+                          <label for="cleanup-preset">Writing style</label>
+                          <Select
+                            id="cleanup-preset"
+                            bind:value={draft.cleanupPreset}
+                            options={[
+                              {
+                                value: 'minimal',
+                                label: 'Formatting only',
+                                description: 'Punctuation and capitalization without word changes',
+                              },
+                              {
+                                value: 'balanced',
+                                label: 'Context correction',
+                                description: 'Correct recognition errors and improve phrasing',
+                              },
+                            ]}
+                            disabled={pending !== null || pipelineBusy || !draft.cleanupEnabled}
+                            describedBy="cleanup-help"
+                          />
+                          <p id="cleanup-help" class="note">
+                            The original transcript is always kept.
+                          </p>
+                        </div>
+                        <details>
+                          <summary>Advanced writing instructions</summary>
+                          <div class="field">
+                            <label for="cleanup-instruction">Custom writing instruction</label>
+                            <textarea
+                              id="cleanup-instruction"
+                              rows="4"
+                              bind:value={draft.customCleanupInstruction}
+                              aria-describedby="instruction-help"
+                              aria-invalid={[...draft.customCleanupInstruction].length > 4000}
+                              placeholder="For example: Use short sentences and retain technical terms."
+                            ></textarea>
+                            <p id="instruction-help" class="note">
+                              Replaces the selected preset; leave blank to use the preset. {[
+                                ...draft.customCleanupInstruction,
+                              ].length.toLocaleString()} / 4,000 characters.
+                            </p>
+                          </div>
+                        </details>
+                      </fieldset>
+                    </div>
+                  </div>
                 </section>
                 <section
                   class="settings-section model-choice"
@@ -1192,48 +1200,49 @@
                 </section>
                 <section
                   class="settings-section"
-                  hidden={activeView !== 'settings' || settingsSection !== 'recording'}
+                  hidden={activeView !== 'settings' || settingsSection !== 'privacy'}
+                  id="settings-privacy-panel"
                   aria-labelledby="storage-heading"
                 >
-                  <h3 id="storage-heading">Storage and improvement</h3>
-                  <div class="setting-toggle">
-                    <label class="checkbox-field" for="collect-training"
-                      ><input
-                        id="collect-training"
-                        type="checkbox"
-                        bind:checked={draft.collectTrainingData}
-                        aria-describedby="collect-training-help"
-                      /><span>Save recordings and transcripts</span></label
-                    >
-                    <p id="collect-training-help" class="note checkbox-help">
-                      Saved on this device for review and export from History.
-                    </p>
-                  </div>
-                  <details class="settings-advanced">
-                    <summary>Advanced storage and improvement</summary>
-                    <div class="field improvement-field">
-                      <p id="improvement-help" class="note">
-                        Spelling learning runs automatically from eligible edits to Your text.
-                        History reviews need your confirmation. Automatic model training and
-                        activation are not available.
-                      </p>
+                  <h2 id="storage-heading">Privacy</h2>
+                  <p class="settings-description">Everything stays on this Mac.</p>
+                  <div class="settings-group">
+                    <h3>Storage</h3>
+                    <div class="group-box">
+                      <div class="setting-toggle">
+                        <label class="checkbox-field" for="collect-training"
+                          ><input
+                            id="collect-training"
+                            type="checkbox"
+                            bind:checked={draft.collectTrainingData}
+                            aria-describedby="collect-training-help"
+                          /><span>Save recordings and transcripts</span></label
+                        >
+                        <p id="collect-training-help" class="note checkbox-help">
+                          Kept for History and export.
+                        </p>
+                      </div>
+                      <details class="settings-advanced">
+                        <summary>Advanced storage and improvement</summary>
+                        <div class="field improvement-field">
+                          <p id="improvement-help" class="note">
+                            Spellings are learned from your fixes. History reviews need your
+                            confirmation. Vesper never trains or swaps models on its own.
+                          </p>
+                        </div>
+                      </details>
                     </div>
-                    <details class="settings-defaults">
-                      <summary>Restore default preferences</summary>
-                      <p class="note">
-                        Restore and save the application's default settings. Your recordings and
-                        vocabulary stay.
-                      </p>
-                      <button type="button" onclick={reset} disabled={modelChoicesLocked}>
-                        {pending === 'resetting' ? 'Restoring…' : 'Restore defaults'}
-                      </button>
-                    </details>
-                  </details>
-                  <div class="settings-model-summary">
-                    <ConfiguredModels
-                      settings={engineSettings}
-                      onManage={() => navigate('models')}
-                    />
+                  </div>
+                  <div class="settings-group">
+                    <h3>Reset</h3>
+                    <div class="group-box">
+                      <div class="settings-row">
+                        <p class="note">Restore default settings. Recordings and words stay.</p>
+                        <button type="button" onclick={reset} disabled={modelChoicesLocked}>
+                          {pending === 'resetting' ? 'Restoring…' : 'Restore defaults'}
+                        </button>
+                      </div>
+                    </div>
                   </div>
                 </section>
               </fieldset>
@@ -1249,10 +1258,13 @@
           >
             <h2 id="appearance-heading">Appearance</h2>
             <p class="settings-description">Make Vesper feel at home on your screen.</p>
-            <AppearanceSettings />
-            <div class="capture-appearance">
+            <div class="settings-group">
+              <h3>Theme</h3>
+              <div class="group-box"><AppearanceSettings /></div>
+            </div>
+            <div class="settings-group capture-appearance">
               <h3>Floating capture</h3>
-              <fieldset disabled={!loaded || pending !== null || pipelineBusy}>
+              <fieldset class="group-box" disabled={!loaded || pending !== null || pipelineBusy}>
                 <div class="setting-toggle">
                   <label class="checkbox-field" for="floating-bar"
                     ><input
@@ -1263,7 +1275,7 @@
                     /><span>Show the floating capture</span></label
                   >
                   <p id="floating-bar-help" class="note checkbox-help">
-                    The recording shortcut works even when floating capture is hidden.
+                    Shortcuts work even when it is hidden.
                   </p>
                 </div>
                 <CaptureDesignPicker
@@ -1272,7 +1284,6 @@
                   disabled={pending !== null || pipelineBusy || !draft.floatingBarEnabled}
                 />
               </fieldset>
-              <p class="note">Capture preferences save automatically.</p>
             </div>
           </section>
           <div
@@ -1285,7 +1296,7 @@
             class="settings-notice"
             hidden={activeView === 'history' ||
               (activeView === 'settings' &&
-                ['appearance', 'about'].includes(settingsSection) &&
+                !APP_FORM_SECTIONS.includes(settingsSection) &&
                 !dirty &&
                 !error &&
                 loaded) ||
@@ -1321,7 +1332,7 @@
           {#if loaded}
             <PersonalizationPanel
               desktop={environment === 'desktop'}
-              visible={activeView === 'settings' && settingsSection === 'writing'}
+              section={activeView === 'settings' ? settingsSection : ''}
               disabled={pending !== null || pipelineBusy}
               onSaveActivity={(saving, at) => {
                 panelSaving = saving;

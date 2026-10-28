@@ -2,7 +2,7 @@
 
 Status: implemented, tracked in [#357](https://github.com/rahulsharmavishwakarma/vesper/issues/357); owner-approved on 27 October 2026; not yet in a release. Both features are **off by default**. Real-app coverage is not yet measured; the per-app counts below are how it will be.
 
-Most corrections happen in the app that received the dictation, not in Vesper. Without these features, ordinary use gives the [learning loop](self-improving-system.md) no input: in the first 17 real dictations with the new build, Vesper knew 0 terms and made 0 corrections. Two opt-in features in **Writing → Workspaces** use that app's text, under the same rules as in-app learning.
+Most corrections happen in the app that received the dictation, not in Vesper. Without these features, ordinary use gives the [learning loop](self-improving-system.md) no input: in the first 17 real dictations with the new build, Vesper knew 0 terms and made 0 corrections. Two opt-in features in **Vocabulary → Learning** use that app's text, under the same rules as in-app learning.
 
 ```mermaid
 sequenceDiagram
