@@ -18,6 +18,9 @@ pub const VISIBLE_DAYS: usize = 2;
 /// there, seen on at least `ROOT_DAYS` days.
 pub const ROOT_DOCUMENTS: usize = 2;
 pub const ROOT_DAYS: usize = 2;
+/// …or once a single document has this many dictations there (also over
+/// `ROOT_DAYS` days): people often dictate with the same file focused.
+pub const ROOT_SINGLE_DOCUMENT_DICTATIONS: u32 = 5;
 const MAX_LEAVES: usize = 4;
 const MAX_DAYS: usize = 8;
 const MAX_CHAIN: usize = 8;
@@ -665,9 +668,11 @@ impl WorkspaceState {
             Target::Folder { leaf, chain } => {
                 let anchor = chain.last()?;
                 let node = self.touch_node(&anchor.key, leaf, day);
-                // Register the anchor once enough independent documents anchor there.
+                // Register the anchor once enough independent documents, or
+                // repeated dictations with one document, anchor there.
                 if self.workspace(&anchor.key).is_none()
-                    && node.leaves.len() >= ROOT_DOCUMENTS
+                    && (node.leaves.len() >= ROOT_DOCUMENTS
+                        || node.count >= ROOT_SINGLE_DOCUMENT_DICTATIONS)
                     && node.days.len() >= ROOT_DAYS
                 {
                     let (count, days) = (node.count.saturating_sub(1), node.days.clone());

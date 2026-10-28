@@ -183,15 +183,23 @@ fn many_dictations_on_one_day_stay_latent() {
 }
 
 #[test]
-fn a_single_document_never_forms_a_workspace() {
+fn a_single_document_forms_a_workspace_after_five_dictations_over_two_days() {
     let mut s = WorkspaceState::default();
-    let only = file(PAGES, "/Users/tester/Documents/Taxes/2026.numbers");
-    for day in 0..30 {
-        assert_eq!(s.observe(&only, day), None);
+    let only = file(CODE, "/Users/tester/work/alpha/notes.md");
+    for _ in 0..20 {
+        assert_eq!(s.observe(&only, 5), None, "one day never qualifies a root");
     }
     assert!(s.workspaces.is_empty());
-    assert_eq!(s.nodes.len(), 1);
-    assert_eq!(s.nodes[0].leaves.len(), 1);
+    assert!(s.observe(&only, 6).is_some());
+    assert_eq!(visible_label(&s, &only).as_deref(), Some("alpha"));
+
+    let mut few = WorkspaceState::default();
+    for day in 0..4 {
+        assert_eq!(few.observe(&only, day), None);
+    }
+    assert!(few.workspaces.is_empty(), "four dictations stay a node");
+    few.observe(&only, 4);
+    assert_eq!(visible_label(&few, &only).as_deref(), Some("alpha"));
 }
 
 #[test]

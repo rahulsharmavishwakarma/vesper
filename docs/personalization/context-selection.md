@@ -245,8 +245,10 @@ filesystem (no `stat`, no walk), so it cannot trigger macOS privacy prompts.
   at `repo`. A Terminal directory inside the repo anchors there too, so editor and
   terminal dictations share one workspace.
 - Root rule: the anchor folder becomes a (latent) workspace root once at least
-  **2 distinct documents** anchor there on at least **2 days**. A single file never
-  forms a workspace. The deepest registered root on a document's chain owns it.
+  **2 distinct documents** anchor there on at least **2 days**, or once a single
+  document has **5 dictations** there over at least **2 days** (people often dictate
+  into a chat or terminal with the same file focused). One day never forms a
+  root. The deepest registered root on a document's chain owns it.
 - Lifecycle: a root stays **latent** (no name stored) until it has **5 dictations
   over at least 2 days**; it then becomes visible, named after its folder's last
   component (deduplicated with a numeric suffix). A latent subfolder root defers to
