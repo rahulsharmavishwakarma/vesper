@@ -1,7 +1,7 @@
 <script lang="ts">
   import { selectionHighlight } from '../actions/selectionHighlight';
   import type { SessionRecord } from '../api/dataset';
-  import { TYPING_WPM, formatDuration, historyActivity } from '../history';
+  import { TYPING_WPM, durationParts, formatDuration, historyActivity } from '../history';
   let {
     records,
     selectedDay,
@@ -86,11 +86,19 @@
   {#key range}<dl class="history-metrics">
       <div>
         <dt>Time saved</dt>
-        <dd>{formatDuration(activity.savedMs)}</dd>
+        <dd>
+          {#each durationParts(activity.savedMs) as [value, unit] (unit)}<span class="duration-part"
+              >{value}<span class="unit">{unit}</span></span
+            >{/each}
+        </dd>
       </div>
       <div>
         <dt>Time recorded</dt>
-        <dd>{formatDuration(activity.recordedMs)}</dd>
+        <dd>
+          {#each durationParts(activity.recordedMs) as [value, unit] (unit)}<span
+              class="duration-part">{value}<span class="unit">{unit}</span></span
+            >{/each}
+        </dd>
       </div>
       <div>
         <dt>Words</dt>
@@ -167,13 +175,13 @@
   <dl class="history-insights">
     <div>
       <dt>Active days</dt>
-      <dd>{activity.activeDays}<span> / {range}</span></dd>
+      <dd>{activity.activeDays}<span class="unit">of {range}</span></dd>
     </div>
     <div>
       <dt>Speaking pace</dt>
       <dd>
-        {#if activity.pace}{Math.round(activity.pace).toLocaleString()}<span>
-            words a minute</span
+        {#if activity.pace}{Math.round(activity.pace).toLocaleString()}<span class="unit"
+            >words a minute</span
           >{:else}—{/if}
       </dd>
     </div>

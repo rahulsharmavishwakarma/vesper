@@ -482,7 +482,8 @@ reloads it.
 **Your recording rhythm** (top of History, last 7 or 30 days) shows **Time
 saved**, **Time recorded**, **Words** and **Recordings**, a recordings-per-day
 chart (pick a day to filter the list), active days, speaking pace and words per
-recording. Time saved is how much longer typing the same words at 40 words a
+recording. Durations read like **2h 50min**, with the units in smaller text.
+Time saved is how much longer typing the same words at 40 words a
 minute would have taken than saying them; a recording without a known length
 adds nothing.
 

@@ -229,6 +229,14 @@ selection and project on Projects). Lists of items, such as workspaces, are
 compact rows: name and details on the left, quiet text actions on the right,
 not one card per item. Do not ask people to pick folders for Vesper to read.
 
+## Statistic tiles
+
+A large statistic shows its number at full size and its unit small and muted,
+with no space before the unit: **2h 50min**, **39s**, **4 of 7**. A full-size
+unit such as "2 h 50 min" crowds the tile and makes the neighbouring tiles look
+misaligned. Smaller readouts, such as the chart tooltip, keep plain text
+("2 h 50 min saved").
+
 ## Small windows
 
 The main window supports 360 × 480 logical pixels. At widths up to 700 px,

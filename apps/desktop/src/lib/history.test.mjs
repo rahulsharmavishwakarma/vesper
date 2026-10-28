@@ -4,6 +4,7 @@ import {
   filterSessions,
   paginateSessions,
   historyActivity,
+  durationParts,
   formatDuration,
   recordingDay,
   recordingDate,
@@ -295,4 +296,9 @@ test('time saved compares typing the words at 40 a minute with saying them', () 
   assert.equal(formatDuration(45_000), '45 s');
   assert.equal(formatDuration(35 * 60_000), '35 min');
   assert.equal(formatDuration(72 * 60_000), '1 h 12 min');
+  assert.equal(formatDuration(120 * 60_000), '2 h');
+  assert.deepEqual(durationParts(170 * 60_000), [
+    [2, 'h'],
+    [50, 'min'],
+  ]);
 });

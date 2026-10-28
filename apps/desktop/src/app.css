@@ -1340,11 +1340,17 @@ details {
   letter-spacing: -0.04em;
   overflow-wrap: anywhere;
 }
-.history-metrics dd span {
-  margin-left: var(--space-1);
+/* Units are small and muted so the numbers carry the tile: 2h 50min. */
+.history-metrics .unit,
+.history-insights .unit {
+  margin-left: 2px;
   color: var(--color-muted);
-  font-size: 12px;
+  font-size: 0.42em;
+  font-weight: 500;
   letter-spacing: 0;
+}
+.history-metrics .duration-part + .duration-part {
+  margin-left: 0.22em;
 }
 .activity-chart-heading,
 .activity-axis {
@@ -1488,9 +1494,9 @@ details {
   font-size: 14px;
   font-variant-numeric: tabular-nums;
 }
-.history-insights dd span {
-  font-size: 10px;
-  color: var(--color-muted);
+.history-insights .unit {
+  margin-left: var(--space-1);
+  font-size: 11px;
 }
 .activity-explanation {
   font-size: 11px;

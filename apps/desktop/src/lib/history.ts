@@ -106,12 +106,23 @@ export function recordingDay(value: string | Date): string {
 export const TYPING_WPM = 40;
 
 /** `1 h 12 min`, `35 min`, `45 s` or `0 min`. */
-export function formatDuration(ms: number): string {
+/** Splits a duration into number and unit pairs, such as `[[2, 'h'], [50, 'min']]`. */
+export function durationParts(ms: number): [number, string][] {
   const minutes = Math.floor(ms / 60_000);
-  if (minutes >= 60) return `${Math.floor(minutes / 60)} h ${minutes % 60} min`;
-  if (minutes >= 1) return `${minutes} min`;
+  if (minutes >= 60) {
+    const parts: [number, string][] = [[Math.floor(minutes / 60), 'h']];
+    if (minutes % 60) parts.push([minutes % 60, 'min']);
+    return parts;
+  }
+  if (minutes >= 1) return [[minutes, 'min']];
   const seconds = Math.round(ms / 1000);
-  return seconds > 0 ? `${seconds} s` : '0 min';
+  return seconds > 0 ? [[seconds, 's']] : [[0, 'min']];
+}
+
+export function formatDuration(ms: number): string {
+  return durationParts(ms)
+    .map(([value, unit]) => `${value} ${unit}`)
+    .join(' ');
 }
 
 export function historyActivity(records: SessionRecord[], dayCount: 7 | 30, now = new Date()) {
