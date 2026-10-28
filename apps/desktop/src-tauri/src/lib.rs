@@ -9,7 +9,10 @@ mod settings;
 mod setup;
 mod shortcuts;
 mod storage;
+mod term_worker;
+mod terms;
 mod updates;
+mod workspaces;
 
 use std::path::PathBuf;
 use std::sync::Arc;
@@ -40,6 +43,7 @@ pub struct AppStorage {
     shortcut_recorder: std::sync::Mutex<shortcuts::Recorder>,
     dictation: dictation::Dictation,
     onboarding: onboarding::OnboardingStore,
+    term_worker: term_worker::TermWorker,
 }
 
 pub fn replace_global_shortcut(
@@ -144,7 +148,9 @@ pub fn run() {
                 shortcut_recorder: std::sync::Mutex::new(shortcuts::Recorder::default()),
                 dictation: dictation::Dictation::default(),
                 onboarding,
+                term_worker: term_worker::TermWorker::default(),
             });
+            term_worker::start(app.handle().clone());
             if let Some(window) = app.get_webview_window("quick-capture") {
                 vesper_desktop_platform::initialize(&window).map_err(std::io::Error::other)?;
             }
@@ -203,6 +209,10 @@ pub fn run() {
             commands::get_app_info,
             commands::read_project_application,
             commands::resolve_project_folder,
+            workspaces::list_workspaces,
+            workspaces::rename_workspace,
+            workspaces::merge_workspace,
+            workspaces::delete_workspace,
             commands::get_app_status,
             commands::get_engine_diagnostics,
             commands::get_accelerator_capabilities,
@@ -213,6 +223,7 @@ pub fn run() {
             commands::get_automatic_learning,
             commands::get_learning_shadow_diagnostics,
             commands::forget_automatic_learning,
+            commands::resume_automatic_spellings,
             commands::suspend_automatic_candidate,
             commands::approve_automatic_candidate,
             commands::edit_latest_draft,
@@ -256,6 +267,10 @@ pub fn run() {
             commands::stop_recording,
             commands::cancel_operation,
             commands::transcribe_file,
+            terms::get_term_inventory,
+            terms::remove_inventory_term,
+            terms::forget_term_source,
+            terms::resume_term_source,
         ])
         .build(tauri::generate_context!())
         .expect("failed to build the Vesper desktop application")

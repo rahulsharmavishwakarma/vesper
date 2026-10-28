@@ -28,6 +28,19 @@ For the public native replay, preserve original manifest ordering and select the
 
 The diagnostic native quality margin is **no increase in audit word edits or harmed audit cases** relative to frozen memory. The exploratory timing margin is **no more than 10% higher mean or p95 backend completion time** for learning on matched resident requests; report sample size and order effects and do not treat a small shared-host screen as a release decision. No timing exclusion may depend on which arm was faster. Cold requests remain in their own reported group. These diagnostic margins do not replace a powered natural-user qualification.
 
+## Recognizer hook qualification
+
+A typed recognizer hook (see [context selection](context-selection.md#typed-recognizer-hooks)) moves from `declared` to `qualified` only through the fixed [term evaluator](term-evaluation.md), per adapter and artifact, on the frozen corpus's `test` split. These gates were written on 27 October 2026, before any term-evaluation output was scored:
+
+1. **Benefit.** Case-sensitive target-term recall on clean positives rises by at least 5 percentage points over `none` at both `ws10` and `ws32`, and paired improvements outnumber paired regressions.
+2. **No added false alarms.** On rendered target-free hard negatives and on real FLEURS speech, `ws32` and `wrong32` each raise the false-alarm rate by at most 1 percentage point over `none`, and the 95% upper bound stays at or below 3%.
+3. **No ordinary-word damage.** Non-target WER on FLEURS under `ws32` rises by at most 0.5 percentage points absolute over `none`.
+4. **No new failures** under any hint condition relative to `none`.
+
+Measurement note (27 October, after round 1, gates unchanged): with 92 FLEURS clips the one-sided 95% bound is 3.2% even with zero false alarms, so the bound in gate 2 cannot be met on that lane alone. The [term evaluation](term-evaluation.md#round-2-ordinary-word-filter-and-lower-nemotron-boosts) reports both the per-lane and the pooled reading and qualifies nothing on the pooled reading without an owner decision.
+
+All four pass: `qualified`. Benefit fails but harm gates pass: stays `declared` (no reason to send hints). Any harm gate fails: `disabled`, with the measured reason recorded on the term-evaluation page. The `large` condition documents list-size degradation and is not a gate, because the application never sends more than the hook's limits. Synthetic TTS positives cannot qualify a hook for natural speech on their own; a qualified status remains subject to the natural-use evidence above.
+
 ## Learning opportunity coverage
 
 The fixed two-clip-per-cohort public replay is an execution/admission diagnostic,

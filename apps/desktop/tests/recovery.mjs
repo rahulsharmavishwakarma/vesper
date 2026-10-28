@@ -212,6 +212,7 @@ async function setup({ recording = false, preview = false, main = false, interce
             reviewQueue: [],
           };
         case 'get_correction_suggestions':
+        case 'list_workspaces':
           return [];
         case 'get_selected_adapters':
           return { speech: { capabilities: { contextualPhrases: false, nativeStreaming: false } } };
@@ -870,9 +871,18 @@ await test('Personal preference drafts survive navigation and save independently
   await tick();
   waitForSave = deferred();
   await until(() => (state.counts.save_personalization ?? 0) >= 3, 'Autosave did not start');
-  assert(project().matches(':disabled'), 'Controls can change during save');
+  // Saving runs in the background: controls stay usable, and an edit made while
+  // the write is in flight is kept and saved next rather than overwritten.
+  assert(!project().matches(':disabled'), 'Saving disabled the controls');
+  project().value = 'Edit during save';
+  project().dispatchEvent(new Event('input', { bubbles: true }));
+  await tick();
   waitForSave.resolve();
-  await until(() => saved.activeProject === 'Second edit', 'Second edit did not save');
+  await until(
+    () => saved.activeProject === 'Edit during save',
+    'Edit made during the save was lost',
+  );
+  assert(project().value === 'Edit during save', 'The stored copy replaced a newer edit');
   saved.activeProject = 'Updated from History';
   await navigate('History');
   await navigate('Settings');

@@ -378,7 +378,10 @@ fn ordinary_correction_learning_reuses_names_acronyms_and_formatted_edits() {
             }
             let raw = format!("Inspect {alias} {cue} again");
             let target = format!("Inspect {canonical} {cue} again");
-            let (runtime, result) = complete(4, &raw, true);
+            // Another recognizer family did not produce this error; the alias waits.
+            let (_, switched) = complete(4, &raw, true);
+            assert_eq!(final_text(&switched), raw);
+            let (runtime, result) = complete(4, &raw, false);
             assert_eq!(final_text(&result), target);
             assert_eq!(word_edits(&target, final_text(&result)), Some(0));
             assert!(word_edits(&target, &raw).unwrap() > 0);
@@ -409,7 +412,7 @@ fn ordinary_correction_learning_reuses_names_acronyms_and_formatted_edits() {
             rows.push(json!({"alias":alias,"canonical":canonical,"undo":undo,
                 "distinctSupport":2,"duplicateSupportAdded":false,
                 "rawWordEdits":word_edits(&target,&raw),"learningWordEdits":0,
-                "wrongContextAndQuoteUnchanged":true,"suspensionPassed":true,"forgetPassed":true}));
+                "wrongContextAndQuoteUnchanged":true,"otherRecognizerUnchanged":true,"suspensionPassed":true,"forgetPassed":true}));
         }
     }
     report(

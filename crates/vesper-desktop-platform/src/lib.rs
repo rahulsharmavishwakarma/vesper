@@ -1,8 +1,15 @@
 //! Narrow native desktop boundary. Every native entry checks the main thread;
 //! borrowed window handles never outlive their owner during initialization.
 use raw_window_handle::HasWindowHandle;
+mod background;
 mod projects;
-pub use projects::{project_application, project_document, ProjectApplication};
+pub use background::{
+    enter_background_thread, system_conditions, thread_cpu_time, SystemConditions, ThermalState,
+};
+pub use projects::{
+    project_application, project_context, project_document, DocumentContext, DocumentKind,
+    ProjectApplication,
+};
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 pub enum PasteResult {
@@ -34,6 +41,16 @@ mod ffi {
         pub fn td_target_clear(token: u64);
         pub fn td_paste(token: u64, text: *const c_char) -> i32;
         pub fn td_copy(text: *const c_char) -> bool;
+        pub fn td_target_context(token: u64, limit: usize, output: *mut c_char, size: usize)
+            -> i32;
+        pub fn td_paste_receipts_enabled(enabled: bool);
+        pub fn td_capture_failure(output: *mut c_char, size: usize) -> i32;
+        pub fn td_receipt_read(
+            token: u64,
+            pasted: *mut u64,
+            output: *mut c_char,
+            size: usize,
+        ) -> i32;
     }
 }
 
@@ -235,6 +252,82 @@ fn capture_message(code: i32) -> Result<(), String> {
         ),
     }
 }
+/// Why the last `capture_target` found no field: a reason plus the focused
+/// element's AX role, subrole and editability flags. Never any text.
+pub fn capture_failure() -> Option<String> {
+    #[cfg(target_os = "macos")]
+    {
+        // SAFETY: The buffer outlives the synchronous call; native code bounds writes.
+        read_native(|out, size| unsafe { ffi::td_capture_failure(out, size) })
+    }
+    #[cfg(not(target_os = "macos"))]
+    None
+}
+
+/// Field text the opt-in field-words feature may read: at most this many UTF-16
+/// units before the caret of the captured paste target.
+pub const FIELD_CONTEXT_CHARS: usize = 4000;
+
+#[cfg(target_os = "macos")]
+fn read_native(read: impl FnOnce(*mut std::ffi::c_char, usize) -> i32) -> Option<String> {
+    let mut buffer = vec![0 as std::ffi::c_char; 131_073];
+    let written = read(buffer.as_mut_ptr(), buffer.len());
+    if written < 0 {
+        return None;
+    }
+    // SAFETY: Native code wrote `written` bytes plus a terminator into `buffer`.
+    let bytes =
+        unsafe { std::slice::from_raw_parts(buffer.as_ptr().cast::<u8>(), written as usize) };
+    Some(String::from_utf8_lossy(bytes).into_owned())
+}
+
+/// Text before the caret of the field captured for `token` (opt-in field words).
+/// `None` for secure fields, cells, a different target or an unreadable field.
+pub fn target_context(token: u64) -> Option<String> {
+    #[cfg(target_os = "macos")]
+    {
+        // SAFETY: The buffer outlives the synchronous call; native code bounds writes.
+        read_native(|out, size| unsafe {
+            ffi::td_target_context(token, FIELD_CONTEXT_CHARS, out, size)
+        })
+    }
+    #[cfg(not(target_os = "macos"))]
+    {
+        let _ = token;
+        None
+    }
+}
+
+/// Keep one receipt per paste so its span can be read back once (opt-in).
+/// Disabling drops any pending receipt. Call on the main thread.
+pub fn set_paste_receipts_enabled(enabled: bool) {
+    #[cfg(target_os = "macos")]
+    // SAFETY: Scalar preference; native code checks thread affinity.
+    unsafe {
+        ffi::td_paste_receipts_enabled(enabled)
+    }
+    #[cfg(not(target_os = "macos"))]
+    let _ = enabled;
+}
+
+/// Read back the last paste once: (paste token, text from where it began).
+/// `token` 0 takes any pending receipt. The receipt is consumed either way.
+pub fn take_paste_receipt(token: u64) -> Option<(u64, String)> {
+    #[cfg(target_os = "macos")]
+    {
+        let mut pasted = 0;
+        // SAFETY: `pasted` and the buffer outlive the synchronous call.
+        let text =
+            read_native(|out, size| unsafe { ffi::td_receipt_read(token, &mut pasted, out, size) });
+        text.map(|text| (pasted, text))
+    }
+    #[cfg(not(target_os = "macos"))]
+    {
+        let _ = token;
+        None
+    }
+}
+
 pub fn capture_target(token: u64) -> Result<(), String> {
     #[cfg(target_os = "macos")]
     // SAFETY: Native code owns all AX references; Rust receives no external handles.

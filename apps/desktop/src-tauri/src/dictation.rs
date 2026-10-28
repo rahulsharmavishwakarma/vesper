@@ -60,6 +60,23 @@ struct State {
     target_ready: bool,
     began: Option<Instant>,
     released: Option<Instant>,
+    /// Frontmost app at capture start (bundle identifier), for app-learning counts.
+    target_app: Option<String>,
+    /// Opt-in fix read-back for this dictation (`learn_from_app_edits`).
+    read_back: bool,
+    /// The last paste a read-back may still examine; survives later dictations.
+    last_paste: Option<PasteRecord>,
+}
+/// What was pasted, so a later read-back can tell the user's fixes apart.
+#[derive(Debug, Clone)]
+struct PasteRecord {
+    token: u64,
+    application: String,
+    result_id: String,
+    revision: u64,
+    /// The draft as stored (untrimmed) and the trimmed text actually pasted.
+    draft: String,
+    pasted: String,
 }
 #[derive(Debug, PartialEq, Eq)]
 enum Action {
@@ -434,6 +451,8 @@ async fn start(app: tauri::AppHandle, id: u64) {
         }
         return;
     }
+    // A fix made in the app since the last paste teaches before this snapshot.
+    read_back_paste(&app, 0).await;
     let root = storage.dataset_dir.clone();
     let snapshot = tauri::async_runtime::spawn_blocking(move || {
         vesper_data::DatasetStore::open(root)
@@ -453,6 +472,8 @@ async fn start(app: tauri::AppHandle, id: u64) {
         }
     };
     let desktop = app.clone();
+    let home = std::env::var("HOME").ok();
+    let day = vesper_data::workspace_day();
     let setup = on_main(&app, move || {
         let storage = desktop.state::<AppStorage>();
         let Ok(mut state) = storage.dictation.state.lock() else {
@@ -461,27 +482,88 @@ async fn start(app: tauri::AppHandle, id: u64) {
         if state.status.id != id || state.status.phase != Phase::Starting || state.cancelled {
             return None;
         }
-        if snapshot.profile.project_mode == vesper_core::ProjectMode::Automatic
+        // Automatic workspaces (see docs/personalization/context-selection.md):
+        // one bounded AX read, hashed and resolved in memory; persisted below.
+        let mut observation = None;
+        let mut detection = None;
+        let automatic = snapshot.profile.automatic_workspaces;
+        if (snapshot.profile.project_mode == vesper_core::ProjectMode::Automatic || automatic)
             && snapshot.profile.active_project.trim().is_empty()
         {
             let application = vesper_desktop_platform::project_application(None);
             let app_id = application
                 .as_ref()
                 .map(|application| application.id.as_str());
-            let needs_document = snapshot.profile.project_rules.iter().any(|rule| {
-                rule.enabled
-                    && Some(rule.application_id.as_str()) == app_id
-                    && rule.folder.is_some()
-            });
+            let needs_document = automatic
+                || snapshot.profile.project_rules.iter().any(|rule| {
+                    rule.enabled
+                        && Some(rule.application_id.as_str()) == app_id
+                        && rule.folder.is_some()
+                });
+            let started = std::time::Instant::now();
             let document = app_id
                 .filter(|_| needs_document)
-                .and_then(vesper_desktop_platform::project_document);
-            snapshot.resolve_project(app_id, document.as_deref());
+                .map(|id| {
+                    vesper_desktop_platform::project_context(
+                        id,
+                        automatic && vesper_core::is_browser(id),
+                    )
+                })
+                .unwrap_or_default();
+            let read_ms = started.elapsed().as_secs_f64() * 1000.0;
+            use vesper_desktop_platform::DocumentKind;
+            // Coverage of real dictations only: app identifier, result kind, latency.
+            if automatic {
+                detection = app_id.map(|id| {
+                    let found = match document.kind {
+                        DocumentKind::None => vesper_data::DetectedDocument::None,
+                        DocumentKind::File => vesper_data::DetectedDocument::File,
+                        DocumentKind::Folder => vesper_data::DetectedDocument::Folder,
+                        DocumentKind::Web => vesper_data::DetectedDocument::Web,
+                    };
+                    (id.to_owned(), found, read_ms)
+                });
+            }
+            let signal = match document.kind {
+                DocumentKind::File | DocumentKind::Folder => vesper_core::DocumentSignal::File {
+                    path: &document.value,
+                    directory: document.kind == DocumentKind::Folder,
+                },
+                DocumentKind::Web => vesper_core::DocumentSignal::WebHost(&document.value),
+                DocumentKind::None => vesper_core::DocumentSignal::None,
+            };
+            observation = snapshot.resolve_context(app_id, signal, home.as_deref(), day);
         }
+        let front = vesper_desktop_platform::project_application(None).map(|a| a.id);
+        state.target_app = front.clone();
+        state.read_back = snapshot.profile.learn_from_app_edits;
+        vesper_desktop_platform::set_paste_receipts_enabled(state.read_back);
+        let mut field = None;
+        let mut capture = None;
         if state.output == DictationOutput::Paste {
             match vesper_desktop_platform::capture_target(id) {
-                Ok(()) => state.target_ready = true,
-                Err(message) => state.status.message = message,
+                Ok(()) => {
+                    state.target_ready = true;
+                    // Opt-in field words: spellings already written before the caret,
+                    // used for this recording only (docs/personalization/app-learning.md).
+                    if snapshot.profile.app_field_words {
+                        let terms = vesper_desktop_platform::target_context(id)
+                            .map(|text| vesper_core::field_terms(&text));
+                        snapshot.field_terms = terms.clone().unwrap_or_default();
+                        field = front.clone().map(|app| (app, terms.map(|t| t.len())));
+                    }
+                }
+                Err(message) => {
+                    // Per-app paste counts: why no field was captured (AX roles only).
+                    let failure = vesper_desktop_platform::capture_failure();
+                    let outcome = match (&failure, message.contains("secure")) {
+                        (Some(_), _) => vesper_data::PasteOutcome::NoField,
+                        (None, true) => vesper_data::PasteOutcome::Secure,
+                        (None, false) => vesper_data::PasteOutcome::NoPermission,
+                    };
+                    capture = front.clone().map(|app| (app, outcome, failure));
+                    state.status.message = message;
+                }
             }
         }
         drop(state);
@@ -492,17 +574,49 @@ async fn start(app: tauri::AppHandle, id: u64) {
         {
             show(&desktop);
         }
-        Some(snapshot)
+        Some((snapshot, observation, detection, field, capture))
     })
     .await;
-    let snapshot = match setup {
-        Ok(Some(snapshot)) => snapshot,
+    let mut snapshot = match setup {
+        Ok(Some((snapshot, observation, detection, field, capture))) => {
+            if observation.is_some() || detection.is_some() || field.is_some() || capture.is_some()
+            {
+                let root = storage.dataset_dir.clone();
+                // Best effort and off the main thread; never delays recording.
+                tauri::async_runtime::spawn_blocking(move || {
+                    let Ok(store) = vesper_data::DatasetStore::open(root) else {
+                        return;
+                    };
+                    if let Some(observation) = observation {
+                        let _ = store.record_workspace_observation(&observation, day);
+                    }
+                    if let Some((application, found, read_ms)) = detection {
+                        let _ = store.record_detection(&application, found, read_ms);
+                    }
+                    if let Some((application, terms)) = field {
+                        let _ = store.record_field_read(&application, terms);
+                    }
+                    if let Some((application, outcome, failure)) = capture {
+                        let _ = store.record_paste(&application, outcome, failure.as_deref());
+                    }
+                });
+            }
+            snapshot
+        }
         Ok(None) => return,
         Err(error) => {
             fail(&app, id, &error);
             return;
         }
     };
+    // Term inventory: select this recording's working set after resolution.
+    snapshot.select_working_set(
+        storage
+            .settings
+            .load()
+            .map(|c| c.language)
+            .unwrap_or_default(),
+    );
     if !start_allowed(&storage, id) {
         fail(&app, id, "Recording cancelled.");
         return;
@@ -524,6 +638,14 @@ async fn start(app: tauri::AppHandle, id: u64) {
         }
         Err(error) => fail(&app, id, &error),
     }
+}
+/// A dictation is starting, recording, finishing or pasting (term worker gate).
+pub fn active(storage: &AppStorage) -> bool {
+    storage
+        .dictation
+        .state
+        .lock()
+        .is_ok_and(|s| s.status.phase.active())
 }
 pub fn start_allowed(storage: &AppStorage, id: u64) -> bool {
     storage
@@ -719,14 +841,126 @@ pub async fn completed(
                 };
                 state.status.final_to_dispatch_ms =
                     (outcome == PasteResult::Sent).then(|| began.elapsed().as_millis() as u64);
-                state.status.message =
-                    paste_message(outcome, vesper_desktop_platform::secure_input()).into();
+                if outcome == PasteResult::Sent && state.read_back {
+                    if let (Ok(result), Some(application)) = (result, state.target_app.clone()) {
+                        let draft = result
+                            .personalized_transcript
+                            .as_deref()
+                            .or(result.cleaned_transcript.as_deref())
+                            .unwrap_or(&result.raw_transcript)
+                            .to_owned();
+                        state.last_paste = Some(PasteRecord {
+                            token: id,
+                            application,
+                            result_id: result.result_id.clone(),
+                            revision: result.draft_revision,
+                            draft,
+                            pasted: text.clone(),
+                        });
+                        let later = app.clone();
+                        tauri::async_runtime::spawn(async move {
+                            tauri::async_runtime::spawn_blocking(|| {
+                                std::thread::sleep(READ_BACK_AFTER)
+                            })
+                            .await
+                            .ok();
+                            read_back_paste(&later, id).await;
+                        });
+                    }
+                }
+                let secure = vesper_desktop_platform::secure_input();
+                state.status.message = paste_message(outcome, secure).into();
+                if let Some(application) = state.target_app.clone() {
+                    use vesper_data::PasteOutcome;
+                    let counted = match outcome {
+                        PasteResult::Sent => PasteOutcome::Sent,
+                        PasteResult::TargetChanged if secure => PasteOutcome::Secure,
+                        PasteResult::TargetChanged => PasteOutcome::FieldChanged,
+                        PasteResult::ClipboardUnavailable => PasteOutcome::Clipboard,
+                        PasteResult::ModifiersHeld | PasteResult::Unavailable => {
+                            PasteOutcome::Other
+                        }
+                    };
+                    let root = storage.dataset_dir.clone();
+                    tauri::async_runtime::spawn_blocking(move || {
+                        if let Ok(store) = vesper_data::DatasetStore::open(root) {
+                            let _ = store.record_paste(&application, counted, None);
+                        }
+                    });
+                }
             }
         }
     }
     let _ = app.global_shortcut().unregister("Escape");
     let _ = on_main(app, move || vesper_desktop_platform::clear_target(id)).await;
     emit(app);
+}
+
+/// The fallback read-back happens this long after a paste when no new dictation
+/// reads it first.
+const READ_BACK_AFTER: Duration = Duration::from_secs(120);
+
+/// Opt-in: read the last paste's span back once and, when the user changed
+/// words there, offer the corrected text to learning as an edit of that draft.
+/// `token` 0 reads whichever paste is pending. Only per-app counts are stored.
+async fn read_back_paste(app: &tauri::AppHandle, token: u64) {
+    let storage = app.state::<AppStorage>();
+    let record = storage.dictation.state.lock().ok().and_then(|mut state| {
+        let matches = state
+            .last_paste
+            .as_ref()
+            .is_some_and(|r| token == 0 || r.token == token);
+        if matches {
+            state.last_paste.take()
+        } else {
+            None
+        }
+    });
+    let Some(record) = record else {
+        return;
+    };
+    let wanted = record.token;
+    let receipt = on_main(app, move || {
+        vesper_desktop_platform::take_paste_receipt(wanted)
+    })
+    .await
+    .ok()
+    .flatten();
+    let corrected = match receipt {
+        Some((pasted, region)) if pasted == record.token => Some((
+            region.trim().is_empty(),
+            vesper_core::aligned_edit(&record.pasted, &region),
+        )),
+        _ => None,
+    };
+    let root = storage.dataset_dir.clone();
+    let runtime = std::sync::Arc::clone(&storage.runtime);
+    let _ = tauri::async_runtime::spawn_blocking(move || {
+        use vesper_data::Readback;
+        let outcome = match corrected {
+            None => Readback::Unreadable,
+            Some((true, _)) => Readback::Cleared,
+            Some((false, None)) => Readback::Unaligned,
+            Some((false, Some(text))) if text == record.pasted => Readback::Unchanged,
+            Some((false, Some(text))) => {
+                let draft = record.draft.replacen(&record.pasted, &text, 1);
+                match runtime.edit_latest_draft(
+                    root.clone(),
+                    &record.result_id,
+                    record.revision,
+                    draft,
+                ) {
+                    Ok(_) => Readback::Edited,
+                    // The draft moved on (edited in Vesper or replaced): nothing learned.
+                    Err(_) => Readback::Unaligned,
+                }
+            }
+        };
+        if let Ok(store) = vesper_data::DatasetStore::open(root) {
+            let _ = store.record_app_readback(&record.application, outcome);
+        }
+    })
+    .await;
 }
 
 #[tauri::command]

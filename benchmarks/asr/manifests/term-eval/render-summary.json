@@ -1,0 +1,143 @@
+{
+  "schemaVersion": 1,
+  "dataset": "term-eval-2026-10-26",
+  "statement": "Audio rendered from the frozen corpus; no model output was used.",
+  "frozenFiles": {
+    "terms.json": "d4762e2b83475d409035b0758de6e09c4912e464c30d2136bbd4754d33ee3351",
+    "sentences.jsonl": "4c768e7923840ca8fc6bc761a8585e0cdac6fd9010f9e82c27a5e8e4d5f08edb"
+  },
+  "termManifestSha256": "388cc295df99ff276c56e81bcc7ff2e953589e07595b06acf28e4f08eb6f9f6e",
+  "macos": {
+    "productName": "macOS",
+    "productVersion": "27.0.1",
+    "buildVersion": "26A434",
+    "machine": "arm64"
+  },
+  "voices": [
+    {
+      "name": "Samantha",
+      "locale": "en_US",
+      "sayListing": "Samantha (English (US)) en_US # Hello! My name is Samantha."
+    },
+    {
+      "name": "Daniel",
+      "locale": "en_GB",
+      "sayListing": "Daniel (English (UK)) en_GB # Hello! My name is Daniel."
+    },
+    {
+      "name": "Rishi",
+      "locale": "en_IN",
+      "sayListing": "Rishi (English (India)) en_IN # Hello! My name is Rishi."
+    },
+    {
+      "name": "Karen",
+      "locale": "en_AU",
+      "sayListing": "Karen en_AU # Hello! My name is Karen."
+    },
+    {
+      "name": "Moira",
+      "locale": "en_IE",
+      "sayListing": "Moira en_IE # Hello! My name is Moira."
+    },
+    {
+      "name": "Tessa",
+      "locale": "en_ZA",
+      "sayListing": "Tessa en_ZA # Hello! My name is Tessa."
+    }
+  ],
+  "conversion": "say -v VOICE -o x.aiff TEXT; afconvert -f WAVE -d LEI16@16000 -c 1",
+  "noise": {
+    "pink10": "1/f power pink noise, per-clip seeded, 10 dB SNR (full-clip RMS)",
+    "babble10": "sum of 3 RMS-normalised FLEURS en-US test clips from a 30-clip pool disjoint from the real-speech controls, 10 dB SNR (full-clip RMS)",
+    "peakLimit": 0.99,
+    "peakScaledClips": 2,
+    "babblePoolFleursIds": [
+      "12570605547501325774",
+      "13896470903695476292",
+      "9063124481850378787",
+      "10614481583312370701",
+      "10768814098664478369",
+      "13888599635337906526",
+      "15510957858467012907",
+      "8837680402159291933",
+      "13006273800980159403",
+      "7528221290776312797",
+      "3794657101809943148",
+      "1153104690713813269",
+      "1724953769276277810",
+      "15592925372393530543",
+      "9113447011736256545",
+      "17824557748066874904",
+      "3702958695101050591",
+      "13029464143980259888",
+      "14982964006464846866",
+      "1242235796224521830",
+      "2013850546771709559",
+      "12596201646041937807",
+      "5059640273671690654",
+      "6847551837519900288",
+      "9154457394779597213",
+      "16437430878550556483",
+      "16200495359369533302",
+      "14572481585322233862",
+      "16989675193715509568",
+      "12921155570472263117"
+    ]
+  },
+  "counts": {
+    "samples": 4102,
+    "audioSamples": 1246,
+    "textOnlySamples": 2856,
+    "renderedSentences": 480,
+    "syntheticClips": 846,
+    "byCategorySubcategoryNoise": {
+      "hard_negative/homophone/clean": 100,
+      "hard_negative/ordinary/clean": 50,
+      "hard_negative/protected/clean": 64,
+      "hard_negative/review_case/clean": 12,
+      "hard_negative/subword/clean": 80,
+      "positive/carrier/babble10": 180,
+      "positive/carrier/clean": 180,
+      "positive/carrier/pink10": 180,
+      "rare_word/librispeech/clean": 300,
+      "real_negative/fleurs/clean": 100
+    },
+    "byVoice": {
+      "Daniel (en_GB)": 141,
+      "Karen (en_AU)": 141,
+      "Moira (en_IE)": 141,
+      "Rishi (en_IN)": 141,
+      "Samantha (en_US)": 141,
+      "Tessa (en_ZA)": 141
+    },
+    "bySplitAudio": {
+      "dev": 131,
+      "test": 1115
+    },
+    "fleursKept": 100,
+    "fleursDroppedForTermCollision": 0
+  },
+  "durationSeconds": {
+    "total": 5887.57,
+    "byLane": {
+      "hard_negative/homophone/clean": 324.0,
+      "hard_negative/ordinary/clean": 155.96,
+      "hard_negative/protected/clean": 178.86,
+      "hard_negative/review_case/clean": 18.28,
+      "hard_negative/subword/clean": 240.96,
+      "positive/carrier/babble10": 505.53,
+      "positive/carrier/clean": 505.53,
+      "positive/carrier/pink10": 505.53,
+      "rare_word/librispeech/clean": 2500.5,
+      "real_negative/fleurs/clean": 952.42
+    }
+  },
+  "librispeech": {
+    "built": true,
+    "utterances": 300,
+    "candidatesWithRareWords": 1980,
+    "selection": "first 300 by sha256('librispeech:'+utterance id) among rows with >=1 rare word",
+    "licenseTxtSha256": "908b0b565ae9bf61b7b41447cb0b83564f320375723bcc884ec30e5537a0d5dc",
+    "biasingListRevision": "43cdb3ca9644a755d5c6cc55cbcc91132f85ed44"
+  }
+}

@@ -33,6 +33,15 @@ static uint64_t targetToken;
 // Cells carry no text selection: the selected cell itself is the destination.
 static bool targetIsCell;
 static id pasteAccessibilityObserver;
+// Opt-in read-back of one paste (docs/personalization/app-learning.md): the
+// field and where the pasted text began. Only that span is ever read, once.
+static AXUIElementRef receipt;
+static pid_t receiptPID;
+static CFIndex receiptLocation;
+static CFIndex receiptLength;
+static uint64_t receiptToken;
+static bool receiptsEnabled;
+void td_receipt_clear(void);
 static NSMutableArray<NSRunningApplication *> *preparedPasteApplications;
 
 // Electron exposes its editable tree asynchronously after this documented
@@ -208,6 +217,7 @@ void td_panel_destroy(void) {
     td_paste_access_enabled(false);
     preparedPasteApplications = nil;
     td_target_clear(0);
+    td_receipt_clear();
     restoreClipboard();
     [panel orderOut:nil];
     if (originalWindow && originalContent) {
@@ -336,9 +346,32 @@ bool td_secure_input(void) {
     if (![NSThread isMainThread]) return false;
     return IsSecureEventInputEnabled();
 }
+// Why the last capture found no field: AX roles and flags only, never text.
+static char captureFailure[192];
+static void noteCaptureFailure(AXUIElementRef element, const char *reason) {
+    if (!element) { snprintf(captureFailure, sizeof captureFailure, "%s", reason); return; }
+    NSString *role = attribute(element, kAXRoleAttribute), *subrole = attribute(element, kAXSubroleAttribute);
+    NSNumber *enabled = attribute(element, kAXEnabledAttribute);
+    Boolean settable = false;
+    AXError settableError = AXUIElementIsAttributeSettable(element, kAXValueAttribute, &settable);
+    CFRange range;
+    snprintf(captureFailure, sizeof captureFailure, "%s role=%s subrole=%s enabled=%s valueSettable=%s range=%s",
+        reason, [role isKindOfClass:NSString.class] ? role.UTF8String : "-",
+        [subrole isKindOfClass:NSString.class] ? subrole.UTF8String : "-",
+        [enabled isKindOfClass:NSNumber.class] ? (enabled.boolValue ? "yes" : "no") : "missing",
+        settableError ? "error" : (settable ? "yes" : "no"), selectedRange(element, &range) ? "yes" : "no");
+}
+int td_capture_failure(char *output, size_t size) {
+    if (![NSThread isMainThread] || !output || !size || !captureFailure[0]) return -1;
+    size_t length = strnlen(captureFailure, sizeof captureFailure);
+    if (length >= size) return -1;
+    memcpy(output, captureFailure, length + 1);
+    return (int)length;
+}
 int td_target_capture(uint64_t token) {
     if (![NSThread isMainThread]) return -1;
     td_target_clear(0);
+    captureFailure[0] = '\0';
     if ((td_permissions(false) & 6) != 6) return -1;
     // Secure input is a separate, global state (any password prompt, Touch ID,
     // or sudo session anywhere); attributing it to Accessibility sends users
@@ -348,13 +381,19 @@ int td_target_capture(uint64_t token) {
     // Terminals require independent bracketed-paste/command execution qualification.
     if (!front || front.processIdentifier == getpid() ||
         [@[@"com.apple.Terminal", @"com.googlecode.iterm2", @"dev.warp.Warp-Stable"]
-            containsObject:front.bundleIdentifier ?: @""]) return -2;
+            containsObject:front.bundleIdentifier ?: @""]) {
+        noteCaptureFailure(NULL, front ? "terminal-excluded" : "no-app");
+        return -2;
+    }
     // Recover a request skipped before Accessibility permission was granted.
     // This never waits or adopts a field later in the recording: an unready
     // destination still uses Copy fallback for this operation.
     preparePasteApplication(front);
     AXUIElementRef element = focused(front.processIdentifier);
-    if (!element) return -2;
+    if (!element) {
+        noteCaptureFailure(NULL, "no-focused-element");
+        return -2;
+    }
     CFRange selection = {0, 0};
     AXUIElementRef field = resolveField(element, &selection, true);
     if (field) {
@@ -368,6 +407,7 @@ int td_target_capture(uint64_t token) {
         targetIsCell = true;
         return 0;
     }
+    noteCaptureFailure(element, "no-editable-field");
     CFRelease(element);
     return -2;
 }
@@ -463,6 +503,12 @@ int td_paste(uint64_t token, const char *text) {
     }
     NSInteger owned = board.changeCount;
     pendingClipboard = saved; pendingOwnership = owned;
+    if (receiptsEnabled && !targetIsCell) {
+        if (receipt) CFRelease(receipt);
+        receipt = (AXUIElementRef)CFRetain(target); receiptPID = targetPID;
+        receiptLocation = targetSelection.location; receiptLength = (CFIndex)value.length;
+        receiptToken = token;
+    }
     // Consume before posting: another call can never duplicate this dispatch.
     td_target_clear(token);
     CGEventPost(kCGHIDEventTap, down); CGEventPost(kCGHIDEventTap, up);
@@ -473,6 +519,79 @@ int td_paste(uint64_t token, const char *text) {
         if (pendingClipboard && pendingOwnership == owned) restoreClipboard();
     });
     return 0;
+}
+// Text of `element` in [location, location + length), clamped to the field.
+// Uses the parameterized range read; falls back to a bounded AXValue slice.
+static NSString *rangeText(AXUIElementRef element, CFIndex location, CFIndex length) {
+    if (location < 0 || length < 0) return nil;
+    // An empty range (an empty field, or the caret at its start) is readable text.
+    if (length == 0) return @"";
+    NSNumber *count = attribute(element, kAXNumberOfCharactersAttribute);
+    if ([count isKindOfClass:NSNumber.class]) {
+        CFIndex total = count.longValue;
+        if (location > total) return nil;
+        length = MIN(length, total - location);
+        if (length <= 0) return @"";
+        CFRange range = CFRangeMake(location, length);
+        AXValueRef parameter = AXValueCreate(kAXValueCFRangeType, &range);
+        CFTypeRef value = NULL;
+        AXError error = AXUIElementCopyParameterizedAttributeValue(element,
+            kAXStringForRangeParameterizedAttribute, parameter, &value);
+        CFRelease(parameter);
+        if (error == kAXErrorSuccess && value && CFGetTypeID(value) == CFStringGetTypeID())
+            return CFBridgingRelease(value);
+        if (value) CFRelease(value);
+    }
+    NSString *whole = attribute(element, kAXValueAttribute);
+    if (![whole isKindOfClass:NSString.class] || whole.length > 200000 || location > (CFIndex)whole.length)
+        return nil;
+    return [whole substringWithRange:NSMakeRange(location, MIN(length, (CFIndex)whole.length - location))];
+}
+static bool secureElement(AXUIElementRef element) {
+    NSString *subrole = attribute(element, kAXSubroleAttribute);
+    return [subrole isEqualToString:(__bridge NSString *)kAXSecureTextFieldSubrole] || IsSecureEventInputEnabled();
+}
+static int copyOut(NSString *text, char *output, size_t size) {
+    NSData *data = [text dataUsingEncoding:NSUTF8StringEncoding];
+    if (!data || data.length >= size) return -1;
+    memcpy(output, data.bytes, data.length);
+    output[data.length] = '\0';
+    return (int)data.length;
+}
+// Up to `limit` UTF-16 units of the captured field before its caret (opt-in
+// field words). Returns bytes written, or -1 when nothing may be read.
+int td_target_context(uint64_t token, size_t limit, char *output, size_t size) {
+    if (![NSThread isMainThread] || !output || !size || !target || token != targetToken || targetIsCell ||
+        secureElement(target)) return -1;
+    CFIndex start = MAX(0, targetSelection.location - (CFIndex)limit);
+    NSString *text = rangeText(target, start, targetSelection.location - start);
+    return text ? copyOut(text, output, size) : -1;
+}
+void td_paste_receipts_enabled(bool enabled) {
+    if (![NSThread isMainThread]) return;
+    receiptsEnabled = enabled;
+    if (!enabled) td_receipt_clear();
+}
+void td_receipt_clear(void) {
+    if (![NSThread isMainThread]) return;
+    if (receipt) CFRelease(receipt);
+    receipt = NULL; receiptPID = 0; receiptLocation = 0; receiptLength = 0; receiptToken = 0;
+}
+// One-shot read-back of the last paste: the text from where it began, up to
+// twice its length plus a margin. `token` names the paste (0 takes any).
+// Returns bytes written; -1 when there is no receipt or it cannot be read.
+int td_receipt_read(uint64_t token, uint64_t *pasted, char *output, size_t size) {
+    if (![NSThread isMainThread] || !receipt || !output || !size || (token && token != receiptToken)) return -1;
+    NSRunningApplication *app = [NSRunningApplication runningApplicationWithProcessIdentifier:receiptPID];
+    int written = -1;
+    if (app && !app.terminated && !secureElement(receipt)) {
+        AXUIElementSetMessagingTimeout(receipt, 0.15f);
+        NSString *text = rangeText(receipt, receiptLocation, MIN(receiptLength * 2 + 80, (CFIndex)32768));
+        if (text) written = copyOut(text, output, size);
+    }
+    if (pasted) *pasted = receiptToken;
+    td_receipt_clear();
+    return written;
 }
 bool td_copy(const char *text) {
     if (![NSThread isMainThread] || !text) return false;

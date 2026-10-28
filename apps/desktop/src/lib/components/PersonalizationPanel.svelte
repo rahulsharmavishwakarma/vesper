@@ -6,6 +6,7 @@
     savePersonalization,
     getAutomaticLearning,
     forgetAutomaticLearning,
+    resumeAutomaticSpellings,
     suspendAutomaticCandidate,
     approveAutomaticCandidate,
     chooseProjectApplication,
@@ -17,6 +18,8 @@
   } from '../api/personalization';
   import type { Language } from '../config';
   import Select from './Select.svelte';
+  import TermInventory from './TermInventory.svelte';
+  import Workspaces from './Workspaces.svelte';
   let {
     desktop,
     disabled = false,
@@ -128,19 +131,24 @@
     if (writable && snapshot !== saved) panelSaver.notify();
     onSaveActivity?.(panelSaver.status === 'saving', panelSaver.savedAt);
   });
+  // Background save: controls stay enabled (disabling them made the whole panel
+  // blink on every toggle), and an edit made while it runs is kept, not
+  // overwritten by the stored copy; it saves on the next pass.
   async function saveNow(): Promise<boolean> {
     if (!profile || controlsDisabled) return false;
-    if (JSON.stringify(profile) === JSON.stringify(savedProfile)) return true;
-    pending = 'saving';
+    const sent = $state.snapshot(profile);
+    const sentJson = JSON.stringify(sent);
+    if (sentJson === JSON.stringify(savedProfile)) return true;
     try {
-      profile = await savePersonalization($state.snapshot(profile));
-      savedProfile = $state.snapshot(profile);
+      const stored = await savePersonalization(sent);
+      savedProfile = $state.snapshot(stored);
+      const unchanged = profile !== null && JSON.stringify(profile) === sentJson;
+      if (unchanged) profile = stored;
+      else if (profile) profile.revision = stored.revision;
       learning = await getAutomaticLearning();
-      panelSaver.noteSaved();
+      if (unchanged) panelSaver.noteSaved();
     } catch {
       return false;
-    } finally {
-      pending = null;
     }
     return true;
   }
@@ -155,6 +163,20 @@
       savedProfile = $state.snapshot(profile);
       learning = await getAutomaticLearning();
       feedback = 'Automatic learning forgotten.';
+    } catch (cause) {
+      error = String(cause);
+    } finally {
+      pending = null;
+    }
+  }
+  async function resumeSpellings() {
+    if (controlsDisabled) return;
+    pending = 'saving';
+    error = '';
+    feedback = '';
+    try {
+      learning = await resumeAutomaticSpellings();
+      feedback = 'Learned spellings resumed.';
     } catch (cause) {
       error = String(cause);
     } finally {
@@ -447,6 +469,22 @@
               </p>
             </div>
             <div class="setting-toggle">
+              <label class="checkbox-field" for="personal-format"
+                ><input
+                  id="personal-format"
+                  type="checkbox"
+                  bind:checked={profile.formatDictation}
+                  aria-describedby="personal-format-help"
+                /><span>Format numbers, times, emails and links</span></label
+              >
+              <p id="personal-format-help" class="note checkbox-help">
+                Writes “two thousand dollars” as $2,000, “ten thirty a m” as 10:30 AM and “john dot
+                smith at gmail dot com” as john.smith@gmail.com, removes “um” and repeated words,
+                and keeps the corrected value in “Tuesday, no, Wednesday”. English only. Works the
+                same with every speech model.
+              </p>
+            </div>
+            <div class="setting-toggle">
               <label class="checkbox-field" for="personal-remember-intent"
                 ><input
                   id="personal-remember-intent"
@@ -484,6 +522,7 @@
               </p>
             </div>
           </div>
+          <Workspaces bind:profile disabled={controlsDisabled} onprofilechange={load} />
           <div class="preference-group" id="vocabulary">
             <div class="group-heading">
               <h3 id="vocabulary">Vocabulary</h3>
@@ -690,6 +729,22 @@
                 anything you do not want; removed words never come back.
               </p>
             </details>
+            {#if learning?.breakerTrippedMs}
+              <div class="learn-paused" role="status" id="learned-spellings-paused">
+                <p class="note">
+                  Learned spellings are paused because you undid two of them recently. Words you
+                  added or ticked still apply.
+                </p>
+                <button
+                  type="button"
+                  class="quiet"
+                  disabled={controlsDisabled}
+                  onclick={() => {
+                    void resumeSpellings();
+                  }}>Resume learned spellings</button
+                >
+              </div>
+            {/if}
             <div class="learn-foot">
               <label class="checkbox-field" for="learn-from-edits"
                 ><input
@@ -706,6 +761,7 @@
               >
             </div>
           </div>
+          <TermInventory disabled={controlsDisabled} />
           {#if profile.examples.length}
             <div class="preference-group" id="remembered-examples">
               <div class="group-heading">
@@ -767,11 +823,12 @@
           {/if}
         </fieldset>
       {/if}
-      <div class="preferences-footer" hidden={!error && pending === null && !feedback}>
+      <!-- Saving shows only in the sidebar status; an inline note here pushed the
+           options around on every toggle. -->
+      <div class="preferences-footer" hidden={!error && pending !== 'loading' && !feedback}>
         <div class="preference-feedback" aria-live="polite">
           {#if error}<p class="error" role="alert">{error}</p>
           {:else if pending === 'loading'}<p class="note">Loading personal preferences…</p>
-          {:else if pending === 'saving'}<p class="note">Saving personal preferences…</p>
           {:else if feedback}<p class="success">{feedback}</p>{/if}
         </div>
         <div class="form-actions">
@@ -1038,6 +1095,14 @@
   .word-entry.learning .term-static {
     color: var(--color-muted);
     font-weight: 400;
+  }
+  .learn-paused {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: space-between;
+    gap: var(--space-3);
+    margin-top: var(--space-4);
   }
   .learn-foot {
     display: flex;

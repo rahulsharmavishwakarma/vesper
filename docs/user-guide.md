@@ -501,7 +501,12 @@ The app can learn eligible joined/split names, closely related spellings and
 narrow acronym corrections, even when the edit includes minor formatting.
 Ordinary terms need corrections from two independent recordings before they
 are reused in matching context. Replaying the same recording does not count
-twice. Sentence rewrites and changed decisions are not global dictionary rules,
+twice. An everyday word that was really a name or acronym (for example _data_ →
+_Detta_, _rack_ → _RAG_) is learned after three corrections in the same project.
+It is then used only when the sentence shares at least two topic words with the
+sentences you corrected, so "the training data" stays as it is. An everyday word
+changed into another everyday word (_write_ → _right_) is never applied
+automatically. Add that spelling in Vocabulary if you want it. Sentence rewrites and changed decisions are not global dictionary rules,
 and some valid corrections still fall outside the current learning rules.
 
 If you restore an earlier spelling in the same draft, its withdrawn correction
@@ -511,17 +516,40 @@ and it will not be learned again. Fresh corrections
 of the original recognition error can then teach its replacement; the app keeps
 your current draft immediately while waiting for that support.
 
-Personal vocabulary persists across model changes. These local corrections do
-not train model weights or activate a new model. Read the
+Personal vocabulary persists across model changes. A correction Vesper learned
+from one speech model's mistakes waits while you use a different model and comes
+back when you return; words you add or tick work with every model. If you undo
+two different learned spellings within a week, Vesper pauses all unticked
+learned spellings and shows **Resume learned spellings** under Vocabulary.
+Vesper also fixes a misheard non-word that is one letter away from a name or term it knows for this dictation (your words, Words Vesper found, words in the field), such as _vasper_ → _Vesper_. It never changes ordinary English words. If you change a fixed word back, Vesper stops using that spelling for automatic fixes.
+These local corrections do not train model weights or activate a new model. Read the
 [personalization guide](personalization/README.md) for the exact learning,
 review and undo behavior.
+
+**Words Vesper found** (under Vocabulary, collapsed) lists spellings that
+Vesper collected on its own. Sources:
+
+- your Mac's **Text Replacements** and learned spelling words
+
+A background check runs about once an hour while the Mac is idle and not too
+warm. It skips Low Power Mode. Each
+recording uses only a few relevant words, preferring the current project's
+words. Words found this way are never taken from what the speech model or the
+writer produced.
+
+- Remove a word with ×; it is not added again.
+- **Forget** removes every word from one source and stops reading it until you
+  choose **Resume**.
+
+See [term inventory](personalization/term-inventory.md).
 
 **Project selection** can be manual or use application rules. In Vocabulary,
 choose **Use application rules**, click **Add application rule**, choose an app,
 and name its project, then save. Shortcut dictation freezes the receiving app's
 project before recording. TextEdit rules can also match a selected folder; the
 most specific matching folder wins. Missing document context or conflicting rules
-uses shared vocabulary. Other apps currently support app rules, not folder detection.
+uses shared vocabulary. Folder rules use the same document reader as automatic
+workspaces, so they are no longer limited to TextEdit.
 A nonempty **Project override** always wins. Main-window recordings and file imports
 use the explicit project name. Results show the project and any fallback reason.
 
@@ -529,8 +557,27 @@ Give vocabulary and examples the same project name to limit their use; leave an
 entry's project blank to share it. Reviewing an older recording keeps its original
 project, including a blank project, rather than borrowing the current selection.
 Changing rules or switching apps cannot move an in-flight recording's feedback
-into another project. Vesper reads app identity and an optional TextEdit document
-URL for folder rules, never document contents to guess the project.
+into another project. Vesper reads app identity and the focused window's document
+location for folder rules and workspaces, never document contents to guess the project.
+
+**Workspaces** (Writing → Workspaces) are off until you turn on **Detect
+workspaces automatically**. Then they are detected when you dictate
+with the shortcut and have not entered a project. Vesper notes the folder of the
+file open in the focused window (for example a repository in VS Code or Terminal,
+or a document folder) or, in a browser, only the website's name. A workspace
+appears in the list after about five dictations on two different days; until
+then dictation uses shared vocabulary. A visible workspace works like a project
+named after its folder or website: words you teach while in it stay with it. In
+the list you can **Rename** it (Enter saves, Escape cancels), **Merge…** it into
+another workspace, or **Remove** it so it is never detected again. Renaming or
+merging moves the vocabulary and examples saved under the old name. A project you enter, and any application rule, always wins. Turn off **Detect
+workspaces automatically** to stop detection; existing workspaces stay listed.
+Detection relies on what each app exposes through Accessibility; apps that
+expose nothing (for example Mail or Slack) use shared vocabulary. While
+detection is on, Vesper counts, for each app you dictate into, how often it
+found a file, folder or website and how long the read took. Only the app's
+identifier and the counts are kept, never what was found, and turning detection
+off deletes them.
 
 **Apply my saved corrections** works with all supported speech models, including
 when cleanup is off or the writer fails. **Request extra speech hints when supported**
@@ -580,7 +627,7 @@ controls.
 | In-app spelling learning    | Eligible saved corrections contribute automatically to scoped vocabulary under the support and context rules above. No per-word approval is needed.                                                                                      |
 | Background edit analysis    | After a saved in-app correction, an already-loaded supported writer can analyze intent and context while idle. Its findings are evaluation evidence; they do not change your preferences or approve labels. Recording cancels this work. |
 | Learning-rule comparisons   | Explicit in-app edits trigger background comparisons of fixed learning rules. Results do not select a new active rule.                                                                                                                   |
-| External-editor corrections | Not observed. Correct the draft inside Vesper; eligible in-app corrections teach vocabulary automatically.                                                                                                                               |
+| External-editor corrections | Off by default. With **Learn from fixes in other apps** on, Vesper reads the pasted text back once and teaches from words you changed.                                                                                                   |
 | History and model training  | History training labels require explicit review. Automatic label approval, candidate training and model promotion are not active.                                                                                                        |
 
 Automatic checks therefore do not mark each recording as reviewed. Semantic
@@ -637,9 +684,18 @@ When you save a correction inside Vesper, the app also attempts a small local an
 
 The app may retain bounded before/after text and one recent attempt locally for up to 30 days, even when saving audio for training is off. At most 256 results are retained, with expiry applied when the store is next accessed. Undo learning removes that result’s analysis; Forget automatic learning also removes all of this analysis. No audio or training labels are created by it. See [semantic personalization](personalization/semantic-shadow.md) for details and current evidence.
 
+### Formatting
+
+**Format numbers, times, emails and links** (Writing, on by default) writes spoken forms the way you would type them: “two thousand five hundred dollars” → $2,500, “ten thirty a m” → 10:30 AM, “john dot smith at gmail dot com” → john.smith@gmail.com, “github dot com slash vesper” → github.com/vesper. It removes “um”, “uh” and repeated words (unless **Keep fillers and repetition** is on), and in “Tuesday no Wednesday” keeps only the corrected value. It works the same with every speech model and is English only. See [dictation formatting](personalization/formatting.md).
+
 ### Corrections in other applications
 
-Vesper does not watch text you edit outside the app. A former TextEdit-only correction observer was removed because dictation pastes into any application; see the [removal note](personalization/external-observer.md). To teach a spelling, correct the draft inside Vesper instead — ordinary in-app spelling learning remains automatic.
+Two optional settings in Writing → Workspaces let Vesper learn from the app you dictate into. Both are off until you turn them on.
+
+- **Use words already in the field:** when you dictate into a text field, Vesper reads the text before the cursor and uses names and terms written there to fix misheard words in that dictation. Nothing it reads is saved.
+- **Learn from fixes in other apps:** after pasting, Vesper reads back only the text it pasted, at your next dictation or two minutes later. Words you changed there teach spellings the same way an edit in Vesper does, and the corrected text becomes that dictation's draft in History.
+
+Neither reads password fields. Apps that do not expose their text show as unreadable in the per-app counts. See [learning from the app you dictate into](personalization/app-learning.md). Correcting the draft inside Vesper still teaches as before. The former TextEdit-only observer is described in the [removal note](personalization/external-observer.md).
 
 **IBM Granite Speech 5.0 TurboCTC** is an optional fast model for Apple Silicon. It supports English, French, German, Spanish, Portuguese, Italian and Japanese, and writes punctuation. It runs only on the Mac's GPU: keep **Automatic** (or choose **Metal**), select its language, save, and use **Download** (about 948 MB). CPU is unavailable for this model, and it is not offered on other computers. See [its evaluation](validation/granite-speech5-turboctc-2026-10-21.md).
 

@@ -327,6 +327,7 @@ pub(crate) fn decode_with_recognizer(
         healthy,
         observe,
         DecodePurpose::Completed,
+        &[],
     )
 }
 
@@ -340,8 +341,10 @@ pub(crate) fn decode_for_purpose(
     healthy: Option<&std::cell::Cell<bool>>,
     observe: &dyn Fn(SegmentObservation),
     purpose: DecodePurpose,
+    hints: &[String],
 ) -> Result<String> {
     validate_audio(audio, config, cancelled)?;
+    let hotwords = qwen_hotwords(config, hints);
     if audio.samples().iter().all(|sample| *sample == 0.0) {
         progress(TranscriptionProgress {
             processed_samples: audio.samples().len(),
@@ -352,7 +355,7 @@ pub(crate) fn decode_for_purpose(
     }
     let decode_part = |samples: &[f32]| {
         decode_segment_once(
-            recognizer, samples, config, cancelled, healthy, observe, purpose,
+            recognizer, samples, config, cancelled, healthy, observe, purpose, &hotwords,
         )
     };
     decode_segments_with_limit(
@@ -386,6 +389,24 @@ pub(crate) fn decode_for_purpose(
         },
         progress,
     )
+}
+
+/// Qwen3-ASR context words for the pinned sherpa-onnx prompt. The native side
+/// splits this on ASCII commas, trims each item and joins them with single spaces
+/// inside the chat template's system turn (`offline-recognizer-qwen3-asr-impl.cc`
+/// `Qwen3FormatHotwordsForPrompt`, `BuildSourceIds`). The prompt counts against
+/// `max_total_len`; overflow truncates audio and the completion report then
+/// rejects the result. Other models ignore hints here.
+pub(crate) fn qwen_hotwords(config: &AppConfig, hints: &[String]) -> String {
+    if config.models.asr != AsrModel::Qwen3Asr06b {
+        return String::new();
+    }
+    hints
+        .iter()
+        .map(|hint| hint.trim())
+        .filter(|hint| !hint.is_empty() && !hint.contains(','))
+        .collect::<Vec<_>>()
+        .join(",")
 }
 
 /// Retry only non-silent parts that decoded to nothing: the native recognizer
@@ -425,6 +446,7 @@ fn decode_segment_once(
     healthy: Option<&std::cell::Cell<bool>>,
     observe: &dyn Fn(SegmentObservation),
     purpose: DecodePurpose,
+    hotwords: &str,
 ) -> Result<String> {
     // Only weights/sessions may persist. Every segment gets fresh features,
     // options and generated decoding state, even across recordings.
@@ -432,6 +454,10 @@ fn decode_segment_once(
     let stream = recognizer.create_stream();
     if let Some(language) = language(config) {
         stream.set_option("language", language);
+    }
+    if !hotwords.is_empty() {
+        // Per-stream, so hints never leak into the next segment or recording.
+        stream.set_option("hotwords", hotwords);
     }
     stream.accept_waveform(ASR_SAMPLE_RATE as i32, samples);
     let accept_us = started.elapsed().as_micros().min(u64::MAX as u128) as u64;
@@ -885,6 +911,17 @@ mod tests {
             transcribe(&boundary, &config, root, &cancelled),
             Err(InferenceError::Configuration(_))
         ));
+    }
+
+    #[test]
+    fn qwen_hotwords_use_the_native_comma_list_and_only_reach_qwen() {
+        let mut config = AppConfig::default();
+        config.models.asr = AsrModel::Qwen3Asr06b;
+        let hints = ["kubectl", " Cedar Point ", "a,b", ""].map(String::from);
+        assert_eq!(super::qwen_hotwords(&config, &hints), "kubectl,Cedar Point");
+        assert_eq!(super::qwen_hotwords(&config, &[]), "");
+        config.models.asr = AsrModel::CohereTranscribe;
+        assert_eq!(super::qwen_hotwords(&config, &hints), "");
     }
 
     #[test]

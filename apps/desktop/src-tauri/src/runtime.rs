@@ -17,6 +17,9 @@ use vesper_data::{DatasetStore, SessionRecord};
 mod learning_tests;
 
 #[cfg(test)]
+#[path = "runtime_e2e_tests.rs"]
+mod e2e_tests;
+#[cfg(test)]
 #[path = "runtime_learning_qualification_tests.rs"]
 mod learning_qualification_tests;
 
@@ -55,7 +58,7 @@ mod tests {
     fn editable_result(profile: &vesper_core::PersonalizationProfile, id: &str) -> PipelineResult {
         PipelineResult {
             result_id: id.into(),
-            raw_transcript: "Open read me in the repo".into(),
+            raw_transcript: "Open readme in the repo".into(),
             cleaned_transcript: None,
             speaker_timeline: None,
             personalized_transcript: None,
@@ -73,6 +76,7 @@ mod tests {
                 model_id: "fixture".into(),
                 learning_epoch: profile.learning_epoch,
                 learning_enabled: profile.automatic_learning,
+                ..Default::default()
             },
             session: None,
             warnings: vec![],
@@ -445,7 +449,7 @@ mod tests {
         let state = runtime.state.lock().unwrap();
         let partial = state.partial.as_ref().unwrap();
         assert_eq!(partial.sequence, 4);
-        assert_eq!(partial.committed_text, "Open read me in the repo");
+        assert_eq!(partial.committed_text, "Open readme in the repo");
         assert!(partial.provisional_text.is_empty());
         assert!(partial.is_final);
         assert!(state.partial_invalidated_for.is_none());
@@ -636,14 +640,15 @@ mod tests {
         let inference = Arc::new(vesper_inference::InferenceManager::new().unwrap());
         let before = "Deploy kubernets to the cluster";
         let after = "Deploy kubernetes to the cluster";
-        for attempt in 0..3 {
+        for attempt in 0..4 {
             let mut config = AppConfig {
                 cleanup_enabled: false,
                 collect_training_data: false,
                 language: Language::English,
                 ..Default::default()
             };
-            // Third recording uses the other recognizer, without changing memory ownership.
+            // The third recording uses another recognizer: the learned alias belongs to
+            // the family whose errors taught it, so it waits until Cohere is used again.
             config.models.asr = if attempt == 2 {
                 vesper_core::AsrModel::Nemotron35AsrStreaming06b
             } else {
@@ -672,6 +677,13 @@ mod tests {
                 runtime
                     .edit_latest_draft(root.clone(), &result.result_id, 0, after.into())
                     .unwrap();
+            } else if attempt == 2 {
+                // No alias for this recognizer; the near-miss repair of the
+                // non-word against the learned spelling still applies.
+                let evidence = result.personalization_evidence.as_ref().unwrap();
+                assert!(evidence.applied.is_empty());
+                assert_eq!(evidence.gate.len(), 1);
+                assert_eq!(result.personalized_transcript.as_deref(), Some(after));
             } else {
                 assert_eq!(result.personalized_transcript.as_deref(), Some(after));
             }
@@ -1578,6 +1590,21 @@ impl Runtime {
                 ..Default::default()
             }
         };
+        // Gate-written spellings the user removed are rejections of that term.
+        if let Some(gate) = result
+            .personalization_evidence
+            .as_ref()
+            .map(|e| &e.gate)
+            .filter(|g| !g.is_empty() && result.learning_context.learning_enabled)
+        {
+            if let Err(error) = DatasetStore::open(root.clone()).and_then(|store| {
+                store.observe_gate_reverts(&result.learning_context, before, &text, gate)
+            }) {
+                result
+                    .warnings
+                    .push(format!("Correction feedback could not be saved: {error}"));
+            }
+        }
         result.draft_transcript = Some(text);
         result.draft_revision = next_revision;
         result.learning_outcome = Some(outcome);
@@ -1786,6 +1813,10 @@ impl Runtime {
     #[cfg(test)]
     pub fn is_busy(&self) -> bool {
         self.state.lock().is_ok_and(|state| state.busy)
+    }
+    /// A background model download is running (term worker gate).
+    pub fn background_download_running(&self) -> bool {
+        self.background.lock().is_ok_and(|b| b.running)
     }
     pub fn activity(&self) -> Result<serde_json::Value, String> {
         let state = self.state.lock().map_err(|error| error.to_string())?;
@@ -2262,9 +2293,11 @@ impl WorkContext {
             self.annotate_speakers(audio, session, &mut result)?;
         }
         // Freeze eligibility from the raw hypothesis. Cleanup cannot generate its own cues.
-        let post_asr_profile = self
-            .personalization_snapshot()?
-            .post_asr_profile(&raw, self.config.language);
+        let post_asr_profile = self.personalization_snapshot()?.post_asr_profile_for(
+            &raw,
+            self.config.language,
+            self.config.asr_name(),
+        );
         if self.config.cleanup_enabled && !raw.trim().is_empty() {
             self.runtime.progress(
                 "rewriting",
@@ -2318,7 +2351,15 @@ impl WorkContext {
         }
         let profile = self.personalization()?;
         result.project_selection = self.personalization_snapshot()?.project_selection.clone();
+        // Bias provenance: the exact hints this recording's decode received.
+        let bias = vesper_core::recognizer_hints(
+            &self.config.speech_adapter().capabilities.speech_hook,
+            profile,
+            self.config.language,
+        );
         result.learning_context = vesper_core::LearningContext {
+            hint_hash: bias.hint_hash,
+            hinted_phrases: bias.phrases,
             result_id: result.result_id.clone(),
             source_key: if profile.automatic_learning {
                 vesper_data::learning_audio_key(audio.samples())
@@ -2333,7 +2374,61 @@ impl WorkContext {
             learning_enabled: profile.automatic_learning,
         };
         let baseline = result.cleaned_transcript.as_deref().unwrap_or(&raw);
-        let personalized = post_asr_profile.personalize(baseline, self.config.language);
+        let mut personalized = post_asr_profile.personalize(baseline, self.config.language);
+        // Correction gate over the per-recording working set. Selection reads the raw
+        // hypothesis only; the gate edits the final text. Paused with the breaker.
+        let snapshot = self.personalization_snapshot()?;
+        let set = snapshot.post_asr_working_set(&raw, self.config.language);
+        personalized.evidence.hint_hash = set.hint_hash.clone();
+        if post_asr_profile.apply_corrections && snapshot.learning.breaker_tripped_ms.is_none() {
+            // Near-miss repairs apply: they met the predeclared evaluator gate (no
+            // changes on hard negatives or retained history with the right workspace).
+            // Near-miss repairs compound a biased decode's insertions (term
+            // evaluation round 2), so a hinted decode keeps them in shadow.
+            let hinted = !vesper_core::recognizer_hints(
+                &self.config.speech_adapter().capabilities.speech_hook,
+                self.personalization()?,
+                self.config.language,
+            )
+            .phrases
+            .is_empty();
+            let gate = vesper_core::correction_gate_with(
+                &personalized.text,
+                &set,
+                self.config.language,
+                if hinted {
+                    vesper_core::NearMiss::Shadow
+                } else {
+                    vesper_core::NearMiss::Apply
+                },
+            );
+            // Proposals the gate could not apply (overlaps) stay visible for review.
+            personalized.evidence.gate_shadow = gate
+                .near_misses
+                .into_iter()
+                .filter(|n| !gate.applied.iter().any(|a| a.start == n.start))
+                .collect();
+            if !gate.applied.is_empty() {
+                personalized.text = gate.text;
+                personalized.evidence.gate = gate.applied;
+            }
+        }
+        // Rule-based formatting, independent of the recognizer and writer
+        // (docs/personalization/formatting.md).
+        if self.config.language == Language::English && post_asr_profile.format_dictation {
+            let formatted = vesper_core::format_dictation(
+                &personalized.text,
+                post_asr_profile.preserve_fillers,
+            );
+            if !formatted.rules.is_empty() {
+                personalized.text = formatted.text;
+                personalized.evidence.formatting = formatted
+                    .rules
+                    .iter()
+                    .map(|rule| (*rule).to_owned())
+                    .collect();
+            }
+        }
         if personalized.text != baseline {
             result.personalized_transcript = Some(personalized.text.clone());
         }

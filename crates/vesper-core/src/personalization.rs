@@ -92,11 +92,27 @@ pub struct PersonalizationProfile {
     pub active_project: String,
     pub project_mode: crate::ProjectMode,
     pub project_rules: Vec<crate::ProjectRule>,
+    /// Detect repo/folder/website workspaces at shortcut capture start. Opt-in:
+    /// it reads the frontmost app's open document, so it is off until enabled.
+    pub automatic_workspaces: bool,
+    /// Opt-in: read back a pasted span once and treat the user's changes there as
+    /// a draft edit (docs/personalization/app-learning.md).
+    pub learn_from_app_edits: bool,
+    /// Opt-in: use unusual spellings already in the destination field, before the
+    /// caret, as references for that recording only. Never stored.
+    pub app_field_words: bool,
+    /// Rule-based formatting of numbers, times, dates, emails, web addresses,
+    /// hesitations and spoken self-corrections (English). Same for every model.
+    pub format_dictation: bool,
     pub automatic_learning: bool,
     /// Changes when learning permission changes or all automatic evidence is forgotten.
     pub learning_epoch: u64,
     pub vocabulary: Vec<VocabularyEntry>,
     pub examples: Vec<CleanupExample>,
+    /// Transient per-recording decode input (working-set hints). Never stored,
+    /// serialized or accepted from the frontend.
+    #[serde(skip)]
+    pub decode_context: Option<crate::DecodeContext>,
 }
 
 impl Default for PersonalizationProfile {
@@ -113,10 +129,15 @@ impl Default for PersonalizationProfile {
             active_project: String::new(),
             project_mode: crate::ProjectMode::Manual,
             project_rules: vec![],
+            automatic_workspaces: false,
+            learn_from_app_edits: false,
+            app_field_words: false,
+            format_dictation: true,
             automatic_learning: false,
             learning_epoch: 0,
             vocabulary: vec![],
             examples: vec![],
+            decode_context: None,
         }
     }
 }

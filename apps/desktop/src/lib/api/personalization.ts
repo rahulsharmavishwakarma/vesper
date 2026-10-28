@@ -13,7 +13,15 @@ export interface ProjectRule {
 }
 export interface ProjectSelection {
   project: string;
-  source: 'manual' | 'application' | 'folder' | 'shared' | 'context_unavailable' | 'ambiguous';
+  source:
+    | 'manual'
+    | 'application'
+    | 'folder'
+    | 'shared'
+    | 'context_unavailable'
+    | 'ambiguous'
+    | 'workspace'
+    | 'category';
   ruleId: string | null;
 }
 export async function chooseProjectApplication(): Promise<{ id: string; name: string } | null> {
@@ -64,6 +72,10 @@ export interface PersonalizationProfile {
   activeProject: string;
   projectMode: 'manual' | 'automatic';
   projectRules: ProjectRule[];
+  automaticWorkspaces: boolean;
+  learnFromAppEdits: boolean;
+  appFieldWords: boolean;
+  formatDictation: boolean;
   automaticLearning: boolean;
   learningEpoch: number;
   vocabulary: VocabularyEntry[];
@@ -119,6 +131,10 @@ export const getPersonalization = async () => {
     ...profile,
     projectMode: profile.projectMode ?? 'manual',
     projectRules: profile.projectRules ?? [],
+    automaticWorkspaces: profile.automaticWorkspaces ?? false,
+    learnFromAppEdits: profile.learnFromAppEdits ?? false,
+    appFieldWords: profile.appFieldWords ?? false,
+    formatDictation: profile.formatDictation ?? true,
   };
 };
 export interface LearningOutcome {
@@ -141,7 +157,13 @@ export interface AutomaticLearningState {
     project: string;
     context: string;
     state: 'observed' | 'provisional' | 'active' | 'suspended';
-    support: { sourceKey: string; episodeId: string; eventId: string; teachingTerms: string[] }[];
+    support: {
+      sourceKey: string;
+      episodeId: string;
+      eventId: string;
+      teachingTerms: string[];
+      recognizer?: string;
+    }[];
     observedCount: number;
     lastSeenMs: number;
     reason: string;
@@ -150,8 +172,12 @@ export interface AutomaticLearningState {
     kind: 'user_edit' | 'raw_observation' | 'memory_undo';
     retry: 'possible_repair' | 'continuation' | 'changed_intent' | 'uncertain' | null;
   }[];
+  /** Set while automatic spellings are paused after recent rejections. */
+  breakerTrippedMs?: number | null;
 }
 export const getAutomaticLearning = () => invoke<AutomaticLearningState>('get_automatic_learning');
+export const resumeAutomaticSpellings = () =>
+  invoke<AutomaticLearningState>('resume_automatic_spellings');
 export const forgetAutomaticLearning = (revision: number) =>
   invoke<PersonalizationProfile>('forget_automatic_learning', { revision });
 export const suspendAutomaticCandidate = (candidateId: string) =>

@@ -157,8 +157,12 @@ impl Learner {
             model_id: input.model_id.clone(),
             learning_epoch: p.learning_epoch,
             learning_enabled: true,
+            ..Default::default()
         };
         self.store.learn_from_edit(&context, 0, before, edited)?;
+        // This experiment compares eligibility policies; the live policy breaker
+        // (two rejected rules pause all automatic ones) is evaluated separately.
+        self.store.resume_automatic_spellings()?;
         if let Some(pair) = automatic_spelling_pair(before, edited) {
             let id = format!("{}:0", input.id);
             let state = self.store.automatic_learning_state()?;
@@ -651,7 +655,7 @@ mod tests {
     }
     fn learned() -> Learner {
         let mut learner = Learner::new().unwrap();
-        let i = input("teach", "Open read me for onboarding");
+        let i = input("teach", "Open readme for onboarding");
         learner
             .feedback(&i, &i.text, "Open README.md for onboarding")
             .unwrap();
@@ -661,7 +665,7 @@ mod tests {
         let learner = learned();
         (0..4)
             .map(|n| {
-                let i = input(&format!("case-{n}"), "Discuss read me in linguistics");
+                let i = input(&format!("case-{n}"), "Discuss readme in linguistics");
                 FeedbackCase {
                     snapshot: learner.snapshot().unwrap(),
                     desired: i.text.clone(),
@@ -680,7 +684,7 @@ mod tests {
             .map(|n| {
                 let input = input(
                     &format!("{prefix}-{n}"),
-                    &format!("Review read me during {topic}"),
+                    &format!("Review readme during {topic}"),
                 );
                 FeedbackCase {
                     snapshot: snapshot.clone(),
@@ -717,7 +721,7 @@ mod tests {
         );
         let mut positive = scoped_cases("onboarding", "changed-preference");
         for c in &mut positive {
-            c.desired = c.input.text.replace("read me", "README.md");
+            c.desired = c.input.text.replace("readme", "README.md");
         }
         let proposals = scopes.propose(&positive);
         scopes.finish("positive", &proposals, &positive, &positive);
@@ -736,8 +740,8 @@ mod tests {
         case.input.model_id = "different-model".into();
         assert_eq!(scoped::key(&case.snapshot, &case.input), Some(original));
         for text in [
-            "Review read me",
-            "Keep 'read me' during onboarding",
+            "Review readme",
+            "Keep 'readme' during onboarding",
             "Review an unknown term during onboarding",
         ] {
             let mut input = case.input.clone();
@@ -755,7 +759,7 @@ mod tests {
         }
         case.input.text.push_str(" rendering");
         assert!(scoped::key(&case.snapshot, &case.input).is_none());
-        case.input.text = "Review read me during onboarding".into();
+        case.input.text = "Review readme during onboarding".into();
         let duplicate = case.snapshot.profile.vocabulary[0].clone();
         case.snapshot.profile.vocabulary.push(duplicate);
         assert!(scoped::key(&case.snapshot, &case.input).is_none());
@@ -770,7 +774,7 @@ mod tests {
         assert!(scopes.propose(&cases).is_empty());
         let mut independent = scoped_cases("onboarding", "mixed");
         let mut adverse = independent[0].clone();
-        adverse.input.text = "Review read me during unknown-context".into();
+        adverse.input.text = "Review readme during unknown-context".into();
         independent.push(adverse);
         // One ambiguous connected component leaves only three eligible independent cases.
         assert!(scopes.propose(&independent).is_empty());
@@ -1109,12 +1113,12 @@ mod tests {
     #[test]
     fn duplicate_edit_bridges_cannot_satisfy_the_experimental_support_floor() {
         let mut learner = learned();
-        let mut bridge = input("bridge", "Open read me for onboarding");
+        let mut bridge = input("bridge", "Open readme for onboarding");
         bridge.source_key = "source-teach".into();
         learner
             .feedback(&bridge, &bridge.text, "Open README.md for onboarding")
             .unwrap();
-        let mut related = input("related", "Open read me for onboarding");
+        let mut related = input("related", "Open readme for onboarding");
         related.episode_id = bridge.episode_id.clone();
         learner
             .feedback(&related, &related.text, "Open README.md for onboarding")
@@ -1175,7 +1179,7 @@ mod tests {
             support_floor: 2,
             context_overlap: 0,
         };
-        let mut again = input("teach-again", "Open read me for onboarding");
+        let mut again = input("teach-again", "Open readme for onboarding");
         again.source_key = "source-teach".into();
         learner
             .feedback(&again, &again.text, "Open README.md for onboarding")
@@ -1184,7 +1188,7 @@ mod tests {
             prediction(&learner.snapshot().unwrap(), &again, policy).unwrap(),
             again.text
         );
-        let independent = input("independent", "Open read me for onboarding");
+        let independent = input("independent", "Open readme for onboarding");
         learner
             .feedback(
                 &independent,
@@ -1196,7 +1200,7 @@ mod tests {
             prediction(&learner.snapshot().unwrap(), &independent, policy).unwrap(),
             "Open README.md for onboarding"
         );
-        let undo = input("undo", "Open read me for onboarding");
+        let undo = input("undo", "Open readme for onboarding");
         learner
             .feedback(&undo, "Open README.md for onboarding", &undo.text)
             .unwrap();
@@ -1237,13 +1241,13 @@ mod tests {
         let learner = learned();
         let s = learner.snapshot().unwrap();
         for text in [
-            "Keep 'read me' during onboarding",
+            "Keep 'readme' during onboarding",
             "Do not send 15 files Friday",
         ] {
             let i = input("protected", text);
             assert_eq!(prediction(&s, &i, Policy::baseline()).unwrap(), text);
         }
-        let mut i = input("other", "Open read me for onboarding");
+        let mut i = input("other", "Open readme for onboarding");
         i.model_id = "another-model".into();
         assert_eq!(
             prediction(&s, &i, Policy::baseline()).unwrap(),
@@ -1350,7 +1354,7 @@ mod tests {
                     support_floor,
                     context_overlap,
                 };
-                let query = input("query", "Open read me for onboarding");
+                let query = input("query", "Open readme for onboarding");
                 assert_eq!(
                     prediction(&other.snapshot().unwrap(), &query, policy).unwrap(),
                     query.text
@@ -1362,9 +1366,9 @@ mod tests {
                     Language::Auto,
                 ] {
                     for text in [
-                        "Keep 'read me' during onboarding",
-                        "Keep \"read me\" during onboarding",
-                        "Keep `read me` during onboarding",
+                        "Keep 'readme' during onboarding",
+                        "Keep \"readme\" during onboarding",
+                        "Keep `readme` during onboarding",
                         "Do not send 15 files Friday",
                         "कृपया कल बैठक करें",
                     ] {
@@ -1386,7 +1390,7 @@ mod tests {
             .unwrap();
         let forgotten = learner.snapshot().unwrap();
         assert!(forgotten.profile.vocabulary.is_empty());
-        let query = input("after-forget", "Open read me for onboarding");
+        let query = input("after-forget", "Open readme for onboarding");
         assert_eq!(
             prediction(&forgotten, &query, Policy::baseline()).unwrap(),
             query.text
@@ -1440,7 +1444,7 @@ mod tests {
         snapshot.profile.vocabulary[0].enabled = false;
         // Non-active candidates may be evicted at the retained-evidence bound.
         snapshot.evidence.candidates.clear();
-        let query = input("disabled", "Open read me for onboarding");
+        let query = input("disabled", "Open readme for onboarding");
         assert_eq!(
             prediction(&snapshot, &query, Policy::baseline()).unwrap(),
             query.text

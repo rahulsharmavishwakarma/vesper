@@ -19,6 +19,17 @@ pub struct EditSupport {
     /// Local lexical cues from this independent edit. Missing in schema-1 support.
     #[serde(default)]
     pub teaching_terms: Vec<String>,
+    /// Recognizer family that produced the heard form; empty in older support.
+    #[serde(default)]
+    pub recognizer: String,
+}
+
+/// A user rejection of an applied automatic rule; feeds the policy breaker.
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct RuleRevert {
+    pub rule: String,
+    pub at_ms: i64,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -64,6 +75,10 @@ pub struct AutomaticLearningState {
     pub candidates: Vec<LearningCandidate>,
     pub events: Vec<LearningEvent>,
     pub expired_candidates: u64,
+    pub reverts: Vec<RuleRevert>,
+    /// Set when distinct rules were rejected in a short window. Unconfirmed
+    /// automatic rules stay in shadow until the user resumes them.
+    pub breaker_tripped_ms: Option<i64>,
 }
 impl Default for AutomaticLearningState {
     fn default() -> Self {
@@ -73,6 +88,8 @@ impl Default for AutomaticLearningState {
             candidates: vec![],
             events: vec![],
             expired_candidates: 0,
+            reverts: vec![],
+            breaker_tripped_ms: None,
         }
     }
 }
@@ -84,6 +101,15 @@ pub struct DictationPersonalizationSnapshot {
     pub profile: PersonalizationProfile,
     pub learning: AutomaticLearningState,
     pub project_selection: vesper_core::ProjectSelection,
+    /// Resolved at capture start by `resolve_context`; empty for imports.
+    pub workspace: vesper_core::WorkspaceContext,
+    pub(crate) workspaces: crate::workspaces::WorkspaceSnapshot,
+    // Term inventory (see term_inventory.rs): the usable inventory rows and the
+    // per-recording selection made after workspace resolution.
+    pub inventory: Vec<vesper_core::InventoryTerm>,
+    pub working_set: vesper_core::WorkingSet,
+    /// Opt-in field words read at capture start; references for this recording only.
+    pub field_terms: Vec<String>,
 }
 
 impl DictationPersonalizationSnapshot {
@@ -99,6 +125,20 @@ impl DictationPersonalizationSnapshot {
     }
 
     pub fn post_asr_profile(&self, raw: &str, language: Language) -> PersonalizationProfile {
+        self.post_asr_profile_for(raw, language, "")
+    }
+
+    /// Unconfirmed automatic aliases apply only for the recognizer family that
+    /// produced their evidence (legacy support without a family applies to all),
+    /// and not at all while the policy breaker is tripped.
+    pub fn post_asr_profile_for(
+        &self,
+        raw: &str,
+        language: Language,
+        model: &str,
+    ) -> PersonalizationProfile {
+        let family = vesper_core::recognizer_family(model);
+        let paused = self.learning.breaker_tripped_ms.is_some();
         let mut selected = self.profile.clone();
         for entry in &mut selected.vocabulary {
             let Some(source) = &entry.automatic_source else {
@@ -112,28 +152,32 @@ impl DictationPersonalizationSnapshot {
                 }
                 continue;
             }
-            let eligible = self.learning.candidates.iter().any(|candidate| {
-                candidate.id == *source
-                    && candidate.state == CandidateState::Active
-                    && candidate.phrase == entry.phrase
-                    && entry.aliases.contains(&candidate.alias)
-                    && candidate.language == entry.language
-                    && candidate.project == entry.project
-                    && language != Language::Auto
-                    && vesper_core::language_matches(entry.language, language)
-                    && vesper_core::project_matches(&entry.project, &selected.active_project)
-                    && (memory_phrase_occurs(raw, &candidate.alias)
-                        || memory_phrase_occurs(raw, &candidate.phrase))
-                    && vesper_core::teaching_context_matches(
-                        candidate.support.iter().flat_map(|s| &s.teaching_terms),
-                        raw,
-                        &CorrectionPair {
-                            heard: candidate.alias.clone(),
-                            intended: candidate.phrase.clone(),
-                        },
-                        &selected.active_project,
-                    )
-            });
+            let eligible = !paused
+                && self.learning.candidates.iter().any(|candidate| {
+                    candidate.id == *source
+                        && candidate.state == CandidateState::Active
+                        && (model.is_empty()
+                            || candidate.support.iter().all(|s| s.recognizer.is_empty())
+                            || candidate.support.iter().any(|s| s.recognizer == family))
+                        && candidate.phrase == entry.phrase
+                        && entry.aliases.contains(&candidate.alias)
+                        && candidate.language == entry.language
+                        && candidate.project == entry.project
+                        && language != Language::Auto
+                        && vesper_core::language_matches(entry.language, language)
+                        && vesper_core::project_matches(&entry.project, &selected.active_project)
+                        && (memory_phrase_occurs(raw, &candidate.alias)
+                            || memory_phrase_occurs(raw, &candidate.phrase))
+                        && vesper_core::teaching_context_matches(
+                            candidate.support.iter().flat_map(|s| &s.teaching_terms),
+                            raw,
+                            &CorrectionPair {
+                                heard: candidate.alias.clone(),
+                                intended: candidate.phrase.clone(),
+                            },
+                            &selected.active_project,
+                        )
+                });
             entry.enabled &= eligible;
             if entry.enabled {
                 // The raw-text evidence guard already established this operation's
@@ -220,6 +264,7 @@ impl DatasetStore {
     pub fn dictation_personalization_snapshot(&self) -> Result<DictationPersonalizationSnapshot> {
         // Persist the existing desktop enable migration before the read transaction.
         self.dictation_personalization()?;
+        self.ensure_workspace_store()?;
         let tx = rusqlite::Transaction::new_unchecked(
             &self.connection,
             rusqlite::TransactionBehavior::Deferred,
@@ -236,6 +281,12 @@ impl DatasetStore {
             profile,
             project_selection,
             learning: self.automatic_learning_state()?,
+            workspace: Default::default(),
+            workspaces: self.workspace_snapshot()?,
+            // A damaged inventory never blocks dictation; it only loses hints.
+            inventory: self.inventory_terms().unwrap_or_default(),
+            working_set: vesper_core::WorkingSet::default(),
+            field_terms: vec![],
         };
         tx.commit()?;
         Ok(snapshot)
@@ -278,6 +329,11 @@ impl DatasetStore {
             return Err(DatasetError::InvalidConfig(
                 "Unsupported or oversized automatic-learning store.".into(),
             ));
+        }
+        if state.policy_version < LEARNING_POLICY_VERSION {
+            // A new policy version is the documented way out of a tripped breaker.
+            state.breaker_tripped_ms = None;
+            state.reverts.clear();
         }
         // Read compatibility is non-writing; the next mutation persists schema 2.
         state.schema_version = 2;
@@ -374,6 +430,10 @@ impl DatasetStore {
             suspend(&mut state, source);
             outcome.suspended += 1;
         }
+        record_reverts(
+            &mut state,
+            withdrawn_entries.iter().map(|(_, s)| s.as_str()),
+        );
         if !withdrawn_entries.is_empty() {
             profile
                 .vocabulary
@@ -416,6 +476,7 @@ impl DatasetStore {
                 });
                 state.candidates.len() - 1
             });
+            let paused = state.breaker_tripped_ms.is_some();
             let candidate = &mut state.candidates[position];
             candidate.last_seen_ms = stamp();
             if candidate.state != CandidateState::Suspended {
@@ -431,6 +492,7 @@ impl DatasetStore {
                             pair,
                             &context.project,
                         ),
+                        recognizer: vesper_core::recognizer_family(&context.model_id),
                     };
                     if candidate.support.len() < 16 {
                         teaching_changed |= candidate.state == CandidateState::Active
@@ -448,13 +510,9 @@ impl DatasetStore {
                         }
                     }
                 }
-                let required = if !context.project.is_empty()
-                    && vesper_core::technical_spelling(&pair.intended)
-                {
-                    1
-                } else {
-                    2
-                };
+                // Asymmetric promotion: see `vesper_core::promotion_policy`.
+                let required = vesper_core::promotion_policy(pair, !context.project.is_empty())
+                    .required_support();
                 let conflict = profile.vocabulary.iter().any(|v| {
                     (v.enabled || v.automatic_source.is_none())
                         && (v.project.is_empty()
@@ -472,7 +530,8 @@ impl DatasetStore {
                     candidate.state = CandidateState::Suspended;
                     candidate.reason =
                         "Conflicts with an existing spelling; no automatic replacement.".into();
-                } else if candidate.support.len() >= required
+                } else if required.is_some_and(|required| candidate.support.len() >= required)
+                    && !paused
                     && candidate.language != Language::Auto
                     && (!candidate.context.is_empty() || !candidate.project.is_empty())
                     && candidate.state != CandidateState::Active
@@ -506,7 +565,12 @@ impl DatasetStore {
                 if candidate.state == CandidateState::Provisional {
                     candidate.reason = if candidate.language == Language::Auto {
                         "Select a recording language in Settings, then correct a new recording; automatic language mode cannot activate learned spellings.".into()
-                    } else if candidate.support.len() < required {
+                    } else if required.is_none() {
+                        "A single common word is never replaced automatically. Add the spelling in Vocabulary to use it.".into()
+                    } else if paused {
+                        "Automatic spellings are paused after recent rejections. Resume them in Vocabulary.".into()
+                    } else if let Some(required) = required.filter(|r| candidate.support.len() < *r)
+                    {
                         format!(
                             "Waiting for independent spelling evidence ({}/{required} recordings). Replaying the same audio does not count again.",
                             candidate.support.len()
@@ -636,6 +700,9 @@ impl DatasetStore {
                 )
                 && (memory_phrase_occurs(raw, &word.phrase)
                     || word.aliases.iter().any(|a| memory_phrase_occurs(raw, a)))
+                // A phrase this decode was biased toward may appear because of
+                // the bias; counting it would make the hint list confirm itself.
+                && !vesper_core::hinted(&word.phrase, &context.hinted_phrases)
             {
                 word.usage_count = word.usage_count.saturating_add(1);
                 changed = true;
@@ -650,6 +717,7 @@ impl DatasetStore {
                     && s.len() <= 128
                     && vesper_core::technical_spelling(s)
                     && memory_phrase_occurs(raw, s)
+                    && !vesper_core::hinted(s, &context.hinted_phrases)
             })
             .take(8)
         {
@@ -813,6 +881,87 @@ impl DatasetStore {
         tx: &Connection,
         ids: &[String],
     ) -> Result<usize> {
+        self.suspend_automatic_with(tx, ids, false)
+    }
+
+    /// The user undid applied output: suspend and count the rejection for the breaker.
+    pub(crate) fn reject_automatic_in_transaction(
+        &self,
+        tx: &Connection,
+        ids: &[String],
+    ) -> Result<usize> {
+        self.suspend_automatic_with(tx, ids, true)
+    }
+
+    /// A saved draft that drops a gate-written spelling and restores what was heard
+    /// (or picks a third spelling) rejects that term's automatic use. Returns the
+    /// rejected term ids; each counts toward the policy breaker.
+    pub fn observe_gate_reverts(
+        &self,
+        context: &LearningContext,
+        before: &str,
+        after: &str,
+        changes: &[vesper_core::GateChange],
+    ) -> Result<Vec<String>> {
+        if changes.is_empty() || !permitted(&self.personalization()?, context)? {
+            return Ok(vec![]);
+        }
+        let rejected = changes
+            .iter()
+            .filter(|c| {
+                memory_phrase_occurs(before, &c.spelling)
+                    && !memory_phrase_occurs(after, &c.spelling)
+            })
+            .map(|c| c.term_id.clone())
+            .collect::<Vec<_>>();
+        // Exact normalizations name their inventory row; near-miss repairs name
+        // the reference spelling, which suspends every inventory row with it.
+        let mut suspend = rejected
+            .iter()
+            .filter_map(|id| id.strip_prefix("inv:")?.parse::<i64>().ok())
+            .collect::<Vec<_>>();
+        let references = rejected
+            .iter()
+            .filter_map(|id| id.strip_prefix("reference:"))
+            .collect::<Vec<_>>();
+        if !references.is_empty() {
+            suspend.extend(
+                self.inventory_terms()?
+                    .into_iter()
+                    .filter(|t| references.contains(&t.surface.as_str()))
+                    .filter_map(|t| t.id.strip_prefix("inv:")?.parse::<i64>().ok()),
+            );
+        }
+        for id in suspend {
+            self.suspend_inventory_term(id)?;
+        }
+        if !rejected.is_empty() {
+            let tx = self.connection.unchecked_transaction()?;
+            let mut state = self.automatic_learning_state()?;
+            record_reverts(&mut state, rejected.iter().map(|id| id.as_str()));
+            put_state(&tx, &state)?;
+            tx.commit()?;
+        }
+        Ok(rejected)
+    }
+
+    /// Clear a tripped breaker after the user reviews their automatic spellings.
+    pub fn resume_automatic_spellings(&self) -> Result<()> {
+        let tx = self.connection.unchecked_transaction()?;
+        let mut state = self.automatic_learning_state()?;
+        state.breaker_tripped_ms = None;
+        state.reverts.clear();
+        put_state(&tx, &state)?;
+        tx.commit()?;
+        Ok(())
+    }
+
+    fn suspend_automatic_with(
+        &self,
+        tx: &Connection,
+        ids: &[String],
+        reverted: bool,
+    ) -> Result<usize> {
         let mut profile = self.personalization()?;
         let mut state = self.automatic_learning_state()?;
         let mut count = 0;
@@ -827,6 +976,9 @@ impl DatasetStore {
         for source in &removed {
             suspend(&mut state, source);
             count += 1;
+        }
+        if reverted {
+            record_reverts(&mut state, removed.iter().map(String::as_str));
         }
         if count > 0 {
             let sources = removed;
@@ -1012,6 +1164,31 @@ fn scope(language: Language, project: &str, context: &LearningContext) -> bool {
     vesper_core::language_matches(language, context.language)
         && vesper_core::project_matches(project, &context.project)
 }
+/// Rejections of applied rules count toward the breaker; list housekeeping does not.
+fn record_reverts<'a>(
+    state: &mut AutomaticLearningState,
+    rules: impl IntoIterator<Item = &'a str>,
+) {
+    let now = stamp();
+    state
+        .reverts
+        .extend(rules.into_iter().map(|rule| RuleRevert {
+            rule: rule.to_owned(),
+            at_ms: now,
+        }));
+    state
+        .reverts
+        .retain(|r| now.saturating_sub(r.at_ms) <= vesper_core::BREAKER_WINDOW_MS);
+    if state.breaker_tripped_ms.is_none()
+        && vesper_core::breaker_trips(
+            state.reverts.iter().map(|r| (r.rule.as_str(), r.at_ms)),
+            now,
+        )
+    {
+        state.breaker_tripped_ms = Some(now);
+    }
+}
+
 fn suspend(state: &mut AutomaticLearningState, id: &str) {
     if let Some(candidate) = state.candidates.iter_mut().find(|c| c.id == id) {
         candidate.state = CandidateState::Suspended;
@@ -1060,7 +1237,7 @@ fn prune(state: &mut AutomaticLearningState, timestamp: i64) {
         }
     }
 }
-fn put_state(tx: &Connection, state: &AutomaticLearningState) -> Result<()> {
+pub(crate) fn put_state(tx: &Connection, state: &AutomaticLearningState) -> Result<()> {
     if state
         .events
         .iter()
@@ -1073,7 +1250,7 @@ fn put_state(tx: &Connection, state: &AutomaticLearningState) -> Result<()> {
     tx.execute("INSERT INTO automatic_learning(id,state_json) VALUES(1,?1) ON CONFLICT(id) DO UPDATE SET state_json=excluded.state_json", [serde_json::to_string(state)?])?;
     Ok(())
 }
-fn put_profile(tx: &Connection, profile: &mut PersonalizationProfile) -> Result<()> {
+pub(crate) fn put_profile(tx: &Connection, profile: &mut PersonalizationProfile) -> Result<()> {
     profile.schema_version = 4;
     profile.revision = profile
         .revision
@@ -1087,7 +1264,7 @@ fn put_profile(tx: &Connection, profile: &mut PersonalizationProfile) -> Result<
 #[cfg(test)]
 mod tests {
     use super::*;
-    const CONTEXT_HEARD: &str = "Open read me for deployment";
+    const CONTEXT_HEARD: &str = "Open readme for deployment";
     const CONTEXT_EDITED: &str = "Open README.md for deployment";
 
     #[test]
@@ -1162,10 +1339,10 @@ mod tests {
             CONTEXT_EDITED
         );
         for raw in [
-            "Open read me for shopping",
-            "Open read me in repo",
-            "Open 'read me' for deployment",
-            "Open read me for 'deployment'",
+            "Open readme for shopping",
+            "Open readme in repo",
+            "Open 'readme' for deployment",
+            "Open readme for 'deployment'",
             "Discuss deployment without a filename",
         ] {
             assert!(
@@ -1305,7 +1482,7 @@ mod tests {
                 .learn_from_edit(
                     &context(&p, &format!("old-{i}")),
                     0,
-                    "Open read me",
+                    "Open readme",
                     "Open README.md",
                 )
                 .unwrap();
@@ -1345,7 +1522,7 @@ mod tests {
     fn context_support_is_rolled_back_cleared_by_undo_and_retained_only_with_active_memory() {
         let (_dir, store, p) = setup();
         store
-            .learn_from_edit(&context(&p, "old"), 0, "Open read me", "Open README.md")
+            .learn_from_edit(&context(&p, "old"), 0, "Open readme", "Open README.md")
             .unwrap();
         store.connection.execute_batch("CREATE TRIGGER fail_context BEFORE UPDATE ON personalization BEGIN SELECT RAISE(ABORT, 'injected context write failure'); END;").unwrap();
         assert!(store
@@ -1454,6 +1631,7 @@ mod tests {
             model_id: "model-a".into(),
             learning_epoch: p.learning_epoch,
             learning_enabled: true,
+            ..Default::default()
         }
     }
     fn teach(store: &DatasetStore, p: &PersonalizationProfile, id: &str) -> LearningOutcome {
@@ -1461,7 +1639,7 @@ mod tests {
             .learn_from_edit(
                 &context(p, id),
                 0,
-                "Open read me in the repo",
+                "Open readme in the repo",
                 "Open README.md in the repo",
             )
             .unwrap()
@@ -1474,18 +1652,18 @@ mod tests {
         assert!(learned.vocabulary[0].sources.is_empty());
         assert!(learned.vocabulary[0].automatic_source.is_some());
         assert_eq!(
-            learned.personalize("Open read me", Language::English).text,
+            learned.personalize("Open readme", Language::English).text,
             "Open README.md"
         );
         let mut other = learned.clone();
         other.active_project = "personal".into();
         assert_eq!(
-            other.personalize("Open read me", Language::English).text,
-            "Open read me"
+            other.personalize("Open readme", Language::English).text,
+            "Open readme"
         );
         assert_eq!(
-            learned.personalize("Open read me", Language::Hindi).text,
-            "Open read me"
+            learned.personalize("Open readme", Language::Hindi).text,
+            "Open readme"
         );
         assert!(store.list_sessions().unwrap().is_empty());
         assert_eq!(
@@ -1498,7 +1676,7 @@ mod tests {
         let mut switched = context(&p, "two");
         switched.model_id = "different-recognizer".into();
         reopened
-            .observe_learning(&switched, "Open read me", None)
+            .observe_learning(&switched, "Open readme", None)
             .unwrap();
         assert_eq!(
             reopened.personalization().unwrap().vocabulary[0].usage_count,
@@ -1843,14 +2021,14 @@ mod tests {
         teach(&store, &p, "teach");
         let first = context(&p, "first");
         store
-            .observe_learning(&first, "Open read me with NewTool", None)
+            .observe_learning(&first, "Open readme with NewTool", None)
             .unwrap();
         let mut repeat = context(&p, "repeat");
         repeat.episode_id = first.episode_id;
         store
             .observe_learning(
                 &repeat,
-                "I said open read me with NewTool",
+                "I said open readme with NewTool",
                 Some(RetryRelation::PossibleRepair),
             )
             .unwrap();
@@ -1865,6 +2043,51 @@ mod tests {
         assert!(state.candidates.iter().any(|c| c.phrase == "NewTool"
             && c.state == CandidateState::Observed
             && c.support.is_empty()));
+    }
+    #[test]
+    fn a_biased_decode_never_counts_its_own_hints_as_usage_or_observations() {
+        let (_dir, store, p) = setup();
+        teach(&store, &p, "teach");
+        let phrase = store.personalization().unwrap().vocabulary[0]
+            .phrase
+            .clone();
+        let raw = format!("Open {phrase} with NewTool");
+        let hints = vec![phrase.clone(), "NewTool".to_owned()];
+        for n in 0..3 {
+            let mut biased = context(&p, &format!("biased-{n}"));
+            biased.hint_hash = vesper_core::hint_hash(&hints);
+            biased.hinted_phrases = hints.clone();
+            store.observe_learning(&biased, &raw, None).unwrap();
+        }
+        assert_eq!(
+            store.personalization().unwrap().vocabulary[0].usage_count,
+            0
+        );
+        let state = store.automatic_learning_state().unwrap();
+        assert!(!state.candidates.iter().any(|c| c.phrase == "NewTool"));
+        // The observation is still recorded, with its bias provenance.
+        assert_eq!(
+            state
+                .events
+                .iter()
+                .filter(|e| e.context.hint_hash == vesper_core::hint_hash(&hints))
+                .count(),
+            3
+        );
+        // An unbiased decode of the same text remains ordinary evidence.
+        store
+            .observe_learning(&context(&p, "plain"), &raw, None)
+            .unwrap();
+        assert_eq!(
+            store.personalization().unwrap().vocabulary[0].usage_count,
+            1
+        );
+        assert!(store
+            .automatic_learning_state()
+            .unwrap()
+            .candidates
+            .iter()
+            .any(|c| c.phrase == "NewTool"));
     }
     #[test]
     fn changing_learning_permission_invalidates_old_callbacks_and_preserves_memory() {
@@ -1889,7 +2112,7 @@ mod tests {
         let (_dir, store, p) = setup();
         teach(&store, &p, "one");
         let outcome = store
-            .learn_from_edit(&context(&p, "undo"), 0, "Open README.md", "Open read me")
+            .learn_from_edit(&context(&p, "undo"), 0, "Open README.md", "Open readme")
             .unwrap();
         assert_eq!(outcome.suspended, 1);
         // The rejected spelling leaves the vocabulary; the suspended
@@ -1897,8 +2120,8 @@ mod tests {
         let profile = store.personalization().unwrap();
         assert!(profile.vocabulary.is_empty());
         assert_eq!(
-            profile.personalize("Open read me", Language::English).text,
-            "Open read me"
+            profile.personalize("Open readme", Language::English).text,
+            "Open readme"
         );
         assert_eq!(
             store.automatic_learning_state().unwrap().candidates[0].state,
@@ -2133,7 +2356,7 @@ mod tests {
         store
             .set_transcripts(
                 &record.id,
-                "Open read me in the repo".into(),
+                "Open readme in the repo".into(),
                 None,
                 json!({}),
             )
@@ -2172,7 +2395,7 @@ mod tests {
         let (_dir, store, p) = setup();
         store.connection.execute_batch("CREATE TRIGGER fail_learning BEFORE UPDATE ON personalization BEGIN SELECT RAISE(ABORT, 'injected write failure'); END;").unwrap();
         assert!(store
-            .learn_from_edit(&context(&p, "one"), 0, "Open read me", "Open README.md")
+            .learn_from_edit(&context(&p, "one"), 0, "Open readme", "Open README.md")
             .is_err());
         assert!(store.personalization().unwrap().vocabulary.is_empty());
         assert!(store.automatic_learning_state().unwrap().events.is_empty());
@@ -2189,29 +2412,26 @@ mod tests {
         fs::write(&audio, b"synthetic test audio bytes").unwrap();
         let record = store.import_audio(&audio, &AppConfig::default()).unwrap();
         store
-            .set_transcripts(&record.id, "Open read me in repo".into(), None, json!({}))
+            .set_transcripts(&record.id, "Open readme in repo".into(), None, json!({}))
             .unwrap();
         let ctx = context(&p, "draft");
         let (saved, outcome) = store
             .edit_session_draft(
                 &record.id,
                 0,
-                "Open read me in repo",
+                "Open readme in repo",
                 "Open README.md in repo",
                 &ctx,
             )
             .unwrap();
         assert_eq!(outcome.activated, ["README.md"]);
         assert_eq!(saved.draft_revision, 1);
-        assert_eq!(
-            saved.raw_transcript.as_deref(),
-            Some("Open read me in repo")
-        );
+        assert_eq!(saved.raw_transcript.as_deref(), Some("Open readme in repo"));
         assert!(saved.review_history.is_empty());
         assert!(saved.verified_transcript.is_none());
         assert!(saved.corrected_transcript.is_none());
         assert!(store
-            .edit_session_draft(&record.id, 0, "Open read me in repo", "changed", &ctx)
+            .edit_session_draft(&record.id, 0, "Open readme in repo", "changed", &ctx)
             .is_err());
         assert_eq!(
             store
@@ -2221,7 +2441,7 @@ mod tests {
             0
         );
         let encoded = serde_json::to_string(&store.automatic_learning_state().unwrap()).unwrap();
-        assert!(!encoded.contains("Open read me in repo"));
+        assert!(!encoded.contains("Open readme in repo"));
         assert!(!encoded.contains("Open README.md in repo"));
         assert!(encoded.contains("README.md"));
     }
@@ -2302,7 +2522,7 @@ mod tests {
         let mut auto = context(&p, "auto");
         auto.language = Language::Auto;
         let outcome = store
-            .learn_from_edit(&auto, 0, "Open read me", "Open README.md")
+            .learn_from_edit(&auto, 0, "Open readme", "Open README.md")
             .unwrap();
         assert!(outcome.activated.is_empty());
         assert!(outcome.status.contains("Select a recording language"));
@@ -2311,10 +2531,224 @@ mod tests {
             .contains("Select a recording language"));
         teach(&store, &p, "one");
         assert!(store
-            .learn_from_edit(&context(&p, "other"), 0, "Open read me", "Open README.txt")
+            .learn_from_edit(&context(&p, "other"), 0, "Open readme", "Open README.txt")
             .unwrap()
             .activated
             .is_empty());
         assert_eq!(store.personalization().unwrap().vocabulary.len(), 1);
+    }
+
+    #[test]
+    fn heard_class_sets_required_independent_support() {
+        let (_dir, store, p) = setup();
+        let teach = |id: &str, before: &str, after: &str| {
+            store
+                .learn_from_edit(&context(&p, id), 0, before, after)
+                .unwrap()
+        };
+        // An ordinary phrase needs two independent edits, even for an identifier.
+        assert!(teach(
+            "a1",
+            "Open read me in the repo",
+            "Open README.md in the repo"
+        )
+        .activated
+        .is_empty());
+        assert_eq!(
+            teach(
+                "a2",
+                "Open read me in the repo",
+                "Open README.md in the repo"
+            )
+            .activated,
+            ["README.md"]
+        );
+        // Policy 6: one ordinary word becomes a term only after three independent
+        // edits in a project; earlier edits stay provisional.
+        for (id, activated) in [("d1", false), ("d2", false), ("d3", true)] {
+            let outcome = teach(
+                id,
+                "The data formatting page for Fermion",
+                "The Detta formatting page for Fermion",
+            );
+            assert_eq!(outcome.activated == ["Detta"], activated, "{id}");
+        }
+        // Corrected to another lowercase word: never automatic, however often.
+        for id in ["w1", "w2", "w3", "w4", "w5"] {
+            let outcome = teach(
+                id,
+                "I will write the repo docs",
+                "I will right the repo docs",
+            );
+            assert!(outcome.activated.is_empty(), "{id}");
+        }
+        // Word-to-word rewrites are not spelling evidence at all: no candidate.
+        let state = store.automatic_learning_state().unwrap();
+        assert!(state
+            .candidates
+            .iter()
+            .all(|c| c.phrase != "right" || c.state != CandidateState::Active));
+        let data = state
+            .candidates
+            .iter()
+            .find(|c| c.phrase == "Detta")
+            .unwrap();
+        assert_eq!(
+            (data.state, data.support.len()),
+            (CandidateState::Active, 3)
+        );
+    }
+
+    #[test]
+    fn learned_aliases_stay_with_the_recognizer_family_that_needed_them() {
+        let (_dir, store, p) = setup();
+        let mut cohere = context(&p, "c1");
+        cohere.model_id = "Cohere Transcribe".into();
+        assert_eq!(
+            store
+                .learn_from_edit(
+                    &cohere,
+                    0,
+                    "Open readme for deployment",
+                    "Open README.md for deployment"
+                )
+                .unwrap()
+                .activated,
+            ["README.md"]
+        );
+        let snapshot = store.dictation_personalization_snapshot().unwrap();
+        let raw = "Open readme for deployment";
+        let apply = |model: &str| {
+            snapshot
+                .post_asr_profile_for(raw, Language::English, model)
+                .personalize(raw, Language::English)
+                .text
+        };
+        assert_eq!(apply("Cohere Transcribe"), "Open README.md for deployment");
+        assert_eq!(apply("NVIDIA Parakeet TDT 0.6B v3"), raw);
+        // Callers without a model keep the previous behavior.
+        assert_eq!(
+            snapshot
+                .post_asr_profile(raw, Language::English)
+                .personalize(raw, Language::English)
+                .text,
+            "Open README.md for deployment"
+        );
+    }
+
+    #[test]
+    fn two_distinct_rejected_rules_trip_the_breaker_until_resumed() {
+        let (_dir, store, p) = setup();
+        for (id, before, after) in [
+            (
+                "t1",
+                "Open readme for deployment",
+                "Open README.md for deployment",
+            ),
+            (
+                "t2",
+                "Run sherpa onnx for deployment",
+                "Run sherpa_onnx for deployment",
+            ),
+            (
+                "t3",
+                "Use kube ctl for deployment",
+                "Use kubectl.io for deployment",
+            ),
+        ] {
+            assert_eq!(
+                store
+                    .learn_from_edit(&context(&p, id), 0, before, after)
+                    .unwrap()
+                    .activated
+                    .len(),
+                1,
+                "{id}"
+            );
+        }
+        // The user puts the heard forms back on two different applied rules.
+        for (id, before, after) in [
+            (
+                "r1",
+                "Open README.md for deployment",
+                "Open readme for deployment",
+            ),
+            (
+                "r2",
+                "Run sherpa_onnx for deployment",
+                "Run sherpa onnx for deployment",
+            ),
+        ] {
+            assert_eq!(
+                store
+                    .learn_from_edit(&context(&p, id), 0, before, after)
+                    .unwrap()
+                    .suspended,
+                1
+            );
+        }
+        let snapshot = store.dictation_personalization_snapshot().unwrap();
+        assert!(snapshot.learning.breaker_tripped_ms.is_some());
+        let raw = "Use kube ctl for deployment";
+        assert_eq!(
+            snapshot
+                .post_asr_profile_for(raw, Language::English, "model-a")
+                .personalize(raw, Language::English)
+                .text,
+            raw
+        );
+        store.resume_automatic_spellings().unwrap();
+        let resumed = store.dictation_personalization_snapshot().unwrap();
+        assert_eq!(
+            resumed
+                .post_asr_profile_for(raw, Language::English, "model-a")
+                .personalize(raw, Language::English)
+                .text,
+            "Use kubectl.io for deployment"
+        );
+    }
+
+    #[test]
+    fn rejecting_gate_spellings_counts_toward_the_breaker() {
+        let (_dir, store, p) = setup();
+        let ctx = context(&p, "gate");
+        let change = |spelling: &str, id: &str| vesper_core::GateChange {
+            start: 0,
+            end: 0,
+            heard: String::new(),
+            spelling: spelling.into(),
+            term_id: id.into(),
+        };
+        let changes = [change("sherpa_onnx", "t1"), change("Sortformer", "t2")];
+        let before = "Link sherpa_onnx and Sortformer.";
+        // Unrelated edits and kept spellings are not rejections.
+        assert!(store
+            .observe_gate_reverts(
+                &ctx,
+                before,
+                "Link sherpa_onnx and Sortformer now.",
+                &changes
+            )
+            .unwrap()
+            .is_empty());
+        assert_eq!(
+            store
+                .observe_gate_reverts(&ctx, before, "Link sherpa onnx and Sortformer.", &changes)
+                .unwrap(),
+            ["t1"]
+        );
+        assert!(store
+            .automatic_learning_state()
+            .unwrap()
+            .breaker_tripped_ms
+            .is_none());
+        store
+            .observe_gate_reverts(&ctx, before, "Link sherpa_onnx and sort former.", &changes)
+            .unwrap();
+        assert!(store
+            .automatic_learning_state()
+            .unwrap()
+            .breaker_tripped_ms
+            .is_some());
     }
 }

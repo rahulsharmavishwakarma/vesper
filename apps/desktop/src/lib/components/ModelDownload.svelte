@@ -23,6 +23,8 @@
     fallbackBytes = 0,
     onDownload,
     onRemove,
+    onCancel,
+    lockNote = '',
   }: {
     target: DownloadTarget;
     state: ModelDownloadState;
@@ -34,6 +36,10 @@
     fallbackBytes?: number;
     onDownload: () => void;
     onRemove: (model: ModelCatalogInstallation) => void;
+    /** Cancels this card's download; shown beside its action while it runs. */
+    onCancel?: () => void;
+    /** Which choices wait for the download, shown under the progress. */
+    lockNote?: string;
   } = $props();
   const entry = $derived(knownSelection ? matchingDownload(state.catalog, target) : undefined);
   const installing = $derived(state.installingKey === downloadKey(target));
@@ -169,7 +175,18 @@
   {:else if entry && desktop && (!entry.runtimeReady || !entry.supported)}<p class="note">
       {entry.message}
     </p>{/if}
-  {#if installing}<DownloadProgress progress={state.details} cancelling={state.cancelling} />{/if}
+  {#if installing}<div class="download-progress">
+      <DownloadProgress
+        progress={state.details}
+        cancelling={state.cancelling}
+      />{#if onCancel}<button type="button" disabled={state.cancelling} onclick={onCancel}
+          >{state.cancelling ? 'Cancelling…' : 'Cancel download'}</button
+        >{/if}
+    </div>
+    {#if lockNote}<p class="note">{lockNote}</p>{/if}
+  {:else if onCancel && state.resultKey === downloadKey(target)}
+    {#if state.error}<p class="error" role="alert">{state.error}</p>
+    {:else if state.feedback}<p class="success">{state.feedback}</p>{/if}{/if}
 </div>
 
 <style>

@@ -71,7 +71,7 @@ pub fn word_edit_distance(reference: &str, hypothesis: &str) -> usize {
     )
 }
 
-fn normalize(text: &str) -> String {
+pub(crate) fn normalize(text: &str) -> String {
     let mut normalized = String::new();
     let mut separated = true;
     for character in text.nfkc().flat_map(char::to_lowercase) {

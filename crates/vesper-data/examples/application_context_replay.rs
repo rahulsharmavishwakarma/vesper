@@ -55,6 +55,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
             model_id: "constructed-output".into(),
             learning_epoch: profile.learning_epoch,
             learning_enabled: true,
+            ..Default::default()
         };
         let start = Instant::now();
         store.learn_from_edit(&ctx, 0, &before, &after)?;

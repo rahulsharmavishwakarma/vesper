@@ -141,7 +141,8 @@ impl SpeechModel {
         profile: &PersonalizationProfile,
     ) -> Result<String> {
         if let Self::Sherpa(model) = self {
-            return model.preview(audio, config, root, cancelled);
+            let hints = decode_hints(config, profile);
+            return model.preview(audio, config, root, cancelled, &hints.phrases);
         }
         let progress: TranscriptionProgressSink = std::sync::Arc::new(|_| {});
         self.transcribe(audio, config, root, id, cancelled, &progress, profile)
@@ -193,15 +194,26 @@ impl SpeechModel {
         match self {
             #[cfg(feature = "mlx")]
             Self::Mlx(model) => model.transcribe(audio, config, root, cancelled, &**progress),
-            Self::Nemo(model) => model.transcribe_with_phrases(
+            Self::Nemo(model) => {
+                let hints = decode_hints(config, profile);
+                model.transcribe_with_phrases(
+                    audio,
+                    config,
+                    Some(id),
+                    cancelled,
+                    &hints.phrases,
+                    phrase_boost(&hints),
+                )
+            }
+            Self::Lfm(model) => model.transcribe(audio, cancelled, &**progress),
+            Self::Sherpa(model) => model.transcribe(
                 audio,
                 config,
-                Some(id),
+                root,
                 cancelled,
-                &profile.speech_phrases(config.language),
+                &**progress,
+                &decode_hints(config, profile).phrases,
             ),
-            Self::Lfm(model) => model.transcribe(audio, cancelled, &**progress),
-            Self::Sherpa(model) => model.transcribe(audio, config, root, cancelled, &**progress),
             Self::PerJob(kind) => {
                 vesper_models::verify_asr(config, root, cancelled)
                     .map_err(|e| native("speech model verification", e))?;
@@ -220,21 +232,44 @@ impl SpeechModel {
         match self {
             #[cfg(feature = "mlx")]
             Self::Mlx(model) => model.stream().map(Box::new).map(NativeStream::Mlx),
-            Self::Nemo(model) => model
-                .stream_with_phrases(
-                    config,
-                    id,
-                    cancelled,
-                    &profile.speech_phrases(config.language),
-                )
-                .map(NativeStream::Nemo),
+            Self::Nemo(model) => {
+                let hints = decode_hints(config, profile);
+                model
+                    .stream_with_phrases(
+                        config,
+                        id,
+                        cancelled,
+                        &hints.phrases,
+                        phrase_boost(&hints),
+                    )
+                    .map(NativeStream::Nemo)
+            }
             Self::Lfm(_) | Self::Sherpa(_) | Self::PerJob(_) => {
                 Err(InferenceError::UnsupportedAsr(config.models.asr.id()))
             }
         }
     }
 
+    /// Execution evidence plus this decode's bias provenance (hook, source, count
+    /// and hash; never the phrases themselves).
     pub(crate) fn evidence(
+        &self,
+        config: &AppConfig,
+        profile: &PersonalizationProfile,
+    ) -> serde_json::Value {
+        let mut value = self.runtime_evidence(config, profile);
+        let hook = config.speech_adapter().capabilities.speech_hook;
+        let hints = decode_hints(config, profile);
+        if let Some(object) = value.as_object_mut() {
+            object.insert("speechHook".into(), serde_json::json!(hook));
+            object.insert("hintSource".into(), serde_json::json!(hints.source));
+            object.insert("hintCount".into(), hints.phrases.len().into());
+            object.insert("hintHash".into(), hints.hint_hash.into());
+        }
+        value
+    }
+
+    fn runtime_evidence(
         &self,
         config: &AppConfig,
         profile: &PersonalizationProfile,
@@ -249,7 +284,8 @@ impl SpeechModel {
                 "nativeGraphThreads":crate::worker_threads(), "residentWeights":true,
                 "residentLoadOrdinal":model.load_ordinal, "verificationUs":model.verification_us,
                 "modelLoadUs":model.load_us, "metrics":*model.metrics.borrow(),
-                "contextualPhrasesSupported":false, "contextualPhraseCount":0,
+                "contextualPhrasesSupported":false,
+                "contextualPhraseCount":decode_hints(config, profile).phrases.len(),
                 "evidence":"verified-resident-sherpa-fresh-segment-streams"});
         }
         if let Self::Lfm(model) = self {
@@ -274,9 +310,33 @@ impl SpeechModel {
             ) => Some("cpu"),
             Self::Lfm(_) | Self::Sherpa(_) | Self::PerJob(_) => None,
         };
-        serde_json::json!({"requestedBackend":config.compute_backend, "initializedProvider":initialized, "nativeGraphThreads":if matches!(self, Self::Nemo(_)) { Some(4) } else { None }, "streamingPolicy":if matches!(self, Self::Nemo(_)) && config.speech_adapter().capabilities.native_streaming { serde_json::json!({"rightContextPolicy":"artifact-default", "artifactRightContextFrames":3, "artifactLeftContextFrames":56, "nominalEncoderAdvanceMs":320, "evidence":"pinned-model-and-runtime-source"}) } else { serde_json::Value::Null }, "operatorPlacement":"unknown", "profileRevision":profile.revision, "contextualPhrasesSupported":config.speech_adapter().capabilities.contextual_phrases, "contextualPhraseCount":if config.speech_adapter().capabilities.contextual_phrases { profile.speech_phrases(config.language).len() } else { 0 }, "phraseBoost":2.0, "evidence":"adapter-initialization-or-explicit-cpu-contract"})
+        serde_json::json!({"requestedBackend":config.compute_backend, "initializedProvider":initialized, "nativeGraphThreads":if matches!(self, Self::Nemo(_)) { Some(4) } else { None }, "streamingPolicy":if matches!(self, Self::Nemo(_)) && config.speech_adapter().capabilities.native_streaming { serde_json::json!({"rightContextPolicy":"artifact-default", "artifactRightContextFrames":3, "artifactLeftContextFrames":56, "nominalEncoderAdvanceMs":320, "evidence":"pinned-model-and-runtime-source"}) } else { serde_json::Value::Null }, "operatorPlacement":"unknown", "profileRevision":profile.revision, "contextualPhrasesSupported":config.speech_adapter().capabilities.contextual_phrases(), "contextualPhraseCount":decode_hints(config, profile).phrases.len(), "phraseBoost":phrase_boost(&decode_hints(config, profile)), "evidence":"adapter-initialization-or-explicit-cpu-contract"})
     }
 }
+
+/// The exact hint list this decode sends to the adapter's qualified hook.
+pub(crate) fn decode_hints(
+    config: &AppConfig,
+    profile: &PersonalizationProfile,
+) -> vesper_core::RecognizerHints {
+    vesper_core::recognizer_hints(
+        &config.speech_adapter().capabilities.speech_hook,
+        profile,
+        config.language,
+    )
+}
+
+/// The NeMo-Speech.cpp request boost. The FFI validates the boost (0.1–5.0) even
+/// when the phrase list is empty, so an unbiased decode keeps the previous 2.0.
+pub(crate) fn phrase_boost(hints: &vesper_core::RecognizerHints) -> f32 {
+    if hints.phrases.is_empty() || hints.boost_milli == 0 {
+        UNBIASED_PHRASE_BOOST
+    } else {
+        hints.boost_milli as f32 / 1000.0
+    }
+}
+
+const UNBIASED_PHRASE_BOOST: f32 = 2.0;
 
 pub(crate) fn transcribe_once(
     kind: AdapterKind,
@@ -362,4 +422,19 @@ fn require_runtime(config: &AppConfig) -> Result<()> {
         return Err(InferenceError::UnsupportedAsr(config.models.asr.id()));
     }
     Ok(())
+}
+
+#[cfg(test)]
+mod phrase_boost_tests {
+    #[test]
+    fn unbiased_decodes_keep_a_boost_the_nemo_ffi_accepts() {
+        let none = vesper_core::RecognizerHints::default();
+        assert_eq!(super::phrase_boost(&none), 2.0);
+        let half = vesper_core::RecognizerHints {
+            phrases: vec!["kubectl".into()],
+            boost_milli: 500,
+            ..Default::default()
+        };
+        assert_eq!(super::phrase_boost(&half), 0.5);
+    }
 }

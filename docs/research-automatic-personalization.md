@@ -6,7 +6,7 @@ Reviewed: **16 September 2026**. Recent research window: **16 September 2024–1
 
 The intended experience is: **dictate normally, correct naturally, and encounter fewer recurring mistakes over time**. Users should not have to maintain a dictionary or press “Remember” after each correction. All inference and memory updates stay on device; the application owns the memory across model changes. Training remains deferred until a separately approved own-model project.
 
-This extends [the six-capability research](research-personal-dictation.md). It concentrates on the missing automatic feedback loop rather than repeating that document's accent, adapter and competitor survey.
+This extends the six-capability research (removed in #353; Git history keeps it). It concentrates on the missing automatic feedback loop rather than repeating that document's accent, adapter and competitor survey.
 
 The [phase roadmap](personalization/roadmap.md) organizes the remaining implementation directions and their validation requirements. It preserves A/B from this proposal and distinguishes optional external-editor observation and own-model training from the current on-device memory loop.
 
@@ -94,7 +94,7 @@ Proposed initial admission rules, to test rather than describe as calibrated con
 
 1. A completed user edit that supplies a guarded, unambiguous technical spelling in a known project can activate a scoped alias automatically. One ordinary edit is enough in this narrow case; no extra confirmation.
 2. Other spelling/name candidates need agreement from at least two independent completed user edits in compatible scope before automatic alias activation. A canonical term may be eligible for retrieval before any alias is justified. Common words, quoted content, numbers, dates, negation, conflicting mappings and broad rewrites remain outside automatic replacement.
-3. Machine-only recurrence changes observed usage counts. It cannot satisfy user-authored support. Retry-derived wording without independent spelling evidence stays provisional; it may help identify relevant existing memory, but cannot rewrite future unrelated dictation.
+3. Machine-only recurrence changes observed usage counts, except for phrases the recognizer was biased toward in that decode, which never count ([bias provenance](personalization/context-selection.md#typed-recognizer-hooks)). It cannot satisfy user-authored support. Retry-derived wording without independent spelling evidence stays provisional; it may help identify relevant existing memory, but cannot rewrite future unrelated dictation.
 4. An undo of an inferred application suspends that alias and restores the current machine fallback. An ordinary edit reversing the alias records negative evidence too. Do not keep applying it until the user finds the dictionary screen.
 5. Distinct models, cleanup reruns, imported duplicates and multiple attempts within one repair episode count as one correlated episode, not independent teaching examples. Tag memory-applied spans so later unchanged output cannot corroborate the same memory.
 

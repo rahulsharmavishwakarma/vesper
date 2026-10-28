@@ -444,6 +444,24 @@ conflicts with the running operation (issue #273).
     the accessible name and tooltip.
   - Reduced motion stops the pulse and the bar transition. (Issue #307.)
 
+- **Saving and downloads never push the page around** (28 October 2026):
+  - Settings autosave reports only in the sidebar status pill. The inline
+    "Saving…" notes in Settings and Writing were removed, and the empty
+    notice box no longer appears during a save; it shows only for errors,
+    validation messages and action feedback.
+  - A model download shows its progress, **Cancel download** and the lock
+    note inside that model's card, and its result message there too. The
+    shared area above the cards keeps progress only for downloads without a
+    card, such as automatic audio setup.
+  - Content below an expanding card still moves; content above it never does.
+  - Autosave never disables controls or blinks them: Writing saves in the
+    background, and an edit made while a save runs is kept and saved next
+    instead of being replaced by the stored copy (Settings and Writing).
+  - The sidebar shows saving only in its status pill; the accent dot on the
+    Models and Settings icons was removed.
+  - Tests: `settings-layout.spec.mjs` and `downloads.spec.mjs` assert the
+    options do not move.
+
 ## Verification
 
 Exercise the whole task with pointer and keyboard input: initial value, entering edit mode, valid and invalid input, cancellation, focus movement, saving, failure/retry, and reloading. Include slow asynchronous setup and navigation while work is pending. Check narrow and desktop layouts using the rendered component; do not rely solely on a screenshot or a synthetic event pass. Reduced motion must preserve the same state and feedback. Keep real OS shortcut and permission qualification separate from browser mocks.

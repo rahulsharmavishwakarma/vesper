@@ -197,6 +197,23 @@ pub async fn get_learning_shadow_diagnostics(
     .map_err(|e| e.to_string())?
 }
 
+/// Clears a tripped policy breaker after the user chose to resume automatic spellings.
+#[tauri::command]
+pub async fn resume_automatic_spellings(
+    storage: tauri::State<'_, AppStorage>,
+) -> Result<vesper_data::AutomaticLearningState, String> {
+    let root = storage.dataset_dir.clone();
+    tauri::async_runtime::spawn_blocking(move || {
+        let store = DatasetStore::open(root).map_err(|e| e.to_string())?;
+        store
+            .resume_automatic_spellings()
+            .and_then(|()| store.automatic_learning_state())
+            .map_err(|e| e.to_string())
+    })
+    .await
+    .map_err(|e| e.to_string())?
+}
+
 #[tauri::command]
 pub async fn forget_automatic_learning(
     revision: u64,

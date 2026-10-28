@@ -1,11 +1,16 @@
 //! Shared types for local dictation, independent of desktop and inference runtimes.
 
 mod adapters;
+mod app_text;
 mod config;
 mod diarization;
 pub mod environment;
 mod error;
+mod evidence;
+mod formatting;
+mod gate;
 mod generated;
+mod hooks;
 mod huggingface;
 mod learning;
 mod memory;
@@ -15,13 +20,17 @@ mod projects;
 mod semantic;
 mod shortcuts;
 mod speech;
+mod term_select;
+mod terms;
 mod transcript;
+mod workspace;
 
 pub use adapters::{
     adapter, mlx_speech_only, mlx_speech_supported, nemo_gguf_supported, neural_engine_supported,
     resolve_adapter, AdapterCapabilities, AdapterKind, AdapterRegistration, CacheState, LiveMode,
     ADAPTERS, MLX_REVISION, MLX_RUNTIME,
 };
+pub use app_text::{aligned_edit, field_terms, MAX_ALIGNED_WORDS, MAX_FIELD_TERMS};
 pub use config::{
     AppConfig, AsrEngine, AudioFrontendConfig, CaptureDesign, CleanupPreset, ComputeBackend,
     DictationOutput, ImprovementMode, Language, ModelSelection, NoiseReduction, RecordingMode,
@@ -29,7 +38,14 @@ pub use config::{
 };
 pub use diarization::{SpeakerSegment, SpeakerTimeline};
 pub use error::{Error, Result};
+pub use evidence::*;
+pub use formatting::{format_dictation, Formatted};
+pub use gate::{correction_gate, correction_gate_with, ordinary_language, ordinary_word, NearMiss};
 pub use generated::runtime_language_code;
+pub use hooks::{
+    bounded_hints, hint_hash, hinted, recognizer_hints, ConfidenceKind, DecodeContext, HintSource,
+    HookStatus, RecognizerHints, SpeechHook, SpeechHookKind,
+};
 pub use huggingface::{HuggingFaceFile, HuggingFaceProfile, ModelFileRole, ModelRuntime};
 pub use learning::*;
 pub use memory::{
@@ -48,4 +64,7 @@ pub use shortcuts::{recording_shortcut_identity, same_recording_shortcut};
 pub use speech::{
     whisper_no_speech, WHISPER_LOG_PROBABILITY_THRESHOLD, WHISPER_NO_SPEECH_THRESHOLD,
 };
+pub use term_select::*;
+pub use terms::*;
 pub use transcript::{PipelineStage, Transcript};
+pub use workspace::*;

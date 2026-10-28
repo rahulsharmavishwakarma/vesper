@@ -1,0 +1,1281 @@
+{
+  "schemaVersion": 1,
+  "note": "Synthetic evaluation terms; not user data. Distractors pad hint lists only and never occur in any sentence.",
+  "workspaces": [
+    {
+      "id": "devops",
+      "label": "DevOps / Kubernetes (synthetic)",
+      "terms": [
+        {
+          "id": "devops-kubectl",
+          "spelling": "kubectl",
+          "spoken": [
+            "kube control",
+            "kube c t l",
+            "kube cuddle"
+          ],
+          "kind": "identifier"
+        },
+        {
+          "id": "devops-etcd",
+          "spelling": "etcd",
+          "spoken": [
+            "e t c d",
+            "et c d"
+          ],
+          "kind": "identifier"
+        },
+        {
+          "id": "devops-helm",
+          "spelling": "Helm",
+          "spoken": [
+            "helm"
+          ],
+          "kind": "name"
+        },
+        {
+          "id": "devops-istio",
+          "spelling": "Istio",
+          "spoken": [
+            "is tee oh",
+            "istio"
+          ],
+          "kind": "name"
+        },
+        {
+          "id": "devops-kubelet",
+          "spelling": "kubelet",
+          "spoken": [
+            "kube let",
+            "cube let"
+          ],
+          "kind": "identifier"
+        },
+        {
+          "id": "devops-kustomize",
+          "spelling": "Kustomize",
+          "spoken": [
+            "customize"
+          ],
+          "kind": "name"
+        },
+        {
+          "id": "devops-argocd",
+          "spelling": "ArgoCD",
+          "spoken": [
+            "argo c d",
+            "argo"
+          ],
+          "kind": "name"
+        },
+        {
+          "id": "devops-prometheus",
+          "spelling": "Prometheus",
+          "spoken": [
+            "prometheus"
+          ],
+          "kind": "name"
+        },
+        {
+          "id": "devops-grafana",
+          "spelling": "Grafana",
+          "spoken": [
+            "grafana",
+            "gra fana"
+          ],
+          "kind": "name"
+        },
+        {
+          "id": "devops-terraform",
+          "spelling": "Terraform",
+          "spoken": [
+            "terraform",
+            "terra form"
+          ],
+          "kind": "name"
+        },
+        {
+          "id": "devops-kube-proxy",
+          "spelling": "kube-proxy",
+          "spoken": [
+            "kube proxy",
+            "cube proxy"
+          ],
+          "kind": "identifier"
+        },
+        {
+          "id": "devops-coredns",
+          "spelling": "CoreDNS",
+          "spoken": [
+            "core d n s"
+          ],
+          "kind": "name"
+        },
+        {
+          "id": "devops-envoy",
+          "spelling": "Envoy",
+          "spoken": [
+            "envoy"
+          ],
+          "kind": "name"
+        },
+        {
+          "id": "devops-linkerd",
+          "spelling": "Linkerd",
+          "spoken": [
+            "linker dee",
+            "linker d"
+          ],
+          "kind": "name"
+        },
+        {
+          "id": "devops-tekton",
+          "spelling": "Tekton",
+          "spoken": [
+            "tech ton",
+            "tekton"
+          ],
+          "kind": "name"
+        },
+        {
+          "id": "devops-fluentd",
+          "spelling": "Fluentd",
+          "spoken": [
+            "fluent dee",
+            "fluent d"
+          ],
+          "kind": "name"
+        },
+        {
+          "id": "devops-ingress-nginx",
+          "spelling": "ingress-nginx",
+          "spoken": [
+            "ingress engine x",
+            "ingress nginx"
+          ],
+          "kind": "identifier"
+        },
+        {
+          "id": "devops-minikube",
+          "spelling": "minikube",
+          "spoken": [
+            "mini kube",
+            "mini cube"
+          ],
+          "kind": "identifier"
+        },
+        {
+          "id": "devops-k9s",
+          "spelling": "k9s",
+          "spoken": [
+            "k nines",
+            "canines"
+          ],
+          "kind": "identifier"
+        },
+        {
+          "id": "devops-containerd",
+          "spelling": "containerd",
+          "spoken": [
+            "container dee",
+            "container d"
+          ],
+          "kind": "identifier"
+        },
+        {
+          "id": "devops-cri-o",
+          "spelling": "CRI-O",
+          "spoken": [
+            "cry oh",
+            "c r i o"
+          ],
+          "kind": "identifier"
+        },
+        {
+          "id": "devops-velero",
+          "spelling": "Velero",
+          "spoken": [
+            "velero",
+            "vel arrow"
+          ],
+          "kind": "name"
+        },
+        {
+          "id": "devops-karpenter",
+          "spelling": "Karpenter",
+          "spoken": [
+            "carpenter"
+          ],
+          "kind": "name"
+        },
+        {
+          "id": "devops-keda",
+          "spelling": "KEDA",
+          "spoken": [
+            "keda",
+            "k e d a"
+          ],
+          "kind": "acronym"
+        },
+        {
+          "id": "devops-cilium",
+          "spelling": "Cilium",
+          "spoken": [
+            "cilium",
+            "silly um"
+          ],
+          "kind": "name"
+        },
+        {
+          "id": "devops-calico",
+          "spelling": "Calico",
+          "spoken": [
+            "calico"
+          ],
+          "kind": "name"
+        },
+        {
+          "id": "devops-opentelemetry",
+          "spelling": "OpenTelemetry",
+          "spoken": [
+            "open telemetry"
+          ],
+          "kind": "name"
+        },
+        {
+          "id": "devops-jaeger",
+          "spelling": "Jaeger",
+          "spoken": [
+            "jaeger",
+            "yay ger"
+          ],
+          "kind": "name"
+        },
+        {
+          "id": "devops-thanos",
+          "spelling": "Thanos",
+          "spoken": [
+            "thanos",
+            "than ohs"
+          ],
+          "kind": "name"
+        },
+        {
+          "id": "devops-loki",
+          "spelling": "Loki",
+          "spoken": [
+            "loki",
+            "low key"
+          ],
+          "kind": "name"
+        }
+      ]
+    },
+    {
+      "id": "rustaudio",
+      "label": "Rust audio codebase identifiers (synthetic)",
+      "terms": [
+        {
+          "id": "rustaudio-sherpa-onnx",
+          "spelling": "sherpa_onnx",
+          "spoken": [
+            "sherpa onyx",
+            "sherpa onnx",
+            "sherpa o n n x"
+          ],
+          "kind": "identifier"
+        },
+        {
+          "id": "rustaudio-dpdfnet",
+          "spelling": "DPDFNet",
+          "spoken": [
+            "d p d f net",
+            "dpdf net"
+          ],
+          "kind": "identifier"
+        },
+        {
+          "id": "rustaudio-sortformer",
+          "spelling": "Sortformer",
+          "spoken": [
+            "sort former",
+            "sortformer"
+          ],
+          "kind": "name"
+        },
+        {
+          "id": "rustaudio-silero",
+          "spelling": "Silero",
+          "spoken": [
+            "silero",
+            "sil air oh"
+          ],
+          "kind": "name"
+        },
+        {
+          "id": "rustaudio-cpal",
+          "spelling": "cpal",
+          "spoken": [
+            "see pal",
+            "c pal"
+          ],
+          "kind": "identifier"
+        },
+        {
+          "id": "rustaudio-rubato",
+          "spelling": "rubato",
+          "spoken": [
+            "rubato"
+          ],
+          "kind": "identifier"
+        },
+        {
+          "id": "rustaudio-tokio",
+          "spelling": "tokio",
+          "spoken": [
+            "tokyo",
+            "tokio"
+          ],
+          "kind": "identifier"
+        },
+        {
+          "id": "rustaudio-serde-json",
+          "spelling": "serde_json",
+          "spoken": [
+            "sir dee jason",
+            "serde json",
+            "serde jason"
+          ],
+          "kind": "identifier"
+        },
+        {
+          "id": "rustaudio-tauri",
+          "spelling": "Tauri",
+          "spoken": [
+            "tauri",
+            "tory"
+          ],
+          "kind": "name"
+        },
+        {
+          "id": "rustaudio-svelte",
+          "spelling": "Svelte",
+          "spoken": [
+            "svelte"
+          ],
+          "kind": "name"
+        },
+        {
+          "id": "rustaudio-nemo",
+          "spelling": "NeMo",
+          "spoken": [
+            "nemo"
+          ],
+          "kind": "name"
+        },
+        {
+          "id": "rustaudio-gguf",
+          "spelling": "GGUF",
+          "spoken": [
+            "g g u f"
+          ],
+          "kind": "acronym"
+        },
+        {
+          "id": "rustaudio-llama-cpp",
+          "spelling": "llama_cpp",
+          "spoken": [
+            "llama c p p",
+            "llama cpp"
+          ],
+          "kind": "identifier"
+        },
+        {
+          "id": "rustaudio-monopcm",
+          "spelling": "MonoPcm",
+          "spoken": [
+            "mono p c m",
+            "mono pcm"
+          ],
+          "kind": "identifier"
+        },
+        {
+          "id": "rustaudio-vad",
+          "spelling": "VAD",
+          "spoken": [
+            "v a d",
+            "vad"
+          ],
+          "kind": "acronym"
+        },
+        {
+          "id": "rustaudio-clippy",
+          "spelling": "clippy",
+          "spoken": [
+            "clippy"
+          ],
+          "kind": "identifier"
+        },
+        {
+          "id": "rustaudio-rustfmt",
+          "spelling": "rustfmt",
+          "spoken": [
+            "rust format",
+            "rust fmt"
+          ],
+          "kind": "identifier"
+        },
+        {
+          "id": "rustaudio-cargo-deny",
+          "spelling": "cargo-deny",
+          "spoken": [
+            "cargo deny"
+          ],
+          "kind": "identifier"
+        },
+        {
+          "id": "rustaudio-onnx",
+          "spelling": "ONNX",
+          "spoken": [
+            "onyx",
+            "o n n x",
+            "onnx"
+          ],
+          "kind": "acronym"
+        },
+        {
+          "id": "rustaudio-parakeet",
+          "spelling": "Parakeet",
+          "spoken": [
+            "parakeet"
+          ],
+          "kind": "name"
+        },
+        {
+          "id": "rustaudio-nemotron",
+          "spelling": "Nemotron",
+          "spoken": [
+            "nemotron",
+            "nemo tron"
+          ],
+          "kind": "name"
+        },
+        {
+          "id": "rustaudio-whisper-cpp",
+          "spelling": "whisper.cpp",
+          "spoken": [
+            "whisper c p p",
+            "whisper cpp"
+          ],
+          "kind": "identifier"
+        },
+        {
+          "id": "rustaudio-coreml",
+          "spelling": "CoreML",
+          "spoken": [
+            "core m l"
+          ],
+          "kind": "name"
+        },
+        {
+          "id": "rustaudio-mlx",
+          "spelling": "MLX",
+          "spoken": [
+            "m l x"
+          ],
+          "kind": "acronym"
+        },
+        {
+          "id": "rustaudio-qwen",
+          "spelling": "Qwen",
+          "spoken": [
+            "kwen",
+            "qwen"
+          ],
+          "kind": "name"
+        },
+        {
+          "id": "rustaudio-mtmd",
+          "spelling": "mtmd",
+          "spoken": [
+            "m t m d"
+          ],
+          "kind": "identifier"
+        },
+        {
+          "id": "rustaudio-pcm16",
+          "spelling": "PCM16",
+          "spoken": [
+            "p c m sixteen",
+            "pcm sixteen"
+          ],
+          "kind": "identifier"
+        },
+        {
+          "id": "rustaudio-sincfixedin",
+          "spelling": "SincFixedIn",
+          "spoken": [
+            "sink fixed in",
+            "sinc fixed in"
+          ],
+          "kind": "identifier"
+        },
+        {
+          "id": "rustaudio-symphonia",
+          "spelling": "Symphonia",
+          "spoken": [
+            "symphonia"
+          ],
+          "kind": "name"
+        },
+        {
+          "id": "rustaudio-kaldi",
+          "spelling": "Kaldi",
+          "spoken": [
+            "kaldi",
+            "call dee"
+          ],
+          "kind": "name"
+        }
+      ]
+    },
+    {
+      "id": "people",
+      "label": "People and product names (synthetic, invented)",
+      "terms": [
+        {
+          "id": "people-siobhan-okafor",
+          "spelling": "Siobhan Okafor",
+          "spoken": [
+            "shivawn okafor",
+            "shiv awn oh kah for"
+          ],
+          "kind": "name"
+        },
+        {
+          "id": "people-anneliese",
+          "spelling": "Anneliese",
+          "spoken": [
+            "anna leesa",
+            "anna lease"
+          ],
+          "kind": "name"
+        },
+        {
+          "id": "people-vesper",
+          "spelling": "Vesper",
+          "spoken": [
+            "vesper"
+          ],
+          "kind": "name"
+        },
+        {
+          "id": "people-zysec",
+          "spelling": "Zysec",
+          "spoken": [
+            "zai sec",
+            "zy sec"
+          ],
+          "kind": "name"
+        },
+        {
+          "id": "people-priyanka-venkataraman",
+          "spelling": "Priyanka Venkataraman",
+          "spoken": [
+            "priyanka venkataraman",
+            "pree yanka venkata raman"
+          ],
+          "kind": "name"
+        },
+        {
+          "id": "people-nguyen",
+          "spelling": "Nguyen",
+          "spoken": [
+            "win",
+            "new yen"
+          ],
+          "kind": "name"
+        },
+        {
+          "id": "people-wright",
+          "spelling": "Wright",
+          "spoken": [
+            "wright"
+          ],
+          "kind": "name"
+        },
+        {
+          "id": "people-mandy",
+          "spelling": "Mandy",
+          "spoken": [
+            "mandy"
+          ],
+          "kind": "name"
+        },
+        {
+          "id": "people-cedar-point",
+          "spelling": "Cedar Point",
+          "spoken": [
+            "cedar point"
+          ],
+          "kind": "phrase"
+        },
+        {
+          "id": "people-lumora",
+          "spelling": "Lumora",
+          "spoken": [
+            "lumora",
+            "loo mora"
+          ],
+          "kind": "name"
+        },
+        {
+          "id": "people-quillstack",
+          "spelling": "Quillstack",
+          "spoken": [
+            "quill stack"
+          ],
+          "kind": "name"
+        },
+        {
+          "id": "people-saoirse-brennan",
+          "spelling": "Saoirse Brennan",
+          "spoken": [
+            "seersha brennan",
+            "sur sha brennan"
+          ],
+          "kind": "name"
+        },
+        {
+          "id": "people-joaquin-phelan",
+          "spelling": "Joaquin Phelan",
+          "spoken": [
+            "wah keen phelan"
+          ],
+          "kind": "name"
+        },
+        {
+          "id": "people-aoife",
+          "spelling": "Aoife",
+          "spoken": [
+            "eefa"
+          ],
+          "kind": "name"
+        },
+        {
+          "id": "people-xiomara",
+          "spelling": "Xiomara",
+          "spoken": [
+            "see oh mara"
+          ],
+          "kind": "name"
+        },
+        {
+          "id": "people-thandiwe-mokoena",
+          "spelling": "Thandiwe Mokoena",
+          "spoken": [
+            "tan dee way mo kweh na"
+          ],
+          "kind": "name"
+        },
+        {
+          "id": "people-paige",
+          "spelling": "Paige",
+          "spoken": [
+            "paige"
+          ],
+          "kind": "name"
+        },
+        {
+          "id": "people-bree",
+          "spelling": "Bree",
+          "spoken": [
+            "bree"
+          ],
+          "kind": "name"
+        },
+        {
+          "id": "people-niall",
+          "spelling": "Niall",
+          "spoken": [
+            "neil",
+            "nile"
+          ],
+          "kind": "name"
+        },
+        {
+          "id": "people-sloane-ferreira",
+          "spelling": "Sloane Ferreira",
+          "spoken": [
+            "slone ferreira"
+          ],
+          "kind": "name"
+        },
+        {
+          "id": "people-tadeusz-kowalczyk",
+          "spelling": "Tadeusz Kowalczyk",
+          "spoken": [
+            "tadeush kovalchick"
+          ],
+          "kind": "name"
+        },
+        {
+          "id": "people-ruairi",
+          "spelling": "Ruairi",
+          "spoken": [
+            "rory"
+          ],
+          "kind": "name"
+        },
+        {
+          "id": "people-ximena",
+          "spelling": "Ximena",
+          "spoken": [
+            "he mena"
+          ],
+          "kind": "name"
+        },
+        {
+          "id": "people-brightloom",
+          "spelling": "Brightloom",
+          "spoken": [
+            "bright loom"
+          ],
+          "kind": "name"
+        },
+        {
+          "id": "people-fernwick",
+          "spelling": "Fernwick",
+          "spoken": [
+            "fern wick"
+          ],
+          "kind": "name"
+        },
+        {
+          "id": "people-orvana",
+          "spelling": "Orvana",
+          "spoken": [
+            "or vana"
+          ],
+          "kind": "name"
+        },
+        {
+          "id": "people-tidewell",
+          "spelling": "Tidewell",
+          "spoken": [
+            "tide well"
+          ],
+          "kind": "name"
+        },
+        {
+          "id": "people-kaveri-iyer",
+          "spelling": "Kaveri Iyer",
+          "spoken": [
+            "kaveri iyer",
+            "kah very eye er"
+          ],
+          "kind": "name"
+        },
+        {
+          "id": "people-mehmet-yilmaz",
+          "spelling": "Mehmet Yilmaz",
+          "spoken": [
+            "mehmet yilmaz"
+          ],
+          "kind": "name"
+        },
+        {
+          "id": "people-dashiell",
+          "spelling": "Dashiell",
+          "spoken": [
+            "dash eel"
+          ],
+          "kind": "name"
+        }
+      ]
+    }
+  ],
+  "distractors": [
+    {
+      "id": "distractor-flannelbrook",
+      "spelling": "Flannelbrook",
+      "spoken": [
+        "flannel brook"
+      ],
+      "kind": "name"
+    },
+    {
+      "id": "distractor-kube-scheduler",
+      "spelling": "kube-scheduler",
+      "spoken": [
+        "kube scheduler"
+      ],
+      "kind": "identifier"
+    },
+    {
+      "id": "distractor-crossplane",
+      "spelling": "Crossplane",
+      "spoken": [
+        "cross plane"
+      ],
+      "kind": "name"
+    },
+    {
+      "id": "distractor-kyverno",
+      "spelling": "Kyverno",
+      "spoken": [
+        "kai verno"
+      ],
+      "kind": "name"
+    },
+    {
+      "id": "distractor-falco",
+      "spelling": "Falco",
+      "spoken": [
+        "falco"
+      ],
+      "kind": "name"
+    },
+    {
+      "id": "distractor-harborview",
+      "spelling": "Harborview",
+      "spoken": [
+        "harbor view"
+      ],
+      "kind": "name"
+    },
+    {
+      "id": "distractor-longhorn",
+      "spelling": "Longhorn",
+      "spoken": [
+        "longhorn"
+      ],
+      "kind": "name"
+    },
+    {
+      "id": "distractor-rancher",
+      "spelling": "Rancher",
+      "spoken": [
+        "rancher"
+      ],
+      "kind": "name"
+    },
+    {
+      "id": "distractor-kubeflow",
+      "spelling": "Kubeflow",
+      "spoken": [
+        "kube flow"
+      ],
+      "kind": "name"
+    },
+    {
+      "id": "distractor-knative",
+      "spelling": "Knative",
+      "spoken": [
+        "k native"
+      ],
+      "kind": "name"
+    },
+    {
+      "id": "distractor-dapr",
+      "spelling": "Dapr",
+      "spoken": [
+        "dapper"
+      ],
+      "kind": "name"
+    },
+    {
+      "id": "distractor-flux",
+      "spelling": "Flux",
+      "spoken": [
+        "flux"
+      ],
+      "kind": "name"
+    },
+    {
+      "id": "distractor-spinnaker",
+      "spelling": "Spinnaker",
+      "spoken": [
+        "spinnaker"
+      ],
+      "kind": "name"
+    },
+    {
+      "id": "distractor-vitess",
+      "spelling": "Vitess",
+      "spoken": [
+        "vitess"
+      ],
+      "kind": "name"
+    },
+    {
+      "id": "distractor-rook",
+      "spelling": "Rook",
+      "spoken": [
+        "rook"
+      ],
+      "kind": "name"
+    },
+    {
+      "id": "distractor-contour",
+      "spelling": "Contour",
+      "spoken": [
+        "contour"
+      ],
+      "kind": "name"
+    },
+    {
+      "id": "distractor-kubeadm",
+      "spelling": "kubeadm",
+      "spoken": [
+        "kube admin",
+        "kube adm"
+      ],
+      "kind": "identifier"
+    },
+    {
+      "id": "distractor-traefik",
+      "spelling": "Traefik",
+      "spoken": [
+        "traffic"
+      ],
+      "kind": "name"
+    },
+    {
+      "id": "distractor-telepresence",
+      "spelling": "Telepresence",
+      "spoken": [
+        "telepresence"
+      ],
+      "kind": "name"
+    },
+    {
+      "id": "distractor-skaffold",
+      "spelling": "Skaffold",
+      "spoken": [
+        "scaffold"
+      ],
+      "kind": "name"
+    },
+    {
+      "id": "distractor-ndarray",
+      "spelling": "ndarray",
+      "spoken": [
+        "n d array"
+      ],
+      "kind": "identifier"
+    },
+    {
+      "id": "distractor-hound",
+      "spelling": "hound",
+      "spoken": [
+        "hound"
+      ],
+      "kind": "identifier"
+    },
+    {
+      "id": "distractor-realfft",
+      "spelling": "realfft",
+      "spoken": [
+        "real f f t"
+      ],
+      "kind": "identifier"
+    },
+    {
+      "id": "distractor-rustfft",
+      "spelling": "rustfft",
+      "spoken": [
+        "rust f f t"
+      ],
+      "kind": "identifier"
+    },
+    {
+      "id": "distractor-dasp",
+      "spelling": "dasp",
+      "spoken": [
+        "dasp"
+      ],
+      "kind": "identifier"
+    },
+    {
+      "id": "distractor-ringbuf",
+      "spelling": "ringbuf",
+      "spoken": [
+        "ring buf"
+      ],
+      "kind": "identifier"
+    },
+    {
+      "id": "distractor-crossbeam",
+      "spelling": "crossbeam",
+      "spoken": [
+        "cross beam"
+      ],
+      "kind": "identifier"
+    },
+    {
+      "id": "distractor-anyhow",
+      "spelling": "anyhow",
+      "spoken": [
+        "anyhow"
+      ],
+      "kind": "identifier"
+    },
+    {
+      "id": "distractor-thiserror",
+      "spelling": "thiserror",
+      "spoken": [
+        "this error"
+      ],
+      "kind": "identifier"
+    },
+    {
+      "id": "distractor-tracing-subscriber",
+      "spelling": "tracing_subscriber",
+      "spoken": [
+        "tracing subscriber"
+      ],
+      "kind": "identifier"
+    },
+    {
+      "id": "distractor-kokoro",
+      "spelling": "Kokoro",
+      "spoken": [
+        "kokoro"
+      ],
+      "kind": "name"
+    },
+    {
+      "id": "distractor-canary",
+      "spelling": "Canary",
+      "spoken": [
+        "canary"
+      ],
+      "kind": "name"
+    },
+    {
+      "id": "distractor-moonshine",
+      "spelling": "Moonshine",
+      "spoken": [
+        "moonshine"
+      ],
+      "kind": "name"
+    },
+    {
+      "id": "distractor-pyannote",
+      "spelling": "Pyannote",
+      "spoken": [
+        "pie a note"
+      ],
+      "kind": "name"
+    },
+    {
+      "id": "distractor-wavlm",
+      "spelling": "WavLM",
+      "spoken": [
+        "wav l m"
+      ],
+      "kind": "name"
+    },
+    {
+      "id": "distractor-ecapa",
+      "spelling": "ECAPA",
+      "spoken": [
+        "e capa"
+      ],
+      "kind": "acronym"
+    },
+    {
+      "id": "distractor-fastconformer",
+      "spelling": "FastConformer",
+      "spoken": [
+        "fast conformer"
+      ],
+      "kind": "name"
+    },
+    {
+      "id": "distractor-titanet",
+      "spelling": "TitaNet",
+      "spoken": [
+        "tita net"
+      ],
+      "kind": "name"
+    },
+    {
+      "id": "distractor-rnnt",
+      "spelling": "RNNT",
+      "spoken": [
+        "r n n t"
+      ],
+      "kind": "acronym"
+    },
+    {
+      "id": "distractor-ctcdecoder",
+      "spelling": "CTCDecoder",
+      "spoken": [
+        "c t c decoder"
+      ],
+      "kind": "identifier"
+    },
+    {
+      "id": "distractor-okonkwo",
+      "spelling": "Okonkwo",
+      "spoken": [
+        "oh konk woh"
+      ],
+      "kind": "name"
+    },
+    {
+      "id": "distractor-leocadia",
+      "spelling": "Leocadia",
+      "spoken": [
+        "leo cadia"
+      ],
+      "kind": "name"
+    },
+    {
+      "id": "distractor-ottoline-pargeter",
+      "spelling": "Ottoline Pargeter",
+      "spoken": [
+        "ottoline pargeter"
+      ],
+      "kind": "name"
+    },
+    {
+      "id": "distractor-fenella",
+      "spelling": "Fenella",
+      "spoken": [
+        "fenella"
+      ],
+      "kind": "name"
+    },
+    {
+      "id": "distractor-ingeborg-valtonen",
+      "spelling": "Ingeborg Valtonen",
+      "spoken": [
+        "ingeborg valtonen"
+      ],
+      "kind": "name"
+    },
+    {
+      "id": "distractor-tavish",
+      "spelling": "Tavish",
+      "spoken": [
+        "tavish"
+      ],
+      "kind": "name"
+    },
+    {
+      "id": "distractor-oluwaseun",
+      "spelling": "Oluwaseun",
+      "spoken": [
+        "oh lu wa shay oon"
+      ],
+      "kind": "name"
+    },
+    {
+      "id": "distractor-radomir",
+      "spelling": "Radomir",
+      "spoken": [
+        "rado meer"
+      ],
+      "kind": "name"
+    },
+    {
+      "id": "distractor-yevgenia",
+      "spelling": "Yevgenia",
+      "spoken": [
+        "yev genia"
+      ],
+      "kind": "name"
+    },
+    {
+      "id": "distractor-cosimo-albrecht",
+      "spelling": "Cosimo Albrecht",
+      "spoken": [
+        "cosimo albrecht"
+      ],
+      "kind": "name"
+    },
+    {
+      "id": "distractor-marisol-achterberg",
+      "spelling": "Marisol Achterberg",
+      "spoken": [
+        "marisol achterberg"
+      ],
+      "kind": "name"
+    },
+    {
+      "id": "distractor-ebenezer-quaye",
+      "spelling": "Ebenezer Quaye",
+      "spoken": [
+        "ebenezer kway"
+      ],
+      "kind": "name"
+    },
+    {
+      "id": "distractor-halcyra",
+      "spelling": "Halcyra",
+      "spoken": [
+        "hal sira"
+      ],
+      "kind": "name"
+    },
+    {
+      "id": "distractor-novaprism",
+      "spelling": "Novaprism",
+      "spoken": [
+        "nova prism"
+      ],
+      "kind": "name"
+    },
+    {
+      "id": "distractor-driftmark",
+      "spelling": "Driftmark",
+      "spoken": [
+        "drift mark"
+      ],
+      "kind": "name"
+    },
+    {
+      "id": "distractor-pellucid-labs",
+      "spelling": "Pellucid Labs",
+      "spoken": [
+        "pellucid labs"
+      ],
+      "kind": "name"
+    },
+    {
+      "id": "distractor-corvantis",
+      "spelling": "Corvantis",
+      "spoken": [
+        "cor vantis"
+      ],
+      "kind": "name"
+    },
+    {
+      "id": "distractor-glimmerdeck",
+      "spelling": "Glimmerdeck",
+      "spoken": [
+        "glimmer deck"
+      ],
+      "kind": "name"
+    },
+    {
+      "id": "distractor-zephyrine",
+      "spelling": "Zephyrine",
+      "spoken": [
+        "zephyrine"
+      ],
+      "kind": "name"
+    },
+    {
+      "id": "distractor-ambrosine-kett",
+      "spelling": "Ambrosine Kett",
+      "spoken": [
+        "ambrosine kett"
+      ],
+      "kind": "name"
+    }
+  ]
+}

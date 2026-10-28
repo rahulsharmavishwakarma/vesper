@@ -1,6 +1,6 @@
 # Automatic dictionary admission
 
-Implementation: [core learning policy](../../crates/vesper-core/src/learning.rs), [existing memory guards](../../crates/vesper-core/src/memory.rs), and [evidence/admission transactions](../../crates/vesper-data/src/learning.rs). Policy version: **4**. These deterministic rules are not calibrated probabilities or acoustic confidence.
+Implementation: [core learning policy](../../crates/vesper-core/src/learning.rs), [existing memory guards](../../crates/vesper-core/src/memory.rs), and [evidence/admission transactions](../../crates/vesper-data/src/learning.rs). Policy version: **6**. These deterministic rules are not calibrated probabilities or acoustic confidence.
 
 Learning is automatic desktop behavior: no enable switch or separate Remember action is needed. Completed edits and result observations use the existing background workers. This changes when the existing policy is available, not its admission thresholds or evidence requirements.
 
@@ -34,8 +34,37 @@ A term must look like an identifier or a related spelling. Identifier evidence r
 
 ## Automatic activation
 
-- A supplied identifier spelling in a known project can activate after one completed eligible edit.
-- Other eligible spellings require at least two independent user edits. A lowercase command such as `kubectl` follows this second route unless its spelling meets the identifier-shape rule.
+Policy 6 (28 October 2026; policy 5 plus the ordinary-word row below) derives the number of independent edits from an asymmetric promotion rule ([`evidence.rs`](../../crates/vesper-core/src/evidence.rs)). A spelling activates only when the posterior mean that it is intended exceeds `t = r / (1 + r)`, where `r` is the cost of a wrong automatic change divided by the cost of a missed one. How much harm a wrong change can do depends on what the recognizer heard, which the [correction gate's lexicon](correction-gate.md#lexicon) classifies:
+
+| Heard form                                                                             | Example                                               | Prior          | `r` (`t`) | Independent edits                                                                                                      |
+| -------------------------------------------------------------------------------------- | ----------------------------------------------------- | -------------- | --------- | ---------------------------------------------------------------------------------------------------------------------- |
+| Contains a non-word, or rejoins the same letters; identifier target in a known project | `sherpa onnx → sherpa_onnx`, `aster tool → AsterTool` | Beta(2, 0.5)   | 4 (0.80)  | 1                                                                                                                      |
+| Contains a non-word, other target                                                      | `kube ctl → kubectl`                                  | Beta(0.5, 0.5) | 4 (0.80)  | 2                                                                                                                      |
+| Several ordinary words                                                                 | `read me → README.md`                                 | Beta(0.5, 0.5) | 4 (0.80)  | 2, and teaching cues must match at use                                                                                 |
+| One capitalized word → capitalized spelling (name repair)                              | `Jonathon → Jonathan`                                 | Beta(0.5, 0.5) | 4 (0.80)  | 2, and teaching cues must match at use                                                                                 |
+| One ordinary word → a term (capitalized, acronym or identifier) in a known project     | `data → Detta`, `rack → RAG`, `west → Vesper`         | Beta(0.5, 0.5) | 6 (0.86)  | 3, and at use the text must share two topical teaching cues (function words and words under four letters do not count) |
+| One ordinary word → another lowercase word, or outside a project                       | `write → right`, `data → date`                        | —              | ∞         | never; add the word in Vocabulary instead                                                                              |
+
+The priors and cost ratios are design assumptions, not calibrated probabilities. With `r = 9` (`t = 0.90`), every route above would need five independent edits under the Jeffreys prior, which a single user who rarely edits would almost never supply. The strict "never" row is where the review found real harm (`write → Wright`, `notes → Nots`). Policy 4 activated `read me → README.md` after one edit. Policy 5 needs two, because `read me` is ordinary speech ("read me the list").
+
+Two inputs to the ordinary-word row are normalized:
+
+- A capital that only marks a sentence start counts as the lowercase word (`Data is…`), so it adds to the same rule.
+- A misheard short acronym counts as a spelling repair when it starts with the same letter and is at most two edits away (`rack → RAG`), not `use → ISO`.
+
+**Evaluation of the ordinary-word row** (local, 28 October 2026). `policy6_replay` taught three realistic corrections each for `data → Detta` and `rack → RAG`, then ran 465 local transcripts and 20 held-out sentences through the real learned-alias path.
+
+| Cue rule at use                         | Wrong changes in history (38 `data`, 1 `rack`)              | Held-out: fixed / wrongly changed                                                                                                                                        |
+| --------------------------------------- | ----------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| One shared cue (as for phrases)         | 7 wrong; 4 correct (the Detta message 3×, `rack system` 1×) | not run                                                                                                                                                                  |
+| Two shared cues, function words counted | 2 wrong (`from` + `how`, `how` + `what`); 3 correct         | not run                                                                                                                                                                  |
+| Two topical cues (shipped)              | 0                                                           | 10 / 10 positives fixed; 3 / 10 adversarial negatives changed (ordinary `data` sentences sharing two topic words, such as `Our data comes from Fermion research papers`) |
+
+The history was used to choose the cue rule, so its 0 is a development figure; the held-out sentences were written by the developer. The rule fixes an ordinary-word error when the speaker is talking about the term's topic. It can be fooled by an ordinary sentence that shares two of those topic words, and one change-back then stops that rule.
+
+Any rejection of an applied rule suspends it outright: one strike, with no posterior update.
+
+- `Language::Auto` cannot activate an automatic alias because the actual language has not been established by this layer. The evidence can remain provisional.
 - `Language::Auto` cannot activate an automatic alias because the actual language has not been established by this layer. The evidence can remain provisional.
 - A candidate needs project or lexical context. Without a project, up to three informative terms from the original context limit its later application.
 - Conflicting existing aliases suspend the candidate. The store does not overwrite or re-enable an equivalent manually managed entry. Full vocabulary capacity leaves the candidate unactivated.
@@ -52,11 +81,25 @@ Legacy support with no teaching cues stays stored but cannot satisfy this added 
 
 This integrates the stronger fixed-context idea from the benchmarks. It does **not** enable the experimental adaptive controller or transfer its reported gains to real use. It can prevent unrelated replacements and can also miss useful paraphrases; [evaluation](evaluation.md) records both.
 
+## Recognizer-keyed aliases
+
+Each supporting edit records the recognizer family that produced the heard form, such as `cohere`, `parakeet`, `nemotron`, `qwen3-asr` or `whisper`. Runtimes of the same model share a family; fine-tunes such as Phonon-2 or Parakeet Redux have their own. An unconfirmed automatic alias applies only while a recognizer from one of its supporting families is selected, because a confusion learned from one model's errors says little about another's.
+
+The learned _spelling_ is still model-independent: it joins the working set's references, so the [correction gate](correction-gate.md#near-miss-repair) can repair a non-word one letter away from it (`kubernets` → `kubernetes`) under any recognizer. Ordinary-word aliases stay with their family.
+
+Support recorded before policy 5 has no family and keeps applying to all models. Confirmed (ticked) and manual words are model-independent. Switching models therefore never deletes evidence: the alias waits in shadow until that model is selected again, or until fresh edits support it for the new one.
+
+## Policy breaker
+
+When the user rejects applied output from **two distinct** automatic rules within seven days (Undo on a result, or a saved draft that restores the heard form or picks a third spelling), the breaker trips. Every unconfirmed automatic alias then stops applying, and no new alias activates. This protects against a faulty policy rather than one bad word. Manual and confirmed words keep working.
+
+The breaker clears when the user resumes automatic spellings (`resume_automatic_spellings`), after Forget, or when a newer learning policy version is installed. Removing a word from the Vocabulary list is housekeeping and does not count as a rejection.
+
 ## Independence and self-reinforcement
 
 Support is deduplicated by source-audio fingerprint and correlated interaction episode, with at most 16 compact support records. Re-running a file under another model does not become independent spelling evidence. Repeated ASR output, repeated attempts in one episode, unchanged generated text and copied text cannot satisfy the two-edit gate.
 
-Usage observations update ranking of already credible entries. Conspicuous identifier forms can also enter the observed-candidate pool, with no alias and no user-authored support. They do not become active replacement rules through frequency alone. Only the actual changed span is corrective evidence; the surrounding machine-generated paragraph is not relabeled as user-authored.
+Usage observations update ranking of already credible entries. Phrases the recognizer was biased toward in that decode are excluded, so recognition hints cannot confirm themselves. Conspicuous identifier forms can also enter the observed-candidate pool, with no alias and no user-authored support. They do not become active replacement rules through frequency alone. Only the actual changed span is corrective evidence; the surrounding machine-generated paragraph is not relabeled as user-authored.
 
 The expected benefit is fewer repeated corrections on later relevant dictation. That benefit remains a hypothesis outside the measured cases. Policy 2 admitted zero spelling pairs from 18 persisted public edits; policy 3 admits two provisional pairs in the same already-inspected corpus. The [diagnosis and follow-up](evaluation.md#correction-admission-follow-up) distinguish admission coverage from later activation and accuracy. A successfully saved draft does not imply that its correction became a vocabulary candidate. Earlier rejected edits are not automatically reprocessed; new eligible corrections supply evidence. Personal vocabulary survives switching models, while the usefulness of individual error aliases can differ between recognizers.
 

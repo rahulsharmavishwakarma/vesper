@@ -49,7 +49,7 @@ fn automatic_project_completion_and_delayed_edits_keep_receiving_scope_after_set
     store.save_dictation_personalization(changed).unwrap();
     let audio = MonoPcm::new(vec![0.1; 1600], 16000).unwrap();
     let mut result = context
-        .complete_raw(&audio, &mut None, "Open read me for deployment".into())
+        .complete_raw(&audio, &mut None, "Open readme for deployment".into())
         .unwrap();
     context.observe_result(&mut result, false);
     runtime.publish(result.clone());
@@ -101,7 +101,7 @@ fn automatic_app_context_guard_applies_to_later_raw_context_and_freezes_per_oper
         pending_speakers: Default::default(),
     };
     assert!(frozen.personalization().unwrap().vocabulary.is_empty());
-    let heard = "Open read me for deployment";
+    let heard = "Open readme for deployment";
     let edited = "Open README.md for deployment";
     let result = complete(
         &root,
@@ -124,16 +124,16 @@ fn automatic_app_context_guard_applies_to_later_raw_context_and_freezes_per_oper
         &root,
         &runtime,
         2,
-        AsrModel::Nemotron35AsrStreaming06b,
+        AsrModel::CohereTranscribe,
         Language::English,
         heard,
     );
     assert_eq!(later.personalized_transcript.as_deref(), Some(edited));
     for (i, raw) in [
-        "Open read me for shopping",
-        "Open read me in repo",
-        "Open 'read me' for deployment",
-        "Open read me for 'deployment'",
+        "Open readme for shopping",
+        "Open readme in repo",
+        "Open 'readme' for deployment",
+        "Open readme for 'deployment'",
     ]
     .iter()
     .enumerate()
@@ -150,7 +150,7 @@ fn automatic_app_context_guard_applies_to_later_raw_context_and_freezes_per_oper
         assert!(output.personalization_evidence.unwrap().applied.is_empty());
     }
     let snapshot = store.dictation_personalization_snapshot().unwrap();
-    let cleanup_input = snapshot.post_asr_profile("Open read me for shopping", Language::English);
+    let cleanup_input = snapshot.post_asr_profile("Open readme for shopping", Language::English);
     assert!(!cleanup_input.vocabulary[0].enabled);
     assert_eq!(
         cleanup_input.personalize(heard, Language::English).text,
@@ -161,7 +161,7 @@ fn automatic_app_context_guard_applies_to_later_raw_context_and_freezes_per_oper
     assert_eq!(
         positive_input
             .personalize(
-                "Do not open read me for deployment on 21 June",
+                "Do not open readme for deployment on 21 June",
                 Language::English
             )
             .text,
@@ -173,7 +173,7 @@ fn automatic_app_context_guard_applies_to_later_raw_context_and_freezes_per_oper
         20,
         AsrModel::CohereTranscribe,
         Language::English,
-        "Open read me for shopping",
+        "Open readme for shopping",
     );
     runtime
         .edit_latest_draft(
@@ -186,7 +186,7 @@ fn automatic_app_context_guard_applies_to_later_raw_context_and_freezes_per_oper
     assert!(store.personalization().unwrap().revision > snapshot.profile.revision);
     assert!(
         !snapshot
-            .post_asr_profile("Open read me for shopping", Language::English)
+            .post_asr_profile("Open readme for shopping", Language::English)
             .vocabulary[0]
             .enabled
     );
@@ -194,9 +194,9 @@ fn automatic_app_context_guard_applies_to_later_raw_context_and_freezes_per_oper
         &root,
         &runtime,
         21,
-        AsrModel::Nemotron35AsrStreaming06b,
+        AsrModel::CohereTranscribe,
         Language::English,
-        "Open read me for shopping",
+        "Open readme for shopping",
     );
     assert_eq!(
         learned_context.personalized_transcript.as_deref(),
@@ -276,11 +276,26 @@ fn automatic_app_learning_survives_restart_model_switch_and_forget_epoch() {
     }
     drop(runtime);
     let runtime = Arc::new(Runtime::default());
+    // Learned from Cohere's errors: Nemotron does not use the alias. The learned
+    // word is still a model-independent spelling, so the gate's near-miss repair
+    // fixes the non-word `kubernets` for any recognizer.
     let result = complete(
         &root,
         &runtime,
         3,
         AsrModel::Nemotron35AsrStreaming06b,
+        Language::English,
+        HEARD,
+    );
+    let evidence = result.personalization_evidence.clone().unwrap();
+    assert!(evidence.applied.is_empty());
+    assert_eq!(evidence.gate.len(), 1);
+    assert_eq!(result.personalized_transcript.as_deref(), Some(EDITED));
+    let result = complete(
+        &root,
+        &runtime,
+        4,
+        AsrModel::CohereTranscribe,
         Language::English,
         HEARD,
     );
@@ -454,5 +469,212 @@ fn automatic_app_failed_edit_keeps_revision_and_retries_once_without_duplicate_f
             .draft_transcript
             .as_deref(),
         Some(EDITED)
+    );
+}
+
+#[test]
+fn mined_terms_are_normalized_by_the_gate_and_a_user_revert_suspends_them() {
+    use vesper_core::TermSource;
+    let dir = tempfile::tempdir().unwrap();
+    let root = dir.path().join("dataset");
+    let runtime = Arc::new(Runtime::default());
+    let store = DatasetStore::open(root.clone()).unwrap();
+    store
+        .replace_mined_sources(
+            &[TermSource::Identifier],
+            "",
+            &[vesper_data::term_mining::MinedTerm::new(
+                "sherpa_onnx",
+                TermSource::Identifier,
+                "",
+                3,
+            )],
+            0,
+        )
+        .unwrap();
+    let heard = "Link sherpa onnx in the build";
+    let fixed = "Link sherpa_onnx in the build";
+    let result = complete(
+        &root,
+        &runtime,
+        1,
+        AsrModel::CohereTranscribe,
+        Language::English,
+        heard,
+    );
+    assert_eq!(result.personalized_transcript.as_deref(), Some(fixed));
+    let evidence = result.personalization_evidence.clone().unwrap();
+    assert_eq!(evidence.gate.len(), 1);
+    assert_eq!(evidence.gate[0].heard, "sherpa onnx");
+    // Ordinary speech in the same recording context is never rewritten.
+    let ordinary = complete(
+        &root,
+        &runtime,
+        2,
+        AsrModel::CohereTranscribe,
+        Language::English,
+        "I see the point you are making",
+    );
+    assert_eq!(ordinary.personalized_transcript, None);
+    // The user puts the heard words back: that term stops applying.
+    let result = complete(
+        &root,
+        &runtime,
+        3,
+        AsrModel::CohereTranscribe,
+        Language::English,
+        heard,
+    );
+    runtime
+        .edit_latest_draft(root.clone(), &result.result_id, 0, heard.into())
+        .unwrap();
+    let later = complete(
+        &root,
+        &runtime,
+        4,
+        AsrModel::CohereTranscribe,
+        Language::English,
+        heard,
+    );
+    assert_eq!(later.personalized_transcript, None);
+}
+
+#[test]
+fn near_miss_repairs_apply_and_an_undone_repair_pauses_that_spelling() {
+    use vesper_core::TermSource;
+    let dir = tempfile::tempdir().unwrap();
+    let root = dir.path().join("dataset");
+    let runtime = Arc::new(Runtime::default());
+    let store = DatasetStore::open(root.clone()).unwrap();
+    store
+        .replace_mined_sources(
+            &[TermSource::Documentation],
+            "",
+            &[vesper_data::term_mining::MinedTerm::new(
+                "NVIDIA",
+                TermSource::Documentation,
+                "",
+                4,
+            )],
+            0,
+        )
+        .unwrap();
+    let heard = "Run the encoder on Envidia hardware";
+    let fixed = "Run the encoder on NVIDIA hardware";
+    let complete_one = |source: u16, text: &str| {
+        complete(
+            &root,
+            &runtime,
+            source,
+            AsrModel::CohereTranscribe,
+            Language::English,
+            text,
+        )
+    };
+    let result = complete_one(1, heard);
+    assert_eq!(result.personalized_transcript.as_deref(), Some(fixed));
+    assert_eq!(
+        result.personalization_evidence.unwrap().gate[0].term_id,
+        "reference:NVIDIA"
+    );
+    // Ordinary words near the reference stay untouched.
+    assert_eq!(
+        complete_one(2, "We visited a media lab").personalized_transcript,
+        None
+    );
+    let result = complete_one(3, heard);
+    runtime
+        .edit_latest_draft(root.clone(), &result.result_id, 0, heard.into())
+        .unwrap();
+    assert_eq!(complete_one(4, heard).personalized_transcript, None);
+}
+
+#[test]
+fn a_hinted_decode_keeps_near_miss_repairs_in_shadow() {
+    let dir = tempfile::tempdir().unwrap();
+    let root = dir.path().join("dataset");
+    let runtime = Arc::new(Runtime::default());
+    let store = DatasetStore::open(root.clone()).unwrap();
+    let mut profile = store.dictation_personalization().unwrap();
+    profile.speech_bias_enabled = true;
+    profile.vocabulary.push(vesper_core::VocabularyEntry {
+        id: "nvidia".into(),
+        phrase: "NVIDIA".into(),
+        language: Language::English,
+        enabled: true,
+        confirmed: true,
+        ..Default::default()
+    });
+    store.save_dictation_personalization(profile).unwrap();
+    let heard = "Run the encoder on Envidia hardware";
+    // Nemotron receives the Settings phrase list, so its output may carry bias.
+    let hinted = complete(
+        &root,
+        &runtime,
+        1,
+        AsrModel::Nemotron35AsrStreaming06b,
+        Language::English,
+        heard,
+    );
+    assert_eq!(hinted.personalized_transcript, None);
+    assert_eq!(
+        hinted.personalization_evidence.unwrap().gate_shadow.len(),
+        1
+    );
+    // A recognizer without a phrase hook decodes unbiased: the repair applies.
+    let plain = complete(
+        &root,
+        &runtime,
+        2,
+        AsrModel::CohereTranscribe,
+        Language::English,
+        heard,
+    );
+    assert_eq!(
+        plain.personalized_transcript.as_deref(),
+        Some("Run the encoder on NVIDIA hardware")
+    );
+}
+
+/// Fix read-back (opt-in): a word the user changed in another app after the paste
+/// reaches learning as a draft edit, and teaches like an in-app edit would.
+#[test]
+fn a_fix_made_in_another_app_teaches_through_the_draft_edit_path() {
+    let dir = tempfile::tempdir().unwrap();
+    let root = dir.path().join("dataset");
+    let runtime = Arc::new(Runtime::default());
+    let heard = "Deploy it with kube ctl tonight";
+    let complete_one = |source: u16| {
+        complete(
+            &root,
+            &runtime,
+            source,
+            AsrModel::CohereTranscribe,
+            Language::English,
+            heard,
+        )
+    };
+    let result = complete_one(1);
+    let pasted = result
+        .personalized_transcript
+        .as_deref()
+        .unwrap_or(&result.raw_transcript)
+        .to_owned();
+    // What the destination field holds later: the user's fix, then more typing.
+    let region = "Deploy it with kubectl tonight\nThen check the pods";
+    let corrected = vesper_core::aligned_edit(&pasted, region).unwrap();
+    assert_eq!(corrected, "Deploy it with kubectl tonight");
+    runtime
+        .edit_latest_draft(root.clone(), &result.result_id, 0, corrected)
+        .unwrap();
+    // A second independent fix of the same non-word activates the spelling.
+    let result = complete_one(2);
+    let corrected = vesper_core::aligned_edit(heard, region).unwrap();
+    runtime
+        .edit_latest_draft(root.clone(), &result.result_id, 0, corrected)
+        .unwrap();
+    assert_eq!(
+        complete_one(3).personalized_transcript.as_deref(),
+        Some("Deploy it with kubectl tonight")
     );
 }

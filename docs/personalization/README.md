@@ -12,16 +12,25 @@ The separately approved fixed [teaching-context guard](automatic-dictionary.md#c
 
 The [September 2026 RSI research review](../research-rsi-2026-09.md) compares Dream-RSI, related recent papers and lab posts with this implementation. It prioritizes retaining past failure cases and evaluating memory-specific outcomes before integrating a live policy optimizer.
 
-| Component                       | Detailed contract                                                                                                                                                                     |
-| ------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| Editing and feedback capture    | [Editable drafts](draft-editing.md): commit points, Copy, revision checks, failures and review separation                                                                             |
-| Automatic vocabulary            | [Dictionary learning](automatic-dictionary.md): candidate admission, independent support, guards and limitations                                                                      |
-| Context and in-context examples | [Context selection](context-selection.md): pre-ASR hints, post-ASR retrieval, budgets and model support                                                                               |
-| Intent and writing preferences  | [Intent and writing](intent-and-writing.md): existing explicit examples and output-form routing; automatic semantic proposals are isolated in [shadow evaluation](semantic-shadow.md) |
-| Repeat dictation                | [Retry evidence](retry-evidence.md): temporal/lexical cues, correlated attempts and uncertainty                                                                                       |
-| Lifecycle and privacy           | [Storage and privacy](storage-and-privacy.md): schemas, quotas, epochs, undo and deletion                                                                                             |
-| Evidence of benefit             | [Evaluation](evaluation.md): replay, comparison limits, timing and qualification                                                                                                      |
-| Native qualification procedure  | [Protocol](native-qualification.md): frozen controls, installed-model replay, natural sessions and acceptance gates                                                                   |
+[Dictation formatting](formatting.md) covers the rule-based formatting of numbers, times, dates, emails, links, hesitations and self-corrections.
+
+[Learning from the app you dictate into](app-learning.md) covers the opt-in field words and fix read-back.
+
+The [self-improving dictation system](self-improving-system.md) page summarizes how automatic workspaces, the term inventory, recognizer hooks, the correction gate, formatting and policy-6 learning fit together, with an overview diagram and the measured status of each.
+
+| Component                                      | Detailed contract                                                                                                                                                                     |
+| ---------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Editing and feedback capture                   | [Editable drafts](draft-editing.md): commit points, Copy, revision checks, failures and review separation                                                                             |
+| Automatic vocabulary                           | [Dictionary learning](automatic-dictionary.md): candidate admission, independent support, guards and limitations                                                                      |
+| Context and in-context examples                | [Context selection](context-selection.md): pre-ASR hints, post-ASR retrieval, budgets and model support                                                                               |
+| Term inventory and working set                 | [Term inventory](term-inventory.md): mined spellings, tiers, background worker, per-recording selection and privacy boundaries                                                        |
+| Intent and writing preferences                 | [Intent and writing](intent-and-writing.md): existing explicit examples and output-form routing; automatic semantic proposals are isolated in [shadow evaluation](semantic-shadow.md) |
+| Repeat dictation                               | [Retry evidence](retry-evidence.md): temporal/lexical cues, correlated attempts and uncertainty                                                                                       |
+| Lifecycle and privacy                          | [Storage and privacy](storage-and-privacy.md): schemas, quotas, epochs, undo and deletion                                                                                             |
+| Evidence of benefit                            | [Evaluation](evaluation.md): replay, comparison limits, timing and qualification                                                                                                      |
+| Native qualification procedure                 | [Protocol](native-qualification.md): frozen controls, installed-model replay, natural sessions and acceptance gates                                                                   |
+| Recognizer hooks and correction gate per model | [Term evaluation](term-evaluation.md): fixed term evaluator, hint conditions, false alarms and hook decisions                                                                         |
+| Correction gate                                | [Correction gate](correction-gate.md): exact normalizations, heard-plausibility, near-miss repair and stage authorship                                                                |
 
 Automatic local learning is core desktop behavior, including for existing profiles. There is no **Learn as I dictate** switch and no setup or per-word confirmation is needed. Settings → Your vocabulary and writing explains the behavior and retains inspection, removal and **Forget automatic learning**. Forget clears learned evidence; fresh recordings can teach again, while old result contexts cannot recreate forgotten evidence. This product requirement supersedes the earlier off-by-default rollout choice; broad personal benefit still needs qualification. **Apply my saved corrections** controls the final alias-replacement stage. Recognition hints have a separate opt-in switch and depend on the adapter.
 

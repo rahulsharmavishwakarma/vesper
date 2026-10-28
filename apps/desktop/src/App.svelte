@@ -50,6 +50,7 @@
     knownDownloadSelection,
     type ModelDownloadState,
     type DownloadTarget,
+    downloadKey,
   } from './lib/modelDownloads';
   import type { ModelProfileRole } from './lib/config';
   import Icon from './lib/components/Icon.svelte';
@@ -161,6 +162,24 @@
   );
   const asrDownload = $derived(downloadTarget(draft, 'asr'));
   const cleanupDownload = $derived(downloadTarget(draft, 'rewriter'));
+  // A model card shows its own progress in place, so the page never jumps; the
+  // shared area keeps progress only for downloads without a card (audio setup).
+  const cardDownloading = $derived(
+    downloads.installing &&
+      (downloads.installingKey === downloadKey(asrDownload) ||
+        downloads.installingKey === downloadKey(cleanupDownload)),
+  );
+  const resultInCard = $derived(
+    downloads.resultKey === downloadKey(asrDownload) ||
+      downloads.resultKey === downloadKey(cleanupDownload),
+  );
+  const downloadLockNote = $derived(
+    downloadingRole === 'asr'
+      ? 'The speech model and processing device unlock when this download finishes. You can still change the writing model and everything else.'
+      : downloadingRole === 'rewriter'
+        ? 'The writing model and processing device unlock when this download finishes. You can still change the speech model and everything else.'
+        : 'Model and device choices unlock when the download finishes. Everything else stays available.',
+  );
   let datasetRevision = $state(0);
   // Last shortcut/main recording already counted in datasetRevision, so each
   // completion refreshes History exactly once even when the poll loop is idle.
@@ -295,8 +314,7 @@
     !loaded ||
       (error !== null && activeView !== 'models') ||
       (loaded && validationErrors.length > 0) ||
-      feedback !== null ||
-      saveInFlight,
+      feedback !== null,
   );
   const writerError = $derived(writingLanguageError(draft));
   const languageError = $derived(transcriptionLanguageError(draft) ?? writerError);
@@ -484,9 +502,16 @@
   // status pill on "Saving" and schedules a silent retry.
   async function saveNow(): Promise<boolean> {
     if (pending || pipelineBusy || !loaded || validationErrors.length) return false;
-    if (JSON.stringify(draft) === savedJson) return true;
+    const sentJson = JSON.stringify(draft);
+    if (sentJson === savedJson) return true;
     try {
-      acceptSettings(await saveSettings(draft));
+      const stored = await saveSettings(JSON.parse(sentJson) as AppConfig);
+      // An edit made while the save ran is kept and saves next, not overwritten.
+      if (JSON.stringify(draft) === sentJson) acceptSettings(stored);
+      else {
+        savedJson = JSON.stringify(stored);
+        engineSettings = JSON.parse(savedJson) as AppConfig;
+      }
     } catch {
       return false;
     }
@@ -687,11 +712,7 @@
               name={view.icon}
               active={activeView === view.id}
               motionKey={activeView === view.id ? navigationRevision : 0}
-            /><span class:visually-hidden={activeView === 'settings'}>{view.label}</span
-            >{#if saveInFlight && (view.id === 'settings' || view.id === 'models')}<span
-                class="draft-dot"
-                aria-label="Saving settings"
-              ></span>{/if}</button
+            /><span class:visually-hidden={activeView === 'settings'}>{view.label}</span></button
           >
         {/each}
       </nav>
@@ -787,7 +808,9 @@
       />
       {#if activeView === 'models' || downloads.installing || downloads.audioSetupPaused}
         <div class="model-download-feedback" aria-live="polite">
-          {#if downloads.installing}<div class="download-progress">
+          {#if downloads.installing && !(cardDownloading && activeView === 'models')}<div
+              class="download-progress"
+            >
               <DownloadProgress
                 progress={downloads.details}
                 cancelling={downloads.cancelling}
@@ -799,16 +822,17 @@
                 }}>{downloads.cancelling ? 'Cancelling…' : 'Cancel download'}</button
               >
             </div>
-            <p class="note">
-              {downloadingRole === 'asr'
-                ? 'The speech model and processing device unlock when this download finishes. You can still change the writing model and everything else.'
-                : downloadingRole === 'rewriter'
-                  ? 'The writing model and processing device unlock when this download finishes. You can still change the speech model and everything else.'
-                  : 'Model and device choices unlock when the download finishes. Everything else stays available.'}
-            </p>{/if}
+            <p class="note">{downloadLockNote}</p>{/if}
           {#if error}<p class="error" role="alert">{error}</p>{/if}
-          {#if downloads.error}<p class="error" role="alert">{downloads.error}</p>{/if}
-          {#if downloads.feedback}<p class="success">{downloads.feedback}</p>{/if}
+          {#if !(resultInCard && activeView === 'models') && downloads.error}<p
+              class="error"
+              role="alert"
+            >
+              {downloads.error}
+            </p>{/if}
+          {#if !(resultInCard && activeView === 'models') && downloads.feedback}<p class="success">
+              {downloads.feedback}
+            </p>{/if}
           {#if downloads.audioSetupPaused && !downloads.installing}
             <p class="note">Audio setup will retry automatically when the app is idle.</p>
           {/if}
@@ -1027,6 +1051,10 @@
                       void removalDialog?.confirmRemoval(model);
                     }}
                     state={downloads}
+                    lockNote={downloadLockNote}
+                    onCancel={() => {
+                      void transcriptionPanel?.cancelDownload();
+                    }}
                     desktop={environment === 'desktop'}
                     {dirty}
                     disabled={modelChoicesLocked}
@@ -1094,6 +1122,10 @@
                       void removalDialog?.confirmRemoval(model);
                     }}
                     state={downloads}
+                    lockNote={downloadLockNote}
+                    onCancel={() => {
+                      void transcriptionPanel?.cancelDownload();
+                    }}
                     desktop={environment === 'desktop'}
                     {dirty}
                     disabled={modelChoicesLocked}
@@ -1273,8 +1305,7 @@
                     {#each validationErrors as issue, index (index)}<li>{issue}</li>{/each}
                   </ul>
                 </div>
-              {:else if feedback}<p class="success">{feedback}</p>
-              {:else if saveInFlight}<p class="note">Saving…</p>{/if}
+              {:else if feedback}<p class="success">{feedback}</p>{/if}
             </div>
             {#if !loaded}<div class="form-actions">
                 <button
