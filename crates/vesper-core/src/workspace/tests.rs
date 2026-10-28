@@ -1,12 +1,22 @@
 // Synthetic paths only: no real user folders or documents.
 use super::*;
+use std::hash::{BuildHasher, Hasher};
 
-const SALT: &str = "test-salt";
+// Random per test process: tests compare keys with each other, never with fixed values.
+fn random_salt() -> String {
+    let mut hasher = std::collections::hash_map::RandomState::new().build_hasher();
+    hasher.write_u8(0);
+    format!("{:016x}", hasher.finish())
+}
+fn salt() -> &'static str {
+    static SALT: std::sync::OnceLock<String> = std::sync::OnceLock::new();
+    SALT.get_or_init(random_salt)
+}
 const HOME: &str = "/Users/tester";
 
 fn file(app: &str, path: &str) -> WorkspaceObservation {
     WorkspaceObservation::new(
-        SALT,
+        salt(),
         app,
         DocumentSignal::File {
             path,
@@ -17,7 +27,7 @@ fn file(app: &str, path: &str) -> WorkspaceObservation {
 }
 fn dir(app: &str, path: &str) -> WorkspaceObservation {
     WorkspaceObservation::new(
-        SALT,
+        salt(),
         app,
         DocumentSignal::File {
             path,
@@ -28,7 +38,7 @@ fn dir(app: &str, path: &str) -> WorkspaceObservation {
 }
 fn web(host: &str) -> WorkspaceObservation {
     WorkspaceObservation::new(
-        SALT,
+        salt(),
         "com.apple.Safari",
         DocumentSignal::WebHost(host),
         Some(HOME),
@@ -72,7 +82,7 @@ fn keys_are_stable_salted_and_case_insensitive() {
     assert_eq!(a.ancestor_keys(), b.ancestor_keys());
     assert_eq!(a.ancestor_keys(), c.ancestor_keys());
     let other_salt = WorkspaceObservation::new(
-        "different",
+        &random_salt(),
         CODE,
         DocumentSignal::File {
             path: "/Users/tester/work/alpha/src/main.rs",
@@ -355,13 +365,15 @@ fn resolution_precedence_is_manual_rule_workspace_category_shared() {
     assert_eq!(r.selection, shared);
     assert!(r.context.workspace_key.is_empty());
     // No workspace: category scope, shared vocabulary.
-    let mail = WorkspaceObservation::new(SALT, "com.apple.mail", DocumentSignal::None, Some(HOME));
+    let mail =
+        WorkspaceObservation::new(salt(), "com.apple.mail", DocumentSignal::None, Some(HOME));
     let r = resolve_workspace(shared.clone(), true, &s, Some(&mail));
     assert_eq!(r.selection.source, ProjectSource::Category);
     assert!(r.selection.project.is_empty());
     assert_eq!(r.context.category, AppCategory::Email);
     // Unknown app, no document: shared.
-    let other = WorkspaceObservation::new(SALT, "com.example.x", DocumentSignal::None, Some(HOME));
+    let other =
+        WorkspaceObservation::new(salt(), "com.example.x", DocumentSignal::None, Some(HOME));
     assert_eq!(
         resolve_workspace(shared.clone(), true, &s, Some(&other)).selection,
         shared
