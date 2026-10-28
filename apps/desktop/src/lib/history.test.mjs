@@ -4,6 +4,7 @@ import {
   filterSessions,
   paginateSessions,
   historyActivity,
+  formatDuration,
   recordingDay,
   recordingDate,
   recordingState,
@@ -266,4 +267,32 @@ test('ordinary drafts display and search without becoming reviewed labels', () =
     transcriptPreview(recording({ rawTranscript: 'deleted text', draftTranscript: '' })),
     '',
   );
+});
+
+test('time saved compares typing the words at 40 a minute with saying them', () => {
+  const now = new Date(2026, 8, 14, 12);
+  const createdAt = now.toISOString();
+  const words = Array.from({ length: 80 }, () => 'word').join(' ');
+  const timeline = (durationMs) => ({ durationMs, segments: [], clippedSegments: 0 });
+  const stats = historyActivity(
+    [
+      // 80 words: 2 min to type, 30 s to say → 90 s saved.
+      recording({ createdAt, rawTranscript: words, speakerTimeline: timeline(30_000) }),
+      // Saying it slower than typing never counts as negative time.
+      recording({ createdAt, rawTranscript: 'Two words', speakerTimeline: timeline(60_000) }),
+      // No recorded length: nothing to compare, so no time saved.
+      recording({ createdAt, rawTranscript: 'No duration here' }),
+    ],
+    7,
+    now,
+  );
+  assert.equal(stats.recordedMs, 90_000);
+  assert.equal(Math.round(stats.savedMs), 90_000);
+  assert.equal(Math.round(stats.days[6].savedMs), Math.round(stats.savedMs));
+  assert.equal(Math.round(stats.pace), Math.round(85 / 1.5));
+  assert.equal(historyActivity([], 7, now).pace, 0);
+  assert.equal(formatDuration(0), '0 min');
+  assert.equal(formatDuration(45_000), '45 s');
+  assert.equal(formatDuration(35 * 60_000), '35 min');
+  assert.equal(formatDuration(72 * 60_000), '1 h 12 min');
 });

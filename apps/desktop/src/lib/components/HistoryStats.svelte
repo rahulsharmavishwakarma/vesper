@@ -1,7 +1,7 @@
 <script lang="ts">
   import { selectionHighlight } from '../actions/selectionHighlight';
   import type { SessionRecord } from '../api/dataset';
-  import { historyActivity } from '../history';
+  import { TYPING_WPM, formatDuration, historyActivity } from '../history';
   let {
     records,
     selectedDay,
@@ -85,32 +85,27 @@
   </div>
   {#key range}<dl class="history-metrics">
       <div>
-        <dt>Recordings</dt>
-        <dd>{activity.recordings.toLocaleString()}</dd>
+        <dt>Time saved</dt>
+        <dd>{formatDuration(activity.savedMs)}</dd>
       </div>
       <div>
-        <dt>Transcript words</dt>
+        <dt>Time recorded</dt>
+        <dd>{formatDuration(activity.recordedMs)}</dd>
+      </div>
+      <div>
+        <dt>Words</dt>
         <dd>{activity.words.toLocaleString()}</dd>
       </div>
       <div>
-        <dt>Reviewed</dt>
-        <dd>{activity.reviewed}<span> / {activity.recordings}</span></dd>
-      </div>
-      <div>
-        <dt>Audio stored</dt>
-        <dd>
-          {(
-            activity.audioBytes / (activity.audioBytes >= 1024 ** 3 ? 1024 ** 3 : 1024 ** 2)
-          ).toLocaleString(undefined, { maximumFractionDigits: 1 })}<span>
-            {activity.audioBytes >= 1024 ** 3 ? 'GiB' : 'MiB'}</span
-          >
-        </dd>
+        <dt>Recordings</dt>
+        <dd>{activity.recordings.toLocaleString()}</dd>
       </div>
     </dl>{/key}
   <div class="activity-chart-heading">
     <span>Recordings per day</span><span class="activity-readout"
       >{#if inspected}{inspected.label} · {inspected.count}
-        {inspected.count === 1 ? 'recording' : 'recordings'}{:else}Last {range} days{/if}</span
+        {inspected.count === 1 ? 'recording' : 'recordings'} · {formatDuration(inspected.savedMs)} saved{:else}Last
+        {range} days{/if}</span
     >
   </div>
   <div class="activity-plot">
@@ -175,16 +170,18 @@
       <dd>{activity.activeDays}<span> / {range}</span></dd>
     </div>
     <div>
-      <dt>Words / transcript</dt>
+      <dt>Speaking pace</dt>
       <dd>
-        {activity.withText
-          ? activity.averageWords.toLocaleString(undefined, { maximumFractionDigits: 1 })
-          : '—'}
+        {#if activity.pace}{Math.round(activity.pace).toLocaleString()}<span>
+            words a minute</span
+          >{:else}—{/if}
       </dd>
     </div>
     <div>
-      <dt>With text</dt>
-      <dd>{activity.withText}<span> · {activity.withoutText} without text</span></dd>
+      <dt>Words per recording</dt>
+      <dd>
+        {activity.withText ? Math.round(activity.averageWords).toLocaleString() : '—'}
+      </dd>
     </div>
   </dl>
   <p class="note activity-explanation" aria-live="polite">
@@ -192,7 +189,7 @@
       {highlighted.count === 1 ? 'recording' : 'recordings'}.
       <button type="button" class="inline-link" onclick={() => onSelectDay('')}
         >Show all dates</button
-      >{:else if activity.recordings}Select a day to filter recordings.{:else}No recordings in the
-      last {range} days.{/if}
+      >{:else if activity.recordings}Time saved compares typing at {TYPING_WPM} words a minute. Select
+      a day to filter recordings.{:else}No recordings in the last {range} days.{/if}
   </p>
 </section>

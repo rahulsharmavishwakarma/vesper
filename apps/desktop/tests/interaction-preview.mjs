@@ -138,6 +138,7 @@ if (states) {
     audioRelativePath: 'synthetic.wav',
     audioSha256: '',
     audioBytes: 64000 + i * 8000,
+    speakerTimeline: { durationMs: 1800 + i * 150, segments: [], clippedSegments: 0 },
     rawTranscript: samples[i % samples.length],
     cleanedTranscript: null,
     correctedTranscript: null,

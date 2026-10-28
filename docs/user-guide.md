@@ -469,6 +469,13 @@ recording appears here, including shortcut dictations finished in other apps:
 the list refreshes itself when a recording completes, and returning to History
 reloads it.
 
+**Your recording rhythm** (top of History, last 7 or 30 days) shows **Time
+saved**, **Time recorded**, **Words** and **Recordings**, a recordings-per-day
+chart (pick a day to filter the list), active days, speaking pace and words per
+recording. Time saved is how much longer typing the same words at 40 words a
+minute would have taken than saying them; a recording without a known length
+adds nothing.
+
 Expanding a recording shows its transcript card, also used for the latest
 result in Dictate. The card plays the saved audio (play/pause, seek bar,
 1×–2× speed) and shows **Heard** beside **Polished · edit to teach**;
@@ -594,10 +601,12 @@ does not count as independent support. A manually added term
 needs a **Heard as** alias to replace a recurring mistake after recognition;
 listing its preferred spelling alone does not create that replacement.
 
-If learning appears inactive, open **Learning on this device** (History). No recent
-in-app corrections means Vesper has not received the relevant feedback: edit
-**Your text** and leave the field or copy to save it. Dictation frequency, Copy,
-and corrections made in another app do not verify spellings. Candidate messages
+If learning appears inactive, Vesper probably has not received the relevant
+feedback. (The **Learning on this device** report in History was removed on
+28 October 2026.) Edit
+**Your text** and leave the field or copy to save it. Dictation frequency and Copy
+do not verify spellings; corrections made in another app count only with **Learn
+from fixes in other apps** on. Candidate messages
 explain missing independent support, automatic-language mode, a full vocabulary
 or an existing manually managed entry. Select a recording language and correct
 new recordings to teach automatic aliases; older automatic-language observations

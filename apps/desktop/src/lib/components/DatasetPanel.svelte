@@ -7,7 +7,6 @@
   import Icon from './Icon.svelte';
   import HistoryStats from './HistoryStats.svelte';
   import LearningReview from './LearningReview.svelte';
-  import LearningSummary from './LearningSummary.svelte';
   import {
     filterSessions,
     paginateSessions,
@@ -56,7 +55,6 @@
   let feedback = $state<string | null>(null);
   let approvedOnly = $state(true);
   let hasLoaded = $state(false);
-  let learningRevision = $state(0);
   const desktop = $derived(environment === 'desktop');
   const filtered = $derived(
     filterSessions(records, query, filter).filter(
@@ -187,15 +185,6 @@
       calmRows = false;
     }, 450);
   }
-  async function openLearningReview(id: string) {
-    clearFilters();
-    const index = records.findIndex((r) => r.id === id);
-    if (index < 0) return;
-    page = Math.floor(index / pageSize) + 1;
-    selectedId = id;
-    await tick();
-    document.getElementById(`recording-details-${id}`)?.focus({ preventScroll: true });
-  }
   async function revealPage() {
     await tick();
     const count = document.getElementById('history-result-count');
@@ -270,10 +259,6 @@
       disabled={controlsBusy || !desktop}
       onUpdate={(updated) => {
         records = records.map((r) => (r.id === updated.id ? updated : r));
-        learningRevision++;
-      }}
-      onRemember={() => {
-        learningRevision++;
       }}
     />
     {#if feedbackTarget === record.id}{@render statusMessage()}{/if}
@@ -290,11 +275,6 @@
   aria-labelledby="dataset-heading"
   aria-busy={pending !== null}
 >
-  {#if view === 'full' && desktop && hasLoaded}<LearningSummary
-      disabled={controlsBusy}
-      refreshKey={`${refreshKey}:${learningRevision}:${records.reduce((n, r) => n + r.reviewHistory.length, 0)}`}
-      onReview={openLearningReview}
-    />{/if}
   {#if view !== 'recent' && desktop && hasLoaded}<HistoryStats
       {records}
       {selectedDay}
