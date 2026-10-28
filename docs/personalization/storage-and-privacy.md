@@ -30,8 +30,8 @@ first/last day. Its label (a folder's last component or a web host) is written
 only when the workspace becomes visible, and is cleared by Remove or Merge.
 Raw document paths, URLs, URL paths or queries, window titles and document text
 are never stored; the observed path or host exists only in memory during capture
-start and the follow-up write. A `miningRoot` path is stored only after the user
-picks that folder in Settings, and Stop learning, Merge or Remove clears it.
+start and the follow-up write. No folder path is stored; a `miningRoot` path left
+by the removed folder opt-in is erased when the store is next opened.
 Removed workspaces keep a suppressed salted key so they are not detected again.
 The salt is never shown, logged (`Debug` redacts it) or included in exports.
 Rename and Merge rewrite the project name on scoped vocabulary, examples and
@@ -86,7 +86,7 @@ Bounds:
 
 Removing a word writes a tombstone that clears its evidence and spoken forms. Mining never re-adds that spelling in any letter case. **Forget words from this source** deletes that source's evidence and pauses the source until you resume it. Rows left with no evidence are deleted; suspended rows keep their status. Forgetting a tier-B source also clears scan cursors, so a resume rescans from scratch.
 
-The inventory never stores file paths, document text, URLs or window titles. Workspace scopes are opaque keys, and labels are folder names. Mining roots are explicit opt-in preferences, like folder rules. Deletion is logical; it does not claim forensic erasure of SQLite pages.
+The inventory never stores file paths, document text, URLs or window titles. Workspace scopes are opaque keys, and labels are folder names. Folder mining runs only for developer-configured roots. Deletion is logical; it does not claim forensic erasure of SQLite pages.
 
 ## Learning from other apps
 

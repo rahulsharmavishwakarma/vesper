@@ -477,8 +477,6 @@ pub struct Workspace {
     pub first_seen_day: u32,
     pub last_seen_day: u32,
     pub category: AppCategory,
-    /// User-selected folder for the inventory miner (explicit opt-in only).
-    pub mining_root: Option<String>,
 }
 
 impl Workspace {
@@ -580,9 +578,6 @@ impl WorkspaceState {
                 || w.merged_into
                     .as_ref()
                     .is_some_and(|k| !hex(k, KEY_HEX) || *k == w.key)
-                || w.mining_root.as_ref().is_some_and(|p| {
-                    !p.starts_with('/') || p.len() > 4096 || p.chars().any(char::is_control)
-                })
             {
                 return err();
             }
@@ -755,7 +750,7 @@ impl WorkspaceState {
                 .workspaces
                 .iter()
                 .enumerate()
-                .filter(|(_, w)| w.latent() && w.mining_root.is_none())
+                .filter(|(_, w)| w.latent())
                 .min_by(|a, b| {
                     a.1.last_seen_day
                         .cmp(&b.1.last_seen_day)
@@ -841,7 +836,6 @@ impl WorkspaceState {
         let (old, dictations, days) = {
             let w = self.workspace_mut(from).expect("checked above");
             w.merged_into = Some(into.clone());
-            w.mining_root = None;
             (
                 std::mem::take(&mut w.label),
                 w.dictations,
@@ -864,23 +858,8 @@ impl WorkspaceState {
             .filter(|w| !w.suppressed)
             .ok_or("That workspace is not available.")?;
         w.suppressed = true;
-        w.mining_root = None;
         w.merged_into = None;
         Ok(std::mem::take(&mut w.label))
-    }
-
-    pub fn set_mining_root(&mut self, key: &str, root: Option<String>) -> Result<(), String> {
-        if root.as_ref().is_some_and(|p| {
-            !p.starts_with('/') || p.len() > 4096 || p.chars().any(char::is_control)
-        }) {
-            return Err("Choose an absolute folder.".into());
-        }
-        let w = self
-            .workspace_mut(key)
-            .filter(|w| w.visible() && w.kind == WorkspaceKind::Folder)
-            .ok_or("Only a visible folder workspace can learn words from a folder.")?;
-        w.mining_root = root;
-        Ok(())
     }
 }
 

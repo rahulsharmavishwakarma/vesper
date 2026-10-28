@@ -2,7 +2,6 @@
 //! shortcut capture start in `dictation.rs`; these commands only list and
 //! manage visible workspaces. Every store call runs off the main thread.
 use crate::AppStorage;
-use std::path::Path;
 use vesper_data::{DatasetStore, WorkspaceSummary, WorkspaceUpdate};
 
 async fn with_store<T: Send + 'static>(
@@ -50,33 +49,4 @@ pub async fn delete_workspace(
     storage: tauri::State<'_, AppStorage>,
 ) -> Result<WorkspaceUpdate, String> {
     with_store(storage, move |store| store.delete_workspace(&key)).await
-}
-
-/// `path` comes from the native folder picker: choosing it is the user's
-/// consent for the inventory builder to read that folder. `None` withdraws it.
-#[tauri::command]
-pub async fn set_workspace_mining_root(
-    key: String,
-    path: Option<String>,
-    storage: tauri::State<'_, AppStorage>,
-) -> Result<WorkspaceUpdate, String> {
-    with_store(storage, move |store| {
-        let root = match path {
-            None => None,
-            Some(path) => {
-                let invalid =
-                    || vesper_data::DatasetError::InvalidConfig("Choose a folder.".into());
-                if path.len() > 4096 || !Path::new(&path).is_absolute() {
-                    return Err(invalid());
-                }
-                let folder = std::fs::canonicalize(&path)?;
-                if !folder.is_dir() {
-                    return Err(invalid());
-                }
-                Some(folder.to_str().ok_or_else(invalid)?.to_string())
-            }
-        };
-        store.set_workspace_mining_root(&key, root)
-    })
-    .await
 }

@@ -213,7 +213,6 @@ pub fn run() {
             workspaces::rename_workspace,
             workspaces::merge_workspace,
             workspaces::delete_workspace,
-            workspaces::set_workspace_mining_root,
             commands::get_app_status,
             commands::get_engine_diagnostics,
             commands::get_accelerator_capabilities,

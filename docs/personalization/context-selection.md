@@ -193,9 +193,8 @@ flowchart TB
   SEL --> PIPE["Existing hints, writer, memory and learning context"]
   OBS -. "observation (keys + transient folder names)" .-> BG["Off main thread: re-apply to latest stored state"]
   BG --> STORE[("workspace_store: salt, salted keys,<br/>day stamps, counts; label only when visible")]
-  UI["Settings → Workspaces: rename, merge,<br/>remove, folder opt-in"] --> STORE
+  UI["Settings → Workspaces: rename, merge,<br/>remove"] --> STORE
   UI -->|"rename/merge move scoped entries"| PROF[("Profile vocabulary, examples,<br/>learning candidates")]
-  STORE -.->|"mining root (explicit opt-in only)"| MINER["Inventory file miner<br/>(separate component, not part of this change)"]
 ```
 
 Failure paths: missing Accessibility trust, a focus or window change during the
@@ -276,13 +275,14 @@ Categories do not partition vocabulary: with one user's small evidence, splittin
 words by category would hide them from other apps. The category is carried in
 `WorkspaceContext` as a ranking signal only.
 
-### Folder opt-in for the inventory miner
+### Folder opt-in (removed)
 
-**Learn words from this folder…** opens the native folder picker for a visible
-folder workspace. The canonical folder the user picks is stored as that
-workspace's `miningRoot`; choosing it is the consent for the separate inventory
-file miner (`DatasetStore::workspace_mining_roots`). **Stop learning from folder**,
-Merge and Remove clear it. Detection itself never reads any folder.
+Until 28 October 2026 a visible folder workspace offered **Learn words from this
+folder…**, which stored a `miningRoot` path as consent for the inventory file
+miner. It was removed because people do not pick folders. Stored paths are
+erased the next time the workspace store is opened (`parse_state` drops the
+field), and the worker drops words mined from those folders on its next run.
+Detection itself never reads any folder.
 
 ### Measurements
 

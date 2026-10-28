@@ -1,8 +1,7 @@
 //! Automatic workspace storage: a per-install random salt plus the bounded
 //! lattice of salted folder/host keys, day stamps and counts. Raw document
 //! paths, URLs and window titles are never written. A workspace label (folder
-//! name or web host) is written only once the workspace becomes visible; a
-//! mining root is written only after the user picks that folder explicitly.
+//! name or web host) is written only once the workspace becomes visible.
 //!
 //! Scoping: the visible workspace's label is its project name. Vocabulary,
 //! examples and learning candidates are scoped by that name, so rename and
@@ -42,7 +41,6 @@ pub struct WorkspaceSummary {
     pub first_seen_day: u32,
     pub last_seen_day: u32,
     pub renamed: bool,
-    pub mining_root: Option<String>,
 }
 
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
@@ -104,7 +102,6 @@ fn summaries(state: &WorkspaceState) -> Vec<WorkspaceSummary> {
             first_seen_day: w.first_seen_day,
             last_seen_day: w.last_seen_day,
             renamed: w.renamed,
-            mining_root: w.mining_root.clone(),
         })
         .collect();
     out.sort_by(|a, b| {
@@ -114,6 +111,22 @@ fn summaries(state: &WorkspaceState) -> Vec<WorkspaceSummary> {
             .then(a.label.cmp(&b.label))
     });
     out
+}
+
+/// Parse stored state, dropping `miningRoot` (the folder opt-in removed on
+/// 28 October 2026). The flag says whether a retired field was present.
+fn parse_state(json: &str) -> Result<(WorkspaceState, bool)> {
+    let mut value: serde_json::Value = serde_json::from_str(json)?;
+    let mut retired = false;
+    if let Some(list) = value.get_mut("workspaces").and_then(|v| v.as_array_mut()) {
+        for w in list {
+            retired |= w
+                .as_object_mut()
+                .and_then(|w| w.remove("miningRoot"))
+                .is_some();
+        }
+    }
+    Ok((serde_json::from_value(value)?, retired))
 }
 
 fn same_project(entry: &str, name: &str) -> bool {
@@ -133,7 +146,7 @@ impl DatasetStore {
         let Some((salt, json)) = row else {
             return Ok(None);
         };
-        let state: WorkspaceState = serde_json::from_str(&json)?;
+        let state = parse_state(&json)?.0;
         state.validate().map_err(DatasetError::InvalidConfig)?;
         if salt.len() < 32 {
             return Err(DatasetError::InvalidConfig(
@@ -152,7 +165,8 @@ impl DatasetStore {
         Ok(())
     }
 
-    /// Create the per-install salt once. Never exported or shown.
+    /// Create the per-install salt once. Never exported or shown. Also erases
+    /// a folder path stored by the retired folder opt-in.
     pub fn ensure_workspace_store(&self) -> Result<()> {
         self.connection.execute(
             "INSERT OR IGNORE INTO workspace_store (id, salt, state_json) VALUES (1, ?1, ?2)",
@@ -161,6 +175,14 @@ impl DatasetStore {
                 serde_json::to_string(&WorkspaceState::default())?
             ],
         )?;
+        let json: String = self.connection.query_row(
+            "SELECT state_json FROM workspace_store WHERE id = 1",
+            [],
+            |r| r.get(0),
+        )?;
+        if let (state, true) = parse_state(&json)? {
+            self.write_workspace_state(&state)?;
+        }
         Ok(())
     }
 
@@ -270,15 +292,6 @@ impl DatasetStore {
         Ok(summaries(&self.workspace_state()?))
     }
 
-    /// Visible folder workspaces whose user explicitly chose a mining root.
-    pub fn workspace_mining_roots(&self) -> Result<Vec<WorkspaceSummary>> {
-        Ok(self
-            .list_workspaces()?
-            .into_iter()
-            .filter(|w| w.mining_root.is_some())
-            .collect())
-    }
-
     fn mutate_workspaces(
         &self,
         change: impl FnOnce(
@@ -354,15 +367,6 @@ impl DatasetStore {
     /// Delete (suppress). Entries scoped to its name stay, unused, until removed.
     pub fn delete_workspace(&self, key: &str) -> Result<WorkspaceUpdate> {
         self.mutate_workspaces(|state| state.delete(key).map(|_| None))
-    }
-
-    /// `root` must already be a canonical folder the user picked; `None` clears it.
-    pub fn set_workspace_mining_root(
-        &self,
-        key: &str,
-        root: Option<String>,
-    ) -> Result<WorkspaceUpdate> {
-        self.mutate_workspaces(|state| state.set_mining_root(key, root).map(|_| None))
     }
 }
 

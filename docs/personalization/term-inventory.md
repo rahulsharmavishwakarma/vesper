@@ -167,9 +167,7 @@ After setup resolves the workspace and project, `select_working_set(language)` f
 
 **Why a plain thread instead of NSBackgroundActivityScheduler.** The scheduler would add an Objective-C block bridge and completion-handler lifetime across the FFI boundary for little gain. The worker already needs app-specific gates that the system cannot see: dictation and model activity. It also needs per-file cancellation. The system's own deferral signals that matter here are applied directly: thermal state, Low Power Mode and power source. The thread spends nearly all of its life blocked on a condition variable. A later change could move the trigger to the scheduler without touching the miners.
 
-**Opted-in roots.** Tier-B mining runs only for folder workspaces whose mining root you chose in Settings → Workspaces (`workspace_mining_roots` in the [workspace store](../../crates/vesper-data/src/workspaces.rs)). Their rows are scoped to the workspace key, which is the same key `resolve_context` puts in `WorkspaceContext.workspace_key` at capture start, and labelled with the workspace's name.
-
-When a root is cleared or its workspace removed, the next run drops that scope's mined evidence and cursor (`forget_term_workspace`). A merged-away workspace's rows are dropped the same way. The developer variable `VESPER_TERM_MINING_ROOTS` adds extra roots for testing:
+**Folder roots.** Tier-B mining runs only for roots in the developer variable `VESPER_TERM_MINING_ROOTS`. The Settings folder opt-in (**Learn words from this folder…**) was removed on 28 October 2026, so in normal use no folder is read. A scope that is no longer listed has its mined evidence and cursor dropped on the next run (`forget_term_workspace`), which also clears words mined from folders chosen before the removal. The variable's format:
 
 - entries are separated by `;`
 - each entry is `scope=/path` or a bare `/path`

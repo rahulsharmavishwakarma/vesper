@@ -306,16 +306,10 @@ fn rename_merge_and_delete_follow_the_lifecycle() {
         "merged rows are hidden"
     );
     assert_eq!(s.visible().count(), 1);
-    // Mining root: explicit, folder workspaces only, cleared by delete.
-    s.set_mining_root(&alpha_key, Some("/Users/tester/work/alpha".into()))
-        .unwrap();
-    assert!(s
-        .set_mining_root(&alpha_key, Some("relative".into()))
-        .is_err());
     // Delete suppresses: nothing resolves, and it never resurfaces.
     assert_eq!(s.delete(&alpha_key).unwrap(), "Alpha app");
     let w = s.workspace(&alpha_key).unwrap();
-    assert!(w.suppressed && w.mining_root.is_none() && w.label.is_empty());
+    assert!(w.suppressed && w.label.is_empty());
     for day in 7..20 {
         assert_eq!(s.observe(&alpha[0], day), None);
     }

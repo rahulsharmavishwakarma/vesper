@@ -241,17 +241,10 @@ fn mine(
             );
         }
     }
-    // Opted-in roots from the workspace store (scope = workspace key), plus the
-    // developer variable. Scopes no longer opted in lose their mined evidence.
-    let mut roots = store
-        .workspace_mining_roots()?
-        .into_iter()
-        .filter_map(|w| {
-            let path = PathBuf::from(w.mining_root?).canonicalize().ok()?;
-            Some((w.key, w.label, path))
-        })
-        .collect::<Vec<_>>();
-    roots.extend(mining_roots());
+    // Developer variable only. Scopes no longer listed lose their mined evidence,
+    // which also clears words read from folders chosen before the folder
+    // opt-in was removed.
+    let mut roots = mining_roots();
     roots.truncate(32);
     for scope in store.mined_workspace_scopes()? {
         if !roots.iter().any(|(key, _, _)| *key == scope) {

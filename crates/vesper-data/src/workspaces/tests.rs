@@ -236,15 +236,9 @@ fn rename_and_merge_move_scoped_entries_and_delete_leaves_them() {
     assert_eq!(project("2"), "Alpha app");
     let s = dictate(&store, CODE, "/Users/tester/work/beta/a.rs", 8);
     assert_eq!(s.project_selection.project, "Alpha app");
-    // Mining root: explicit and cleared by delete.
-    store
-        .set_workspace_mining_root(&alpha, Some("/Users/tester/work/alpha".into()))
-        .unwrap();
-    assert_eq!(store.workspace_mining_roots().unwrap().len(), 1);
     let update = store.delete_workspace(&alpha).unwrap();
     assert!(!update.profile_changed);
     assert!(update.workspaces.is_empty());
-    assert!(store.workspace_mining_roots().unwrap().is_empty());
     assert_eq!(project("1"), "Alpha app", "delete keeps scoped entries");
     let s = dictate(&store, CODE, "/Users/tester/work/alpha/a.rs", 9);
     assert_eq!(s.project_selection.source, ProjectSource::Category);
@@ -294,10 +288,10 @@ fn store_pair() -> (tempfile::TempDir, DatasetStore) {
     store()
 }
 
-/// Opt-in folder → miner (the worker's calls) → inventory → per-recording working
-/// set → correction gate, through the real snapshot path.
+/// Folder → miner → inventory → per-recording working set → correction gate,
+/// through the real snapshot path.
 #[test]
-fn an_opted_in_folder_teaches_its_identifiers_to_dictation_in_that_workspace() {
+fn a_mined_folder_teaches_its_identifiers_to_dictation_in_that_workspace() {
     use crate::term_mining;
     use vesper_core::{correction_gate, Language, TermSource};
     let (_dir, store) = store();
@@ -323,16 +317,12 @@ fn an_opted_in_folder_teaches_its_identifiers_to_dictation_in_that_workspace() {
     .unwrap();
     run(&["add", "a.rs", "b.rs"]);
     let key = make_visible(&store, "speechapp");
-    store
-        .set_workspace_mining_root(&key, Some(repo.path().to_string_lossy().into_owned()))
-        .unwrap();
-    for workspace in store.workspace_mining_roots().unwrap() {
-        let root = std::path::PathBuf::from(workspace.mining_root.unwrap());
+    {
         let mut cursor = Default::default();
         let report = term_mining::scan_workspace(
             &git,
-            &root,
-            &workspace.key,
+            repo.path(),
+            &key,
             &mut cursor,
             Default::default(),
             &|| false,
@@ -345,7 +335,7 @@ fn an_opted_in_folder_teaches_its_identifiers_to_dictation_in_that_workspace() {
                     TermSource::Manifest,
                     TermSource::Documentation,
                 ],
-                &workspace.key,
+                &key,
                 &report.admitted.unwrap(),
                 0,
             )
@@ -365,4 +355,32 @@ fn an_opted_in_folder_teaches_its_identifiers_to_dictation_in_that_workspace() {
     // Another workspace never receives this repository's spellings.
     make_visible(&store, "billing");
     assert_eq!(correct("/Users/tester/work/billing/a.rs", raw), raw);
+}
+
+#[test]
+fn a_stored_folder_path_from_the_retired_opt_in_is_erased() {
+    let (_dir, store) = store();
+    make_visible(&store, "alpha");
+    let json: String = store
+        .connection
+        .query_row("SELECT state_json FROM workspace_store", [], |r| r.get(0))
+        .unwrap();
+    let mut value: serde_json::Value = serde_json::from_str(&json).unwrap();
+    for w in value["workspaces"].as_array_mut().unwrap() {
+        w["miningRoot"] = "/Users/tester/work/alpha".into();
+    }
+    store
+        .connection
+        .execute(
+            "UPDATE workspace_store SET state_json = ?1",
+            [value.to_string()],
+        )
+        .unwrap();
+    assert_eq!(store.list_workspaces().unwrap().len(), 1, "old stores load");
+    store.ensure_workspace_store().unwrap();
+    let json: String = store
+        .connection
+        .query_row("SELECT state_json FROM workspace_store", [], |r| r.get(0))
+        .unwrap();
+    assert!(!json.contains("miningRoot") && !json.contains("/Users/tester"));
 }
