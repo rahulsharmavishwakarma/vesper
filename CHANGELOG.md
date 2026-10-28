@@ -9,13 +9,30 @@ Nightly builds are not listed.
 
 ## [Unreleased]
 
+### Added
+
+- Self-improving dictation that works with every speech model. Vesper learns
+  spellings from Text Replacements, your spelling dictionary and the fixes you
+  make, and a correction gate repairs near-misses without rewriting ordinary
+  words. Learning pauses itself after repeated rejections.
+- Rule-based formatting for English numbers, times, dates, emails, links,
+  hesitations and self-corrections.
+- Opt-in automatic workspaces, and opt-in learning from the app you dictate
+  into.
+- History shows time saved, time recorded, words and recordings.
+
 ### Changed
 
+- Settings has one tab per task: Dictation, Writing, Vocabulary, Projects,
+  Appearance, Privacy and About, with grouped rows in the macOS style.
+- Speech model recommendations come from Vesper's own per-language results.
 - Update checks query the stable and pre-release feeds at the same time, time out
   after 20 seconds, and read the stable feed from GitHub Pages first.
 
 ### Removed
 
+- The folder opt-in for learning words. A stored folder path is erased on
+  upgrade.
 - VibeVoice benchmark tooling. Vesper does not support VibeVoice models.
 
 ### Security
