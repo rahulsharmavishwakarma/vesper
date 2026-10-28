@@ -293,6 +293,7 @@
     gap: var(--space-1);
   }
   .workspace-label {
+    font-size: 13px;
     font-weight: 500;
     overflow-wrap: anywhere;
     min-width: 0;

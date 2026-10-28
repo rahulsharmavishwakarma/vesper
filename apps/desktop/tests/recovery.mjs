@@ -2407,16 +2407,14 @@ await test('Saved model summaries stay synchronized and navigate to the model se
   const label = () => target.querySelector('.studio-recorder [aria-label="Configured models"]');
   async function checkEveryScreen(speech, writing, off) {
     const saves = state.counts.save_settings;
-    for (const view of ['Dictate', 'History', 'Settings']) {
+    // Settings does not repeat the model names; Models owns them.
+    for (const view of ['Dictate', 'History']) {
       button(view).click();
       await tick();
-      if (view === 'Settings') await settingsSection('Dictation');
       const summary = target.querySelector(
         view === 'Dictate'
           ? '.studio-recorder .configured-models'
-          : view === 'Settings'
-            ? '.settings-model-summary .configured-models'
-            : '.page-model-summary .configured-models',
+          : '.page-model-summary .configured-models',
       );
       assert(summary && !summary.closest('[hidden]'), `${view} model summary is hidden`);
       await until(

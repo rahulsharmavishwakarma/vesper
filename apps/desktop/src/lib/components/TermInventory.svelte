@@ -127,7 +127,7 @@
 
 <style>
   .term-inventory {
-    margin-top: var(--space-6);
+    padding-block: var(--space-4);
   }
   .term-inventory summary .entry-count {
     margin-left: var(--space-2);

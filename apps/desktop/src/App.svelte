@@ -929,15 +929,6 @@
                       />
                     </div>
                   </div>
-                  <div class="settings-group">
-                    <h3>Models</h3>
-                    <div class="group-box settings-model-summary">
-                      <ConfiguredModels
-                        settings={engineSettings}
-                        onManage={() => navigate('models')}
-                      />
-                    </div>
-                  </div>
                 </section>
                 <section
                   class="settings-section"

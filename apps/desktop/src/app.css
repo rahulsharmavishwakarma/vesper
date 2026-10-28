@@ -2898,6 +2898,118 @@ button:is(
 .settings-content .appearance-motion {
   font-size: 13px;
 }
+/* Wide windows: label and help on the left, control on the right. Narrow
+   windows keep the stacked label, control and help. */
+@media (min-width: 641px) {
+  /* Every field row: label and help on the left, control on the right. */
+  .settings-content
+    :is(
+      .group-box > .field,
+      .group-box > fieldset > .field,
+      .group-box .preference-fields > .field:not(.project-rules)
+    ) {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) minmax(200px, 46%);
+    column-gap: var(--space-5);
+    align-items: center;
+  }
+  .settings-content
+    :is(.group-box > .field, .group-box > fieldset > .field, .group-box .preference-fields > .field)
+    > label {
+    grid-column: 1;
+    grid-row: 1;
+    margin: 0;
+  }
+  .settings-content
+    :is(
+      .group-box > .field,
+      .group-box > fieldset > .field,
+      .group-box .preference-fields > .field:not(.project-rules)
+    )
+    > :is(.select-trigger, .shortcut-field, input, .select-popup) {
+    grid-column: 2;
+    grid-row: 1 / span 3;
+  }
+  .settings-content
+    :is(
+      .group-box > .field,
+      .group-box > fieldset > .field,
+      .group-box .preference-fields > .field:not(.project-rules)
+    )
+    > :is(.note, .error, .shortcut-status) {
+    grid-column: 1;
+    margin: 2px 0 0;
+  }
+  .settings-content .group-box .shortcut-status:empty {
+    margin: 0;
+  }
+  /* A label with no help line sits level with its control. */
+  .settings-content
+    :is(
+      .group-box > .field,
+      .group-box > fieldset > .field,
+      .group-box .preference-fields > .field:not(.project-rules)
+    ):not(:has(> .note:not(:empty), > .error))
+    > label {
+    grid-row: 1 / span 3;
+    align-self: center;
+  }
+  .settings-content .group-box .capture-design-field {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) minmax(200px, 46%);
+    column-gap: var(--space-5);
+    row-gap: var(--space-3);
+    align-items: center;
+  }
+  .settings-content .group-box .capture-design-field > label {
+    grid-column: 1;
+    margin: 0;
+  }
+  .settings-content .group-box .capture-design-field > :is(.select-trigger, .select-popup) {
+    grid-column: 2;
+  }
+  .settings-content .group-box .capture-design-field > :is(.design-preview, .preview-controls) {
+    grid-column: 1 / -1;
+  }
+}
+/* Text fields and shortcut fields match the menus beside them. */
+.settings-content .group-box :is(input:not([type='checkbox']), .shortcut-field) {
+  min-height: 44px;
+  font-size: 13px;
+}
+.settings-content .group-box .preview-controls button {
+  font-size: 13px;
+}
+/* Two-field rows stack as rows of the same box. */
+.settings-content .group-box > .preference-fields {
+  display: block;
+  padding-block: 0;
+}
+.settings-content .group-box .preference-fields > .field {
+  margin: 0;
+  padding-block: var(--space-4);
+}
+.settings-content .group-box .preference-fields > * + * {
+  border-top: 1px solid var(--color-line);
+}
+/* Buttons inside a box match the row text, not page-level actions. */
+.settings-content .group-box :is(.settings-row, .actions, .learn-paused) button {
+  min-height: 32px;
+  padding: 6px 12px;
+  font-size: 13px;
+}
+/* Quiet text buttons end on the same edge as switches and menus. */
+.settings-content .group-box :is(.settings-row, .actions) > button.quiet:last-child {
+  margin-inline-end: -12px;
+}
+/* A disclosure inside a box is a plain row, never a box in a box. */
+.settings-content .group-box details.settings-advanced > summary {
+  border: 0;
+  padding: 0;
+}
+.settings-content .group-box .field > * {
+  min-width: 0;
+}
 .settings-row {
   display: flex;
   flex-wrap: wrap;
@@ -3089,26 +3201,6 @@ button:is(
     transition: none;
   }
 }
-.settings-model-summary {
-  border-top: 1px solid var(--color-line);
-  margin-top: var(--space-6);
-  padding-top: var(--space-5);
-}
-.settings-content [aria-labelledby='speech-heading'] > .field {
-  display: grid;
-  grid-template-columns: minmax(0, 1fr) minmax(180px, 42%);
-  column-gap: var(--space-5);
-  align-items: center;
-  border-top: 1px solid var(--color-line);
-  padding-top: var(--space-5);
-}
-.settings-content [aria-labelledby='speech-heading'] > .field > label {
-  margin: 0;
-}
-.settings-content [aria-labelledby='speech-heading'] > .field > .note,
-.settings-content [aria-labelledby='speech-heading'] > .field > .error {
-  grid-column: 1 / -1;
-}
 .settings-content .settings-section:not([hidden]) {
   animation: section-arrive 260ms var(--ease-out) both;
 }
@@ -3185,15 +3277,6 @@ button:is(
 .appearance-motion .note {
   margin: 0;
 }
-@media (max-width: 1000px) {
-  .settings-layout {
-    grid-template-columns: 118px minmax(0, 1fr);
-    gap: var(--space-4);
-  }
-  .settings-content {
-    padding: var(--space-6);
-  }
-}
 @media (max-width: 820px) {
   .settings-layout {
     grid-template-columns: minmax(0, 1fr);
@@ -3236,10 +3319,6 @@ button:is(
     padding: 8px;
     font-size: 11px;
   }
-  .settings-content [aria-labelledby='speech-heading'] .field {
-    grid-template-columns: minmax(0, 1fr);
-    gap: var(--space-2);
-  }
   .appearance-options {
     gap: var(--space-2);
   }
@@ -3259,8 +3338,9 @@ button:is(
     animation: none;
   }
 }
+/* Label left, switch right (the input is ordered last above). */
 .settings-content .setting-toggle .checkbox-field {
-  flex-direction: row-reverse;
+  flex-direction: row;
   justify-content: space-between;
   align-items: center;
 }
@@ -3270,24 +3350,4 @@ button:is(
 .settings-content .setting-toggle .checkbox-help {
   margin-left: 0;
   padding-right: var(--space-8);
-}
-.settings-content [aria-labelledby='speech-heading'] > .field > .select-trigger {
-  grid-column: 2;
-  grid-row: 1 / 3;
-}
-.settings-content [aria-labelledby='speech-heading'] > .field > .note,
-.settings-content [aria-labelledby='speech-heading'] > .field > .error {
-  grid-column: 1;
-  margin: 4px 0 0;
-}
-.settings-content .settings-model-summary .configured-models {
-  border: 0;
-  padding: 0;
-  margin: 0;
-}
-@media (max-width: 480px) {
-  .settings-content [aria-labelledby='speech-heading'] > .field > .select-trigger {
-    grid-column: 1;
-    grid-row: auto;
-  }
 }

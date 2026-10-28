@@ -806,7 +806,10 @@
                 </div>
               </div>
             </div>
-            <TermInventory disabled={controlsDisabled} />
+            <div class="settings-group">
+              <h3>Found on this Mac</h3>
+              <TermInventory disabled={controlsDisabled} />
+            </div>
             {#if profile.examples.length}
               <div class="settings-group" id="remembered-examples">
                 <div class="group-heading">

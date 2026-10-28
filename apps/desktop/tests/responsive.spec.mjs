@@ -40,9 +40,6 @@ test('minimum window shows Settings controls and preserves drafts, menus and dia
   await expect(page.locator('.save-status')).toHaveAttribute('data-state', 'saving');
   await navigate(page, 'Settings');
 
-  const summary = page.locator('.settings-model-summary');
-  await expect(summary).toContainText('NVIDIA Nemotron 3.5 ASR Streaming 0.6B');
-  await expect(summary).toContainText('Qwen3.5 0.8B');
   await expectInsideWindow(page, page.locator('#settings-language'));
   await page.locator('#settings-language').click();
   await expectInsideWindow(page, page.getByRole('listbox'));

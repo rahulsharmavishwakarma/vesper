@@ -64,7 +64,7 @@ remain valid and are never renamed automatically; their data format is unchanged
 ### Small windows
 
 When the window is narrow, navigation moves to the top and spacing becomes
-more compact. Both configured model names remain visible in Settings → Dictation and
+more compact. Both configured model names remain visible on Dictate and
 History. Settings section navigation moves above its content when space is tight.
 Scroll vertically to reach the remaining controls. Resizing preserves unsaved preferences; an open dropdown closes and can
 be reopened in its new position.
@@ -76,7 +76,7 @@ heading, then groups, each a small label above one box of options.
 
 | Tab            | What it holds                                                                                                                                                               |
 | -------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| **Dictation**  | Transcription language, notifications, shortcuts and what happens after a shortcut dictation (paste or keep), speech hints, and the configured models                       |
+| **Dictation**  | Transcription language, notifications, shortcuts and what happens after a shortcut dictation (paste or keep), speech hints                                                  |
 | **Writing**    | The writing model and style, output style, formatting, keeping fillers                                                                                                      |
 | **Vocabulary** | Your words, learning settings (saved corrections, learn from my edits, learn from fixes in other apps, words already in the field), words Vesper found, remembered examples |
 | **Projects**   | Project selection, application rules and workspaces                                                                                                                         |

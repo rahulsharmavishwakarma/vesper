@@ -197,8 +197,8 @@ flow. Keep these removals independent of changes to page width or card layout.
 ### Settings grouping
 
 Settings has one tab per task, never a tab that mixes topics: **Dictation**
-(language, notifications, shortcuts, after-dictation paste, speech hints,
-configured models), **Writing** (writing model, output style, formatting),
+(language, notifications, shortcuts, after-dictation paste, speech hints),
+**Writing** (writing model, output style, formatting),
 **Vocabulary** (words, how Vesper learns them, words found, examples),
 **Projects** (project selection, app rules, workspaces), **Appearance**,
 **Privacy** (storage, reset) and **About**. This follows macOS System Settings:
@@ -206,6 +206,12 @@ each tab is a heading and one line of description, then groups; a group is a
 small muted label above one rounded box (`.settings-group` > `h3` +
 `.group-box`) whose rows are separated by hairlines. Do not nest another card
 inside a group box, and do not put a section's controls in a big outer card.
+Every row uses one pattern: label and its one-line help on the left, the
+control on the right (switch, menu, shortcut field or text field, all 44 px and
+13 px text); a label without help is centred on its control. Buttons inside a
+box are compact 13 px text buttons whose last one ends on the same edge as the
+switches. A disclosure inside a box is a plain row. Settings does not repeat
+the configured model names; Models owns them.
 A control that reads or controls other apps belongs with the feature it serves
 (Vocabulary → Learning), not with detection. In phone-sized windows the tab
 description is hidden so the first controls stay in view.
@@ -227,7 +233,7 @@ The main window supports 360 × 480 logical pixels. At widths up to 700 px,
 navigation becomes a compact header: reduce its surrounding space and wordmark
 size while retaining 44 px button targets. Keep the same page order and cards.
 Use tighter heading/card spacing and put the saved model labels beside their
-full names in Settings → Dictation and History. Names wrap within the available width;
+full names on Dictate, History and Models. Names wrap within the available width;
 do not hide either model or truncate it to make the window fit.
 
 At the minimum window size, the first Settings control should be fully visible
