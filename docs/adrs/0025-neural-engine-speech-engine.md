@@ -46,6 +46,7 @@ file, and the risk of failing the converter's dependency audit.
   They are hosted at `rahulsharmavishwakarma/vesper-parakeet-tdt-0.6b-v3-coreml-ane@4dc405d6` (CC-BY-4.0, with
   attribution and a modification notice). The total download is 640 MB. The owner approved int8 weights on
   22 October 2026 after they matched the float16 encoder within noise at half the size.
+
 - `scripts/convert-parakeet-v3-coreml-ane.py` builds those files.
   - It runs in the locked, audited `coreml-convert` project.
   - It builds the encoder from NVIDIA's Transformers-format checkpoint rather than NeMo, whose dependency stack

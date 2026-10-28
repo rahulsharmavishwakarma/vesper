@@ -36,28 +36,29 @@ A term must look like an identifier or a related spelling. Identifier evidence r
 
 Policy 6 (28 October 2026; policy 5 plus the ordinary-word row below) derives the number of independent edits from an asymmetric promotion rule ([`evidence.rs`](../../crates/vesper-core/src/evidence.rs)). A spelling activates only when the posterior mean that it is intended exceeds `t = r / (1 + r)`, where `r` is the cost of a wrong automatic change divided by the cost of a missed one. How much harm a wrong change can do depends on what the recognizer heard, which the [correction gate's lexicon](correction-gate.md#lexicon) classifies:
 
-| Heard form | Example | Prior | `r` (`t`) | Independent edits |
-| --- | --- | --- | --- | --- |
-| Contains a non-word, or rejoins the same letters; identifier target in a known project | `sherpa onnx → sherpa_onnx`, `aster tool → AsterTool` | Beta(2, 0.5) | 4 (0.80) | 1 |
-| Contains a non-word, other target | `kube ctl → kubectl` | Beta(0.5, 0.5) | 4 (0.80) | 2 |
-| Several ordinary words | `read me → README.md` | Beta(0.5, 0.5) | 4 (0.80) | 2, and teaching cues must match at use |
-| One capitalized word → capitalized spelling (name repair) | `Jonathon → Jonathan` | Beta(0.5, 0.5) | 4 (0.80) | 2, and teaching cues must match at use |
-| One ordinary word → a term (capitalized, acronym or identifier) in a known project | `data → Detta`, `rack → RAG`, `west → Vesper` | Beta(0.5, 0.5) | 6 (0.86) | 3, and at use the text must share two topical teaching cues (function words and words under four letters do not count) |
-| One ordinary word → another lowercase word, or outside a project | `write → right`, `data → date` | — | ∞ | never; add the word in Vocabulary instead |
+| Heard form                                                                             | Example                                               | Prior          | `r` (`t`) | Independent edits                                                                                                      |
+| -------------------------------------------------------------------------------------- | ----------------------------------------------------- | -------------- | --------- | ---------------------------------------------------------------------------------------------------------------------- |
+| Contains a non-word, or rejoins the same letters; identifier target in a known project | `sherpa onnx → sherpa_onnx`, `aster tool → AsterTool` | Beta(2, 0.5)   | 4 (0.80)  | 1                                                                                                                      |
+| Contains a non-word, other target                                                      | `kube ctl → kubectl`                                  | Beta(0.5, 0.5) | 4 (0.80)  | 2                                                                                                                      |
+| Several ordinary words                                                                 | `read me → README.md`                                 | Beta(0.5, 0.5) | 4 (0.80)  | 2, and teaching cues must match at use                                                                                 |
+| One capitalized word → capitalized spelling (name repair)                              | `Jonathon → Jonathan`                                 | Beta(0.5, 0.5) | 4 (0.80)  | 2, and teaching cues must match at use                                                                                 |
+| One ordinary word → a term (capitalized, acronym or identifier) in a known project     | `data → Detta`, `rack → RAG`, `west → Vesper`         | Beta(0.5, 0.5) | 6 (0.86)  | 3, and at use the text must share two topical teaching cues (function words and words under four letters do not count) |
+| One ordinary word → another lowercase word, or outside a project                       | `write → right`, `data → date`                        | —              | ∞         | never; add the word in Vocabulary instead                                                                              |
 
 The priors and cost ratios are design assumptions, not calibrated probabilities. With `r = 9` (`t = 0.90`), every route above would need five independent edits under the Jeffreys prior, which a single user who rarely edits would almost never supply. The strict "never" row is where the review found real harm (`write → Wright`, `notes → Nots`). Policy 4 activated `read me → README.md` after one edit. Policy 5 needs two, because `read me` is ordinary speech ("read me the list").
 
 Two inputs to the ordinary-word row are normalized:
+
 - A capital that only marks a sentence start counts as the lowercase word (`Data is…`), so it adds to the same rule.
 - A misheard short acronym counts as a spelling repair when it starts with the same letter and is at most two edits away (`rack → RAG`), not `use → ISO`.
 
 **Evaluation of the ordinary-word row** (local, 28 October 2026). `policy6_replay` taught three realistic corrections each for `data → Detta` and `rack → RAG`, then ran 465 local transcripts and 20 held-out sentences through the real learned-alias path.
 
-| Cue rule at use | Wrong changes in history (38 `data`, 1 `rack`) | Held-out: fixed / wrongly changed |
-| --- | --- | --- |
-| One shared cue (as for phrases) | 7 wrong; 4 correct (the Detta message 3×, `rack system` 1×) | not run |
-| Two shared cues, function words counted | 2 wrong (`from` + `how`, `how` + `what`); 3 correct | not run |
-| Two topical cues (shipped) | 0 | 10 / 10 positives fixed; 3 / 10 adversarial negatives changed (ordinary `data` sentences sharing two topic words, such as `Our data comes from Fermion research papers`) |
+| Cue rule at use                         | Wrong changes in history (38 `data`, 1 `rack`)              | Held-out: fixed / wrongly changed                                                                                                                                        |
+| --------------------------------------- | ----------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| One shared cue (as for phrases)         | 7 wrong; 4 correct (the Detta message 3×, `rack system` 1×) | not run                                                                                                                                                                  |
+| Two shared cues, function words counted | 2 wrong (`from` + `how`, `how` + `what`); 3 correct         | not run                                                                                                                                                                  |
+| Two topical cues (shipped)              | 0                                                           | 10 / 10 positives fixed; 3 / 10 adversarial negatives changed (ordinary `data` sentences sharing two topic words, such as `Our data comes from Fermion research papers`) |
 
 The history was used to choose the cue rule, so its 0 is a development figure; the held-out sentences were written by the developer. The rule fixes an ordinary-word error when the speaker is talking about the term's topic. It can be fooled by an ordinary sentence that shares two of those topic words, and one change-back then stops that rule.
 
@@ -84,7 +85,7 @@ This integrates the stronger fixed-context idea from the benchmarks. It does **n
 
 Each supporting edit records the recognizer family that produced the heard form, such as `cohere`, `parakeet`, `nemotron`, `qwen3-asr` or `whisper`. Runtimes of the same model share a family; fine-tunes such as Phonon-2 or Parakeet Redux have their own. An unconfirmed automatic alias applies only while a recognizer from one of its supporting families is selected, because a confusion learned from one model's errors says little about another's.
 
-The learned *spelling* is still model-independent: it joins the working set's references, so the [correction gate](correction-gate.md#near-miss-repair) can repair a non-word one letter away from it (`kubernets` → `kubernetes`) under any recognizer. Ordinary-word aliases stay with their family.
+The learned _spelling_ is still model-independent: it joins the working set's references, so the [correction gate](correction-gate.md#near-miss-repair) can repair a non-word one letter away from it (`kubernets` → `kubernetes`) under any recognizer. Ordinary-word aliases stay with their family.
 
 Support recorded before policy 5 has no family and keeps applying to all models. Confirmed (ticked) and manual words are model-independent. Switching models therefore never deletes evidence: the alias waits in shadow until that model is selected again, or until fresh edits support it for the new one.
 

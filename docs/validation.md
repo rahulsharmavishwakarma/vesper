@@ -94,11 +94,11 @@ uncommitted.
 
 The approved [issue #14](https://github.com/rahulsharmavishwakarma/vesper/issues/14) integration was qualified on Apple M5 Pro, 64 GiB RAM, macOS 26.6.2 (25G83), CPU with eight native threads. The source-pinned Sherpa 1.13.8 patch/build, artifact hashes, outputs and individual timings remain in `.cache/benchmarks/results/qwen-cohere-native/debug-summary.json`; fixture attribution and reproduction commands are in [offline ASR](offline-asr.md).
 
-| Adapter | Native load | Native decode | Peak process RSS | Post-stop backend pipeline |
-| --- | ---: | ---: | ---: | ---: |
-| Qwen3-ASR 0.6B INT8 | 0.90 s | 0.46 s | 1.53 GiB | 3.02 s |
-| Cohere Transcribe INT8 | 1.63 s | 0.46 s | 4.14 GiB | 6.89 s |
-| Parakeet v3 INT8 regression | 0.54 s | 0.15 s | 1.10 GiB | Not measured in this run |
+| Adapter                     | Native load | Native decode | Peak process RSS | Post-stop backend pipeline |
+| --------------------------- | ----------: | ------------: | ---------------: | -------------------------: |
+| Qwen3-ASR 0.6B INT8         |      0.90 s |        0.46 s |         1.53 GiB |                     3.02 s |
+| Cohere Transcribe INT8      |      1.63 s |        0.46 s |         4.14 GiB |                     6.89 s |
+| Parakeet v3 INT8 regression |      0.54 s |        0.15 s |         1.10 GiB |   Not measured in this run |
 
 These are separate single observations on the public 8.76-second English FLEURS fixture, with per-job native loads and possibly warm filesystem caches. Native probe timings exclude hash verification, archival, cleanup and UI/IPC. Post-stop timing calls the actual capture-processing backend with public PCM: it includes archive persistence, artifact verification, model load and decode, with cleanup disabled, and excludes microphone/device-stop/UI/IPC time. It is not a measured live user-visible latency. File-import pipeline times were 3.05 s and 6.91 s respectively. Peak RSS comes from a separate process for each native probe. Power mode and sustained thermal behavior were not measured.
 
@@ -120,11 +120,11 @@ The full native smoke also verifies the resident recognizer's offline file call,
 
 Before the resident-worker migration, the installer downloaded and verified the official Nemotron Q8 GGUF (`742,090,464` bytes), NeMo-Speech.cpp 0.1.0 Apple Metal archive (`3,465,028` bytes), and existing Qwen Q4 GGUF (`563,036,064` bytes). The then-current complete release-mode pipeline ran on the Apple M5 Pro against the same 3.845-second public fixture:
 
-| Measured operation | Time |
-| --- | ---: |
-| Nemotron Metal load + recognition | 1.09 s |
+| Measured operation                                                      |   Time |
+| ----------------------------------------------------------------------- | -----: |
+| Nemotron Metal load + recognition                                       | 1.09 s |
 | Qwen Metal load + cleanup, including first-run Metal kernel compilation | 6.76 s |
-| Complete native pipeline | 7.85 s |
+| Complete native pipeline                                                | 7.85 s |
 
 Nemotron returned “Ask not what your country can do for you. Ask what you can do for your country.” Qwen's minimal cleanup preserved it exactly. Runtime provenance reported `metal` for both stages. An ASR-only rerun took 1.07 seconds including model load. These are historical single warm-filesystem observations, not distributions; the current resident C-ABI path requires new live-path distributions before making a performance comparison.
 
@@ -136,11 +136,11 @@ The native Parakeet → Qwen pipeline ran on an **Apple M5 Pro with 64 GiB RAM**
 
 The pinned [public English speech fixture](https://huggingface.co/csukuangfj/sherpa-onnx-nemo-parakeet-tdt-0.6b-v3-int8/blob/2bda32ec70b097a55adaa07d9a7173915b43cc78/test_wavs/en.wav) is approximately 3.845 seconds, sampled at 24 kHz. Our decoder/resampler converted it to mono 16 kHz before inference. Its SHA-256 is `148b936b43ce7c546a866e64da059f0458aee2d65e617f16e9d94f06e8d99ed6`.
 
-| Measured operation | Time |
-| --- | ---: |
-| Parakeet load + recognition | 0.76 s |
-| Qwen load + cleanup | 0.70 s |
-| Native model pipeline | 1.46 s |
+| Measured operation                                                                                                             |   Time |
+| ------------------------------------------------------------------------------------------------------------------------------ | -----: |
+| Parakeet load + recognition                                                                                                    | 0.76 s |
+| Qwen load + cleanup                                                                                                            | 0.70 s |
+| Native model pipeline                                                                                                          | 1.46 s |
 | Desktop service integration test, including full model hashes, audio preservation, both models, SQLite and export verification | 3.63 s |
 
 These are individual development-machine observations, not latency distributions. Native stage measurements exclude model download, microphone recording, UI/IPC, and per-request artifact hashing. They include per-job model loading; the filesystem cache may be warm. The integration measurement includes test assertions and export work. Peak process memory was not measured.
@@ -488,10 +488,10 @@ This explicit target requires the existing pinned public English fixture at `.ca
 
 Both explicit checks passed on an Apple M5 Pro with 64 GiB RAM, running macOS 26.6.2 (25G83):
 
-| Check | Result | Observed test duration |
-| --- | --- | --- |
-| Desktop Nemotron → Qwen pipeline, original audio, model provenance, and dataset export | Passed; both stages reported Metal | 4.26 s |
-| Existing GGUF embedded-template formatting/tokenization and control-token rejection | Passed; CPU model loading | 0.92 s |
+| Check                                                                                  | Result                             | Observed test duration |
+| -------------------------------------------------------------------------------------- | ---------------------------------- | ---------------------- |
+| Desktop Nemotron → Qwen pipeline, original audio, model provenance, and dataset export | Passed; both stages reported Metal | 4.26 s                 |
+| Existing GGUF embedded-template formatting/tokenization and control-token rejection    | Passed; CPU model loading          | 0.92 s                 |
 
 The pipeline smoke now requires a nonempty cleanup result, no pipeline warnings, and equality between the returned and persisted cleanup. Previously it could pass when cleanup failed and raw text survived. On this run, the raw and cleaned public-fixture transcripts were identical. Both training targets remained null in the archive export, and the archived audio matched the source bytes.
 
@@ -575,12 +575,12 @@ inputs are synthetic stress cases. The separate natural clips are 10.56 seconds
 (English), 10.20 seconds (French), and 13.80 seconds (Hindi).
 
 | Model / language | Original WER | Three copies WER | Shifted copies WER | Natural long WER |
-| --- | ---: | ---: | ---: | ---: |
-| Qwen / English | 9.52% | 9.52% | 9.52% | 5.26% |
-| Qwen / French | 34.62% | 28.21% | 29.49% | 15.00% |
-| Qwen / Hindi | 25.00% | 25.00% | 23.61% | 17.50% |
-| Cohere / English | 9.52% | 9.52% | 9.52% | 21.05% |
-| Cohere / French | 11.54% | 19.23% | 23.08% | 5.00% |
+| ---------------- | -----------: | ---------------: | -----------------: | ---------------: |
+| Qwen / English   |        9.52% |            9.52% |              9.52% |            5.26% |
+| Qwen / French    |       34.62% |           28.21% |             29.49% |           15.00% |
+| Qwen / Hindi     |       25.00% |           25.00% |             23.61% |           17.50% |
+| Cohere / English |        9.52% |            9.52% |              9.52% |           21.05% |
+| Cohere / French  |       11.54% |           19.23% |             23.08% |            5.00% |
 
 These small development measurements are not a general accuracy benchmark.
 Cohere's French repeated/shifted cases worsen relative to the original: fresh

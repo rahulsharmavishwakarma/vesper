@@ -5,7 +5,6 @@
 > and `VESPER_*` override names; legacy environment aliases remain supported.
 > See [current naming and compatibility](../development.md#product-name-and-compatibility). No measurement has been requalified by renaming.
 
-
 This follow-up tests the required denoising feature using the existing frozen DPDFNet4/8 models and shared online frontend. Its predeclared protocol is recorded in [issue #42](https://github.com/rahulsharmavishwakarma/transcribe/issues/42#issuecomment-5735902954). No production default, adaptive routing, model training or native decoder changes are included.
 
 ## Completed main quality comparison
@@ -14,41 +13,41 @@ All 1,830 primary ASR/writer attempts are recorded. Fixed 50/50 mixing substanti
 
 Raw natural-speech WER percentages, lower is better. Each complete observed condition contains 24 recordings / 689 reference words. Parentheses show scored/attempted clips when ASR failed; failed clips are not successful empty transcripts.
 
-| ASR | Observed condition | Raw | DPDF4 full | DPDF4 mix50 | DPDF8 full | DPDF8 mix50 |
-| --- | --- | ---: | ---: | ---: | ---: | ---: |
-| Cohere | Clean | 5.66 | 6.24 | 6.39 | 5.81 | 5.95 |
-| Cohere | Noise mixture | 9.43 | 11.32 | 9.00 | 9.87 | 9.00 |
-| Cohere | ×0.03 amplitude | 66.76 | 67.52 (23/24) | 66.91 | 66.33 | 67.63 |
-| Whisper Small | Clean | 7.84 | 7.84 | 7.55 | 7.55 | 7.55 |
-| Whisper Small | Noise mixture | 17.42 | 16.98 | 14.80 | 13.35 | 14.51 |
-| Whisper Small | ×0.03 amplitude | 32.95 | 55.01 | 46.15 | 51.56 (23/24) | 33.68 (23/24) |
-| Whisper Turbo | Clean | 5.08 | 5.22 | 5.22 | 5.95 | 5.37 |
-| Whisper Turbo | Noise mixture | 9.43 | 10.16 | 6.68 | 7.40 | 6.97 |
-| Whisper Turbo | ×0.03 amplitude | 6.53 | 53.27 | 11.32 | 18.80 (23/24) | 8.71 |
+| ASR           | Observed condition |   Raw |    DPDF4 full | DPDF4 mix50 |    DPDF8 full |   DPDF8 mix50 |
+| ------------- | ------------------ | ----: | ------------: | ----------: | ------------: | ------------: |
+| Cohere        | Clean              |  5.66 |          6.24 |        6.39 |          5.81 |          5.95 |
+| Cohere        | Noise mixture      |  9.43 |         11.32 |        9.00 |          9.87 |          9.00 |
+| Cohere        | ×0.03 amplitude    | 66.76 | 67.52 (23/24) |       66.91 |         66.33 |         67.63 |
+| Whisper Small | Clean              |  7.84 |          7.84 |        7.55 |          7.55 |          7.55 |
+| Whisper Small | Noise mixture      | 17.42 |         16.98 |       14.80 |         13.35 |         14.51 |
+| Whisper Small | ×0.03 amplitude    | 32.95 |         55.01 |       46.15 | 51.56 (23/24) | 33.68 (23/24) |
+| Whisper Turbo | Clean              |  5.08 |          5.22 |        5.22 |          5.95 |          5.37 |
+| Whisper Turbo | Noise mixture      |  9.43 |         10.16 |        6.68 |          7.40 |          6.97 |
+| Whisper Turbo | ×0.03 amplitude    |  6.53 |         53.27 |       11.32 | 18.80 (23/24) |          8.71 |
 
 The fresh subset has 12 recordings / 322 reference words per complete condition and is reported separately:
 
-| ASR | Fresh condition | Raw | DPDF4 full | DPDF4 mix50 | DPDF8 full | DPDF8 mix50 |
-| --- | --- | ---: | ---: | ---: | ---: | ---: |
-| Cohere | Clean | 4.66 | 4.97 | 4.66 | 4.35 | 4.66 |
-| Cohere | Noise mixture | 8.39 | 11.49 | 7.76 | 9.01 | 8.70 |
-| Cohere | ×0.03 amplitude | 78.57 | 80.75 | 79.81 | 84.78 | 80.12 |
-| Whisper Small | Clean | 7.76 | 7.45 | 7.45 | 7.45 | 7.14 |
-| Whisper Small | Noise mixture | 28.57 | 24.22 | 22.98 | 26.09 | 27.95 |
-| Whisper Small | ×0.03 amplitude | 50.34 (11/12) | 72.67 | 57.76 | 63.27 (11/12) | 50.68 (11/12) |
-| Whisper Turbo | Clean | 4.97 | 4.97 | 4.66 | 4.97 | 4.66 |
-| Whisper Turbo | Noise mixture | 12.42 | 15.22 | 8.39 | 9.63 | 7.76 |
-| Whisper Turbo | ×0.03 amplitude | 4.97 | 62.42 | 7.76 | 21.12 | 5.59 |
+| ASR           | Fresh condition |           Raw | DPDF4 full | DPDF4 mix50 |    DPDF8 full |   DPDF8 mix50 |
+| ------------- | --------------- | ------------: | ---------: | ----------: | ------------: | ------------: |
+| Cohere        | Clean           |          4.66 |       4.97 |        4.66 |          4.35 |          4.66 |
+| Cohere        | Noise mixture   |          8.39 |      11.49 |        7.76 |          9.01 |          8.70 |
+| Cohere        | ×0.03 amplitude |         78.57 |      80.75 |       79.81 |         84.78 |         80.12 |
+| Whisper Small | Clean           |          7.76 |       7.45 |        7.45 |          7.45 |          7.14 |
+| Whisper Small | Noise mixture   |         28.57 |      24.22 |       22.98 |         26.09 |         27.95 |
+| Whisper Small | ×0.03 amplitude | 50.34 (11/12) |      72.67 |       57.76 | 63.27 (11/12) | 50.68 (11/12) |
+| Whisper Turbo | Clean           |          4.97 |       4.97 |        4.66 |          4.97 |          4.66 |
+| Whisper Turbo | Noise mixture   |         12.42 |      15.22 |        8.39 |          9.63 |          7.76 |
+| Whisper Turbo | ×0.03 amplitude |          4.97 |      62.42 |        7.76 |         21.12 |          5.59 |
 
 Turbo's DPDF8 mix changes fresh noisy WER by −4.66 percentage points, with a descriptive paired 95% interval reaching zero; its quiet WER increases by 0.62 points. The observed noisy change is −2.47 points. Small's DPDF8 full and mixed settings fail on different observed quiet recordings, so even their equal 23/24 scored counts do not establish identical comparison populations. Paired results retain these exclusions. Intervals use 5,000 fixed-seed recording-level resamples, are unadjusted for multiple comparisons and do not establish speaker-level generalization.
 
 Noise controls show why favorable speech WER alone is insufficient. These are false transcripts / successfully scored noise clips; eight noise clips were attempted in every cell:
 
-| ASR | Raw | DPDF4 full | DPDF4 mix50 | DPDF8 full | DPDF8 mix50 |
-| --- | ---: | ---: | ---: | ---: | ---: |
-| Cohere | 0/8 | 0/8 | 1/8 | 0/8 | 1/8 |
-| Whisper Small | 5/8 | 4/8 | 5/8 | 3/8 | 5/8 |
-| Whisper Turbo | 7/8 | 7/8 | 6/7 + 1 ASR failure | 7/8 | 7/8 |
+| ASR           | Raw | DPDF4 full |         DPDF4 mix50 | DPDF8 full | DPDF8 mix50 |
+| ------------- | --: | ---------: | ------------------: | ---------: | ----------: |
+| Cohere        | 0/8 |        0/8 |                 1/8 |        0/8 |         1/8 |
+| Whisper Small | 5/8 |        4/8 |                 5/8 |        3/8 |         5/8 |
+| Whisper Turbo | 7/8 |        7/8 | 6/7 + 1 ASR failure |        7/8 |         7/8 |
 
 The failed Turbo noise clip cannot be counted as successful silence. Whisper's noise qualification remains unmet, and the new Cohere false transcripts block automatic adoption of either mixture.
 
@@ -58,18 +57,18 @@ All **774/774** reused raw/full-denoising cases match the earlier integration re
 
 All 288 additional attempts on the 24 observed quiet recordings are recorded. Let `q = 0.03 x`, where `x` is the original recording. “Pre-gain, restore” is `0.03 D(q / 0.03)`; “post-gain” is `D(q) / 0.03`. Both gains were fixed before results. This reverses a known artificial attenuation; it is not an implemented AGC or a deployable streaming rule.
 
-| ASR | Denoiser | Raw quiet WER | Direct quiet enhancement | Pre-gain, restore | Post-gain | Enhancement of original `x` |
-| --- | --- | ---: | ---: | ---: | ---: | ---: |
-| Cohere | DPDF4 | 66.76 | 67.52 (23/24) | 66.04 | 54.72 | 6.24 |
-| Cohere | DPDF8 | 66.76 | 66.33 | 67.63 | 13.50 | 5.81 |
-| Whisper Small | DPDF4 | 32.95 | 55.01 | 33.38 (23/24) | 54.28 | 7.84 |
-| Whisper Small | DPDF8 | 32.95 | 51.56 (23/24) | 33.09 | 10.30 | 7.55 |
-| Whisper Turbo | DPDF4 | 6.53 | 53.27 | 6.53 | 24.09 | 5.22 |
-| Whisper Turbo | DPDF8 | 6.53 | 18.80 (23/24) | 6.68 | 8.71 | 5.95 |
+| ASR           | Denoiser | Raw quiet WER | Direct quiet enhancement | Pre-gain, restore | Post-gain | Enhancement of original `x` |
+| ------------- | -------- | ------------: | -----------------------: | ----------------: | --------: | --------------------------: |
+| Cohere        | DPDF4    |         66.76 |            67.52 (23/24) |             66.04 |     54.72 |                        6.24 |
+| Cohere        | DPDF8    |         66.76 |                    66.33 |             67.63 |     13.50 |                        5.81 |
+| Whisper Small | DPDF4    |         32.95 |                    55.01 |     33.38 (23/24) |     54.28 |                        7.84 |
+| Whisper Small | DPDF8    |         32.95 |            51.56 (23/24) |             33.09 |     10.30 |                        7.55 |
+| Whisper Turbo | DPDF4    |          6.53 |                    53.27 |              6.53 |     24.09 |                        5.22 |
+| Whisper Turbo | DPDF8    |          6.53 |            18.80 (23/24) |              6.68 |      8.71 |                        5.95 |
 
 The diagnostics establish a substantial low-level recognition problem and indicate level-dependent enhancement behavior. Cohere is already highly sensitive to the artificial attenuation without denoising: 5.66% clean WER becomes 66.76% quiet WER. Improving denoiser input level but returning its output to the quiet level leaves Cohere near 66–68%. Amplifying DPDF8's quiet output recovers much of its recognition quality, showing that useful speech information survives enhancement. For Turbo, improving DPDF4 input level and then restoring the quiet amplitude changes WER from 53.27% to 6.53%, with all 24 clips completing. The Small/DPDF4 pre-gain lane still has a completion failure; normalization is not universally qualified by these results.
 
-The 24 diagnostic inputs have median RMS −83.32 dBFS. Direct DPDF4/8 outputs have medians −90.57/−83.72 dBFS; their median *paired* input-to-output changes are −5.17/−1.15 dB. Post-gain outputs remain at different levels (−60.11 versus −53.26 dBFS medians). Consequently, their residual WER gap does **not** isolate irreversible speech removal, specific artifacts or a runtime defect. Comparing gain-matched enhanced waveforms is the next isolating diagnostic. Any whole-recording level estimate must remain an offline diagnostic until a causal policy passes streaming, quiet-speech and noise-only controls.
+The 24 diagnostic inputs have median RMS −83.32 dBFS. Direct DPDF4/8 outputs have medians −90.57/−83.72 dBFS; their median _paired_ input-to-output changes are −5.17/−1.15 dB. Post-gain outputs remain at different levels (−60.11 versus −53.26 dBFS medians). Consequently, their residual WER gap does **not** isolate irreversible speech removal, specific artifacts or a runtime defect. Comparing gain-matched enhanced waveforms is the next isolating diagnostic. Any whole-recording level estimate must remain an offline diagnostic until a causal policy passes streaming, quiet-speech and noise-only controls.
 
 All 36 original FLEURS files match the pinned public archive byte for byte. The very low levels are present in that archive and the declared ×0.03 transformation, rather than an extra decoder/extraction scale factor. These are extreme digitally attenuated recordings, not natural whispers or ordinary quiet-microphone qualification. The inspected export wrapper already applies spectral normalization; adding it a second time is not the proposed remedy.
 
@@ -79,13 +78,13 @@ Across the complete 2,118 completed-audio attempts, there are **nine ASR complet
 
 All 35 Nemotron streaming attempts complete without errors. Each lane replays the same seven observed cases, totaling 54.72 seconds and 146 reference words **including a repeated reset recording**. This is a small regression fixture, not a fresh streaming accuracy benchmark. All five reset outputs exactly match the corresponding first recording. Enhancement worsens WER on this fixture:
 
-| Profile | Fixture WER % | Stop-to-final p50 / p95 ms | Whole-process peak RSS GB |
-| --- | ---: | ---: | ---: |
-| Raw | 31.51 | 87.0 / 90.8 | 1.038 |
-| DPDF4 full | 39.73 | 84.3 / 91.0 | 1.097 |
-| DPDF4 mix50 | 37.67 | 85.7 / 88.8 | 1.097 |
-| DPDF8 full | 37.67 | 86.4 / 92.0 | 1.108 |
-| DPDF8 mix50 | 37.67 | 86.7 / 88.9 | 1.110 |
+| Profile     | Fixture WER % | Stop-to-final p50 / p95 ms | Whole-process peak RSS GB |
+| ----------- | ------------: | -------------------------: | ------------------------: |
+| Raw         |         31.51 |                87.0 / 90.8 |                     1.038 |
+| DPDF4 full  |         39.73 |                84.3 / 91.0 |                     1.097 |
+| DPDF4 mix50 |         37.67 |                85.7 / 88.8 |                     1.097 |
+| DPDF8 full  |         37.67 |                86.4 / 92.0 |                     1.108 |
+| DPDF8 mix50 |         37.67 |                86.7 / 88.9 |                     1.110 |
 
 Stop-to-final starts at the nominal arrival time of the final real audio packet. It includes delayed delivery, the last packet's processing, frontend tail and ASR finalization. `feedFinishedToFinalMs` separately starts after the last enqueue. Across all lanes the maximum Stop-to-final is 94.0 ms and maximum observed packet-arrival lateness is 5.8 ms. These are contended replay observations, not physical microphone or production-placement guarantees.
 
@@ -134,11 +133,11 @@ The pinned Sherpa [online implementation](https://github.com/k2-fsa/sherpa-onnx/
 
 Artifact/runtime pins remain those in [ADR-0019](../adrs/0019-shared-audio-frontend.md). The benchmark freezes its own application source and executable separately from the September 18 experiment and concurrent workspace edits. Preprocessing wall/native/mixing time is separate from ASR/writer time over cached processed WAVs; those stage observations are not automatically complete application latency. Process load, power source, precision, thread settings, failures and artifact identities are retained. No candidate is promoted from publisher claims or a scored-only aggregate that hides failures.
 
-| Engineering category | Scope of this experiment |
-| --- | --- |
+| Engineering category              | Scope of this experiment                                                                                                                                            |
+| --------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | Frozen-weight application/runtime | Public processed-audio API, fresh frontend sessions, sample-aligned mixing, fixed known-gain transforms and measurement. Implemented in the development probe only. |
-| Runtime-internal decoder/kernel | None. No online attenuation-limit implementation, ONNX graph, decoder, quantization or operator changes. |
-| Training/checkpoint | None. AB-SDR and DPDFNet over-attenuation objectives motivate research; they are not enabled by a runtime setting. |
+| Runtime-internal decoder/kernel   | None. No online attenuation-limit implementation, ONNX graph, decoder, quantization or operator changes.                                                            |
+| Training/checkpoint               | None. AB-SDR and DPDFNet over-attenuation objectives motivate research; they are not enabled by a runtime setting.                                                  |
 
 Paper findings and official implementation capabilities motivate the protocol. The result section reports local measurements separately; an adaptive gain/mixing policy remains an unverified hypothesis.
 
@@ -170,14 +169,14 @@ The earlier gains survive the stricter control. **720 main attempts plus 24 conf
 
 WER percentages, lower is better. Each complete cell has 24 recordings / 689 reference words; a parenthetical denominator marks incomplete ASR scoring. “Pre-gain” uses the previously frozen pre-gain/restore waveform, then applies the common RMS match. Both denoiser arms therefore have the same final total RMS within each row.
 
-| ASR | Matched output level | Raw | DPDF4 direct | DPDF4 pre-gain | DPDF8 direct | DPDF8 pre-gain |
-| --- | --- | ---: | ---: | ---: | ---: | ---: |
-| Cohere | Quiet | 66.76 | 68.36 | 67.63 | 66.47 | 66.76 |
-| Cohere | Restored | 5.81 | 22.93 | 5.81 | 12.34 | 6.24 |
-| Whisper Small | Quiet | 32.95 | 55.30 | 33.24 | 52.69 | 33.09 |
-| Whisper Small | Restored | 7.98 | 12.34 | 7.84 | 10.16 | 6.97 |
-| Whisper Turbo | Quiet | 6.53 | 26.57 (21/24) | 6.24 | 14.38 (23/24) | 6.24 |
-| Whisper Turbo | Restored | 5.37 | 6.24 | 4.93 | 7.69 | 5.81 |
+| ASR           | Matched output level |   Raw |  DPDF4 direct | DPDF4 pre-gain |  DPDF8 direct | DPDF8 pre-gain |
+| ------------- | -------------------- | ----: | ------------: | -------------: | ------------: | -------------: |
+| Cohere        | Quiet                | 66.76 |         68.36 |          67.63 |         66.47 |          66.76 |
+| Cohere        | Restored             |  5.81 |         22.93 |           5.81 |         12.34 |           6.24 |
+| Whisper Small | Quiet                | 32.95 |         55.30 |          33.24 |         52.69 |          33.09 |
+| Whisper Small | Restored             |  7.98 |         12.34 |           7.84 |         10.16 |           6.97 |
+| Whisper Turbo | Quiet                |  6.53 | 26.57 (21/24) |           6.24 | 14.38 (23/24) |           6.24 |
+| Whisper Turbo | Restored             |  5.37 |          6.24 |           4.93 |          7.69 |           5.81 |
 
 Pre-gain DPDF4 versus direct DPDF4 at restored RMS changes WER by −17.13 / −4.50 / −1.31 points for Cohere / Small / Turbo. Descriptive paired 95% intervals are [−29.05, −7.01], [−11.83, −0.47] and [−2.63, −0.38]. They use 5,000 recording-level resamples and are unadjusted for multiple comparisons; these already observed clips are not a new holdout. All restored pre-gain comparisons against the corresponding **raw** control have intervals spanning zero. This supports recovering denoising regressions, not claiming a general accuracy advantage over raw speech.
 
@@ -230,27 +229,27 @@ Six fresh FLEURS base recordings, one per sex × duration stratum, each have cle
 
 WER %, lower is better. Each ordinary cell has six recordings / 100 reference words. Parentheses identify incomplete scoring, which must not be ranked as a complete quality pass. “Level” is automatic gain; D4/D8 are the existing full denoisers.
 
-| ASR | Condition | Raw | Level | D4 | Level + D4 | D8 | Level + D8 |
-| --- | --- | ---: | ---: | ---: | ---: | ---: | ---: |
-| Cohere | Clean | 7 | 6 | 9 | 6 | 8 | 3 |
-| Cohere | Quiet | 82 | 63 | 85 | 72 | 87 | 66 |
-| Cohere | Noise mixture | 13 | 12 | 36 | 38 | 17 | 20 |
-| Whisper Small | Clean | 5 | 4 | 5 | 5 | 5 | 4 |
-| Whisper Small | Quiet | 58 | 58 | 87 | 70 | 58 | 48 |
-| Whisper Small | Noise mixture | 27 | 27 | 46 | 46 | 7.89 (5/6) | 11.84 (5/6) |
-| Whisper Turbo | Clean | 3 | 3 | 3 | 5 | 3 | 4 |
-| Whisper Turbo | Quiet | 7 | 17 | 64 | 49 | 48 | 37 |
-| Whisper Turbo | Noise mixture | 9 | 7 | 32 | 35 | 21 | 17 |
+| ASR           | Condition     | Raw | Level |  D4 | Level + D4 |         D8 |  Level + D8 |
+| ------------- | ------------- | --: | ----: | --: | ---------: | ---------: | ----------: |
+| Cohere        | Clean         |   7 |     6 |   9 |          6 |          8 |           3 |
+| Cohere        | Quiet         |  82 |    63 |  85 |         72 |         87 |          66 |
+| Cohere        | Noise mixture |  13 |    12 |  36 |         38 |         17 |          20 |
+| Whisper Small | Clean         |   5 |     4 |   5 |          5 |          5 |           4 |
+| Whisper Small | Quiet         |  58 |    58 |  87 |         70 |         58 |          48 |
+| Whisper Small | Noise mixture |  27 |    27 |  46 |         46 | 7.89 (5/6) | 11.84 (5/6) |
+| Whisper Turbo | Clean         |   3 |     3 |   3 |          5 |          3 |           4 |
+| Whisper Turbo | Quiet         |   7 |    17 |  64 |         49 |         48 |          37 |
+| Whisper Turbo | Noise mixture |   9 |     7 |  32 |         35 |         21 |          17 |
 
 Small's two incomplete cells each score 76 reference words and retain one model-token-limit failure. Turbo Level additionally fails one noise-only case with that same limit: **three ASR failures total**. The writer rejects 16 outputs (12 output-limit and four fidelity rejections); delivered natural-speech aggregate WER equals raw WER in every lane, using the existing raw-text fallback. Failures are preserved rather than scored as successful empty transcripts.
 
 Noise-only false transcripts, out of six attempts per cell:
 
-| ASR | Raw | Level | D4 | Level + D4 | D8 | Level + D8 |
-| --- | ---: | ---: | ---: | ---: | ---: | ---: |
-| Cohere | 0 | 0 | 0 | 0 | 0 | 0 |
-| Whisper Small | 4 | 4 | 3 | 5 | 2 | 2 |
-| Whisper Turbo | 5 | 4 + 1 ASR failure | 5 | 5 | 5 | 5 |
+| ASR           | Raw |             Level |  D4 | Level + D4 |  D8 | Level + D8 |
+| ------------- | --: | ----------------: | --: | ---------: | --: | ---------: |
+| Cohere        |   0 |                 0 |   0 |          0 |   0 |          0 |
+| Whisper Small |   4 |                 4 |   3 |          5 |   2 |          2 |
+| Whisper Turbo |   5 | 4 + 1 ASR failure |   5 |          5 |   5 |          5 |
 
 The two synthetic negation/amount and date/time controls are excluded from natural-speech WER. Their lexical scores are unchanged when Level is added to each corresponding raw/denoiser profile. This checks regression on those fixtures; it is not a human semantic or factual-fidelity certification.
 
@@ -270,12 +269,12 @@ Reproduce with the locked project and cached public inputs using `scripts/qualif
 
 Sixteen short attempts exercise the actual application manager with Nemotron Q8_0, four native graph threads, 20 ms paced packets, artifact-default 56-frame left / three-frame right context and nominal 320 ms encoder advance. No automatic endpoint is enabled. Each profile runs the same 5.46-second English utterance clean, attenuated and noise-mixed, plus an AC-noise-only control. These fixtures overlap the completed-audio matrix and are not an independent accuracy holdout.
 
-| Profile | Clean WER % | Quiet WER % | Noisy WER % | First partial, clean / noisy ms | Stop-to-final range, four cases ms |
-| --- | ---: | ---: | ---: | ---: | ---: |
-| Raw | 11.76 | 100 | 23.53 | 1,344 / 1,001 | 56.7–67.1 |
-| Level | 5.88 | 100 | 23.53 | 1,305 / 1,024 | 59.5–91.0 |
-| D4 | 17.65 | 100 | 70.59 | 1,371 / 1,671 | 52.3–82.7 |
-| Level + D4 | 11.76 | 100 | 70.59 | 1,393 / 1,694 | 64.7–87.0 |
+| Profile    | Clean WER % | Quiet WER % | Noisy WER % | First partial, clean / noisy ms | Stop-to-final range, four cases ms |
+| ---------- | ----------: | ----------: | ----------: | ------------------------------: | ---------------------------------: |
+| Raw        |       11.76 |         100 |       23.53 |                   1,344 / 1,001 |                          56.7–67.1 |
+| Level      |        5.88 |         100 |       23.53 |                   1,305 / 1,024 |                          59.5–91.0 |
+| D4         |       17.65 |         100 |       70.59 |                   1,371 / 1,671 |                          52.3–82.7 |
+| Level + D4 |       11.76 |         100 |       70.59 |                   1,393 / 1,694 |                          64.7–87.0 |
 
 All 16 attempts complete with no frontend fallback; all active frontends preserve exact sample count and finalize. The noise-only control produces no words. Every quiet attempt produces no words and no first partial, despite successful execution. First-partial timing starts before stream creation: the clean case is cold in each process, while the noisy case is resident. Stop-to-final surrounds `session.finish()` and a small first-partial scan; it is not automatic endpoint or word-emission latency. `asrMs` also includes paced feeding and the partial-edit observer. Partial update/edit-distance counts are retained, but framing changes update frequency, so fewer updates cannot establish greater stability. The evaluator retains partial snapshots; bounded controller state does not establish bounded application memory.
 

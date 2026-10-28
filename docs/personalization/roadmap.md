@@ -8,13 +8,13 @@ The original proposal named **phase A** and **phase B**. **C and D below are org
 
 ## At a glance
 
-| Phase | User-visible purpose | Current boundary | Scope owner |
-| --- | --- | --- | --- |
-| A — local spelling memory | Learn eligible spellings and lexical context from ordinary edits; reuse them in relevant dictation across model changes. | Automatic desktop behavior on existing workers, without opt-in; fixed raw-context eligibility is integrated. Broader personal benefit remains unqualified. | [#34](https://github.com/rahulsharmavishwakarma/vesper/issues/34); guard delivered in [PR #52](https://github.com/rahulsharmavishwakarma/vesper/pull/52) |
-| A qualification | Establish whether learning actually reduces repeated corrections and editing time. | Controlled tests and a public replay exist; longitudinal user evidence is still needed. | [#58](https://github.com/rahulsharmavishwakarma/vesper/issues/58) |
-| B — semantic personalization | Learn supported writing preferences and better interpret intent, repairs and relevant context. | Bounded [semantic shadow analysis](semantic-shadow.md) is wired to draft edits; activation and personal efficacy remain unqualified. | [#59](https://github.com/rahulsharmavishwakarma/vesper/issues/59) |
-| C — external-app feedback (removed) | Was: learn from a correction made in the editor where dictation was inserted. | Removed: the TextEdit-only observer covered almost none of real corrections. See the [removal note](external-observer.md). | [#61](https://github.com/rahulsharmavishwakarma/vesper/issues/61); insertion remains in [#4](https://github.com/rahulsharmavishwakarma/vesper/issues/4) |
-| D — optional own-model adaptation | Improve acoustic recognition or cleanup through a trained and qualified local artifact. | Cleanup-first design approved; exact adapter conversion/native parity proof in progress. No trained candidate is active. | [#5](https://github.com/rahulsharmavishwakarma/vesper/issues/5) |
+| Phase                               | User-visible purpose                                                                                                     | Current boundary                                                                                                                                           | Scope owner                                                                                                                                              |
+| ----------------------------------- | ------------------------------------------------------------------------------------------------------------------------ | ---------------------------------------------------------------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| A — local spelling memory           | Learn eligible spellings and lexical context from ordinary edits; reuse them in relevant dictation across model changes. | Automatic desktop behavior on existing workers, without opt-in; fixed raw-context eligibility is integrated. Broader personal benefit remains unqualified. | [#34](https://github.com/rahulsharmavishwakarma/vesper/issues/34); guard delivered in [PR #52](https://github.com/rahulsharmavishwakarma/vesper/pull/52) |
+| A qualification                     | Establish whether learning actually reduces repeated corrections and editing time.                                       | Controlled tests and a public replay exist; longitudinal user evidence is still needed.                                                                    | [#58](https://github.com/rahulsharmavishwakarma/vesper/issues/58)                                                                                        |
+| B — semantic personalization        | Learn supported writing preferences and better interpret intent, repairs and relevant context.                           | Bounded [semantic shadow analysis](semantic-shadow.md) is wired to draft edits; activation and personal efficacy remain unqualified.                       | [#59](https://github.com/rahulsharmavishwakarma/vesper/issues/59)                                                                                        |
+| C — external-app feedback (removed) | Was: learn from a correction made in the editor where dictation was inserted.                                            | Removed: the TextEdit-only observer covered almost none of real corrections. See the [removal note](external-observer.md).                                 | [#61](https://github.com/rahulsharmavishwakarma/vesper/issues/61); insertion remains in [#4](https://github.com/rahulsharmavishwakarma/vesper/issues/4)  |
+| D — optional own-model adaptation   | Improve acoustic recognition or cleanup through a trained and qualified local artifact.                                  | Cleanup-first design approved; exact adapter conversion/native parity proof in progress. No trained candidate is active.                                   | [#5](https://github.com/rahulsharmavishwakarma/vesper/issues/5)                                                                                          |
 
 The separate [adaptive-policy qualification gate (#60)](https://github.com/rahulsharmavishwakarma/vesper/issues/60) owns the evidence and approval needed before promoting the implemented shadow controller to live use. Both live policy promotion and semantic activation depend on A qualification's independently labelled feedback. Native device/permission checks remain in [#7](https://github.com/rahulsharmavishwakarma/vesper/issues/7); #58 owns the learning outcome across sessions. C and D remain optional directions, not prerequisites for automatic in-app learning.
 
@@ -35,12 +35,12 @@ If “RSI” means recursive self-improvement, distinguish two objectives. The c
 
 The evidence supports a path, with specific limits:
 
-| Evidence class | What it supports | What it does not establish |
-| --- | --- | --- |
-| Paper: [GEC-RAG, January 2025](https://arxiv.org/abs/2501.10734v1) | Paired ASR errors and independent reference text can improve later correction through retrieval without modifying the recognizer. | Fully passive learning, this local implementation's performance, or the correctness of a repeated ASR guess. |
-| Paper: [PROSE, May 2025](https://arxiv.org/abs/2505.23815v1) | Iterative preference inference and checks across writing samples can improve personalized generation. | Quality with this app's installed small model, its latency, or improvement of its own learning algorithm. |
-| Local phase-A replay | Each automatic mode learned two memories and improved five of 27 constructed episode outputs without worsening any. | A measured reduction in real-user correction burden. The separate public replay learned no active memory and had no held-out gain. |
-| Engineering hypothesis | Scoped memory, reliable edits, later-use evaluation and reversible updates can reduce recurring personal mistakes on device. | Guaranteed, unlimited or monotonic improvement merely from continued use. |
+| Evidence class                                                     | What it supports                                                                                                                  | What it does not establish                                                                                                         |
+| ------------------------------------------------------------------ | --------------------------------------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------- |
+| Paper: [GEC-RAG, January 2025](https://arxiv.org/abs/2501.10734v1) | Paired ASR errors and independent reference text can improve later correction through retrieval without modifying the recognizer. | Fully passive learning, this local implementation's performance, or the correctness of a repeated ASR guess.                       |
+| Paper: [PROSE, May 2025](https://arxiv.org/abs/2505.23815v1)       | Iterative preference inference and checks across writing samples can improve personalized generation.                             | Quality with this app's installed small model, its latency, or improvement of its own learning algorithm.                          |
+| Local phase-A replay                                               | Each automatic mode learned two memories and improved five of 27 constructed episode outputs without worsening any.               | A measured reduction in real-user correction burden. The separate public replay learned no active memory and had no held-out gain. |
+| Engineering hypothesis                                             | Scoped memory, reliable edits, later-use evaluation and reversible updates can reduce recurring personal mistakes on device.      | Guaranteed, unlimited or monotonic improvement merely from continued use.                                                          |
 
 The intended user experience is to dictate and correct naturally when needed; desktop learning is automatic without an enable step. The app manages eligible memories; a user should not need to tune thresholds or curate every dictionary entry. However, learning needs an observed correction: in-app edits confirmed through ordinary use enter vocabulary. A retry can flag an unresolved problem without revealing the desired spelling. New topics, unseen errors and changing preferences can still need feedback.
 
@@ -137,14 +137,14 @@ The detailed training, deletion/provenance, promotion and rollback contract rema
 
 The six research areas are capabilities, not six successive implementation phases.
 
-| Capability | Existing foundation | Further development |
-| --- | --- | --- |
-| Correction learning | Ordinary spelling edits and explicit reviews | A qualification; B for semantic edits; optional C for external edits |
-| Contextual vocabulary | Scoped aliases and bounded retrieval | B3 context selection; C only for observable external context |
-| Evidence of improvement | Usage/undo counts and separate replay reports | A qualification, then comparisons for every extension |
-| Useful feedback | Bounded review selection and retry cues | B2 better repair interpretation; measure correction effort |
-| Intent and writing | Explicit forms and reviewed-example suggestions | B1 preferences and B2 intent, with fidelity checks |
-| Pronunciation/accent needs | Reviewed text-level confusion aliases | Optional D for acoustic changes; accent labels only with proven utility |
+| Capability                 | Existing foundation                             | Further development                                                     |
+| -------------------------- | ----------------------------------------------- | ----------------------------------------------------------------------- |
+| Correction learning        | Ordinary spelling edits and explicit reviews    | A qualification; B for semantic edits; optional C for external edits    |
+| Contextual vocabulary      | Scoped aliases and bounded retrieval            | B3 context selection; C only for observable external context            |
+| Evidence of improvement    | Usage/undo counts and separate replay reports   | A qualification, then comparisons for every extension                   |
+| Useful feedback            | Bounded review selection and retry cues         | B2 better repair interpretation; measure correction effort              |
+| Intent and writing         | Explicit forms and reviewed-example suggestions | B1 preferences and B2 intent, with fidelity checks                      |
+| Pronunciation/accent needs | Reviewed text-level confusion aliases           | Optional D for acoustic changes; accent labels only with proven utility |
 
 ## Evidence and performance boundaries
 

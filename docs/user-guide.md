@@ -74,15 +74,15 @@ be reopened in its new position.
 Settings has one tab per task, and every tab uses the same layout: a short
 heading, then groups, each a small label above one box of options.
 
-| Tab | What it holds |
-| --- | --- |
-| **Dictation** | Transcription language, notifications, shortcuts and what happens after a shortcut dictation (paste or keep), speech hints, and the configured models |
-| **Writing** | The writing model and style, output style, formatting, keeping fillers |
+| Tab            | What it holds                                                                                                                                                               |
+| -------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **Dictation**  | Transcription language, notifications, shortcuts and what happens after a shortcut dictation (paste or keep), speech hints, and the configured models                       |
+| **Writing**    | The writing model and style, output style, formatting, keeping fillers                                                                                                      |
 | **Vocabulary** | Your words, learning settings (saved corrections, learn from my edits, learn from fixes in other apps, words already in the field), words Vesper found, remembered examples |
-| **Projects** | Project selection, application rules and workspaces |
-| **Appearance** | Theme, reduced motion and the floating capture |
-| **Privacy** | Saving recordings, storage details and Restore defaults |
-| **About** | Version and updates |
+| **Projects**   | Project selection, application rules and workspaces                                                                                                                         |
+| **Appearance** | Theme, reduced motion and the floating capture                                                                                                                              |
+| **Privacy**    | Saving recordings, storage details and Restore defaults                                                                                                                     |
+| **About**      | Version and updates                                                                                                                                                         |
 
 Changing tabs keeps unsaved preferences intact.
 Preferences save automatically about a second after each change, across
@@ -518,11 +518,11 @@ The app can learn eligible joined/split names, closely related spellings and
 narrow acronym corrections, even when the edit includes minor formatting.
 Ordinary terms need corrections from two independent recordings before they
 are reused in matching context. Replaying the same recording does not count
-twice. An everyday word that was really a name or acronym (for example *data* →
-*Detta*, *rack* → *RAG*) is learned after three corrections in the same project.
+twice. An everyday word that was really a name or acronym (for example _data_ →
+_Detta_, _rack_ → _RAG_) is learned after three corrections in the same project.
 It is then used only when the sentence shares at least two topic words with the
 sentences you corrected, so "the training data" stays as it is. An everyday word
-changed into another everyday word (*write* → *right*) is never applied
+changed into another everyday word (_write_ → _right_) is never applied
 automatically. Add that spelling in Vocabulary if you want it. Sentence rewrites and changed decisions are not global dictionary rules,
 and some valid corrections still fall outside the current learning rules.
 
@@ -538,7 +538,7 @@ from one speech model's mistakes waits while you use a different model and comes
 back when you return; words you add or tick work with every model. If you undo
 two different learned spellings within a week, Vesper pauses all unticked
 learned spellings and shows **Resume learned spellings** under Vocabulary.
-In a detected workspace, Vesper also fixes a misheard non-word that is one letter away from one of that workspace's names or terms, such as *vasper* → *Vesper*. It never changes ordinary English words. If you change a fixed word back, Vesper stops using that spelling for automatic fixes.
+In a detected workspace, Vesper also fixes a misheard non-word that is one letter away from one of that workspace's names or terms, such as _vasper_ → _Vesper_. It never changes ordinary English words. If you change a fixed word back, Vesper stops using that spelling for automatic fixes.
 These local corrections do not train model weights or activate a new model. Read the
 [personalization guide](personalization/README.md) for the exact learning,
 review and undo behavior.

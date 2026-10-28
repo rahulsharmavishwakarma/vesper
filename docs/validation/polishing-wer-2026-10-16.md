@@ -33,11 +33,11 @@ or personal vocabulary.
 
 ## Word error
 
-| Lane | Raw ASR | Minimal | Balanced | Balanced better / worse recordings |
-| --- | ---: | ---: | ---: | ---: |
-| Clean, 24 clips, 608 words | 61 (10.03%) | 63 (10.36%) | 65 (10.69%) | 1 / 5 |
-| Noise at 0 dB, 24 clips, 608 words | 91 (14.97%) | 91 (14.97%) | 93 (15.30%) | 0 / 2 |
-| Synthetic controls, 4 clips, 52 words | 8 (15.38%) | 8 (15.38%) | 8 (15.38%) | 0 / 0 |
+| Lane                                  |     Raw ASR |     Minimal |    Balanced | Balanced better / worse recordings |
+| ------------------------------------- | ----------: | ----------: | ----------: | ---------------------------------: |
+| Clean, 24 clips, 608 words            | 61 (10.03%) | 63 (10.36%) | 65 (10.69%) |                              1 / 5 |
+| Noise at 0 dB, 24 clips, 608 words    | 91 (14.97%) | 91 (14.97%) | 93 (15.30%) |                              0 / 2 |
+| Synthetic controls, 4 clips, 52 words |  8 (15.38%) |  8 (15.38%) |  8 (15.38%) |                              0 / 0 |
 
 Minimal's +2 on the clean lane is a scoring artifact: it changed a typographic
 apostrophe (`isn’t` → `isn't`), which this normalization treats as a

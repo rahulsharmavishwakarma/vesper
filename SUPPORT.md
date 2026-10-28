@@ -1,17 +1,17 @@
-# Support
+# Getting help
 
-Start with the [development guide](docs/development.md),
-[validation guide](docs/validation.md), and [model support documentation](docs/model-presets.md).
-The current desktop release target is macOS on Apple silicon. Browser preview
-does not provide native recording or inference; Docker/Nginx is optional preview
-tooling, not a prerequisite for the Mac app.
+- **Using Vesper:** start with the [user guide](docs/user-guide.md). It covers
+  installation, permissions, models, shortcuts, updates and troubleshooting.
+  [Language support](docs/language-support-and-recommendations.md) explains which
+  model to use for each language.
+- **Building or contributing:** see the [development guide](docs/development.md)
+  and [CONTRIBUTING.md](CONTRIBUTING.md).
+- **Found a bug or want a feature?** Search
+  [existing issues](https://github.com/rahulsharmavishwakarma/vesper/issues) first,
+  then open one with the bug or feature template. Include your Vesper version,
+  macOS version, Mac model and selected speech model. Remove private recordings,
+  transcript text, credentials and personal file paths.
+- **Security issue?** Report it privately as described in [SECURITY.md](SECURITY.md).
 
-Search [existing issues](https://github.com/rahulsharmavishwakarma/vesper/issues)
-before reporting a problem. Use the bug template with your application version,
-operating system, selected model, and a small synthetic reproduction. Remove
-private recordings, transcript text, credentials, and identifying file paths.
-Feature requests and maintenance work have separate templates.
-
-For vulnerabilities, follow [SECURITY.md](SECURITY.md) and contact the maintainer
-privately. Do not post exploit details in a public support issue. Support is
-provided on a best-effort basis; there is no response-time guarantee.
+Vesper currently supports macOS on Apple silicon. Support is best effort, with no
+guaranteed response time.

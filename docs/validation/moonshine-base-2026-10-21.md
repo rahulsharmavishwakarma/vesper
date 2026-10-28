@@ -9,11 +9,11 @@ dedicated adapter built around its architecture and its reference runtime?
 Held-out WER is **10.11%** on 94 FLEURS en-US clips, at a median of 86 ms per
 clip on CPU. The download is about 141 MB.
 
-| Model | Held-out WER | Download |
-| --- | --- | --- |
-| Moonshine Base | 10.11% | ~141 MB |
-| Parakeet v3, CPU | 5.95% | ~730 MB |
-| Cohere | 5.85% | ~2.9 GB |
+| Model            | Held-out WER | Download |
+| ---------------- | ------------ | -------- |
+| Moonshine Base   | 10.11%       | ~141 MB  |
+| Parakeet v3, CPU | 5.95%        | ~730 MB  |
+| Cohere           | 5.85%        | ~2.9 GB  |
 
 Moonshine's own published Open ASR average is about 10%, so the adapter reaches
 the model's expected quality. These are local measurements on read English
@@ -75,13 +75,14 @@ Apple M5 Pro, macOS 27.0.1, battery power. The production installer and
 `vesper-eval` built-in path were used, on CPU in English.
 
 | 94 held-out FLEURS clips | Generic 9 s parts | 15 s parts + mask fix | + empty-result retry |
-| --- | ---: | ---: | ---: |
-| ≤ 9 s (46) | 6.69% | 6.69% | 6.69% |
-| 9–15 s (44) | 16.68% | 15.80% | 11.32% |
-| > 15 s (4) | 18.98% | 21.90% | 21.90% |
-| All | 12.66% | 12.41% | **10.11%** |
+| ------------------------ | ----------------: | --------------------: | -------------------: |
+| ≤ 9 s (46)               |             6.69% |                 6.69% |                6.69% |
+| 9–15 s (44)              |            16.68% |                15.80% |               11.32% |
+| > 15 s (4)               |            18.98% |                21.90% |               21.90% |
+| All                      |            12.66% |                12.41% |           **10.11%** |
 
 On the held-out regression lanes:
+
 - Non-speech controls: 0/8 false transcripts.
 - Synthetic controls: 15–33% WER.
 - −30 dB quiet lane: 62%. One clip hit the token budget and was rejected

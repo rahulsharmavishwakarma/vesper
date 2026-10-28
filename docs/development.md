@@ -72,7 +72,6 @@ make python-lock-check
 make audit-python
 # Apple-silicon macOS benchmark dependency audits:
 make audit-python-audio-frontend
-make audit-python-vibevoice
 make audit-python-onnx-quantize
 make audit-python-mlx-convert
 make audit-python-nemo-convert
@@ -91,8 +90,7 @@ Python, Ruff, pre-commit, ShellCheck and shfmt through `uv run --locked`; old
 is independent of the non-distributable Python tooling project's version.
 
 Model probes use separate macOS Apple-silicon/Python 3.12 projects under
-`benchmarks/asr/python/audio-frontend` and `benchmarks/asr/python/vibevoice`, each
-with its own manifest and lockfile. `benchmarks/asr/python/onnx-quantize` holds the
+`benchmarks/asr/python/audio-frontend`, with its own manifest and lockfile. `benchmarks/asr/python/onnx-quantize` holds the
 ONNX weight-only conversion tooling for published speech artifacts; see
 [Parakeet CPU precision](offline-asr.md#parakeet-cpu-precision). It supports Python 3.12 and 3.13
 so Google Colab's current runtime can install its hash-checked export, and its non-default `evaluation` group
@@ -136,20 +134,9 @@ Linux-only optimized regression is `make test-glib-backport`; install system
 GLib development files and pkg-config first. See the [backport maintenance
 procedure](../patches/glib/README.md) before updating vendor files or provenance.
 
-The VibeVoice research probe uses a [checksum-verified compatibility
-patch](../patches/vibevoice/README.md) for Transformers 5.10.1. After preparing
-the pinned model assets and public corpus under an ignored `ROOT`, run:
+The VibeVoice research probe, its environment and compatibility patch were
+removed on 27 October 2026 because Vesper does not support VibeVoice models. The dated [validation reports](validation/vibevoice-2026-09-18.md) remain as history.
 
-```sh
-uv sync --locked --project benchmarks/asr/python/vibevoice
-uv run --locked --project benchmarks/asr/python/vibevoice python scripts/check-vibevoice-tokenizer.py --root ROOT --output ROOT/tokenizer-compat.json
-uv run --locked --project benchmarks/asr/python/vibevoice python scripts/probe-vibevoice.py --root ROOT --plan ROOT/plan-offline.json --output ROOT/runs/offline.json
-uv run --locked --project benchmarks/asr/python/vibevoice python scripts/probe-vibevoice.py --root ROOT --plan ROOT/plan-streaming.json --output ROOT/runs/streaming.json
-```
-
-Use fresh output filenames; existing reports are preserved. The compatibility
-check covers tokenizer equivalence, tied and untied synthetic checkpoint
-round trips, and separate publisher/built-in acoustic configuration dispatch.
 The actual probe additionally verifies every downloaded checkpoint tensor and
 per-chunk cache progression. Keep source patches, manifest/lock, generated
 requirements and fresh benchmark evidence together when upgrading this stack.
@@ -522,8 +509,6 @@ The isolated audio-frontend Python project is `vesper-audio-frontend-probe`.
 Its generated requirements export continues to omit the local package while
 retaining accurate dependency provenance comments; `make python-lock-check`
 verifies each manifest, lockfile and export together.
-The VibeVoice reference environment likewise uses `vesper-vibevoice-probe`;
-its isolation, platform markers and pinned third-party packages are unchanged.
 Temporary audit, benchmark-source, release/version-test and native-probe paths
 use Vesper prefixes. Their creation/cleanup boundaries are unchanged; no
 existing temporary directory or prior measurement is renamed by the app.
@@ -588,26 +573,26 @@ Edit and save settings in the application. On desktop, the Tauri commands `get_s
 
 The persisted JSON uses camelCase fields:
 
-| Field                              | Default                                   | Accepted values / behavior                                                                                                        |
-| ---------------------------------- | ----------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------- |
-| `schemaVersion`                    | `1`                                       | Version `1`                                                                                                                       |
-| `models.asr`                       | `CohereLabs/cohere-transcribe-03-2026`    | Cohere, Nemotron, Qwen3-ASR, Parakeet, or LFM2.5 Audio                                                                            |
-| `models.rewriter`                  | `Qwen/Qwen3.5-0.8B`                       | Current cleanup model                                                                                                             |
-| `cleanupEnabled`                   | `true`                                    | Enable or disable the cleanup stage                                                                                               |
-| `language`                         | `en`                                      | `auto` plus the selected model's vendor-declared codes (`models/languages.json`); the adapter rejects undeclared combinations                                |
-| `computeBackend`                   | `auto`                                    | `auto`, `cpu`, `metal`, `cuda`, `vulkan`, or `rocm`; unsupported platform/model pairs are rejected                                |
-| `cleanupPreset`                    | `minimal`                                 | `minimal` preserves words; `balanced` allows broader guarded edits in one full cleanup pass                                     |
-| `customCleanupInstruction`         | Empty string                              | At most 4,000 characters; nonblank text replaces the preset instruction, otherwise the preset applies                             |
+| Field                              | Default                                   | Accepted values / behavior                                                                                                                       |
+| ---------------------------------- | ----------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------ |
+| `schemaVersion`                    | `1`                                       | Version `1`                                                                                                                                      |
+| `models.asr`                       | `CohereLabs/cohere-transcribe-03-2026`    | Cohere, Nemotron, Qwen3-ASR, Parakeet, or LFM2.5 Audio                                                                                           |
+| `models.rewriter`                  | `Qwen/Qwen3.5-0.8B`                       | Current cleanup model                                                                                                                            |
+| `cleanupEnabled`                   | `true`                                    | Enable or disable the cleanup stage                                                                                                              |
+| `language`                         | `en`                                      | `auto` plus the selected model's vendor-declared codes (`models/languages.json`); the adapter rejects undeclared combinations                    |
+| `computeBackend`                   | `auto`                                    | `auto`, `cpu`, `metal`, `cuda`, `vulkan`, or `rocm`; unsupported platform/model pairs are rejected                                               |
+| `cleanupPreset`                    | `minimal`                                 | `minimal` preserves words; `balanced` allows broader guarded edits in one full cleanup pass                                                      |
+| `customCleanupInstruction`         | Empty string                              | At most 4,000 characters; nonblank text replaces the preset instruction, otherwise the preset applies                                            |
 | `rewriteQuantization`              | `automatic`                               | `automatic` (resolves to the qualified Q4_0 file); `q4_0` or `q8_0` are developer overrides. The desktop app loads a saved `q4_0` as `automatic` |
-| `maxRecordingSeconds`              | `0`                                       | Legacy unsigned integer, retained but ignored; no general time quota                                                              |
-| `globalShortcut` / `recordingMode` | `CommandOrControl+Shift+Space` / `toggle` | Legacy single-binding fields retained for migration                                                                               |
-| `holdShortcut`                     | `null`                                    | Effective default Alt/Option + Shift + D; a saved legacy Hold binding is preserved                                                |
-| `toggleShortcut`                   | `null`                                    | Effective default ⌘/Ctrl + Shift + Space; a saved legacy Toggle binding is preserved                                              |
-| `floatingBarEnabled`               | `true`                                    | Show the always-on-top quick-capture strip when the shortcut is pressed                                                           |
-| `captureDesign`                    | `split`                                   | `capsule`, `split`, or `island`; chosen under Settings → Appearance                           |
-| `notificationsEnabled`             | `false`                                   | Send privacy-safe OS completion/failure notifications after permission is granted                                                 |
-| `collectTrainingData`              | `true`                                    | Retain imported/captured audio and session data; disabling runs transcription without archiving and prevents archive-only imports |
-| `improvementMode`                  | `review_required`                         | `review_required` or `automatic`; future training policy, not a running trainer                                                   |
+| `maxRecordingSeconds`              | `0`                                       | Legacy unsigned integer, retained but ignored; no general time quota                                                                             |
+| `globalShortcut` / `recordingMode` | `CommandOrControl+Shift+Space` / `toggle` | Legacy single-binding fields retained for migration                                                                                              |
+| `holdShortcut`                     | `null`                                    | Effective default Alt/Option + Shift + D; a saved legacy Hold binding is preserved                                                               |
+| `toggleShortcut`                   | `null`                                    | Effective default ⌘/Ctrl + Shift + Space; a saved legacy Toggle binding is preserved                                                             |
+| `floatingBarEnabled`               | `true`                                    | Show the always-on-top quick-capture strip when the shortcut is pressed                                                                          |
+| `captureDesign`                    | `split`                                   | `capsule`, `split`, or `island`; chosen under Settings → Appearance                                                                              |
+| `notificationsEnabled`             | `false`                                   | Send privacy-safe OS completion/failure notifications after permission is granted                                                                |
+| `collectTrainingData`              | `true`                                    | Retain imported/captured audio and session data; disabling runs transcription without archiving and prevents archive-only imports                |
+| `improvementMode`                  | `review_required`                         | `review_required` or `automatic`; future training policy, not a running trainer                                                                  |
 
 Models owns the separate ASR and cleanup selectors, inference accelerator and downloads; there is no writer precision control. Dictate and Settings expose the same persisted transcription-language setting; its choices are filtered to the selected built-in model or imported profile. Settings also owns cleanup behavior and instructions, shortcuts, notifications and collection policy. All pages share a configuration draft; edits autosave the whole draft about a second after each change, confirmed by a transient sidebar pill. Local engine stays open at the top, followed by the speech and writing model cards. Download status is integrated into the model dropdowns; there is no separate downloaded-model panel. Custom profiles appear as the active choice in their respective selectors.
 

@@ -23,9 +23,9 @@ HF_REVISION ?= main
 HF_OUTPUT ?= models/custom-profile.json
 export HF_REPO HF_WEIGHTS HF_REVISION HF_OUTPUT
 
-.PHONY: help setup setup-checks hooks precommit prepush workflows dev web model-profile build build-debug build-web check check-fast check-web test-tools test-python test-browser benchmark-contract version-check version-set container-build container-smoke fmt fmt-check lint test smoke-native models sherpa-runtime test-native-report
+.PHONY: help setup setup-checks hooks precommit prepush workflows dev web model-profile build build-debug build-web check check-fast check-web test-tools test-python test-browser benchmark-contract diagrams version-check version-set container-build container-smoke fmt fmt-check lint test smoke-native models sherpa-runtime test-native-report
 .PHONY: check-portable check-rust fmt-rust fmt-rust-check fmt-web fmt-web-check fmt-python fmt-python-check fmt-shell fmt-shell-check lint-rust lint-web lint-python lint-shell test-rust doc-rust
-.PHONY: python-lock-check audit-python audit-python-audio-frontend audit-python-vibevoice audit-python-onnx-quantize audit-python-mlx-convert audit-python-nemo-convert audit-python-coreml-convert audit-rust test-glib-backport test-cleanup-bridge
+.PHONY: python-lock-check audit-python audit-python-audio-frontend audit-python-onnx-quantize audit-python-mlx-convert audit-python-nemo-convert audit-python-coreml-convert audit-rust test-glib-backport test-cleanup-bridge
 
 help: ## Show available commands
 	@awk 'BEGIN { FS = ":.*## "; printf "Usage: make <target>\n\n" } /^[a-zA-Z_-]+:.*## / { printf "  %-14s %s\n", $$1, $$2 }' Makefile
@@ -49,7 +49,6 @@ setup-checks: ## Install isolated Python tooling and the Chromium test browser
 python-lock-check: ## Verify Python manifests, lockfiles and compatibility exports
 	$(UV) lock --check
 	$(UV) lock --check --project benchmarks/asr/python/audio-frontend
-	$(UV) lock --check --project benchmarks/asr/python/vibevoice
 	$(UV) lock --check --project benchmarks/asr/python/onnx-quantize
 	$(UV) lock --check --project benchmarks/asr/python/mlx-convert
 	$(UV) lock --check --project benchmarks/asr/python/nemo-convert
@@ -58,8 +57,6 @@ python-lock-check: ## Verify Python manifests, lockfiles and compatibility expor
 	@mkdir -p .cache
 	$(UV) export --locked --project benchmarks/asr/python/audio-frontend --no-dev --no-emit-project --output-file .cache/audio-frontend-requirements.txt > /dev/null
 	cmp benchmarks/asr/audio-frontend-requirements.txt .cache/audio-frontend-requirements.txt
-	$(UV) export --locked --project benchmarks/asr/python/vibevoice --no-dev --no-emit-project --output-file .cache/vibevoice-reference-requirements.txt > /dev/null
-	cmp benchmarks/asr/vibevoice-reference-requirements.txt .cache/vibevoice-reference-requirements.txt
 
 audit-python: ## Audit every locked contributor dependency group without re-resolving it
 	@mkdir -p .cache
@@ -74,18 +71,16 @@ test-glib-backport: ## Run optimized GLib iterator regressions (requires system 
 	$(RUN) cargo test --release --locked --manifest-path tests/glib-backport/Cargo.toml
 
 audit-python-audio-frontend: PYTHON_AUDIT_PROJECT = audio-frontend
-audit-python-vibevoice: PYTHON_AUDIT_PROJECT = vibevoice
 audit-python-onnx-quantize: PYTHON_AUDIT_PROJECT = onnx-quantize
 audit-python-mlx-convert: PYTHON_AUDIT_PROJECT = mlx-convert
 audit-python-nemo-convert: PYTHON_AUDIT_PROJECT = nemo-convert
 audit-python-coreml-convert: PYTHON_AUDIT_PROJECT = coreml-convert
 audit-python-audio-frontend: ## Audit the locked audio frontend environment on Apple-silicon macOS
-audit-python-vibevoice: ## Audit the locked VibeVoice environment on Apple-silicon macOS
 audit-python-onnx-quantize: ## Audit the locked ONNX weight-only quantization environment on Apple-silicon macOS
 audit-python-mlx-convert: ## Audit the locked MLX artifact conversion environment on Apple-silicon macOS
 audit-python-nemo-convert: ## Audit the locked NeMo-Speech.cpp GGUF conversion environment on Apple-silicon macOS
 audit-python-coreml-convert: ## Audit the locked Core ML artifact conversion environment on Apple-silicon macOS
-audit-python-audio-frontend audit-python-vibevoice audit-python-onnx-quantize audit-python-mlx-convert audit-python-nemo-convert audit-python-coreml-convert:
+audit-python-audio-frontend audit-python-onnx-quantize audit-python-mlx-convert audit-python-nemo-convert audit-python-coreml-convert:
 	@$(PYTHON) -c 'import platform, sys; sys.exit(0 if (platform.system(), platform.machine()) == ("Darwin", "arm64") else "Benchmark audits require Apple-silicon macOS; other hosts skip their dependency markers.")'
 	@mkdir -p .cache
 	$(UV) export --locked --project benchmarks/asr/python/$(PYTHON_AUDIT_PROJECT) --no-dev --no-emit-project --output-file .cache/$(PYTHON_AUDIT_PROJECT)-audit-requirements.txt > /dev/null
@@ -166,6 +161,9 @@ container-smoke: container-build ## Manually health-check the optional browser-p
 	done; \
 	[ "$$(docker inspect --format '{{.State.Health.Status}}' "$$container_id")" = healthy ]; \
 	docker exec "$$container_id" wget -qO- http://127.0.0.1:8080/healthz | grep -qx ok
+
+diagrams: ## Render the overview diagrams in docs/diagrams/*.mjs to SVGs in the app's style
+	node scripts/render-diagrams.mjs
 
 check-web: ## Check Svelte and TypeScript
 	$(RUN) npm run check

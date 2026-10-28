@@ -28,11 +28,11 @@ The evaluation planned 317 sample executions: 158 in the main suite, 90 in the r
 
 The main English lane has 24 natural FLEURS US-English test recordings (610 normalized reference words), four synthetic meaning controls and two reset repeats. Two processes reverse model order across 15-case blocks. The entire English lane was repeated with the same frozen binary; there were no changed raw/cleaned transcript hashes, scores or failure outcomes. Repetition demonstrates regression stability, not additional independent samples. These clips were already observed in the earlier screen; no model, padding or confidence threshold was tuned on them during this implementation.
 
-| Model | Natural English raw WER | Natural English after accepted cleanup | Environmental noise with false text | Quiet −30 dB control WER |
-| --- | ---: | ---: | ---: | ---: |
-| Cohere | 59/610 = 9.67% | 9.67% | 0/3 | 12/12 = 100% |
-| Whisper Small | 45/610 = 7.38% | 7.38% | 2/3 | 4/12 = 33.33% |
-| Whisper Turbo | 30/610 = 4.92% | 4.92% | 3/3 | 4/12 = 33.33% |
+| Model         | Natural English raw WER | Natural English after accepted cleanup | Environmental noise with false text | Quiet −30 dB control WER |
+| ------------- | ----------------------: | -------------------------------------: | ----------------------------------: | -----------------------: |
+| Cohere        |          59/610 = 9.67% |                                  9.67% |                                 0/3 |             12/12 = 100% |
+| Whisper Small |          45/610 = 7.38% |                                  7.38% |                                 2/3 |            4/12 = 33.33% |
+| Whisper Turbo |          30/610 = 4.92% |                                  4.92% |                                 3/3 |            4/12 = 33.33% |
 
 The three environmental clips are five seconds each from MS-SNSD test recordings, not a broad noise evaluation. Small inserts two words on two clips; Turbo inserts one on all three. The other Small noise clip is suppressed by the joint score rule. Scores and successful EOS remain recorded. Quiet speech is one attenuated public recording plus a repeated control: preserving nonempty text is not perfect recognition, and none of these results establishes a general gain/noise policy. Cohere's blank quiet output is retained as a 100% deletion outcome rather than counted as success in quality terms.
 
@@ -48,11 +48,11 @@ Explicit Hindi is rejected before inference: two failed processes account for ei
 
 A separate 45-second AMI ES2004a mixed-speaker, far-field excerpt (meeting time 600–645 seconds) uses the same 24 kHz PCM preparation and word-start-ordered reference as the earlier VibeVoice comparison, then the common evaluator's 16 kHz resampling. The reference includes overlaps, disfluencies and speaker backchannels; it is not a clean single-speaker dictation lane. Each process runs English A → meeting → A. All three return matching A before/after and successful EOS for every segment.
 
-| Model | AMI WER, 134 words | Resident ASR time for 45 s | RTF | Native segments |
-| --- | ---: | ---: | ---: | ---: |
-| Cohere | 46/134 = 34.33% | 2.285 s | 0.0508 | 6 |
-| Whisper Small | 49/134 = 36.57% | 3.018 s | 0.0671 | 2 |
-| Whisper Turbo | 44/134 = 32.84% | 4.825 s | 0.1072 | 2 |
+| Model         | AMI WER, 134 words | Resident ASR time for 45 s |    RTF | Native segments |
+| ------------- | -----------------: | -------------------------: | -----: | --------------: |
+| Cohere        |    46/134 = 34.33% |                    2.285 s | 0.0508 |               6 |
+| Whisper Small |    49/134 = 36.57% |                    3.018 s | 0.0671 |               2 |
+| Whisper Turbo |    44/134 = 32.84% |                    4.825 s | 0.1072 |               2 |
 
 All three meeting processes had no detected competing work. This is one excerpt per model and no writing stage; it provides a narrow comparable measurement, not a broad latency distribution or meeting-quality qualification.
 
@@ -70,11 +70,11 @@ Cold English requests recorded roughly 0.55 seconds of verification plus session
 
 All three 100-cycle installed-model tests passed (300 mixed cycles total, plus cold/reset/invalidation checks):
 
-| Model | Resident ASR-only RSS | Maximum sampled RSS from cycle 10 onward | Growth from cycle 10 | Result |
-| --- | ---: | ---: | ---: | --- |
-| Cohere | 4,315.0 MiB | 5,564.2 MiB | 13.3 MiB | Pass |
-| Whisper Small | 1,210.0 MiB | 2,672.1 MiB | 0.031 MiB | Pass |
-| Whisper Turbo | 2,157.6 MiB | 3,813.0 MiB | 5.8 MiB | Pass |
+| Model         | Resident ASR-only RSS | Maximum sampled RSS from cycle 10 onward | Growth from cycle 10 | Result |
+| ------------- | --------------------: | ---------------------------------------: | -------------------: | ------ |
+| Cohere        |           4,315.0 MiB |                              5,564.2 MiB |             13.3 MiB | Pass   |
+| Whisper Small |           1,210.0 MiB |                              2,672.1 MiB |            0.031 MiB | Pass   |
+| Whisper Turbo |           2,157.6 MiB |                              3,813.0 MiB |              5.8 MiB | Pass   |
 
 The larger mixed-cycle RSS includes the resident Qwen writing model. Peak process RSS from `/usr/bin/time` is recorded separately. Turbo and Cohere lifecycle processes observed external contention; use them for their asserted state/memory checks, not an uncontended latency comparison.
 

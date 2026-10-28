@@ -18,11 +18,10 @@ the same checks before packaging. Stable PR check names are:
 4. `Security / Secrets`
 5. `Security / Dependencies`
 6. `Security / Python benchmarks (audio-frontend)`
-7. `Security / Python benchmarks (vibevoice)`
-8. `Security / Python benchmarks (onnx-quantize)`
-9. `Security / Python benchmarks (mlx-convert)`
-10. `Security / Python benchmarks (nemo-convert)`
-11. `Security / Python benchmarks (coreml-convert)`
+7. `Security / Python benchmarks (onnx-quantize)`
+8. `Security / Python benchmarks (mlx-convert)`
+9. `Security / Python benchmarks (nemo-convert)`
+10. `Security / Python benchmarks (coreml-convert)`
 
 The benchmark names come from the `security.yml` matrix, so adding or removing a
 benchmark project adds or removes a check.
@@ -67,12 +66,12 @@ would change (`git diff HEAD^1 HEAD` on the merge commit) and
 [`scripts/ci-scope.mjs`](../scripts/ci-scope.mjs) decides which heavy jobs they
 need:
 
-| Job | Skipped when every changed file is… |
-| --- | --- |
-| `Rust (macOS)` | documentation, Markdown, notebooks, the Pages `site/`, Python benchmark projects, or the browser-only frontend (`apps/desktop/src/`, `apps/desktop/tests/`, Playwright/ESLint config) |
-| `Browser regressions` | documentation, Markdown, notebooks, `site/`, Python benchmark projects, or Rust/native-only paths (`crates/`, `native/`, `patches/`, `vendor/`, `apps/desktop/src-tauri/`, Cargo and toolchain files) |
-| `Python benchmarks (…)` | anything other than a benchmark project, its exported requirements, the root `pyproject.toml`/`uv.lock` or the `Makefile` |
-| GLib backport step in `Dependencies` | anything other than `vendor/glib/`, `tests/glib-backport/`, Cargo manifests and lockfile, the toolchain file, `scripts/audit-rust.py`/`test_rust_audit.py` or the `Makefile` |
+| Job                                  | Skipped when every changed file is…                                                                                                                                                                   |
+| ------------------------------------ | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `Rust (macOS)`                       | documentation, Markdown, notebooks, the Pages `site/`, Python benchmark projects, or the browser-only frontend (`apps/desktop/src/`, `apps/desktop/tests/`, Playwright/ESLint config)                 |
+| `Browser regressions`                | documentation, Markdown, notebooks, `site/`, Python benchmark projects, or Rust/native-only paths (`crates/`, `native/`, `patches/`, `vendor/`, `apps/desktop/src-tauri/`, Cargo and toolchain files) |
+| `Python benchmarks (…)`              | anything other than a benchmark project, its exported requirements, the root `pyproject.toml`/`uv.lock` or the `Makefile`                                                                             |
+| GLib backport step in `Dependencies` | anything other than `vendor/glib/`, `tests/glib-backport/`, Cargo manifests and lockfile, the toolchain file, `scripts/audit-rust.py`/`test_rust_audit.py` or the `Makefile`                          |
 
 The rules list what each job can ignore, so a path nobody anticipated still runs
 the job. Rust embeds files from `models/` and `benchmarks/`, so those always run
@@ -93,26 +92,6 @@ a workflow that never starts would leave them pending forever. The condition is
 `!cancelled() && needs.scope.outputs.<job> != 'false'`, so if the scope job itself
 fails, the jobs run instead of being skipped as passed.
 
-Native-protocol tests in `scripts/test-vibevoice-bitnet.py` launch synthetic
-children through the real resource wrapper. It uses BSD `/usr/bin/time -l` on
-macOS and GNU `/usr/bin/time -f` on the Ubuntu portable runner. GNU peak RSS is
-reported in KiB and converted to bytes; macOS already reports bytes. The GNU
-format is an explicit marker, so parsing does not depend on localized labels or
-the caller's `TIME` environment variable. Missing memory evidence stays absent.
-See GNU time's [format options](https://www.gnu.org/software/time/manual/html_node/Setting-Format.html)
-and [memory fields](https://www.gnu.org/software/time/manual/html_node/Memory-Resources.html).
-Using `-l` on Ubuntu exits before the child emits its protocol record and causes
-misleading missing-measurement failures. Do not skip those assertions or move the
-portable suite to macOS to conceal the failure. The full benchmark's macOS power
-sampling remains platform-specific; this wrapper portability does not qualify
-Linux inference or change the supported desktop platform.
-
-The portability correction was validated locally on macOS with the complete
-`make check-portable` gate, including nine passing protocol/resource tests and
-all nine Python suites. Platform-selection and byte-conversion fixtures cover
-both BSD and GNU output; the real subprocess test checks memory evidence on the
-current host. This is local evidence, not a successful Ubuntu Actions rerun.
-
 The browser job runs the existing `tests/recovery.html` scenarios in Chromium
 with mocked Tauri commands through Playwright. It fails on scenario failures,
 uncaught browser errors, or missing completion; it does not retry away failures.
@@ -132,15 +111,16 @@ app packaging follows [Tauri's macOS bundle documentation](https://v2.tauri.app/
 
 ### Language coverage
 
-| Source | Formatting | Lint/type/build checks | Tests |
-| --- | --- | --- | --- |
-| Rust workspace | `cargo fmt --all -- --check` | Locked `cargo check` and Clippy across all targets; Clippy/rustdoc deny warnings; native app build | `cargo test --workspace --all-targets --locked` plus a separate `--doc` run |
-| Isolated Rust integrity probe | Its own manifest's rustfmt check | Locked all-target/all-feature check and strict Clippy | Its own all-target/all-feature test harness |
-| TypeScript/Svelte | Prettier with the Svelte plugin | ESLint recommended JS/TS/Svelte rules, zero warnings; strict `svelte-check`, including the interaction preview fixture; Vite build | Node helper tests and mocked-native Playwright regressions |
-| JavaScript/Node tools | Prettier | ESLint recommended rules, zero warnings | All existing `scripts/*.test.mjs` and frontend helper suites |
-| Python tooling | Ruff format | Ruff syntax, Pyflakes, style-error and import-order rules | Every existing Python test naming convention in `scripts/` |
-| POSIX shell scripts | shfmt syntax/format check | ShellCheck, including sourced project files | Exercised by native reporting/build/release checks where applicable |
-| JSON/YAML/TOML/Actions | Root JSON uses Prettier; generic whitespace hooks | Syntax hooks, actionlint/ShellCheck and zizmor | Workflow checks and version/publication tooling tests |
+| Source                        | Formatting                                                                                                                                       | Lint/type/build checks                                                                                                             | Tests                                                                       |
+| ----------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------ | ---------------------------------------------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------- |
+| Rust workspace                | `cargo fmt --all -- --check`                                                                                                                     | Locked `cargo check` and Clippy across all targets; Clippy/rustdoc deny warnings; native app build                                 | `cargo test --workspace --all-targets --locked` plus a separate `--doc` run |
+| Isolated Rust integrity probe | Its own manifest's rustfmt check                                                                                                                 | Locked all-target/all-feature check and strict Clippy                                                                              | Its own all-target/all-feature test harness                                 |
+| TypeScript/Svelte             | Prettier with the Svelte plugin                                                                                                                  | ESLint recommended JS/TS/Svelte rules, zero warnings; strict `svelte-check`, including the interaction preview fixture; Vite build | Node helper tests and mocked-native Playwright regressions                  |
+| JavaScript/Node tools         | Prettier                                                                                                                                         | ESLint recommended rules, zero warnings                                                                                            | All existing `scripts/*.test.mjs` and frontend helper suites                |
+| Python tooling                | Ruff format                                                                                                                                      | Ruff syntax, Pyflakes, style-error and import-order rules                                                                          | Every existing Python test naming convention in `scripts/`                  |
+| POSIX shell scripts           | shfmt syntax/format check                                                                                                                        | ShellCheck, including sourced project files                                                                                        | Exercised by native reporting/build/release checks where applicable         |
+| JSON/YAML/TOML/Actions        | Root JSON uses Prettier; generic whitespace hooks                                                                                                | Syntax hooks, actionlint/ShellCheck and zizmor                                                                                     | Workflow checks and version/publication tooling tests                       |
+| Markdown                      | Prettier for the README, community files, `docs/`, `benchmarks/`, `models/` and `notebooks/` (`vendor/` and `patches/` keep upstream formatting) | Diagram freshness and inline-Mermaid test                                                                                          |
 
 All targets includes Rust example test harnesses that plain `cargo test` only
 compiled. Cargo's `--all-targets` excludes doctests, so the separate `--doc`
@@ -286,7 +266,6 @@ copy each export to its corresponding `benchmarks/asr/` requirements file:
 ```sh
 mkdir -p .cache
 uv export --locked --project benchmarks/asr/python/audio-frontend --no-dev --no-emit-project --output-file .cache/audio-frontend-requirements.txt
-uv export --locked --project benchmarks/asr/python/vibevoice --no-dev --no-emit-project --output-file .cache/vibevoice-reference-requirements.txt
 ```
 
 The export commands intentionally match `make python-lock-check`, including the
@@ -297,14 +276,14 @@ qualification before attributing them to changed environments.
 
 Frontend coverage is shared between local hooks and CI:
 
-| Check | Local command | Hook stage |
-| --- | --- | --- |
-| TypeScript/Svelte/JavaScript formatting (Prettier) | `make fmt-web-check` | pre-commit |
-| TypeScript/Svelte/JavaScript lint (ESLint, warnings denied) | `make lint-web` | pre-commit |
-| Svelte and TypeScript diagnostics | `make check-web` | pre-commit |
-| Frontend helper and repository tests (Node) | `make test-tools` | pre-commit |
-| Version consistency | `make version-check` | pre-push |
-| Mocked-native UI regressions (Playwright/Chromium) | `make test-browser` | Explicit local check and CI |
+| Check                                                       | Local command        | Hook stage                  |
+| ----------------------------------------------------------- | -------------------- | --------------------------- |
+| TypeScript/Svelte/JavaScript formatting (Prettier)          | `make fmt-web-check` | pre-commit                  |
+| TypeScript/Svelte/JavaScript lint (ESLint, warnings denied) | `make lint-web`      | pre-commit                  |
+| Svelte and TypeScript diagnostics                           | `make check-web`     | pre-commit                  |
+| Frontend helper and repository tests (Node)                 | `make test-tools`    | pre-commit                  |
+| Version consistency                                         | `make version-check` | pre-push                    |
+| Mocked-native UI regressions (Playwright/Chromium)          | `make test-browser`  | Explicit local check and CI |
 
 `make hooks` installs both stages. CI runs those checks independently of local
 hook installation; the portable job also builds frontend assets.
@@ -366,8 +345,8 @@ filtered.
 locked contributor groups (`dev` and `benchmark`), then runs
 `uv run --locked pip-audit --strict --require-hashes
 --disable-pip` against it. The audit cannot silently resolve newer transitive
-versions. `make audit-python-audio-frontend` and `make audit-python-vibevoice`
-use the same auditor against fresh exports of their owning locks. They require
+versions. `make audit-python-audio-frontend` and the other `audit-python-*` benchmark
+targets use the same auditor against fresh exports of their owning locks. They require
 Apple-silicon macOS: running these exports through a Linux auditor would skip
 their platform-marked dependencies and could produce an empty, misleading pass.
 
@@ -390,11 +369,15 @@ plus `setuptools` 84.0.0 (GHSA-xmj3-9gf7-h52w, fixed in 84.1.0) in those two.
 pip-audit reported them before GitHub raised Dependabot alerts. All moved to
 `filelock` 4.2.4 and `setuptools` 84.1.0 or later the same way
 ([issue #57](https://github.com/rahulsharmavishwakarma/vesper/issues/57)).
+The VibeVoice lock in these incidents was removed on 27 October 2026 because Vesper does not support VibeVoice models.
 The same day the Rust audit began failing on `tokio` 1.53.1: RUSTSEC-2026-0386
 (published 13 October) marks `AsyncFd::new` and related constructors unsound,
 and unsound advisories are denied. `cargo update -p tokio --precise 1.53.3`
 takes the patched release in the same minor series; Vesper's own code does not
 use `AsyncFd`, so the constructors 1.53.3 deprecates do not affect it.
+On 27 October 2026 the root lock's `msgpack` 1.2.2 (CVE-2026-114613, fixed in
+1.2.3) failed `make audit-python` and moved to 1.2.4 the same way, alongside the
+zstd advisories described below ([issue #348](https://github.com/rahulsharmavishwakarma/vesper/issues/348)).
 The audit jobs install only contributor tools, not model runtimes or weights.
 All manifests and lockfiles stay versioned, while `.venv` and `.cache` stay ignored.
 
@@ -407,22 +390,24 @@ marker removed, or advisory ignored. [Issue #57](https://github.com/rahulsharmav
 tracks the remaining work; this is not a claim that the repository is free of
 known advisories.
 
-| Optional VibeVoice dependency | Result | Dependabot alerts addressed |
-| --- | --- | --- |
-| Accelerate 1.10.1 | Removed; the CPU probe does not use its APIs or device dispatch | 17 |
-| Torch 2.8.0 | Updated to 2.13.0 | 11, 12, 15 |
-| Diffusers 0.35.1 | Updated to 0.38.0, requiring Safetensors 0.8.0 | 9, 10 |
-| Transformers 4.51.3 | Updated to 4.57.6, with Tokenizers 0.22.2 | 2–7 |
+The VibeVoice environment, its compatibility patch and its probe were
+removed on 27 October 2026 because Vesper does not support VibeVoice models; the table and the next paragraph record the 2026-09-19 remediation as history.
+
+| Optional VibeVoice dependency | Result                                                          | Dependabot alerts addressed |
+| ----------------------------- | --------------------------------------------------------------- | --------------------------- |
+| Accelerate 1.10.1             | Removed; the CPU probe does not use its APIs or device dispatch | 17                          |
+| Torch 2.8.0                   | Updated to 2.13.0                                               | 11, 12, 15                  |
+| Diffusers 0.35.1              | Updated to 0.38.0, requiring Safetensors 0.8.0                  | 9, 10                       |
+| Transformers 4.51.3           | Updated to 4.57.6, with Tokenizers 0.22.2                       | 2–7                         |
 
 The earlier compatible-only update still left Transformers 4.57.6 findings and
 GLib 0.18.5 / RUSTSEC-2024-0429 in the maintained graphs. The owner approved the
 following source-level remediation in [issue #57](https://github.com/rahulsharmavishwakarma/vesper/issues/57).
 
-The isolated VibeVoice environment now uses Transformers 5.10.1 and Hub 1.5.0.
-A [pinned compatibility patch](../patches/vibevoice/README.md) adapts the exact
-publisher source to tokenizer, loader initialization and tied-weight APIs. It
-preserves the existing checkpoint. The probe refuses altered source/patches,
-checks every loaded tensor against the checkpoint, and records patch provenance.
+The isolated VibeVoice environment used Transformers 5.10.1 and Hub 1.5.0.
+A pinned compatibility patch adapted the exact
+publisher source to tokenizer, loader initialization and tied-weight APIs,
+verified every loaded tensor against the checkpoint, and recorded patch provenance.
 The original publisher source requires Transformers <5: this is a maintained
 port, not a claim of upstream compatibility. Version 5.10.0 was yanked; 5.10.1
 is the candidate validated here. Historical benchmark reports retain their
@@ -444,7 +429,7 @@ and checksum in a temporary audit-only lockfile, then runs `cargo audit --file
 <temporary-lock> --deny unsound --ignore RUSTSEC-2024-0429`. The actual build
 lockfile remains untouched. This deliberately preserves matching against every
 other present or future GLib advisory; a synthetic second advisory tests that
-failure with the real client. Six existing maintenance warnings remain visible;
+failure with the real client. Unmaintained-crate warnings remain visible;
 all other vulnerabilities and unsoundness findings remain fatal. Direct
 cargo-audit omits both source verification and GLib registry-advisory coverage
 and is not a substitute for this wrapper.
@@ -473,6 +458,19 @@ shows exactly webpki-roots 0.26.11 used only by ureq 2.12.1, itself used only by
 sherpa-onnx-sys, and refuses any other webpki-roots below 1.0.10 before auditing.
 Remove the ignore and guard when sherpa-onnx-sys moves to ureq 3.
 
+A fourth owner-approved scoped ignore (2026-10-27, [issue #348](https://github.com/rahulsharmavishwakarma/vesper/issues/348))
+covers the zstd advisories RustSec published on 16 October 2026: RUSTSEC-2026-0391
+against `zstd` 0.13.3 (patched in 0.14.3) and RUSTSEC-2026-0395 to -0406 against
+`zstd-safe` 7.3.0 (patched in 8.2.0; two vulnerabilities and ten unsoundness
+findings). Both are reached only through zip 2.6.1, the sherpa-onnx-sys build
+dependency above, so they are never compiled into the application, and zip 2.x
+cannot use the patched releases. The wrapper verifies the lockfile still shows
+exactly zstd 0.13.3 used only by zip 2.6.1 and zstd-safe 7.3.0 used only by that
+zstd, and refuses any other unpatched copy before auditing. `zstd-sys` moved to
+2.1.2 for RUSTSEC-2026-0410 and needs no exception. sherpa-onnx-sys 2.0 uses
+zip 9 and zstd 0.14; moving to it removes this ignore (and likely the zip one),
+but it is a speech-runtime upgrade that needs its own qualification.
+
 The end-of-file formatter excludes only GLib's upstream `LICENSE` and
 `.cargo_vcs_info.json`, preserving their original end-of-file whitespace. Their hashes
 remain enforced by the source guard; secret and dependency scans still include
@@ -481,8 +479,7 @@ the vendor tree.
 The Python audit does not use advisory exceptions. Both package audits must
 pass independently of model qualification. The [compatibility validation](validation/dependency-security-compat-2026-09-19.md)
 records the security regressions and model checks. See the patch READMEs for update and
-removal conditions, and `docs/research-vibevoice.md` for the reference runtime's
-scope. Do not replace the checks with `continue-on-error` or a global ignore.
+removal conditions. Do not replace the checks with `continue-on-error` or a global ignore.
 
 Primary sources: [Microsoft's pinned dependency contract](https://github.com/microsoft/VibeVoice/blob/1541f590c7099820f10ea012f48d2399282df69f/pyproject.toml),
 [Transformers 5.10.1](https://github.com/huggingface/transformers/releases/tag/v5.10.1),
@@ -1029,13 +1026,13 @@ The official updater **v2.11.0** source establishes these API limits; they were
 not re-verified against the pinned 2.13.3 plugin. This is upstream source
 evidence, not a tested project integration or a dependency choice:
 
-| Planned behavior | Verified limit and design consequence |
-| --- | --- |
-| Cancel a download | The [JS API](https://github.com/tauri-apps/plugins-workspace/blob/updater-v2.11.0/plugins/updater/guest-js/index.ts) has no cancellation/AbortSignal. Resource `close()` does not cancel the cloned native transfer. True cancellation needs separately scoped implementation; do not label dismissal as cancellation. |
-| Show download size in advance | Standard check metadata lacks size. Publish optional per-platform size metadata or obtain asset metadata separately; otherwise omit the estimate. During download, total length may be absent, requiring indeterminate progress. |
-| Show ready after transfer | The [native download implementation](https://github.com/tauri-apps/plugins-workspace/blob/updater-v2.11.0/plugins/updater/src/updater.rs) emits transfer completion before signature verification. Await successful `download()` resolution before offering installation. |
-| Install later | macOS `install()` replaces the app bundle immediately; restarting is separate. Guard installation and restart together against active recording, transcription, model operations and unsaved changes. |
-| Keep a downloaded update after quitting | [JS-backed downloads](https://github.com/tauri-apps/plugins-workspace/blob/updater-v2.11.0/plugins/updater/src/commands.rs) live in an in-memory resource. Session-only deferral is available; persistent caching/resume requires additional design. |
+| Planned behavior                        | Verified limit and design consequence                                                                                                                                                                                                                                                                                  |
+| --------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Cancel a download                       | The [JS API](https://github.com/tauri-apps/plugins-workspace/blob/updater-v2.11.0/plugins/updater/guest-js/index.ts) has no cancellation/AbortSignal. Resource `close()` does not cancel the cloned native transfer. True cancellation needs separately scoped implementation; do not label dismissal as cancellation. |
+| Show download size in advance           | Standard check metadata lacks size. Publish optional per-platform size metadata or obtain asset metadata separately; otherwise omit the estimate. During download, total length may be absent, requiring indeterminate progress.                                                                                       |
+| Show ready after transfer               | The [native download implementation](https://github.com/tauri-apps/plugins-workspace/blob/updater-v2.11.0/plugins/updater/src/updater.rs) emits transfer completion before signature verification. Await successful `download()` resolution before offering installation.                                              |
+| Install later                           | macOS `install()` replaces the app bundle immediately; restarting is separate. Guard installation and restart together against active recording, transcription, model operations and unsaved changes.                                                                                                                  |
+| Keep a downloaded update after quitting | [JS-backed downloads](https://github.com/tauri-apps/plugins-workspace/blob/updater-v2.11.0/plugins/updater/src/commands.rs) live in an in-memory resource. Session-only deferral is available; persistent caching/resume requires additional design.                                                                   |
 
 Private release assets require authorized access according to
 [GitHub's asset API](https://docs.github.com/en/rest/releases/assets#get-a-release-asset).

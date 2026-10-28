@@ -18,24 +18,24 @@ follows the application-path results below and is kept as history.
 Measured through `vesper-eval` on Metal on an M5 Pro, on battery, against
 Parakeet v3 on the same lanes.
 
-| Lane | Parakeet v3 | Redux | Redux − v3 (95% CI) |
-| --- | --- | --- | --- |
-| FLEURS en-US held-out, 94 clips | 5.25% | 6.35% | [+0.36, +1.87] |
-| FLEURS en-US unseen, 100 clips | 5.68% | 6.71% | [+0.13, +2.03] |
-| Natural clean, 24 | 6.25% | 6.91% | [−0.96, +2.14] |
-| Natural +10 dB SNR, 24 | 6.74% | 8.22% | [−0.36, +3.65] |
-| Natural 0 dB SNR, 24 | 9.21% | 13.32% | [+1.45, +7.37] |
-| Quiet (−30 dB), 24 | 6.91% | 8.22% | [0.00, +2.77] |
-| Joined FLEURS long-form, 6 × ~95 s | 10.50% | 8.97% | [−4.56, +0.76] |
-| FLEURS de-DE, 50 clips (explicit `de` or automatic) | 6.62%¹ | 7.16% | [−0.84, +1.95] |
+| Lane                                                | Parakeet v3 | Redux  | Redux − v3 (95% CI) |
+| --------------------------------------------------- | ----------- | ------ | ------------------- |
+| FLEURS en-US held-out, 94 clips                     | 5.25%       | 6.35%  | [+0.36, +1.87]      |
+| FLEURS en-US unseen, 100 clips                      | 5.68%       | 6.71%  | [+0.13, +2.03]      |
+| Natural clean, 24                                   | 6.25%       | 6.91%  | [−0.96, +2.14]      |
+| Natural +10 dB SNR, 24                              | 6.74%       | 8.22%  | [−0.36, +3.65]      |
+| Natural 0 dB SNR, 24                                | 9.21%       | 13.32% | [+1.45, +7.37]      |
+| Quiet (−30 dB), 24                                  | 6.91%       | 8.22%  | [0.00, +2.77]       |
+| Joined FLEURS long-form, 6 × ~95 s                  | 10.50%      | 8.97%  | [−4.56, +0.76]      |
+| FLEURS de-DE, 50 clips (explicit `de` or automatic) | 6.62%¹      | 7.16%  | [−0.84, +1.95]      |
 
 ¹ Parakeet v3's 4-bit CPU export: its Metal path is English-only.
 
-| Resource (FLEURS en-US, Metal) | Parakeet v3 MLX | Redux |
-| --- | --- | --- |
-| Median / p95 ASR time per clip | 48 / 71 ms | 51 / 80 ms |
-| Peak MLX allocator memory | 3.80 GB | 0.94 GB |
-| Download | ~2.5 GB | ~217 MB |
+| Resource (FLEURS en-US, Metal) | Parakeet v3 MLX | Redux      |
+| ------------------------------ | --------------- | ---------- |
+| Median / p95 ASR time per clip | 48 / 71 ms      | 51 / 80 ms |
+| Peak MLX allocator memory      | 3.80 GB         | 0.94 GB    |
+| Download                       | ~2.5 GB         | ~217 MB    |
 
 The unseen set and the long-form lane are described in the
 [Phonon-2 record](phonon2-2026-10-21.md#environment) and the
@@ -107,14 +107,14 @@ Checked at `moondream/parakeet-redux@2bf12860`, CC-BY-4.0.
 The same reference code, Python mlx-audio 0.6.1 (`ParakeetRedux` and the
 mlx-community v3 files the app ships), ran on an Apple M5 Pro on battery power.
 
-| Set | v3 (MLX) | redux | redux better / worse | Difference CI |
-| --- | ---: | ---: | --- | --- |
-| FLEURS en-US, 94 held-out clips | 5.05% | 6.50% | 6 / 27 | [0.65, 2.29] |
-| Regression, clean (24) | 6.58% | 7.07% | 5 / 8 | [−0.96, 1.78] |
-| Regression, +10 dB (24) | 6.58% | 8.55% | 2 / 8 | [0.00, 4.44] |
-| Regression, 0 dB (24) | 9.54% | 13.65% | 3 / 14 | [1.39, 7.25] |
-| Regression, −30 dB quiet (24) | 57.73%² | 23.68%² | 15 / 2 | [−50.0, −18.4] |
-| FLEURS de-DE, 50 clips | 5.55% | 6.71% | — | — |
+| Set                             | v3 (MLX) |   redux | redux better / worse | Difference CI  |
+| ------------------------------- | -------: | ------: | -------------------- | -------------- |
+| FLEURS en-US, 94 held-out clips |    5.05% |   6.50% | 6 / 27               | [0.65, 2.29]   |
+| Regression, clean (24)          |    6.58% |   7.07% | 5 / 8                | [−0.96, 1.78]  |
+| Regression, +10 dB (24)         |    6.58% |   8.55% | 2 / 8                | [0.00, 4.44]   |
+| Regression, 0 dB (24)           |    9.54% |  13.65% | 3 / 14               | [1.39, 7.25]   |
+| Regression, −30 dB quiet (24)   |  57.73%² | 23.68%² | 15 / 2               | [−50.0, −18.4] |
+| FLEURS de-DE, 50 clips          |    5.55% |   6.71% | —                    | —              |
 
 Median decode was 51 ms for v3 and 79 ms for redux per clip on Metal.
 

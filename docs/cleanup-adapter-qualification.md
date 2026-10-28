@@ -15,15 +15,15 @@ The conversion uses official runtime APIs and an application-side tensor bridge.
 No production decoder/kernel change is included. Fitting adapters would be a
 training/checkpoint change, still gated here.
 
-| Component | Inspected/tested identity |
-| --- | --- |
-| Public base source | `Qwen/Qwen3.5-0.8B@2fc06364715b967f1860aea9cf38778875588b17` |
-| MLX-LM | `0.31.3`, source `ed1fca4cef15a824c5f1702c80f70b4cffc8e4dd` |
-| MLX / MLX Metal | `0.32.2` |
-| Native binding | `llama-cpp-2 0.1.156` (27 September experiment; the application now pins 0.1.159 / llama.cpp `d8123504`) |
-| Native source/converter | `llama.cpp e79e4bf660e19f2ad851e06c6913f7a8c5852621` |
-| Converter environment | Python 3.12, Torch 2.13.0, Transformers 5.17.0, NumPy 2.5.3, safetensors 0.8.0, protobuf 7.36.2, sentencepiece 0.2.2; full lock in `training/cleanup/uv.lock` |
-| Native fixture | Apple M5 Pro, macOS 27.0 (26A428), CPU or Metal, 4 CPU threads, context 512, batch/microbatch 128 |
+| Component               | Inspected/tested identity                                                                                                                                     |
+| ----------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Public base source      | `Qwen/Qwen3.5-0.8B@2fc06364715b967f1860aea9cf38778875588b17`                                                                                                  |
+| MLX-LM                  | `0.31.3`, source `ed1fca4cef15a824c5f1702c80f70b4cffc8e4dd`                                                                                                   |
+| MLX / MLX Metal         | `0.32.2`                                                                                                                                                      |
+| Native binding          | `llama-cpp-2 0.1.156` (27 September experiment; the application now pins 0.1.159 / llama.cpp `d8123504`)                                                      |
+| Native source/converter | `llama.cpp e79e4bf660e19f2ad851e06c6913f7a8c5852621`                                                                                                          |
+| Converter environment   | Python 3.12, Torch 2.13.0, Transformers 5.17.0, NumPy 2.5.3, safetensors 0.8.0, protobuf 7.36.2, sentencepiece 0.2.2; full lock in `training/cleanup/uv.lock` |
+| Native fixture          | Apple M5 Pro, macOS 27.0 (26A428), CPU or Metal, 4 CPU threads, context 512, batch/microbatch 128                                                             |
 
 Only final decoder layer 23's `mlp.down_proj` is accepted. The checkpoint has
 24 layers, input width 3584 and output width 1024. MLX stores `A[in,rank]` and
@@ -130,13 +130,13 @@ correct explicit empty-device configuration matches the production CPU path.
 Cross-runtime limits fixed before the first comparison: baseline max absolute
 error ≤0.02, baseline RMS ≤0.002, adapter-delta relative RMS ≤0.1 and cosine ≥0.99.
 
-| Run | Baseline max absolute range | Baseline RMS range | Result |
-| --- | --- | --- | --- |
-| Locked MLX-LM 0.31.3 vs native F32 | 0.03565–0.04840 | 0.00681–0.01151 | Fail |
-| Native F32 KV cache control | Same as above | Same as above | Fail |
-| Official normalization correction, diagnostic only | 0.00980–0.01221 | 0.00215–0.00282 | Fail |
-| Native normalization formula, diagnostic only | 0.00905–0.01595 | 0.00204–0.00374 | Fail |
-| Official formula with reference GDN operations | 0.00947–0.01277 | 0.00218–0.00285 | Fail |
+| Run                                                | Baseline max absolute range | Baseline RMS range | Result |
+| -------------------------------------------------- | --------------------------- | ------------------ | ------ |
+| Locked MLX-LM 0.31.3 vs native F32                 | 0.03565–0.04840             | 0.00681–0.01151    | Fail   |
+| Native F32 KV cache control                        | Same as above               | Same as above      | Fail   |
+| Official normalization correction, diagnostic only | 0.00980–0.01221             | 0.00215–0.00282    | Fail   |
+| Native normalization formula, diagnostic only      | 0.00905–0.01595             | 0.00204–0.00374    | Fail   |
+| Official formula with reference GDN operations     | 0.00947–0.01277             | 0.00218–0.00285    | Fail   |
 
 The locked run's adapter-delta cosine was 0.999809–0.999989, relative RMS
 0.00475–0.01957. Delta agreement supports the narrower hypothesis of a base-runtime
@@ -153,13 +153,13 @@ dependency upgrade or a production patch. The official correction improves
 agreement but does not account for the remaining discrepancy. Locks, production
 runtime and original acceptance thresholds remain unchanged.
 
-| Artifact | SHA-256 |
-| --- | --- |
-| Source config | `b90b86f35c8e6925ef74ee04d0e758f0a845c83a42089ad82bbaa948de9b4204` |
-| Source safetensors | `04b1c301231dd422b8860db31311ab2721511346a32cb1e079c4c4e5f1fe4696` |
-| Converted F32 base | `0db234f4b33f0624cbab12f259d9769ccf1146e2807380eb085aa5aed4d55ed8` |
-| Deployed Q4 base | `57d1997790d1744fba5b40a7317df71ea5e2acee28c47e78f0cce39c0703f8cf` |
-| Zero GGUF adapter | `e1fe2d30f09a26dbea4eee6449550b988f064f0f3fb60782643545370a6b0be1` |
+| Artifact             | SHA-256                                                            |
+| -------------------- | ------------------------------------------------------------------ |
+| Source config        | `b90b86f35c8e6925ef74ee04d0e758f0a845c83a42089ad82bbaa948de9b4204` |
+| Source safetensors   | `04b1c301231dd422b8860db31311ab2721511346a32cb1e079c4c4e5f1fe4696` |
+| Converted F32 base   | `0db234f4b33f0624cbab12f259d9769ccf1146e2807380eb085aa5aed4d55ed8` |
+| Deployed Q4 base     | `57d1997790d1744fba5b40a7317df71ea5e2acee28c47e78f0cce39c0703f8cf` |
+| Zero GGUF adapter    | `e1fe2d30f09a26dbea4eee6449550b988f064f0f3fb60782643545370a6b0be1` |
 | Nonzero GGUF adapter | `2a2f8b09fa6df53098d813c16e5f33a6cffd5df16675469d0bd5fba84ea99ce7` |
 
 These short synthetic controls establish neither writing quality nor CPU/GPU
