@@ -543,9 +543,9 @@ writer produced.
 - **Forget** removes every word from one source and stops reading it until you
   choose **Resume**.
 
-Project folders are the ones you chose with **Learn words from this folder…**
-under Workspaces; clearing that choice removes the words found there on the
-next check. See [term inventory](personalization/term-inventory.md).
+Vesper never asks you to choose folders to read. (The earlier **Learn words from
+this folder…** button was removed on 28 October 2026; words read that way are
+dropped on the next check.) See [term inventory](personalization/term-inventory.md).
 
 **Project selection** can be manual or use application rules. In Vocabulary,
 choose **Use application rules**, click **Add application rule**, choose an app,
@@ -574,9 +574,7 @@ then dictation uses shared vocabulary. A visible workspace works like a project
 named after its folder or website: words you teach while in it stay with it. In
 the list you can **Rename** it (Enter saves, Escape cancels), **Merge…** it into
 another workspace, or **Remove** it so it is never detected again. Renaming or
-merging moves the vocabulary and examples saved under the old name. For a folder
-workspace, **Learn words from this folder…** lets you pick a folder Vesper may
-read later to learn spellings; **Stop learning from folder** withdraws that.
+merging moves the vocabulary and examples saved under the old name.
 A project you enter, and any application rule, always wins. Turn off **Detect
 workspaces automatically** to stop detection; existing workspaces stay listed.
 Detection relies on what each app exposes through Accessibility; apps that

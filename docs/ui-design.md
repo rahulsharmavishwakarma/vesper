@@ -194,6 +194,17 @@ repeating both selected models. Do not add a separate batch-verification card;
 automatic integrity checks and each model's Download/Verify files action own that
 flow. Keep these removals independent of changes to page width or card layout.
 
+### Option text
+
+A setting's label says what it does; help text under it is at most one short
+line, and is left out when the label is enough. Examples beat explanations
+(`“two thousand dollars” → $2,000`). Opt-ins that read other apps keep one line
+saying what is read and that nothing is saved. Details belong in the user
+guide, not the screen. Short related fields share one row (Writing: project
+selection, project and output style). Lists of items, such as workspaces, are
+compact rows: name and details on the left, quiet text actions on the right,
+not one card per item. Do not ask people to pick folders for Vesper to read.
+
 ## Small windows
 
 The main window supports 360 × 480 logical pixels. At widths up to 700 px,

@@ -106,7 +106,6 @@ if (states) {
       firstSeenDay: 740000,
       lastSeenDay: 740003,
       renamed: false,
-      miningRoot: null,
     },
     {
       key: 'b'.repeat(32),
@@ -117,7 +116,6 @@ if (states) {
       firstSeenDay: 740001,
       lastSeenDay: 740002,
       renamed: false,
-      miningRoot: null,
     },
   ];
   const runtime = {
@@ -514,11 +512,6 @@ if (states) {
         case 'delete_workspace':
           previewWorkspaces = previewWorkspaces.filter((w) => w.key !== args.key);
           return { workspaces: structuredClone(previewWorkspaces), profileChanged: false };
-        case 'set_workspace_mining_root': {
-          const target = previewWorkspaces.find((w) => w.key === args.key);
-          target.miningRoot = args.path;
-          return { workspaces: structuredClone(previewWorkspaces), profileChanged: false };
-        }
         case 'get_automatic_learning':
           return {
             schemaVersion: 1,

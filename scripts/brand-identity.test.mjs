@@ -189,7 +189,7 @@ test('current product copy consistently names Vesper', () => {
     ['SECURITY.md', 'Until Vesper publishes stable releases'],
     ['.github/ISSUE_TEMPLATE/bug_report.yml', 'Start Vesper with'],
     ['.github/ISSUE_TEMPLATE/feature_request.yml', 'improvement to Vesper'],
-    ['apps/desktop/src/lib/components/PersonalizationPanel.svelte', 'Vesper automatically learns'],
+    ['apps/desktop/src/lib/components/PersonalizationPanel.svelte', 'Vesper learns spellings'],
     ['apps/desktop/src-tauri/src/lib.rs', 'failed to build the Vesper desktop application'],
     ['apps/desktop/src-tauri/examples/learning_webview.rs', 'Vesper — public audio qualification'],
     ['apps/desktop/src-tauri/capabilities/default.json', 'local Vesper application'],

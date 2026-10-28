@@ -927,8 +927,7 @@
                       /><span>Use the writing model to polish transcripts</span></label
                     >
                     <p id="cleanup-enabled-help" class="note checkbox-help">
-                      Turn this off to skip writing-model edits. Confirmed vocabulary corrections
-                      can still apply.
+                      Off: your vocabulary still applies.
                     </p>
                   </div>
                   <fieldset disabled={!draft.cleanupEnabled} class="cleanup-options">
@@ -953,10 +952,7 @@
                         disabled={pending !== null || pipelineBusy || !draft.cleanupEnabled}
                         describedBy="cleanup-help"
                       />
-                      <p id="cleanup-help" class="note">
-                        Formatting only keeps your words. Context correction can change wording. The
-                        original transcript stays available.
-                      </p>
+                      <p id="cleanup-help" class="note">The original transcript is always kept.</p>
                     </div>
                     <details>
                       <summary>Advanced writing instructions</summary>
