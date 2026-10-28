@@ -539,7 +539,7 @@ from one speech model's mistakes waits while you use a different model and comes
 back when you return; words you add or tick work with every model. If you undo
 two different learned spellings within a week, Vesper pauses all unticked
 learned spellings and shows **Resume learned spellings** under Vocabulary.
-In a detected workspace, Vesper also fixes a misheard non-word that is one letter away from one of that workspace's names or terms, such as _vasper_ → _Vesper_. It never changes ordinary English words. If you change a fixed word back, Vesper stops using that spelling for automatic fixes.
+Vesper also fixes a misheard non-word that is one letter away from a name or term it knows for this dictation (your words, Words Vesper found, words in the field), such as _vasper_ → _Vesper_. It never changes ordinary English words. If you change a fixed word back, Vesper stops using that spelling for automatic fixes.
 These local corrections do not train model weights or activate a new model. Read the
 [personalization guide](personalization/README.md) for the exact learning,
 review and undo behavior.
@@ -548,11 +548,9 @@ review and undo behavior.
 Vesper collected on its own. Sources:
 
 - your Mac's **Text Replacements** and learned spelling words
-- spelling lists, code names, package names and documentation headings in
-  project folders you chose
 
 A background check runs about once an hour while the Mac is idle and not too
-warm. It skips Low Power Mode, and it reads project folders only on power. Each
+warm. It skips Low Power Mode. Each
 recording uses only a few relevant words, preferring the current project's
 words. Words found this way are never taken from what the speech model or the
 writer produced.
@@ -561,9 +559,7 @@ writer produced.
 - **Forget** removes every word from one source and stops reading it until you
   choose **Resume**.
 
-Vesper never asks you to choose folders to read. (The earlier **Learn words from
-this folder…** button was removed on 28 October 2026; words read that way are
-dropped on the next check.) See [term inventory](personalization/term-inventory.md).
+See [term inventory](personalization/term-inventory.md).
 
 **Project selection** can be manual or use application rules. In Vocabulary,
 choose **Use application rules**, click **Add application rule**, choose an app,
@@ -652,7 +648,7 @@ controls.
 | In-app spelling learning    | Eligible saved corrections contribute automatically to scoped vocabulary under the support and context rules above. No per-word approval is needed.                                                                                      |
 | Background edit analysis    | After a saved in-app correction, an already-loaded supported writer can analyze intent and context while idle. Its findings are evaluation evidence; they do not change your preferences or approve labels. Recording cancels this work. |
 | Learning-rule comparisons   | Explicit in-app edits trigger background comparisons of fixed learning rules. Results do not select a new active rule.                                                                                                                   |
-| External-editor corrections | Not observed. Correct the draft inside Vesper; eligible in-app corrections teach vocabulary automatically.                                                                                                                               |
+| External-editor corrections | Off by default. With **Learn from fixes in other apps** on, Vesper reads the pasted text back once and teaches from words you changed.                                                                                                   |
 | History and model training  | History training labels require explicit review. Automatic label approval, candidate training and model promotion are not active.                                                                                                        |
 
 Automatic checks therefore do not mark each recording as reviewed. Semantic

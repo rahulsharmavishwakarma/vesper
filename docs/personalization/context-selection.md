@@ -144,7 +144,7 @@ training targets.
 
 ## Automatic workspaces
 
-Status: implemented on `feature/automatic-workspaces`; resolver, storage and
+Status: implemented, tracked in [#357](https://github.com/rahulsharmavishwakarma/vesper/issues/357); resolver, storage and
 settings are covered by unit, store and mocked-browser tests and a synthetic
 replay. Per-app accessibility coverage is measured only from real dictations
 while the user has detection switched on ([coverage](#coverage-from-real-dictations));
@@ -284,13 +284,13 @@ Synthetic replay (`cargo run --release -p vesper-data --example workspace_replay
 an invented week of 2,749 dictations over 20 seeds across three repositories,
 one document folder, two websites, Mail, Slack and one-off files, with 10% of
 document reads returning nothing. It exercises the real snapshot, resolver and
-store; it is **not** evidence of live accessibility coverage.
+store; it is **not** evidence of live accessibility coverage. Precision, recall and the Mail/Slack row were re-run on 29 October 2026 with the single-document rule (one document, five dictations, two days); the visibility and split rows are from the earlier run without it.
 
 | Measure (local measurement, synthetic input)                                          | Result                                                                                                     |
 | ------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------- |
-| Precision (assigned dictations whose workspace's majority truth matches)              | 1,349 / 1,349                                                                                              |
-| Recall over all workspace dictations (includes the latent period)                     | 1,349 / 2,259 (59.7%)                                                                                      |
-| Recall after each workspace first became visible (mean over seeds)                    | 90.1%                                                                                                      |
+| Precision (assigned dictations whose workspace's majority truth matches)              | 1,363 / 1,363                                                                                              |
+| Recall over all workspace dictations (includes the latent period)                     | 1,363 / 2,259 (60.3%)                                                                                      |
+| Recall after each workspace first became visible (mean over seeds)                    | 90.0%                                                                                                      |
 | Mail, Slack and one-off files assigned a workspace                                    | 0 / 490                                                                                                    |
 | Median time to visibility (repos, document folder, hosts)                             | day 2–3.5, 5.5–8.5 dictations                                                                              |
 | Visible within the week (seeds)                                                       | vesper 20/20, billing-api 19/20, Acme 19/20, github.com 18/20, docs.rs 12/18, notes-site 7/19 (as `posts`) |

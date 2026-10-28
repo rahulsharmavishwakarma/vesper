@@ -79,14 +79,19 @@ Continuous model improvement remains a separate train/evaluate/promote milestone
 ### Current personalization boundaries
 
 This diagram describes the implemented flow. The operation freezes its project,
-language and memory before using them. Projects resolve from an explicit manual
-override or bounded app/folder rules. Semantic/policy evaluations do not activate memory
-or train models. Detailed contracts live in the [personalization guide](personalization/README.md).
+workspace, language and memory before using them. Projects resolve from an
+explicit manual override or bounded app/folder rules; automatic workspaces
+(opt-in) resolve from the frontmost app and a hashed folder key or web host.
+Semantic/policy evaluations do not activate memory or train models. The
+[self-improving system](personalization/self-improving-system.md) page has the
+overview diagram of both learning loops; detailed contracts live in the
+[personalization guide](personalization/README.md).
 
 ```mermaid
 flowchart TD
-    P["Manual override, app/folder rules, language and memory"] --> S["Frozen operation snapshot"]
-    S --> A["Selected ASR; optional supported hints"]
+    P["Manual override, app/folder rules, workspace, language and memory"] --> S["Frozen operation snapshot"]
+    S --> WS["Working set from term inventory and vocabulary"]
+    WS --> A["Selected ASR; hints only through a qualified hook"]
     A --> R["Durable raw transcript"]
     R --> C["Select memory using raw text and scope"]
     S --> C
@@ -94,9 +99,12 @@ flowchart TD
     R -->|"Writer off or failed"| M["Shared saved-correction stage"]
     W --> M
     C --> M
-    M --> O["Output with recording scope"]
-    O --> E["Edits in Your text"]
-    E --> G["Independent support, language and context gates"]
+    M --> CG["Correction gate: exact terms, near-miss repair"]
+    WS --> CG
+    CG --> F["Rule-based formatting (English)"]
+    F --> O["Output with recording scope and stage authorship"]
+    O --> E["Edits in Your text, Undo, opt-in fixes read back from the app"]
+    E --> G["Independent support, language, context gates and policy breaker"]
     G -->|"Eligible spelling"| P
     E --> Q["Semantic and policy shadow evaluation only"]
     R --> H["Separate explicit human review"]

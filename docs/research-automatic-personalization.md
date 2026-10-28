@@ -6,7 +6,7 @@ Reviewed: **16 September 2026**. Recent research window: **16 September 2024–1
 
 The intended experience is: **dictate normally, correct naturally, and encounter fewer recurring mistakes over time**. Users should not have to maintain a dictionary or press “Remember” after each correction. All inference and memory updates stay on device; the application owns the memory across model changes. Training remains deferred until a separately approved own-model project.
 
-This extends [the six-capability research](research-personal-dictation.md). It concentrates on the missing automatic feedback loop rather than repeating that document's accent, adapter and competitor survey.
+This extends the six-capability research (removed in #353; Git history keeps it). It concentrates on the missing automatic feedback loop rather than repeating that document's accent, adapter and competitor survey.
 
 The [phase roadmap](personalization/roadmap.md) organizes the remaining implementation directions and their validation requirements. It preserves A/B from this proposal and distinguishes optional external-editor observation and own-model training from the current on-device memory loop.
 

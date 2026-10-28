@@ -16,7 +16,7 @@ The [September 2026 RSI research review](../research-rsi-2026-09.md) compares Dr
 
 [Learning from the app you dictate into](app-learning.md) covers the opt-in field words and fix read-back.
 
-The [self-improving dictation system](self-improving-system.md) page summarizes how automatic workspaces, the term inventory, recognizer hooks, the correction gate and policy-5 learning fit together, with the measured status of each.
+The [self-improving dictation system](self-improving-system.md) page summarizes how automatic workspaces, the term inventory, recognizer hooks, the correction gate, formatting and policy-6 learning fit together, with an overview diagram and the measured status of each.
 
 | Component                                      | Detailed contract                                                                                                                                                                     |
 | ---------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
@@ -30,6 +30,7 @@ The [self-improving dictation system](self-improving-system.md) page summarizes 
 | Evidence of benefit                            | [Evaluation](evaluation.md): replay, comparison limits, timing and qualification                                                                                                      |
 | Native qualification procedure                 | [Protocol](native-qualification.md): frozen controls, installed-model replay, natural sessions and acceptance gates                                                                   |
 | Recognizer hooks and correction gate per model | [Term evaluation](term-evaluation.md): fixed term evaluator, hint conditions, false alarms and hook decisions                                                                         |
+| Correction gate                                | [Correction gate](correction-gate.md): exact normalizations, heard-plausibility, near-miss repair and stage authorship                                                                |
 
 Automatic local learning is core desktop behavior, including for existing profiles. There is no **Learn as I dictate** switch and no setup or per-word confirmation is needed. Settings → Vocabulary explains the behavior and retains inspection, removal and **Forget automatic learning**. Forget clears learned evidence; fresh recordings can teach again, while old result contexts cannot recreate forgotten evidence. This product requirement supersedes the earlier off-by-default rollout choice; broad personal benefit still needs qualification. **Apply my saved corrections** controls the final alias-replacement stage. Recognition hints have a separate opt-in switch and depend on the adapter.
 

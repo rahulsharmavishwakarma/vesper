@@ -99,7 +99,7 @@ Runtime's HQQ quantizer imports) serve the [quantization research notebooks](../
 CI's dependency audit covers only the default group.
 `benchmarks/asr/python/nemo-convert` mirrors the converter requirements of the pinned NeMo-Speech.cpp runtime
 (PyTorch 2.6 CPU, torchaudio, librosa, NumPy 1.26) for producing GGUF files that one file serves on CPU, Metal, CUDA
-and Vulkan; see the [Parakeet GGUF record](validation/parakeet-gguf-cross-backend-2026-10-22.md).
+and Vulkan (its validation record was removed in #353; Git history keeps it).
 `benchmarks/asr/python/mlx-convert` pins mlx-audio for MLX artifact conversion;
 see [Parakeet Redux](offline-asr.md#parakeet-redux-apple-gpu).
 `benchmarks/asr/python/coreml-convert` pins coremltools, PyTorch and Transformers for the
@@ -135,7 +135,7 @@ GLib development files and pkg-config first. See the [backport maintenance
 procedure](../patches/glib/README.md) before updating vendor files or provenance.
 
 The VibeVoice research probe, its environment and compatibility patch were
-removed on 27 October 2026 because Vesper does not support VibeVoice models. The dated [validation reports](validation/vibevoice-2026-09-18.md) remain as history.
+removed on 27 October 2026 because Vesper does not support VibeVoice models. Its dated validation reports were removed in #353; Git history keeps them.
 
 The actual probe additionally verifies every downloaded checkpoint tensor and
 per-chunk cache progression. Keep source patches, manifest/lock, generated
@@ -205,7 +205,7 @@ sudo apt-get install -y build-essential cmake clang libclang-dev pkg-config \
 
 - `sherpa-onnx` is pinned to `1.13.8` and built with the approved completion-reporting patch. Run `make sherpa-runtime` (also included in `make setup`) and `source scripts/dev-env.sh` before direct Cargo commands. The build validates the patch and 13 static-library hashes; ordinary upstream prebuilt libraries do not contain this report and cannot satisfy the build contract. See [offline ASR build/provenance](offline-asr.md).
 - Nemotron uses the official NeMo-Speech.cpp 0.1.0 executable downloaded by the model installer. Platform archives are pinned for CPU, Apple Metal, NVIDIA CUDA, and Vulkan. The executable is a local, cancellable sidecar; no server or network request is involved during transcription.
-- `llama-cpp-2` is pinned to `0.1.159` (llama-cpp-sys-2 0.1.160, bundled llama.cpp `d8123504`; [upgrade validation](validation/rust-dependency-upgrade-2026-10-19.md)), with default features disabled. Its bundled llama.cpp builds from C/C++ source through CMake and links statically. Apple Silicon includes Metal; Linux/Windows accelerator builds use `cargo build -p vesper-desktop --features cuda`, `--features vulkan`, or `--features rocm`. The selected backend falls back to CPU for cleanup if its matching feature was not compiled. `CMAKE_BUILD_PARALLEL_LEVEL=2` can reduce peak build memory. See the [pinned binding build script](https://docs.rs/crate/llama-cpp-sys-2/0.1.160/source/build.rs).
+- `llama-cpp-2` is pinned to `0.1.159` (llama-cpp-sys-2 0.1.160, bundled llama.cpp `d8123504`), with default features disabled. Its bundled llama.cpp builds from C/C++ source through CMake and links statically. Apple Silicon includes Metal; Linux/Windows accelerator builds use `cargo build -p vesper-desktop --features cuda`, `--features vulkan`, or `--features rocm`. The selected backend falls back to CPU for cleanup if its matching feature was not compiled. `CMAKE_BUILD_PARALLEL_LEVEL=2` can reduce peak build memory. See the [pinned binding build script](https://docs.rs/crate/llama-cpp-sys-2/0.1.160/source/build.rs).
 - Keep `Cargo.lock` committed. `--locked` fixes Rust dependency resolution; native release downloads still require network access on an uncached build. Do not set `DOCS_RS` to bypass native linking: that upstream documentation option does not produce a working application. Switching to shared native libraries later requires packaging their runtime libraries and loader paths; the current manifests use static linking.
 
 ## Experimental speaker runtime
@@ -360,6 +360,8 @@ The rounded macOS window enables Tauri's `macos-private-api` feature and `app.ma
 When the current `com.vesper.desktop` directory has no actual settings, dataset, or model files, the application checks prior sibling directories in this order: `com.transcribe.desktop`, `com.ukti.desktop`, `com.stt.desktop`, reusing the newest store with data in place. A populated `com.vesper.desktop` directory always wins. Nothing is moved, merged, or deleted. Empty platform-created directories do not hide an earlier store, and read failures are reported.
 
 Nonempty overrides are checked in order: `VESPER_MODEL_DIR`, `TRANSCRIBE_MODEL_DIR`, `UKTI_MODEL_DIR`, `STT_MODEL_DIR`. Debug builds also discover an existing repository `models/downloads` folder, including when the debug `.app` is opened from Finder. Release builds without an override use the selected data directory's `models` folder. Browser preview settings read `vesper.browser-preview.settings.v1` first, then the legacy `transcribe.browser-preview.settings.v1`, `ukti.browser-preview.settings.v1` and `stt.browser-preview.settings.v1` keys. Reads never write. Only an explicit Save/Reset writes the Vesper key, leaving legacy bytes untouched. Invalid current settings are reported instead of silently falling back.
+
+`VESPER_TERM_MINING_ROOTS` lets a developer point the background term miner at folders (`scope=/path` or a bare path, entries separated by `;`). It is the only way Vesper reads a folder for spellings; ordinary use reads none. See [term inventory](personalization/term-inventory.md).
 
 `VESPER_NEMO_SPEECH_LIB` selects a custom NeMo library, with `TRANSCRIBE_NEMO_SPEECH_LIB` retained as a fallback. The shared Rust environment resolver prefers a present Vesper value, even if invalid or non-Unicode, rather than hiding configuration errors behind an older value. Only directory overrides treat an empty value as absent. Rust developer/qualification overrides use this same resolver.
 
