@@ -1,6 +1,6 @@
 # Term inventory and working-set selection
 
-Vesper keeps a local **term inventory**: spellings that you asserted (spelling lists, text replacements) or authored (identifiers, package names and documentation headings in a workspace you opted into). It is separate from the 128-entry profile vocabulary. For each recording a pure **selector** picks a small, relevant **working set** from the inventory plus the profile vocabulary and hands it to whichever recognizer and correction step run.
+Vesper keeps a local **term inventory**: spellings that you asserted (spelling lists, text replacements) or authored (identifiers, package names and documentation headings in a folder root a developer configured with `VESPER_TERM_MINING_ROOTS`; none in normal use). It is separate from the 128-entry profile vocabulary. For each recording a pure **selector** picks a small, relevant **working set** from the inventory plus the profile vocabulary and hands it to whichever recognizer and correction step run.
 
 Machine output is never a spelling source. ASR text, writer output, recurrence and rule output do not create or confirm inventory rows (see `crates/vesper-core/src/terms.rs`).
 
@@ -9,7 +9,7 @@ flowchart TB
   subgraph Sources["User-asserted and user-authored sources (read-only)"]
     TR["Text Replacements DB"]
     LD["LocalDictionary"]
-    WS["Opted-in workspace root<br/>cspell · VS Code · JetBrains lists<br/>git-tracked code · manifests · doc headings"]
+    WS["Developer root (VESPER_TERM_MINING_ROOTS)<br/>cspell · VS Code · JetBrains lists<br/>git-tracked code · manifests · doc headings"]
   end
   subgraph Worker["Background worker thread (QoS background: efficiency cores, throttled I/O)"]
     G{"Gates: idle app · thermal ≤ fair ·<br/>no Low Power Mode · AC for workspace scans"}
@@ -61,13 +61,13 @@ Spoken forms come from `identifier_spoken_form`: camelCase, snake_case, kebab-ca
 
 ## Sources and trust tiers
 
-| Tier        | Source (`TermSource`)                     | Where it is read                                                                                                                                                                                                                                                                                                                                   | Scope               |
-| ----------- | ----------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------- |
-| A, asserted | `text_replacement`                        | `~/Library/KeyboardServices/TextReplacements.db`, opened read-only; live rows of `ZTEXTREPLACEMENTENTRY` (`ZPHRASE`). The typed shortcut is not a spoken form and is dropped                                                                                                                                                                       | Global              |
-| A           | `spelling_dictionary`                     | `~/Library/Spelling/LocalDictionary` (one learned word per line)                                                                                                                                                                                                                                                                                   | Global              |
-| A           | `project_dictionary`                      | Inside an opted-in workspace only: `cspell.json`, `.cspell.json`, `cspell.config.{json,yaml,yml}`, `cspell.{yaml,yml}`, `.vscode/cspell.json`, `package.json#cspell` (`words` plus `dictionaryDefinitions[].path` word lists inside the root), `.vscode/settings.json` `cSpell.words`/`cSpell.userWords`, `.idea/dictionaries/*.xml` `<w>` entries | That workspace      |
-| A           | `vocabulary`, `correction`                | The profile vocabulary, merged at selection time rather than copied into the inventory. Manual and confirmed entries contribute their taught aliases as spoken forms                                                                                                                                                                               | The entry's project |
-| B, authored | `identifier`, `manifest`, `documentation` | Git-tracked text files under an opted-in workspace root                                                                                                                                                                                                                                                                                            | That workspace      |
+| Tier        | Source (`TermSource`)                     | Where it is read                                                                                                                                                                                                                                                                                                                                         | Scope               |
+| ----------- | ----------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------- |
+| A, asserted | `text_replacement`                        | `~/Library/KeyboardServices/TextReplacements.db`, opened read-only; live rows of `ZTEXTREPLACEMENTENTRY` (`ZPHRASE`). The typed shortcut is not a spoken form and is dropped                                                                                                                                                                             | Global              |
+| A           | `spelling_dictionary`                     | `~/Library/Spelling/LocalDictionary` (one learned word per line)                                                                                                                                                                                                                                                                                         | Global              |
+| A           | `project_dictionary`                      | Inside a developer-configured root only: `cspell.json`, `.cspell.json`, `cspell.config.{json,yaml,yml}`, `cspell.{yaml,yml}`, `.vscode/cspell.json`, `package.json#cspell` (`words` plus `dictionaryDefinitions[].path` word lists inside the root), `.vscode/settings.json` `cSpell.words`/`cSpell.userWords`, `.idea/dictionaries/*.xml` `<w>` entries | That workspace      |
+| A           | `vocabulary`, `correction`                | The profile vocabulary, merged at selection time rather than copied into the inventory. Manual and confirmed entries contribute their taught aliases as spoken forms                                                                                                                                                                                     | The entry's project |
+| B, authored | `identifier`, `manifest`, `documentation` | Git-tracked text files under a developer-configured root                                                                                                                                                                                                                                                                                                 | That workspace      |
 
 Asserted values must look like a term: at most four words and 64 bytes, at least two letters, no `@`, no `://`, and no trailing sentence punctuation. That excludes "On my way!", addresses and URLs. cspell `flagWords` are errors, not spellings, and are ignored. JSONC comments and trailing commas are accepted. YAML is read only for the top-level `words` list and `dictionaryDefinitions` paths. Code-based cspell configurations (`cspell.config.js` and similar) are not executed or read.
 
@@ -189,7 +189,7 @@ Each row has × (tombstone removal). Each source has **Forget** (delete its evid
 
 ## Privacy boundaries
 
-- **Read:** Text Replacements (read-only SQLite), LocalDictionary, and, inside opted-in roots only, spelling-list files and git-tracked text files.
+- **Read:** Text Replacements (read-only SQLite), LocalDictionary, and, inside developer-configured roots only (none by default), spelling-list files and git-tracked text files.
 - **Not read:** the home folder at large, Mail, Messages, browser data, the screen or the clipboard. Mining requests no permission and needs no Full Disk Access.
 - **Stored:** spellings, spoken forms, counts, opaque scope keys and folder-name labels. Never paths, URLs or file text. Cursors keep only a SHA-256 fingerprint, an index and candidate counts.
 - **Not learned from:** machine output, which never creates, confirms or re-activates an inventory row.

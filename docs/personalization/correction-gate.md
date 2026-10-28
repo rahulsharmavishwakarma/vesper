@@ -23,7 +23,7 @@ The heard-plausibility gate is what blocks the failures found in the [proposer r
 
 Exact normalizations cannot repair a misrecognition such as `vasper` → `Vesper`, `Envidia` → `NVIDIA` or `GEMA` → `Gemma`. Those misrecognitions do occur in local dictation history. Learned aliases need user edits, and in-app edits are rare.
 
-The gate therefore has an experimental near-miss rule over the working set's **references**: the up to 16 spellings relevant to this workspace. It proposes a repair only when all of these hold:
+The gate therefore has an experimental near-miss rule over the working set's **references**: the up to 16 spellings in this dictation's working set (your words, Words Vesper found and field words, scoped to the workspace when one is detected). It proposes a repair only when all of these hold:
 
 - the heard token is not an ordinary word, has at least four letters, and is not protected or quoted;
 - it is within one letter edit of exactly one reference (two edits from eight letters), with a unique best match;
@@ -37,7 +37,7 @@ The criterion for applying them in the app was written down before the evaluatio
 - **Positives:** 89 repairs, 1 harmful. A LibriSpeech utterance contains two rare words one letter apart, both in the reference and the list.
 - **Retained local history:** 18 repairs, 0 wrong. This history was also the development set for two earlier rule fixes.
 
-The one harmful change on real speech came from another workspace's list, in a FLEURS clip about the TogiNet radio site. That is why repairs depend on workspace detection, and why a rejected repair suspends its spelling and counts toward the breaker. The desktop therefore applies near-miss repairs, except after a hinted decode: when a recognizer received a phrase list (today only the optional Settings list for Nemotron), near-miss repairs stay in shadow. Round 2 of the [term evaluation](term-evaluation.md) found that they compound a biased decode's insertions (`bright room` → `Brightloom`).
+The one harmful change on real speech came from another workspace's list, in a FLEURS clip about the TogiNet radio site. That is why references are scoped to the detected workspace when detection is on, and why a rejected repair suspends its spelling and counts toward the breaker. The desktop therefore applies near-miss repairs, except after a hinted decode: when a recognizer received a phrase list (today only the optional Settings list for Nemotron), near-miss repairs stay in shadow. Round 2 of the [term evaluation](term-evaluation.md) found that they compound a biased decode's insertions (`bright room` → `Brightloom`).
 
 `crates/vesper-data/examples/would_fire_replay.rs` runs the gate over a **copy** of a dataset with a frozen working set. It reports every exact and near-miss change with surrounding context, for private review. It never runs a model or writes to the source store.
 

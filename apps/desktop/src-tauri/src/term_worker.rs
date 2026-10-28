@@ -97,7 +97,7 @@ fn gate(storage: &AppStorage) -> Option<Gate> {
 /// Developer-only extra mining roots as `(scope, label, path)` from
 /// `VESPER_TERM_MINING_ROOTS`: entries separated by `;`, each `scope=path` or a
 /// bare path (scope = folder name, which then matches a project of that name).
-/// Ordinary opt-in comes from the workspace store's mining roots.
+/// This is the only folder source; ordinary use reads no folders.
 pub fn mining_roots() -> Vec<(String, String, PathBuf)> {
     parse_mining_roots(&std::env::var("VESPER_TERM_MINING_ROOTS").unwrap_or_default())
 }

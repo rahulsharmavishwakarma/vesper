@@ -1,6 +1,6 @@
 # Dictation formatting
 
-Status: implemented on the local branch `feature/self-improving-dictation` (28 October 2026); not published. On by default (**Format numbers, times, emails and links** in Writing), English only.
+Status: implemented on 28 October 2026, tracked in [#357](https://github.com/rahulsharmavishwakarma/vesper/issues/357); not yet in a release. On by default (**Format numbers, times, emails and links** in Writing), English only.
 
 `vesper_core::format_dictation` rewrites spoken forms into written ones after the [correction gate](correction-gate.md). It is fixed rules, not a model, so the result is the same whichever speech model or writer produced the text, and changing either cannot degrade it. A rule only rewrites a span it fully recognizes. Each result records the rules that fired in `personalizationEvidence.formatting`.
 

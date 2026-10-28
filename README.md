@@ -35,7 +35,7 @@ punctuation and formatting. No account or cloud API key is required.
 - **Quick dictation.** Hold to talk or toggle recording with a global shortcut and floating controls.
 - **Audio-file transcription.** Import a recording and review its transcript alongside microphone recordings.
 - **Optional text cleanup.** Improve punctuation and formatting while keeping the original transcript available.
-- **Personal vocabulary.** Remember spellings across recordings and model changes, select project vocabulary with app rules, and review eligible TextEdit corrections. See [scope and limits](docs/personalization/README.md).
+- **Personal vocabulary.** Remember spellings across recordings and model changes, select project vocabulary with app rules, and learn spellings from your corrections, including optional fixes in the app you dictate into. English dictations get numbers, dates, emails and links formatted. See [scope and limits](docs/personalization/README.md).
 - **Local history.** Search, review, copy and export saved recordings and text.
 - **Your choice of models.** Select speech and writing models independently. Current speech adapters show live drafts, with update speed and language support depending on the model and device.
 - **Automatic acceleration.** Compatible models use the Mac GPU with matching model files chosen during download. See [supported combinations](docs/accelerators.md).

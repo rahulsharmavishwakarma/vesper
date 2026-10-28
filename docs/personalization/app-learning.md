@@ -1,6 +1,6 @@
 # Learning from the app you dictate into
 
-Status: implemented on the local branch `feature/self-improving-dictation`; owner-approved on 27 October 2026; not published. Both features are **off by default**. Real-app coverage is not yet measured; the per-app counts below are how it will be.
+Status: implemented, tracked in [#357](https://github.com/rahulsharmavishwakarma/vesper/issues/357); owner-approved on 27 October 2026; not yet in a release. Both features are **off by default**. Real-app coverage is not yet measured; the per-app counts below are how it will be.
 
 Most corrections happen in the app that received the dictation, not in Vesper. Without these features, ordinary use gives the [learning loop](self-improving-system.md) no input: in the first 17 real dictations with the new build, Vesper knew 0 terms and made 0 corrections. Two opt-in features in **Writing → Workspaces** use that app's text, under the same rules as in-app learning.
 
@@ -9,7 +9,7 @@ sequenceDiagram
   participant U as User
   participant V as Vesper (main thread)
   participant F as Destination field (other app)
-  participant L as Learning (policy 5)
+  participant L as Learning (policy 6)
   U->>V: shortcut
   V->>F: capture target (existing)
   opt Use words already in the field
@@ -48,7 +48,7 @@ After an automatic paste, the native layer keeps one receipt: the field, where t
 
 `vesper_core::aligned_edit` aligns the pasted words to the start of that span with a word-level edit distance. It accepts the alignment only within a third of the pasted word count, so text typed afterwards is ignored and rewritten or moved text is rejected. A changed, aligned span is passed to `edit_latest_draft` as an edit of that dictation's draft. It then teaches exactly as an in-app edit does:
 
-- policy 5 promotion
+- policy 6 promotion
 - one-strike suspension
 - the policy breaker
 - reverts of gate changes
