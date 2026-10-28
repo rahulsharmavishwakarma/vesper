@@ -45,30 +45,30 @@ Evidence class: **local measurement** on synthetic TTS and public speech. It doe
 
 **Corpus (test split only).** Frozen term manifest SHA-256 `388cc295…`; with the [ordinary-word supplement](../../benchmarks/asr/python/term-eval/README.md#ordinary-word-supplement) `960663b1…`.
 
-| Lane | Utterances | Notes |
-| --- | --- | --- |
-| Positives, synthetic TTS | 158 (168 target occurrences) | six English voices; clean, pink noise 10 dB, FLEURS babble 10 dB |
-| Target-free hard negatives, rendered | 350 | 278 frozen (homophone, sub-word, protected, ordinary, review cases) + 72 ordinary-word supplement |
-| Target-free hard negatives, text only | 2,595 | gate arms only; hypothesis = reference |
-| FLEURS en-US, real speech, target-free | 92 | |
-| LibriSpeech test-clean with Le et al. N=100 lists | 271 (732 target occurrences) | real speech; lists lowercase, so case-insensitive recall is the meaningful column |
+| Lane                                              | Utterances                   | Notes                                                                                             |
+| ------------------------------------------------- | ---------------------------- | ------------------------------------------------------------------------------------------------- |
+| Positives, synthetic TTS                          | 158 (168 target occurrences) | six English voices; clean, pink noise 10 dB, FLEURS babble 10 dB                                  |
+| Target-free hard negatives, rendered              | 350                          | 278 frozen (homophone, sub-word, protected, ordinary, review cases) + 72 ordinary-word supplement |
+| Target-free hard negatives, text only             | 2,595                        | gate arms only; hypothesis = reference                                                            |
+| FLEURS en-US, real speech, target-free            | 92                           |                                                                                                   |
+| LibriSpeech test-clean with Le et al. N=100 lists | 271 (732 target occurrences) | real speech; lists lowercase, so case-insensitive recall is the meaningful column                 |
 
 ### Recognizer hooks (raw recognizer output)
 
 Recall is exact spelling, case-sensitive / case-insensitive. FA = target-free utterances containing a hint term absent from the reference (case-sensitive), with the 95% upper bound.
 
-| Model, condition | Positive recall | Non-target WER | Hard-negative FA | FLEURS FA | FLEURS WER | Added ASR ms p50/p95 |
-| --- | --- | --- | --- | --- | --- | --- |
-| Nemotron, none | 13.7% / 25.0% | 12.4% | 3/350 (0.9%, ≤2.2%) | 0/92 (≤3.2%) | 10.7% | — |
-| Nemotron, ws10 | 53.6% / 59.5% | 14.1% | 55/350 (15.7%, ≤19.3%) | 19/92 (20.7%) | 14.9% | 6 / 11 |
-| Nemotron, ws32 | 52.4% / 57.1% | 16.1% | 77/350 (22.0%, ≤26.0%) | 31/92 (33.7%) | 17.6% | 6 / 11 |
-| Nemotron, wrong32 | 9.5% / 16.7% | 19.7% | 51/350 (14.6%) | 38/92 (41.3%) | 19.6% | 6 / 12 |
-| Nemotron, large (150) | all 158 failed | — | all failed | all failed | — | — |
-| Qwen3-ASR, none | 18.5% / 29.2% | 10.8% | 0/350 (≤0.9%) | 0/92 (≤3.2%) | 7.2% | — |
-| Qwen3-ASR, ws10 | 57.1% / 66.7% | 6.8% | 5/350 (1.4%, ≤3.0%) | 1/92 (1.1%) | 8.3% | 24 / 50 |
-| Qwen3-ASR, ws32 | 58.9% / 67.9% | 8.7% | 8/350 (2.3%, ≤4.1%) | 0/92 | 7.6% | 69 / 128 |
-| Qwen3-ASR, wrong32 | 17.3% / 28.0% | 11.2% | 2/350 (0.6%, ≤1.8%) | 0/92 | 7.0% | 67 / 117 |
-| Qwen3-ASR, large (150) | 51.2% / 58.9%, 13 failed | 10.9% | 5/350 (1.4%) | 77/92 failed | — | 468 / 536 |
+| Model, condition       | Positive recall          | Non-target WER | Hard-negative FA       | FLEURS FA     | FLEURS WER | Added ASR ms p50/p95 |
+| ---------------------- | ------------------------ | -------------- | ---------------------- | ------------- | ---------- | -------------------- |
+| Nemotron, none         | 13.7% / 25.0%            | 12.4%          | 3/350 (0.9%, ≤2.2%)    | 0/92 (≤3.2%)  | 10.7%      | —                    |
+| Nemotron, ws10         | 53.6% / 59.5%            | 14.1%          | 55/350 (15.7%, ≤19.3%) | 19/92 (20.7%) | 14.9%      | 6 / 11               |
+| Nemotron, ws32         | 52.4% / 57.1%            | 16.1%          | 77/350 (22.0%, ≤26.0%) | 31/92 (33.7%) | 17.6%      | 6 / 11               |
+| Nemotron, wrong32      | 9.5% / 16.7%             | 19.7%          | 51/350 (14.6%)         | 38/92 (41.3%) | 19.6%      | 6 / 12               |
+| Nemotron, large (150)  | all 158 failed           | —              | all failed             | all failed    | —          | —                    |
+| Qwen3-ASR, none        | 18.5% / 29.2%            | 10.8%          | 0/350 (≤0.9%)          | 0/92 (≤3.2%)  | 7.2%       | —                    |
+| Qwen3-ASR, ws10        | 57.1% / 66.7%            | 6.8%           | 5/350 (1.4%, ≤3.0%)    | 1/92 (1.1%)   | 8.3%       | 24 / 50              |
+| Qwen3-ASR, ws32        | 58.9% / 67.9%            | 8.7%           | 8/350 (2.3%, ≤4.1%)    | 0/92          | 7.6%       | 69 / 128             |
+| Qwen3-ASR, wrong32     | 17.3% / 28.0%            | 11.2%          | 2/350 (0.6%, ≤1.8%)    | 0/92          | 7.0%       | 67 / 117             |
+| Qwen3-ASR, large (150) | 51.2% / 58.9%, 13 failed | 10.9%          | 5/350 (1.4%)           | 77/92 failed  | —          | 468 / 536            |
 
 - **Nemotron.** Boosting the 30-phrase workspace list (boost 2.0) inserted hint terms into ordinary speech: "We launch in May." → "We launch in Vesper.", "Please send the notes now." → "Priyanka Venkataraman.", "studying traffic flow" → "Saoirse Brennan traffic flow", "the box contained" → "the box containerd". Paired against the unhinted decode, ws32 made 110 of 350 negatives worse and 8 better, and 53 of 92 FLEURS clips worse and 1 better. On LibriSpeech the lists raised case-insensitive recall from 85.5% to 92.9% (ws10) but non-target WER rose from 2.1% to 3.6% (ws10) and 5.3% (ws32). The NeMo FFI rejects lists over 32 phrases, so `large` failed every request.
 - **Qwen3-ASR.** Context words raised recall by 38–40 points and lowered non-target WER on positives (10.8% → 6.8% at ws10). The harm is narrower but real: ordinary words that are also terms were capitalized as terms (calico → Calico, envoy → Envoy, parakeet → Parakeet, vesper → Vesper; "low key" → Loki), 7 of 72 ordinary-word supplement clips at ws32 against 1 of 278 frozen negatives. Twice the model emitted the hint list itself as the transcript ("Turn right at the second light." → a list of 30 names at ws32; a FLEURS clip ending in a list of names at ws10). The 150-entry list overflowed the 512-token context on most FLEURS clips (77/92 failed) and added about 0.5 s per decode. Noise-mixed positives behave like clean ones (pink 13.1% → 54.8%, babble 17.9% → 56.5% exact recall at ws32).
@@ -77,14 +77,14 @@ Recall is exact spelling, case-sensitive / case-insensitive. FA = target-free ut
 
 `gate_exact` uses the condition's normalizations; `gate_near_miss` adds near-miss repairs against up to 16 references. Hint lists never reach these models, so `raw` is identical in every condition. Gate arms below are rescored from the saved raw rows with the gate at base revision `bd03f38`; the first scoring used `f60e87f`, whose exact arm recovered 2–4 more targets per lane, also with no harmful change.
 
-| Model | Lane | Raw recall | ws32 `gate_exact` | ws32 `gate_near_miss` | Gate changes / harmful (ws32) | Hard-negative FA (any condition) | FLEURS FA |
-| --- | --- | --- | --- | --- | --- | --- | --- |
-| Cohere | positives, clean | 32.7% / 45.2% (4 of 158 failed: duration token limit) | 42.3% / 53.6% | 47.6% / 58.9% | exact 16/0; near-miss 9/0 | 1/350 before the gate, gate adds 0 | 0/92; near-miss 1/92 under `wrong32` |
-| Cohere | positives, pink / babble | 29.8% / 28.0% | 37.5% / 37.5% | 43.5% / 44.6% | no harmful changes | — | — |
-| Cohere | LibriSpeech | 81.6% / 94.0% (2 failed) | 85.9% / 94.0% | 86.7% / 94.8% | exact 32/0; near-miss 8/1 | — | — |
-| Parakeet | positives, clean | 27.4% / 37.5% | 39.3% / 47.6% | 44.6% / 53.0% | exact 20/0; near-miss 9/0 | 1/350 before the gate, gate adds 0 | 0/92 |
-| Parakeet | positives, pink / babble | 23.8% / 24.4% | 34.5% / 36.9% | 40.5% / 42.3% | no harmful changes | — | — |
-| Parakeet | LibriSpeech | 76.1% / 90.3% | 80.7% / 90.3% | 83.7% / 93.3% | exact 34/0; near-miss 22/0 | — | — |
+| Model    | Lane                     | Raw recall                                            | ws32 `gate_exact` | ws32 `gate_near_miss` | Gate changes / harmful (ws32) | Hard-negative FA (any condition)   | FLEURS FA                            |
+| -------- | ------------------------ | ----------------------------------------------------- | ----------------- | --------------------- | ----------------------------- | ---------------------------------- | ------------------------------------ |
+| Cohere   | positives, clean         | 32.7% / 45.2% (4 of 158 failed: duration token limit) | 42.3% / 53.6%     | 47.6% / 58.9%         | exact 16/0; near-miss 9/0     | 1/350 before the gate, gate adds 0 | 0/92; near-miss 1/92 under `wrong32` |
+| Cohere   | positives, pink / babble | 29.8% / 28.0%                                         | 37.5% / 37.5%     | 43.5% / 44.6%         | no harmful changes            | —                                  | —                                    |
+| Cohere   | LibriSpeech              | 81.6% / 94.0% (2 failed)                              | 85.9% / 94.0%     | 86.7% / 94.8%         | exact 32/0; near-miss 8/1     | —                                  | —                                    |
+| Parakeet | positives, clean         | 27.4% / 37.5%                                         | 39.3% / 47.6%     | 44.6% / 53.0%         | exact 20/0; near-miss 9/0     | 1/350 before the gate, gate adds 0 | 0/92                                 |
+| Parakeet | positives, pink / babble | 23.8% / 24.4%                                         | 34.5% / 36.9%     | 40.5% / 42.3%         | no harmful changes            | —                                  | —                                    |
+| Parakeet | LibriSpeech              | 76.1% / 90.3%                                         | 80.7% / 90.3%     | 83.7% / 93.3%         | exact 34/0; near-miss 22/0    | —                                  | —                                    |
 
 - **Text-only negatives:** 0 gate changes and 0 near-miss changes on 2,595 sentences in every condition (≤0.12% at 95%).
 - **Authored tier** (`gate_exact_authored`, which may not rejoin ordinary words) recovers almost nothing on these positives (Cohere 33.9%, Parakeet 29.2% exact at ws32, 2–3 changes), because most spoken forms here are ordinary-word splits; on LibriSpeech it keeps most of the gain (84.6% and 79.2%).
@@ -95,11 +95,11 @@ Recall is exact spelling, case-sensitive / case-insensitive. FA = target-free ut
 
 Subset: 60 positives, 80 hard negatives, 40 FLEURS, conditions `none` and `ws32` only, with the condition's terms as profile vocabulary. Cleanup failed and kept the raw text on 9 of 360 requests (fidelity-check rejections and output limits); those rows are excluded from the `cleaned` columns below and listed here.
 
-| Lane | Raw | Cleaned (ws32 vocabulary) | Cleaned + `gate_exact` |
-| --- | --- | --- | --- |
-| Positives exact recall | 35.9% (23/64) | 36.8% (21/57) | 50.9% (29/57) |
-| Hard-negative FA | 0/80 | 0/80 | 0/80 |
-| FLEURS FA | 0/40 | 0/38 | 0/38 |
+| Lane                   | Raw           | Cleaned (ws32 vocabulary) | Cleaned + `gate_exact` |
+| ---------------------- | ------------- | ------------------------- | ---------------------- |
+| Positives exact recall | 35.9% (23/64) | 36.8% (21/57)             | 50.9% (29/57)          |
+| Hard-negative FA       | 0/80          | 0/80                      | 0/80                   |
+| FLEURS FA              | 0/40          | 0/38                      | 0/38                   |
 
 With these spellings available the writer neither repaired nor introduced terms; the gate after cleanup added the same repairs as on raw text. Cleanup took about 90 ms p50 per request.
 
@@ -107,14 +107,14 @@ With these spellings available the writer neither repaired nor introduced terms;
 
 The desktop forces Silero VAD and DPDFNet8 on every recording. Here DPDFNet8 alone (no VAD) runs through the same manager frontend as the app, on all 158 positives in each noise variant; every row carries the frontend's execution evidence and none fell back to the original audio. Noise is synthetic: pink noise and three-talker FLEURS babble mixed at 10 dB SNR into TTS speech.
 
-| Model | Audio | Raw: recall (exact / ci), non-target WER | DPDFNet8: recall, non-target WER | ws32 `gate_exact` recall, raw → DPDFNet8 |
-| --- | --- | --- | --- | --- |
-| Cohere | clean | 32.7% / 45.2%, 10.0% | 32.7% / 42.9%, 10.8% | 42.3% → 41.1% |
-| Cohere | pink 10 dB | 29.8% / 39.9%, 11.1% | 23.8% / 33.3%, 10.9% | 37.5% → 32.1% |
-| Cohere | babble 10 dB | 28.0% / 37.5%, 11.9% | 25.6% / 32.7%, 13.2% | 37.5% → 33.9% |
-| Parakeet | clean | 27.4% / 37.5%, 7.8% | 27.4% / 35.7%, 8.3% | 39.3% → 36.9% |
-| Parakeet | pink 10 dB | 23.8% / 33.3%, 10.3% | 20.8% / 28.0%, 12.4% | 34.5% → 27.4% |
-| Parakeet | babble 10 dB | 24.4% / 33.3%, 11.4% | 21.4% / 29.2%, 12.6% | 36.9% → 31.5% |
+| Model    | Audio        | Raw: recall (exact / ci), non-target WER | DPDFNet8: recall, non-target WER | ws32 `gate_exact` recall, raw → DPDFNet8 |
+| -------- | ------------ | ---------------------------------------- | -------------------------------- | ---------------------------------------- |
+| Cohere   | clean        | 32.7% / 45.2%, 10.0%                     | 32.7% / 42.9%, 10.8%             | 42.3% → 41.1%                            |
+| Cohere   | pink 10 dB   | 29.8% / 39.9%, 11.1%                     | 23.8% / 33.3%, 10.9%             | 37.5% → 32.1%                            |
+| Cohere   | babble 10 dB | 28.0% / 37.5%, 11.9%                     | 25.6% / 32.7%, 13.2%             | 37.5% → 33.9%                            |
+| Parakeet | clean        | 27.4% / 37.5%, 7.8%                      | 27.4% / 35.7%, 8.3%              | 39.3% → 36.9%                            |
+| Parakeet | pink 10 dB   | 23.8% / 33.3%, 10.3%                     | 20.8% / 28.0%, 12.4%             | 34.5% → 27.4%                            |
+| Parakeet | babble 10 dB | 24.4% / 33.3%, 11.4%                     | 21.4% / 29.2%, 12.6%             | 36.9% → 31.5%                            |
 
 Failures: Cohere 4 / 4 / 4 raw and 4 / 1 / 5 with DPDFNet8 (duration token limit); Parakeet none. DPDFNet8 lowered case-insensitive term recall in all six lanes (by 1.8–6.6 points) and raised non-target WER in five of six. The denominator is 168 target occurrences per lane and no significance test was run, so this is a consistent direction rather than a qualified effect size. It is evidence against learning only from denoised audio, and supports measuring the forced desktop frontend on real dictation before learning depends on it. Silero VAD, which the desktop also forces, was not part of this comparison.
 
@@ -122,10 +122,10 @@ Failures: Cohere 4 / 4 / 4 raw and 4 / 1 / 5 with DPDFNet8 (duration token limit
 
 Gates are the predeclared ones in [native qualification](native-qualification.md#recognizer-hook-qualification).
 
-| Hook | Benefit | ≤1 pt FA increase, upper bound ≤3% | FLEURS WER ≤ +0.5 pt | No new failures | Status |
-| --- | --- | --- | --- | --- | --- |
-| Nemotron `phrase_bias` | pass (+39.9 / +38.7 pts) | **fail** (ws32 +21.1 pts hard negatives, +33.7 pts FLEURS) | **fail** (+6.9 pts) | pass at ws10/ws32 | **`disabled`** |
-| Qwen3-ASR `prompt_context` | pass (+38.6 / +40.4 pts) | **fail** at ws32 (+2.3 pts, upper bound 4.1%); wrong32 passes on hard negatives | pass (+0.3 pts) | pass at ws10/ws32 | **`disabled`** |
+| Hook                       | Benefit                  | ≤1 pt FA increase, upper bound ≤3%                                              | FLEURS WER ≤ +0.5 pt | No new failures   | Status         |
+| -------------------------- | ------------------------ | ------------------------------------------------------------------------------- | -------------------- | ----------------- | -------------- |
+| Nemotron `phrase_bias`     | pass (+39.9 / +38.7 pts) | **fail** (ws32 +21.1 pts hard negatives, +33.7 pts FLEURS)                      | **fail** (+6.9 pts)  | pass at ws10/ws32 | **`disabled`** |
+| Qwen3-ASR `prompt_context` | pass (+38.6 / +40.4 pts) | **fail** at ws32 (+2.3 pts, upper bound 4.1%); wrong32 passes on hard negatives | pass (+0.3 pts)      | pass at ws10/ws32 | **`disabled`** |
 
 The upper bound in the false-alarm gate cannot be met on the FLEURS lane by any configuration: 92 clips with zero events still give a 3.2% bound. Read per lane, that gate fails every hook on FLEURS; the decisions above rest on failures that do not depend on that reading. See [round 2](#round-2-ordinary-word-filter-and-lower-nemotron-boosts) for both readings.
 
@@ -140,23 +140,23 @@ Same frozen corpus (with the supplement), same predeclared gates and thresholds,
 
 Decoded with evaluator `c1252b6` (`3e4f1d16…`). That revision sent boost 0 with an empty list, which the NeMo FFI rejects, so all 600 Nemotron `none` rows failed; the fix (`8efb24b`, an application bug that would have broken every unbiased Nemotron decode) restored 2.0 for unbiased decodes, and those rows were re-decoded with `8efb24b` (`vesper-eval-v4`). The failed rows are kept locally.
 
-| Configuration | Exact recall, none → ws10 / ws32 | Non-target WER ws32 | Hard-negative FA ws32 (wrong32) | FLEURS FA ws32 (wrong32) | Pooled FA ws32, 442 utt. | FLEURS WER Δ ws32 | Paired hard-negative regressions / improvements ws32 |
-| --- | --- | --- | --- | --- | --- | --- | --- |
-| Qwen3-ASR, round 1 (no filter) | 18.5% → 57.1% / 58.9% | 8.7% | 8/350, ≤4.1% (2/350) | 0/92 (0/92) | 8, ≤3.2% | +0.34 pts | 20 / 16 |
-| **Qwen3-ASR, filtered** | 18.5% → 45.8% / 47.6% | 9.6% | 1/350, ≤1.3% (0/350) | 1/92 (1/92) | 2, ≤1.4% | **+1.62 pts** | 17 / 17 |
-| Nemotron 2.0, round 1 (no filter) | 13.7% → 53.6% / 52.4% | 16.1% | 77/350, ≤26.0% (51/350) | 31/92 (38/92) | 108, ≤28.0% | +6.97 pts | 110 / 8 |
-| Nemotron 2.0, filtered | 13.7% → 44.6% / 43.5% | 16.9% | 57/350, ≤19.9% (42/350) | 31/92 (34/92) | 88, ≤23.3% | +6.73 pts | 95 / 5 |
-| Nemotron 1.0, filtered | 13.7% → 32.1% / 32.1% | 11.3% | 7/350, ≤3.7% (4/350) | 3/92 (0/92) | 10, ≤3.8% | +0.64 pts | 21 / 4 |
-| **Nemotron 0.5, filtered** | 13.7% → 20.8% / 20.8% | 12.0% | 4/350, ≤2.6% (0/350) | 0/92, ≤3.2% (0/92) | 4, ≤2.1% | −0.05 pts | 2 / 3 |
+| Configuration                     | Exact recall, none → ws10 / ws32 | Non-target WER ws32 | Hard-negative FA ws32 (wrong32) | FLEURS FA ws32 (wrong32) | Pooled FA ws32, 442 utt. | FLEURS WER Δ ws32 | Paired hard-negative regressions / improvements ws32 |
+| --------------------------------- | -------------------------------- | ------------------- | ------------------------------- | ------------------------ | ------------------------ | ----------------- | ---------------------------------------------------- |
+| Qwen3-ASR, round 1 (no filter)    | 18.5% → 57.1% / 58.9%            | 8.7%                | 8/350, ≤4.1% (2/350)            | 0/92 (0/92)              | 8, ≤3.2%                 | +0.34 pts         | 20 / 16                                              |
+| **Qwen3-ASR, filtered**           | 18.5% → 45.8% / 47.6%            | 9.6%                | 1/350, ≤1.3% (0/350)            | 1/92 (1/92)              | 2, ≤1.4%                 | **+1.62 pts**     | 17 / 17                                              |
+| Nemotron 2.0, round 1 (no filter) | 13.7% → 53.6% / 52.4%            | 16.1%               | 77/350, ≤26.0% (51/350)         | 31/92 (38/92)            | 108, ≤28.0%              | +6.97 pts         | 110 / 8                                              |
+| Nemotron 2.0, filtered            | 13.7% → 44.6% / 43.5%            | 16.9%               | 57/350, ≤19.9% (42/350)         | 31/92 (34/92)            | 88, ≤23.3%               | +6.73 pts         | 95 / 5                                               |
+| Nemotron 1.0, filtered            | 13.7% → 32.1% / 32.1%            | 11.3%               | 7/350, ≤3.7% (4/350)            | 3/92 (0/92)              | 10, ≤3.8%                | +0.64 pts         | 21 / 4                                               |
+| **Nemotron 0.5, filtered**        | 13.7% → 20.8% / 20.8%            | 12.0%               | 4/350, ≤2.6% (0/350)            | 0/92, ≤3.2% (0/92)       | 4, ≤2.1%                 | −0.05 pts         | 2 / 3                                                |
 
 `none` baselines: Qwen3-ASR 0/350 and 0/92; Nemotron 3/350 and 0/92 (the model itself capitalizes "calico" in the supplement). No hinted condition failed a decode.
 
-| Configuration | 1 Benefit | 2 False alarms, per lane as written | 2 False alarms, lanes pooled | 3 FLEURS WER | 4 Failures | Decision |
-| --- | --- | --- | --- | --- | --- | --- |
-| Qwen3-ASR, filtered | pass (+27.3 / +29.1 pts) | **fail** (FLEURS +1.1 pts and bound 5.1%) | pass | **fail** (+1.62 pts) | pass | **`disabled`** |
-| Nemotron 2.0, filtered | pass | **fail** | **fail** | **fail** | pass | `disabled` |
-| Nemotron 1.0, filtered | pass | **fail** | **fail** (bound 3.8%) | **fail** (+0.64 pts) | pass | `disabled` |
-| Nemotron 0.5, filtered | pass (+7.1 / +7.1 pts) | **fail only on the FLEURS bound** (0/92 → 3.2%) | pass | pass | pass | not qualified as written; see below |
+| Configuration          | 1 Benefit                | 2 False alarms, per lane as written             | 2 False alarms, lanes pooled | 3 FLEURS WER         | 4 Failures | Decision                            |
+| ---------------------- | ------------------------ | ----------------------------------------------- | ---------------------------- | -------------------- | ---------- | ----------------------------------- |
+| Qwen3-ASR, filtered    | pass (+27.3 / +29.1 pts) | **fail** (FLEURS +1.1 pts and bound 5.1%)       | pass                         | **fail** (+1.62 pts) | pass       | **`disabled`**                      |
+| Nemotron 2.0, filtered | pass                     | **fail**                                        | **fail**                     | **fail**             | pass       | `disabled`                          |
+| Nemotron 1.0, filtered | pass                     | **fail**                                        | **fail** (bound 3.8%)        | **fail** (+0.64 pts) | pass       | `disabled`                          |
+| Nemotron 0.5, filtered | pass (+7.1 / +7.1 pts)   | **fail only on the FLEURS bound** (0/92 → 3.2%) | pass                         | pass                 | pass       | not qualified as written; see below |
 
 - **Qwen3-ASR stays `disabled`.** The filter removed most ordinary-word false alarms (8 → 1 hard negatives at ws32) at the cost of about 11 recall points, but the prompt still changes decoding outside the terms: on FLEURS it emitted the whole hint list as text (in place of "radio site TogiNet Radio" at ws32, and inside another clip at wrong32), and it dropped spans of ordinary speech ("along with an extra set in the roof of its mouth"). FLEURS WER rose by 1.6 points. This failure does not depend on how the bound is read.
 - **Nemotron 0.5 with the filter** adds 7.1 points of exact recall with no measurable change on FLEURS and one extra hard-negative false alarm. It passes every gate except the FLEURS upper bound read per lane, which no configuration can pass with 92 clips. Under the predeclared text it is **not qualified**, and the hook stays `disabled` at its configured boost 2.0. Qualifying it needs either an owner decision that the bound applies to the pooled target-free set (4/442, ≤2.1%), or at least 99 more fresh real-speech negatives added as a new predeclared lane. Its recall gain is also modest: on the same positives, the exact correction gate alone added 9.6–11.9 points on Cohere and Parakeet.

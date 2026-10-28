@@ -20,11 +20,11 @@ has no runtime consumer for training, review or promotion. The automatic choice
 does not enable recursive improvement or approve machine predictions. Settings
 instead explains the active in-app spelling loop and explicit History reviews.
 
-| Setting | Default | Intended behavior |
-| --- | --- | --- |
-| `collectTrainingData` | `true` | Retain source audio, predictions, and subsequent user corrections for later review and export. Turning it off stops collection for new sessions. |
-| `improvementMode` | `review_required` | Require an explicit promotion decision after a candidate passes evaluation. |
-| `improvementMode = automatic` | Optional | Permit a future improvement service to promote a candidate only after all configured dataset, quality, performance, and compatibility gates pass. |
+| Setting                       | Default           | Intended behavior                                                                                                                                 |
+| ----------------------------- | ----------------- | ------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `collectTrainingData`         | `true`            | Retain source audio, predictions, and subsequent user corrections for later review and export. Turning it off stops collection for new sessions.  |
+| `improvementMode`             | `review_required` | Require an explicit promotion decision after a candidate passes evaluation.                                                                       |
+| `improvementMode = automatic` | Optional          | Permit a future improvement service to promote a candidate only after all configured dataset, quality, performance, and compatibility gates pass. |
 
 The collection preference should remain visible in settings and recording flows. Store recordings in the application's data directory; use the configured model directory for weights. Resetting settings must not delete recordings. Turning collection off must not silently delete existing examples.
 
@@ -36,13 +36,13 @@ Preserve the original source file and its content hash. For microphone sessions,
 
 Each retained session needs the following provenance:
 
-| Evidence | Required information |
-| --- | --- |
-| Source | Stable session ID, capture/import time, original filename where applicable, sample rate, channels, duration, content hash, and relative artifact path |
+| Evidence    | Required information                                                                                                                                    |
+| ----------- | ------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Source      | Stable session ID, capture/import time, original filename where applicable, sample rate, channels, duration, content hash, and relative artifact path   |
 | Recognition | Raw ASR transcript, speech model ID and revision, weight hash/quantization, runtime version, requested/detected language, decoding settings, and timing |
-| Cleanup | Cleaned prediction, cleanup model revision and weight hash/quantization, effective preset/custom instruction, decoding settings, and timing |
-| Correction | User-edited text, correction revision/time, target type, review status, and explicit acceptance or rejection |
-| Processing | Application/configuration version, success/cancellation/error status, and derivative relationships |
+| Cleanup     | Cleaned prediction, cleanup model revision and weight hash/quantization, effective preset/custom instruction, decoding settings, and timing             |
+| Correction  | User-edited text, correction revision/time, target type, review status, and explicit acceptance or rejection                                            |
+| Processing  | Application/configuration version, success/cancellation/error status, and derivative relationships                                                      |
 
 Original audio and recorded predictions are immutable within a retained session. Corrections are additional records, with a revision history; editing the final text must not replace the raw ASR output or the model's cleanup prediction. Explicit deletion removes retained artifacts according to the user's request.
 
@@ -52,10 +52,10 @@ Only completed, internally consistent sessions enter export selection. Interrupt
 
 Speech recognition and text cleanup require different supervision:
 
-| Task | Input | Approved target |
-| --- | --- | --- |
-| ASR adaptation | Audio | A reviewed transcript of the words actually spoken, following the dataset's documented transcription convention |
-| Cleanup adaptation | Raw ASR transcript and effective cleanup instruction | A reviewed readable version that preserves the speaker's meaning |
+| Task               | Input                                                | Approved target                                                                                                 |
+| ------------------ | ---------------------------------------------------- | --------------------------------------------------------------------------------------------------------------- |
+| ASR adaptation     | Audio                                                | A reviewed transcript of the words actually spoken, following the dataset's documented transcription convention |
+| Cleanup adaptation | Raw ASR transcript and effective cleanup instruction | A reviewed readable version that preserves the speaker's meaning                                                |
 
 For example, if the audio says “um Friday, sorry Monday,” the ASR reference should preserve the spoken correction according to its transcription convention. The cleanup target may be “Monday.” A polished final sentence is not automatically an accurate acoustic training label.
 
@@ -150,15 +150,15 @@ Run jobs on a user-configured schedule or explicit request, with resource limits
 
 Compare the candidate against the currently active model on identical held-out recordings, target conventions, runtime, and supported devices. Evaluate both each stage and the complete speech-to-cleaned-text pipeline. Include silence, noisy audio, accents, technical names, amounts, negation, uncertainty, explicit corrections, and mixed-language speech when those are supported product cases.
 
-| Gate | Evaluation requirement |
-| --- | --- |
-| Recognition | Word/character error by language and audio condition; track insertions and unsupported speech on silence |
-| Meaning | Names, numbers, dates, amounts, units, negation, uncertainty, and code identifiers preserved |
-| Cleanup | Unsupported additions, meaning-changing deletions, damage to already-correct input, and human acceptance |
-| Latency | Cold-load time, warm inference time, and stop-to-final-text latency distributions |
-| Resources | Peak memory, sustained responsiveness, and configured device/resource budgets |
-| Runtime | Artifact loading, selected quantization, language coverage, repeated sessions, cancellation, and compatibility with the packaged runtime |
-| Dataset | Approved labels, leakage checks, adequate evaluation coverage, and reproducible snapshot/split manifests |
+| Gate        | Evaluation requirement                                                                                                                   |
+| ----------- | ---------------------------------------------------------------------------------------------------------------------------------------- |
+| Recognition | Word/character error by language and audio condition; track insertions and unsupported speech on silence                                 |
+| Meaning     | Names, numbers, dates, amounts, units, negation, uncertainty, and code identifiers preserved                                             |
+| Cleanup     | Unsupported additions, meaning-changing deletions, damage to already-correct input, and human acceptance                                 |
+| Latency     | Cold-load time, warm inference time, and stop-to-final-text latency distributions                                                        |
+| Resources   | Peak memory, sustained responsiveness, and configured device/resource budgets                                                            |
+| Runtime     | Artifact loading, selected quantization, language coverage, repeated sessions, cancellation, and compatibility with the packaged runtime |
+| Dataset     | Approved labels, leakage checks, adequate evaluation coverage, and reproducible snapshot/split manifests                                 |
 
 Define the pass/fail thresholds before evaluating candidates. A lower average word error rate must not hide regressions in names, numbers, negation, or a supported language. Evaluate the actual quantized artifact intended for the app; success on training weights alone is insufficient. Small samples or missing coverage cannot establish that a candidate passed an automatic gate.
 

@@ -5,6 +5,7 @@ does the shipped Parakeet TDT 0.6B v3 CPU export lose accuracy to quantization,
 and can a different precision recover it at a similar download size?
 
 **Result: yes. The built-in CPU artifacts now use 4-bit weight-only quantization.**
+
 - Dynamic INT8 quantizes activations at run time and lost accuracy. Both changes
   are measured on held-out sets:
   - 94 FLEURS en-US clips: 7.70% → 5.95% WER.
@@ -19,12 +20,12 @@ languages, spontaneous speech or other machines.
 
 ## Artifacts
 
-| | Previous | Current |
-| --- | --- | --- |
-| Repository | `csukuangfj/sherpa-onnx-nemo-parakeet-tdt-0.6b-v3-int8@2bda32ec` | `rahulsharmavishwakarma/vesper-parakeet-tdt-0.6b-v3-sherpa-onnx-wo4@8e178c8a` |
-| Precision | Dynamic INT8 (QUInt8 encoder) | 4-bit weight-only, FP32 activations |
-| Encoder / decoder / joiner | 652,184,281 / 11,845,275 / 6,355,277 B | 679,397,339 / 47,233,762 / 3,984,870 B |
-| Install folder | `parakeet-tdt-0.6b-v3/` | `parakeet-tdt-0.6b-v3-wo4/` |
+|                            | Previous                                                         | Current                                                                       |
+| -------------------------- | ---------------------------------------------------------------- | ----------------------------------------------------------------------------- |
+| Repository                 | `csukuangfj/sherpa-onnx-nemo-parakeet-tdt-0.6b-v3-int8@2bda32ec` | `rahulsharmavishwakarma/vesper-parakeet-tdt-0.6b-v3-sherpa-onnx-wo4@8e178c8a` |
+| Precision                  | Dynamic INT8 (QUInt8 encoder)                                    | 4-bit weight-only, FP32 activations                                           |
+| Encoder / decoder / joiner | 652,184,281 / 11,845,275 / 6,355,277 B                           | 679,397,339 / 47,233,762 / 3,984,870 B                                        |
+| Install folder             | `parakeet-tdt-0.6b-v3/`                                          | `parakeet-tdt-0.6b-v3-wo4/`                                                   |
 
 The current files were produced from the official FP32 export
 `csukuangfj/sherpa-onnx-nemo-parakeet-tdt-0.6b-v3@1a468a35` by
@@ -48,14 +49,14 @@ The application's sherpa-onnx (`11afbd0`) links ONNX Runtime 1.28.2, which provi
 
 ### Held-out sets
 
-| Set | INT8 (previous) | 4-bit weight-only | FP32 | 4-bit better / worse clips | Median ASR, INT8 → 4-bit |
-| --- | ---: | ---: | ---: | --- | --- |
-| FLEURS en-US, 94 clips, 1,999 words | 7.70% | **5.95%** | 5.85% | 30 / 12; difference CI [−3.18, −0.49] | 217 → 335 ms |
-| FLEURS de-DE, 50 clips, 1,118 words | 8.23% | **6.62%** | — | 19 / 10; difference CI [−3.32, 0.00] | 294 → 451 ms |
-| FLEURS en-US, 16-clip screen pack | 5.57% | 6.50% | — | 3 more word errors | 208 → 299 ms |
-| Regression quiet lane (−30 dB), 24 clips | 72.70% | 68.75% | — | — | — |
-| Synthetic controls, 16 | 15.38% | 15.38–17.31% | — | 1 word in two conditions | — |
-| Non-speech controls, 8 | 0 false | 0 false | — | — | — |
+| Set                                      | INT8 (previous) | 4-bit weight-only |  FP32 | 4-bit better / worse clips            | Median ASR, INT8 → 4-bit |
+| ---------------------------------------- | --------------: | ----------------: | ----: | ------------------------------------- | ------------------------ |
+| FLEURS en-US, 94 clips, 1,999 words      |           7.70% |         **5.95%** | 5.85% | 30 / 12; difference CI [−3.18, −0.49] | 217 → 335 ms             |
+| FLEURS de-DE, 50 clips, 1,118 words      |           8.23% |         **6.62%** |     — | 19 / 10; difference CI [−3.32, 0.00]  | 294 → 451 ms             |
+| FLEURS en-US, 16-clip screen pack        |           5.57% |             6.50% |     — | 3 more word errors                    | 208 → 299 ms             |
+| Regression quiet lane (−30 dB), 24 clips |          72.70% |            68.75% |     — | —                                     | —                        |
+| Synthetic controls, 16                   |          15.38% |      15.38–17.31% |     — | 1 word in two conditions              | —                        |
+| Non-speech controls, 8                   |         0 false |           0 false |     — | —                                     | —                        |
 
 The 94-clip set was prepared with `scripts/prepare-fleurs-benchmark.mjs`
 (`--count 100`). The 6 sentences shared with the development clips were removed.
@@ -68,13 +69,13 @@ test split. After repinning, the built-in path scored the same 5.95% on the
 72 clips from the [16 September regression corpus](audio-regression-2026-09-16.md)
 (24 FLEURS sentences each clean, +10 dB and 0 dB noise; 1,824 words):
 
-| Precision | Clean | +10 dB | 0 dB | All | Median ASR |
-| --- | ---: | ---: | ---: | ---: | ---: |
-| Dynamic INT8 (official) | 15.13% | 14.47% | 25.16% | 18.26% | 261 ms |
-| Dynamic INT8, per-channel signed | 13.49% | 16.45% | 30.76% | 20.23% | 334 ms |
-| 4-bit weight-only | 8.06% | 7.40% | 10.69% | 8.72% | 375–421 ms |
-| 8-bit weight-only | 7.07% | 7.24% | 10.53% | 8.28% | 718 ms |
-| FP32 | 7.07% | 7.24% | 10.53% | 8.28% | 466 ms |
+| Precision                        |  Clean | +10 dB |   0 dB |    All | Median ASR |
+| -------------------------------- | -----: | -----: | -----: | -----: | ---------: |
+| Dynamic INT8 (official)          | 15.13% | 14.47% | 25.16% | 18.26% |     261 ms |
+| Dynamic INT8, per-channel signed | 13.49% | 16.45% | 30.76% | 20.23% |     334 ms |
+| 4-bit weight-only                |  8.06% |  7.40% | 10.69% |  8.72% | 375–421 ms |
+| 8-bit weight-only                |  7.07% |  7.24% | 10.53% |  8.28% |     718 ms |
+| FP32                             |  7.07% |  7.24% | 10.53% |  8.28% |     466 ms |
 
 An export of v3 made with the same NeMo 3.0 pipeline scored 17.98% in INT8, close
 to the official 18.26%, so the export tooling does not explain the difference.
@@ -88,10 +89,10 @@ Parakeet Unified English 0.6B
 NVIDIA Open Model License). Both were compared with their current dynamic INT8
 presets on the same 94 held-out FLEURS en-US clips:
 
-| Preset | Dynamic INT8 (shipped) | 4-bit weight-only | Better / worse clips | Difference CI | Median ASR |
-| --- | ---: | ---: | --- | --- | --- |
-| Parakeet v2 | 4.95% | 5.05% | 10 / 12 | [−0.46, 0.67] | 196 → 279 ms |
-| Parakeet Unified | 5.45% | 5.75% | 11 / 13 | [−0.50, 1.15] | 271 → 397 ms |
+| Preset           | Dynamic INT8 (shipped) | 4-bit weight-only | Better / worse clips | Difference CI | Median ASR   |
+| ---------------- | ---------------------: | ----------------: | -------------------- | ------------- | ------------ |
+| Parakeet v2      |                  4.95% |             5.05% | 10 / 12              | [−0.46, 0.67] | 196 → 279 ms |
+| Parakeet Unified |                  5.45% |             5.75% | 11 / 13              | [−0.50, 1.15] | 271 → 397 ms |
 
 Neither shows a difference within noise, and both are slower. Both presets keep
 their INT8 exports, and no converted copies were published. The INT8 accuracy
@@ -117,10 +118,10 @@ a full-precision copy was reconstructed locally for comparison:
 Decoded with the pinned sherpa-onnx runtime (`11afbd0`) through a batch C-API
 probe, CPU, 8 threads:
 
-| Set | INT8 (shipped) | INT8 weights, no activation quantization | Original weights (FP32) | FP32 better / worse | Median decode |
-| --- | ---: | ---: | ---: | --- | --- |
-| FLEURS en-US, 94 held-out clips | 5.85% | 5.75% | 5.75% | 6 / 6; CI [−0.56, 0.30] | 460 → 917 ms |
-| FLEURS de-DE, 50 clips | 4.74% | — | 4.56% | 6 / 4; CI [−0.97, 0.67] | 678 → 1,351 ms |
+| Set                             | INT8 (shipped) | INT8 weights, no activation quantization | Original weights (FP32) | FP32 better / worse     | Median decode  |
+| ------------------------------- | -------------: | ---------------------------------------: | ----------------------: | ----------------------- | -------------- |
+| FLEURS en-US, 94 held-out clips |          5.85% |                                    5.75% |                   5.75% | 6 / 6; CI [−0.56, 0.30] | 460 → 917 ms   |
+| FLEURS de-DE, 50 clips          |          4.74% |                                        — |                   4.56% | 6 / 4; CI [−0.97, 0.67] | 678 → 1,351 ms |
 
 Despite the coarse per-tensor weight scales, Cohere's INT8 export shows no
 accuracy loss outside noise, while full precision doubles decode time. Cohere is

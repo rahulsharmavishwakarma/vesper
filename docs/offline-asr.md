@@ -217,6 +217,7 @@ processing. Every other case runs one file, NVIDIA's
 `parakeet-tdt-0.6b-v3.q8_0.gguf` at `541d1f99` (713,975,456 bytes), through the
 bundled NeMo-Speech.cpp 0.1.0 runtime on CPU, Metal, CUDA or Vulkan for every
 declared Parakeet language:
+
 - other languages and automatic language detection;
 - CPU processing;
 - Macs where the MLX bridge cannot load.
@@ -227,6 +228,7 @@ See [ADR-0024](adrs/0024-unified-gguf-speech-engine.md),
 
 After the selected set installs, the app downloads the other set quietly in the
 background (`companion_artifacts`):
+
 - an English user gets the GGUF;
 - a user in another language gets the Neural Engine set.
 
@@ -287,16 +289,17 @@ prepared copy, and the next recording takes the extra seconds once.
 
 Through the application on 94 held-out English clips, the engine scored 5.11% WER against 5.16% for the MLX path, a
 difference within noise.
+
 - Clips up to 15 s matched.
 - Clips of 15–20 s gained a few errors from the extra cut.
 
 The [spike record](validation/ane-coreml-spike-2026-10-22.md) measured the same encoder program alongside the writing
 model:
 
-| Measure | Neural Engine | MLX speech |
-| --- | --- | --- |
-| Writer generation slowdown | 8% | 61% |
-| Encoder energy per window | about a fifth of MLX's | — |
+| Measure                    | Neural Engine          | MLX speech |
+| -------------------------- | ---------------------- | ---------- |
+| Writer generation slowdown | 8%                     | 61%        |
+| Encoder energy per window  | about a fifth of MLX's | —          |
 
 See the [qualification record](validation/parakeet-neural-engine-2026-10-22.md). It was measured on one
 M5 Pro. Other languages are not yet measured on this path, so Automatic sends them to the unified GGUF.

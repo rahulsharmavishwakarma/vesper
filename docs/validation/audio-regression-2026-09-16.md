@@ -22,12 +22,12 @@ Eligible recent checkpoints remain Silero v6.2 (November 2025), DPDFNet4/8 (Dece
 
 Natural English WER is total word edits divided by **610 reference words across 24 recordings per condition**. Lower is better; this is the same checkpoint/backend/precision/corpus for each paired comparison.
 
-| Input condition | Raw audio | DPDFNet4 | DPDFNet8 |
-| --- | ---: | ---: | ---: |
-| Original clean | 9.67% (59 edits) | 9.02% (55) | 9.51% (58) |
-| +10 dB environmental mixture | 10.49% (64) | 10.49% (64) | 10.82% (66) |
-| 0 dB environmental mixture | **14.59% (89)** | 14.92% (91) | 15.90% (97) |
-| Extreme attenuation, ×0.03 | **69.84% (426)** | 76.56% (467) | 77.70% (474) |
+| Input condition              |        Raw audio |     DPDFNet4 |     DPDFNet8 |
+| ---------------------------- | ---------------: | -----------: | -----------: |
+| Original clean               | 9.67% (59 edits) |   9.02% (55) |   9.51% (58) |
+| +10 dB environmental mixture |      10.49% (64) |  10.49% (64) |  10.82% (66) |
+| 0 dB environmental mixture   |  **14.59% (89)** |  14.92% (91) |  15.90% (97) |
+| Extreme attenuation, ×0.03   | **69.84% (426)** | 76.56% (467) | 77.70% (474) |
 
 Small clean gains are inconclusive. DPDFNet4's clean delta is −0.66 percentage points, with an unadjusted paired 95% bootstrap interval of −1.98 to +0.51 points. At 0 dB, its delta is +0.33 points (−4.76 to +4.66); DPDFNet8's is +1.31 (−3.76 to +5.53). At 0 dB, DPDFNet4 improves five recordings and worsens ten; DPDFNet8 improves three and worsens ten. These descriptive intervals do not establish universal superiority or inferiority. They do show that the earlier two-clip enhancement benefit did not persist on this larger selection.
 
@@ -59,10 +59,10 @@ Ear correctly identifies **24/24 clean English and 12/12 clean Hindi** recording
 
 AMI annotations identify 12 uh/um anchors and 13 filler events in their windows. Counts below require actual temporal overlap with the annotation. The six backchannel windows and three laughter windows contain overlapping speakers; the 12 positive windows and three ordinary-speech controls do not. Reference times are approximate and all windows come from one meeting.
 
-| Uhm input policy | Uh anchors hit | Um anchors hit | All filler events overlapped | Backchannel anchors marked | Ordinary-speech windows with a span |
-| --- | ---: | ---: | ---: | ---: | ---: |
-| Raw PCM | 4/6 | 6/6 | 10/13 | 0/6 | **2/3** |
-| SDK normalization | 4/6 | 3/6 | 7/13 | 0/6 | **1/3** |
+| Uhm input policy  | Uh anchors hit | Um anchors hit | All filler events overlapped | Backchannel anchors marked | Ordinary-speech windows with a span |
+| ----------------- | -------------: | -------------: | ---------------------------: | -------------------------: | ----------------------------------: |
+| Raw PCM           |            4/6 |            6/6 |                        10/13 |                        0/6 |                             **2/3** |
+| SDK normalization |            4/6 |            3/6 |                         7/13 |                        0/6 |                             **1/3** |
 
 Normalization reduces some false alarms but also reduces positive detection on these cases. Neither setting marks a laughter anchor. Some predicted spans occur elsewhere in backchannel windows; these are reported separately from anchor overlap. The ordinary-speech alarms are relative to AMI's annotations, not a new exhaustive human relabeling.
 
@@ -72,21 +72,21 @@ Both configurations detect the synthetic um/uh controls and also mark the meanin
 
 RTF is frontend computation divided by input duration, excluding loading, file I/O, pacing sleeps and ASR/writing. Per-call p95 is not utterance latency. RAM is **peak whole-process RSS**, including the benchmark and retained result data; it is not incremental model memory. Pacing changes CPU scheduling/wake-up behavior, so its measurements are kept separate from accelerated throughput.
 
-| Frontend | Payload | Completed-file sweep | Peak process RSS in that sweep |
-| --- | ---: | ---: | ---: |
-| Silero v6.2 | 1.29 MB | RTF 0.00215 | 480.2 MB |
-| DPDFNet4 | 11.71 MB | RTF 0.10399 | 132.5 MB |
-| DPDFNet8 | 14.62 MB | RTF 0.17379 | 138.2 MB |
-| Ear | 23.13 MB bundle | Median inference 74.02 ms + preprocessing 2.48 ms | 271.6 MB |
-| Uhm, raw | 47.05 MB FP16 artifact | Median inference 1,843.95 ms | 1,470.4 MB |
-| Uhm, normalized | Same artifact | Median inference 1,843.81 ms | 1,482.9 MB |
+| Frontend        |                Payload |                              Completed-file sweep | Peak process RSS in that sweep |
+| --------------- | ---------------------: | ------------------------------------------------: | -----------------------------: |
+| Silero v6.2     |                1.29 MB |                                       RTF 0.00215 |                       480.2 MB |
+| DPDFNet4        |               11.71 MB |                                       RTF 0.10399 |                       132.5 MB |
+| DPDFNet8        |               14.62 MB |                                       RTF 0.17379 |                       138.2 MB |
+| Ear             |        23.13 MB bundle | Median inference 74.02 ms + preprocessing 2.48 ms |                       271.6 MB |
+| Uhm, raw        | 47.05 MB FP16 artifact |                      Median inference 1,843.95 ms |                     1,470.4 MB |
+| Uhm, normalized |          Same artifact |                      Median inference 1,843.81 ms |                     1,482.9 MB |
 
 Uhm/Ear pad short recordings into a fixed 30-second model window; these call times are not per-second streaming costs. FP16 artifact storage does not prove native FP16 arithmetic. Silero's long-sweep RSS differs substantially from its three-recording paced process below; no model-only allocation or leak diagnosis follows from these process maxima.
 
-| Paced frontend, 20 ms delivery | Call p50 / p95 / maximum | Compute RTF | Maximum delivery lateness | Peak RSS |
-| --- | ---: | ---: | ---: | ---: |
-| Silero v6.2 | 0.189 / 0.611 / 5.094 ms | 0.01155 | 12.49 ms | 117.3 MB |
-| DPDFNet8 | 6.921 / 8.633 / 12.314 ms | 0.33426 | 10.02 ms | 157.2 MB |
+| Paced frontend, 20 ms delivery |  Call p50 / p95 / maximum | Compute RTF | Maximum delivery lateness | Peak RSS |
+| ------------------------------ | ------------------------: | ----------: | ------------------------: | -------: |
+| Silero v6.2                    |  0.189 / 0.611 / 5.094 ms |     0.01155 |                  12.49 ms | 117.3 MB |
+| DPDFNet8                       | 6.921 / 8.633 / 12.314 ms |     0.33426 |                  10.02 ms | 157.2 MB |
 
 Each paced run includes a 180-second stitched clean/noisy/attenuated stream between two identical 4.62-second recordings: 189.24 seconds and 9,462 packet calls. Accelerated chunk replay is faster—DPDFNet4/8 call p95 is 2.224/3.799 ms—but must not replace paced measurements. This is synchronous frontend replay. First ASR partial, word emission, app endpoint/stop-to-final, real microphone queue drops, cancellation during native calls and sustained thermals remain unmeasured.
 
@@ -107,10 +107,10 @@ The separate five-case Cohere probe preserves current per-job recognizer ownersh
 
 The actual Cargo feature graph selects `sha2 0.10.9` default/std. On this ARM target that uses software SHA; the crate's supported `asm` feature enables CPU-detected hardware SHA. An **isolated nested Cargo workspace**, without changing the app build, tests both implementations against all four Cohere artifacts over three order-rotated passes. [Official dispatch source](https://docs.rs/sha2/0.10.9/src/sha2/sha256.rs.html).
 
-| Full-file read + SHA-256, 2.89 GB | Three passes | Median |
-| --- | --- | ---: |
-| Current software backend | 4.887 / 4.739 / 4.743 s | **4.743 s** |
-| Supported hardware backend | 0.988 / 0.961 / 0.964 s | **0.964 s** |
+| Full-file read + SHA-256, 2.89 GB | Three passes            |      Median |
+| --------------------------------- | ----------------------- | ----------: |
+| Current software backend          | 4.887 / 4.739 / 4.743 s | **4.743 s** |
+| Supported hardware backend        | 0.988 / 0.961 / 0.964 s | **0.964 s** |
 
 This is a **4.92× improvement in that verification microbenchmark**, with matching pinned hashes on all 24 file checks. All 32 padding/block/reader-boundary and mutation/truncation/oversize checks pass. Every file is still fully read and verified; no cached success or skipped integrity check is introduced. CPU SHA support is detected locally. Both builds use sha2 0.10.9; the isolated lock pins sha2-asm 0.6.4. Per-file timings exclude process startup/file open, the OS cache is not flushed, and three repeats do not establish a deployment-wide confidence interval.
 

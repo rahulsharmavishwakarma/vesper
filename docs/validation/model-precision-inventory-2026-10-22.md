@@ -9,17 +9,17 @@ artifact, catalog entry or default changed.
 pinned revisions, checks their hashes, and groups initializer bytes by the operator that consumes them and by element
 type (convolutions split into pointwise, depthwise and other).
 
-| Model file | Initializers | Largest groups |
-| --- | ---: | --- |
-| Cohere Transcribe `encoder.int8.onnx` (+ `.data`) | 2,629 MB | `MatMulInteger` int8 1,675 MB (64%); **pointwise `Conv` float32 945 MB (36%)** |
-| Cohere Transcribe `decoder.int8.onnx` | 153 MB | `MatMulInteger` int8 134 MB; `Gather` uint8 18 MB |
-| Qwen3-ASR 0.6B `decoder.int8.onnx` | 754 MB | `MatMulInteger` uint8 597 MB; `Gather` uint8 156 MB |
-| Qwen3-ASR 0.6B `encoder.int8.onnx` | 177 MB | `MatMulInteger` int8 175 MB |
-| Qwen3-ASR 0.6B `conv_frontend.onnx` | 44 MB | `MatMul` float32 28 MB; `Conv` float32 17 MB |
-| Whisper Turbo `turbo-encoder.int8.onnx` | 674 MB | `MatMulInteger` int8 642 MB; `Conv` float32 22 MB |
-| Whisper Turbo `turbo-decoder.int8.onnx` | 360 MB | **float32 token table through `Identity` 266 MB (74%)**; `MatMulInteger` int8 92 MB |
-| Whisper Small `small-encoder.int8.onnx` | 112 MB | `MatMulInteger` int8 99 MB; `Conv` float32 8 MB |
-| Whisper Small `small-decoder.int8.onnx` | 260 MB | **float32 token table through `Identity` 159 MB (61%)**; `MatMulInteger` int8 99 MB |
+| Model file                                        | Initializers | Largest groups                                                                      |
+| ------------------------------------------------- | -----------: | ----------------------------------------------------------------------------------- |
+| Cohere Transcribe `encoder.int8.onnx` (+ `.data`) |     2,629 MB | `MatMulInteger` int8 1,675 MB (64%); **pointwise `Conv` float32 945 MB (36%)**      |
+| Cohere Transcribe `decoder.int8.onnx`             |       153 MB | `MatMulInteger` int8 134 MB; `Gather` uint8 18 MB                                   |
+| Qwen3-ASR 0.6B `decoder.int8.onnx`                |       754 MB | `MatMulInteger` uint8 597 MB; `Gather` uint8 156 MB                                 |
+| Qwen3-ASR 0.6B `encoder.int8.onnx`                |       177 MB | `MatMulInteger` int8 175 MB                                                         |
+| Qwen3-ASR 0.6B `conv_frontend.onnx`               |        44 MB | `MatMul` float32 28 MB; `Conv` float32 17 MB                                        |
+| Whisper Turbo `turbo-encoder.int8.onnx`           |       674 MB | `MatMulInteger` int8 642 MB; `Conv` float32 22 MB                                   |
+| Whisper Turbo `turbo-decoder.int8.onnx`           |       360 MB | **float32 token table through `Identity` 266 MB (74%)**; `MatMulInteger` int8 92 MB |
+| Whisper Small `small-encoder.int8.onnx`           |       112 MB | `MatMulInteger` int8 99 MB; `Conv` float32 8 MB                                     |
+| Whisper Small `small-decoder.int8.onnx`           |       260 MB | **float32 token table through `Identity` 159 MB (61%)**; `MatMulInteger` int8 99 MB |
 
 The Parakeet v3 CPU and MLX models are covered in [their](parakeet-conv-rewrite-2026-10-22.md)
 [records](parakeet-mlx-quantization-2026-10-22.md). Moonshine ships ONNX Runtime `.ort` files, which this tool does not
@@ -36,11 +36,11 @@ Scored on the same 100 FLEURS en-US test clips as the Parakeet records (`google/
 Python wheel, `from_cohere_transcribe` with explicit English, punctuation and ITN on, 4 threads, Apple M5 Pro CPU;
 lower-case, punctuation-free micro WER over 2,166 words; paired clip bootstrap against the shipped encoder:
 
-| Encoder | Size | WER | Difference [95% CI] | Median decode per clip |
-| --- | ---: | ---: | --- | ---: |
-| Shipped int8 | 2,735 MB | 5.77% | — | 570 ms |
-| Rewrite, new nodes dynamic int8 | 2,027 MB | 5.86% | +0.09 [−0.18, +0.40] | 446 ms |
-| **Rewrite, new nodes 4-bit weight-only** | **1,938 MB** | **5.77%** | **0.00 [−0.42, +0.37]** | 595 ms |
+| Encoder                                  |         Size |       WER | Difference [95% CI]     | Median decode per clip |
+| ---------------------------------------- | -----------: | --------: | ----------------------- | ---------------------: |
+| Shipped int8                             |     2,735 MB |     5.77% | —                       |                 570 ms |
+| Rewrite, new nodes dynamic int8          |     2,027 MB |     5.86% | +0.09 [−0.18, +0.40]    |                 446 ms |
+| **Rewrite, new nodes 4-bit weight-only** | **1,938 MB** | **5.77%** | **0.00 [−0.42, +0.37]** |                 595 ms |
 
 Both cut 0.7-0.8 GB from the default speech model with WER unchanged within noise on this set. Decode times are from
 one pass each and were not repeated.

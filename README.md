@@ -22,6 +22,7 @@
   <a href="#getting-started">Get&nbsp;started</a> ·
   <a href="docs/user-guide.md">User&nbsp;guide</a> ·
   <a href="#development">Build&nbsp;from&nbsp;source</a> ·
+  <a href="docs/README.md">Docs</a> ·
   <a href="https://github.com/rahulsharmavishwakarma/vesper/issues">Issues</a>
 </p>
 
@@ -59,16 +60,14 @@ Intel Macs, Windows and Linux are not current release targets.
 The app is **not yet notarized** with an Apple Developer ID, so macOS warns on
 the first launch. Drag Vesper to Applications and open it; if macOS says it cannot
 verify the app, go to **System Settings → Privacy & Security** and choose **Open
-Anyway**. If it instead says **"Vesper" is damaged and can't be opened** (the
-0.1.0 download, which is only partly signed), run
-`xattr -cr /Applications/Vesper.app` in Terminal and open it again. Later releases
-seal the whole app, so they show the normal warning. Verify the download against
-`SHA256SUMS` if you want to confirm it.
+Anyway**. If the older 0.1.0 download says **"Vesper" is damaged**,
+run `xattr -cr /Applications/Vesper.app` in Terminal and open it again. You can
+verify any download against `SHA256SUMS`.
 Signing and notarization are tracked in
 [issue #64](https://github.com/rahulsharmavishwakarma/vesper/issues/64).
 
-You can also [run from source](#development). Packaging details are in the
-[release guide](docs/ci-and-releases.md#release-workflow-and-download-url).
+What changed in each version is in the [changelog](CHANGELOG.md). You can also
+[run from source](#development).
 
 ## Getting started
 
@@ -86,9 +85,9 @@ Afterwards, in **Dictate**:
 
 Default shortcuts while the app is running:
 
-| Action | Shortcut |
-| --- | --- |
-| Hold to talk | `⌥ Shift D` |
+| Action                 | Shortcut        |
+| ---------------------- | --------------- |
+| Hold to talk           | `⌥ Shift D`     |
 | Start / stop recording | `⌘ Shift Space` |
 
 Change these in **Settings → Shortcuts**. Pasting into the original text
@@ -105,6 +104,23 @@ Recording history is saved locally by default. Turn off **Save recordings and
 transcripts** in Settings to stop archiving new sessions. Personal vocabulary
 and compact correction evidence are stored separately on the device. Read the
 [storage and privacy details](docs/user-guide.md#privacy-and-storage).
+
+## How it works
+
+Vesper is a single Tauri 2 desktop app. A Rust core captures audio and runs every
+model in-process on one inference worker; the Svelte interface talks to it over
+Tauri IPC. Nothing is sent to a server.
+
+<picture>
+  <source media="(prefers-color-scheme: dark)" srcset="docs/assets/diagrams/overview.dark.svg">
+  <img alt="How Vesper works: audio capture, the inference worker, on-device runtimes, history and the UI" src="docs/assets/diagrams/overview.light.svg">
+</picture>
+
+<sub>Diagram source: [overview.mjs](docs/diagrams/overview.mjs)</sub>
+
+Automatic picks the engine for each model and Mac (CPU, Apple GPU or Neural
+Engine). See [architecture](docs/architecture.md) and the
+[inference architecture](docs/inference-architecture.md) for the details.
 
 ## Development
 
@@ -133,8 +149,7 @@ make check
 
 For builds, formatting, tests and release commands, see the
 [development guide](docs/development.md) and [CI documentation](docs/ci-and-releases.md).
-See the [architecture](docs/architecture.md), [inference backend architecture](docs/inference-architecture.md) and [research](docs/research.md)
-guides for technical background.
+All guides are listed in the [documentation index](docs/README.md).
 
 ## Contributing and support
 

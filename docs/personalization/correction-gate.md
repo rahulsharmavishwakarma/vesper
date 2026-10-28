@@ -11,7 +11,7 @@ A normalization applies only when all of these hold:
 1. The recording language is English. Other languages and automatic language detection fail closed (`unsupported_language`).
 2. The spoken form occurs as an exact token sequence (ignoring case). It must not cross punctuation, a sentence or line boundary, or sit inside quotes (`boundary`).
 3. Neither side contains a protected class: numbers, weekdays, months, dates, negation, uncertainty, pronouns or auxiliaries (`protected_class`).
-4. **Heard-plausibility gate.** If every heard token is an ordinary English word, the span already makes sense as speech, and the gate refuses to change it into a different word (`ordinary_language`). The one exception is a *user-asserted* spelling with exactly the same letters, such as `type script` → `TypeScript`. A rejoin into an ordinary word is still refused.
+4. **Heard-plausibility gate.** If every heard token is an ordinary English word, the span already makes sense as speech, and the gate refuses to change it into a different word (`ordinary_language`). The one exception is a _user-asserted_ spelling with exactly the same letters, such as `type script` → `TypeScript`. A rejoin into an ordinary word is still refused.
 5. A mined (tier B) term, or any snake_case, dotted or `::` identifier, may rejoin several heard words only when none of them is an ordinary word. `sherpa onnx` → `sherpa_onnx` passes. `ASR models` → `ASR_MODELS` and `ASR model` → `AsrModel` are refused (`ordinary_language`). Before this rule, replaying real dictation history produced these two wrong changes, five times in total.
 6. Overlapping candidates abstain (`ambiguous`). Replacement is single-pass and does not cascade.
 
@@ -32,6 +32,7 @@ The gate therefore has an experimental near-miss rule over the working set's **r
 `NearMiss::Shadow`, the library default, records proposals in `GateResult::near_misses` without changing text. `NearMiss::Apply` applies them.
 
 The criterion for applying them in the app was written down before the evaluation: zero would-fire changes on correct words across the hard-negative bank and the retained-history replay. It was met on 27 October 2026 with the correct workspace's references (local measurement, [term evaluation](term-evaluation.md)):
+
 - **Target-free lanes:** 0 changes on 350 rendered hard negatives and 92 FLEURS clips. This holds for Cohere and Parakeet, clean and noise-mixed.
 - **Positives:** 89 repairs, 1 harmful. A LibriSpeech utterance contains two rare words one letter apart, both in the reference and the list.
 - **Retained local history:** 18 repairs, 0 wrong. This history was also the development set for two earlier rule fixes.
@@ -50,7 +51,7 @@ Each result's personalization evidence records the gate's changes (`gate`) and t
 
 The bundled file `crates/vesper-core/data/english-lexicon.fc` holds 117,493 lowercase ASCII words, front-coded in 522 KB. `scripts/generate-english-lexicon.py` regenerates it and checks the source hash. CMUdict is redistributed under its BSD-style license (`crates/vesper-core/data/CMUDICT-LICENSE`); keep that notice with any binary distribution's notices.
 
-The lexicon includes inflections and many proper names. This makes the gate *more* conservative: a heard name such as "Mandy" also counts as ordinary and is never rewritten. It does not contain most technical tokens (`onnx`, `kubectl`, `etcd`, `ctl`), and those are the spans the gate exists to repair.
+The lexicon includes inflections and many proper names. This makes the gate _more_ conservative: a heard name such as "Mandy" also counts as ordinary and is never rewritten. It does not contain most technical tokens (`onnx`, `kubectl`, `etcd`, `ctl`), and those are the spans the gate exists to repair.
 
 ## Limitations
 
@@ -62,12 +63,12 @@ The lexicon includes inflections and many proper names. This makes the gate *mor
 
 Some recognition errors are real words that sound like a term: `data` for Detta, `rack` for RAG, `Bray` for Brave. A model-free rule that replaced an ordinary word with a known term of the same rule-based sound key (within two letter edits) was tested as a dry run. It used all 1,814 terms mined from the Vesper repository over 465 local transcripts.
 
-| Measure | Value |
-| --- | --- |
-| Ordinary words checked | 8,397 |
-| Changes it would make | 733 |
-| Distinct word → term pairs | 91 |
-| Most frequent | `etc` → UTC (100), `use` → ISO (61), `data` → Detta (38), `any` → ANE (36), `from` → VRAM (32), `where` → WER (28), `go` → GUI (26) |
+| Measure                    | Value                                                                                                                               |
+| -------------------------- | ----------------------------------------------------------------------------------------------------------------------------------- |
+| Ordinary words checked     | 8,397                                                                                                                               |
+| Changes it would make      | 733                                                                                                                                 |
+| Distinct word → term pairs | 91                                                                                                                                  |
+| Most frequent              | `etc` → UTC (100), `use` → ISO (61), `data` → Detta (38), `any` → ANE (36), `from` → VRAM (32), `where` → WER (28), `go` → GUI (26) |
 
 Nearly all were wrong, including most `data` → Detta, because sound cannot tell the intended word from the term. The gate therefore keeps its rule that ordinary words are never rewritten automatically.
 

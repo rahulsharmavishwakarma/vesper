@@ -5,7 +5,6 @@
 > and `VESPER_*` override names; legacy environment aliases remain supported.
 > See [current naming and compatibility](../../docs/development.md#product-name-and-compatibility). No measurement has been requalified by renaming.
 
-
 **Both local recognizers ran all 304 selected Svarah recordings without execution failure.** On identical audio, Cohere INT8 scored 9.54% normalized WER and Nemotron Q8 scored 20.78%. The frozen corpus-reference dictionary slightly worsened both results by applying one incorrect pluralization. These are fresh native audio measurements, separate from the [text/feedback stress simulation](2026-09-18-policy-learning-stress.md).
 
 The local debug report at `.cache/benchmarks/results/2026-09-18-accent-personalization/debug-summary.json` retains each cohort, score denominators, failures, sample/audio hashes, model/runtime artifacts, actual execution settings and timing distributions without exporting transcript rows. [Issue #34](https://github.com/rahulsharmavishwakarma/transcribe/issues/34#issuecomment-5719577820) records the authorized testing scope. No model/default, runtime ownership, live user profile or training behavior changed.
@@ -24,28 +23,28 @@ Svarah and FLEURS are attributed under CC BY 4.0. Cached WAV bytes are copied un
 
 WER is pooled word edits divided by reference words using the existing `transcribe-eval` normalization. It is not the `word_edits` helper used in the policy simulation. There are 4,667 reference words and no failed/unscored Svarah samples for either recognizer.
 
-| Speaker primary language | Clips | Reference words | Nemotron WER | Cohere WER |
-| --- | ---: | ---: | ---: | ---: |
-| Assamese | 16 | 246 | 27.24% | 11.38% |
-| Bengali | 16 | 249 | 27.31% | 9.64% |
-| Bodo | 16 | 275 | 30.91% | 12.36% |
-| Dogri | 16 | 298 | 15.10% | 8.05% |
-| Gujarati | 16 | 222 | 16.22% | 7.21% |
-| Hindi | 16 | 241 | 14.11% | 9.96% |
-| Kannada | 16 | 191 | 19.37% | 7.85% |
-| Kashmiri | 16 | 268 | 23.88% | 8.58% |
-| Konkani | 16 | 245 | 25.31% | 15.92% |
-| Maithili | 16 | 220 | 22.73% | 7.73% |
-| Malayalam | 16 | 267 | 14.61% | 7.12% |
-| Marathi | 16 | 252 | 21.83% | 7.94% |
-| Nepali | 16 | 187 | 27.81% | 10.16% |
-| Odia | 16 | 272 | 13.24% | 2.57% |
-| Punjabi | 16 | 275 | 15.27% | 8.36% |
-| Sindhi | 16 | 256 | 16.41% | 11.72% |
-| Tamil | 16 | 255 | 17.25% | 5.49% |
-| Telugu | 16 | 230 | 17.83% | 11.30% |
-| Urdu | 16 | 218 | 32.57% | 19.72% |
-| **All selected Svarah clips** | **304** | **4,667** | **970 edits / 20.78%** | **445 edits / 9.54%** |
+| Speaker primary language      |   Clips | Reference words |           Nemotron WER |            Cohere WER |
+| ----------------------------- | ------: | --------------: | ---------------------: | --------------------: |
+| Assamese                      |      16 |             246 |                 27.24% |                11.38% |
+| Bengali                       |      16 |             249 |                 27.31% |                 9.64% |
+| Bodo                          |      16 |             275 |                 30.91% |                12.36% |
+| Dogri                         |      16 |             298 |                 15.10% |                 8.05% |
+| Gujarati                      |      16 |             222 |                 16.22% |                 7.21% |
+| Hindi                         |      16 |             241 |                 14.11% |                 9.96% |
+| Kannada                       |      16 |             191 |                 19.37% |                 7.85% |
+| Kashmiri                      |      16 |             268 |                 23.88% |                 8.58% |
+| Konkani                       |      16 |             245 |                 25.31% |                15.92% |
+| Maithili                      |      16 |             220 |                 22.73% |                 7.73% |
+| Malayalam                     |      16 |             267 |                 14.61% |                 7.12% |
+| Marathi                       |      16 |             252 |                 21.83% |                 7.94% |
+| Nepali                        |      16 |             187 |                 27.81% |                10.16% |
+| Odia                          |      16 |             272 |                 13.24% |                 2.57% |
+| Punjabi                       |      16 |             275 |                 15.27% |                 8.36% |
+| Sindhi                        |      16 |             256 |                 16.41% |                11.72% |
+| Tamil                         |      16 |             255 |                 17.25% |                 5.49% |
+| Telugu                        |      16 |             230 |                 17.83% |                11.30% |
+| Urdu                          |      16 |             218 |                 32.57% |                19.72% |
+| **All selected Svarah clips** | **304** |       **4,667** | **970 edits / 20.78%** | **445 edits / 9.54%** |
 
 Sixteen clips per background are a small descriptive screen. The utterances, vocabulary and number formats differ by group; this table does not isolate accent as the cause of error differences or rank population-level accent difficulty. Exact per-group grapheme error rates and timing distributions are in the JSON.
 
@@ -67,12 +66,12 @@ Nemotron scored all 32 US-control clips at 121/738 word edits (16.40%); dictiona
 
 A separate actual-store replay combines the earlier 192 calibration outputs/reference edits with the **304 freshly decoded Nemotron Svarah outputs**. References for these 304 recordings remain scoring-only; they never become feedback. This is a 496-episode simulated ordinary-edit experiment, not 496 additional acoustic executions. The prior calibration and new held-out ASR envelopes remain identified separately by their report hashes.
 
-| Replay mode | Stored vocabulary | Held-out core word edits | Improved / worsened recordings |
-| --- | ---: | ---: | ---: |
-| Off | 0 | 977 | 0 / 0 |
-| Manual oracle | 50 | 978 | 0 / 1 |
-| Automatic edits | 0 | 977 | 0 / 0 |
-| Automatic usage/retry | 0 | 977 | 0 / 0 |
+| Replay mode           | Stored vocabulary | Held-out core word edits | Improved / worsened recordings |
+| --------------------- | ----------------: | -----------------------: | -----------------------------: |
+| Off                   |                 0 |                      977 |                          0 / 0 |
+| Manual oracle         |                50 |                      978 |                          0 / 1 |
+| Automatic edits       |                 0 |                      977 |                          0 / 0 |
+| Automatic usage/retry |                 0 |                      977 |                          0 / 0 |
 
 Both automatic modes abstained from activating entries: 14 candidates remained in the edit-only mode and 18 in usage/retry mode. No replay/store failures occurred. Every primary-language group had unchanged automatic output. These core word-edit counts use a different tokenizer from native normalized WER and must not be mixed with the 970 native word errors above.
 
@@ -82,10 +81,10 @@ This set shows **no automatic accent-related gain**. Cross-speaker corpus refere
 
 Nemotron received 20 ms packets at their wall-clock deadlines for **38 recordings, two per language-background group**, totaling 311.50 seconds of speech. All completed without error. These are prerecorded audio replays through the application's existing streaming adapter, not microphone or desktop end-to-end tests.
 
-| ASR metric, 38 recordings | Mean | Median | p95 | Maximum |
-| --- | ---: | ---: | ---: | ---: |
-| First nonempty partial | 1,306 ms | 1,002 ms | 2,920 ms | 3,235 ms |
-| Last audio packet to final text | 60.6 ms | 59.2 ms | 87.8 ms | 90.3 ms |
+| ASR metric, 38 recordings       |     Mean |   Median |      p95 |  Maximum |
+| ------------------------------- | -------: | -------: | -------: | -------: |
+| First nonempty partial          | 1,306 ms | 1,002 ms | 2,920 ms | 3,235 ms |
+| Last audio packet to final text |  60.6 ms |  59.2 ms |  87.8 ms |  90.3 ms |
 
 First-partial latency includes applicable cold setup. Stop-to-final begins after the last paced audio packet and excludes subsequent dictionary work, writing, UI and insertion. The approximately 1.01 paced real-time factor includes intentionally waiting for audio delivery and is not a decoder-throughput result. Two examples per cohort do not establish a reliable per-accent latency percentile.
 
@@ -97,13 +96,13 @@ Apple M5 Pro (Mac17,8), 18 logical CPUs, 64 GiB, macOS 27.0 (26A428), Rust 1.98.
 
 Actual execution evidence reports **four native graph threads for Nemotron and eight for Cohere**. This supersedes the older generic `environment.threads = 8` worker-cap annotation and its note about unavailable NeMo thread information. Per-process supply snapshots report battery operation during timing, superseding the preparation-time AC observation. Power mode was zero; there was no recorded thermal warning at the start, but no continuous thermal/power trace. No timed models ran concurrently; unrelated host activity and filesystem caches were uncontrolled.
 
-| Svarah completed-file component | Nemotron | Cohere |
-| --- | ---: | ---: |
-| Mean ASR time, all 304 | 363 ms | 428 ms |
-| Median ASR time | 310 ms | 366 ms |
-| ASR p95 | 691 ms | 794 ms |
-| Mean ASR time, 303 later requests | 361 ms | 421 ms |
-| Mean dictionary application | 0.049 ms | 0.055 ms |
+| Svarah completed-file component   | Nemotron |   Cohere |
+| --------------------------------- | -------: | -------: |
+| Mean ASR time, all 304            |   363 ms |   428 ms |
+| Median ASR time                   |   310 ms |   366 ms |
+| ASR p95                           |   691 ms |   794 ms |
+| Mean ASR time, 303 later requests |   361 ms |   421 ms |
+| Mean dictionary application       | 0.049 ms | 0.055 ms |
 
 File ASR time covers the existing manager request, including applicable load/verification and decoding, and excludes file setup, subsequent dictionary application, UI and insertion. The first request in each process is cold; later requests use the adapter's resident weights and fresh recording state. These numbers are not microphone Stop-to-final latency. The JSON records model/runtime revisions, actual initialized providers, native artifact hashes and process peak RSS from `time -l`.
 

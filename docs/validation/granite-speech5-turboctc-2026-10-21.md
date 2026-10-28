@@ -11,27 +11,27 @@ measured. It runs at about half of Parakeet's per-clip latency and uses about a
 third of its GPU memory. IBM publishes no CPU export, so the model is offered
 only on Apple Silicon builds that include the MLX bridge.
 
-| Lane (Metal, app path) | Parakeet v3 | Granite | Granite − v3 (95% CI) |
-| --- | --- | --- | --- |
-| FLEURS en-US held-out, 94 clips | 5.25% | 5.30% | [−0.77, +0.91] |
-| Natural clean, 24 | 6.25% | 5.92% | [−2.15, +1.47] |
-| Natural +10 dB SNR, 24 | 6.74% | 6.25% | [−2.00, +0.88] |
-| Natural 0 dB SNR, 24 | 9.21% | 8.06% | [−3.00, +0.62] |
-| Quiet (−30 dB), 24 | 6.91% | 5.59% | [−2.72, +0.00] |
-| Joined FLEURS long-form, 6 × ~95 s | 10.50% | 6.57% | [−7.55, −0.26] |
-| FLEURS de-DE, 50 clips | 6.62%¹ | 6.44% | [−1.82, +1.46] |
+| Lane (Metal, app path)             | Parakeet v3 | Granite | Granite − v3 (95% CI) |
+| ---------------------------------- | ----------- | ------- | --------------------- |
+| FLEURS en-US held-out, 94 clips    | 5.25%       | 5.30%   | [−0.77, +0.91]        |
+| Natural clean, 24                  | 6.25%       | 5.92%   | [−2.15, +1.47]        |
+| Natural +10 dB SNR, 24             | 6.74%       | 6.25%   | [−2.00, +0.88]        |
+| Natural 0 dB SNR, 24               | 9.21%       | 8.06%   | [−3.00, +0.62]        |
+| Quiet (−30 dB), 24                 | 6.91%       | 5.59%   | [−2.72, +0.00]        |
+| Joined FLEURS long-form, 6 × ~95 s | 10.50%      | 6.57%   | [−7.55, −0.26]        |
+| FLEURS de-DE, 50 clips             | 6.62%¹      | 6.44%   | [−1.82, +1.46]        |
 
 ¹ Parakeet's German MLX path is not offered (Metal is English-only for the
 shared models), so the German baseline is its 4-bit CPU export through the same
 evaluator.
 
-| Resource (FLEURS en-US, Metal) | Parakeet v3 MLX | Granite |
-| --- | --- | --- |
-| Median / p95 ASR time per clip | 48 / 71 ms | 22 / 32 ms |
-| First request after load (kernel compilation) | 1.19 s | 1.09 s |
-| Model load, cold file cache | 218 ms | 679 ms |
-| Peak MLX allocator memory | 3.80 GB | 1.37 GB |
-| Download | ~2.5 GB | ~948 MB |
+| Resource (FLEURS en-US, Metal)                | Parakeet v3 MLX | Granite    |
+| --------------------------------------------- | --------------- | ---------- |
+| Median / p95 ASR time per clip                | 48 / 71 ms      | 22 / 32 ms |
+| First request after load (kernel compilation) | 1.19 s          | 1.09 s     |
+| Model load, cold file cache                   | 218 ms          | 679 ms     |
+| Peak MLX allocator memory                     | 3.80 GB         | 1.37 GB    |
+| Download                                      | ~2.5 GB         | ~948 MB    |
 
 Except for long-form, every confidence interval includes or touches zero: on
 these sets Granite is as accurate as Parakeet v3, not proven better. Long-form
@@ -60,12 +60,12 @@ They come from one M5 Pro on battery and are not general claims.
 
 Files load unmodified from IBM's repository; nothing is converted or re-hosted.
 
-| File | Bytes | SHA-256 |
-| --- | --- | --- |
-| `config.json` | 921 | `aabd64a2da736a1a1c21237c896b71628f6dd7364f1f5ec8a77f5e04b3ef1011` |
-| `model.safetensors` | 946,311,576 | `5b569c3744c42a9172ac976881539926b66176d03fbaaa3c51b5d2960067f6fc` |
-| `tokenizer.json` | 1,699,784 | `a1c3ca763ce0690faf0df3456365358547acfdf766122c9e4a69be8e8708042e` |
-| `tokenizer_config.json` | 223 | `2f61ece3468bf7ca7a1b6dd3fd5b809814315bea9c298feea035fda4931b9f02` |
+| File                    | Bytes       | SHA-256                                                            |
+| ----------------------- | ----------- | ------------------------------------------------------------------ |
+| `config.json`           | 921         | `aabd64a2da736a1a1c21237c896b71628f6dd7364f1f5ec8a77f5e04b3ef1011` |
+| `model.safetensors`     | 946,311,576 | `5b569c3744c42a9172ac976881539926b66176d03fbaaa3c51b5d2960067f6fc` |
+| `tokenizer.json`        | 1,699,784   | `a1c3ca763ce0690faf0df3456365358547acfdf766122c9e4a69be8e8708042e` |
+| `tokenizer_config.json` | 223         | `2f61ece3468bf7ca7a1b6dd3fd5b809814315bea9c298feea035fda4931b9f02` |
 
 ## Adapter design
 
@@ -119,12 +119,12 @@ The target was chosen among two candidates (peak 0.5 and RMS −23 dBFS) on the
 English and noise lanes. German was then used as the check. These figures come
 from the reference implementation on identical float input:
 
-| Lane | No leveling | Leveled |
-| --- | --- | --- |
-| FLEURS en-US held-out | 5.95% | 5.25% |
-| FLEURS de-DE (check set) | 6.26% | 6.17% |
-| Natural 0 dB | 8.88% | 8.06% |
-| Quiet (−30 dB) | 20.89% | 5.59% |
+| Lane                     | No leveling | Leveled |
+| ------------------------ | ----------- | ------- |
+| FLEURS en-US held-out    | 5.95%       | 5.25%   |
+| FLEURS de-DE (check set) | 6.26%       | 6.17%   |
+| Natural 0 dB             | 8.88%       | 8.06%   |
+| Quiet (−30 dB)           | 20.89%      | 5.59%   |
 
 ## Parity with the reference
 

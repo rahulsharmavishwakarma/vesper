@@ -9,11 +9,10 @@ labelled as such. Product behavior lives in [live transcription](live-transcript
 live in [inference performance](inference-performance.md). Decisions are recorded
 in [ADRs](adrs/README.md).
 
-Visual review: no Excalidraw MCP server was connected when these diagrams were
-written ([#189](https://github.com/rahulsharmavishwakarma/vesper/issues/189)).
-The Mermaid sources were rendered and checked with `@mermaid-js/mermaid-cli`
-11.4.2. Excalidraw versions should be generated from these sources with the
-official Mermaid-to-Excalidraw converter, and kept in sync with them.
+The overview in section 1 is a hand-laid-out SVG
+([source](diagrams/inference-high-level.mjs)); the detailed diagrams are Mermaid.
+No Excalidraw MCP server was connected when they were written
+([#189](https://github.com/rahulsharmavishwakarma/vesper/issues/189)).
 
 ## 1. High-level backend
 
@@ -22,71 +21,22 @@ model work runs on one inference worker thread, owned by `InferenceManager`.
 Native runtimes are linked libraries, not services, so nothing leaves the
 device after the models are installed.
 
-```mermaid
-flowchart TB
-  subgraph UI["Svelte 5 UI (WebView)"]
-    views[Dictate / History / Models / Settings]
-  end
-  subgraph Desktop["vesper-desktop (Tauri 2, Rust)"]
-    commands[commands.rs: start / stop recording]
-    runtime[runtime.rs WorkContext: process_capture]
-    dictation[dictation.rs: paste via vesper-desktop-platform]
-  end
-  subgraph Audio["vesper-audio"]
-    capture[CPAL capture, lock-free ring]
-    decode[File decode, Symphonia]
-    mixer[ChannelMixer + StreamingResampler]
-  end
-  subgraph Inference["vesper-inference (one worker thread)"]
-    manager[InferenceManager + WorkerState]
-    frontend[Audio frontend: Silero VAD, DPDFNet8]
-    speech[Speech adapters]
-    writer[Qwen3.5 writer]
-    diar[Speaker diarization]
-  end
-  subgraph Native["Native runtimes (linked or bundled)"]
-    sherpa[sherpa-onnx 1.13.8]
-    nemo[NeMo-Speech.cpp C ABI via vesper-nemo]
-    mlx[MLX Swift bridge via vesper-mlx]
-    llama[llama.cpp via llama-cpp-2 0.1.159 + mtmd]
-  end
-  subgraph Store["Local storage"]
-    models[(Model root: weights + runtimes)]
-    data[(vesper-data: sessions.sqlite3 + audio)]
-  end
-  core[vesper-core: config, model ids, adapter registry, personalization]
-  modelsCrate[vesper-models: catalog, install, sha256, selection]
+<picture>
+  <source media="(prefers-color-scheme: dark)" srcset="assets/diagrams/inference-high-level.dark.svg">
+  <img alt="High-level backend: UI, desktop runtime, audio, inference worker, native runtimes and storage" src="assets/diagrams/inference-high-level.light.svg">
+</picture>
 
-  views <-->|Tauri IPC + events| commands
-  commands --> capture
-  commands --> runtime
-  runtime --> manager
-  runtime --> dictation
-  runtime --> data
-  capture --> mixer --> manager
-  decode --> mixer
-  manager --> frontend
-  manager --> speech
-  manager --> writer
-  manager --> diar
-  speech --> sherpa & nemo & mlx & llama
-  writer --> llama
-  diar --> nemo
-  frontend --> sherpa
-  modelsCrate --> models
-  manager -. verify + resolve .-> modelsCrate
-  core -. shared types .-> Desktop & Inference & modelsCrate
-```
+<sub>Diagram source: [inference-high-level.mjs](diagrams/inference-high-level.mjs)</sub>
 
-| Crate | Responsibility |
-| --- | --- |
-| `vesper-core` | Config, model ids, adapter registry (`AdapterKind`, `AdapterCapabilities`), personalization types; no workspace dependencies |
-| `vesper-audio` | Capture, WAV storage, decoding, `ChannelMixer`, resampling, completed-audio segmentation |
-| `vesper-models` | Pinned artifact catalog, install, SHA-256 verification, speech/backend selection |
-| `vesper-inference` | Single worker, adapters, audio frontend, live previews, writer, diarization adapter |
-| `vesper-nemo` / `vesper-mlx` | Safe wrappers over the NeMo-Speech.cpp C ABI and the MLX Swift bridge |
-| `vesper-data` | Local SQLite sessions, transcripts, labels, learning (no inference) |
-| `vesper-desktop` | Tauri app: commands, orchestration, paste, diagnostics |
+| Crate                        | Responsibility                                                                                                               |
+| ---------------------------- | ---------------------------------------------------------------------------------------------------------------------------- |
+| `vesper-core`                | Config, model ids, adapter registry (`AdapterKind`, `AdapterCapabilities`), personalization types; no workspace dependencies |
+| `vesper-audio`               | Capture, WAV storage, decoding, `ChannelMixer`, resampling, completed-audio segmentation                                     |
+| `vesper-models`              | Pinned artifact catalog, install, SHA-256 verification, speech/backend selection                                             |
+| `vesper-inference`           | Single worker, adapters, audio frontend, live previews, writer, diarization adapter                                          |
+| `vesper-nemo` / `vesper-mlx` | Safe wrappers over the NeMo-Speech.cpp C ABI and the MLX Swift bridge                                                        |
+| `vesper-data`                | Local SQLite sessions, transcripts, labels, learning (no inference)                                                          |
+| `vesper-desktop`             | Tauri app: commands, orchestration, paste, diagnostics                                                                       |
 
 ## 2. Recording lifecycle
 
@@ -194,60 +144,26 @@ The registry in `vesper-core/src/adapters.rs` maps each built-in model to an
 turns a selection into a loaded `SpeechModel`. Backend selection lives in
 `vesper-models/src/selection.rs` and `vesper-inference/src/backend.rs`.
 
-```mermaid
-flowchart LR
-  subgraph Models["AsrModel (vesper-core)"]
-    nem[Nemotron 3.5 streaming]
-    par[Parakeet TDT v3]
-    qwa[Qwen3-ASR 0.6B]
-    coh[Cohere Transcribe - default]
-    whi[Whisper Small / Turbo]
-    lfm[LFM2.5 Audio]
-    moo[Moonshine Base]
-    gra[Granite Speech 5.0 TurboCTC]
-    pho[Phonon-2]
-    red[Parakeet Redux]
-    cus[Custom NeMo transducer profile]
-  end
-  subgraph Kinds["AdapterKind"]
-    k1[NemoRnnt: native_streaming, phrase hints]
-    k2[SherpaTransducer]
-    k3[QwenAsr]
-    k4[CohereAsr]
-    k5[Whisper]
-    k6[LfmAudio]
-    k7[MoonshineAsr]
-    k8[GraniteCtc: Apple GPU only]
-    k9[PackedTdt: Apple GPU only]
-    k10[TernaryTdt: Apple GPU only]
-    k11[NemoTdt: completed audio, buffered live]
-    k12[NeuralEngineTdt: English, 15 s parts, buffered live]
-  end
-  subgraph Runtime["Runtime"]
-    r1[NeMo-Speech.cpp: CPU / Metal / CUDA / Vulkan]
-    r2[sherpa-onnx: CPU only]
-    r3[MLX Swift: Metal; English except<br/>Granite and Redux languages]
-    r4[llama.cpp mtmd: CPU / GPU]
-    r5[Core ML encoder on the Neural Engine<br/>+ MLX decoder on Metal, via the MLX bridge]
-  end
-  nem --> k1 --> r1
-  par --> k2
-  cus --> k2
-  qwa --> k3
-  coh --> k4
-  whi --> k5
-  moo --> k7
-  k2 & k3 & k4 & k5 & k7 --> r2
-  gra --> k8 --> r3
-  pho --> k9 --> r3
-  red --> k10 --> r3
-  par -. "MLX registration" .-> r3
-  par -. "Automatic: English on Apple silicon" .-> k12 --> r5
-  par -. "Automatic: other languages, or no Neural Engine" .-> k11 --> r1
-  qwa -. "MLX registration, native live preview" .-> r3
-  whi -. "WhisperSmall MLX registration" .-> r3
-  lfm --> k6 --> r4
-```
+| Model                          | Adapter kind                                                                                             | Runtime                                                    |
+| ------------------------------ | -------------------------------------------------------------------------------------------------------- | ---------------------------------------------------------- |
+| Nemotron 3.5 streaming         | `NemoRnnt`: native streaming, phrase hints                                                               | NeMo-Speech.cpp                                            |
+| Parakeet TDT v3                | `NeuralEngineTdt` under Automatic for English on Apple silicon: 15 s parts, buffered live                | Core ML encoder on the Neural Engine, MLX decoder on Metal |
+|                                | `NemoTdt` under Automatic for other languages or without a Neural Engine: completed audio, buffered live | NeMo-Speech.cpp                                            |
+|                                | `SherpaTransducer`, and an MLX registration                                                              | sherpa-onnx; MLX Swift                                     |
+| Custom NeMo transducer profile | `SherpaTransducer`                                                                                       | sherpa-onnx                                                |
+| Qwen3-ASR 0.6B                 | `QwenAsr`, and an MLX registration with native live preview                                              | sherpa-onnx; MLX Swift                                     |
+| Cohere Transcribe (default)    | `CohereAsr`                                                                                              | sherpa-onnx                                                |
+| Whisper Small / Turbo          | `Whisper`; Whisper Small also has an MLX registration                                                    | sherpa-onnx; MLX Swift                                     |
+| Moonshine Base                 | `MoonshineAsr`                                                                                           | sherpa-onnx                                                |
+| Granite Speech 5.0 TurboCTC    | `GraniteCtc`, Apple GPU only                                                                             | MLX Swift                                                  |
+| Phonon-2                       | `PackedTdt`, Apple GPU only                                                                              | MLX Swift                                                  |
+| Parakeet Redux                 | `TernaryTdt`, Apple GPU only                                                                             | MLX Swift                                                  |
+| LFM2.5 Audio                   | `LfmAudio`                                                                                               | llama.cpp mtmd                                             |
+
+sherpa-onnx runs on the CPU only. NeMo-Speech.cpp runs on CPU, Metal, CUDA or
+Vulkan, MLX Swift on Metal (English, except for Granite's and Redux's declared
+languages), and llama.cpp mtmd on CPU or GPU. Automatic picks the engine and
+backend like this:
 
 ```mermaid
 flowchart TB
@@ -298,29 +214,15 @@ All live models share one `StreamingSession`. Nemotron, and MLX Qwen with the
 Metal backend, run native streams on the worker. Every other model uses
 buffered previews (ADR-0023). The completed-audio final stays authoritative.
 
-```mermaid
-flowchart TB
-  mic[Capture chunks, native rate] --> sess[StreamingSession.push]
-  sess -->|native model| nat[run_stream on worker:<br/>inline frontend session -> native stream push]
-  nat -->|Nemotron final| fin1[StreamingFinal::Transcript]
-  nat -->|MLX Qwen| keep[retain enhanced PCM -> EnhancedStore]
-  sess -->|buffered model| lf[vesper-live-frontend thread:<br/>own Silero + DPDFNet8 session]
-  lf -->|enhanced 16 kHz| mb[Preview mailbox]
-  lf -->|Silero end of speech| pause[mark_pause]
-  pause --> mb
-  lf -->|whole enhanced recording| es[(EnhancedStore)]
-  subgraph Mailbox["Mailbox (live_preview.rs)"]
-    open[Open buffer]
-    open -->|pause after >= 2 s, or quietest point 4-8 s| pend[Closed segments FIFO <= 2]
-    pend -. oldest dropped when decoder lags .-> drop[previewSegmentsDropped]
-  end
-  mb --> open
-  pend -->|decode once| com[committedText, append only]
-  open -->|re-decode tail >= 2 s| prov[provisionalText, replaced]
-  com & prov --> ui[StreamingTranscript events]
-  keep --> es
-  es -->|same operation, settings, length +-50 ms| final[Completed-audio final decode]
-```
+Native streams run a frontend session inline on the worker and push audio
+straight into the model: Nemotron's stream final is the transcript, and MLX Qwen
+keeps its enhanced audio in `EnhancedStore` for the final. Buffered models get
+audio from the `vesper-live-frontend` thread, which runs its own Silero and
+DPDFNet8 session, feeds the preview mailbox, marks pauses and keeps the whole
+enhanced recording. The completed-audio final reuses that audio only when the
+operation, settings and length (within 50 ms) match. The
+[live transcription guide](live-transcription.md#recording-and-final-results)
+shows how drafts and the final relate.
 
 Not adopted: decoding only the tail at Stop, reusing committed segments
 (Phase B). It failed the WER parity gate; see ADR-0023 and #155.
@@ -391,16 +293,16 @@ Diarization uses Nemotron-3-Diarization through a namespaced NeMo-Speech.cpp
 runtime that ships in the app bundle. Live recordings run it after the text is
 delivered. Imported files run it before the result is shown.
 
-```mermaid
-flowchart LR
-  bundle[App bundle Resources/diarization-runtime/rev] -->|startup pre-check, non-fatal| inst[model root nemotron-diarization-runtime/rev]
-  w[(Nemotron-3-Diarization q8_0 GGUF, 107 MB)] --> ver
-  inst --> ver[verify: full sha256 of GGUF + 7 dylibs, ~38 ms]
-  ver --> load[dlopen RTLD_LOCAL + Diarizer::load<br/>Metal; Auto retries on CPU]
-  load --> run[diarize original 16 kHz audio<br/>~0.56 s per 45 s on Metal]
-  run --> tl[SpeakerTimeline -> complete_speaker_timeline]
-  load -. "per recording, ~14-55 ms; first-ever Metal shader compile ~7 s" .-> note[not resident by design]
-```
+- The app bundle carries the runtime in `Resources/diarization-runtime/<rev>`. A
+  non-fatal startup check installs it into the model root as
+  `nemotron-diarization-runtime/<rev>`.
+- Before each load, Vesper checks the full SHA-256 of the q8_0 GGUF (107 MB) and
+  the seven dylibs, which takes about 38 ms. It then loads with
+  `dlopen(RTLD_LOCAL)` on Metal; Auto retries on CPU.
+- The diarizer runs on the original 16 kHz audio, about 0.56 s per 45 s of audio
+  on Metal, and stores a `SpeakerTimeline` with `complete_speaker_timeline`.
+- By design it loads per recording (about 14–55 ms, plus about 7 s for the first
+  Metal shader compile) and is not kept resident.
 
 ## 9. Model installation and verification
 
@@ -429,25 +331,22 @@ plus the recorded hash, and every new load re-verifies the full hash.
 
 ## 10. Threads, memory and failure policy
 
-| Thread | Work | Native threads |
-| --- | --- | --- |
-| CPAL callback | Lock-free ring write only | — |
-| `vesper-live-audio` | Forwards capture chunks to the session | — |
-| `vesper-live-frontend` | Silero + DPDFNet8 per buffered recording | ONNX Runtime 1 each |
-| `vesper-inference` | All model work, serially | sherpa-onnx and llama.cpp up to clamp(cores − 2, 1, 8); NeMo and MLX use their runtime defaults |
-| Caller and Tauri threads | Orchestration, persistence, paste | — |
+| Thread                   | Work                                     | Native threads                                                                                  |
+| ------------------------ | ---------------------------------------- | ----------------------------------------------------------------------------------------------- |
+| CPAL callback            | Lock-free ring write only                | —                                                                                               |
+| `vesper-live-audio`      | Forwards capture chunks to the session   | —                                                                                               |
+| `vesper-live-frontend`   | Silero + DPDFNet8 per buffered recording | ONNX Runtime 1 each                                                                             |
+| `vesper-inference`       | All model work, serially                 | sherpa-onnx and llama.cpp up to clamp(cores − 2, 1, 8); NeMo and MLX use their runtime defaults |
+| Caller and Tauri threads | Orchestration, persistence, paste        | —                                                                                               |
 
-```mermaid
-flowchart LR
-  err[Native error] --> drop[Drop that resident handle]
-  drop --> next[Next request: full verify + reload]
-  cancel[Cancel flag] --> checks[Checked before and after native calls]
-  checks --> discard[Discard partial output]
-  press[Memory pressure] --> rel[Release idle writer before recording;<br/>back off previews]
-  fe[Frontend failure] --> origa[Original audio + warning]
-  wr[Writer failure / time limit / fidelity] --> rawk[Raw transcript kept]
-  di[Diarization failure] --> textk[Transcript kept + warning]
-```
+| Event                                               | What happens                                                                   |
+| --------------------------------------------------- | ------------------------------------------------------------------------------ |
+| Native error                                        | The resident handle is dropped; the next request verifies and reloads in full  |
+| Cancellation                                        | The flag is checked before and after native calls; partial output is discarded |
+| Memory pressure                                     | The idle writer is released before recording, and previews back off            |
+| Audio frontend failure                              | The original audio is used, with a warning                                     |
+| Writer failure, time limit or failed fidelity check | The raw transcript is kept, with a message                                     |
+| Diarization failure                                 | The transcript is kept, with a warning                                         |
 
 Not yet qualified: a shared thread budget across runtimes, an Apple Neural
 Engine path (proposal #143, not approved), and CUDA, Vulkan and ROCm on

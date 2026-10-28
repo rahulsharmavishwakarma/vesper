@@ -5,7 +5,6 @@
 > and `VESPER_*` override names; legacy environment aliases remain supported.
 > See [current naming and compatibility](../../docs/development.md#product-name-and-compatibility). No measurement has been requalified by renaming.
 
-
 **The mechanism works, but the trial does not qualify it for live deployment.** The controller made two eligibility-policy changes and a later rollback. Intermediate held-out audits improved versus the starting policy, but the complete constructed run and final test tied that baseline. The adaptive controller also tied the best fixed policies on held-out word edits while making more harmful changes. The separate public replay produced no policy update or quality gain.
 
 The [implementation contract](../../docs/personalization/policy-experiment.md) explains the finite policy family, feedback boundaries and rollback. [Issue #34](https://github.com/rahulsharmavishwakarma/transcribe/issues/34#issuecomment-5717283286) records authorization for this isolated prototype. The local debug report at `.cache/benchmarks/results/2026-09-17-policy-learning/debug-summary.json` contains exact comparisons, distributions, failures, source/binary/manifest hashes and public artifact provenance. No live application policy, model, storage schema or default was changed.
@@ -22,30 +21,30 @@ The constructed generator, manifest and public conversion were frozen before the
 
 The authored fixture contains **66 episodes**: 46 supplied feedback targets, 12 hidden intermediate-audit episodes and eight final-test episodes. Its explicit labels on unchanged outputs simulate stronger feedback than passive usage supplies.
 
-| Round | Decision | Resulting policy |
-| --- | --- | --- |
-| Context | Promote | Support floor 1; require a shared teaching-context term |
-| Independent support | Promote | Support floor 2; keep the context requirement |
-| Distribution change | Roll back | Restore support floor 1 with the context requirement |
+| Round               | Decision  | Resulting policy                                        |
+| ------------------- | --------- | ------------------------------------------------------- |
+| Context             | Promote   | Support floor 1; require a shared teaching-context term |
+| Independent support | Promote   | Support floor 2; keep the context requirement           |
+| Distribution change | Roll back | Restore support floor 1 with the context requirement    |
 
 Each accepted decision improved two of four fresh validation cases without a validation regression. Those cases did not represent every later condition: the rollback re-exposed two harmful final cases. They remain in the aggregate and were not used to redesign the fixture or controller.
 
-| Evaluation slice | Episodes | Starting fixed policy word edits | Adaptive word edits |
-| --- | ---: | ---: | ---: |
-| Entire chronological sequence | 66 | 68 | 68 |
-| Intermediate hidden audits | 12 | 8 | 0 |
-| Final hidden test | 8 | 4 | 4 |
-| All hidden episodes | 20 | 12 | 4 |
+| Evaluation slice              | Episodes | Starting fixed policy word edits | Adaptive word edits |
+| ----------------------------- | -------: | -------------------------------: | ------------------: |
+| Entire chronological sequence |       66 |                               68 |                  68 |
+| Intermediate hidden audits    |       12 |                                8 |                   0 |
+| Final hidden test             |        8 |                                4 |                   4 |
+| All hidden episodes           |       20 |                               12 |                   4 |
 
 Across all hidden episodes, four outputs improved and none worsened relative to the starting fixed-policy trajectory. Nevertheless, two adaptive outputs were worse than raw input. On the complete sequence, four earlier improvements were offset by four regressions, so the hidden-audit gain is not a demonstrated reduction in overall correction burden.
 
-| Fixed comparison policy | Hidden word edits | Outputs worse than raw input |
-| --- | ---: | ---: |
-| Support 1, no extra context | 12 | 6 |
-| Support 1, context required | 8 | 4 |
-| Support 2, with or without context | 4 | 0 |
-| Support 3, with or without context | 4 | 0 |
-| Adaptive controller | 4 | 2 |
+| Fixed comparison policy            | Hidden word edits | Outputs worse than raw input |
+| ---------------------------------- | ----------------: | ---------------------------: |
+| Support 1, no extra context        |                12 |                            6 |
+| Support 1, context required        |                 8 |                            4 |
+| Support 2, with or without context |                 4 |                            0 |
+| Support 3, with or without context |                 4 |                            0 |
+| Adaptive controller                |                 4 |                            2 |
 
 The best fixed alternatives tied the adaptive error total and avoided its harmful substitutions. Their best status is a post-hoc comparison, not an independently selected production default. This trial establishes finite policy updating and rejection/rollback mechanics, not superiority over fixed policies or open-ended recursive algorithm improvement.
 
@@ -63,12 +62,12 @@ Scores use `transcribe_core::word_edits`: lowercase whitespace-token Levenshtein
 
 Apple M5 Pro, 64 GiB RAM, **macOS 27.0 (26A428)**, Rust 1.98.1, release build with the recorded lockfile. This differs from the earlier macOS 26.6.2 envelope. The sequential CPU replay loads no model and uses temporary stores with warm open SQLite connections.
 
-| Constructed component | Count | Mean | p50 | p95 |
-| --- | ---: | ---: | ---: | ---: |
-| Filter profile and apply memory | 66 | 0.0196 ms | 0.0193 ms | 0.0270 ms |
-| Feedback transaction and metadata | 46 | 0.2461 ms | 0.2378 ms | 0.3127 ms |
-| Propose from bounded neighbors | 3 | 0.3654 ms | 0.3153 ms | 0.4811 ms |
-| Validate/rollback policy decision | 3 | 0.2951 ms | 0.2411 ms | 0.4501 ms |
+| Constructed component             | Count |      Mean |       p50 |       p95 |
+| --------------------------------- | ----: | --------: | --------: | --------: |
+| Filter profile and apply memory   |    66 | 0.0196 ms | 0.0193 ms | 0.0270 ms |
+| Feedback transaction and metadata |    46 | 0.2461 ms | 0.2378 ms | 0.3127 ms |
+| Propose from bounded neighbors    |     3 | 0.3654 ms | 0.3153 ms | 0.4811 ms |
+| Validate/rollback policy decision |     3 | 0.2951 ms | 0.2411 ms | 0.4501 ms |
 
 The JSON also records p99 and all public timings. With three decisions, tail percentiles are merely descriptive extrema. Public proposal mean was 0.4826 ms, but it had no eligible policy change; its near-empty validation decision is not a useful load benchmark.
 

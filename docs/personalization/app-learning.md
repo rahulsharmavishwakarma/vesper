@@ -47,6 +47,7 @@ They join that recording's references, so the [correction gate](correction-gate.
 After an automatic paste, the native layer keeps one receipt: the field, where the paste began and its length. At the next shortcut, or 120 seconds after the paste, Vesper reads that span once (at most twice its length plus 80 characters, capped at 32,768) and drops the receipt.
 
 `vesper_core::aligned_edit` aligns the pasted words to the start of that span with a word-level edit distance. It accepts the alignment only within a third of the pasted word count, so text typed afterwards is ignored and rewritten or moved text is rejected. A changed, aligned span is passed to `edit_latest_draft` as an edit of that dictation's draft. It then teaches exactly as an in-app edit does:
+
 - policy 5 promotion
 - one-strike suspension
 - the policy breaker
@@ -57,6 +58,7 @@ The corrected span becomes that result's draft in History; nothing else from the
 ## Per-app counts
 
 The `app_learning_coverage` table keeps, per bundle identifier:
+
 - read-backs, split into unchanged, edited, unaligned, cleared (the span is empty: the text was sent or removed) and unreadable
 - field reads, unreadable field reads, and the number of spellings taken
 

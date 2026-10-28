@@ -9,9 +9,9 @@ This development experiment, recorded on 15 September 2026, measured the then-se
 The full local debug report with 60 samples and source digests remains at `.cache/benchmarks/results/2026-09-15-m5-pro-prefix-screen/debug-summary.json`: Apple M5 Pro, 18 logical CPUs, 64 GiB RAM, explicit CPU, 8 inference threads, macOS 26.6.2, AC power with low power mode off. Qwen3.5-0.8B Q4_0, llama-cpp-2 0.1.156 / llama.cpp `e79e4bf660e19f2ad851e06c6913f7a8c5852621`, 4096-token fresh contexts, batch 512, microbatch 128, greedy decoding. Rust test/dev profile with bundled native runtime.
 
 | Warm resident configuration | Runs | Median complete rewrite | Observed P90 |
-| --- | ---: | ---: | ---: |
-| Full prefill on each pass | 30 | 838.96 ms | 868.51 ms |
-| Reused immutable prefixes | 30 | 366.25 ms | 378.96 ms |
+| --------------------------- | ---: | ----------------------: | -----------: |
+| Full prefill on each pass   |   30 |               838.96 ms |    868.51 ms |
+| Reused immutable prefixes   |   30 |               366.25 ms |    378.96 ms |
 
 Median reduction: **56.35%** on this single synthetic English technical-dictation fixture. All 60 outputs matched the accepted reference exactly, including `README.txt`; that filename came from the since-removed fixture rule and fallback, not from a model capability. The cache retained 46,841,268 bytes (44.67 MiB); this is snapshot payload, not whole-process RAM.
 
@@ -47,9 +47,9 @@ per configuration with `hybrid_prefix_cache_matches_fresh_requests_and_profile_r
 (same machine class, explicit CPU, debug test profile). These are single observations,
 not distributions:
 
-| Configuration | Before (two passes) | After (one pass) |
-| --- | ---: | ---: |
-| Full prefill | 0.30 s + 0.54 s = 0.84 s | 0.50 s |
-| Warm cached prefix | 0.18 s + 0.20 s = 0.38 s | 0.20 s |
+| Configuration      |      Before (two passes) | After (one pass) |
+| ------------------ | -----------------------: | ---------------: |
+| Full prefill       | 0.30 s + 0.54 s = 0.84 s |           0.50 s |
+| Warm cached prefix | 0.18 s + 0.20 s = 0.38 s |           0.20 s |
 
 Fresh vs cached outputs remained identical in both runs.

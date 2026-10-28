@@ -52,18 +52,18 @@ The existing limit is **32 phrases / 2,048 bytes**, with opt-in uniform boost 2.
 
 Each speech adapter declares one typed vocabulary hook (`AdapterCapabilities.speech_hook` in [`adapters.rs`](../../crates/vesper-core/src/adapters.rs), selection in [`hooks.rs`](../../crates/vesper-core/src/hooks.rs)) instead of the former `contextual_phrases` flag:
 
-| Field | Values |
-| --- | --- |
-| Kind | `none`, `phrase_bias` (decode-time boosting), `prompt_context` (text in the model prompt) |
-| Status | `declared` (code path exists), `qualified` (passed the [term evaluator](term-evaluation.md)), `disabled` (measured harmful or unusable) |
-| Limits | maximum phrases and bytes the hook accepts |
-| Confidence | `none`, `token_logprob`, `ctc_posterior`, `constant` (reported but unusable, such as Nemotron's 1.0) |
+| Field      | Values                                                                                                                                  |
+| ---------- | --------------------------------------------------------------------------------------------------------------------------------------- |
+| Kind       | `none`, `phrase_bias` (decode-time boosting), `prompt_context` (text in the model prompt)                                               |
+| Status     | `declared` (code path exists), `qualified` (passed the [term evaluator](term-evaluation.md)), `disabled` (measured harmful or unusable) |
+| Limits     | maximum phrases and bytes the hook accepts                                                                                              |
+| Confidence | `none`, `token_logprob`, `ctc_posterior`, `constant` (reported but unusable, such as Nemotron's 1.0)                                    |
 
-| Adapter (runtime) | Hook | Limits | Status |
-| --- | --- | --- | --- |
-| Nemotron 3.5 streaming (NeMo-Speech.cpp) | `phrase_bias`, boost 2.0 | 32 phrases / 2,048 B (FFI limit) | `disabled`: inserted hint terms into ordinary speech ([evidence](term-evaluation.md#hook-decisions)) |
-| Qwen3-ASR 0.6B (sherpa-onnx) | `prompt_context`: per-stream `hotwords` | 32 phrases / 512 B | `disabled`: capitalized ordinary words as terms and sometimes emitted the list ([evidence](term-evaluation.md#hook-decisions)) |
-| Every other adapter, including Cohere, Parakeet (GGUF, sherpa, Neural Engine) and Qwen3-ASR on MLX | `none` | — | text-level [correction gate](correction-gate.md) only |
+| Adapter (runtime)                                                                                  | Hook                                    | Limits                           | Status                                                                                                                         |
+| -------------------------------------------------------------------------------------------------- | --------------------------------------- | -------------------------------- | ------------------------------------------------------------------------------------------------------------------------------ |
+| Nemotron 3.5 streaming (NeMo-Speech.cpp)                                                           | `phrase_bias`, boost 2.0                | 32 phrases / 2,048 B (FFI limit) | `disabled`: inserted hint terms into ordinary speech ([evidence](term-evaluation.md#hook-decisions))                           |
+| Qwen3-ASR 0.6B (sherpa-onnx)                                                                       | `prompt_context`: per-stream `hotwords` | 32 phrases / 512 B               | `disabled`: capitalized ordinary words as terms and sometimes emitted the list ([evidence](term-evaluation.md#hook-decisions)) |
+| Every other adapter, including Cohere, Parakeet (GGUF, sherpa, Neural Engine) and Qwen3-ASR on MLX | `none`                                  | —                                | text-level [correction gate](correction-gate.md) only                                                                          |
 
 Only a `qualified` hook receives automatic working-set hints; no hook is qualified today, so vocabulary currently reaches every model through the text-level [correction gate](correction-gate.md). The explicit Settings opt-in list (`speech_bias_enabled`, usage-ranked as above) keeps its previous behavior on a `phrase_bias` hook whatever the qualification status, because it is the user's own choice; the term evaluation measured the same mechanism as harmful with 30 workspace phrases, so treat that switch with care. Once a per-recording working set exists and a hook is qualified, the working set replaces that list. Every list is re-bounded by the hook's own limits, deduplicated case-insensitively and stripped of unsafe phrases (and of commas for prompt hooks). Automatic hints also drop any surface whose every word is an ordinary English word in the gate's CMUdict-derived lexicon (`ordinary_language`, for example Calico, Envoy, Cedar Point and common first names): such words are not hard for a recognizer, and biasing toward them capitalized ordinary speech as terms. The correction gate's references and normalizations keep them, and the explicit opt-in list is not filtered. A phrase-bias hook carries its uniform boost (`boost_milli`, 2.0 for Nemotron); the evaluator can override it to measure lower boosts. The development evaluator can send hints to an unqualified (`declared` or `disabled`) hook to measure it; the application never does.
 
@@ -116,16 +116,10 @@ Those component timings exclude snapshot loading, recording startup and renderin
 See [the exact native envelope](native-qualification.md#automatic-projects-and-external-correction-component-check--27-september-2026).
 Natural-use routing accuracy and end-to-end capture latency remain unqualified.
 
-```mermaid
-flowchart LR
-    A["Receiving app at capture start"] --> R["Bounded rule resolver"]
-    F["Optional qualified document URL"] --> R
-    P["Saved app or folder rules"] --> R
-    O["Explicit manual override"] --> R
-    R --> S["Frozen effective project and provenance"]
-    S --> M["Existing ASR hints, writer and memory"]
-    S --> E["Feedback tied to original operation"]
-```
+The resolver takes the receiving app at capture start, an optional qualified
+document URL, saved app or folder rules and any manual override. It freezes one
+effective project, with its provenance, for the whole operation; ASR hints, the
+writer, memory and later feedback all use that snapshot.
 
 Apple's [frontmost application](https://developer.apple.com/documentation/appkit/nsworkspace/frontmostapplication)
 and [bundle identifier](https://developer.apple.com/documentation/appkit/nsrunningapplication/bundleidentifier)
@@ -292,19 +286,19 @@ one document folder, two websites, Mail, Slack and one-off files, with 10% of
 document reads returning nothing. It exercises the real snapshot, resolver and
 store; it is **not** evidence of live accessibility coverage.
 
-| Measure (local measurement, synthetic input) | Result |
-|---|---|
-| Precision (assigned dictations whose workspace's majority truth matches) | 1,349 / 1,349 |
-| Recall over all workspace dictations (includes the latent period) | 1,349 / 2,259 (59.7%) |
-| Recall after each workspace first became visible (mean over seeds) | 90.1% |
-| Mail, Slack and one-off files assigned a workspace | 0 / 490 |
-| Median time to visibility (repos, document folder, hosts) | day 2–3.5, 5.5–8.5 dictations |
-| Visible within the week (seeds) | vesper 20/20, billing-api 19/20, Acme 19/20, github.com 18/20, docs.rs 12/18, notes-site 7/19 (as `posts`) |
-| A repo split into two workspaces (a non-structure subfolder such as `benchmarks/asr`) | 9 / 20 seeds |
-| Static-site repo (`content/posts`, `layouts`) visible under its own name | 0 / 19 seeds (it surfaces as `posts`, recall 8.6%) |
-| `resolve_context` (main thread), release build | p50 0.003 ms, p95 0.005 ms |
-| Whole personalization snapshot load incl. workspace state | p50 0.015 ms, p95 0.019 ms |
-| Observation persistence (off main thread) | p50 0.044 ms, p95 0.059 ms |
+| Measure (local measurement, synthetic input)                                          | Result                                                                                                     |
+| ------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------- |
+| Precision (assigned dictations whose workspace's majority truth matches)              | 1,349 / 1,349                                                                                              |
+| Recall over all workspace dictations (includes the latent period)                     | 1,349 / 2,259 (59.7%)                                                                                      |
+| Recall after each workspace first became visible (mean over seeds)                    | 90.1%                                                                                                      |
+| Mail, Slack and one-off files assigned a workspace                                    | 0 / 490                                                                                                    |
+| Median time to visibility (repos, document folder, hosts)                             | day 2–3.5, 5.5–8.5 dictations                                                                              |
+| Visible within the week (seeds)                                                       | vesper 20/20, billing-api 19/20, Acme 19/20, github.com 18/20, docs.rs 12/18, notes-site 7/19 (as `posts`) |
+| A repo split into two workspaces (a non-structure subfolder such as `benchmarks/asr`) | 9 / 20 seeds                                                                                               |
+| Static-site repo (`content/posts`, `layouts`) visible under its own name              | 0 / 19 seeds (it surfaces as `posts`, recall 8.6%)                                                         |
+| `resolve_context` (main thread), release build                                        | p50 0.003 ms, p95 0.005 ms                                                                                 |
+| Whole personalization snapshot load incl. workspace state                             | p50 0.015 ms, p95 0.019 ms                                                                                 |
+| Observation persistence (off main thread)                                             | p50 0.044 ms, p95 0.059 ms                                                                                 |
 
 These were measured on an M5 Pro while other builds ran; they exclude the native
 AX read, whose per-app latency and coverage are unmeasured.

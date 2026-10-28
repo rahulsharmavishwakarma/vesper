@@ -501,11 +501,11 @@ The app can learn eligible joined/split names, closely related spellings and
 narrow acronym corrections, even when the edit includes minor formatting.
 Ordinary terms need corrections from two independent recordings before they
 are reused in matching context. Replaying the same recording does not count
-twice. An everyday word that was really a name or acronym (for example *data* →
-*Detta*, *rack* → *RAG*) is learned after three corrections in the same project.
+twice. An everyday word that was really a name or acronym (for example _data_ →
+_Detta_, _rack_ → _RAG_) is learned after three corrections in the same project.
 It is then used only when the sentence shares at least two topic words with the
 sentences you corrected, so "the training data" stays as it is. An everyday word
-changed into another everyday word (*write* → *right*) is never applied
+changed into another everyday word (_write_ → _right_) is never applied
 automatically. Add that spelling in Vocabulary if you want it. Sentence rewrites and changed decisions are not global dictionary rules,
 and some valid corrections still fall outside the current learning rules.
 
@@ -521,7 +521,7 @@ from one speech model's mistakes waits while you use a different model and comes
 back when you return; words you add or tick work with every model. If you undo
 two different learned spellings within a week, Vesper pauses all unticked
 learned spellings and shows **Resume learned spellings** under Vocabulary.
-In a detected workspace, Vesper also fixes a misheard non-word that is one letter away from one of that workspace's names or terms, such as *vasper* → *Vesper*. It never changes ordinary English words. If you change a fixed word back, Vesper stops using that spelling for automatic fixes.
+In a detected workspace, Vesper also fixes a misheard non-word that is one letter away from one of that workspace's names or terms, such as _vasper_ → _Vesper_. It never changes ordinary English words. If you change a fixed word back, Vesper stops using that spelling for automatic fixes.
 These local corrections do not train model weights or activate a new model. Read the
 [personalization guide](personalization/README.md) for the exact learning,
 review and undo behavior.

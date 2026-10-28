@@ -59,12 +59,12 @@ The new [application context replay](../../crates/vesper-data/examples/applicati
 
 The release replay repeats each output comparison five times and requires exact agreement. Mean component measurements with one to eight active entries are:
 
-| Component | Observations | Mean |
-| --- | ---: | ---: |
-| SQLite/profile/evidence snapshot | 320 | 0.0220 ms |
-| Raw-text eligibility selection | 320 | 0.0044 ms |
-| Final deterministic application | 320 | 0.0034 ms |
-| Learning edit transaction, including commit | 8 | 0.1905 ms |
+| Component                                   | Observations |      Mean |
+| ------------------------------------------- | -----------: | --------: |
+| SQLite/profile/evidence snapshot            |          320 | 0.0220 ms |
+| Raw-text eligibility selection              |          320 | 0.0044 ms |
+| Final deterministic application             |          320 | 0.0034 ms |
+| Learning edit transaction, including commit |            8 | 0.1905 ms |
 
 The SQLite connection is already open in these measurements. They exclude connection opening, ASR, cleanup, frontend IPC/rendering and insertion. They do not qualify the theoretical maximum metadata size or native resource interference.
 
@@ -91,12 +91,12 @@ The **native public run** executes 38 cached Svarah recordings across 19 languag
 The native no-warning gate **fails**: three clips each produce the same fallback in both arms (**6/76 requests**). One cleanup changes words despite formatting-only policy; two exhaust their output budgets (106 and 64 generated tokens). All six preserve raw text exactly, are scored, and remain in timings. The fidelity and truncation guards behaved as intended. No output limit or fidelity rule was relaxed to obtain a pass. Cleanup reliability remains a qualification issue separate from memory benefit.
 
 | Native backend completion, matched resident pairs | Frozen memory | Automatic learning |
-| --- | ---: | ---: |
-| Requests per arm | 37 | 37 |
-| Mean | 1,718.08 ms | 1,580.81 ms |
-| p95, nearest rank | 4,016.99 ms | 3,703.07 ms |
-| Mean ASR stage | 1,457.06 ms | 1,308.38 ms |
-| Mean cleanup stage | 247.40 ms | 246.18 ms |
+| ------------------------------------------------- | ------------: | -----------------: |
+| Requests per arm                                  |            37 |                 37 |
+| Mean                                              |   1,718.08 ms |        1,580.81 ms |
+| p95, nearest rank                                 |   4,016.99 ms |        3,703.07 ms |
+| Mean ASR stage                                    |   1,457.06 ms |        1,308.38 ms |
+| Mean cleanup stage                                |     247.40 ms |          246.18 ms |
 
 The first model-manager request is retained separately at **33,226.97 ms**; its entire pair is excluded from the resident comparison by the predeclared rule. These times start at backend capture-processing entry and end after final runtime publication. They exclude microphone stop, IPC, visible rendering and insertion. The exploratory 10% mean/p95 margin passes numerically, but the difference does not establish a speedup on this small shared-host run. Both aggregates retain warning-bearing requests. Collection is off, so archival save time is absent; total time includes personalization/observation work not isolated by the existing stage timer. Nineteen simulated draft submissions average **2.53 ms** to return (p95 **3.49 ms**); this is not human editing time.
 
@@ -105,26 +105,26 @@ The clips total **311.50 seconds**, ranging from 4.13 to 15.84 seconds. Environm
 Audit errors by primary-language background (one audit clip each; **not** speaker or accent classification):
 
 | Background | Frozen / learning word edits | Cleanup fallback per arm |
-| --- | ---: | --- |
-| Assamese | 2 / 2 | No |
-| Bengali | 4 / 4 | No |
-| Bodo | 2 / 2 | Yes, fidelity |
-| Dogri | 4 / 4 | No |
-| Gujarati | 0 / 0 | No |
-| Hindi | 1 / 1 | No |
-| Kannada | 1 / 1 | No |
-| Kashmiri | 1 / 1 | No |
-| Konkani | 11 / 11 | No |
-| Maithili | 4 / 4 | No |
-| Malayalam | 1 / 1 | No |
-| Marathi | 4 / 4 | No |
-| Nepali | 1 / 1 | No |
-| Odia | 0 / 0 | No |
-| Punjabi | 5 / 5 | No |
-| Sindhi | 0 / 0 | No |
-| Tamil | 2 / 2 | No |
-| Telugu | 3 / 3 | No |
-| Urdu | 0 / 0 | Yes, output limit |
+| ---------- | ---------------------------: | ------------------------ |
+| Assamese   |                        2 / 2 | No                       |
+| Bengali    |                        4 / 4 | No                       |
+| Bodo       |                        2 / 2 | Yes, fidelity            |
+| Dogri      |                        4 / 4 | No                       |
+| Gujarati   |                        0 / 0 | No                       |
+| Hindi      |                        1 / 1 | No                       |
+| Kannada    |                        1 / 1 | No                       |
+| Kashmiri   |                        1 / 1 | No                       |
+| Konkani    |                      11 / 11 | No                       |
+| Maithili   |                        4 / 4 | No                       |
+| Malayalam  |                        1 / 1 | No                       |
+| Marathi    |                        4 / 4 | No                       |
+| Nepali     |                        1 / 1 | No                       |
+| Odia       |                        0 / 0 | No                       |
+| Punjabi    |                        5 / 5 | No                       |
+| Sindhi     |                        0 / 0 | No                       |
+| Tamil      |                        2 / 2 | No                       |
+| Telugu     |                        3 / 3 | No                       |
+| Urdu       |                        0 / 0 | Yes, output limit        |
 
 The third fallback is a calibration clip. All recordings are English; a Hindi-background speaker is not a Hindi-language qualification.
 
@@ -144,11 +144,11 @@ Before comparing a candidate, the [58-case fixture](../../benchmarks/cleanup/nat
 
 The candidate retained the existing preset instruction and official nonthinking wrapper, removed the additional system prose/examples, and added a request to preserve contractions and repetition. It used the same installed Qwen3.5-0.8B Q4_0, CPU, eight threads, greedy selection, fresh 4096-token contexts and unchanged fidelity/output-budget rules. Prefix caching was off. Baseline always ran first; these per-pass timings do not establish a latency comparison.
 
-| CPU cleanup result | Existing prompt | Shorter candidate |
-| --- | ---: | ---: |
-| Public hypotheses rejected / 38 | 4 | 8 |
-| Authored controls rejected / 20 | 5 | 8 |
-| Total rejected / 58 | 9 | 16 |
+| CPU cleanup result              | Existing prompt | Shorter candidate |
+| ------------------------------- | --------------: | ----------------: |
+| Public hypotheses rejected / 38 |               4 |                 8 |
+| Authored controls rejected / 20 |               5 |                 8 |
+| Total rejected / 58             |               9 |                16 |
 
 The candidate resolves one rejection but introduces **eight new rejections** and leaves two of the original three failures unresolved. **Reject the candidate.** It remains inside an ignored experiment and is never selected by the application. Acceptance means passing lexical/number/negation checks, not independent semantic certification. The CPU result must remain separate from the earlier Metal cleanup run; even the existing prompt has one additional public rejection on CPU.
 
@@ -166,10 +166,10 @@ If that fails, the existing writer may try the conversation-example prompt **onc
 
 Before viewing candidate qualification outputs, [58 disjoint text cases](../../benchmarks/cleanup/native-learning-holdout.json) were frozen at SHA-256 `74f5898e514f2a39a87369e4c6200a09bf731654997fc46735d756ad383d37e3`: the first two remaining earlier Cohere CPU hypotheses per Svarah cohort, excluding all development IDs, plus 20 authored controls. This is disjoint cleanup text evidence from a previously used ASR corpus, not an untouched acoustic or natural-user study.
 
-| CPU text comparison | Cases | Original failures | Recovery failures |
-| --- | ---: | ---: | ---: |
-| Development | 58 | 9 | 2 |
-| Disjoint qualification | 58 | 7 | 2 |
+| CPU text comparison    | Cases | Original failures | Recovery failures |
+| ---------------------- | ----: | ----------------: | ----------------: |
+| Development            |    58 |                 9 |                 2 |
+| Disjoint qualification |    58 |                 7 |                 2 |
 
 All three original failures are recovered. Every previously accepted output is identical; remaining failures are retained. The original three recovered outputs equal their raw transcripts, so those cases establish reliable completion without a warning, **not a word-error reduction or added punctuation benefit**. Other authored controls gain punctuation. The development and qualification screens used respectively eight and seven retries. These baseline-first text comparisons do not establish a latency speedup; retry cost must remain in native timings.
 
@@ -182,11 +182,11 @@ The final production entry point reproduces the **9 → 2** development and **7 
 The same 38 public recordings were then replayed through desktop `process_capture` in both learning and frozen-memory arms. All **76 requests pass with zero warnings/failures**, resolving the earlier six warning-bearing requests. Diagnostics retain **four accepted second passes** and **two source-contraction restorations**. The original first-pass failures are visible in the recovery metrics. Audit word edits still tie at **46**; 15/19 audits need correction in both arms, no memory activates, and paired improvements/harms remain zero. This is a cleanup reliability fix, not evidence of new personal-learning or recognition accuracy gains.
 
 | Production backend completion, 37 matched resident pairs | Frozen memory | Automatic learning |
-| --- | ---: | ---: |
-| Mean | 613.72 ms | 621.37 ms |
-| p95, nearest rank | 1,200.37 ms | 1,217.16 ms |
-| Mean ASR stage | 430.33 ms | 432.90 ms |
-| Mean cleanup stage, including retries | 178.40 ms | 178.58 ms |
+| -------------------------------------------------------- | ------------: | -----------------: |
+| Mean                                                     |     613.72 ms |          621.37 ms |
+| p95, nearest rank                                        |   1,200.37 ms |        1,217.16 ms |
+| Mean ASR stage                                           |     430.33 ms |          432.90 ms |
+| Mean cleanup stage, including retries                    |     178.40 ms |          178.58 ms |
 
 Learning overhead is **1.25% mean / 1.40% p95**, within the predeclared 10% exploratory margin for this run. The first request with model loading is retained separately at **10,604.24 ms**; filesystem-cache state was uncontrolled. Timing still covers backend processing entry through publication, excluding microphone stop, IPC, rendering and insertion. The much lower absolute times than the earlier run are **not a measured speedup from the fix**: power and competing host activity differ, and no paired old/new performance experiment was performed.
 
@@ -229,17 +229,17 @@ The September 19 screen used the pinned Qwen3.5-0.8B Q4_0 artifact (revision `8f
 
 Initial prompt version 1 failed schema validation on all 24 development cases because its example encouraged unquoted enum values. Version 2 produced 18 valid responses and 9 correct relation labels. A balanced five-class-example variant produced 21 valid but only 6 correct labels and was rejected before opening the holdout. The retained version 2 was then tested on 22 separate authored cases. These labels were written before scoring, without independent human review; they cannot establish natural-user efficacy.
 
-| Final holdout measurement | Metal | CPU |
-| --- | ---: | ---: |
-| Structurally valid responses | 18/22 | 19/22 |
-| Correct relation labels, all cases | 7/22 | 7/22 |
-| Invalid responses retained as failures | 4 | 3 |
-| Mean semantic analysis time | 315.57 ms | 640.13 ms |
-| p95 semantic analysis time | 372.59 ms | 712.61 ms |
-| Mean foreground cleanup, no shadow | 73.18 ms | 239.82 ms |
-| Mean foreground cleanup, interrupted shadow | 85.98 ms | 244.33 ms |
-| Mean paired added foreground delay | 12.80 ms | 4.52 ms |
-| p95 paired added foreground delay | 20.90 ms | 9.03 ms |
+| Final holdout measurement                   |     Metal |       CPU |
+| ------------------------------------------- | --------: | --------: |
+| Structurally valid responses                |     18/22 |     19/22 |
+| Correct relation labels, all cases          |      7/22 |      7/22 |
+| Invalid responses retained as failures      |         4 |         3 |
+| Mean semantic analysis time                 | 315.57 ms | 640.13 ms |
+| p95 semantic analysis time                  | 372.59 ms | 712.61 ms |
+| Mean foreground cleanup, no shadow          |  73.18 ms | 239.82 ms |
+| Mean foreground cleanup, interrupted shadow |  85.98 ms | 244.33 ms |
+| Mean paired added foreground delay          |  12.80 ms |   4.52 ms |
+| p95 paired added foreground delay           |  20.90 ms |   9.03 ms |
 
 Each provider used 20 alternating-order latency pairs. All 40 final pairs returned identical foreground text without failure; all interrupted jobs returned cancellation without a proposal. No timeouts occurred in these short cases. Cold foreground load plus cleanup was 555.38 ms on Metal and 841.65 ms on CPU, separate from resident timings. A CPU run overlapping the native app test is retained as `cpu-final.json`; the table uses the subsequent serial `cpu-final-serial.json`, not a mixture of runs. These timings exclude ASR, microphone capture, Tauri/UI, insertion and desktop proposal persistence. They do not establish a universal responsiveness budget.
 
@@ -259,12 +259,12 @@ The final checks passed **196 Rust unit/integration tests** (24 existing opt-in 
 
 The authored 128-pair debug-build replay on Mac17,8 / arm64 / 64 GiB / macOS 27.0 measured:
 
-| Stage | Mean | p95 |
-| --- | ---: | ---: |
-| Baseline draft learning/store operations | 3.65 ms | 6.17 ms |
+| Stage                                                        |     Mean |      p95 |
+| ------------------------------------------------------------ | -------: | -------: |
+| Baseline draft learning/store operations                     |  3.65 ms |  6.17 ms |
 | Draft learning with pre-edit snapshot and shadow reservation | 16.23 ms | 27.80 ms |
-| Paired added foreground work | 12.58 ms | 21.80 ms |
-| Separate background score/persistence work | 11.97 ms | 21.32 ms |
+| Paired added foreground work                                 | 12.58 ms | 21.80 ms |
+| Separate background score/persistence work                   | 11.97 ms | 21.32 ms |
 
 These are sequential component timings with alternating baseline/shadow order on a shared, uncontrolled host. They include repeated SQLite opens and retention checks. They exclude the actual worker queue, ASR, microphone, UI and editor; do not report them as average dictation latency or a production latency budget. Both stores produced the same active personalized output, and shadow storage retained eight decisions. No candidate changed the live policy.
 
@@ -343,14 +343,14 @@ fixture. Replaying those texts with the same reference edits reproduces the
 result without another ASR run. Events retain the correct result identity;
 the edited draft and revision update correctly with audio collection off.
 
-| First rejection stage in 19 calibration rows | Count |
-| --- | ---: |
-| Unchanged text; no edit submitted | 1 |
-| Case/punctuation changes with no token change | 9 |
-| No safe single contiguous replacement (including additions or broad edits) | 5 |
-| Replacement exceeds the one-token target limit | 1 |
-| Extracted pair also fails admission in isolation | 2 |
-| Pair passes alone but cannot reproduce the entire edited paragraph | 1 |
+| First rejection stage in 19 calibration rows                               | Count |
+| -------------------------------------------------------------------------- | ----: |
+| Unchanged text; no edit submitted                                          |     1 |
+| Case/punctuation changes with no token change                              |     9 |
+| No safe single contiguous replacement (including additions or broad edits) |     5 |
+| Replacement exceeds the one-token target limit                             |     1 |
+| Extracted pair also fails admission in isolation                           |     2 |
+| Pair passes alone but cannot reproduce the entire edited paragraph         |     1 |
 
 Examples locate policy limitations: `Ambedkarnagar → Ambedkar Nagar` is rejected
 by the single-token target rule; `API → APY` fails the minimum-length spelling
@@ -394,13 +394,13 @@ The table excludes the complete first pair before calculating either arm's
 resident statistics: **37 matched pairs**. Percentiles use nearest rank. All
 durations are milliseconds.
 
-| Measurement | Frozen mean | Learning mean | Frozen p95 | Learning p95 |
-| --- | ---: | ---: | ---: | ---: |
-| Native `process_capture` completion | 605.83 | 612.53 | 1182.67 | 1188.61 |
-| Stop click to first observed final DOM | 613.11 | 618.76 | 1189 | 1196 |
-| Stop click to render opportunity | 639.30 | 643.92 | 1218 | 1218 |
-| ASR stage | 426.10 | 427.76 | 766.81 | 772.95 |
-| Cleanup stage | 174.10 | 174.22 | 432.96 | 426.62 |
+| Measurement                            | Frozen mean | Learning mean | Frozen p95 | Learning p95 |
+| -------------------------------------- | ----------: | ------------: | ---------: | -----------: |
+| Native `process_capture` completion    |      605.83 |        612.53 |    1182.67 |      1188.61 |
+| Stop click to first observed final DOM |      613.11 |        618.76 |       1189 |         1196 |
+| Stop click to render opportunity       |      639.30 |        643.92 |       1218 |         1218 |
+| ASR stage                              |      426.10 |        427.76 |     766.81 |       772.95 |
+| Cleanup stage                          |      174.10 |        174.22 |     432.96 |       426.62 |
 
 The WebView clock starts immediately before clicking Stop. Final DOM readiness
 is observed with a requested 5 ms polling timer; after a matching result and
@@ -461,12 +461,12 @@ thermal behavior were not controlled or qualified.
 All four native attempts remain under the ignored local directory
 `.cache/benchmarks/results/native-learning-webview-2026-09-20/`:
 
-| Attempt | Retained result |
-| --- | --- |
+| Attempt      | Retained result                                                                                                                                                                                              |
+| ------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
 | `run-nilEd0` | All 76 rows completed, then Metal shutdown asserted and the process aborted. The corrected exit-aware summary fails this attempt. Its earlier incomplete scoring remains as historical evidence, not a pass. |
-| `run-fixed` | Explicit unload on the existing owner gave 76 passing rows and exit 0. Temporary-store cleanup was not yet asserted. |
-| `run-final` | All 76 rows completed, but the new temporary-store check failed; process exit 1 keeps this attempt failed. |
-| `run-clean` | Explicit worker release and temporary-store removal, returning event loop and joined watchdog: 76 passing rows, verified cleanup and exit 0. Final measurements above use only this attempt. |
+| `run-fixed`  | Explicit unload on the existing owner gave 76 passing rows and exit 0. Temporary-store cleanup was not yet asserted.                                                                                         |
+| `run-final`  | All 76 rows completed, but the new temporary-store check failed; process exit 1 keeps this attempt failed.                                                                                                   |
+| `run-clean`  | Explicit worker release and temporary-store removal, returning event loop and joined watchdog: 76 passing rows, verified cleanup and exit 0. Final measurements above use only this attempt.                 |
 
 The fixes are confined to the test host. The launcher independently records
 process exit status; successful request rows cannot conceal an abort. The
@@ -601,11 +601,11 @@ production `learn_from_edit`, `dictation_personalization_snapshot`,
 `post_asr_profile` and `personalize` APIs. All three reproduced undesirable
 behavior under policy 3; they are findings, not passing acceptance tests:
 
-| Finding | Reproduction | Observed result |
-| --- | --- | --- |
-| Revised target leaves the old automatic mapping active | Teach `Jonathon → Jonathan` twice, then independently correct the displayed `Jonathan → Jonatan` twice, with `Meet … tomorrow` as the surrounding text. | The new target activates, but later raw `Jonathon` still becomes `Jonathan`. Reversal handling requires the original alias to reappear in the edit; the new mapping has the displayed intermediate word as its alias and fails raw-text eligibility. |
-| Retracted provisional evidence still counts | Correct `Meet Martellis tomorrow` to `Meet Martellys tomorrow`, then restore the original spelling in the same result's next draft revision. Supply one later independent correction to `Martellys`. | The first support is not withdrawn, and the mapping activates after only one remaining unretracted correction. The reversal loop visits active vocabulary, not provisional candidates. |
-| New teaching cues can pass selection but fail application | With no selected project, correct `Deploy kubernets alpha` to `Deploy kubernetes alpha`, then independently correct `Manage kubernets beta` to `Manage kubernetes beta`. | Activation succeeds and the raw-text selector enables the entry for `Manage kubernets beta`, but final output still contains `kubernets`. The stored context remains `alpha deploy`; the later generic context filter rejects the newly taught context. Cleanup retrieval has the same additional context filter. |
+| Finding                                                   | Reproduction                                                                                                                                                                                         | Observed result                                                                                                                                                                                                                                                                                                   |
+| --------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Revised target leaves the old automatic mapping active    | Teach `Jonathon → Jonathan` twice, then independently correct the displayed `Jonathan → Jonatan` twice, with `Meet … tomorrow` as the surrounding text.                                              | The new target activates, but later raw `Jonathon` still becomes `Jonathan`. Reversal handling requires the original alias to reappear in the edit; the new mapping has the displayed intermediate word as its alias and fails raw-text eligibility.                                                              |
+| Retracted provisional evidence still counts               | Correct `Meet Martellis tomorrow` to `Meet Martellys tomorrow`, then restore the original spelling in the same result's next draft revision. Supply one later independent correction to `Martellys`. | The first support is not withdrawn, and the mapping activates after only one remaining unretracted correction. The reversal loop visits active vocabulary, not provisional candidates.                                                                                                                            |
+| New teaching cues can pass selection but fail application | With no selected project, correct `Deploy kubernets alpha` to `Deploy kubernetes alpha`, then independently correct `Manage kubernets beta` to `Manage kubernetes beta`.                             | Activation succeeds and the raw-text selector enables the entry for `Manage kubernets beta`, but final output still contains `kubernets`. The stored context remains `alpha deploy`; the later generic context filter rejects the newly taught context. Cleanup retrieval has the same additional context filter. |
 
 The probes simulate distinct source and episode identifiers. They perform no
 ASR, cleanup inference, microphone capture or UI interaction and make no
@@ -676,21 +676,21 @@ and cleanup was Metal. The last run verifies the final code, including the
 oversized-draft guard, after the full checks. All three produced the same quality
 counts; repeated runs are not additional independent learning examples:
 
-| Measure | Result |
-| --- | --- |
-| Requests attempted | 144 in each run |
-| ASR completion failures | 10 in each run; no partial transcript accepted |
-| Cleanup warning/fallback requests | 32 in each run; raw text preserved |
-| Returned transcript results | 134 in each run, including the 32 fallbacks |
-| Feedback rows / eligible displayed pairs | 36 / 28 |
-| Mapping activations | 8 |
-| Realized audit reuse opportunities | 8 |
-| Audit rows with selected/applied automatic memory | 6 / 6 |
-| Paired audit rows scored / scheduled | 32 / 36 |
-| Paired audit word edits, frozen → learning | 30 → 18 |
-| Outputs needing correction, frozen → learning | 14 → 8 |
-| Improved / harmed scored audit outputs | 6 / 0 |
-| Overall diagnostic gate | **Failed**, process exit 101 in all three runs |
+| Measure                                           | Result                                         |
+| ------------------------------------------------- | ---------------------------------------------- |
+| Requests attempted                                | 144 in each run                                |
+| ASR completion failures                           | 10 in each run; no partial transcript accepted |
+| Cleanup warning/fallback requests                 | 32 in each run; raw text preserved             |
+| Returned transcript results                       | 134 in each run, including the 32 fallbacks    |
+| Feedback rows / eligible displayed pairs          | 36 / 28                                        |
+| Mapping activations                               | 8                                              |
+| Realized audit reuse opportunities                | 8                                              |
+| Audit rows with selected/applied automatic memory | 6 / 6                                          |
+| Paired audit rows scored / scheduled              | 32 / 36                                        |
+| Paired audit word edits, frozen → learning        | 30 → 18                                        |
+| Outputs needing correction, frozen → learning     | 14 → 8                                         |
+| Improved / harmed scored audit outputs            | 6 / 0                                          |
+| Overall diagnostic gate                           | **Failed**, process exit 101 in all three runs |
 
 All three Brookside voice scenarios activate the initial and revised spelling
 and improve two later audits each. Samantha and Daniel activate `CedarPoint`,
@@ -743,10 +743,10 @@ four unscored audit pairs. Scored audit word edits remain 30 frozen versus 18
 learning; these totals exclude the four failed pairs explicitly. The separate
 historical authored harm is not cleared by this result.
 
-| Backend completion, 71 matched subsequent pairs | Frozen | Learning |
-| --- | ---: | ---: |
-| Mean | 426.37 ms | 492.92 ms |
-| p95 | 2975.96 ms | 3008.98 ms |
+| Backend completion, 71 matched subsequent pairs |     Frozen |   Learning |
+| ----------------------------------------------- | ---------: | ---------: |
+| Mean                                            |  426.37 ms |  492.92 ms |
+| p95                                             | 2975.96 ms | 3008.98 ms |
 
 The first pair is excluded together; failed/fallback requests remain in timing.
 Mean overhead is **15.61%**, p95 overhead 1.11%. The overall qualification and

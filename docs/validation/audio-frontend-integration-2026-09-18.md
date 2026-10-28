@@ -8,17 +8,17 @@ All 1,032 planned completed ASR+writer attempts are present: three ASRs × four 
 
 Raw WER percentages on the 24 previously unlisted natural recordings per condition (lower is better):
 
-| ASR | Condition | Original | VAD only | VAD + DPDF4 | VAD + DPDF8 |
-| --- | --- | ---: | ---: | ---: | ---: |
-| Cohere | Clean | 5.66 | 5.66 | 6.24 | 5.81 |
-| Cohere | 0 dB mixture | 9.43 | 9.43 | 11.32 | 9.87 |
-| Cohere | ×0.03 amplitude | 66.76 | 66.76 | 67.52† | 66.33 |
-| Whisper Small | Clean | 7.84 | 7.84 | 7.84 | 7.55 |
-| Whisper Small | 0 dB mixture | 17.42 | 17.42 | 16.98 | 13.35 |
-| Whisper Small | ×0.03 amplitude | 32.95 | 32.95 | 55.01 | 51.56† |
-| Whisper Turbo | Clean | 5.08 | 5.08 | 5.22 | 5.95 |
-| Whisper Turbo | 0 dB mixture | 9.43 | 9.43 | 10.16 | 7.40 |
-| Whisper Turbo | ×0.03 amplitude | 6.53 | 6.53 | 53.27 | 18.80† |
+| ASR           | Condition       | Original | VAD only | VAD + DPDF4 | VAD + DPDF8 |
+| ------------- | --------------- | -------: | -------: | ----------: | ----------: |
+| Cohere        | Clean           |     5.66 |     5.66 |        6.24 |        5.81 |
+| Cohere        | 0 dB mixture    |     9.43 |     9.43 |       11.32 |        9.87 |
+| Cohere        | ×0.03 amplitude |    66.76 |    66.76 |      67.52† |       66.33 |
+| Whisper Small | Clean           |     7.84 |     7.84 |        7.84 |        7.55 |
+| Whisper Small | 0 dB mixture    |    17.42 |    17.42 |       16.98 |       13.35 |
+| Whisper Small | ×0.03 amplitude |    32.95 |    32.95 |       55.01 |      51.56† |
+| Whisper Turbo | Clean           |     5.08 |     5.08 |        5.22 |        5.95 |
+| Whisper Turbo | 0 dB mixture    |     9.43 |     9.43 |       10.16 |        7.40 |
+| Whisper Turbo | ×0.03 amplitude |     6.53 |     6.53 |       53.27 |      18.80† |
 
 † Scored-only WER on 23/24 clips; one additional clip failed completion. Cohere+DPDF4 hit `duration_token_limit`; Small+DPDF8 and Turbo+DPDF8 hit `model_token_limit`, all on attenuated input. Those clips are failures, not successful empty transcripts. Their reduced denominators and matched-pair exclusions remain explicit in JSON. Each complete 24-clip condition has 689 reference words.
 
@@ -28,11 +28,11 @@ For the 0 dB subset, DPDF8 changes WER by −4.06 percentage points for Small (d
 
 False transcripts on eight noise controls:
 
-| ASR | Original | VAD only | VAD + DPDF4 | VAD + DPDF8 |
-| --- | ---: | ---: | ---: | ---: |
-| Cohere | 0/8 | 0/8 | 0/8 | 0/8 |
-| Whisper Small | 5/8 | 5/8 | 4/8 | 3/8 |
-| Whisper Turbo | 7/8 | 7/8 | 7/8 | 7/8 |
+| ASR           | Original | VAD only | VAD + DPDF4 | VAD + DPDF8 |
+| ------------- | -------: | -------: | ----------: | ----------: |
+| Cohere        |      0/8 |      0/8 |         0/8 |         0/8 |
+| Whisper Small |      5/8 |      5/8 |         4/8 |         3/8 |
+| Whisper Turbo |      7/8 |      7/8 |         7/8 |         7/8 |
 
 This does not qualify Whisper for the application picker: its noise gate remains unmet. Advisory VAD cannot suppress those outputs because it intentionally does not remove audio.
 
@@ -42,12 +42,12 @@ Manual inspection of the four existing synthetic meaning controls found both Coh
 
 All 28 short streaming attempts completed. The six resident rows per profile give the following descriptive timing observations; competing CPU activity makes them unsuitable for an uncontended speed comparison. These are application evaluator stages, not microphone-to-visible-text measurements.
 
-| Profile | First partial p50 / p95 (ms) | Stop-to-final p50 / p95 (ms) | Frontend dispatch p95 / p99 upper bucket bounds | Maximum dispatch (ms) |
-| --- | ---: | ---: | ---: | ---: |
-| Original | 1306.85 / 1561.53 | 65.54 / 72.38 | — | — |
-| VAD only | 1307.98 / 1566.58 | 75.83 / 88.36 | <1 / <1 ms | 0.806 |
-| VAD + DPDF4 | 1359.24 / 1360.57 | 80.60 / 84.85 | <5 / <5 ms | 5.287 |
-| VAD + DPDF8 | 1353.61 / 1357.76 | 82.45 / 83.98 | <6 / <6 ms | 6.911 |
+| Profile     | First partial p50 / p95 (ms) | Stop-to-final p50 / p95 (ms) | Frontend dispatch p95 / p99 upper bucket bounds | Maximum dispatch (ms) |
+| ----------- | ---------------------------: | ---------------------------: | ----------------------------------------------: | --------------------: |
+| Original    |            1306.85 / 1561.53 |                65.54 / 72.38 |                                               — |                     — |
+| VAD only    |            1307.98 / 1566.58 |                75.83 / 88.36 |                                      <1 / <1 ms |                 0.806 |
+| VAD + DPDF4 |            1359.24 / 1360.57 |                80.60 / 84.85 |                                      <5 / <5 ms |                 5.287 |
+| VAD + DPDF8 |            1353.61 / 1357.76 |                82.45 / 83.98 |                                      <6 / <6 ms |                 6.911 |
 
 Dispatch observations include all seven rows. Total frontend native processing divided by audio duration is 0.0071 for VAD, 0.1689 for DPDF4+VAD and 0.2440 for DPDF8+VAD. Whole-process peak RSS is approximately 1.038 / 1.062 / 1.096 / 1.106 GB respectively; these are not frontend-only memory costs. Denoising changes recognition and the timing of the first nonempty result. The small first-partial p95 differences therefore do not demonstrate acceleration.
 
