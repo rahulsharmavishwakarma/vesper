@@ -460,13 +460,16 @@ async fn start(app: tauri::AppHandle, id: u64) {
             .map_err(|error| error.to_string())
     })
     .await;
+    let snapshot = snapshot
+        .map_err(|error| error.to_string())
+        .and_then(|loaded| loaded);
     let mut snapshot = match snapshot {
-        Ok(Ok(snapshot)) => snapshot,
-        error => {
+        Ok(snapshot) => snapshot,
+        Err(error) => {
             fail(
                 &app,
                 id,
-                &format!("Could not load project preferences: {error:?}"),
+                &format!("Could not load your dictation settings: {error}"),
             );
             return;
         }
