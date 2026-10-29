@@ -3,7 +3,7 @@
   import { getAppInfo, type AppInfo } from '../api/desktop';
   import { updateBackend, updateManager } from '../updatesTauri';
   import type { UpdateState } from '../updates';
-  import { parseReleaseNotes, previewNotes } from '../releaseNotes';
+  import { parseReleaseNotes } from '../releaseNotes';
   import Icon from './Icon.svelte';
   import BrandLogo from './BrandLogo.svelte';
 
@@ -68,20 +68,14 @@
           ? 'Restart failed'
           : 'Couldn’t check',
   );
-  // What's new sits under the Install button it describes. A few items show at
-  // first; the rest open in place, without a nested scroll box.
-  const NOTES_PREVIEW = 4;
+  // What's new sits under the Install button it describes, in a panel of fixed
+  // height that scrolls, so long notes never push the switches down.
   const offered = $derived(
     updates.status === 'available' || updates.status === 'downloading' || updates.status === 'ready'
       ? updates.available
       : null,
   );
   const noteSections = $derived(offered ? parseReleaseNotes(offered.notes) : []);
-  const noteCount = $derived(noteSections.reduce((total, entry) => total + entry.items.length, 0));
-  let notesExpanded = $state(false);
-  const shownNotes = $derived(
-    notesExpanded ? noteSections : previewNotes(noteSections, NOTES_PREVIEW),
-  );
   // One control carries both the update status and its next action.
   const pill = $derived.by((): Pill => {
     if (!updateBackend.enabled) {
@@ -266,24 +260,19 @@
       </div>
     {/if}
   </div>
-  {#if info && offered && noteCount}
-    <section class="whats-new" aria-labelledby="{prefId}-whats-new">
+  {#if info && offered && noteSections.length}
+    <section class="whats-new">
       <h4 id="{prefId}-whats-new">What’s new in {offered.version}</h4>
-      {#each shownNotes as entry, index (index)}
-        {#if entry.title}<h5>{entry.title}</h5>{/if}
-        <ul>
-          {#each entry.items as item, itemIndex (itemIndex)}<li>{item}</li>{/each}
-        </ul>
-      {/each}
-      {#if noteCount > NOTES_PREVIEW}
-        <button
-          type="button"
-          class="quiet notes-toggle"
-          aria-expanded={notesExpanded}
-          onclick={() => (notesExpanded = !notesExpanded)}
-          >{notesExpanded ? 'Show fewer' : `Show all ${noteCount} changes`}</button
-        >
-      {/if}
+      <!-- Focusable so the keyboard can scroll it. -->
+      <!-- svelte-ignore a11y_no_noninteractive_tabindex -->
+      <div class="notes-panel" role="region" aria-labelledby="{prefId}-whats-new" tabindex="0">
+        {#each noteSections as entry, index (index)}
+          {#if entry.title}<h5>{entry.title}</h5>{/if}
+          <ul>
+            {#each entry.items as item, itemIndex (itemIndex)}<li>{item}</li>{/each}
+          </ul>
+        {/each}
+      </div>
     </section>
   {/if}
   {#if info && updateBackend.enabled}
@@ -495,14 +484,28 @@
     font-weight: 600;
     color: var(--color-ink);
   }
+  .notes-panel {
+    max-height: clamp(160px, 34vh, 300px);
+    margin-top: var(--space-2);
+    padding: var(--space-3) var(--space-4);
+    overflow-y: auto;
+    overscroll-behavior: contain;
+    background: var(--color-bg);
+    border: 1px solid var(--color-line);
+    border-radius: var(--radius-md);
+  }
+  .notes-panel:focus-visible {
+    outline: 2px solid var(--color-focus);
+    outline-offset: 2px;
+  }
   .whats-new h5 {
     margin: var(--space-3) 0 var(--space-1);
     font-size: 12px;
     font-weight: 600;
     color: var(--color-muted);
   }
-  .whats-new h4 + ul {
-    margin-top: var(--space-2);
+  .whats-new h5:first-child {
+    margin-top: 0;
   }
   .whats-new ul {
     max-width: 68ch;
@@ -517,16 +520,6 @@
   }
   .whats-new li::marker {
     color: var(--color-accent);
-  }
-  .notes-toggle {
-    min-height: 0;
-    margin: var(--space-2) 0 0 calc(-1 * var(--space-2));
-    padding: var(--space-1) var(--space-2);
-    font-size: 13px;
-    color: var(--color-accent);
-  }
-  .notes-toggle:is(:hover, :focus-visible):enabled {
-    color: var(--color-accent-hover);
   }
 
   /* The update pill: one control for status and the next action. */

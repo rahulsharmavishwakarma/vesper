@@ -313,7 +313,7 @@ test('About update preferences persist, gate install and skip the automatic chec
   expect(await page.evaluate(() => window.updaterChecks)).toBe(1);
 });
 
-test("About shows What's new under the Install button and opens the rest in place", async ({
+test("About shows What's new under the Install button in a fixed scrolling panel", async ({
   page,
 }) => {
   await page.addInitScript(() => {
@@ -332,6 +332,7 @@ test("About shows What's new under the Install button and opens the rest in plac
       '',
       '- A profile saved by a newer version still loads.',
       '- Long errors fit the capture panel.',
+      ...Array.from({ length: 16 }, (_, index) => `- Further fix number ${index + 1}.`),
     ].join('\n');
     Object.defineProperty(internals, 'invoke', {
       configurable: true,
@@ -366,7 +367,7 @@ test("About shows What's new under the Install button and opens the rest in plac
   const notes = page.locator('.about-inline .whats-new');
   await expect(page.locator('.about-inline .pill .lab.rest')).toHaveText('Install 0.1.2-rc.2');
   await expect(notes.getByRole('heading', { name: 'What’s new in 0.1.2-rc.2' })).toBeVisible();
-  await expect(notes.locator('li')).toHaveCount(4);
+  await expect(notes.locator('li')).toHaveCount(21);
   await expect(notes.locator('li').first()).toHaveText(
     'Self-improving dictation that works with every speech model.',
   );
@@ -377,13 +378,14 @@ test("About shows What's new under the Install button and opens the rest in plac
   const switches = await page.locator('.about-inline .switches').boundingBox();
   expect(box.y).toBeGreaterThan(top.y + top.height - 1);
   expect(box.y + box.height).toBeLessThanOrEqual(switches.y + 1);
-  const toggle = notes.getByRole('button', { name: 'Show all 5 changes' });
-  await toggle.click();
-  await expect(notes.locator('li')).toHaveCount(5);
-  await expect(notes.getByRole('button', { name: 'Show fewer' })).toHaveAttribute(
-    'aria-expanded',
-    'true',
-  );
+  // Long notes scroll inside a panel of fixed height; the keyboard can scroll it.
+  const panel = notes.getByRole('region', { name: 'What’s new in 0.1.2-rc.2' });
+  expect((await panel.boundingBox()).height).toBeLessThanOrEqual(301);
+  expect(await panel.evaluate((node) => node.scrollHeight > node.clientHeight)).toBe(true);
+  await panel.focus();
+  await page.keyboard.press('End');
+  await expect.poll(() => panel.evaluate((node) => node.scrollTop)).toBeGreaterThan(0);
+  await expect(notes.getByRole('button')).toHaveCount(0);
 });
 
 test('Saving shows only in the status pill and never moves the options', async ({ page }) => {
