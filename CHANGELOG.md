@@ -29,6 +29,11 @@ Nightly builds are not listed.
 - Update checks query the stable and pre-release feeds at the same time, time out
   after 20 seconds, and read the stable feed from GitHub Pages first.
 
+### Fixed
+
+- Going back to an older version no longer stops dictation with an unreadable
+  settings error, and long errors fit the capture panel.
+
 ### Removed
 
 - The folder opt-in for learning words. A stored folder path is erased on
