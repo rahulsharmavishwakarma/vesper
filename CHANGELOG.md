@@ -9,6 +9,8 @@ Nightly builds are not listed.
 
 ## [Unreleased]
 
+## [0.1.2] - 2026-10-29
+
 ### Added
 
 - Self-improving dictation that works with every speech model. Vesper learns
@@ -96,6 +98,7 @@ First stable release.
 - The app is not notarized with an Apple Developer ID, so macOS warns on first
   launch ([#64](https://github.com/rahulsharmavishwakarma/vesper/issues/64)).
 
-[Unreleased]: https://github.com/rahulsharmavishwakarma/vesper/compare/v0.1.1...HEAD
+[Unreleased]: https://github.com/rahulsharmavishwakarma/vesper/compare/v0.1.2...HEAD
+[0.1.2]: https://github.com/rahulsharmavishwakarma/vesper/releases/tag/v0.1.2
 [0.1.1]: https://github.com/rahulsharmavishwakarma/vesper/releases/tag/v0.1.1
 [0.1.0]: https://github.com/rahulsharmavishwakarma/vesper/releases/tag/v0.1.0

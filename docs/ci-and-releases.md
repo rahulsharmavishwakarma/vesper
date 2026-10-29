@@ -675,8 +675,8 @@ A specific release has a permanent version URL, for example:
 https://github.com/rahulsharmavishwakarma/vesper/releases/download/v0.1.0/vesper-macos-arm64.dmg
 ```
 
-These endpoints are live: the repository is public and `v0.1.0` is the latest
-stable release. (At the 2026-09-19 review the repository was private with no
+These endpoints are live: the repository is public, and the newest stable release
+is the latest one. (At the 2026-09-19 review the repository was private with no
 published releases.) A prerelease does not
 replace the latest stable link; use its version-specific URL. See GitHub's
 [release-link documentation](https://docs.github.com/en/repositories/releasing-projects-on-github/linking-to-releases).
@@ -923,7 +923,7 @@ the updater backend itself is tracked in
 `get_app_info` returns app name, compiled Cargo package version, build type and
 target OS/architecture without reading settings or inspecting models. The
 browser preview reads the desktop npm manifest and identifies itself as a
-preview. Both currently report `0.1.0`. The selected A03 About sheet is available
+preview. Both report the version set by `scripts/version.mjs`. The selected A03 About sheet is available
 from the final row in Settings and native About menus. Build revision and release
 channel are not supplied by this metadata contract; a release build is not
 proof of stable-channel publication. The About page itself shows only the logo,
