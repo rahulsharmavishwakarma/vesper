@@ -1,6 +1,6 @@
 {
   "name": "vesper-workspace",
-  "version": "0.1.2-rc.2",
+  "version": "0.1.2",
   "private": true,
   "workspaces": [
     "apps/desktop"
