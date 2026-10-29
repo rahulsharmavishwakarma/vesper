@@ -68,7 +68,7 @@ Render changed diagrams (`make diagrams` for the SVGs, a Mermaid preview otherwi
 
 ## Stored-data compatibility
 
-Users upgrade, and release-candidate testers roll back. Stored data (SQLite JSON documents, `settings.json`) must never stop any version from recording or listing history. New stored fields take `#[serde(default)]`; enum variants are only added, never renamed or removed; a change of meaning needs a schema version and a migration. Read stored JSON through `vesper_data::stored::decode`, never a strict `serde_json::from_str`. Optional data (learned words, history records, analysis) must degrade to defaults or be skipped, never fail the core action. Each stable release adds its dataset dump in the same change as its `CHANGELOG.md` section. See [stored-data compatibility](docs/development.md#stored-data-compatibility).
+Users upgrade, and release-candidate testers roll back. Stored data (SQLite JSON documents, `settings.json`) must never stop any version from recording or listing history. New stored fields take `#[serde(default)]`; enum variants are only added, never renamed or removed; a change of meaning needs a schema version and a migration. Read stored JSON through `vesper_data::stored::decode`, never a strict `serde_json::from_str`. Optional data (learned words, history records, analysis) must degrade to defaults or be skipped, never fail the core action. Each stable release adds its dataset dump in the same change as its dated `CHANGELOG.md` section; the Prepare release bot does both for a stable bump. See [stored-data compatibility](docs/development.md#stored-data-compatibility).
 
 ## Python tooling
 

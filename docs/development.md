@@ -651,7 +651,7 @@ Users move between versions in both directions: they upgrade, and release-candid
 - a dataset with an unknown field added to every stored object loads with nothing lost;
 - replacing each enum-like value, one at a time, never makes a read fail.
 
-The dumps come from `crates/vesper-data/examples/compatibility_fixture.rs`, run with the released code itself. Add the new version's dump in the same change that adds its `CHANGELOG.md` section:
+The dumps come from `crates/vesper-data/examples/compatibility_fixture.rs`, run with the released code itself. For a stable release the **Prepare release** bot adds the dump to its `Release vX.Y.Z` pull request, with the dated `CHANGELOG.md` section ([release bot](ci-and-releases.md#release-bot-issue-199)). For a manual release, or to regenerate an older version's dump:
 
 ```sh
 git worktree add --detach /tmp/vesper-vX.Y.Z vX.Y.Z
