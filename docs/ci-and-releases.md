@@ -675,8 +675,8 @@ A specific release has a permanent version URL, for example:
 https://github.com/rahulsharmavishwakarma/vesper/releases/download/v0.1.0/vesper-macos-arm64.dmg
 ```
 
-These endpoints are live: the repository is public and `v0.1.0` is the latest
-stable release. (At the 2026-09-19 review the repository was private with no
+These endpoints are live: the repository is public, and the newest stable release
+is the latest one. (At the 2026-09-19 review the repository was private with no
 published releases.) A prerelease does not
 replace the latest stable link; use its version-specific URL. See GitHub's
 [release-link documentation](https://docs.github.com/en/repositories/releasing-projects-on-github/linking-to-releases).
@@ -719,18 +719,23 @@ app/Applications layout and the limits on customized icon positioning in CI.
 
 ### Release bot ([issue #199](https://github.com/rahulsharmavishwakarma/vesper/issues/199))
 
-Status: implemented on a branch, **not yet exercised**. It needs the release
-GitHub App configured and a prerelease dry run before it replaces the manual
-sequence below.
+Status: in use since `v0.1.2-rc.1`; the manual sequence below is the fallback.
 
 1. Run the **Prepare release** workflow with `bump` (`patch`, `minor`, `major`,
    `prerelease`, or `release` to promote a candidate) or an explicit `version`.
-   `scripts/release-plan.mjs` computes the version and a changelog from commit
-   subjects since the last tag; `scripts/version.mjs set` updates every pin; the
-   bot creates the `release/vX.Y.Z` branch and its commit through the GitHub API
-   (so GitHub signs the commit, as the repository's verified-signature rule
-   requires; a plain `git commit` on the runner was rejected in the first dry
-   run) and opens a pull request titled `Release vX.Y.Z`.
+   `scripts/release-plan.mjs` computes the version and `scripts/version.mjs set`
+   updates every pin. For a stable version the bot also dates the changelog:
+   `release-plan.mjs stamp` moves the `[Unreleased]` entries under
+   `## [X.Y.Z] - date` (UTC), leaves an empty `[Unreleased]` and updates the
+   compare links, and it fails when `[Unreleased]` is empty. It then runs
+   `examples/compatibility_fixture.rs` with this code, commits the dump as
+   `crates/vesper-data/tests/fixtures/datasets/vX.Y.Z.sql` and runs the
+   compatibility tests. A candidate changes neither. The pull request body is
+   the version's changelog section. The bot creates the `release/vX.Y.Z` branch
+   and its commit through the GitHub API (so GitHub signs the commit, as the
+   repository's verified-signature rule requires; a plain `git commit` on the
+   runner was rejected in the first dry run) and opens a pull request titled
+   `Release vX.Y.Z`.
 2. Review, run the normal checks and squash-merge it. The commit subject must
    keep the `Release vX.Y.Z` prefix.
 3. The `tag` job re-checks versions, refuses an existing tag and pushes
@@ -744,8 +749,8 @@ secret `RELEASE_BOT_PRIVATE_KEY`) because pushes and pull requests made with
 `GITHUB_TOKEN` do not trigger workflows. Tokens are minted per run with only
 contents and pull-requests write. Limitations: the bot's tag is lightweight, not
 the GPG-signed annotated tag that [issue #62](https://github.com/rahulsharmavishwakarma/vesper/issues/62)
-describes; the bot's changelog lists commit subjects, and nightly builds are out
-of scope.
+describes, and nightly builds are out of scope. The changelog entries are
+written by hand in each pull request; the bot only dates them.
 
 Release notes come from [`CHANGELOG.md`](../CHANGELOG.md):
 `scripts/release-notes.mjs` prints the section for the tag's version, or
@@ -766,7 +771,7 @@ sequenceDiagram
     participant Rel as Release workflow
     participant Prod as production environment
     Maintainer->>Prep: dispatch bump or version
-    Prep->>PR: set version, open release/vX.Y.Z
+    Prep->>PR: set version; stable: date changelog, add dataset dump
     Maintainer->>PR: review checks, squash-merge
     PR->>Main: "Release vX.Y.Z"
     Main->>Prep: push event, tag job
@@ -783,7 +788,8 @@ sequenceDiagram
 ### Manual release sequence (fallback)
 
 1. Run `make version-set VERSION=X.Y.Z` on a dedicated branch.
-2. Update `CHANGELOG.md` (the release notes) and canonical documentation. A stable
+2. Update `CHANGELOG.md` (the release notes) and canonical documentation;
+   `node scripts/release-plan.mjs stamp X.Y.Z YYYY-MM-DD` dates the section. A stable
    version's changelog section needs its dataset dump in the same change; see
    [stored-data compatibility](development.md#stored-data-compatibility).
 3. Run `make check`; on a Mac, `CI=true make build` builds the optimized app and DMG.
@@ -923,7 +929,7 @@ the updater backend itself is tracked in
 `get_app_info` returns app name, compiled Cargo package version, build type and
 target OS/architecture without reading settings or inspecting models. The
 browser preview reads the desktop npm manifest and identifies itself as a
-preview. Both currently report `0.1.0`. The selected A03 About sheet is available
+preview. Both report the version set by `scripts/version.mjs`. The selected A03 About sheet is available
 from the final row in Settings and native About menus. Build revision and release
 channel are not supplied by this metadata contract; a release build is not
 proof of stable-channel publication. The About page itself shows only the logo,

@@ -1,5 +1,6 @@
 //! Writes the synthetic dataset behind the stored-data compatibility tests
-//! (`tests/compatibility.rs`). Run it at each release and commit the dump:
+//! (`tests/compatibility.rs`). The Prepare release workflow runs it for each
+//! stable release and commits the dump; by hand:
 //!
 //!     cargo run -p vesper-data --example compatibility_fixture -- <empty dir>
 //!     sqlite3 <dir>/sessions.sqlite3 .dump > tests/fixtures/datasets/vX.Y.Z.sql

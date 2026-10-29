@@ -1,4 +1,5 @@
 #!/usr/bin/env node
+import { readFile, writeFile } from 'node:fs/promises';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 
@@ -39,33 +40,49 @@ export function nextVersion(current, bump) {
   return `${major}.${minor}.${patch + 1}`;
 }
 
-// Builds release notes from commit subjects since the previous tag. Version
-// bump commits and merge noise are dropped; the rest keep their order.
-export function changelog(subjects, version) {
-  const entries = subjects
-    .map((subject) => subject.trim())
-    .filter((subject) => subject && !/^Set application version to /.test(subject))
-    .filter((subject) => !/^Merge (branch|remote-tracking branch|pull request)/.test(subject));
-  const body = entries.length ? entries.map((entry) => `- ${entry}`).join('\n') : '- No changes.';
-  return `## Vesper ${version}\n\n${body}\n`;
+// Dates the [Unreleased] section of CHANGELOG.md as a stable release: its
+// entries move under "## [X.Y.Z] - date", an empty [Unreleased] stays on top,
+// and the compare/tag links follow. The entries themselves are written by
+// hand as changes land; an empty section fails so a release never ships
+// without notes.
+export function stampChangelog(text, version, date) {
+  const { major, minor, patch, rc } = parse(version);
+  if (rc !== undefined)
+    throw new Error(`${version} is a candidate; only stable releases are dated.`);
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(date)) throw new Error(`Date ${date} must be YYYY-MM-DD.`);
+  if (text.includes(`## [${version}]`)) throw new Error(`CHANGELOG.md already has ${version}.`);
+  const heading = '## [Unreleased]\n';
+  const at = text.indexOf(heading);
+  if (at < 0) throw new Error('CHANGELOG.md has no [Unreleased] section.');
+  const bodyStart = at + heading.length;
+  const next = text.slice(bodyStart).search(/^## \[|^\[Unreleased\]: /m);
+  const bodyEnd = next < 0 ? text.length : bodyStart + next;
+  const body = text.slice(bodyStart, bodyEnd).trim();
+  if (!body) throw new Error('CHANGELOG.md [Unreleased] is empty; add notes before a release.');
+  const link = /^\[Unreleased\]: (\S+)\/compare\/v\S+\.\.\.HEAD$/m.exec(text);
+  if (!link) throw new Error('CHANGELOG.md has no [Unreleased] compare link.');
+  const tag = `v${major}.${minor}.${patch}`;
+  return (
+    text.slice(0, at) +
+    `${heading}\n## [${version}] - ${date}\n\n${body}\n\n` +
+    text.slice(bodyEnd)
+  ).replace(
+    link[0],
+    `[Unreleased]: ${link[1]}/compare/${tag}...HEAD\n[${version}]: ${link[1]}/releases/tag/${tag}`,
+  );
 }
 
 function usage() {
-  return 'Usage: node scripts/release-plan.mjs next <current> <bump> | notes <version> (subjects on stdin)';
-}
-
-async function readStdin() {
-  let text = '';
-  for await (const chunk of process.stdin) text += chunk;
-  return text;
+  return 'Usage: node scripts/release-plan.mjs next <current> <bump> | stamp <version> <YYYY-MM-DD> [file]';
 }
 
 async function main() {
   const [command, first, second, extra] = process.argv.slice(2);
   if (command === 'next' && first && second && !extra) {
     process.stdout.write(`${nextVersion(first, second)}\n`);
-  } else if (command === 'notes' && first && !second) {
-    process.stdout.write(changelog((await readStdin()).split('\n'), first));
+  } else if (command === 'stamp' && first && second) {
+    const file = extra ?? 'CHANGELOG.md';
+    await writeFile(file, stampChangelog(await readFile(file, 'utf8'), first, second));
   } else {
     throw new Error(usage());
   }

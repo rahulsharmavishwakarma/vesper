@@ -33,7 +33,7 @@ jobs:
     name: Open release pull request
     if: github.event_name == 'workflow_dispatch'
     runs-on: ubuntu-24.04
-    timeout-minutes: 10
+    timeout-minutes: 30
     env:
       BUMP: ${{ inputs.bump }}
       EXPLICIT_VERSION: ${{ inputs.version }}
@@ -68,12 +68,23 @@ jobs:
             echo "Tag v$version already exists." >&2
             exit 1
           fi
-          last="$(git describe --tags --abbrev=0 --match 'v*' 2>/dev/null || true)"
-          range="${last:+$last..}HEAD"
-          git log "$range" --pretty=%s | node scripts/release-plan.mjs notes "$version" > "$RUNNER_TEMP/notes.md"
           printf 'VERSION=%s\n' "$version" >> "$GITHUB_ENV"
       - name: Apply version
         run: node scripts/version.mjs set "$VERSION"
+      # A stable release dates its CHANGELOG.md section and adds the dataset
+      # dump that tests/compatibility.rs requires for every listed release,
+      # written by this release's own code. Candidates change neither.
+      - name: Date the changelog and add the stored-data fixture
+        run: |
+          set -eu
+          case "$VERSION" in *-*) exit 0 ;; esac
+          node scripts/release-plan.mjs stamp "$VERSION" "$(date -u +%F)"
+          command -v sqlite3 >/dev/null || { sudo apt-get update -q && sudo apt-get install -yq sqlite3; }
+          rustup show active-toolchain
+          cargo run --locked -q -p vesper-data --example compatibility_fixture -- "$RUNNER_TEMP/fixture"
+          sqlite3 "$RUNNER_TEMP/fixture/sessions.sqlite3" .dump \
+            > "crates/vesper-data/tests/fixtures/datasets/v$VERSION.sql"
+          cargo test --locked -q -p vesper-data --test compatibility
       - name: Push branch and open pull request
         env:
           GH_TOKEN: ${{ steps.app.outputs.token }}
@@ -85,8 +96,10 @@ jobs:
           # the API by the GitHub App is signed by GitHub, unlike a plain
           # `git commit` on the runner.
           gh api "repos/$GITHUB_REPOSITORY/git/refs" -f ref="refs/heads/$branch" -f sha="$base" >/dev/null
-          # Contents go through files: Cargo.lock is too large for argv.
-          git diff --name-only | while IFS= read -r file; do
+          # Contents go through files: Cargo.lock is too large for argv. Adding
+          # first includes the new fixture.
+          git add -A
+          git diff --cached --name-only | while IFS= read -r file; do
             jq -n --arg path "$file" --rawfile content "$file" '{path: $path, contents: ($content | @base64)}'
           done | jq -s . > "$RUNNER_TEMP/additions.json"
           if [ "$(jq length "$RUNNER_TEMP/additions.json")" -eq 0 ]; then
@@ -101,7 +114,7 @@ jobs:
                 fileChanges: {additions: $additions[0]}}}}' > "$RUNNER_TEMP/commit.json"
           gh api graphql --input "$RUNNER_TEMP/commit.json" >/dev/null
           {
-            cat "$RUNNER_TEMP/notes.md"
+            node scripts/release-notes.mjs "$VERSION"
             printf '\nMerging this pull request tags v%s, which starts the Release workflow and stages a draft. Promotion still needs approval in the production environment.\n' "$VERSION"
           } > "$RUNNER_TEMP/body.md"
           gh pr create --repo "$GITHUB_REPOSITORY" --base main --head "$branch" \
