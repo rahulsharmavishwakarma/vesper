@@ -141,7 +141,7 @@
       </div>
       {#if showDetail}<div class="island-expander">
           <div class="island-status">{@render stateMorph()}{@render statusHeading()}</div>
-          <p class="capture-detail" title={status}>{status}</p>
+          <p class="capture-detail" class:clamped={failed} title={status}>{status}</p>
         </div>{/if}
     </div>
   {:else}
@@ -159,7 +159,7 @@
         <div class="split-wave capture-wave">{@render waveform()}</div>
         <div class="split-foot">{@render stateMorph()}{@render statusHeading()}</div>
         {#if showDetail}<div class="split-expander">
-            <p class="capture-detail" title={status}>{status}</p>
+            <p class="capture-detail" class:clamped={failed} title={status}>{status}</p>
           </div>{/if}
       </div>
       <div class="glass split-actions quick-actions">{@render actions(false)}</div>
@@ -250,6 +250,15 @@
     font-size: 14.5px;
     line-height: 1.45;
     overflow-wrap: anywhere;
+  }
+  /* The panel has a fixed height: a long error shows three lines, and the full
+   * text stays in the tooltip. */
+  .capture-detail.clamped {
+    display: -webkit-box;
+    -webkit-box-orient: vertical;
+    -webkit-line-clamp: 3;
+    line-clamp: 3;
+    overflow: hidden;
   }
   /* Status morph: pulsing live dot while recording, bouncing dots while the
    * transcript is prepared, drawn check when it lands. */

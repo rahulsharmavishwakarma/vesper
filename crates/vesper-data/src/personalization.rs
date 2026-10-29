@@ -36,7 +36,7 @@ impl DatasetStore {
             )
             .optional()?;
         let mut profile: PersonalizationProfile = serialized
-            .map(|s| serde_json::from_str(&s))
+            .map(|s| profile_from_stored(&s))
             .transpose()?
             .unwrap_or_default();
         profile.validate().map_err(DatasetError::InvalidConfig)?;
@@ -602,6 +602,19 @@ impl DatasetStore {
     }
 }
 
+/// A profile saved by a newer Vesper can carry settings this build does not know.
+/// Drop those top-level keys on read so going back to an older version keeps
+/// dictation working; the next save keeps only this build's fields. Saves from
+/// the frontend still reject unknown fields.
+fn profile_from_stored(serialized: &str) -> serde_json::Result<PersonalizationProfile> {
+    let mut value: serde_json::Value = serde_json::from_str(serialized)?;
+    let known = serde_json::to_value(PersonalizationProfile::default())?;
+    if let (Some(stored), Some(known)) = (value.as_object_mut(), known.as_object()) {
+        stored.retain(|key, _| known.contains_key(key));
+    }
+    serde_json::from_value(value)
+}
+
 fn before(earlier: &str, later: &str) -> bool {
     chrono::DateTime::parse_from_rfc3339(earlier)
         .ok()
@@ -695,6 +708,35 @@ mod tests {
             let reopened = DatasetStore::open(dir.path().join("data")).unwrap();
             assert_eq!(reopened.dictation_personalization().unwrap(), expected);
         }
+    }
+
+    #[test]
+    fn profiles_saved_by_a_newer_version_load_without_their_new_settings() {
+        let dir = tempfile::tempdir().unwrap();
+        let store = DatasetStore::open(dir.path().join("data")).unwrap();
+        let mut newer = serde_json::to_value(PersonalizationProfile {
+            active_project: "existing-project".into(),
+            apply_corrections: false,
+            ..Default::default()
+        })
+        .unwrap();
+        newer
+            .as_object_mut()
+            .unwrap()
+            .insert("settingFromANewerVersion".into(), json!(true));
+        store
+            .connection
+            .execute(
+                "INSERT INTO personalization(id, profile_json) VALUES(1, ?1)",
+                [newer.to_string()],
+            )
+            .unwrap();
+        let profile = store.personalization().unwrap();
+        assert_eq!(profile.active_project, "existing-project");
+        assert!(!profile.apply_corrections);
+        assert!(store.dictation_personalization_snapshot().is_ok());
+        // The frontend's save path stays strict.
+        assert!(serde_json::from_value::<PersonalizationProfile>(newer).is_err());
     }
 
     #[test]
