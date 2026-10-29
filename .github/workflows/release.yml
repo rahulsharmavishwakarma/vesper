@@ -186,7 +186,8 @@ jobs:
             *) manifest=latest.json ;;
           esac
           version="${GITHUB_REF_NAME#v}"
-          notes="$(gh release view "$GITHUB_REF_NAME" --repo "$GITHUB_REPOSITORY" --json body --jq .body)"
+          # The app shows these as What's new: the changelog, not the PR list.
+          notes="$(node scripts/release-notes.mjs "$GITHUB_REF_NAME")"
           url="https://github.com/$GITHUB_REPOSITORY/releases/download/$GITHUB_REF_NAME/vesper-macos-arm64.app.tar.gz"
           node scripts/compose-updater-manifest.mjs --version="$version" --archive="$archive" --sig="$sig" --url="$url" --notes="$notes" --out="release/$manifest"
           gh release upload "$GITHUB_REF_NAME" --repo "$GITHUB_REPOSITORY" --clobber "$archive" "$sig" "release/$manifest"

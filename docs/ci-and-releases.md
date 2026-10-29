@@ -744,8 +744,18 @@ secret `RELEASE_BOT_PRIVATE_KEY`) because pushes and pull requests made with
 `GITHUB_TOKEN` do not trigger workflows. Tokens are minted per run with only
 contents and pull-requests write. Limitations: the bot's tag is lightweight, not
 the GPG-signed annotated tag that [issue #62](https://github.com/rahulsharmavishwakarma/vesper/issues/62)
-describes; the changelog lists commit subjects, and the published release notes
-still come from GitHub's generated notes; nightly builds are out of scope.
+describes; the bot's changelog lists commit subjects, and nightly builds are out
+of scope.
+
+Release notes come from [`CHANGELOG.md`](../CHANGELOG.md):
+`scripts/release-notes.mjs` prints the section for the tag's version, or
+`[Unreleased]` for a candidate before its version has a section, and fails when
+that section is empty. The draft job puts it at the top of the GitHub release,
+followed by GitHub's generated pull-request list, and writes it alone into the
+update feed (`latest.json` or `beta.json`). The app shows the feed notes as
+**What's new** in About. Keep the changelog entries short and written for users
+before cutting a release; feeds published before this change carry the
+generated list, which the app strips of authors, links and pull-request URLs.
 
 ```mermaid
 sequenceDiagram
@@ -773,7 +783,7 @@ sequenceDiagram
 ### Manual release sequence (fallback)
 
 1. Run `make version-set VERSION=X.Y.Z` on a dedicated branch.
-2. Update release notes and canonical documentation.
+2. Update `CHANGELOG.md` (the release notes) and canonical documentation.
 3. Run `make check`; on a Mac, `CI=true make build` builds the optimized app and DMG.
 4. Inspect/install-test the local DMG before approving the source version.
 5. Merge the reviewed changes and push the matching `vX.Y.Z` tag. This is a
