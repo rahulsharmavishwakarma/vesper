@@ -96,7 +96,7 @@ impl Default for AutomaticLearningState {
 
 /// Profile and learning evidence read in one SQLite snapshot for one operation.
 /// Pre-ASR hints use `profile`; both post-ASR stages use `post_asr_profile`.
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, Default)]
 pub struct DictationPersonalizationSnapshot {
     pub profile: PersonalizationProfile,
     pub learning: AutomaticLearningState,
@@ -110,6 +110,23 @@ pub struct DictationPersonalizationSnapshot {
     pub working_set: vesper_core::WorkingSet,
     /// Opt-in field words read at capture start; references for this recording only.
     pub field_terms: Vec<String>,
+    /// Set when stored personalization could not be read (see `unavailable`).
+    pub load_warning: Option<String>,
+}
+
+impl DictationPersonalizationSnapshot {
+    /// Learned words and preferences never block recording (issue #362). When
+    /// they cannot be read, the recording uses default settings with learning
+    /// off, so nothing is written over the unreadable data, and the reason is
+    /// reported as a warning on the result.
+    pub fn unavailable(reason: &str) -> Self {
+        Self {
+            load_warning: Some(format!(
+                "Your learned words could not be loaded, so this recording used default settings: {reason}"
+            )),
+            ..Self::default()
+        }
+    }
 }
 
 impl DictationPersonalizationSnapshot {
@@ -287,6 +304,7 @@ impl DatasetStore {
             inventory: self.inventory_terms().unwrap_or_default(),
             working_set: vesper_core::WorkingSet::default(),
             field_terms: vec![],
+            load_warning: None,
         };
         tx.commit()?;
         Ok(snapshot)
@@ -302,7 +320,7 @@ impl DatasetStore {
             )
             .optional()?;
         let mut state: AutomaticLearningState = state
-            .map(|s| serde_json::from_str(&s))
+            .map(|s| stored::decode(&s))
             .transpose()?
             .unwrap_or_default();
         if !(1..=2).contains(&state.schema_version)

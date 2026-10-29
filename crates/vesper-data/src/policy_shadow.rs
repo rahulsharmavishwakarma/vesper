@@ -1,5 +1,5 @@
 //! Bounded, evaluation-only policy decisions. Nothing here selects a live policy.
-use crate::{policy::*, DatasetError, DatasetStore, Result};
+use crate::{policy::*, stored, DatasetError, DatasetStore, Result};
 use rusqlite::OptionalExtension;
 use serde::{Deserialize, Serialize};
 use std::collections::{BTreeMap, BTreeSet};
@@ -413,7 +413,7 @@ impl DatasetStore {
             .optional()?;
         let mut state = match raw {
             None => PolicyShadowState::default(),
-            Some(raw) => serde_json::from_str::<PolicyShadowState>(&raw)
+            Some(raw) => stored::decode::<PolicyShadowState>(&raw)
                 .ok()
                 .filter(|s| {
                     s.schema_version == 1

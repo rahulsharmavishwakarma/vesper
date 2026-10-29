@@ -1,5 +1,5 @@
 //! Evaluation-only local text evidence. Never read by memory admission or export.
-use crate::{DatasetError, DatasetStore, Result};
+use crate::{stored, DatasetError, DatasetStore, Result};
 use rusqlite::{params, OptionalExtension};
 use serde::{Deserialize, Serialize};
 use vesper_core::{SemanticAnalysisReport, SemanticAnalysisRequest, SemanticStatus};
@@ -65,7 +65,7 @@ impl DatasetStore {
             )
             .optional()?;
         if let Some(old) = old {
-            let prior: SemanticAnalysisRequest = serde_json::from_str(&old)?;
+            let prior: SemanticAnalysisRequest = stored::decode(&old)?;
             if prior.result_revision >= request.result_revision {
                 return Ok(false);
             }
@@ -115,15 +115,19 @@ impl DatasetStore {
                 row.get::<_, String>(2)?,
             ))
         })?;
-        rows.map(|row| {
+        let mut records = Vec::new();
+        for row in rows {
             let (created_at, request, report) = row?;
-            Ok(SemanticShadowRecord {
-                created_at,
-                request: serde_json::from_str(&request)?,
-                report: serde_json::from_str(&report)?,
-            })
-        })
-        .collect()
+            // A record this build cannot read is skipped, not fatal.
+            if let (Ok(request), Ok(report)) = (stored::decode(&request), stored::decode(&report)) {
+                records.push(SemanticShadowRecord {
+                    created_at,
+                    request,
+                    report,
+                });
+            }
+        }
+        Ok(records)
     }
 
     pub fn invalidate_semantic_result(&self, result_id: &str) -> Result<()> {

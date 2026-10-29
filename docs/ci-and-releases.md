@@ -783,7 +783,9 @@ sequenceDiagram
 ### Manual release sequence (fallback)
 
 1. Run `make version-set VERSION=X.Y.Z` on a dedicated branch.
-2. Update `CHANGELOG.md` (the release notes) and canonical documentation.
+2. Update `CHANGELOG.md` (the release notes) and canonical documentation. A stable
+   version's changelog section needs its dataset dump in the same change; see
+   [stored-data compatibility](development.md#stored-data-compatibility).
 3. Run `make check`; on a Mac, `CI=true make build` builds the optimized app and DMG.
 4. Inspect/install-test the local DMG before approving the source version.
 5. Merge the reviewed changes and push the matching `vX.Y.Z` tag. This is a

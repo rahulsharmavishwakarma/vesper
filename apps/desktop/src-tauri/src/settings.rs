@@ -35,7 +35,10 @@ impl SettingsStore {
             }
             Err(error) => return Err(format!("Could not read settings: {error}")),
         };
-        let mut settings: AppConfig = serde_json::from_slice(&bytes)
+        // Settings a newer version added are dropped; corrupt files still fail.
+        let mut settings: AppConfig = std::str::from_utf8(&bytes)
+            .map_err(|e| e.to_string())
+            .and_then(|text| vesper_data::stored::decode(text).map_err(|e| e.to_string()))
             .map_err(|e| format!("Saved settings could not be decoded: {e}"))?;
         settings.validate().map_err(|e| e.to_string())?;
         // Q4_0 was the old visible default; it now follows Automatic. A saved
@@ -177,6 +180,28 @@ mod tests {
             assert!(store.load().is_err());
             assert_eq!(fs::read(&path).unwrap(), bytes);
         }
+    }
+
+    #[test]
+    fn settings_saved_by_a_newer_version_load() {
+        let temp = tempfile::tempdir().unwrap();
+        let path = temp.path().join("settings.json");
+        let store = SettingsStore::new(path.clone());
+        let mut value = serde_json::to_value(AppConfig {
+            global_shortcut: "Alt+Space".into(),
+            ..AppConfig::default()
+        })
+        .unwrap();
+        let object = value.as_object_mut().unwrap();
+        object.insert("settingFromANewerVersion".into(), serde_json::json!(true));
+        object.insert(
+            "language".into(),
+            serde_json::json!("valueFromANewerVersion"),
+        );
+        fs::write(&path, serde_json::to_vec(&value).unwrap()).unwrap();
+        let loaded = store.load().unwrap();
+        assert_eq!(loaded.global_shortcut, "Alt+Space");
+        assert_eq!(loaded.language, AppConfig::default().language);
     }
 
     #[test]

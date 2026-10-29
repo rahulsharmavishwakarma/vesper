@@ -696,6 +696,43 @@ mod tests {
     }
 
     #[test]
+    fn unreadable_learned_words_never_block_a_recording() {
+        let directory = tempfile::tempdir().unwrap();
+        // A file where the dataset folder belongs: the store cannot open.
+        let root = directory.path().join("dataset");
+        std::fs::write(&root, b"not a folder").unwrap();
+        let context = WorkContext {
+            operation_id: "unreadable".into(),
+            config: AppConfig {
+                cleanup_enabled: false,
+                collect_training_data: false,
+                language: Language::English,
+                ..Default::default()
+            },
+            model_root: directory.path().join("missing-models"),
+            dataset_root: root.clone(),
+            runtime: Arc::new(Runtime::default()),
+            inference: Arc::new(vesper_inference::InferenceManager::new().unwrap()),
+            streaming_result: Arc::default(),
+            personalization: Arc::default(),
+            defer_speakers: Default::default(),
+            pending_speakers: Default::default(),
+        };
+        let audio = MonoPcm::new(vec![0.2; 1600], 16000).unwrap();
+        let mut result = context
+            .complete_raw(&audio, &mut None, "Deploy kubernets to the cluster".into())
+            .unwrap();
+        assert_eq!(result.raw_transcript, "Deploy kubernets to the cluster");
+        assert!(!result.learning_context.learning_enabled);
+        assert!(result
+            .warnings
+            .iter()
+            .any(|warning| warning.starts_with("Your learned words could not be loaded")));
+        context.observe_result(&mut result, false);
+        assert_eq!(std::fs::read(&root).unwrap(), b"not a folder");
+    }
+
+    #[test]
     fn final_memory_survives_model_selection_without_cleanup_or_installed_weights() {
         use vesper_core::{AsrModel, PersonalizationProfile, VocabularyEntry};
         let directory = tempfile::tempdir().unwrap();
@@ -1890,9 +1927,14 @@ impl WorkContext {
     ) -> Result<&vesper_data::DictationPersonalizationSnapshot, String> {
         self.personalization
             .get_or_init(|| {
-                DatasetStore::open(self.dataset_root.clone())
+                // Unreadable learned words never block recording (issue #362).
+                Ok(DatasetStore::open(self.dataset_root.clone())
                     .and_then(|store| store.dictation_personalization_snapshot())
-                    .map_err(|e| e.to_string())
+                    .unwrap_or_else(|error| {
+                        vesper_data::DictationPersonalizationSnapshot::unavailable(
+                            &error.to_string(),
+                        )
+                    }))
             })
             .as_ref()
             .map_err(Clone::clone)
@@ -2350,7 +2392,11 @@ impl WorkContext {
             return Err("Transcription cancelled.".into());
         }
         let profile = self.personalization()?;
-        result.project_selection = self.personalization_snapshot()?.project_selection.clone();
+        let snapshot = self.personalization_snapshot()?;
+        result.project_selection = snapshot.project_selection.clone();
+        if let Some(warning) = &snapshot.load_warning {
+            result.warnings.push(warning.clone());
+        }
         // Bias provenance: the exact hints this recording's decode received.
         let bias = vesper_core::recognizer_hints(
             &self.config.speech_adapter().capabilities.speech_hook,

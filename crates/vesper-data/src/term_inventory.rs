@@ -9,7 +9,7 @@ use serde::{Deserialize, Serialize};
 use vesper_core::{term_kind, InventoryTerm, Language, TermKind, TermSource, TermTier};
 
 use crate::term_mining::{MinedTerm, WorkspaceCursor};
-use crate::{DatasetError, DatasetStore, Result};
+use crate::{stored, DatasetError, DatasetStore, Result};
 
 /// Inventory bound; the least useful unconfirmed rows are evicted beyond it.
 pub const MAX_INVENTORY_TERMS: usize = 20_000;
@@ -505,7 +505,7 @@ impl DatasetStore {
                 |r| r.get(0),
             )
             .optional()?;
-        Ok(value.map(|v| serde_json::from_str(&v)).transpose()?)
+        Ok(value.map(|v| stored::decode(&v)).transpose()?)
     }
 
     fn put_mining_state<T: Serialize>(&self, key: &str, value: &T) -> Result<()> {
@@ -591,7 +591,13 @@ impl DatasetStore {
             .connection
             .prepare("SELECT run_json FROM term_mining_runs ORDER BY id DESC LIMIT ?1")?;
         let rows = statement.query_map([limit as i64], |r| r.get::<_, String>(0))?;
-        rows.map(|r| Ok(serde_json::from_str(&r?)?)).collect()
+        let mut runs = Vec::new();
+        for row in rows {
+            if let Ok(run) = stored::decode(&row?) {
+                runs.push(run);
+            }
+        }
+        Ok(runs)
     }
 
     /// Counts per source and workspace plus the strongest rows for review.

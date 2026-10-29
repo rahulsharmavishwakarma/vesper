@@ -637,6 +637,31 @@ This section is the operational summary. [Application internals](internals.md) i
 
 Desktop dataset files live in Tauri's `app_data_dir` under `dataset/`: `sessions.sqlite3` holds records and `audio/` holds imported original files. SQLite uses WAL, so its companion `-wal` and `-shm` files may be present. Use the export function to produce a portable snapshot instead of copying a live database file alone.
 
+### Stored-data compatibility
+
+Users move between versions in both directions: they upgrade, and release-candidate testers go back to a stable build. Stored data must never stop either version from recording or listing history ([issue #362](https://github.com/rahulsharmavishwakarma/vesper/issues/362)).
+
+- **Upgrades.** A new field gets `#[serde(default)]`; an enum gains variants but never renames or removes one. Changing the meaning of a stored field needs a schema version and a migration.
+- **Rollbacks.** Every stored JSON read goes through `vesper_data::stored::decode`, including `settings.json`. It parses strictly, and on an unknown field or enum value it drops the smallest part that names it, which is the field or the list entry holding it. It drops that part only after the parser's error position confirms that part caused the failure; free text that happens to match is never touched. A save writes only this build's fields, so settings a newer version added return to their defaults. Saves from the interface stay strict, and corrupt files still fail.
+- **No blocking.** If learned words and preferences still cannot be read, recording continues with default settings and learning off, and the result shows the warning “Your learned words could not be loaded…”. Nothing is written over the unreadable data. History skips a record it cannot read instead of failing the list.
+
+`crates/vesper-data/tests/compatibility.rs` checks all of this in CI:
+
+- every release in `CHANGELOG.md` has a dataset dump in `crates/vesper-data/tests/fixtures/datasets/`, and each still loads;
+- a dataset with an unknown field added to every stored object loads with nothing lost;
+- replacing each enum-like value, one at a time, never makes a read fail.
+
+The dumps come from `crates/vesper-data/examples/compatibility_fixture.rs`, run with the released code itself. Add the new version's dump in the same change that adds its `CHANGELOG.md` section:
+
+```sh
+git worktree add --detach /tmp/vesper-vX.Y.Z vX.Y.Z
+cp crates/vesper-data/examples/compatibility_fixture.rs /tmp/vesper-vX.Y.Z/crates/vesper-data/examples/
+(cd /tmp/vesper-vX.Y.Z && cargo run -p vesper-data --example compatibility_fixture -- /tmp/vesper-fixture)
+sqlite3 /tmp/vesper-fixture/sessions.sqlite3 .dump > crates/vesper-data/tests/fixtures/datasets/vX.Y.Z.sql
+```
+
+Version 0.1.1 and earlier predate the tolerant reader: they refuse data a newer version saved, and reinstalling the newer version is the fix.
+
 History calculates 7-day/30-day activity from saved session dates in the device’s local timezone. The overview counts recordings, words in the preferred saved transcript, reviewed recordings and archived audio bytes. Empty days are included; invalid/future dates are excluded from activity totals. It does not infer recording duration from compressed file sizes. The line graph uses smooth cubic curves through the daily counts, with bounded tangents that prevent overshoot; empty days stay at zero and flat runs remain flat. Its secondary statistics show active days, average words per non-empty preferred transcript, and recordings with/without saved text in the selected period. With no text, the average displays an em dash. Clicking a graph point filters the recording list by local date, and switching periods clears that date filter. Arrow keys, Home/End and Enter work on the graph. Overview totals describe the selected period independently of list search/review filters.
 
 History displays 10 recordings per page by default, with 10/25/50 choices and Previous/Next controls. The result range and page count follow the complete search, review and date-filtered set. Changed filters, page size and new imports reset to page one; refresh or review clamps a page that no longer exists. Page navigation focuses the result count and brings it into view. Per-record review drafts and the current page survive tab changes; Recent thoughts opens its selected recording on page one. Statistics and exports are independent of the displayed page.

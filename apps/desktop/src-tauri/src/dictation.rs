@@ -463,17 +463,9 @@ async fn start(app: tauri::AppHandle, id: u64) {
     let snapshot = snapshot
         .map_err(|error| error.to_string())
         .and_then(|loaded| loaded);
-    let mut snapshot = match snapshot {
-        Ok(snapshot) => snapshot,
-        Err(error) => {
-            fail(
-                &app,
-                id,
-                &format!("Could not load your dictation settings: {error}"),
-            );
-            return;
-        }
-    };
+    // Unreadable learned words never block dictation; the result carries a warning.
+    let mut snapshot = snapshot
+        .unwrap_or_else(|error| vesper_data::DictationPersonalizationSnapshot::unavailable(&error));
     let desktop = app.clone();
     let home = std::env::var("HOME").ok();
     let day = vesper_data::workspace_day();
