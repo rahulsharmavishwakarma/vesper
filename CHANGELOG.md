@@ -23,6 +23,8 @@ Nightly builds are not listed.
 
 ### Changed
 
+- About lists **What's new** under the Install button, grouped by kind, from this
+  changelog instead of a raw pull-request list.
 - Settings has one tab per task: Dictation, Writing, Vocabulary, Projects,
   Appearance, Privacy and About, with grouped rows in the macOS style.
 - Speech model recommendations come from Vesper's own per-language results.

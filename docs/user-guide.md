@@ -127,7 +127,7 @@ version reports the state and offers the next step. It checks automatically, and
 Vesper also checks quietly at startup after the window is ready, staying silent
 when you are current. The pill reads **Checking…** with a turning arrow, then
 **Up to date** (hover it for **Check now**), **Install 0.2.0** when an update is
-available (its release notes appear below), **Downloading** with a progress fill
+available, **Downloading** with a progress fill
 and percentage, and **Restart to update** once the verified package is ready.
 Installation waits while you are recording, transcribing, cleaning up writing or
 downloading a model, and it never force-restarts; the reason appears below the
@@ -138,6 +138,10 @@ offline network shows **Couldn't check** rather than **Checking…** indefinitel
 In a build without an enrolled updater it reads **Updates
 unavailable** and the switches below are hidden. Model downloads continue to be
 managed separately in **Models**.
+
+While an update is offered, **What’s new in 0.2.0** sits under the pill and
+lists that version’s changes by kind (Added, Changed, Fixed). The first four
+show; **Show all N changes** opens the rest in place.
 
 Two switches under the version control the automation. **Check for updates
 automatically** (on by default) makes the startup check and the check when About

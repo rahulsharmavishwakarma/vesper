@@ -53,6 +53,14 @@ test('a new stable release stays draft until the DMG and checksums are uploaded'
   assert.ok(f.calls[3].includes('--latest=true'));
 });
 
+test('changelog notes lead the generated pull-request list', (t) => {
+  const f = fixture(t);
+  f.publish('v1.2.3', { notes: '### Fixed\n\n- A fix.' });
+  const create = f.calls[1];
+  assert.equal(create[create.indexOf('--notes') + 1], '### Fixed\n\n- A fix.');
+  assert.ok(create.includes('--generate-notes'));
+});
+
 test('prerelease tags never replace the latest stable download', (t) => {
   const f = fixture(t);
   f.publish('v1.3.0-rc.1');

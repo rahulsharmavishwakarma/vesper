@@ -313,6 +313,79 @@ test('About update preferences persist, gate install and skip the automatic chec
   expect(await page.evaluate(() => window.updaterChecks)).toBe(1);
 });
 
+test("About shows What's new under the Install button and opens the rest in place", async ({
+  page,
+}) => {
+  await page.addInitScript(() => {
+    window.isTauri = true;
+    let real;
+    const internals = {};
+    const notes = [
+      '### Added',
+      '',
+      '- Self-improving dictation that works with every',
+      '  speech model.',
+      '- Rule-based formatting for English.',
+      '- History shows time saved.',
+      '',
+      '### Fixed',
+      '',
+      '- A profile saved by a newer version still loads.',
+      '- Long errors fit the capture panel.',
+    ].join('\n');
+    Object.defineProperty(internals, 'invoke', {
+      configurable: true,
+      get: () => async (command, args, options) => {
+        if (command === 'plugin:updater|check') {
+          return {
+            rid: 1,
+            currentVersion: '0.1.0',
+            version: '0.1.2-rc.2',
+            date: '2026-10-29T00:00:00Z',
+            body: notes,
+            rawJson: {},
+          };
+        }
+        return real(command, args, options);
+      },
+      set: (fn) => {
+        real = fn;
+      },
+    });
+    Object.defineProperty(window, '__TAURI_INTERNALS__', {
+      configurable: true,
+      get: () => internals,
+      set: (value) => {
+        if (value?.invoke) real = value.invoke;
+        Object.assign(internals, { ...value, invoke: undefined });
+      },
+    });
+  });
+  await openSettings(page);
+  await section(page, 'About').click();
+  const notes = page.locator('.about-inline .whats-new');
+  await expect(page.locator('.about-inline .pill .lab.rest')).toHaveText('Install 0.1.2-rc.2');
+  await expect(notes.getByRole('heading', { name: 'What’s new in 0.1.2-rc.2' })).toBeVisible();
+  await expect(notes.locator('li')).toHaveCount(4);
+  await expect(notes.locator('li').first()).toHaveText(
+    'Self-improving dictation that works with every speech model.',
+  );
+  await expect(notes).not.toContainText('###');
+  // Between the update row and the switches, not after them.
+  const top = await page.locator('.about-inline .top').boundingBox();
+  const box = await notes.boundingBox();
+  const switches = await page.locator('.about-inline .switches').boundingBox();
+  expect(box.y).toBeGreaterThan(top.y + top.height - 1);
+  expect(box.y + box.height).toBeLessThanOrEqual(switches.y + 1);
+  const toggle = notes.getByRole('button', { name: 'Show all 5 changes' });
+  await toggle.click();
+  await expect(notes.locator('li')).toHaveCount(5);
+  await expect(notes.getByRole('button', { name: 'Show fewer' })).toHaveAttribute(
+    'aria-expanded',
+    'true',
+  );
+});
+
 test('Saving shows only in the status pill and never moves the options', async ({ page }) => {
   await openSettings(page);
   const pill = page.locator('.save-status');

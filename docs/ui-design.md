@@ -333,6 +333,20 @@ their own feed. Installing automatically never restarts the app and reuses
 `downloadAndInstall`'s signature check and wait for active work (issue #195).
 With checking off, the idle pill becomes a manual **Check for updates** action.
 
+While an update is offered (available, downloading or ready), **What's new in
+x.y.z** sits between the update row and the switches, so the notes stay next to
+the Install pill they describe. It lists the changelog section by kind: a 14 px
+heading, 12 px muted kind labels (Added, Changed, Fixed) and 13 px muted bullets
+with accent markers, capped at 68 characters a line. The first four items show,
+and an accent **Show all N changes** text button (`aria-expanded`) opens the rest
+in place; there is no nested scroll box, and Markdown is never shown raw.
+`releaseNotes.ts` turns the feed text into plain grouped items and drops GitHub's
+generated credits, comments and compare link. The pattern follows
+[Sparkle's release notes](https://sparkle-project.org/documentation/publishing/#release-notes)
+(notes beside the install action, grouped and short) and
+[Keep a Changelog](https://keepachangelog.com/en/1.1.0/) (changes grouped by
+kind, written for people rather than a commit list).
+
 ## First-run setup
 
 The one-time setup (issue #270; design study in `docs/design/first-run/`) is

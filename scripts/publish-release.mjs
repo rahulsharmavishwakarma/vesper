@@ -5,10 +5,18 @@ import fs from 'node:fs';
 import path from 'node:path';
 import { spawnSync } from 'node:child_process';
 import { fileURLToPath } from 'node:url';
+import { releaseNotesFromFile } from './release-notes.mjs';
 
 export const ASSET_NAMES = ['vesper-macos-arm64.dmg', 'SHA256SUMS'];
 
-export function publishRelease({ repository, tag, directory = 'release', run, publish = true }) {
+export function publishRelease({
+  repository,
+  tag,
+  directory = 'release',
+  run,
+  publish = true,
+  notes = '',
+}) {
   if (!/^[\w.-]+\/[\w.-]+$/.test(repository ?? '')) throw new Error('Invalid repository');
   if (
     !/^v(0|[1-9]\d*)\.(0|[1-9]\d*)\.(0|[1-9]\d*)(?:-[0-9A-Za-z-]+(?:\.[0-9A-Za-z-]+)*)?$/.test(
@@ -57,6 +65,8 @@ export function publishRelease({ repository, tag, directory = 'release', run, pu
       repository,
       '--draft',
       '--verify-tag',
+      // The changelog section leads; GitHub appends its pull-request list.
+      ...(notes ? ['--notes', notes] : []),
       '--generate-notes',
       '--title',
       `Vesper ${tag}`,
@@ -102,6 +112,7 @@ if (process.argv[1] && path.resolve(process.argv[1]) === fileURLToPath(import.me
     repository: process.env.GITHUB_REPOSITORY,
     tag: process.env.GITHUB_REF_NAME,
     publish: process.env.RELEASE_DRAFT_ONLY !== '1',
+    notes: releaseNotesFromFile(process.env.GITHUB_REF_NAME ?? ''),
     run: (args) => spawnSync('gh', args, { encoding: 'utf8' }),
   });
   console.log(`Desktop release: ${result}`);

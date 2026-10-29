@@ -3,6 +3,7 @@
   import { getAppInfo, type AppInfo } from '../api/desktop';
   import { updateBackend, updateManager } from '../updatesTauri';
   import type { UpdateState } from '../updates';
+  import { parseReleaseNotes, previewNotes } from '../releaseNotes';
   import Icon from './Icon.svelte';
   import BrandLogo from './BrandLogo.svelte';
 
@@ -66,6 +67,20 @@
         : updates.errorPhase === 'restart'
           ? 'Restart failed'
           : 'Couldn’t check',
+  );
+  // What's new sits under the Install button it describes. A few items show at
+  // first; the rest open in place, without a nested scroll box.
+  const NOTES_PREVIEW = 4;
+  const offered = $derived(
+    updates.status === 'available' || updates.status === 'downloading' || updates.status === 'ready'
+      ? updates.available
+      : null,
+  );
+  const noteSections = $derived(offered ? parseReleaseNotes(offered.notes) : []);
+  const noteCount = $derived(noteSections.reduce((total, entry) => total + entry.items.length, 0));
+  let notesExpanded = $state(false);
+  const shownNotes = $derived(
+    notesExpanded ? noteSections : previewNotes(noteSections, NOTES_PREVIEW),
   );
   // One control carries both the update status and its next action.
   const pill = $derived.by((): Pill => {
@@ -251,6 +266,26 @@
       </div>
     {/if}
   </div>
+  {#if info && offered && noteCount}
+    <section class="whats-new" aria-labelledby="{prefId}-whats-new">
+      <h4 id="{prefId}-whats-new">What’s new in {offered.version}</h4>
+      {#each shownNotes as entry, index (index)}
+        {#if entry.title}<h5>{entry.title}</h5>{/if}
+        <ul>
+          {#each entry.items as item, itemIndex (itemIndex)}<li>{item}</li>{/each}
+        </ul>
+      {/each}
+      {#if noteCount > NOTES_PREVIEW}
+        <button
+          type="button"
+          class="quiet notes-toggle"
+          aria-expanded={notesExpanded}
+          onclick={() => (notesExpanded = !notesExpanded)}
+          >{notesExpanded ? 'Show fewer' : `Show all ${noteCount} changes`}</button
+        >
+      {/if}
+    </section>
+  {/if}
   {#if info && updateBackend.enabled}
     <div class="switches">
       <div class="setting-toggle">
@@ -302,9 +337,6 @@
     <p class="error" role="alert">{error}</p>
     <button type="button" onclick={load}>Try again</button>
   {:else if info}
-    {#if updates.status === 'available' && updates.available?.notes}
-      <p class="update-note notes">{updates.available.notes}</p>
-    {/if}
     {#if (updates.status === 'available' || updates.status === 'ready') && updates.blockedReason}
       <p class="update-note" role="status">{updates.blockedReason}</p>
     {/if}
@@ -452,10 +484,49 @@
     font-size: 13px;
     color: var(--color-muted);
   }
-  .notes {
-    white-space: pre-wrap;
-    max-height: 120px;
-    overflow-y: auto;
+  .whats-new {
+    margin-top: var(--space-4);
+    padding-top: var(--space-4);
+    border-top: 1px solid var(--color-line);
+  }
+  .whats-new h4 {
+    margin: 0;
+    font-size: 14px;
+    font-weight: 600;
+    color: var(--color-ink);
+  }
+  .whats-new h5 {
+    margin: var(--space-3) 0 var(--space-1);
+    font-size: 12px;
+    font-weight: 600;
+    color: var(--color-muted);
+  }
+  .whats-new h4 + ul {
+    margin-top: var(--space-2);
+  }
+  .whats-new ul {
+    max-width: 68ch;
+    margin: 0;
+    padding-left: var(--space-4);
+    font-size: 13px;
+    line-height: 1.5;
+    color: var(--color-muted);
+  }
+  .whats-new li + li {
+    margin-top: var(--space-1);
+  }
+  .whats-new li::marker {
+    color: var(--color-accent);
+  }
+  .notes-toggle {
+    min-height: 0;
+    margin: var(--space-2) 0 0 calc(-1 * var(--space-2));
+    padding: var(--space-1) var(--space-2);
+    font-size: 13px;
+    color: var(--color-accent);
+  }
+  .notes-toggle:is(:hover, :focus-visible):enabled {
+    color: var(--color-accent-hover);
   }
 
   /* The update pill: one control for status and the next action. */
