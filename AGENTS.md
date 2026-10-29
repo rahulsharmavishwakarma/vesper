@@ -66,6 +66,10 @@ Use the official [Excalidraw MCP](https://github.com/excalidraw/excalidraw-mcp) 
 
 Render changed diagrams (`make diagrams` for the SVGs, a Mermaid preview otherwise) and inspect them in both themes for syntax, overlapping or clipped labels, crossing arrows, direction and readability. If Excalidraw MCP is unavailable, retain and validate Mermaid, record the tool limitation in the issue, and do not claim an Excalidraw review occurred. Do not add diagram packages to the application runtime or modify global MCP settings just to document a change. See [diagram workflow](docs/project-workflow.md#architecture-diagram-workflow).
 
+## Stored-data compatibility
+
+Users upgrade, and release-candidate testers roll back. Stored data (SQLite JSON documents, `settings.json`) must never stop any version from recording or listing history. New stored fields take `#[serde(default)]`; enum variants are only added, never renamed or removed; a change of meaning needs a schema version and a migration. Read stored JSON through `vesper_data::stored::decode`, never a strict `serde_json::from_str`. Optional data (learned words, history records, analysis) must degrade to defaults or be skipped, never fail the core action. Each stable release adds its dataset dump in the same change as its `CHANGELOG.md` section. See [stored-data compatibility](docs/development.md#stored-data-compatibility).
+
 ## Python tooling
 
 Use **uv and `pyproject.toml` for all Python work**, including contributor tools, scripts, tests, benchmarks and research environments. Keep dependencies, supported Python versions and compatible tool configuration in the owning `pyproject.toml`; use dependency groups for development/test tooling. Manage dependencies with `uv add` / `uv remove`, keep the generated `uv.lock` versioned alongside the manifest, and run project commands through `uv run`. Use `uv sync --locked` and `uv run --locked` for reproducible CI checks.

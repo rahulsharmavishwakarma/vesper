@@ -33,8 +33,9 @@ Nightly builds are not listed.
 
 ### Fixed
 
-- Going back to an older version no longer stops dictation with an unreadable
-  settings error, and long errors fit the capture panel.
+- Data saved by a newer version no longer stops an older one: unknown settings
+  and values are skipped, History skips a record it cannot read, and unreadable
+  learned words never block recording. Long errors fit the capture panel.
 
 ### Removed
 
