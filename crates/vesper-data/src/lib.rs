@@ -6,6 +6,7 @@ mod personalization;
 pub mod policy;
 mod policy_shadow;
 mod semantic;
+pub mod stored;
 mod term_inventory;
 pub mod term_mining;
 mod workspaces;
@@ -355,7 +356,14 @@ impl DatasetStore {
             .connection
             .prepare("SELECT record_json FROM sessions ORDER BY created_at DESC, id")?;
         let rows = statement.query_map([], |row| row.get::<_, String>(0))?;
-        rows.map(|row| Ok(serde_json::from_str(&row?)?)).collect()
+        // One record this build cannot read must not hide the others.
+        let mut records = Vec::new();
+        for row in rows {
+            if let Ok(record) = stored::decode(&row?) {
+                records.push(record);
+            }
+        }
+        Ok(records)
     }
 
     /// Store original machine predictions once, separately from human labels.
@@ -759,7 +767,7 @@ fn read_record(connection: &Connection, id: &str) -> Result<SessionRecord> {
             |row| row.get(0),
         )
         .optional()?;
-    Ok(serde_json::from_str(&value.ok_or_else(|| {
+    Ok(stored::decode(&value.ok_or_else(|| {
         DatasetError::SessionNotFound(id.into())
     })?)?)
 }
