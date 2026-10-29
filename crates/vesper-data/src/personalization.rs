@@ -36,7 +36,7 @@ impl DatasetStore {
             )
             .optional()?;
         let mut profile: PersonalizationProfile = serialized
-            .map(|s| profile_from_stored(&s))
+            .map(|s| stored::decode(&s))
             .transpose()?
             .unwrap_or_default();
         profile.validate().map_err(DatasetError::InvalidConfig)?;
@@ -440,8 +440,11 @@ impl DatasetStore {
             .prepare("SELECT record_json FROM sessions ORDER BY created_at DESC, id LIMIT 512")?;
         let records = statement
             .query_map([], |row| row.get::<_, String>(0))?
-            .map(|row| Ok(serde_json::from_str::<SessionRecord>(&row?)?))
-            .collect::<Result<Vec<_>>>()?;
+            .map(|row| Ok(row.map(|row| stored::decode::<SessionRecord>(&row).ok())?))
+            .collect::<Result<Vec<_>>>()?
+            .into_iter()
+            .flatten()
+            .collect::<Vec<_>>();
         let mut report = LearningDashboard {
             profile_revision: profile.revision,
             inspected_sessions: records.len(),
@@ -600,19 +603,6 @@ impl DatasetStore {
         }
         Ok(report)
     }
-}
-
-/// A profile saved by a newer Vesper can carry settings this build does not know.
-/// Drop those top-level keys on read so going back to an older version keeps
-/// dictation working; the next save keeps only this build's fields. Saves from
-/// the frontend still reject unknown fields.
-fn profile_from_stored(serialized: &str) -> serde_json::Result<PersonalizationProfile> {
-    let mut value: serde_json::Value = serde_json::from_str(serialized)?;
-    let known = serde_json::to_value(PersonalizationProfile::default())?;
-    if let (Some(stored), Some(known)) = (value.as_object_mut(), known.as_object()) {
-        stored.retain(|key, _| known.contains_key(key));
-    }
-    serde_json::from_value(value)
 }
 
 fn before(earlier: &str, later: &str) -> bool {

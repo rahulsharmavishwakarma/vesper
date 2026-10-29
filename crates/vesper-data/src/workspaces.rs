@@ -126,7 +126,7 @@ fn parse_state(json: &str) -> Result<(WorkspaceState, bool)> {
                 .is_some();
         }
     }
-    Ok((serde_json::from_value(value)?, retired))
+    Ok((stored::decode_value(&mut value)?, retired))
 }
 
 fn same_project(entry: &str, name: &str) -> bool {
