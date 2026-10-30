@@ -31,6 +31,16 @@ codesign --verify --deep --strict "$app" || {
   printf '%s\n' 'bundle signature is invalid or does not seal its resources' >&2
   exit 1
 }
+# A channel with a signing certificate must have signed with it: its fixed
+# designated requirement is what lets macOS keep permissions across updates
+# (#371).
+if [ -n "${VESPER_SIGNING_IDENTITY:-}" ]; then
+  leaf=$(printf '%s' "$VESPER_SIGNING_IDENTITY" | tr 'A-F' 'a-f')
+  codesign -d -r- "$app" 2>&1 | grep -q "certificate leaf = H\"$leaf\"" || {
+    printf '%s\n' 'app is not signed with the channel certificate' >&2
+    exit 1
+  }
+fi
 # The hardened runtime would make macOS refuse the ad hoc MLX library (#245).
 if codesign -dvv "$app" 2>&1 | grep -q 'flags=.*runtime'; then
   printf '%s\n' 'app carries the hardened runtime flag; it cannot load the ad hoc MLX library' >&2

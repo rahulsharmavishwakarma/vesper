@@ -114,6 +114,13 @@ jobs:
       - run: npm ci
       - name: Verify tag and application versions
         run: node scripts/version.mjs check --tag="$GITHUB_REF_NAME"
+      # The channel's own certificate keeps the app's identity, and with it
+      # macOS permissions such as Accessibility, the same across updates (#371).
+      - name: Import the code-signing identity
+        env:
+          MACOS_SIGNING_CERTIFICATE: ${{ secrets.MACOS_SIGNING_CERTIFICATE }}
+          MACOS_SIGNING_CERTIFICATE_PASSWORD: ${{ secrets.MACOS_SIGNING_CERTIFICATE_PASSWORD }}
+        run: sh scripts/import-signing-identity.sh
       - name: Build desktop bundles
         run: npm run desktop:build
       - name: Collect release artifact
@@ -125,6 +132,9 @@ jobs:
           if-no-files-found: error
           retention-days: 14
           include-hidden-files: false
+      - name: Remove the signing keychain
+        if: always() && env.VESPER_SIGNING_KEYCHAIN != ''
+        run: security delete-keychain "$VESPER_SIGNING_KEYCHAIN"
 
   draft:
     name: Stage draft candidate
