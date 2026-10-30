@@ -813,7 +813,9 @@ The `v0.1.0` app was signed only by the linker on its main executable (ad hoc,
 be opened" on Apple-silicon Macs instead of the normal unidentified-developer
 prompt; `xattr -cr /Applications/Vesper.app` is the workaround for that download.
 The base macOS bundle config now sets `signingIdentity` to `-`, so Tauri signs
-the whole bundle ad hoc and seals its resources, and two gates fail the build if it
+the whole bundle ad hoc and seals its resources (release and nightly builds
+override it with their channel certificate; see
+[code-signing identity](#code-signing-identity-issue-371)), and two gates fail the build if it
 does not: the `Rust (macOS)` job runs `codesign --verify --deep --strict` on the
 debug bundle, and `scripts/package-release.sh` runs it on the release app. The bundle must not
 carry the hardened runtime (`bundle.macOS.hardenedRuntime` is `false`): it enforces
@@ -831,6 +833,46 @@ Open Anyway applies. Developer ID signing and notarization remain
 on a copy of the published app: after `codesign --force --deep --sign -` the
 signature is valid and `spctl` reports `rejected`, the expected unidentified-developer
 state. A clean second-Mac download test of the next candidate is still required.
+
+### Code-signing identity ([issue #371](https://github.com/rahulsharmavishwakarma/vesper/issues/371))
+
+macOS stores privacy permissions (Accessibility, Microphone and others) against
+an app's designated requirement. An ad hoc signature's requirement is the hash of
+that exact build (`designated => cdhash H"…"`), so every update looked like a new
+app and macOS asked again. Release and nightly builds therefore sign with one
+long-lived self-signed certificate per channel. The requirement becomes
+`identifier "<bundle id>" and certificate leaf = H"<certificate SHA-1>"`, which
+stays the same across updates.
+
+- **Creating it.** The maintainer runs
+  `sh scripts/create-signing-identity.sh production` and `… nightly`. Each run
+  creates an RSA-3072 code-signing certificate valid for 20 years
+  (`Vesper Release Signing` or `Vesper Nightly Signing`). It stores the PKCS#12
+  file and its password as the `MACOS_SIGNING_CERTIFICATE` and
+  `MACOS_SIGNING_CERTIFICATE_PASSWORD` secrets of that environment, imports the
+  identity into the login keychain as the backup, and prints only the SHA-1 leaf
+  hash and the SHA-256 fingerprint. It refuses to replace an existing certificate.
+- **Using it.** The release and nightly desktop jobs run
+  `scripts/import-signing-identity.sh`. It imports the identity into a temporary
+  keychain and sets `APPLE_SIGNING_IDENTITY`, which Tauri reads before the
+  config's `-`. `scripts/package-release.sh` fails unless the app's requirement
+  names that certificate, and the job deletes the keychain at the end. Without the
+  secret (forks, pull requests, local builds) the build stays ad hoc with a warning.
+- **Limits.** The certificate is not trusted by macOS, so this is not notarization.
+  The first-launch prompt and **Open Anyway** remain until Developer ID signing
+  ([issue #64](https://github.com/rahulsharmavishwakarma/vesper/issues/64)), and
+  the hardened runtime stays off. The first update from an ad hoc build to a
+  certificate-signed one asks for permissions once more, and the move to
+  Developer ID will ask once more too.
+- **Rotation and recovery.** Keep the login-keychain backup; it can be exported
+  again from Keychain Access. Rotating means deleting both secrets and running the
+  script again, and every user then grants access once more, so rotate only when
+  the key is compromised or lost.
+
+Verified locally: an untrusted self-signed certificate signs the bundle,
+`codesign --verify --deep --strict` passes, and the requirement names the
+certificate. The certificates are not created yet; the first signed nightly is
+the CI check.
 
 ### Nightly builds ([issue #205](https://github.com/rahulsharmavishwakarma/vesper/issues/205))
 
