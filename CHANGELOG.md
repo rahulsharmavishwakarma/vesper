@@ -14,6 +14,12 @@ Nightly builds are not listed.
 - About shows **What's new** in a panel of fixed height that scrolls, instead of
   expanding the page.
 
+### Fixed
+
+- Updates keep macOS permissions such as Accessibility and Microphone. Release
+  builds now keep one signing identity; the first update to such a build asks
+  once more.
+
 ## [0.1.2] - 2026-10-29
 
 ### Added
