@@ -871,8 +871,15 @@ stays the same across updates.
 
 Verified locally: an untrusted self-signed certificate signs the bundle,
 `codesign --verify --deep --strict` passes, and the requirement names the
-certificate. The certificates are not created yet; the first signed nightly is
-the CI check.
+certificate. The owner created both certificates on 30 October 2026; their
+SHA-1 fingerprints are on
+[issue #371](https://github.com/rahulsharmavishwakarma/vesper/issues/371). The
+first signed nightly, `nightly-20261030-3c71224`, shows
+`Authority=Vesper Nightly Signing`, its designated requirement names the nightly
+certificate's leaf hash (`c69bea4c…`), and it passes
+`codesign --verify --deep --strict`. Whether permissions survive an update is
+checked between two signed nightlies; the first signed stable release is the
+one after 0.1.2.
 
 ### Nightly builds ([issue #205](https://github.com/rahulsharmavishwakarma/vesper/issues/205))
 
