@@ -140,8 +140,8 @@ unavailable** and the switches below are hidden. Model downloads continue to be
 managed separately in **Models**.
 
 While an update is offered, **What’s new in 0.2.0** sits under the pill and
-lists that version’s changes by kind (Added, Changed, Fixed). The first four
-show; **Show all N changes** opens the rest in place.
+lists that version’s changes by kind (Added, Changed, Fixed) in a panel of fixed
+height; scroll it to read the rest.
 
 Two switches under the version control the automation. **Check for updates
 automatically** (on by default) makes the startup check and the check when About

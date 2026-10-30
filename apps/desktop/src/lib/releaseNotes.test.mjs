@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
-import { parseReleaseNotes, previewNotes } from './releaseNotes.ts';
+import { parseReleaseNotes } from './releaseNotes.ts';
 
 test('changelog sections become plain grouped items', () => {
   const notes = [
@@ -48,16 +48,4 @@ test('a plain sentence is one untitled item, and empty notes give nothing', () =
     { title: '', items: ['Nightly 0.1.2 built from main at abc1234.'] },
   ]);
   assert.deepEqual(parseReleaseNotes(''), []);
-});
-
-test('the preview keeps the first items and their headings', () => {
-  const sections = [
-    { title: 'Added', items: ['a', 'b', 'c'] },
-    { title: 'Fixed', items: ['d', 'e'] },
-  ];
-  assert.deepEqual(previewNotes(sections, 4), [
-    { title: 'Added', items: ['a', 'b', 'c'] },
-    { title: 'Fixed', items: ['d'] },
-  ]);
-  assert.deepEqual(previewNotes(sections, 2), [{ title: 'Added', items: ['a', 'b'] }]);
 });

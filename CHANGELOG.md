@@ -9,6 +9,11 @@ Nightly builds are not listed.
 
 ## [Unreleased]
 
+### Changed
+
+- About shows **What's new** in a panel of fixed height that scrolls, instead of
+  expanding the page.
+
 ## [0.1.2] - 2026-10-29
 
 ### Added

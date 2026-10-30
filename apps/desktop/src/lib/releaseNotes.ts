@@ -62,15 +62,3 @@ export function parseReleaseNotes(notes: string): NotesSection[] {
   flush();
   return sections.filter((entry) => entry.items.length > 0);
 }
-
-/** The first `limit` items across sections, keeping each one's heading. */
-export function previewNotes(sections: NotesSection[], limit: number): NotesSection[] {
-  let left = limit;
-  return sections
-    .map((entry) => {
-      const items = entry.items.slice(0, Math.max(0, left));
-      left -= items.length;
-      return { ...entry, items };
-    })
-    .filter((entry) => entry.items.length > 0);
-}

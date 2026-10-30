@@ -337,13 +337,15 @@ While an update is offered (available, downloading or ready), **What's new in
 x.y.z** sits between the update row and the switches, so the notes stay next to
 the Install pill they describe. It lists the changelog section by kind: a 14 px
 heading, 12 px muted kind labels (Added, Changed, Fixed) and 13 px muted bullets
-with accent markers, capped at 68 characters a line. The first four items show,
-and an accent **Show all N changes** text button (`aria-expanded`) opens the rest
-in place; there is no nested scroll box, and Markdown is never shown raw.
+with accent markers, capped at 68 characters a line. The notes sit in an inset
+panel (background colour, hairline border, medium radius) of fixed height,
+`clamp(160px, 34vh, 300px)`, that scrolls, so a long release never pushes the
+switches down. The panel is a labelled region with `tabindex="0"`, so the
+keyboard can focus and scroll it, and Markdown is never shown raw.
 `releaseNotes.ts` turns the feed text into plain grouped items and drops GitHub's
 generated credits, comments and compare link. The pattern follows
 [Sparkle's release notes](https://sparkle-project.org/documentation/publishing/#release-notes)
-(notes beside the install action, grouped and short) and
+(notes beside the install action, in a fixed scrolling view) and
 [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) (changes grouped by
 kind, written for people rather than a commit list).
 
