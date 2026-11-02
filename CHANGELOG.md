@@ -13,12 +13,22 @@ Nightly builds are not listed.
 
 - About shows **What's new** in a panel of fixed height that scrolls, instead of
   expanding the page.
+- Speech recognition runs on sherpa-onnx 2.0.1. Cohere Transcribe (the default)
+  and the Parakeet fallback now use NeMo's log floor when computing audio
+  features, which made both more accurate on the English test set; Qwen3-ASR,
+  Whisper and Moonshine transcripts are unchanged.
 
 ### Fixed
 
 - Updates keep macOS permissions such as Accessibility and Microphone. Release
   builds now keep one signing identity; the first update to such a build asks
   once more.
+
+### Security
+
+- Removed the last copies of `zip` older than 9 from the build
+  (RUSTSEC-2026-0429): the updater plugin moved to 2.14.1 and the speech runtime
+  to 2.0.1.
 
 ## [0.1.2] - 2026-10-29
 
