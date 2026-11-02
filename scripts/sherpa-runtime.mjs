@@ -7,8 +7,8 @@ import { fileURLToPath } from 'node:url';
 import { spawnSync } from 'node:child_process';
 
 const root = fileURLToPath(new URL('../', import.meta.url));
-const revision = '11afbd009a7f8c08f4bcf2fc1b265d0df4670fbf';
-const sourceSha256 = '0a8db6c55dd318f4a688faba85f7760b99a6c92e8ef8864479d418531bee1ac2';
+const revision = 'af2d8d81dbfa61c4cea4c568da78f3982edca005';
+const sourceSha256 = 'afcafe3c34bc2f15a363ad791fa1644a69bf0977a58c1b4f617468976c2faeb5';
 const patch = join(root, 'patches/sherpa-onnx/decode-report.patch');
 const hash = (bytes) => createHash('sha256').update(bytes).digest('hex');
 const patchSha256 = hash(readFileSync(patch));
@@ -23,10 +23,8 @@ const libs = [
   'sherpa-onnx-fst',
   'kaldi-native-fbank-core',
   'kissfft-float',
-  'piper_phonemize',
-  'espeak-ng',
-  'ucd',
   'onnxruntime',
+  'utf8proc',
   'ssentencepiece_core',
 ];
 function run(command, args, options = {}) {
