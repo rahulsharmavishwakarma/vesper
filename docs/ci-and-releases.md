@@ -434,16 +434,20 @@ all other vulnerabilities and unsoundness findings remain fatal. Direct
 cargo-audit omits both source verification and GLib registry-advisory coverage
 and is not a substitute for this wrapper.
 
-The wrapper also carries owner-approved scoped ignores for the three zip
-extraction advisories (RUSTSEC-2026-0367/0368/0369), patched only in zip 9.
-They cover exactly two pinned instances the resolver cannot move: zip 2.6.1
-as a sherpa-onnx-sys build dependency, and zip 4.6.1 under
-tauri-plugin-updater's Windows-only update path. Before auditing, the wrapper
-verifies the lockfile still contains only those instances with only those
-dependents; any other zip below 9 fails the job. Remove the ignores when both
-parents resolve zip 9 or drop it (issue #161).
+Earlier scoped ignores covered the zip extraction advisories
+(RUSTSEC-2026-0367/0368/0369, issue #161) and the zstd advisories
+(RUSTSEC-2026-0391 and -0395 to -0406, issue #348) for two zip copies the
+resolver could not move. When RustSec added RUSTSEC-2026-0429 (high:
+`ZipArchive::extract` aborts the process on a symlink entry with a huge declared
+size, patched in zip 9), the audit failed on every pull request. Both copies left
+on 2 November 2026: zip 4.6.1 with `tauri-plugin-updater` 2.14.1, which uses
+zip 9, and zip 2.6.1 with the move to sherpa-onnx 2.0.1, whose build script uses
+zip 9 and zstd 0.14
+([issue #389](https://github.com/rahulsharmavishwakarma/vesper/issues/389)). The
+lockfile now holds only zip 9.0.5, zstd 0.14.3 and zstd-safe 8.2.0, so those
+ignores and their guards are gone.
 
-A third owner-approved scoped ignore (2026-10-21, [issue #248](https://github.com/rahulsharmavishwakarma/vesper/issues/248))
+The one remaining owner-approved scoped ignore (2026-10-21, [issue #248](https://github.com/rahulsharmavishwakarma/vesper/issues/248))
 covers RUSTSEC-2026-0381, bundled roots that trust distrusted emSign
 intermediates, patched in webpki-roots 1.0.10. The 1.x copy (used by the app's
 `reqwest` downloader) and `rustls-webpki` / `webpki-root-certs` were updated in
@@ -452,24 +456,11 @@ webpki-roots 0.26.11 is a build-dependency of sherpa-onnx-sys through ureq 2.12.
 a download helper its build script uses only when no prebuilt runtime directory is
 supplied; the app always supplies `SHERPA_ONNX_LIB_DIR`, so it is never compiled
 into the application, and `cargo tree -e normal` shows ureq is not a normal
-dependency of anything. sherpa-onnx-sys 1.13.8 (2026-09-11) is the newest published
-version, so upgrading could not clear it. The wrapper verifies the lockfile still
+dependency of anything. sherpa-onnx-sys 2.0.1, the newest published version, still
+depends on ureq 2, so upgrading does not clear it. The wrapper verifies the lockfile still
 shows exactly webpki-roots 0.26.11 used only by ureq 2.12.1, itself used only by
 sherpa-onnx-sys, and refuses any other webpki-roots below 1.0.10 before auditing.
 Remove the ignore and guard when sherpa-onnx-sys moves to ureq 3.
-
-A fourth owner-approved scoped ignore (2026-10-27, [issue #348](https://github.com/rahulsharmavishwakarma/vesper/issues/348))
-covers the zstd advisories RustSec published on 16 October 2026: RUSTSEC-2026-0391
-against `zstd` 0.13.3 (patched in 0.14.3) and RUSTSEC-2026-0395 to -0406 against
-`zstd-safe` 7.3.0 (patched in 8.2.0; two vulnerabilities and ten unsoundness
-findings). Both are reached only through zip 2.6.1, the sherpa-onnx-sys build
-dependency above, so they are never compiled into the application, and zip 2.x
-cannot use the patched releases. The wrapper verifies the lockfile still shows
-exactly zstd 0.13.3 used only by zip 2.6.1 and zstd-safe 7.3.0 used only by that
-zstd, and refuses any other unpatched copy before auditing. `zstd-sys` moved to
-2.1.2 for RUSTSEC-2026-0410 and needs no exception. sherpa-onnx-sys 2.0 uses
-zip 9 and zstd 0.14; moving to it removes this ignore (and likely the zip one),
-but it is a speech-runtime upgrade that needs its own qualification.
 
 The end-of-file formatter excludes only GLib's upstream `LICENSE` and
 `.cargo_vcs_info.json`, preserving their original end-of-file whitespace. Their hashes
