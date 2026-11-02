@@ -48,7 +48,7 @@ for current measurements and their scope.
 
 ## What this application does today
 
-The user-selected default is Cohere Transcribe INT8 through sherpa-onnx 1.13.8, with completed-recording CPU inference and Qwen writing cleanup. This preference is not a fastest-model claim. Selectable Nemotron 3.5 Q8 uses the official NeMo-Speech.cpp 0.1.0 C ABI and supports live partials. Parakeet v3 INT8 through `sherpa-onnx = 1.13.8` remains an offline CPU fallback. Cleanup uses Qwen3.5-0.8B Q4_0/Q8_0 through `llama-cpp-2 = 0.1.159`. Hugging Face profile selection changes compatible artifacts; it does not make an arbitrary architecture compatible with these runtimes.
+The user-selected default is Cohere Transcribe INT8 through sherpa-onnx 2.0.1, with completed-recording CPU inference and Qwen writing cleanup. This preference is not a fastest-model claim. Selectable Nemotron 3.5 Q8 uses the official NeMo-Speech.cpp 0.1.0 C ABI and supports live partials. Parakeet v3 INT8 through `sherpa-onnx = 1.13.8` remains an offline CPU fallback. Cleanup uses Qwen3.5-0.8B Q4_0/Q8_0 through `llama-cpp-2 = 0.1.159`. Hugging Face profile selection changes compatible artifacts; it does not make an arbitrary architecture compatible with these runtimes.
 
 | Component       | Current behavior                                                                                                                                                                                                                                               | Consequence                                                                                                                                                                                                                                            |
 | --------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
@@ -531,15 +531,15 @@ failed its quality gate on both providers.
 
 #### Exact native boundaries
 
-The current pins are Sherpa 1.13.8/source
-`11afbd009a7f8c08f4bcf2fc1b265d0df4670fbf`, llama-cpp-2 0.1.159 / llama-cpp-sys-2 0.1.160 (llama.cpp
+The current pins are Sherpa 2.0.1/source
+`af2d8d81dbfa61c4cea4c568da78f3982edca005`, llama-cpp-2 0.1.159 / llama-cpp-sys-2 0.1.160 (llama.cpp
 `d8123504`), and NeMo-Speech.cpp 0.1.0/source
 `4f9676226f667d14608487df744f375db87127f8` (ggml
 `c03b4e2bcece5134827881af90242086daf75be5`). Model revisions and complete hashes
 remain owned by [the artifact registry](../models/artifacts.json).
 
 The local static Sherpa build has `SHERPA_ONNX_DISABLE_COREML` in its actual
-compiler definitions. Its pinned [Apple ARM static packaging](https://github.com/k2-fsa/sherpa-onnx/blob/11afbd009a7f8c08f4bcf2fc1b265d0df4670fbf/cmake/onnxruntime-osx-arm64-static.cmake)
+compiler definitions. Its pinned [Apple ARM static packaging](https://github.com/k2-fsa/sherpa-onnx/blob/af2d8d81dbfa61c4cea4c568da78f3982edca005/cmake/onnxruntime-osx-arm64-static.cmake)
 selects ONNX Runtime 1.28.2, archive SHA-256
 `bf6e35dc9440d2899c3d21f52b1045fb99176a6ae822281b7245c5418cc338ab`.
 Observed runtime build ID:
@@ -555,7 +555,7 @@ selection, model caching and compute-plan diagnostics. Those options are not
 automatically exposed by this branch. Dynamic shapes, graph partitions, CPU
 fallback and first-use compilation must be measured. CoreML/ANE and Metal GPU
 are separate execution claims. [ORT CoreML contract](https://onnxruntime.ai/docs/execution-providers/CoreML-ExecutionProvider.html),
-[pinned Sherpa session code](https://github.com/k2-fsa/sherpa-onnx/blob/11afbd009a7f8c08f4bcf2fc1b265d0df4670fbf/sherpa-onnx/csrc/session.cc).
+[pinned Sherpa session code](https://github.com/k2-fsa/sherpa-onnx/blob/af2d8d81dbfa61c4cea4c568da78f3982edca005/sherpa-onnx/csrc/session.cc).
 
 The bundled llama.cpp already has an eligible Metal tensor path and native
 quantized kernels. Verify shape/dtype dispatch before proposing new M5 kernels.
@@ -760,7 +760,7 @@ For the fallback ONNX model, do not start a new integration around the old ONNX 
 
 For cleanup, upstream SYCL targets Intel GPUs and requires matching toolchain/runtime components. It is not exposed as a direct feature by our pinned Rust wrapper; additional build/link integration would be needed. Vulkan is another candidate available through the wrapper. Neither route is currently verified for Qwen3.5 in this app. [llama.cpp SYCL documentation](https://github.com/ggml-org/llama.cpp/blob/master/docs/backend/SYCL.md).
 
-**Pinned Sherpa details.** Version 1.13.8 includes CUDA, Core ML, DirectML, OpenVINO and other provider branches, often falling back to CPU when unavailable. Its Core ML branch uses the legacy flags API. OpenVINO defaults to NPU unless `device_type` is provided. Its TensorRT branch requires online-model configuration and is not a drop-in setting for our offline Parakeet path. Record actual execution, including fallback, rather than displaying the requested provider as an attestation. [Versioned Sherpa session implementation](https://github.com/k2-fsa/sherpa-onnx/blob/v1.13.8/sherpa-onnx/csrc/session.cc).
+**Sherpa provider details (checked at 1.13.8).** Version 1.13.8 includes CUDA, Core ML, DirectML, OpenVINO and other provider branches, often falling back to CPU when unavailable. Its Core ML branch uses the legacy flags API. OpenVINO defaults to NPU unless `device_type` is provided. Its TensorRT branch requires online-model configuration and is not a drop-in setting for our offline Parakeet path. Record actual execution, including fallback, rather than displaying the requested provider as an attestation. [Versioned Sherpa session implementation](https://github.com/k2-fsa/sherpa-onnx/blob/v1.13.8/sherpa-onnx/csrc/session.cc).
 
 **Mobile.** Tauri supports native Kotlin/Java and Swift plugin implementations alongside shared Rust logic. Mobile capture permissions, audio interruptions, suspension, native library packaging, memory limits and background behavior need their own implementation and device tests. Desktop microphone integration and a responsive web page do not establish mobile support. Keep recording state and audio recovery independent of model lifetime. [Tauri mobile plugin development](https://v2.tauri.app/develop/plugins/develop-mobile/).
 
@@ -777,7 +777,7 @@ Caching preserves integrity by performing full role-specific verification when a
 
 ONNX Runtime distinguishes intra-op parallelism from inter-op graph parallelism. Its default graph execution is sequential; an inter-op count alone does not enable parallel graph execution. Spinning may reduce wakeup latency while increasing power use, and multiple session pools can contend. Compare spinning disabled against enabled for desktop latency and battery modes. [ONNX threading guidance](https://onnxruntime.ai/docs/performance/tune-performance/threading.html).
 
-Sherpa 1.13.8 maps `num_threads` to both intra/inter counts and forwards `SessionConfig.*` entries from a provider configuration file. That offers an experimental route for supported ONNX session keys and profiling without inventing new Rust binding APIs; independent pool controls may still require upstream changes. Validate every key against the linked runtime version. [Versioned session implementation](https://github.com/k2-fsa/sherpa-onnx/blob/v1.13.8/sherpa-onnx/csrc/session.cc).
+Sherpa 1.13.8 and 2.0.1 map `num_threads` to both intra/inter counts and forwards `SessionConfig.*` entries from a provider configuration file. That offers an experimental route for supported ONNX session keys and profiling without inventing new Rust binding APIs; independent pool controls may still require upstream changes. Validate every key against the linked runtime version. [Versioned session implementation](https://github.com/k2-fsa/sherpa-onnx/blob/v2.0.1/sherpa-onnx/csrc/session.cc).
 
 ## Precision, memory and sustained use
 

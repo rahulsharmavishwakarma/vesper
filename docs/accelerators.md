@@ -72,7 +72,7 @@ The MLX application path shares the existing worker and architecture contracts. 
 families is also not established by the llama.cpp Cargo feature; it needs a
 compatible Sherpa/ONNX Runtime build and model-specific operator evidence.
 
-At pinned Sherpa revision `11afbd009a7f8c08f4bcf2fc1b265d0df4670fbf`, GPU mode
+At Sherpa 1.13.8 (`11afbd009a7f8c08f4bcf2fc1b265d0df4670fbf`), the revision pinned when this was checked, GPU mode
 [forces shared libraries](https://github.com/k2-fsa/sherpa-onnx/blob/11afbd009a7f8c08f4bcf2fc1b265d0df4670fbf/CMakeLists.txt#L173).
 Its Linux x86-64 GPU package pins ONNX Runtime 1.28.2 with CUDA 12/cuDNN 9;
 the application's current Sherpa script builds GPU off and static libraries.
@@ -89,7 +89,7 @@ matching CUDA kernels. This establishes a compatibility gap, not measured
 placement or latency. Separate GPU-compatible exports must be pinned and tested.
 
 Cohere/Whisper already have native CUDA I/O-binding code for attention caches;
-Qwen's pinned CUDA branch [binds decoder outputs, including KV state, to CPU](https://github.com/k2-fsa/sherpa-onnx/blob/11afbd009a7f8c08f4bcf2fc1b265d0df4670fbf/sherpa-onnx/csrc/offline-qwen3-asr-model.cc#L466).
+Qwen's pinned CUDA branch [binds decoder outputs, including KV state, to CPU](https://github.com/k2-fsa/sherpa-onnx/blob/af2d8d81dbfa61c4cea4c568da78f3982edca005/sherpa-onnx/csrc/offline-qwen3-asr-model.cc#L466).
 Reusing the existing bindings is runtime integration; changing Qwen cache placement
 is runtime-internal work. Neither requires training, and neither is enabled by
 this Mac patch. One shared Sherpa GPU package/probe policy is the proposed reuse
