@@ -1257,7 +1257,7 @@ pub fn provenance(config: &AppConfig) -> serde_json::Value {
     } else if uses_nemo_runtime(config) {
         "NeMo-Speech.cpp 0.1.0"
     } else {
-        "sherpa-onnx 1.13.8"
+        "sherpa-onnx 2.0.1"
     };
     serde_json::json!({
         "artifacts": selected(config).unwrap_or_default(),
