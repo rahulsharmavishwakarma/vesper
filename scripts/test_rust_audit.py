@@ -114,12 +114,7 @@ class RustAuditTests(unittest.TestCase):
             self.assertEqual(command[:3], ["cargo", "audit", "--file"])
             expected_ignores = [
                 argument
-                for advisory in (
-                    AUDIT.ADVISORY,
-                    *AUDIT.ZIP_ADVISORIES,
-                    AUDIT.WEBPKI_ADVISORY,
-                    *AUDIT.ZSTD_ADVISORIES,
-                )
+                for advisory in (AUDIT.ADVISORY, AUDIT.WEBPKI_ADVISORY)
                 for argument in ("--ignore", advisory)
             ]
             self.assertEqual(command[4:], ["--deny", "unsound", *expected_ignores])
@@ -139,49 +134,8 @@ class RustAuditTests(unittest.TestCase):
         self.assertTrue(observed)
         self.assertFalse(observed[0].exists())
 
-    def test_run_audit_rejects_unscoped_zip_before_auditing(self):
-        lock = self.root / "Cargo.lock"
-        lock.write_text(lock.read_text() + '\n[[package]]\nname = "zip"\nversion = "3.0.0"\n')
-        with patch.object(AUDIT.subprocess, "run") as run:
-            with self.assertRaises(ValueError):
-                AUDIT.run_audit(self.root)
-        run.assert_not_called()
-
-    def test_zip_exceptions_accept_only_the_reviewed_pins(self):
-        def lock_with(zip_versions, dependents):
-            packages = [{"name": "zip", "version": version} for version in zip_versions]
-            for dependent, version in dependents:
-                packages.append(
-                    {"name": dependent, "version": "1.0.0", "dependencies": [f"zip {version}"]}
-                )
-            return {"package": packages}
-
-        AUDIT.verify_zip_exceptions(
-            lock_with(
-                ["2.6.1", "4.6.1", "9.0.5"],
-                [
-                    ("sherpa-onnx-sys", "2.6.1"),
-                    ("tauri-plugin-updater", "4.6.1"),
-                    ("vesper-models", "9.0.5"),
-                ],
-            )
-        )
-        for bad in (
-            # A version bump under a pin must be re-reviewed.
-            lock_with(["2.7.0"], [("sherpa-onnx-sys", "2.7.0")]),
-            # A new dependent on a pinned version widens the exception.
-            lock_with(
-                ["2.6.1"],
-                [("sherpa-onnx-sys", "2.6.1"), ("vesper-models", "2.6.1")],
-            ),
-            # An unreviewed old zip anywhere else is fatal.
-            lock_with(["4.6.1"], [("some-other-crate", "4.6.1")]),
-        ):
-            with self.assertRaises(ValueError):
-                AUDIT.verify_zip_exceptions(bad)
-
     def test_webpki_exception_accepts_only_the_reviewed_shape(self):
-        def lock_with(roots, ureq_dependents=(("sherpa-onnx-sys", "1.13.8"),), edges=None):
+        def lock_with(roots, ureq_dependents=(("sherpa-onnx-sys", "2.0.1"),), edges=None):
             packages = [{"name": "webpki-roots", "version": version} for version in roots]
             packages.append({"name": "ureq", "version": "2.12.1"})
             edges = edges if edges is not None else [("ureq", "2.12.1", "webpki-roots 0.26.11")]
@@ -210,43 +164,11 @@ class RustAuditTests(unittest.TestCase):
             # ureq reached from anywhere but sherpa-onnx-sys is no longer build-only.
             lock_with(
                 ["0.26.11"],
-                ureq_dependents=(("sherpa-onnx-sys", "1.13.8"), ("vesper-models", "0.1.0")),
+                ureq_dependents=(("sherpa-onnx-sys", "2.0.1"), ("vesper-models", "0.1.0")),
             ),
         ):
             with self.assertRaises(ValueError):
                 AUDIT.verify_webpki_exception(bad)
-
-    def test_zstd_exception_accepts_only_the_reviewed_shape(self):
-        def lock_with(zstd="0.13.3", zstd_parent=("zip", "2.6.1"), safe="7.3.0", extra=()):
-            return {
-                "package": [
-                    {"name": "zstd", "version": zstd, "dependencies": ["zstd-safe"]},
-                    {"name": "zstd-safe", "version": safe},
-                    {"name": zstd_parent[0], "version": zstd_parent[1], "dependencies": ["zstd"]},
-                    *extra,
-                ]
-            }
-
-        AUDIT.verify_zstd_exception(lock_with())
-        # Patched releases need no exception, whoever uses them.
-        AUDIT.verify_zstd_exception(
-            lock_with(zstd="0.14.3", zstd_parent=("vesper-models", "0.1.0"), safe="8.2.0")
-        )
-        for bad in (
-            # A version bump under the pin must be re-reviewed.
-            lock_with(zstd="0.13.2"),
-            lock_with(safe="7.2.4"),
-            # zstd reached from anything but zip 2.6.1 is no longer build-only.
-            lock_with(zstd_parent=("vesper-models", "0.1.0")),
-            # A new user of the old zstd-safe widens the exception.
-            lock_with(
-                extra=(
-                    {"name": "vesper-models", "version": "0.1.0", "dependencies": ["zstd-safe"]},
-                )
-            ),
-        ):
-            with self.assertRaises(ValueError):
-                AUDIT.verify_zstd_exception(bad)
 
     def test_run_audit_rejects_unscoped_webpki_before_auditing(self):
         lock = self.root / "Cargo.lock"

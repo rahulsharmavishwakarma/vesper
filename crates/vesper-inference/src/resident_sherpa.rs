@@ -65,7 +65,7 @@ pub(crate) fn key(config: &AppConfig, root: &Path) -> Result<RecognizerKey> {
         runtime_revision: config.speech_adapter().runtime_revision,
         runtime_build: env!("VESPER_SHERPA_BUILD_ID"),
         runtime_patch: env!("VESPER_SHERPA_PATCH_SHA256"),
-        binding_version: "1.13.8",
+        binding_version: "2.0.1",
         requested_backend: config.compute_backend,
         provider: "cpu",
         threads: worker_threads(),

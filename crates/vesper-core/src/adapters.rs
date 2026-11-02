@@ -182,7 +182,7 @@ use crate::generated::{
     COHERE_LANGUAGES, GRANITE_LANGUAGES, LFM_LANGUAGES, MOONSHINE_LANGUAGES, NEMOTRON_LANGUAGES,
     PARAKEET_LANGUAGES, PHONON2_LANGUAGES, QWEN_ASR_LANGUAGES, REDUX_LANGUAGES, WHISPER_LANGUAGES,
 };
-const SHERPA: &str = "11afbd009a7f8c08f4bcf2fc1b265d0df4670fbf";
+const SHERPA: &str = "af2d8d81dbfa61c4cea4c568da78f3982edca005";
 const LLAMA: &str = "d81235049384534c167caea52b85a694f6103d14";
 const SPEECH: ModelRole = ModelRole::SpeechRecognition;
 const TEXT: ModelRole = ModelRole::TextReconstruction;

@@ -10,23 +10,13 @@ import tomllib
 from pathlib import Path
 
 ADVISORY = "RUSTSEC-2024-0429"
-# Owner-approved scoped exceptions (issue #161, 2026-10-18). The three zip
-# extraction advisories are patched only in zip >= 9, and the two instances
-# below cannot reach it: their parents pin older majors. The ignores apply
-# only while verify_zip_exceptions confirms the lock still contains exactly
-# these instances pulled by exactly these dependents; any other zip below 9
-# (new instance, version, or dependent) fails verification before auditing.
-# Remove the ignores and this guard when sherpa-onnx-sys and
-# tauri-plugin-updater resolve zip >= 9 (or drop zip).
-ZIP_ADVISORIES = ("RUSTSEC-2026-0367", "RUSTSEC-2026-0368", "RUSTSEC-2026-0369")
-PINNED_ZIP_DEPENDENTS = {"2.6.1": "sherpa-onnx-sys", "4.6.1": "tauri-plugin-updater"}
 # Owner-approved scoped exception (issue #248, 2026-10-21). RUSTSEC-2026-0381
 # (bundled roots trusting distrusted emSign intermediates) is patched in
 # webpki-roots >= 1.0.10. The 0.26.11 instance is a build-dependency of
 # sherpa-onnx-sys through ureq 2.12.1 (a download helper its build script uses
 # only when no prebuilt runtime directory is supplied; we always supply
-# SHERPA_ONNX_LIB_DIR), so it is never compiled into the application, and no
-# newer sherpa-onnx-sys is published. The ignore applies only while
+# SHERPA_ONNX_LIB_DIR), so it is never compiled into the application.
+# sherpa-onnx-sys 2.0.1 still depends on ureq 2. The ignore applies only while
 # verify_webpki_exception confirms exactly that shape; any other webpki-roots
 # below 1.0.10 fails before auditing. Remove both when sherpa-onnx-sys moves to
 # ureq 3 / webpki-roots >= 1.0.10.
@@ -34,18 +24,6 @@ WEBPKI_ADVISORY = "RUSTSEC-2026-0381"
 PINNED_WEBPKI = "0.26.11"
 PINNED_UREQ = "2.12.1"
 PINNED_UREQ_DEPENDENT = "sherpa-onnx-sys"
-# Owner-approved scoped exception (issue #348, 2026-10-27). The zstd 0.13.3 and
-# zstd-safe 7.3.0 advisories are patched in zstd >= 0.14.3 / zstd-safe >= 8.2.0,
-# which zip 2.x cannot use. Both are reached only through zip 2.6.1, the
-# sherpa-onnx-sys build dependency guarded above, so they are never compiled
-# into the application. The ignores apply only while verify_zstd_exception
-# confirms exactly that shape. Remove both when sherpa-onnx-sys moves to zip 9.
-ZSTD_ADVISORIES = (
-    "RUSTSEC-2026-0391",
-    *(f"RUSTSEC-2026-{number:04d}" for number in range(395, 407)),
-)
-PINNED_ZSTD = "0.13.3"
-PINNED_ZSTD_SAFE = "7.3.0"
 ARCHIVE_SHA256 = "233daaf6e83ae6a12a52055f568f9d7cf4671dabb78ff9560ab6da230ce00ee5"
 PROVENANCE_SHA256 = "afce59aee5239ed3c48389fa4f089a39ae9efc16a0eabec16706f1aea3ebc7fb"
 ROOT = Path(__file__).resolve().parents[1]
@@ -121,40 +99,6 @@ def verify_resolution(root, metadata):
         raise ValueError("Cargo resolved GLib outside the verified source tree")
 
 
-def verify_zip_exceptions(lock):
-    """Refuse the scoped zip ignores for anything but the reviewed pins.
-
-    zip >= 9 needs no exception. Below 9, only the versions in
-    PINNED_ZIP_DEPENDENTS may appear, each pulled by exactly that dependent:
-    2.6.1 is a sherpa-onnx-sys build dependency (build-time extraction of
-    pinned release archives), 4.6.1 serves tauri-plugin-updater's
-    Windows-only, signature-checked update path. A new zip instance, a
-    version bump under a pin, or a new dependent all fail here so the
-    ignores can never silently cover a fresh runtime exposure.
-    """
-    dependents = {}
-    for package in lock["package"]:
-        for dependency in package.get("dependencies", []):
-            parts = dependency.split(" ")
-            if parts[0] != "zip":
-                continue
-            if len(parts) < 2:
-                raise ValueError("Unversioned zip dependency cannot be scoped")
-            dependents.setdefault(parts[1], set()).add(package["name"])
-    for package in lock["package"]:
-        if package["name"] != "zip":
-            continue
-        version = package["version"]
-        if tuple(int(part) for part in version.split(".")) >= (9, 0, 0):
-            continue
-        expected = PINNED_ZIP_DEPENDENTS.get(version)
-        if expected is None or dependents.get(version, set()) != {expected}:
-            raise ValueError(
-                f"zip {version} is outside the scoped audit exceptions "
-                f"(dependents: {sorted(dependents.get(version, set()))})"
-            )
-
-
 def lock_dependents(lock, name):
     """Map each locked version of `name` to the (package, version) pairs using it."""
     versions = sorted({p["version"] for p in lock["package"] if p["name"] == name})
@@ -202,29 +146,6 @@ def verify_webpki_exception(lock):
             )
 
 
-def verify_zstd_exception(lock):
-    """Refuse the scoped zstd ignores for anything but the reviewed shape.
-
-    zstd >= 0.14.3 and zstd-safe >= 8.2.0 are patched and need no exception.
-    Below those, only PINNED_ZSTD used solely by zip 2.6.1 and PINNED_ZSTD_SAFE
-    used solely by that zstd may appear; anything else fails here.
-    """
-    pins = {
-        "zstd": ((0, 14, 3), PINNED_ZSTD, ("zip", "2.6.1")),
-        "zstd-safe": ((8, 2, 0), PINNED_ZSTD_SAFE, ("zstd", PINNED_ZSTD)),
-    }
-    for name, (patched, pinned, parent) in pins.items():
-        dependents = lock_dependents(lock, name)
-        for version, users in dependents.items():
-            if tuple(int(part) for part in version.split(".")) >= patched:
-                continue
-            if version != pinned or users != {parent}:
-                raise ValueError(
-                    f"{name} {version} is outside the scoped audit exception "
-                    f"(dependents: {sorted(users)})"
-                )
-
-
 def registry_audit_lock(lock_text):
     """Restore only GLib's registry identity so future advisories still match.
 
@@ -260,15 +181,13 @@ def run_audit(root):
     # The ignores below are only valid for the reviewed pins; refuse to
     # apply them to any other lockfile shape.
     lock = tomllib.loads((root / "Cargo.lock").read_text())
-    verify_zip_exceptions(lock)
     verify_webpki_exception(lock)
-    verify_zstd_exception(lock)
     with tempfile.TemporaryDirectory(prefix="vesper-rust-audit-") as directory:
         shadow = Path(directory) / "Cargo.lock"
         shadow.write_text(registry_audit_lock((root / "Cargo.lock").read_text()))
         ignores = [
             argument
-            for advisory in (ADVISORY, *ZIP_ADVISORIES, WEBPKI_ADVISORY, *ZSTD_ADVISORIES)
+            for advisory in (ADVISORY, WEBPKI_ADVISORY)
             for argument in ("--ignore", advisory)
         ]
         subprocess.run(

@@ -1004,7 +1004,7 @@ mod tests {
             assert!(result.duration_seconds > 10.0);
             assert!(provenance
                 .to_string()
-                .contains("11afbd009a7f8c08f4bcf2fc1b265d0df4670fbf"));
+                .contains("af2d8d81dbfa61c4cea4c568da78f3982edca005"));
             assert!(session.verified_transcript.is_none());
             let mono = vesper_audio::decode_file(&audio, 0).unwrap();
             let captured =

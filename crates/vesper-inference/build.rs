@@ -27,12 +27,12 @@ fn main() {
     );
     assert_eq!(
         manifest["revision"],
-        "11afbd009a7f8c08f4bcf2fc1b265d0df4670fbf"
+        "af2d8d81dbfa61c4cea4c568da78f3982edca005"
     );
     let libraries = manifest["libraries"]
         .as_object()
         .expect("Missing library hashes");
-    assert_eq!(libraries.len(), 13, "Incomplete native runtime build");
+    assert_eq!(libraries.len(), 11, "Incomplete native runtime build");
     for (filename, expected) in libraries {
         assert_eq!(Path::new(filename).components().count(), 1);
         assert!(filename.starts_with("lib") && filename.ends_with(".a"));
