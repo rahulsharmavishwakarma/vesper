@@ -61,7 +61,7 @@ def run(root):
         "threads": 8,
         "applicationRevision": "592e0084fe5cf486b4d56c575423e9a4f219bfb8+unstaged-source-sha256:"
         + source_stamp,
-        "runtimeRevision": "Exact artifacts/build identity in native report; sherpa-onnx1.13.8 upstream11afbd009a7f8c08f4bcf2fc1b265d0df4670fbf; NeMo-Speech.cpp0.1.0 4f9676226f667d14608487df744f375db87127f8",
+        "runtimeRevision": "Exact artifacts/build identity in native report; sherpa-onnx2.0.1 upstreamaf2d8d81dbfa61c4cea4c568da78f3982edca005; NeMo-Speech.cpp0.1.0 4f9676226f667d14608487df744f375db87127f8",
         "driver": "CPU; no accelerator driver",
         "notes": "Frozen native application evaluator; English prompt for all Svarah groups. Existing 51-entry corpus-review memory, no native bias, no cleanup. New temporary benchmark outputs; no user profile. Expected native graph threads: Cohere8, pinned NeMo CPU4; verify actual per-request execution evidence. First request cold, later resident according to actual execution evidence. ASR file time is not stop-to-final. Real-time mode uses paced20ms prerecorded packets. No timed-model concurrency; host activity uncontrolled.",
     }
