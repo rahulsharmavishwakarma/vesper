@@ -256,7 +256,7 @@ pub struct FrontendMetrics {
 }
 impl FrontendMetrics {
     pub fn evidence(&self) -> serde_json::Value {
-        serde_json::json!({"runtime":"sherpa-onnx", "runtimeVersion":"1.13.8",
+        serde_json::json!({"runtime":"sherpa-onnx", "runtimeVersion":"2.0.1",
             "runtimeBuildId":env!("VESPER_SHERPA_BUILD_ID"), "runtimePatchSha256":env!("VESPER_SHERPA_PATCH_SHA256"),
             "initializedProvider":"cpu", "nativeGraphThreads":1, "vadPolicy":vad_policy(&self.settings),
             "automaticLevelPolicy":if self.settings.auto_level_enabled {Some("bounded-level-v1")} else {None},

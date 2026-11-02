@@ -53,7 +53,7 @@ pub(crate) fn recognizer_config(
     for path in [&encoder, &decoder, &joiner, &tokens] {
         require_file(path)?;
     }
-    // Matches the official sherpa-onnx 1.13.8 Parakeet-v3 Rust example.
+    // Matches the official sherpa-onnx 2.0.1 Parakeet-v3 Rust example.
     Ok(OfflineRecognizerConfig {
         model_config: OfflineModelConfig {
             transducer: OfflineTransducerModelConfig {
