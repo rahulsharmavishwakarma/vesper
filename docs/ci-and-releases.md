@@ -334,7 +334,11 @@ update failed with `tool_version_not_supported`, so the projects and CI moved to
 0.13.5 ([issue #338](https://github.com/rahulsharmavishwakarma/vesper/issues/338)).
 Cargo updates skip `sha2` 0.11: `vesper-models` enables 0.10's `asm` feature for
 hardware SHA-256 on aarch64, which 0.11 removed, so moving needs a measured
-change rather than a grouped bump. The
+change rather than a grouped bump. They also skip `sherpa-onnx` major versions:
+the crate links Vesper's patched native build of a pinned sherpa-onnx revision,
+and 2.0.0 expects libraries that build does not produce, so a major version moves
+with a rebuilt and requalified runtime
+([issue #389](https://github.com/rahulsharmavishwakarma/vesper/issues/389)). The
 optional manually dispatched container job scans the
 final runnable image and fails for high or critical vulnerabilities, including
 findings that do not yet have an upstream fix. A temporary exception therefore

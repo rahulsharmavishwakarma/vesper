@@ -29,6 +29,10 @@ updates:
       # Move deliberately, after measuring 0.11's hashing speed on Apple silicon.
       - dependency-name: sha2
         update-types: ["version-update:semver-major", "version-update:semver-minor"]
+      # sherpa-onnx links Vesper's patched native build of a pinned source
+      # revision; a major version needs that runtime rebuilt and requalified (#389).
+      - dependency-name: sherpa-onnx
+        update-types: ["version-update:semver-major"]
 
   - package-ecosystem: github-actions
     directory: /
