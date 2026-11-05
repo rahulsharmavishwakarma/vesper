@@ -258,6 +258,13 @@
       : null,
   );
 
+  // The 76 px Settings rail shows the time without seconds under "Saved".
+  const savedShortTime = $derived(
+    lastSavedAt
+      ? new Date(lastSavedAt).toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' })
+      : null,
+  );
+
   $effect(() => {
     const snapshot = JSON.stringify(draft);
     const writable = loaded && pending === null && !pipelineBusy && validationErrors.length === 0;
@@ -758,7 +765,10 @@
               >
             {:else}
               <Icon name="check" /><span class="save-status-text"
-                >Saved{savedClockTime ? ` ${savedClockTime}` : ''}</span
+                >Saved {#if savedClockTime}<span class="save-time">{savedClockTime}</span><span
+                    class="save-time-short"
+                    aria-hidden="true">{savedShortTime}</span
+                  >{/if}</span
               >
             {/if}
           </p>{/if}

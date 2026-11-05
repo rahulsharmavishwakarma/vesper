@@ -141,7 +141,11 @@ storage and Restore defaults. Application edits
 autosave their shared draft across sections about a second after each change;
 a transient sidebar pill (Saving… sliding in, tick with save time, sliding
 away) confirms each write, and explicit actions such as model downloads flush
-pending edits first. There is no Save or Discard action. Vocabulary saves
+pending edits first. In the 76 px Settings icon rail the pill keeps its words
+as a small stacked badge (tick, **Saving…** or **Saved**, then the time without
+seconds); the full time stays in its status text. Below 700 px, where the
+compact header has no footer, the same pill shows as a small toast centred at
+the bottom of the window (issue #381, `settings-layout.spec.mjs`). There is no Save or Discard action. Vocabulary saves
 through the same mechanism. Restore
 defaults is in Privacy's Reset group and still explicitly saves defaults.
 
