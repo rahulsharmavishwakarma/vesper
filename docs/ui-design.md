@@ -524,6 +524,13 @@ conflicts with the running operation (issue #273).
   - Tests: `settings-layout.spec.mjs` and `downloads.spec.mjs` assert the
     options do not move.
 
+- **An empty result is said once.** When a History search, filter or day
+  matches nothing, only the **No matching recordings** panel with **Clear
+  filters** is visible. The result-count line stays in the page as the
+  visually hidden live region, so a screen reader still hears "0 recordings
+  found"; it shows again with the first result (`DatasetPanel.svelte`,
+  issue #383, `responsive.spec.mjs`).
+
 ## Verification
 
 Exercise the whole task with pointer and keyboard input: initial value, entering edit mode, valid and invalid input, cancellation, focus movement, saving, failure/retry, and reloading. Include slow asynchronous setup and navigation while work is pending. Check narrow and desktop layouts using the rendered component; do not rely solely on a screenshot or a synthetic event pass. Reduced motion must preserve the same state and feedback. Keep real OS shortcut and permission qualification separate from browser mocks.

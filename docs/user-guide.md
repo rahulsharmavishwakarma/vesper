@@ -482,7 +482,8 @@ before quitting.
 
 **History** contains saved recordings and transcripts. Search by text or
 filename, filter by review status or date, and expand a recording to review or
-copy its text. Export options distinguish a complete archive from reviewed
+copy its text. When nothing matches, History shows **No matching recordings**
+with **Clear filters**. Export options distinguish a complete archive from reviewed
 training examples; search filters do not limit an export. Every completed
 recording appears here, including shortcut dictations finished in other apps:
 the list refreshes itself when a recording completes, and returning to History

@@ -117,3 +117,28 @@ test('pages and expanded History keep controls reachable across narrow and short
     }
   }
 });
+
+test('History shows one empty state when nothing matches and still announces it', async ({
+  page,
+}) => {
+  await page.goto('/tests/interaction-preview.html');
+  await navigate(page, 'History');
+  const count = page.locator('#history-result-count');
+  await expect(count).toBeVisible();
+  await expect(count).toContainText('Showing');
+
+  await page.getByRole('searchbox', { name: 'Search recordings' }).fill('zzzzqqq');
+  await expect(page.getByRole('heading', { name: 'No matching recordings' })).toBeVisible();
+  // The count stays in the accessibility tree as the live announcement, but only
+  // the empty-state panel is visible.
+  await expect(count).toHaveText('0 recordings found');
+  await expect(count).toHaveAttribute('aria-live', 'polite');
+  await expect(count).toHaveClass(/visually-hidden/);
+  expect(
+    await count.evaluate((element) => element.getBoundingClientRect().height),
+  ).toBeLessThanOrEqual(1);
+
+  await page.getByRole('button', { name: 'Clear filters' }).click();
+  await expect(count).not.toHaveClass(/visually-hidden/);
+  await expect(count).toContainText('Showing');
+});
