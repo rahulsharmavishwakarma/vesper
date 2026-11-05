@@ -676,6 +676,26 @@ await test('Shortcut recorder captures keys, rejects duplicates, cancels, and re
     'Duplicate action accepted',
   );
   assert(toggle.textContent.includes('Press your shortcut'), 'Duplicate modified the binding');
+  {
+    // #380: the reason replaces the help line directly under the field, at the
+    // supporting-copy size, with an icon so it does not rely on colour.
+    const status = target.querySelector('#toggle-shortcut-status');
+    const help = target.querySelector('#toggle-shortcut-help');
+    assert(help.hidden && !help.getClientRects().length, 'Help line stacked above the error');
+    assert(status.querySelector('[data-icon="warning"]'), 'Shortcut error has no icon');
+    assert(
+      Number.parseFloat(getComputedStyle(status).fontSize) >= 13,
+      'Shortcut error is smaller than supporting copy',
+    );
+    assert(
+      status.getBoundingClientRect().top - toggle.getBoundingClientRect().bottom < 16,
+      'Shortcut error is detached from its field',
+    );
+    assert(
+      toggle.getAttribute('aria-describedby') === 'toggle-shortcut-help toggle-shortcut-status',
+      'Shortcut description wiring changed',
+    );
+  }
   await emit('shortcut-recorded', { session: nativeSession, shortcut: 'Control+Shift+K' });
   await tick();
   assert(
