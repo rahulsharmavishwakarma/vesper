@@ -108,9 +108,31 @@ the prefix.
 | Metal, Balanced        |                      222 → 167 ms | 375 → 317 ms |     72 → 16 ms |
 
 Generation time is unchanged; the gain is prompt prefill only. Prompts that
-contain retrieved personal examples and custom GGUF templates still bypass the
-cache. Reproduce with the ignored `measure_prefix_cache_on_transcripts` test
-and `VESPER_WRITER_INPUTS` (a JSON array of public transcripts).
+contain personal context (a non-verbatim output style, matched spellings or
+reviewed examples) and custom GGUF templates still bypass the cache. Reproduce
+with the ignored `measure_prefix_cache_on_transcripts` test and
+`VESPER_WRITER_INPUTS` (a JSON array of public transcripts).
+
+Until 6 November 2026 a profile save also cleared the cache. The profile
+revision advances after any dictation that uses a learned word, because its
+usage count is saved, so the next request re-prefilled the full prompt even
+without personal context. Snapshots hold no profile data, so they now survive
+profile saves.
+
+**Not adopted: personal context after the cached prefix** (6 November 2026,
+#141). Moving the output style, spellings and examples after the fixed
+guidance would let personalized prompts reuse the prefix too: about 356 → 165
+ms per CPU rewrite with exact cached/uncached parity. It failed output
+qualification on Qwen3.5-0.8B Q4_0 (CPU, 480 personalized rows: the 116
+`benchmarks/cleanup/native-learning-*` transcripts × Message and Technical
+styles, plus the 8 memory-cleanup cases, under Minimal and Balanced). Rejected
+outputs, which keep the raw transcript, rose from 100 to 130; 41 rows the
+current layout accepted were rejected, mostly by reaching the output limit.
+Keeping the final "Return the complete edited transcript exactly once"
+instruction after the personal context still gave 122 rejections (28 new). The
+holdout was inspected before that second layout, so neither result is a
+held-out estimate. Reconsider only with a writer that is insensitive to the
+position of reference data.
 
 Current supported-request, Cohere-residency, application-SHA and Whisper
 qualification runners strip both Vesper and legacy Transcribe process overrides

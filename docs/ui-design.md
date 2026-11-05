@@ -141,7 +141,11 @@ storage and Restore defaults. Application edits
 autosave their shared draft across sections about a second after each change;
 a transient sidebar pill (Saving… sliding in, tick with save time, sliding
 away) confirms each write, and explicit actions such as model downloads flush
-pending edits first. There is no Save or Discard action. Vocabulary saves
+pending edits first. In the 76 px Settings icon rail the pill keeps its words
+as a small stacked badge (tick, **Saving…** or **Saved**, then the time without
+seconds); the full time stays in its status text. Below 700 px, where the
+compact header has no footer, the same pill shows as a small toast centred at
+the bottom of the window (issue #381, `settings-layout.spec.mjs`). There is no Save or Discard action. Vocabulary saves
 through the same mechanism. Restore
 defaults is in Privacy's Reset group and still explicitly saves defaults.
 
@@ -272,6 +276,8 @@ save reachability, dropdowns, dialog bounds and draft preservation on resize.
 Settings → Dictation has one shortcut field for each action. Click the field (or focus it and activate it with Enter/Space), press the desired combination; it autosaves. The field displays the captured combination with platform-appropriate modifier names. A valid capture changes only the draft. Escape restores the values present when editing began; Tab, clicking away, or switching windows stops recording keys and keeps a valid draft, which autosaves. Restore defaults remains the existing settings action.
 
 The recorder provides a preparing state before native capture is ready, inline unsupported/duplicate feedback, visible keyboard focus, and disabled behavior during an operation. Modifier selection buttons, key dropdowns, the Customize panel, and the extra Use shortcut step are not part of this flow. A shortcut recorder must not start the action it is configuring: the existing native callback routes already-registered combinations to the active main-window editor, while browser key events capture other supported combinations. Editing is session-scoped and stops on blur/close; late callbacks cannot change another field. No additional global keyboard hook is introduced.
+
+The field shows one line of supporting text. Normally it is the help sentence; while recording it is the prompt ("Press a key combination. Esc to cancel."), and on an unsupported or duplicate combination it is the reason, with a warning icon, at the 13.5 px note size. That line replaces the help sentence instead of stacking under it, so the reason sits beside the field on a desktop-width row and directly under it in a narrow window. The help stays in the DOM, hidden, so the field's `aria-describedby` (help, then status) is unchanged, and the status line is always present as the polite live region (`ShortcutSetting.svelte`, issue #380, asserted in `tests/recovery.mjs`).
 
 The current binding contract is modifier + supported physical key, as described in [development.md](development.md#separate-hold-and-toggle-shortcuts). Other products' Fn, modifier-only, multi-step, or character-layout support does not imply those capabilities exist here. Native registration remains authoritative for errors it can detect; this UI does not claim to enumerate all other applications' shortcuts.
 
@@ -531,6 +537,13 @@ conflicts with the running operation (issue #273).
     Models and Settings icons was removed.
   - Tests: `settings-layout.spec.mjs` and `downloads.spec.mjs` assert the
     options do not move.
+
+- **An empty result is said once.** When a History search, filter or day
+  matches nothing, only the **No matching recordings** panel with **Clear
+  filters** is visible. The result-count line stays in the page as the
+  visually hidden live region, so a screen reader still hears "0 recordings
+  found"; it shows again with the first result (`DatasetPanel.svelte`,
+  issue #383, `responsive.spec.mjs`).
 
 ## Verification
 

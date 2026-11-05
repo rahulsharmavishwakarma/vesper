@@ -459,6 +459,37 @@ test('Autosave keeps controls enabled, keeps edits made during a save and adds n
   await expect.poll(saves).toBeGreaterThan(count + 1);
 });
 
+test('The save pill keeps its words in the icon rail and in a narrow window', async ({ page }) => {
+  for (const [width, height] of [
+    [1280, 900],
+    [360, 600],
+  ]) {
+    await page.setViewportSize({ width, height });
+    await openSettings(page);
+    await section(page, 'Privacy').click();
+    await page.locator('#collect-training').click();
+    const pill = page.locator('.save-status');
+    await expect(pill).toHaveAttribute('data-state', 'saving');
+    await expect(pill.getByText('Saving…')).toBeVisible();
+    await expect(pill).toHaveAttribute('data-state', 'saved', { timeout: 10_000 });
+    await expect(pill.getByText('Saved')).toBeVisible();
+    // The live text keeps the full time, with seconds, in both layouts.
+    await expect(pill).toContainText(/Saved \d{1,2}:\d{2}:\d{2}/);
+    const box = await pill.boundingBox();
+    expect(box.x).toBeGreaterThanOrEqual(0);
+    expect(box.x + box.width).toBeLessThanOrEqual(width);
+    expect(box.y + box.height).toBeLessThanOrEqual(height);
+    if (width > 700) {
+      // Inside the 76 px rail: tick over "Saved" over a short clock time.
+      expect(box.x + box.width).toBeLessThanOrEqual(76);
+      await expect(pill.locator('.save-time-short')).toBeVisible();
+      await expect(pill.locator('.save-time-short')).toHaveText(/^\d{1,2}:\d{2}/);
+    } else {
+      await expect(pill.locator('.save-time')).toBeVisible();
+    }
+  }
+});
+
 test('Settings row actions and the writing link keep 44 px pointer targets', async ({ page }) => {
   for (const [width, height] of [
     [1280, 900],

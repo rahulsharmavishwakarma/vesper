@@ -528,8 +528,11 @@ h3 {
   font-size: 10px;
   color: var(--color-muted);
 }
+/* Block-level flex sized to its content: Svelte's slide transition needs a
+   block box, and inline-flex made it warn and jump. */
 .save-status {
-  display: inline-flex;
+  display: flex;
+  width: fit-content;
   align-items: center;
   gap: var(--space-2);
   border: 1px solid var(--color-line);
@@ -553,8 +556,7 @@ h3 {
     stroke-dashoffset: 1;
   }
 }
-/* The icon rail keeps the toast to its glyph so the pill never overflows. */
-.app-shell.settings-rail .save-status .save-status-text {
+.save-time-short {
   display: none;
 }
 .save-status > span.spinning {
@@ -686,6 +688,35 @@ h3 {
   }
   .app-shell.settings-rail .activity-bar {
     width: 24px;
+  }
+  /* In the rail the save pill stacks: tick, then "Saving…" or "Saved" over a
+     short time, so it still says what happened within 52 px. The full time
+     stays in the status text for assistive technology. */
+  .app-shell.settings-rail .save-status {
+    flex-direction: column;
+    gap: 2px;
+    margin-inline: auto;
+    padding: var(--space-1) var(--space-1);
+    border-radius: var(--radius-sm);
+    text-align: center;
+    line-height: 1.3;
+  }
+  .app-shell.settings-rail .save-status-text {
+    display: grid;
+  }
+  .app-shell.settings-rail .save-time {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    overflow: hidden;
+    clip: rect(0, 0, 0, 0);
+    white-space: nowrap;
+  }
+  .app-shell.settings-rail .save-time-short {
+    display: block;
+    color: var(--color-muted);
+    font-variant-numeric: tabular-nums;
+    white-space: nowrap;
   }
 }
 .studio-main {
@@ -2208,8 +2239,24 @@ textarea:focus:enabled {
     width: 16px;
     height: 16px;
   }
+  /* The compact header has no footer, so the save pill becomes a small toast
+     at the bottom of the window; the rest of the footer stays hidden. */
   .sidebar-foot {
+    margin: 0;
+    padding: 0;
+  }
+  .sidebar-foot > :not(.save-status) {
     display: none;
+  }
+  .save-status {
+    position: fixed;
+    z-index: 30;
+    bottom: var(--space-4);
+    left: 50%;
+    translate: -50% 0;
+    padding: var(--space-2) var(--space-3);
+    font-size: 12px;
+    background: var(--color-raised);
   }
   .studio-main {
     padding: var(--space-4) 18px var(--space-8);

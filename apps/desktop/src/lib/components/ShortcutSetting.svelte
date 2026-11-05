@@ -8,6 +8,7 @@
     shortcutLabel,
   } from '../recording-shortcuts';
   import { shortcutRecording } from '../api/shortcutRecorder';
+  import Icon from './Icon.svelte';
 
   let {
     id,
@@ -35,6 +36,14 @@
   let error = $state<string | null>(null);
   let session: ReturnType<typeof shortcutRecording> | null = null;
   let rollback: (() => void) | null = null;
+  const status = $derived(
+    error ??
+      (editing
+        ? captured
+          ? 'Shortcut recorded. It saves automatically, or Esc to cancel.'
+          : 'Press a key combination. Esc to cancel.'
+        : ''),
+  );
   const hint = $derived(
     preparing ? 'Getting ready…' : editing ? (captured ? 'Recorded' : 'Press keys') : 'Change',
   );
@@ -158,14 +167,18 @@
     >
     <span class="binding-hint" aria-hidden="true">{hint}</span>
   </button>
-  <p id={`${id}-help`} class="note">{help}</p>
-  <p id={`${id}-status`} class="shortcut-status note" class:error={!!error} aria-live="polite">
-    {error ??
-      (editing
-        ? captured
-          ? 'Shortcut recorded. It saves automatically, or Esc to cancel.'
-          : 'Press a key combination. Esc to cancel.'
-        : '')}
+  <!-- One line under the field: the status (error or recording prompt) takes the
+       help line's place instead of stacking below it. The help stays in the DOM so
+       aria-describedby still reads it, and the live region always exists. -->
+  <p id={`${id}-help`} class="note" hidden={!!status}>{help}</p>
+  <p
+    id={`${id}-status`}
+    class="shortcut-status note"
+    class:error={!!error}
+    class:idle={!status}
+    aria-live="polite"
+  >
+    {#if error}<Icon name="warning" />{/if}{status}
   </p>
 </div>
 
@@ -219,8 +232,21 @@
     color: var(--color-accent);
   }
   .shortcut-status {
-    font-size: 11px;
+    display: flex;
+    align-items: flex-start;
+    gap: var(--space-2);
     margin-top: var(--space-2);
     margin-bottom: 0;
+  }
+  .shortcut-status.idle {
+    margin-top: 0;
+  }
+  .note[hidden] {
+    display: none;
+  }
+  .shortcut-status :global(.icon) {
+    width: 16px;
+    height: 16px;
+    margin-top: 0.15em;
   }
 </style>

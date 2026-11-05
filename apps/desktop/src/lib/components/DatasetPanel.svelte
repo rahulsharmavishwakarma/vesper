@@ -392,6 +392,7 @@
       <div class="history-results">
         {#if view !== 'recent'}<p
             class="history-result-count"
+            class:visually-hidden={!pagination.total}
             id="history-result-count"
             tabindex="-1"
             aria-live="polite"
