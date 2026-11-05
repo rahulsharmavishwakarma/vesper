@@ -88,7 +88,8 @@ Changing tabs keeps unsaved preferences intact.
 Preferences save automatically about a second after each change, across
 sections, with no Save or Discard action. A small pill at the bottom of the
 sidebar slides in showing Saving…, flips to a tick with the save time, then
-slides away on its own. Invalid choices are never written: they stay on
+slides away on its own. In a narrow window the pill appears at the bottom of
+the window instead. Invalid choices are never written: they stay on
 screen with guidance until fixed. Downloading a model first flushes any
 pending edit so the saved selection is what downloads. Vocabulary and project
 preferences save the same way.
