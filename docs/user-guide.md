@@ -598,7 +598,8 @@ appears in the list after about five dictations on two different days; until
 then dictation uses shared vocabulary. A visible workspace works like a project
 named after its folder or website: words you teach while in it stay with it. In
 the list you can **Rename** it (Enter saves, Escape cancels), **Merge…** it into
-another workspace, or **Remove** it so it is never detected again. Renaming or
+another workspace, or **Remove…** it so it is never detected again. Remove asks
+first in the row; **Cancel** or Escape keeps the workspace. Renaming or
 merging moves the vocabulary and examples saved under the old name.
 A project you enter, and any application rule, always wins. Turn off **Detect
 workspaces automatically** to stop detection; existing workspaces stay listed.

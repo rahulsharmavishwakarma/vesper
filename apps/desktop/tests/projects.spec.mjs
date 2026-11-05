@@ -94,7 +94,27 @@ test('automatic workspaces rename, merge and remove', async ({ page }) => {
   await expect(rows.first()).toContainText('18 dictations');
   await page.setViewportSize({ width: 320, height: 720 });
   expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true);
-  await page.getByRole('button', { name: 'Remove workspace Synthetic app' }).click();
+  // Remove asks first, inline: Cancel has focus, Escape backs out to the trigger.
+  const removeTrigger = page.getByRole('button', { name: 'Remove workspace Synthetic app…' });
+  const danger = await page.evaluate(() => {
+    const probe = document.createElement('span');
+    probe.style.color = 'var(--color-danger)';
+    document.body.append(probe);
+    const color = getComputedStyle(probe).color;
+    probe.remove();
+    return color;
+  });
+  await expect(removeTrigger).toHaveCSS('color', danger);
+  await removeTrigger.click();
+  const question = page.getByRole('group', { name: /Remove Synthetic app\?/ });
+  await expect(question).toBeVisible();
+  await expect(question.getByRole('button', { name: 'Cancel' })).toBeFocused();
+  await page.keyboard.press('Escape');
+  await expect(question).toHaveCount(0);
+  await expect(rows).toHaveCount(1);
+  await expect(removeTrigger).toBeFocused();
+  await removeTrigger.click();
+  await question.getByRole('button', { name: 'Remove', exact: true }).click();
   await expect(rows).toHaveCount(0);
   await expect(page.getByText('None yet.', { exact: false })).toBeVisible();
   await toggle.uncheck();

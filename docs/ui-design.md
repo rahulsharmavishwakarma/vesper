@@ -216,7 +216,11 @@ Every row uses one pattern: label and its one-line help on the left, the
 control on the right (switch, menu, shortcut field or text field, all 44 px and
 13 px text); a label without help is centred on its control. Buttons inside a
 box are compact 13 px text buttons whose last one ends on the same edge as the
-switches. A disclosure or status (such as paste access) inside a box is a plain
+switches; they keep the 44 px height of the other row controls, so the target
+is never smaller than the text suggests. An inline text link inside a note
+(such as **Adjust writing preferences** in Models) keeps its line height and
+gets a transparent band above and below that makes its pointer target 44 px
+(issue #382). A disclosure or status (such as paste access) inside a box is a plain
 row with a small icon, never a box in a box. About is the one tab that keeps a
 single card around its content. Settings does not repeat
 the configured model names; Models owns them.
@@ -233,7 +237,11 @@ saying what is read and that nothing is saved. Details belong in the user
 guide, not the screen. Short related fields share one row (Projects: project
 selection and the project override). Lists of items, such as workspaces, are
 compact rows: name and details on the left, quiet text actions on the right,
-not one card per item. Do not ask people to pick folders for Vesper to read.
+not one card per item. A destructive row action is in the danger colour, ends
+in an ellipsis, sits apart from its neighbours and asks first in the row itself,
+like Merge…: workspace **Remove…** shows "Remove _name_? It leaves this list and
+is never detected again." with **Remove** and **Cancel**. Focus starts on Cancel
+and Escape returns to the trigger (`Workspaces.svelte`, `projects.spec.mjs`). Do not ask people to pick folders for Vesper to read.
 
 ## Statistic tiles
 
