@@ -63,10 +63,11 @@ pub struct RewriteMetrics {
     pub writing: Option<writing::WritingDecision>,
 }
 
+/// Holds no profile data: personalized prompts are never cached, so a profile
+/// save cannot make a prefix stale.
 struct PrefixState {
     tokens: Vec<LlamaToken>,
     context_tokens: u32,
-    profile_revision: u64,
     state: SeqState,
 }
 const PREFIX_CACHE_BYTES: usize = 64 * 1024 * 1024;
@@ -178,9 +179,6 @@ impl Rewriter {
     ) -> Result<String> {
         *self.metrics.borrow_mut() = RewriteMetrics::default();
         self.metrics.borrow_mut().personalization.profile_revision = profile.revision;
-        self.prefix_states
-            .borrow_mut()
-            .retain(|e| e.profile_revision == profile.revision);
         let result = self.rewrite_inner(raw, config, cancelled, profile);
         if result.is_err() {
             self.metrics.borrow_mut().writing = None;
@@ -440,16 +438,14 @@ impl Rewriter {
         } else {
             Vec::new()
         };
-        let revision = self.metrics.borrow().personalization.profile_revision;
         let mut offset = 0;
         let mut restore_failed = false;
         if self.prefix_cache_enabled && !prefix_tokens.is_empty() {
             let cache = self.prefix_states.borrow();
-            if let Some(entry) = cache.iter().find(|e| {
-                e.context_tokens == context_tokens
-                    && e.profile_revision == revision
-                    && e.tokens == prefix_tokens
-            }) {
+            if let Some(entry) = cache
+                .iter()
+                .find(|e| e.context_tokens == context_tokens && e.tokens == prefix_tokens)
+            {
                 check_cancelled(cancelled)?;
                 let restore_started = Instant::now();
                 if context.state_seq_set(&entry.state, 0).is_ok() {
@@ -504,7 +500,7 @@ impl Rewriter {
                     // Evict before allocating the replacement so host snapshots
                     // cannot transiently double the configured payload budget.
                     let mut cache = self.prefix_states.borrow_mut();
-                    cache.retain(|e| e.profile_revision == revision && e.tokens != prefix_tokens);
+                    cache.retain(|e| e.tokens != prefix_tokens);
                     while !cache.is_empty()
                         && (cache.len() >= 2
                             || cache.iter().map(|e| e.state.byte_len()).sum::<usize>() + size
@@ -517,7 +513,6 @@ impl Rewriter {
                             cache.push(PrefixState {
                                 tokens: prefix_tokens.clone(),
                                 context_tokens,
-                                profile_revision: revision,
                                 state,
                             });
                         }
@@ -1079,17 +1074,18 @@ mod tests {
                 serde_json::json!({"screen":"balanced-cached", "run":run, "metrics":*model.metrics.borrow()})
             );
         }
+        // A profile save (new revision) keeps the cache: prefixes hold no profile data.
         let profile = PersonalizationProfile {
             revision: 2,
             ..Default::default()
         };
-        let _ = model.rewrite_personalized(inputs[0], &config, &cancelled, &profile);
-        assert!(!model.metrics.borrow().passes.iter().any(|p| p.prefix_hit));
-        assert!(model
-            .prefix_states
-            .borrow()
-            .iter()
-            .all(|s| s.profile_revision == 2));
+        assert_eq!(
+            model
+                .rewrite_personalized(inputs[0], &config, &cancelled, &profile)
+                .map_err(|e| e.to_string()),
+            expected[0]
+        );
+        assert!(model.metrics.borrow().passes.iter().any(|p| p.prefix_hit));
         assert!(
             model
                 .prefix_states
