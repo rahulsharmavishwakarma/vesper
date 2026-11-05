@@ -1919,7 +1919,10 @@ details {
 .export-summary > span:first-child {
   flex: 1;
 }
+/* An inline link keeps its line height; a transparent band above and below
+   lifts its pointer target to 44 px (issue #382). */
 button.inline-link {
+  position: relative;
   display: inline-flex;
   min-height: 32px;
   padding: 0 var(--space-1);
@@ -1929,6 +1932,11 @@ button.inline-link {
   font-size: inherit;
   white-space: normal;
   vertical-align: baseline;
+}
+button.inline-link::before {
+  content: '';
+  position: absolute;
+  inset: -6px 0;
 }
 .inline-link .icon {
   width: 14px;
@@ -2997,9 +3005,10 @@ button:is(
 .settings-content .group-box .preference-fields > * + * {
   border-top: 1px solid var(--color-line);
 }
-/* Buttons inside a box match the row text, not page-level actions. */
+/* Buttons inside a box match the row text, not page-level actions, but keep
+   the 44 px target every settings control has (issue #382). */
 .settings-content .group-box :is(.settings-row, .actions, .learn-paused) button {
-  min-height: 32px;
+  min-height: 44px;
   padding: 6px 12px;
   font-size: 13px;
 }

@@ -458,3 +458,49 @@ test('Autosave keeps controls enabled, keeps edits made during a save and adds n
   await expect(format).toBeChecked({ checked: false });
   await expect.poll(saves).toBeGreaterThan(count + 1);
 });
+
+test('Settings row actions and the writing link keep 44 px pointer targets', async ({ page }) => {
+  for (const [width, height] of [
+    [1280, 900],
+    [360, 640],
+  ]) {
+    await page.setViewportSize({ width, height });
+    await openSettings(page);
+    const tall = async (locator, label) => {
+      await locator.scrollIntoViewIfNeeded();
+      const box = await locator.boundingBox();
+      expect(box.height, `${label} at ${width}`).toBeGreaterThanOrEqual(44);
+    };
+    await section(page, 'Projects').click();
+    for (const name of ['Rename', 'Merge…']) {
+      await tall(
+        page.locator('.workspace').first().getByRole('button', { name, exact: true }),
+        name,
+      );
+    }
+    await tall(page.locator('.workspace').first().locator('.danger'), 'Remove…');
+    await section(page, 'Vocabulary').click();
+    await tall(page.getByRole('button', { name: 'Forget automatic learning' }), 'Forget');
+    await section(page, 'Privacy').click();
+    await tall(page.getByRole('button', { name: 'Restore defaults' }), 'Restore defaults');
+    // The inline link keeps its line; its pointer target reaches 44 px.
+    await page
+      .getByRole('navigation', { name: 'Application', exact: true })
+      .getByRole('button', { name: 'Models', exact: true })
+      .click();
+    const link = page.getByRole('button', { name: 'Adjust writing preferences' });
+    await link.scrollIntoViewIfNeeded();
+    const box = await link.boundingBox();
+    const centre = box.x + box.width / 2;
+    const middle = box.y + box.height / 2;
+    for (const y of [middle - 21, middle + 21]) {
+      expect(
+        await page.evaluate(
+          ([x, y]) => document.elementFromPoint(x, y)?.closest('button')?.textContent?.trim(),
+          [centre, y],
+        ),
+        `writing link target at ${width}`,
+      ).toBe('Adjust writing preferences');
+    }
+  }
+});

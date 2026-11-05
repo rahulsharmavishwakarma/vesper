@@ -11,6 +11,7 @@
     type WorkspaceUpdate,
   } from '../api/workspaces';
   import Select from './Select.svelte';
+  import Icon from './Icon.svelte';
   let {
     profile = $bindable(),
     disabled = false,
@@ -30,6 +31,7 @@
   let renameError = $state('');
   let merging = $state('');
   let mergeTarget = $state('');
+  let removing = $state('');
   const locked = $derived(disabled || busy);
 
   async function load() {
@@ -65,6 +67,7 @@
 
   async function startRename(workspace: WorkspaceSummary) {
     merging = '';
+    removing = '';
     renaming = workspace.key;
     draftName = workspace.label;
     renameError = '';
@@ -108,6 +111,7 @@
   }
   function startMerge(workspace: WorkspaceSummary) {
     renaming = '';
+    removing = '';
     merging = workspace.key;
     mergeTarget = workspaces.find((other) => other.key !== workspace.key)?.key ?? '';
   }
@@ -121,6 +125,35 @@
       )
     )
       merging = '';
+  }
+  // Removal cannot be undone from the app, so it asks first, inline like Merge.
+  // Focus starts on Cancel, the safe choice, as in the model removal dialog.
+  async function startRemove(workspace: WorkspaceSummary) {
+    renaming = '';
+    merging = '';
+    removing = workspace.key;
+    await tick();
+    document.getElementById(`workspace-remove-cancel-${workspace.key}`)?.focus();
+  }
+  async function stopRemove(key: string) {
+    removing = '';
+    await tick();
+    document.getElementById(`workspace-remove-${key}`)?.focus();
+  }
+  async function confirmRemove(workspace: WorkspaceSummary) {
+    if (
+      await run(
+        () => deleteWorkspace(workspace.key),
+        `Removed ${workspace.label}. It will not be detected again.`,
+      )
+    )
+      removing = '';
+  }
+  function removeKey(event: KeyboardEvent, key: string) {
+    if (event.key !== 'Escape') return;
+    event.preventDefault();
+    event.stopPropagation();
+    void stopRemove(key);
   }
 </script>
 
@@ -213,6 +246,33 @@
               >
             </div>
           </div>
+        {:else if removing === workspace.key}
+          <!-- svelte-ignore a11y_no_noninteractive_element_interactions -->
+          <div
+            class="remove-bar"
+            role="group"
+            aria-labelledby={`workspace-remove-question-${workspace.key}`}
+            onkeydown={(event) => removeKey(event, workspace.key)}
+          >
+            <p id={`workspace-remove-question-${workspace.key}`}>
+              Remove {workspace.label}? It leaves this list and is never detected again.
+            </p>
+            <div class="actions">
+              <button
+                type="button"
+                class="remove-confirm"
+                disabled={locked}
+                onclick={() => confirmRemove(workspace)}><Icon name="trash" />Remove</button
+              >
+              <button
+                id={`workspace-remove-cancel-${workspace.key}`}
+                type="button"
+                class="quiet"
+                disabled={locked}
+                onclick={() => stopRemove(workspace.key)}>Cancel</button
+              >
+            </div>
+          </div>
         {:else if renaming !== workspace.key}
           <div class="actions">
             <button
@@ -231,15 +291,12 @@
               >
             {/if}
             <button
+              id={`workspace-remove-${workspace.key}`}
               type="button"
-              class="quiet"
-              aria-label={`Remove workspace ${workspace.label}`}
+              class="quiet danger"
+              aria-label={`Remove workspace ${workspace.label}…`}
               disabled={locked}
-              onclick={() =>
-                run(
-                  () => deleteWorkspace(workspace.key),
-                  `Removed ${workspace.label}. It will not be detected again.`,
-                )}>Remove</button
+              onclick={() => startRemove(workspace)}>Remove…</button
             >
           </div>
         {/if}
@@ -286,7 +343,7 @@
     gap: 2px;
     min-width: 0;
   }
-  .workspace > :is(.rename-bar, .merge-bar, .note) {
+  .workspace > :is(.rename-bar, .merge-bar, .remove-bar, .note) {
     flex-basis: 100%;
   }
   .workspace .actions {
@@ -308,8 +365,31 @@
     flex: 1 1 160px;
     min-width: 0;
   }
-  .merge-bar {
+  .merge-bar,
+  .remove-bar {
     display: grid;
     gap: var(--space-2);
+  }
+  .remove-bar p {
+    margin: 0;
+    font-size: 13px;
+    overflow-wrap: anywhere;
+  }
+  /* The destructive action reads as one: danger text, set apart from Rename
+     and Merge… so a near miss lands in empty space. */
+  .workspace .actions .danger {
+    margin-inline-start: var(--space-4);
+    color: var(--color-danger);
+  }
+  .workspace .actions .danger:hover:enabled {
+    color: var(--color-danger);
+    background: color-mix(in srgb, var(--color-danger) 10%, var(--color-transparent));
+  }
+  .remove-confirm {
+    border-color: var(--color-danger);
+    color: var(--color-danger);
+  }
+  .remove-confirm:hover:enabled {
+    background: color-mix(in srgb, var(--color-danger) 10%, var(--color-transparent));
   }
 </style>
