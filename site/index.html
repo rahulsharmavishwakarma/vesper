@@ -1,56 +1,2172 @@
 <!doctype html>
 <html lang="en">
-  <head>
-    <meta charset="utf-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <title>Vesper</title>
-    <meta name="description" content="Vesper: voice to text, on your device." />
-    <style>
-      :root {
-        color-scheme: dark;
-        --bg: #0a0a0a;
-        --text: #f4efe9;
-        --muted: #a39b92;
-        --ember: #ff6b3d;
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<!-- GitHub Pages sends no security headers, so the policy lives here: everything comes from this
+     site, the one outside request is the project's own update feed, and nothing can be framed or posted. -->
+<meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'unsafe-inline'; style-src 'unsafe-inline'; font-src 'self'; img-src 'self' data:; connect-src 'self' https://rahulsharmavishwakarma.github.io; base-uri 'none'; form-action 'none'">
+<meta name="referrer" content="strict-origin-when-cross-origin">
+<title>Vesper: voice to text on your Mac</title>
+<meta name="description" content="Vesper turns your voice into text on your Mac. Local speech models, live drafts, optional cleanup and personal vocabulary. Open source, for Apple silicon.">
+<script>
+  try { var t = localStorage.getItem('vesper-landing-theme'); if (t === 'light' || t === 'dark') document.documentElement.setAttribute('data-theme', t); } catch (e) {}
+  document.documentElement.classList.add('js');
+</script>
+<style>
+@font-face {
+  font-family: "Bricolage";
+  src: url("./assets/bricolage-grotesque.ttf") format("truetype");
+  font-weight: 200 800;
+  font-stretch: 75% 100%;
+  font-display: swap;
+}
+
+/* ---------- Tokens: night (default) ---------- */
+:root {
+  color-scheme: dark;
+  --bg: #0a0a0a;
+  --raised: #151515;
+  --ink: #fff5ee;
+  --muted: #9a9088;
+  --line: #272727;
+  --wire: #3b3029;
+  --accent: #ff6b3d;
+  --accent-light: #ff8a5c;
+  --accent-ink: #ff8a5c;
+  --on-accent: #140a05;
+  --tint: #251209;
+  --provisional: #8a7f77;
+  --glass: rgb(21 21 21 / 0.74);
+  --focus: #ff8a5c;
+  /* Night: the app's black with a fine field of dots that answers the bird's call and the pointer. */
+  --sky-0-top: #0a0a0a;
+  --sky-0-bottom: #0a0a0a;
+  --sky-1-top: #0a0a0a;
+  --sky-1-bottom: #0a0a0a;
+  --sky-2-top: #0a0a0a;
+  --sky-2-bottom: #0a0a0a;
+  --glow: #ff6b3d;
+  --glow-alpha: 0;
+  --star: #fff5ee;
+  --star-alpha: 1;
+  --star-floor: 1;
+  --celestial: star;
+  --spark: #fff5ee;
+  --dot-jitter: 1;
+  --dot-even: 0;
+  --form-dot: #fff5ee;
+  --pill-shadow: 0 10px 32px rgb(0 0 0 / .45);
+  --pools: 0;
+  --horizon: .2;
+
+  --gutter: clamp(16px, 4.2vw, 64px);
+  /* Content widens on large displays so type and layout keep their proportions up to 2560 px and beyond. */
+  --max: clamp(1320px, 76vw, 1960px);
+  --display: clamp(52px, 10.4vw, calc(var(--max) * .115));
+  --h2: clamp(44px, 7.2vw, calc(var(--max) * .086));
+  --lead: clamp(18px, 1.35vw, 21px);
+  --ease-out: cubic-bezier(.16, 1, .3, 1);
+}
+/* ---------- Tokens: daylight ---------- */
+@media (prefers-color-scheme: light) {
+  :root:not([data-theme="dark"]) {
+    color-scheme: light;
+    --bg: #ffffff; --raised: #fafaf8; --ink: #12110f; --muted: #6b6962; --line: #e8e6e0; --wire: #d9d5cd;
+    --accent: #e84d17; --accent-light: #ff8a5c; --accent-ink: #b63a0c; --on-accent: #12110f; --tint: #fdede8;
+    --provisional: #6f6b63; --glass: rgb(255 255 255 / 0.8); --focus: #b63a0c;
+    /* Daylight: the app's paper with a morning wash, an even dot grid like dot paper, ember sparks and a low sun. */
+    --sky-0-top: #fff4ed; --sky-0-bottom: #ffffff; --sky-1-top: #fff8f3; --sky-1-bottom: #ffffff;
+    --sky-2-top: #fffcfa; --sky-2-bottom: #ffffff;
+    --glow: #ff9a70; --glow-alpha: .13; --star: #8f7f72; --star-alpha: 1; --star-floor: 1; --celestial: none;
+    --spark: #e84d17; --dot-jitter: 0; --dot-even: 1; --form-dot: #3b322b; --pill-shadow: 0 8px 28px rgb(80 50 30 / .10); --pools: 1; --horizon: .2;
+  }
+}
+:root[data-theme="light"] {
+  color-scheme: light;
+  --bg: #ffffff; --raised: #fafaf8; --ink: #12110f; --muted: #6b6962; --line: #e8e6e0; --wire: #d9d5cd;
+  --accent: #e84d17; --accent-light: #ff8a5c; --accent-ink: #b63a0c; --on-accent: #12110f; --tint: #fdede8;
+  --provisional: #6f6b63; --glass: rgb(255 255 255 / 0.8); --focus: #b63a0c;
+  /* Daylight: the app's paper with a morning wash, an even dot grid like dot paper, ember sparks and a low sun. */
+  --sky-0-top: #fff4ed; --sky-0-bottom: #ffffff; --sky-1-top: #fff8f3; --sky-1-bottom: #ffffff;
+  --sky-2-top: #fffcfa; --sky-2-bottom: #ffffff;
+  --glow: #ff9a70; --glow-alpha: .13; --star: #8f7f72; --star-alpha: 1; --star-floor: 1; --celestial: none;
+  --spark: #e84d17; --dot-jitter: 0; --dot-even: 1; --form-dot: #3b322b; --pill-shadow: 0 8px 28px rgb(80 50 30 / .10); --pools: 1; --horizon: .2;
+}
+
+/* ---------- Base ---------- */
+*, *::before, *::after { box-sizing: border-box; }
+[hidden] { display: none !important; }
+html { -webkit-text-size-adjust: 100%; scroll-padding-top: 88px; }
+html, body { overflow-x: clip; }
+body {
+  margin: 0;
+  background: var(--bg);
+  color: var(--ink);
+  font-family: "Bricolage", ui-sans-serif, system-ui, -apple-system, sans-serif;
+  font-size: 17px;
+  line-height: 1.55;
+  font-optical-sizing: auto;
+  font-variant-numeric: tabular-nums;
+  -webkit-font-smoothing: antialiased;
+}
+img, svg { display: block; }
+a { color: inherit; }
+p { margin: 0; }
+h1, h2, h3 { margin: 0; font-weight: 800; letter-spacing: -0.04em; line-height: 0.92; text-wrap: balance; }
+:focus-visible { outline: 2px solid var(--focus); outline-offset: 3px; border-radius: 6px; }
+.vh { position: absolute !important; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
+kbd { font: inherit; font-weight: 600; }
+.skip { position: fixed; left: 12px; top: 40px; z-index: 50; background: var(--accent); color: var(--on-accent); padding: 8px 14px; border-radius: 10px; transform: translateY(-200%); }
+.skip:focus { transform: none; }
+
+/* Theme switch: page colours cross-fade while the sky blends (see switchTheme). */
+.theme-fade, .theme-fade *, .theme-fade *::before, .theme-fade *::after {
+  transition-property: background-color, color, border-color, fill, stroke, box-shadow, opacity !important;
+  transition-duration: 1.1s, 1.1s, 1.1s, 1.1s, 1.1s, 1.1s, .45s !important;
+  transition-timing-function: cubic-bezier(.65, 0, .35, 1) !important;
+}
+::view-transition-old(root), ::view-transition-new(root) { animation: none; mix-blend-mode: normal; }
+#sky { position: fixed; inset: 0; width: 100%; height: 100%; z-index: 0; pointer-events: none; }
+
+
+.wrap { position: relative; z-index: 1; max-width: var(--max); margin: 0 auto; padding: 0 var(--gutter); }
+
+/* ---------- Nav ---------- */
+.nav { position: fixed; inset: 0 0 auto 0; z-index: 30; padding-top: 34px; pointer-events: none; }
+/* On scroll the bar becomes a floating glass pill. Its padding is cancelled by a matching negative margin,
+   so the logo and links never move; the theme button sits concentric with the pill's rounded end. */
+.nav-bar {
+  --pin-l: min(20px, calc(var(--gutter) - 6px)); --pin-r: 8px;
+  display: flex; align-items: center; gap: 28px; height: 56px; pointer-events: auto;
+  margin-inline: calc(-1 * var(--pin-l)) calc(-1 * var(--pin-r)); padding-inline: var(--pin-l) var(--pin-r);
+  border-radius: 999px; border: 1px solid transparent; background: transparent;
+  transition: background .35s, border-color .35s, box-shadow .35s;
+}
+.nav.solid .nav-bar {
+  background: var(--glass); border-color: var(--line); box-shadow: var(--pill-shadow);
+  backdrop-filter: blur(16px) saturate(1.3); -webkit-backdrop-filter: blur(16px) saturate(1.3);
+}
+/* The app's lockup (BrandLogo.svelte): Ember bird plus "vesper" in Bricolage 800. */
+.brand { display: inline-flex; align-items: center; gap: .3em; font-size: 26px; color: var(--ink); text-decoration: none; white-space: nowrap; }
+.brand-bird { display: block; height: 1.15em; aspect-ratio: 4 / 3; }
+.brand-word, .giant-word { font-weight: 800; font-stretch: 100%; letter-spacing: -0.035em; line-height: 1; color: var(--ink); }
+.nav nav { margin-left: auto; }
+.nav ul { display: flex; gap: 26px; list-style: none; margin: 0; padding: 0; }
+.nav ul a { text-decoration: none; color: var(--muted); font-weight: 500; font-size: 15px; }
+.nav ul a:hover { color: var(--ink); }
+.btn.nav-dl { font-size: 15px; padding: 10px 18px; }
+.theme {
+  width: 38px; height: 38px; border-radius: 50%; border: 1px solid var(--line); background: transparent; color: var(--ink);
+  display: grid; place-items: center; cursor: pointer;
+}
+.theme:hover { border-color: var(--muted); }
+.theme svg { width: 18px; height: 18px; }
+.theme .sun { display: none; }
+:root[data-theme="light"] .theme .moon { display: none; }
+:root[data-theme="light"] .theme .sun { display: block; }
+@media (prefers-color-scheme: light) {
+  :root:not([data-theme="dark"]) .theme .moon { display: none; }
+  :root:not([data-theme="dark"]) .theme .sun { display: block; }
+}
+
+/* ---------- Buttons ---------- */
+.btn {
+  display: inline-flex; align-items: center; gap: 10px; border-radius: 999px; text-decoration: none;
+  font-weight: 650; font-size: 17px; padding: 15px 26px; line-height: 1; border: 1.5px solid transparent;
+  transition: transform .25s var(--ease-out), background .25s, border-color .25s;
+}
+.btn-primary { background: var(--accent); color: var(--on-accent); }
+.btn-primary:hover { background: var(--accent-light); transform: translateY(-1px); }
+.btn-ghost { border-color: var(--line); color: var(--ink); background: var(--glass); }
+.btn-ghost:hover { border-color: var(--muted); }
+.btn svg { width: 18px; height: 18px; }
+
+/* ---------- Bird ---------- */
+.bird { width: 100%; height: 100%; overflow: visible; }
+.bird .bd, .bird .dsh, .bird .lid { fill: var(--accent); }
+.bird .dsh { transform-box: fill-box; transform-origin: left center; transition: opacity .25s; }
+.bird .lid { transform-box: fill-box; transform-origin: center; transform: scaleY(0); }
+.calling .bird .dsh { animation: call 2.6s ease-in-out infinite; }
+.calling .bird .d2 { animation-delay: .35s; }
+.blinking .bird .lid { animation: blink 4.2s infinite; }
+@keyframes call { 0%, 55%, 100% { opacity: 1; transform: scale(1); } 20% { opacity: .12; transform: scale(.7); } 38% { opacity: 1; transform: scale(1.08); } }
+@keyframes blink { 0%, 93%, 100% { transform: scaleY(0); } 96% { transform: scaleY(1); } }
+.flying .bird .dsh { opacity: 0; animation: none; }
+
+.traveler {
+  position: fixed; left: 0; top: 0; width: 150px; height: 112.5px; z-index: 0; pointer-events: none;
+  transform-origin: 0 0; will-change: transform; display: none;
+}
+.traveler .bird-inner { width: 100%; height: 100%; transform-origin: 50% 60%; will-change: transform; }
+.motion .traveler { display: block; }
+.motion .perch .bird { visibility: hidden; }
+.perch { display: block; width: 76px; aspect-ratio: 4 / 3; pointer-events: none; }
+.perch[data-face="left"] .bird { transform: scaleX(-1); }
+
+/* ---------- Reed ---------- */
+.reed { display: flex; align-items: center; gap: var(--reed-gap, 4px); height: var(--reed-h, 56px); }
+.reed i {
+  display: block; width: var(--reed-w, 3px); height: 100%; border-radius: 99px; background: var(--accent);
+  transform: scaleY(var(--s, .06)); will-change: transform;
+}
+
+/* ---------- Hero ---------- */
+.hero { position: relative; min-height: min(100svh, 1120px); padding: 120px 0 56px; display: flex; flex-direction: column; }
+.hero .wrap { flex: 1; display: flex; flex-direction: column; width: 100%; }
+.wire-svg { position: absolute; left: 0; width: 100%; height: 40px; overflow: visible; pointer-events: none; }
+.wire-svg path { fill: none; stroke: var(--wire); stroke-width: 1.5; }
+.stage { position: relative; margin-top: clamp(24px, 9vh, 120px); }
+.stage-row { display: flex; align-items: flex-end; gap: clamp(10px, 1.4vw, 20px); }
+.stage .perch { width: clamp(96px, 10vw, 150px); flex: none; }
+/* Free flight: no cable. The bird rests in open air beside each section. */
+.hero-wire { display: none; }
+.call { transition: opacity .9s var(--ease-out); }
+.motion .hero:not(.speaking) .call, .hero.done .call, .rm .hero .call { opacity: 0; }
+.call { flex: 1; min-width: 0; padding-bottom: calc(clamp(96px, 10vw, 150px) * .36); }
+.call .reed { --reed-h: clamp(36px, 4.4vw, 64px); --reed-w: clamp(2px, .25vw, 3.5px); --reed-gap: clamp(3px, .38vw, 5px); }
+.hero-wire { position: relative; height: 0; }
+.hero-wire .wire-svg { top: -20px; left: calc(50% - 50vw); width: 100vw; }
+.transcript {
+  margin-top: 26px; min-height: 2.5em; max-width: 25ch;
+  font-size: clamp(24px, 3.1vw, 48px); font-weight: 500; letter-spacing: -0.02em; line-height: 1.18;
+  margin-left: calc(clamp(96px, 10vw, 150px) + clamp(10px, 1.4vw, 20px));
+}
+.w { display: inline-block; transition: color .45s; }
+.w.p { color: var(--provisional); }
+.w.in { animation: wordIn .32s var(--ease-out) both; }
+@keyframes wordIn { from { opacity: 0; transform: translateY(.22em); } }
+.caret { display: inline-block; width: 2px; height: .95em; background: var(--accent); vertical-align: -0.1em; margin-left: 3px; animation: caret 1s steps(1) infinite; }
+.caret.off { visibility: hidden; animation: none; }
+@keyframes caret { 50% { opacity: 0; } }
+.hero-foot { margin-top: auto; padding-top: 40px; display: grid; grid-template-columns: minmax(0, 1.35fr) minmax(0, 1fr); gap: 32px clamp(24px, 4vw, 72px); align-items: end; }
+.hero h1 { font-size: var(--display); line-height: .86; letter-spacing: -0.05em; }
+.hero h1 span { display: block; white-space: nowrap; }
+.hero h1 .l2 { transition: color 1.2s var(--ease-out); }
+.motion .hero.pending h1 .l2 { color: var(--provisional); }
+.hero-side p { font-size: var(--lead); max-width: 30em; }
+.hero-side .fine { margin-top: 14px; font-size: 15px; color: var(--muted); }
+.actions { display: flex; flex-wrap: wrap; gap: 12px; margin-top: 26px; }
+
+/* ---------- Sections (shared) ---------- */
+section { position: relative; }
+.chapter { padding: clamp(96px, 15vh, 180px) 0; }
+.chapter h2 { font-size: var(--h2); }
+.lede { margin-top: 26px; font-size: var(--lead); color: var(--muted); max-width: 32em; }
+.lede strong { color: var(--ink); font-weight: 600; }
+.split { display: grid; grid-template-columns: minmax(0, 5fr) minmax(0, 7fr); gap: clamp(32px, 6vw, 96px); align-items: center; }
+.split.flip { grid-template-columns: minmax(0, 7fr) minmax(0, 5fr); }
+.split.flip > .copy { order: 2; }
+/* A wire is what the bird lands on: a hairline that tops each demonstration. */
+.wired { position: relative; padding-top: 36px; }
+.wired > .perch { position: absolute; bottom: calc(100% - 4px); right: 4%; }
+.wired > .perch[data-face="right"] { right: auto; left: 4%; }
+
+/* ---------- How it works (pinned) ---------- */
+.how { height: 210vh; }
+.how-pin { position: sticky; top: 0; height: 100vh; height: 100svh; display: flex; align-items: center; padding-top: 70px; }
+.how-pin > .wrap { width: 100%; }
+.how h2 { font-size: var(--h2); }
+.steps { list-style: none; margin: 40px 0 0; padding: 0; display: grid; gap: 22px; }
+.steps li { display: grid; grid-template-columns: 34px 1fr; gap: 4px 12px; color: var(--muted); transition: color .4s; }
+.steps li .n { grid-row: span 2; width: 26px; height: 26px; border-radius: 50%; border: 1.5px solid var(--line); display: grid; place-items: center; font-size: 13px; font-weight: 600; transition: background .4s, border-color .4s, color .4s; }
+.steps li strong { font-size: clamp(19px, 1.6vw, 24px); font-weight: 650; letter-spacing: -0.015em; line-height: 1.2; }
+.steps li span.d { font-size: 16px; max-width: 30em; }
+.steps li.on { color: var(--ink); }
+.steps li.on .n { background: var(--accent); border-color: var(--accent); color: var(--on-accent); }
+.steps li.done .n { border-color: var(--accent); color: var(--accent-ink); }
+.desk { position: relative; }
+.keys { display: flex; gap: 10px; justify-content: center; margin-bottom: 34px; }
+.key {
+  min-width: 64px; height: 60px; padding: 0 16px; border-radius: 12px; display: grid; place-items: center;
+  background: var(--raised); border: 1px solid var(--line); box-shadow: 0 5px 0 var(--line);
+  font-weight: 600; font-size: 15px; color: var(--ink); line-height: 1.1; text-align: center;
+  transition: transform .18s, box-shadow .18s, background .18s, color .18s;
+}
+.key b { display: block; font-size: 20px; font-weight: 600; }
+.key.down { transform: translateY(4px); box-shadow: 0 1px 0 var(--line); background: var(--tint); color: var(--accent-ink); border-color: var(--accent); }
+.window { position: relative; border-radius: 14px; background: var(--raised); border: 1px solid var(--line); overflow: visible; }
+.window-bar { display: flex; gap: 7px; padding: 13px 16px; border-bottom: 1px solid var(--line); }
+.window-bar i { width: 11px; height: 11px; border-radius: 50%; background: var(--line); }
+.window-body { padding: 20px 22px 26px; font-size: 16px; min-height: 230px; }
+.field { display: flex; gap: 12px; padding: 8px 0; border-bottom: 1px solid var(--line); color: var(--muted); }
+.field span { color: var(--ink); }
+.typed { margin-top: 18px; font-size: clamp(18px, 1.6vw, 22px); line-height: 1.45; min-height: 3em; }
+.typed .p { color: var(--provisional); }
+.window > .perch { position: absolute; bottom: calc(100% + 40px); right: -8px; }
+.capture {
+  position: absolute; left: 50%; bottom: -26px; transform: translate(-50%, 12px); opacity: 0;
+  display: flex; align-items: center; gap: 12px; padding: 10px 18px 10px 14px; border-radius: 99px;
+  background: var(--bg); border: 1px solid var(--line); box-shadow: 0 10px 30px rgb(0 0 0 / .35);
+  transition: opacity .35s, transform .45s var(--ease-out);
+}
+.capture.on { opacity: 1; transform: translate(-50%, 0); }
+.capture svg { width: 28px; height: 21px; }
+.capture .reed { --reed-h: 22px; --reed-w: 2px; --reed-gap: 3px; }
+
+/* ---------- Live drafts ---------- */
+.drafts .demo { margin-top: clamp(48px, 8vh, 96px); }
+.draft-line {
+  font-size: clamp(30px, 5.4vw, 84px); font-weight: 700; letter-spacing: -0.035em; line-height: 1.05;
+  min-height: 2.2em; max-width: 18ch;
+}
+.draft-meta { display: flex; align-items: center; gap: 18px; margin-top: 28px; color: var(--muted); font-size: 15px; }
+.draft-meta .reed { --reed-h: 26px; --reed-w: 2px; --reed-gap: 3px; }
+.legend-ink { color: var(--ink); font-weight: 600; }
+.legend-grey { color: var(--provisional); font-weight: 600; }
+
+/* ---------- Cleanup ---------- */
+.modes { display: inline-flex; padding: 4px; border-radius: 99px; border: 1px solid var(--line); background: var(--glass); margin-top: 34px; flex-wrap: wrap; }
+.modes button {
+  font: inherit; font-size: 15px; font-weight: 600; border: 0; background: transparent; color: var(--muted);
+  padding: 10px 18px; border-radius: 99px; cursor: pointer; transition: background .25s, color .25s;
+}
+.modes button[aria-pressed="true"] { background: var(--ink); color: var(--bg); }
+.modes button:hover:not([aria-pressed="true"]) { color: var(--ink); }
+.clean-text { font-size: clamp(26px, 3.1vw, 46px); font-weight: 600; letter-spacing: -0.025em; line-height: 1.22; min-height: 3.7em; }
+.tok { display: inline-block; will-change: transform; }
+.tok[hidden] { display: none; }
+.tok.fix { color: var(--accent-ink); }
+.orig { margin-top: 26px; font-size: 15px; color: var(--muted); max-width: 40em; }
+.orig span { color: var(--ink); }
+
+/* ---------- Vocabulary ---------- */
+.vocab-demo { display: grid; grid-template-columns: auto 1fr; gap: clamp(28px, 4vw, 64px); align-items: center; }
+.yours { list-style: none; margin: 0; padding: 0; display: grid; gap: 12px; }
+.yours-title { font-size: 15px; color: var(--muted); margin-bottom: 14px; }
+.yours li { position: relative; border-radius: 99px; outline: 1.5px dashed var(--line); outline-offset: -1.5px; }
+.chip {
+  display: inline-block; padding: 10px 18px; border-radius: 99px; background: var(--tint); color: var(--accent-ink);
+  border: 1.5px solid var(--accent); font-weight: 650; font-size: 18px; will-change: transform;
+}
+.chip.flyer { position: fixed; left: 0; top: 0; z-index: 15; pointer-events: none; opacity: 0; transform-origin: center; }
+.heard { font-size: clamp(26px, 3.2vw, 48px); font-weight: 600; letter-spacing: -0.025em; line-height: 1.25; }
+.slot { display: inline-grid; vertical-align: top; }
+.slot > span { grid-area: 1 / 1; transition: opacity .3s, filter .3s; }
+.slot .wrong { color: var(--muted); text-decoration: underline wavy var(--accent); text-decoration-thickness: 1.5px; text-underline-offset: 6px; }
+.slot .right { color: var(--accent-ink); opacity: 0; }
+.slot.fixed .wrong { opacity: 0; filter: blur(6px); }
+.slot.fixed .right { opacity: 1; }
+
+/* ---------- Languages ---------- */
+/* The 40 languages ride a slowly turning sphere of stars. Particles are drawn on the sky canvas. */
+.globe-stage { position: relative; margin-top: 56px; height: clamp(440px, 50vw, 660px); }
+.globe-stage ul { list-style: none; margin: 0; padding: 0; }
+.motion .globe-stage li {
+  position: absolute; left: 0; top: 0; white-space: nowrap; font-weight: 550; line-height: 1; font-size: clamp(13px, 1.15vw, 16px);
+  opacity: 0; will-change: transform, opacity; padding-left: 11px;
+}
+.globe-stage li::before {
+  content: ""; position: absolute; left: 0; top: 50%; width: 5px; height: 5px; margin-top: -2.5px; border-radius: 50%;
+  background: var(--accent); box-shadow: 0 0 8px var(--accent);
+}
+.globe-stage li.back { color: var(--muted); font-weight: 500; }
+.globe-stage li.near { color: var(--accent-ink); }
+html:not(.js) .globe-stage, .rm .globe-stage { height: auto; }
+html:not(.js) .globe-stage ul, .rm .globe-stage ul { display: flex; flex-wrap: wrap; gap: 14px 30px; padding-top: 40px; }
+html:not(.js) .globe-stage li, .rm .globe-stage li { position: relative; padding-left: 11px; font-weight: 500; }
+.models { margin-top: 48px; display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 32px clamp(32px, 6vw, 96px); }
+.models h3 { font-size: clamp(24px, 2.2vw, 32px); letter-spacing: -0.03em; line-height: 1.05; }
+.models p { margin-top: 12px; color: var(--muted); }
+.model-list { list-style: none; margin: 0; padding: 0; columns: 2; column-gap: 32px; }
+.model-list li { padding: 9px 0; border-bottom: 1px solid var(--line); break-inside: avoid; font-weight: 500; }
+
+/* ---------- Speed ---------- */
+/* Particles assemble the chip; the SVG on top carries the labels and the route the speech model takes. */
+.chip-fig { margin: 0; }
+.chip-stage { position: relative; width: 100%; max-width: calc(var(--max) * .49); margin-left: auto; aspect-ratio: 560 / 380; }
+.chip-over { position: absolute; inset: 0; width: 100%; height: 100%; overflow: visible; }
+.chip-over text { font-family: "Bricolage", sans-serif; }
+.chip-over .lbl { fill: var(--ink); font-size: 17px; font-weight: 700; letter-spacing: -0.01em; }
+.chip-over .sub { fill: var(--muted); font-size: 13.5px; font-weight: 500; }
+.chip-over .t { opacity: var(--lab, 1); transition: opacity .5s; }
+.chip-over .src { fill: var(--accent); }
+.chip-over .route { fill: none; stroke: var(--accent); stroke-width: 2.5; stroke-linecap: round; stroke-linejoin: round; }
+.chip-over .route.main { stroke-dasharray: 1; stroke-dashoffset: var(--r1, 0); }
+.chip-over .route.some { stroke-dasharray: 5 6; stroke-width: 2; }
+.chip-over .route.head { opacity: var(--r3, 1); }
+.chip-over .mask-path { fill: none; stroke: #fff; stroke-width: 8; stroke-dasharray: 1; stroke-dashoffset: var(--r2, 0); }
+.cap { margin-top: 18px; max-width: calc(var(--max) * .49); margin-left: auto; font-size: 14.5px; color: var(--muted); }
+
+/* ---------- Benchmarks ---------- */
+.bench-head { max-width: 52em; }
+.source { margin-top: 18px; font-size: 15px; color: var(--ink); font-weight: 500; }
+.source-note { margin-top: 6px; font-size: 14.5px; color: var(--muted); }
+.bench-missing { margin-top: 40px; color: var(--muted); }
+.bench-missing a { color: var(--ink); font-weight: 600; }
+/* Language tabs sit right above the result they change: plain text, the chosen one underlined in ember. */
+.langs { display: flex; flex-wrap: wrap; gap: 4px 26px; margin-bottom: 22px; border-bottom: 1px solid var(--line); }
+.langs button { font: inherit; font-size: 16px; font-weight: 600; border: 0; background: none; color: var(--muted); padding: 0 0 12px; margin-bottom: -1px; border-bottom: 2px solid transparent; cursor: pointer; transition: color .2s, border-color .2s; }
+.langs button[aria-pressed="true"] { color: var(--ink); border-bottom-color: var(--accent); }
+.langs button:hover:not([aria-pressed="true"]) { color: var(--ink); }
+.langs button:focus-visible { outline-offset: 4px; }
+@media (max-width: 640px) {
+  .langs { flex-wrap: nowrap; gap: 18px; overflow-x: auto; scrollbar-width: none; }
+  .langs::-webkit-scrollbar { display: none; }
+  .langs button { flex: none; font-size: 15px; }
+}
+/* The narrowest phones scroll the row; a soft fade at the edge says there is more. */
+@media (max-width: 370px) {
+  .langs { gap: 16px; -webkit-mask-image: linear-gradient(to right, #000 82%, transparent); mask-image: linear-gradient(to right, #000 82%, transparent); }
+}
+/* Model lineup: one row per model, ranked by accuracy, three measures side by side.
+   The winner of each measure wears a tag; error-rate bars are ember, the others muted. */
+.lineup-bar { margin-top: 44px; }
+.takeaway { font-size: clamp(20px, 1.9vw, 28px); font-weight: 600; letter-spacing: -0.02em; line-height: 1.25; max-width: 40ch; min-height: 2.5em; text-wrap: balance; }
+/* Speed against accuracy at a glance: zoomed to the models' range, the fast and accurate corner glows. */
+.chart-box { position: relative; margin-top: 8px; padding-top: 64px; }
+.chart-box > .perch { position: absolute; top: 0; right: 1%; width: 66px; }
+.chart { display: block; width: 100%; height: auto; overflow: visible; font-family: "Bricolage", sans-serif; }
+.chart .grid line { stroke: var(--line); stroke-width: 1; }
+.chart .tick { fill: var(--muted); font-size: 12.5px; font-variant-numeric: tabular-nums; }
+.chart .axis-title { fill: var(--muted); font-size: 13px; font-weight: 600; }
+.chart .sweet-label { fill: var(--accent-ink); font-size: 13px; font-weight: 650; }
+.chart .pt { transition: transform .9s var(--ease-out), opacity .5s; cursor: default; }
+.chart .pt .ring { fill: var(--accent); opacity: 0; transition: opacity .25s; }
+.chart .pt .core { fill: var(--accent); stroke: var(--bg); stroke-width: 2; transition: r .25s; }
+.chart .pt.hl .ring { opacity: .22; }
+.chart .lbl { fill: var(--ink); font-size: var(--lbl, 13.5px); font-weight: 600; paint-order: stroke; stroke: var(--bg); stroke-width: 4px; stroke-linejoin: round; transition: opacity .4s, fill .25s; }
+.chart .lbl.hl { fill: var(--accent-ink); }
+.chart .num { fill: var(--on-accent); font-size: 10px; font-weight: 750; text-anchor: middle; dominant-baseline: central; pointer-events: none; }
+.chart-note { display: none; margin-top: 8px; font-size: 13.5px; color: var(--muted); }
+@media (max-width: 640px) { .chart-note { display: block; } }
+.chart .leader { stroke: var(--muted); stroke-width: 1; opacity: .5; transition: opacity .4s; }
+.lineup-wrap { margin-top: 44px; }
+.lineup { width: 100%; border-collapse: collapse; table-layout: fixed; font-size: 15.5px; }
+.lineup th { text-align: left; font-weight: 600; color: var(--muted); font-size: 13.5px; padding: 0 16px 12px 0; border-bottom: 1px solid var(--line); vertical-align: bottom; }
+.lineup th small { display: block; font-weight: 400; font-size: 12.5px; opacity: .8; }
+.lineup th:first-child { width: 34%; }
+.lineup tbody tr { position: relative; will-change: transform; }
+.lineup td { padding: 16px 16px 16px 0; border-bottom: 1px solid var(--line); vertical-align: middle; }
+.lineup .who { display: flex; align-items: center; gap: 14px; min-width: 0; }
+.lineup .rank { flex: none; width: 1.6em; font-weight: 700; color: var(--muted); font-variant-numeric: tabular-nums; }
+.lineup .name { font-weight: 650; font-size: 17px; letter-spacing: -0.01em; line-height: 1.2; }
+.lineup .maker { display: block; font-size: 13.5px; font-weight: 400; color: var(--muted); }
+.metric { display: grid; grid-template-columns: minmax(0, 1fr) auto; align-items: center; gap: 6px 12px; }
+.metric .track { height: 6px; border-radius: 99px; background: var(--line); overflow: hidden; }
+.metric .track i { display: block; height: 100%; border-radius: inherit; background: var(--muted); opacity: .55; transform-origin: left; transform: scaleX(var(--v, 0)); transition: transform 1s var(--ease-out), background .35s, opacity .35s; transition-delay: var(--delay, 0s); }
+.metric b { font-weight: 500; font-variant-numeric: tabular-nums; min-width: 5.2ch; text-align: right; }
+.lineup .tags { display: flex; flex-wrap: wrap; gap: 4px; margin-top: 6px; }
+.lineup .tag { font-size: 12px; font-weight: 650; color: var(--accent-ink); background: var(--tint); padding: 2px 9px; border-radius: 99px; }
+.lineup[data-sort="wer"] .m-wer .track i, .lineup[data-sort="ms"] .m-ms .track i, .lineup[data-sort="mem"] .m-mem .track i { background: var(--accent); opacity: 1; }
+.lineup[data-sort="wer"] th.m-wer, .lineup[data-sort="ms"] th.m-ms, .lineup[data-sort="mem"] th.m-mem { color: var(--ink); }
+.lineup tbody tr:hover td, .lineup tbody tr.hl td { background: color-mix(in srgb, var(--tint) 55%, transparent); }
+.published { margin-top: 40px; border-top: 1px solid var(--line); padding-top: 18px; max-width: 46em; }
+.published summary { cursor: pointer; font-weight: 600; color: var(--ink); }
+.published p { margin-top: 10px; color: var(--muted); font-size: 15px; }
+.published ul { list-style: none; padding: 0; margin: 10px 0 0; columns: 2; column-gap: 32px; font-size: 15px; }
+.published li { display: flex; justify-content: space-between; gap: 16px; padding: 6px 0; border-bottom: 1px solid var(--line); break-inside: avoid; }
+
+/* ---------- Privacy ---------- */
+.priv-head { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 24px clamp(32px, 6vw, 96px); align-items: end; }
+.priv-head .lede { margin-top: 0; }
+/* "This Mac": a boundary drawn by particles. Everything you say stays inside it. */
+.ledger { position: relative; margin-top: clamp(48px, 8vh, 88px); display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 13em); gap: 32px clamp(28px, 4vw, 64px); align-items: center; }
+.ledger-in {
+  position: relative; display: grid; grid-template-columns: minmax(0, 4fr) minmax(0, 6fr); gap: 24px clamp(24px, 4vw, 56px); align-items: center;
+  padding: clamp(40px, 5vw, 60px) clamp(24px, 4vw, 52px); border-radius: 28px;
+}
+html:not(.js) .ledger-in { border: 1.5px dashed var(--accent); }
+html:not(.js) .b-label { background: var(--bg); }
+.b-label { position: absolute; left: 30px; top: 0; transform: translateY(-50%); padding: 0 10px; font-weight: 700; font-size: 16px; color: var(--accent-ink); line-height: 1; }
+.mac-art { position: relative; aspect-ratio: 10 / 7.4; width: 100%; }
+.ledger dl { margin: 0; display: grid; grid-template-columns: auto minmax(0, 1fr); }
+.ledger dt, .ledger dd { padding: 16px 0; border-bottom: 1px solid var(--line); }
+.ledger dl > :nth-last-child(-n + 2) { border-bottom: 0; }
+.ledger dt { font-weight: 700; padding-right: 24px; white-space: nowrap; }
+.ledger dd { margin: 0; color: var(--muted); }
+.ledger-out h3 { font-size: 21px; letter-spacing: -0.02em; line-height: 1.2; }
+.ledger-out p { margin-top: 8px; color: var(--muted); font-size: 15.5px; }
+.ledger-out .arrow { display: block; width: 72px; height: 14px; margin-bottom: 14px; overflow: visible; }
+.ledger-out .arrow path { fill: none; stroke: var(--muted); stroke-width: 1.5; stroke-linecap: round; }
+.ledger > .perch { position: absolute; bottom: calc(100% + 18px); right: calc(13em + clamp(28px, 4vw, 64px) + 6%); }
+
+/* ---------- Files & history ---------- */
+.hist-wrap { position: relative; }
+.hist-wrap > .perch { position: absolute; bottom: calc(100% + 18px); right: 4%; }
+.history { border-radius: 14px; border: 1px solid var(--line); background: var(--raised); overflow: hidden; }
+.search { display: flex; align-items: center; gap: 10px; padding: 14px 18px; border-bottom: 1px solid var(--line); color: var(--muted); font-size: 16px; }
+.search svg { width: 16px; height: 16px; }
+.search .q { color: var(--ink); min-width: 1ch; }
+.search .q:empty::before { content: "Search history"; color: var(--muted); }
+.hrow { display: grid; grid-template-columns: 1fr auto; gap: 4px 16px; padding: 14px 18px; border-bottom: 1px solid var(--line); transition: opacity .4s, filter .4s; }
+.hrow:last-child { border-bottom: 0; }
+.hrow .t { font-weight: 550; }
+.hrow .m { grid-column: 1; color: var(--muted); font-size: 14px; }
+.hrow .acts { grid-row: span 2; display: flex; gap: 8px; align-items: center; color: var(--muted); font-size: 14px; }
+.hrow .acts span { border: 1px solid var(--line); border-radius: 99px; padding: 4px 11px; }
+.hrow.out { opacity: .22; filter: blur(1.5px); }
+.hrow mark { background: var(--tint); color: var(--accent-ink); border-radius: 4px; padding: 0 2px; }
+
+/* ---------- First launch ---------- */
+.route { position: relative; margin-top: clamp(64px, 10vh, 110px); }
+.route ol { list-style: none; margin: 0; padding: 0; display: grid; grid-template-columns: repeat(7, minmax(0, 1fr)); position: relative; border-top: 1.5px solid var(--wire); }
+.route li { position: relative; padding: 26px 10px 0 0; color: var(--muted); font-size: 15.5px; line-height: 1.35; transition: color .4s; }
+.route li::before { content: ""; position: absolute; left: 0; top: -6px; width: 10px; height: 10px; border-radius: 50%; background: var(--bg); border: 1.5px solid var(--wire); transition: background .4s, border-color .4s; }
+.route li b { display: block; font-size: 13px; font-weight: 600; margin-bottom: 4px; }
+.route li.reached { color: var(--ink); }
+.route li.reached::before { background: var(--accent); border-color: var(--accent); }
+.route .perch.hop { position: absolute; left: 0; bottom: calc(100% + 26px); width: 64px; transition: transform .55s var(--ease-out); }
+
+/* ---------- Download ---------- */
+.download { text-align: left; }
+.download h2 { font-size: clamp(64px, 13vw, calc(var(--max) * .16)); letter-spacing: -0.055em; line-height: .84; }
+.download .ver { display: flex; align-items: flex-end; gap: clamp(16px, 2vw, 32px); flex-wrap: wrap; }
+.download .ver .perch { width: clamp(84px, 9vw, 130px); margin-bottom: 1%; }
+.dl-grid { margin-top: 48px; display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 40px clamp(32px, 6vw, 96px); align-items: start; }
+.dl-grid .lede { margin-top: 0; }
+.rel-meta { margin-top: 18px; font-size: 15px; color: var(--muted); }
+.rel-meta a { color: var(--ink); font-weight: 600; text-decoration: none; }
+.rel-meta a:hover { color: var(--accent-ink); }
+.first-run { border-top: 1.5px solid var(--wire); padding-top: 22px; }
+.first-run h3 { font-size: 22px; letter-spacing: -0.02em; line-height: 1.2; }
+.first-run p { margin-top: 8px; color: var(--muted); }
+.first-run ol { margin: 16px 0 0; padding-left: 22px; display: grid; gap: 8px; }
+.first-run li::marker { color: var(--accent-ink); font-weight: 700; }
+
+/* ---------- Footer ---------- */
+.site-foot { position: relative; z-index: 1; padding-top: clamp(80px, 12vh, 140px); }
+.foot-top { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1.5fr); gap: 48px clamp(32px, 6vw, 96px); align-items: start; }
+.foot-title { font-size: clamp(34px, 4.2vw, 60px); font-weight: 800; letter-spacing: -0.045em; line-height: .95; max-width: 11ch; text-wrap: balance; }
+.foot-lead .actions { margin-top: 28px; }
+.foot-lead .fine { margin-top: 18px; max-width: 28em; font-size: 15px; color: var(--muted); }
+.foot-cols { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 32px; }
+.foot-cols h2 { font-size: 15px; font-weight: 600; color: var(--muted); letter-spacing: 0; line-height: 1.3; margin-bottom: 16px; }
+.foot-cols ul { list-style: none; margin: 0; padding: 0; display: grid; gap: 12px; }
+.foot-cols a { text-decoration: none; font-weight: 550; font-size: 17px; }
+.foot-cols a:hover { color: var(--accent-ink); }
+.foot-mark { position: relative; margin-top: clamp(56px, 9vh, 112px); }
+.foot-mark { container-type: inline-size; }
+.giant { display: flex; align-items: center; gap: .3em; font-size: 21.1cqw; line-height: 1; white-space: nowrap; }
+.giant-bird { flex: none; height: 1.15em; aspect-ratio: 4 / 3; }
+.giant-bird .perch { width: 100%; height: 100%; }
+.giant-word { display: flex; padding-block: .06em .2em; margin-block: -.06em -.2em; clip-path: inset(0 -.1em); }
+.giant-word > span { display: block; transform: translateY(calc(var(--rise, 0) * .9em - var(--hop, 0) * .09em)); opacity: calc(1 - var(--rise, 0) * .6); will-change: transform; }
+.motion .giant .perch .bird { visibility: visible; opacity: 0; transition: opacity .5s; }
+.motion .site-foot.home .giant .perch .bird { opacity: 1; }
+.giant-bird { position: relative; }
+.giant-bird button { position: absolute; inset: -6%; border: 0; padding: 0; background: none; border-radius: 40%; cursor: pointer; }
+.giant-bird button:focus-visible { outline-offset: 0; }
+.traveler { transition: opacity .45s; }
+.traveler.home { opacity: 0; }
+.foot-base { display: flex; flex-wrap: wrap; justify-content: space-between; align-items: center; gap: 12px 32px; padding-block: 26px 40px; margin-top: clamp(28px, 5vh, 56px); border-top: 1px solid var(--line); color: var(--muted); font-size: 15px; }
+.foot-base a { color: var(--ink); text-decoration: none; font-weight: 600; }
+.foot-base a:hover { color: var(--accent-ink); }
+
+/* ---------- Responsive ---------- */
+@media (max-width: 960px) {
+  .nav ul { display: none; }
+  .nav-bar { gap: 12px; justify-content: space-between; }
+  .btn.nav-dl { margin-left: auto; }
+  .split, .split.flip { grid-template-columns: minmax(0, 1fr); }
+  .split.flip > .copy { order: 0; }
+  .hero-foot { grid-template-columns: minmax(0, 1fr); }
+  .models { grid-template-columns: minmax(0, 1fr); }
+  .dl-grid { grid-template-columns: minmax(0, 1fr); }
+  .route ol { grid-template-columns: minmax(0, 1fr); border-top: 0; border-left: 1.5px solid var(--wire); margin-left: 6px; }
+  .route li { padding: 0 0 22px 24px; }
+  .route li::before { left: -6px; top: 4px; }
+  .route .perch.hop { left: auto; right: 0; bottom: auto; top: 0; }
+  .chip-stage, .cap { margin-left: auto; margin-right: auto; }
+  .priv-head, .ledger, .foot-top { grid-template-columns: minmax(0, 1fr); }
+  .ledger > .perch { right: 10%; }
+  .ledger-out .arrow { display: none; }
+  .chip-over .lbl { font-size: 18.5px; }
+  .chip-over .sub { display: none; }
+}
+/* Small phones: the pill must hold the logo, Download and the theme button without crowding. */
+@media (max-width: 400px) {
+  .brand { font-size: 21px; }
+  .nav-bar { gap: 8px; }
+  .nav .btn.nav-dl { padding: 8px 13px; font-size: 13.5px; }
+}
+@media (max-width: 720px) {
+  .how h2 { font-size: clamp(38px, 11vw, 56px); }
+  .how-pin { padding-top: 104px; align-items: flex-start; }
+  .keys { justify-content: flex-start; }
+  .window > .perch { width: 60px; right: 0; bottom: calc(100% + 64px); }
+  .how .split { gap: 22px; }
+  .steps { margin-top: 18px; gap: 10px; }
+  .steps li span.d { display: none; }
+  .steps li.on span.d { display: block; font-size: 14.5px; }
+  .steps li strong { font-size: 17px; }
+  .keys { margin-bottom: 18px; }
+  .key { min-width: 54px; height: 48px; font-size: 13px; }
+  .key b { font-size: 16px; }
+  .window-body { min-height: 0; padding: 14px 16px 30px; font-size: 14.5px; }
+  .typed { font-size: 17px; }
+  .vocab-demo { grid-template-columns: minmax(0, 1fr); }
+  .yours { grid-auto-flow: column; justify-content: start; }
+  .model-list { columns: 1; }
+  .globe-stage { height: 440px; margin-top: 32px; }
+  .ledger-in { grid-template-columns: minmax(0, 1fr); padding: 44px 22px 22px; }
+  .ledger dl { grid-template-columns: minmax(0, 1fr); }
+  .ledger dt { padding-bottom: 2px; border-bottom: 0; }
+  .ledger dd { padding-top: 0; }
+  .foot-cols { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .published ul { columns: 1; }
+  .lineup thead { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); }
+  .lineup, .lineup tbody, .lineup tr, .lineup td { display: block; }
+  .lineup tbody tr { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 10px 14px; padding: 16px 0; border-bottom: 1px solid var(--line); }
+  .lineup td { border: 0; padding: 0; }
+  .lineup td.who-cell { grid-column: 1 / -1; }
+  .lineup td[data-label]::before { content: attr(data-label); display: block; font-size: 12px; color: var(--muted); margin-bottom: 4px; }
+  .metric { grid-template-columns: minmax(0, 1fr); gap: 5px; }
+  .metric b { text-align: left; order: -1; }
+  .lineup tbody tr:hover td { background: none; }
+  .btn { font-size: 16px; padding: 14px 22px; }
+  .btn.nav-dl { padding: 9px 14px; font-size: 14px; }
+}
+
+/* ---------- Reduced motion: final states, no autoplay ---------- */
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after { animation: none !important; transition: none !important; scroll-behavior: auto !important; }
+}
+.rm .how { height: auto; }
+.rm .how-pin { position: relative; height: auto; padding: clamp(96px, 15vh, 180px) 0; }
+.rm .capture { opacity: 1; transform: translate(-50%, 0); }
+</style>
+</head>
+<body>
+<a class="skip" href="#main">Skip to content</a>
+<canvas id="sky" aria-hidden="true"></canvas>
+
+<template id="bird-tpl">
+<svg class="bird" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 80 60" aria-hidden="true" focusable="false"><g class="vesper-mark"><path class="bd" fill-rule="evenodd" d="M4.9 53.1C4.7 52.9 4.8 48.5 5.0 48.1C5.2 47.7 7.7 44.8 8.5 44.0C9.1 43.4 9.4 43.0 10.8 41.3C12.6 39.3 13.0 38.7 13.6 38.1C13.9 37.8 14.5 37.1 15.0 36.5C15.5 35.9 16.1 35.2 16.4 34.9C16.7 34.6 17.2 34.0 17.5 33.7C17.8 33.3 18.6 32.4 19.1 31.7C19.7 31.1 20.2 30.5 20.2 30.4C20.2 30.3 20.3 30.1 20.4 30.0C20.7 29.7 20.7 29.3 20.4 28.7C19.8 27.6 20.0 21.6 20.6 20.1C20.8 19.5 21.0 18.8 21.0 18.6C21.0 18.2 21.8 16.6 23.1 14.2C23.6 13.2 25.4 11.4 26.2 11.0C26.6 10.8 26.8 10.6 26.8 10.5C26.8 10.4 27.1 10.2 27.5 10.1C27.8 9.9 28.3 9.7 28.5 9.5C28.7 9.3 29.3 9.1 29.8 9.0C30.3 8.9 31.0 8.7 31.3 8.5C32.4 8.1 36.3 8.0 37.5 8.5C38.1 8.7 39.1 8.9 39.7 9.0C40.2 9.1 41.0 9.3 41.3 9.5C41.6 9.8 42.1 10.0 42.4 10.2C43.7 10.9 44.5 11.7 46.5 13.9C46.8 14.3 47.2 15.0 47.7 16.1C47.9 16.5 48.2 17.1 48.4 17.6C48.7 18.0 49.0 19.1 49.1 19.9C49.4 21.6 49.9 22.3 51.6 23.1C52.1 23.3 52.5 23.5 52.6 23.6C52.6 23.7 53.0 23.9 53.3 24.0C53.6 24.1 54.1 24.3 54.3 24.5C54.4 24.7 54.9 24.9 55.2 25.0C55.5 25.1 55.9 25.3 56.1 25.5C56.2 25.6 56.7 25.9 57.0 26.0C57.4 26.1 57.8 26.3 57.8 26.4C57.9 26.7 55.7 27.7 54.5 28.0C54.1 28.1 53.5 28.3 53.1 28.5C52.8 28.7 52.3 28.9 51.9 28.9C51.6 29.0 50.9 29.2 50.5 29.4C50.2 29.6 49.4 29.9 48.9 30.0C47.7 30.3 47.1 30.8 46.9 31.7C46.8 32.1 46.6 32.8 46.4 33.2C46.2 33.6 46.0 34.2 45.9 34.4C45.9 34.7 45.7 35.2 45.4 35.6C45.2 35.9 45.0 36.3 45.0 36.4C45.0 36.5 44.8 36.9 44.5 37.2C44.2 37.6 44.0 38.0 44.0 38.1C44.0 38.2 43.7 38.6 43.4 39.0C43.1 39.4 42.6 40.0 42.4 40.3C41.2 41.7 39.6 43.5 38.9 44.2C37.6 45.4 35.3 46.9 34.5 47.1C34.3 47.1 33.9 47.3 33.7 47.5C33.5 47.7 33.0 47.9 32.6 48.0C32.2 48.1 31.7 48.3 31.5 48.5C31.1 48.8 30.5 48.9 29.2 49.0C28.2 49.1 26.9 49.3 26.2 49.4C24.2 49.8 23.9 49.8 22.4 49.6C21.6 49.4 20.0 49.2 19.0 49.1C17.7 48.9 16.7 48.7 16.1 48.4C15.7 48.2 15.1 48.0 14.9 48.0C14.7 48.0 14.3 47.9 14.1 47.8C13.5 47.6 12.7 47.9 12.0 48.5C11.1 49.3 10.4 49.8 9.9 50.0C9.6 50.2 9.3 50.5 9.1 50.6C8.9 50.8 8.7 51.0 8.6 51.0C8.5 51.0 8.2 51.2 7.9 51.4C5.8 53.1 5.3 53.4 4.9 53.1ZM30.5 35.2C31.9 34.9 33.3 34.3 35.1 33.1C36.1 32.5 39.8 28.8 39.8 28.4C39.8 28.2 38.9 27.8 38.2 27.8C38.1 27.8 37.3 27.7 36.6 27.5C35.0 27.1 33.2 27.0 31.7 27.4C31.2 27.5 30.0 27.7 29.2 27.8C28.0 28.0 27.4 28.2 26.7 28.5C26.2 28.8 25.6 29.0 25.4 29.0C25.2 29.0 24.8 29.2 24.5 29.4C24.2 29.6 23.6 29.9 23.1 30.1C22.7 30.2 22.3 30.4 22.2 30.5C22.2 30.6 21.9 30.8 21.6 30.9C20.6 31.3 21.1 32.3 22.5 33.1C22.8 33.2 23.0 33.4 23.0 33.5C23.0 33.6 23.3 33.8 23.6 33.9C23.9 34.1 24.4 34.3 24.7 34.5C25.2 34.9 28.1 35.5 28.8 35.4C28.9 35.4 29.7 35.3 30.5 35.2ZM39.6 18.9C40.8 18.1 41.0 17.0 40.3 16.0C39.3 14.8 38.2 14.8 37.2 15.9C36.0 17.4 38.0 19.9 39.6 18.9Z"/><path class="dsh d2" d="M66.2 29.3C61.3 29.2 61.1 29.1 60.5 27.1C60.2 26.3 60.9 24.9 61.8 24.4C63.0 23.7 71.2 23.9 72.1 24.6C73.6 25.8 73.4 28.2 71.7 29.1C71.0 29.4 70.4 29.4 66.2 29.3Z"/><path class="dsh d1" d="M58.2 18.8C57.3 18.5 56.3 17.1 56.3 16.3C56.3 15.5 57.0 14.5 58.5 13.2C59.4 12.5 60.8 11.3 61.6 10.5C64.1 8.3 66.1 8.1 67.1 10.2C68.0 12.0 67.6 12.6 63.8 15.9C60.1 19.1 59.5 19.4 58.2 18.8Z"/><ellipse class="lid" cx="38.5" cy="17.4" rx="3.1" ry="3.1"/></g></svg>
+</template>
+
+<div class="traveler calling blinking" id="traveler" aria-hidden="true"><div class="bird-inner"></div></div>
+
+<header class="nav" id="nav">
+  <div class="wrap">
+   <div class="nav-bar">
+    <a class="brand" href="#top" aria-label="Vesper, back to top">
+      <span class="brand-bird" aria-hidden="true"></span><span class="brand-word" aria-hidden="true">vesper</span>
+    </a>
+    <nav aria-label="Sections">
+      <ul>
+        <li><a href="#how">How it works</a></li>
+        <li><a href="#benchmarks">Benchmarks</a></li>
+        <li><a href="#privacy">Privacy</a></li>
+        <li><a href="https://github.com/rahulsharmavishwakarma/vesper">GitHub</a></li>
+      </ul>
+    </nav>
+    <a class="btn btn-primary nav-dl" href="#download">Download</a>
+    <button class="theme" id="theme" type="button" aria-label="Switch to daylight">
+      <svg class="moon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 14.5A8 8 0 0 1 9.5 4a8 8 0 1 0 10.5 10.5Z"/></svg>
+      <svg class="sun" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" aria-hidden="true"><circle cx="12" cy="12" r="4.2"/><path d="M12 2.5v2M12 19.5v2M2.5 12h2M19.5 12h2M5.3 5.3l1.4 1.4M17.3 17.3l1.4 1.4M5.3 18.7l1.4-1.4M17.3 6.7l1.4-1.4"/></svg>
+    </button>
+   </div>
+  </div>
+</header>
+
+<main id="main">
+  <!-- Hero: the bird lands on a wire at dusk, calls, and its call becomes words. -->
+  <section class="hero pending" id="top" aria-labelledby="hero-title">
+    <div class="wrap">
+      <div class="stage">
+        <div class="stage-row">
+          <span class="perch" data-face="right" data-hero>
+            <svg class="bird" viewBox="0 0 80 60" aria-hidden="true"></svg>
+          </span>
+          <div class="call" aria-hidden="true">
+            <div class="reed" id="hero-reed"></div>
+          </div>
+        </div>
+        <div class="hero-wire" aria-hidden="true">
+          <svg class="wire-svg" id="hero-wire" preserveAspectRatio="none"><path d=""/></svg>
+        </div>
+        <p class="transcript" id="hero-text" aria-label="Example dictation: Can you send the Arclight notes to Priya by Friday?"><span class="w">Can</span> <span class="w">you</span> <span class="w">send</span> <span class="w">the</span> <span class="w">Arclight</span> <span class="w">notes</span> <span class="w">to</span> <span class="w">Priya</span> <span class="w">by</span> <span class="w">Friday?</span></p>
+      </div>
+      <div class="hero-foot">
+        <h1 id="hero-title"><span class="l1">Speak.</span> <span class="l2">It’s written.</span></h1>
+        <div class="hero-side">
+          <p>Vesper turns your voice into text on your Mac. Hold a shortcut, talk, and your words appear in the app you’re typing in.</p>
+          <div class="actions">
+            <a class="btn btn-primary" href="https://github.com/rahulsharmavishwakarma/vesper/releases/latest/download/vesper-macos-arm64.dmg">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 4v11M7 10.5l5 5 5-5M5 20h14"/></svg>
+              Download for Mac
+            </a>
+            <a class="btn btn-ghost" href="https://github.com/rahulsharmavishwakarma/vesper">View on GitHub</a>
+          </div>
+          <p class="fine"><span id="hero-ver">For</span> Macs with Apple silicon. Open source, and in early development.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- How it works: pinned, scroll scrubs shortcut, speech and typing. -->
+  <section class="how" id="how" aria-labelledby="how-title">
+    <div class="how-pin">
+      <div class="wrap">
+        <div class="split">
+          <div class="copy">
+            <h2 id="how-title">Hold, talk, let go.</h2>
+            <ol class="steps" id="steps">
+              <li class="on"><span class="n" aria-hidden="true">1</span><strong>Hold <kbd>⌥ Option</kbd> <kbd>Shift</kbd> <kbd>D</kbd></strong><span class="d">Or press <kbd>⌘ Command</kbd> <kbd>Shift</kbd> <kbd>Space</kbd> to start recording, and again to stop.</span></li>
+              <li><span class="n" aria-hidden="true">2</span><strong>Talk the way you’d say it</strong><span class="d">A small bar floats on screen while Vesper listens.</span></li>
+              <li><span class="n" aria-hidden="true">3</span><strong>Your words appear where you’re typing</strong><span class="d">With Accessibility allowed, Vesper types into the app you’re using. Without it, your text waits in Vesper, ready to copy.</span></li>
+            </ol>
+          </div>
+          <div class="desk" aria-hidden="true">
+            <div class="keys">
+              <div class="key" id="k1"><span><b>⌥</b>Option</span></div>
+              <div class="key" id="k2"><span><b>⇧</b>Shift</span></div>
+              <div class="key" id="k3"><span><b>D</b></span></div>
+            </div>
+            <div class="window">
+              <span class="perch" data-face="left"></span>
+              <div class="window-bar"><i></i><i></i><i></i></div>
+              <div class="window-body">
+                <div class="field">To <span>Priya</span></div>
+                <div class="field">Subject <span>Arclight notes</span></div>
+                <p class="typed" id="typed">Hi Priya, the Arclight notes are ready. Can we go through them on Friday?</p>
+              </div>
+              <div class="capture" id="capture">
+                <svg viewBox="0 0 80 60" aria-hidden="true"></svg>
+                <div class="reed" id="cap-reed"></div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Live drafts -->
+  <section class="chapter drafts" id="drafts" aria-labelledby="drafts-title">
+    <div class="wrap">
+      <h2 id="drafts-title">See it write<br>while you talk.</h2>
+      <p class="lede">Words appear as you speak. Settled words show in full colour. The grey tail is still being heard and can change, until the final text replaces the draft.</p>
+      <div class="demo wired">
+        <span class="perch" data-face="left"></span>
+        <p class="draft-line" id="draft-line" aria-label="Example live draft: The quarterly review moves to Thursday afternoon.">The quarterly review moves to Thursday afternoon.</p>
+        <div class="draft-meta" aria-hidden="true">
+          <div class="reed" id="draft-reed"></div>
+          <span><span class="legend-ink">Settled</span> and <span class="legend-grey">still listening</span></span>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Cleanup -->
+  <section class="chapter cleanup" id="cleanup" aria-labelledby="cleanup-title">
+    <div class="wrap split">
+      <div class="copy">
+        <h2 id="cleanup-title">Tidy it, or keep it as said.</h2>
+        <p class="lede">Turn on writing cleanup and a small writing model, Qwen3.5 0.8B, works on your Mac. <strong>As I said it</strong> adds punctuation and capitals. <strong>Polished</strong> also drops fillers and fixes what was misheard. Your original transcript is always kept.</p>
+        <div class="modes" role="group" aria-label="Cleanup style for the example">
+          <button type="button" data-mode="o" aria-pressed="false">Original</button>
+          <button type="button" data-mode="s" aria-pressed="false">As I said it</button>
+          <button type="button" data-mode="p" aria-pressed="true">Polished</button>
+        </div>
+      </div>
+      <div class="wired">
+        <span class="perch" data-face="left"></span>
+        <p class="clean-text" id="clean-text" aria-live="polite"></p>
+        <p class="orig">Original, always kept: <span>um so i think we should uh move the launch to to next weak</span></p>
+      </div>
+    </div>
+  </section>
+
+  <!-- Vocabulary -->
+  <section class="chapter vocab" id="vocabulary" aria-labelledby="vocab-title">
+    <div class="wrap split flip">
+      <div class="copy">
+        <h2 id="vocab-title">It learns your names.</h2>
+        <p class="lede">Teach Vesper the names and terms you use, like Arclight or Priya. It also learns from the corrections you make, and keeps what it learns on this Mac only.</p>
+      </div>
+      <div class="wired vocab-demo" id="vocab-demo">
+        <span class="perch" data-face="left"></span>
+        <div>
+          <p class="yours-title">Your words</p>
+          <ul class="yours" aria-label="Example vocabulary">
+            <li><span class="chip" id="chip-a">Arclight</span></li>
+            <li><span class="chip" id="chip-p">Priya</span></li>
+          </ul>
+        </div>
+        <p class="heard" aria-label="Example: Can you send the Arclight notes to Priya by Friday?">Can you send the <span class="slot" id="slot-a"><span class="wrong">arc light</span><span class="right">Arclight</span></span> notes to <span class="slot" id="slot-p"><span class="wrong">Pria</span><span class="right">Priya</span></span> by Friday?</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- Models and languages -->
+  <section class="chapter languages" id="languages" aria-labelledby="lang-title">
+    <div class="wrap">
+      <h2 id="lang-title">Forty languages.<br>Your pick of model.</h2>
+      <p class="lede">Choose from open speech models that run on your Mac. Together they cover 40 languages, and each model lists the ones it supports.</p>
+      <div class="globe-stage wired" id="globe-stage">
+        <span class="perch" data-face="left"></span>
+        <ul aria-label="The 40 languages covered by Vesper’s speech models">
+          <li lang="en">English</li><li lang="de">Deutsch</li><li lang="es">Español</li><li lang="fr">Français</li><li lang="hi">हिन्दी</li>
+          <li lang="ja">日本語</li><li lang="zh">中文</li><li lang="yue">粵語</li><li lang="ko">한국어</li><li lang="ar">العربية</li>
+          <li lang="fa">فارسی</li><li lang="ru">Русский</li><li lang="uk">Українська</li><li lang="it">Italiano</li><li lang="pt">Português</li>
+          <li lang="nl">Nederlands</li><li lang="pl">Polski</li><li lang="sv">Svenska</li><li lang="nb">Norsk bokmål</li><li lang="da">Dansk</li>
+          <li lang="fi">Suomi</li><li lang="et">Eesti</li><li lang="lv">Latviešu</li><li lang="lt">Lietuvių</li><li lang="cs">Čeština</li>
+          <li lang="sk">Slovenčina</li><li lang="sl">Slovenščina</li><li lang="hr">Hrvatski</li><li lang="hu">Magyar</li><li lang="ro">Română</li>
+          <li lang="bg">Български</li><li lang="mk">Македонски</li><li lang="el">Ελληνικά</li><li lang="mt">Malti</li><li lang="tr">Türkçe</li>
+          <li lang="th">ไทย</li><li lang="vi">Tiếng Việt</li><li lang="id">Bahasa Indonesia</li><li lang="ms">Bahasa Melayu</li><li lang="fil">Filipino</li>
+        </ul>
+      </div>
+      <div class="models">
+        <div>
+          <h3>Setup picks a model for you</h3>
+          <p>When you set up Vesper, it recommends the best speech model for your language and your Mac, based on published benchmarks. You can change it any time.</p>
+        </div>
+        <ul class="model-list" aria-label="Speech models">
+          <li>NVIDIA Parakeet TDT 0.6B v3</li>
+          <li>Cohere Transcribe</li>
+          <li>Qwen3-ASR 0.6B</li>
+          <li>NVIDIA Nemotron 3.5 ASR Streaming</li>
+          <li>IBM Granite Speech</li>
+          <li>OpenAI Whisper</li>
+          <li>Moonshine</li>
+        </ul>
+      </div>
+    </div>
+  </section>
+
+  <!-- Apple silicon speed -->
+  <section class="chapter speed" id="speed" aria-labelledby="speed-title">
+    <div class="wrap split">
+      <div class="copy">
+        <h2 id="speed-title">Quick on Apple silicon.</h2>
+        <p class="lede">Vesper runs the speech model on your Mac’s GPU, and on the Neural Engine for the models that use it. It chooses on its own, so there are no settings to tune.</p>
+      </div>
+      <figure class="chip-fig wired" id="chip-fig">
+        <span class="perch" data-face="left"></span>
+        <div class="chip-stage" id="chip-stage">
+          <svg class="chip-over" id="chip-over" viewBox="0 0 560 380" role="img" aria-label="Diagram of an Apple silicon chip. The speech model goes to the GPU automatically, and to the Neural Engine for some models.">
+            <defs>
+              <mask id="some-mask" maskUnits="userSpaceOnUse" x="0" y="0" width="560" height="380"><path class="mask-path" pathLength="1" d="M110 188C150 188 146 290 186 290"/></mask>
+            </defs>
+            <g class="t">
+              <text class="lbl" x="200" y="88">CPU</text>
+              <text class="lbl" x="364" y="88">GPU</text>
+              <text class="sub" x="364" y="110">Used automatically</text>
+              <text class="lbl" x="200" y="232">Neural Engine</text>
+              <text class="sub" x="200" y="254">For some models</text>
+              <text class="lbl" x="0" y="168">Speech model</text>
+            </g>
+            <circle class="src" cx="14" cy="188" r="6"/>
+            <path class="route main" pathLength="1" d="M20 188H404"/>
+            <path class="route some" mask="url(#some-mask)" d="M110 188C150 188 146 290 186 290"/>
+            <path class="route head" d="M396 181l8 7-8 7"/>
+          </svg>
+        </div>
+        <figcaption class="cap">Where the speech model runs. It uses the GPU automatically. The route to the Neural Engine is dashed because only some models use it.</figcaption>
+      </figure>
+    </div>
+  </section>
+
+  <!-- Benchmarks -->
+  <section class="chapter bench" id="benchmarks" aria-labelledby="bench-title">
+    <div class="wrap">
+      <div class="bench-head">
+        <div>
+          <h2 id="bench-title">Measured on one Mac.</h2>
+          <p class="lede">We ran each speech model through Vesper on the same held-out recordings and counted the words it got wrong, how long it took to write each recording, and how much memory it used.</p>
+          <p class="source" id="bench-source">Measured by Vesper through the app, on one Mac.</p>
+          <p class="source-note">Showing the models that met Vesper’s quality bar in each language.</p>
+        </div>
+      </div>
+      <div class="lineup-bar">
+        <div class="langs" role="group" aria-label="Language" id="langs"></div>
+        <p class="takeaway" id="takeaway" aria-live="polite"></p>
+      </div>
+      <div class="chart-box" id="chart-box">
+        <span class="perch" data-face="left"></span>
+        <svg class="chart" id="chart" role="img"></svg>
+        <p class="chart-note">Numbers match the ranked list below.</p>
+      </div>
+      <div class="lineup-wrap" id="lineup-wrap">
+        <table class="lineup" id="lineup" data-sort="wer">
+          <caption id="bench-table-caption" class="vh"></caption>
+          <thead>
+            <tr><th scope="col">Model</th><th scope="col" class="m-wer">Word error rate<small>lower is better</small></th><th scope="col" class="m-ms">Time per recording<small>log scale</small></th><th scope="col" class="m-mem">Peak memory</th></tr>
+          </thead>
+          <tbody></tbody>
+        </table>
+      </div>
+      <p class="bench-missing" id="bench-missing" hidden>The benchmark results didn’t load. They’re also in the project’s <a href="https://github.com/rahulsharmavishwakarma/vesper/blob/main/models/recommendations.json">model recommendations</a>.</p>
+      <details class="published">
+        <summary>Published English averages, for comparison</summary>
+        <p id="pub-note"></p>
+        <ul id="pub-list"></ul>
+      </details>
+    </div>
+  </section>
+
+  <!-- Privacy -->
+  <section class="chapter privacy" id="privacy" aria-labelledby="privacy-title">
+    <div class="wrap">
+      <div class="priv-head">
+        <h2 id="privacy-title">It stays on your Mac.</h2>
+        <p class="lede">Speech and text are processed on your Mac, and your recordings stay there. There’s no account to create and no cloud API key to paste in.</p>
+      </div>
+      <figure class="ledger" id="ledger" aria-labelledby="ledger-cap">
+        <span class="perch" data-face="left"></span>
+        <div class="ledger-in" id="ledger-in">
+          <span class="b-label">This Mac</span>
+          <div class="mac-art" id="mac-art" aria-hidden="true"></div>
+          <dl>
+            <dt>Processed here</dt><dd>Your speech, the transcript and any writing cleanup.</dd>
+            <dt>Stored here</dt><dd>Recordings, history, your vocabulary and your corrections.</dd>
+            <dt>Not needed</dt><dd>An account, or a cloud API key.</dd>
+          </dl>
+        </div>
+        <div class="ledger-out" id="ledger-out">
+          <svg class="arrow" viewBox="0 0 72 14" aria-hidden="true"><path d="M70 7H4M10 2L4 7l6 5" stroke-dasharray="3 4"/></svg>
+          <h3>The internet</h3>
+          <p>Used only to download models and app updates. Nothing you say goes out.</p>
+        </div>
+        <figcaption class="vh" id="ledger-cap">What stays on your Mac, and the only things that use the internet.</figcaption>
+      </figure>
+    </div>
+  </section>
+
+  <!-- Audio files and history -->
+  <section class="chapter files" id="history" aria-labelledby="files-title">
+    <div class="wrap split">
+      <div class="copy">
+        <h2 id="files-title">Recordings, too.</h2>
+        <p class="lede">Import an audio file to get a transcript. Your recordings and their text are saved to History, where you can search, review, copy and export them.</p>
+      </div>
+      <div class="hist-wrap"><span class="perch" data-face="left"></span><div class="history" id="history-demo" aria-hidden="true">
+        <div class="search"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6"><circle cx="7" cy="7" r="5"/><path d="M11 11l3.5 3.5"/></svg><span class="q" id="hq"></span></div>
+        <div class="hrow" data-k="arclight"><span class="t">Can you send the <mark>Arclight</mark> notes to Priya by Friday?</span><span class="m">Dictation, today</span><span class="acts"><span>Copy</span><span>Export</span></span></div>
+        <div class="hrow"><span class="t">The quarterly review moves to Thursday afternoon.</span><span class="m">Dictation, yesterday</span><span class="acts"><span>Copy</span></span></div>
+        <div class="hrow" data-k="arclight"><span class="t">Interview with the <mark>Arclight</mark> team</span><span class="m">Imported audio file</span><span class="acts"><span>Copy</span><span>Export</span></span></div>
+        <div class="hrow"><span class="t">Ideas for the weekend</span><span class="m">Dictation, Monday</span><span class="acts"><span>Copy</span></span></div>
+      </div></div>
+    </div>
+  </section>
+
+  <!-- Guided first launch -->
+  <section class="chapter setup" id="setup" aria-labelledby="setup-title">
+    <div class="wrap">
+      <h2 id="setup-title">Ready in one sitting.</h2>
+      <p class="lede">The first time you open Vesper, it walks you through setup, one step at a time.</p>
+      <div class="route" id="route">
+        <span class="perch hop" data-face="right"></span>
+        <ol>
+          <li><b>1</b>Pick your language</li>
+          <li><b>2</b>Check the microphone</li>
+          <li><b>3</b>Download the recommended models</li>
+          <li><b>4</b>Allow typing into apps</li>
+          <li><b>5</b>Confirm your shortcut</li>
+          <li><b>6</b>Teach a word</li>
+          <li><b>7</b>Try a first dictation</li>
+        </ol>
+      </div>
+    </div>
+  </section>
+
+  <!-- Download -->
+  <section class="chapter download" id="download" aria-labelledby="dl-title">
+    <div class="wrap">
+      <div class="ver">
+        <h2 id="dl-title">Get Vesper</h2>
+        <span class="perch" data-face="left"></span>
+      </div>
+      <div class="dl-grid">
+        <div>
+          <p class="lede">The latest stable release, as a DMG for Macs with Apple silicon. Intel Macs, Windows and Linux aren’t supported.</p>
+          <div class="actions">
+            <a class="btn btn-primary" href="https://github.com/rahulsharmavishwakarma/vesper/releases/latest/download/vesper-macos-arm64.dmg">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 4v11M7 10.5l5 5 5-5M5 20h14"/></svg>
+              Download for Mac
+            </a>
+            <a class="btn btn-ghost" href="https://github.com/rahulsharmavishwakarma/vesper/releases">All releases</a>
+          </div>
+          <p class="rel-meta" id="rel-meta" hidden></p>
+        </div>
+        <div class="first-run">
+          <h3>Opening it the first time</h3>
+          <p>Vesper isn’t notarized yet, so macOS shows a warning on first launch. To open it:</p>
+          <ol>
+            <li>Open System Settings.</li>
+            <li>Go to Privacy &amp; Security.</li>
+            <li>Choose Open Anyway.</li>
+          </ol>
+        </div>
+      </div>
+    </div>
+  </section>
+</main>
+
+<footer class="site-foot" id="foot">
+  <div class="wrap">
+    <div class="foot-top">
+      <div class="foot-lead">
+        <p class="foot-title">Voice to text, on your Mac.</p>
+        <p class="fine">Local speech models, private by design, made for Macs with Apple silicon.</p>
+      </div>
+      <nav class="foot-cols" aria-label="Footer">
+        <div>
+          <h2>Get Vesper</h2>
+          <ul>
+            <li><a href="https://github.com/rahulsharmavishwakarma/vesper/releases/latest/download/vesper-macos-arm64.dmg">Download for Mac</a></li>
+            <li><a href="https://github.com/rahulsharmavishwakarma/vesper/releases">All releases</a></li>
+            <li><a href="https://github.com/rahulsharmavishwakarma/vesper/blob/main/CHANGELOG.md">Changelog</a></li>
+          </ul>
+        </div>
+        <div>
+          <h2>Learn</h2>
+          <ul>
+            <li><a href="#how">How it works</a></li>
+            <li><a href="#benchmarks">Benchmarks</a></li>
+            <li><a href="#privacy">Privacy</a></li>
+            <li><a href="https://github.com/rahulsharmavishwakarma/vesper/blob/main/docs/user-guide.md">User guide</a></li>
+          </ul>
+        </div>
+        <div>
+          <h2>Project</h2>
+          <ul>
+            <li><a href="https://github.com/rahulsharmavishwakarma/vesper">Source on GitHub</a></li>
+            <li><a href="https://github.com/rahulsharmavishwakarma/vesper/issues">Report an issue</a></li>
+            <li><a href="https://github.com/rahulsharmavishwakarma/vesper/blob/main/LICENSE">Apache 2.0 license</a></li>
+          </ul>
+        </div>
+      </nav>
+    </div>
+    <div class="foot-mark" id="foot-mark">
+      <div class="giant" id="giant" role="img" aria-label="Vesper">
+        <span class="giant-bird"><span class="perch" data-face="right" data-home></span><button type="button" id="sing" aria-label="Hear the bird sing"></button></span>
+        <span class="giant-word" aria-hidden="true"><span>v</span><span>e</span><span>s</span><span>p</span><span>e</span><span>r</span></span>
+      </div>
+    </div>
+    <div class="foot-base">
+      <p>Open source under the Apache 2.0 license, and in early development.</p>
+      <a href="#top">Back to top</a>
+    </div>
+  </div>
+</footer>
+
+<script>
+(() => {
+'use strict';
+/* ================= Data (copied from ./assets/benchmarks.json) ================= */
+// Built from models/recommendations.json by scripts/build-site.mjs on every Pages deploy.
+let BENCH = { languages: {}, results: [], published: null };
+const esc = t => String(t).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[c]);
+
+/* ================= Helpers ================= */
+const $ = (s, r = document) => r.querySelector(s);
+const $$ = (s, r = document) => [...r.querySelectorAll(s)];
+const clamp = (v, a = 0, b = 1) => Math.min(b, Math.max(a, v));
+const lerp = (a, b, t) => a + (b - a) * t;
+const smooth = t => t * t * (3 - 2 * t);
+const easeIO = t => t < .5 ? 4 * t * t * t : 1 - Math.pow(-2 * t + 2, 3) / 2;
+const easeOut = t => 1 - Math.pow(1 - t, 3);
+const root = document.documentElement;
+const mq = matchMedia('(prefers-reduced-motion: reduce)');
+const RM = mq.matches;
+root.classList.add(RM ? 'rm' : 'motion');
+let vw = innerWidth, vh = innerHeight, now = performance.now();
+
+/* ================= Bird markup ================= */
+const tpl = $('#bird-tpl');
+const birdSVG = () => tpl.content.firstElementChild.cloneNode(true);
+$$('.perch').forEach(p => { p.replaceChildren(birdSVG()); });
+const traveler = $('#traveler');
+traveler.querySelector('.bird-inner').appendChild(birdSVG());
+// Copy the mark into the small capture bar and the footer brand.
+{
+  const cap = $('#capture svg');
+  const b = birdSVG(); b.removeAttribute('class'); b.style.width = '28px'; b.style.height = '21px'; b.classList.add('bird'); cap.replaceWith(b);
+  $('.brand-bird').appendChild(birdSVG());
+}
+if (RM) $$('.perch').forEach(p => p.classList.remove('calling'));
+else $$('.perch').forEach(p => p.classList.add('calling', 'blinking'));
+
+/* ================= Theme ================= */
+const themeBtn = $('#theme');
+const isLight = () => root.dataset.theme ? root.dataset.theme === 'light' : matchMedia('(prefers-color-scheme: light)').matches;
+let tokens = {};
+// A theme switch blends the sky's settings over THEME_MS, so the stars glide into the daylight grid
+// (and back) instead of snapping. The page's own colours cross-fade in CSS over the same time.
+const THEME_MS = 1100;
+let tokFrom = null, tokTo = null, themeT0 = -1e9, blendOnly = null;
+// With the circular reveal, colours change inside the circle at once; only the dot layout glides.
+const GEOMETRY = new Set(['jitter', 'even', 'pools', 'starOn']);
+function readTokens(animate, geometryOnly) {
+  const next = sampleTokens();
+  if (animate && !RM && tokens.star) { tokFrom = { ...tokens }; tokTo = next; themeT0 = performance.now(); blendOnly = geometryOnly ? GEOMETRY : null; stepTheme(); }
+  else { tokens = next; tokFrom = null; }
+  themeBtn.setAttribute('aria-label', isLight() ? 'Switch to night' : 'Switch to daylight');
+}
+function stepTheme() {
+  if (!tokFrom) return;
+  const k = clamp((performance.now() - themeT0) / THEME_MS), e = easeIO(k);
+  const out = {};
+  for (const key in tokTo) {
+    const a = tokFrom[key], b = tokTo[key];
+    if (blendOnly && !blendOnly.has(key)) { out[key] = b; continue; }
+    out[key] = Array.isArray(b) ? mix(a, b, e) : typeof b === 'number' ? lerp(a, b, e) : (e < .5 ? a : b);
+  }
+  tokens = out;
+  if (k >= 1) { tokens = tokTo; tokFrom = null; }
+}
+function sampleTokens() {
+  const cs = getComputedStyle(root);
+  const g = n => cs.getPropertyValue(n).trim();
+  return {
+    s0t: hex(g('--sky-0-top')), s0b: hex(g('--sky-0-bottom')), s1t: hex(g('--sky-1-top')), s1b: hex(g('--sky-1-bottom')),
+    s2t: hex(g('--sky-2-top')), s2b: hex(g('--sky-2-bottom')), glow: hex(g('--glow')), glowA: parseFloat(g('--glow-alpha')),
+    star: hex(g('--star')), starA: parseFloat(g('--star-alpha')), floor: parseFloat(g('--star-floor')), celestial: g('--celestial'),
+    accent: hex(g('--accent')), muted: hex(g('--muted')),
+    spark: hex(g('--spark')), jitter: parseFloat(g('--dot-jitter')), even: parseFloat(g('--dot-even')), formDot: hex(g('--form-dot')), pools: parseFloat(g('--pools')), horizon: parseFloat(g('--horizon')),
+    starOn: g('--celestial') === 'star' ? 1 : 0
+  };
+}
+function hex(h) { h = h.replace('#', ''); if (h.length === 3) h = h.split('').map(c => c + c).join(''); const n = parseInt(h, 16); return [n >> 16 & 255, n >> 8 & 255, n & 255]; }
+const mix = (a, b, t) => [lerp(a[0], b[0], t), lerp(a[1], b[1], t), lerp(a[2], b[2], t)];
+const rgba = (c, a = 1) => `rgba(${c[0] | 0},${c[1] | 0},${c[2] | 0},${a})`;
+themeBtn.addEventListener('click', () => {
+  const next = isLight() ? 'dark' : 'light';
+  switchTheme(() => {
+    root.dataset.theme = next;
+    try { localStorage.setItem('vesper-landing-theme', next); } catch (e) {}
+  });
+});
+function switchTheme(apply) {
+  // Preferred: the new theme spreads from the toggle in a growing circle (View Transitions), while the
+  // stars glide into the daylight grid inside it. Fallback: a cross-fade of colours and sky together.
+  if (!RM && document.startViewTransition) {
+    const r = themeBtn.getBoundingClientRect(), x = r.left + r.width / 2, y = r.top + r.height / 2;
+    const end = Math.hypot(Math.max(x, innerWidth - x), Math.max(y, innerHeight - y));
+    const vt = document.startViewTransition(() => { apply && apply(); readTokens(true, true); drawSky(true); });
+    vt.ready.then(() => root.animate(
+      { clipPath: [`circle(0px at ${x}px ${y}px)`, `circle(${end}px at ${x}px ${y}px)`] },
+      { duration: 750, easing: 'cubic-bezier(.65, 0, .35, 1)', pseudoElement: '::view-transition-new(root)' }
+    )).catch(() => {});
+    return;
+  }
+  apply && apply();
+  if (!RM) { root.classList.add('theme-fade'); clearTimeout(switchTheme.t); switchTheme.t = setTimeout(() => root.classList.remove('theme-fade'), THEME_MS + 100); }
+  readTokens(true); drawSky(true);
+}
+matchMedia('(prefers-color-scheme: light)').addEventListener('change', () => switchTheme());
+readTokens();
+
+/* ================= Sky canvas: dusk to night ================= */
+const cv = $('#sky'), cx = cv.getContext('2d');
+let dpr = 1, stars = [], ripples = [], pointer = { x: -1e4, y: -1e4, px: 0.5, py: 0.5 };
+let scrollP = 0;
+function sizeSky() {
+  dpr = Math.min(devicePixelRatio || 1, 2);
+  cv.width = Math.round(vw * dpr); cv.height = Math.round(vh * dpr);
+  // A jittered grid of fine dots (like the app's Welcome screen), with a few brighter stars.
+  const gap = vw < 700 ? 22 : 26;
+  let seed = 7; const rnd = () => (seed = (seed * 16807) % 2147483647) / 2147483647;
+  stars = [];
+  for (let y = gap / 2; y < vh + gap; y += gap) for (let x = gap / 2; x < vw; x += gap) {
+    const tw = rnd() < .04;
+    const jx = (rnd() - .5) * gap * .7, jy = (rnd() - .5) * gap * .7;
+    stars.push({ gx: x, gy: y, jx, jy, x: (x + jx) / vw, y: (y + jy) / vh, r: tw ? .7 + rnd() * 1 : .5 + rnd() * .3, a: tw ? .5 + rnd() * .45 : .09 + rnd() * .13, ph: rnd() * 6.28, sp: .6 + rnd() * 1.6, z: tw ? .7 : .25, tw });
+  }
+}
+function docProgress() { const max = document.documentElement.scrollHeight - vh; return max > 0 ? clamp(scrollY / max) : 0; }
+function skyColors(p) {
+  const t = tokens;
+  if (p < .32) { const k = smooth(p / .32); return [mix(t.s0t, t.s1t, k), mix(t.s0b, t.s1b, k)]; }
+  const k = smooth(clamp((p - .32) / .5)); return [mix(t.s1t, t.s2t, k), mix(t.s1b, t.s2b, k)];
+}
+function drawSky(force) {
+  const t = tokens, p = scrollP, W = cv.width, H = cv.height, s = dpr;
+  const [top, bot] = skyColors(p);
+  const g = cx.createLinearGradient(0, 0, 0, H);
+  g.addColorStop(0, rgba(top)); g.addColorStop(1, rgba(bot));
+  cx.fillStyle = g; cx.fillRect(0, 0, W, H);
+  // Last light on the horizon: sinks and fades as the page scrolls into night.
+  const ga = t.glowA * (1 - smooth(clamp(p / .55)));
+  if (ga > .002) {
+    const gy = H * (1.04 + p * .5), gr = Math.max(W, H) * .75;
+    const rg = cx.createRadialGradient(W * .42, gy, 0, W * .42, gy, gr);
+    rg.addColorStop(0, rgba(t.glow, ga)); rg.addColorStop(.45, rgba(t.glow, ga * .35)); rg.addColorStop(1, rgba(t.glow, 0));
+    cx.fillStyle = rg; cx.fillRect(0, 0, W, H);
+  }
+  const time = now / 1000;
+  const ox = (pointer.px - .5), oy = (pointer.py - .5);
+  // Stars (night) or a fine dot field (daylight). They answer the bird's call with a ripple.
+  const vis = t.floor + (1 - t.floor) * smooth(clamp((p - .04) / .5));
+  // Daylight: slow pools of sunlight drift over the dot paper; the dots under them swell and warm,
+  // like a halftone of moving light. (Night has twinkling stars instead.)
+  // The ending: as the footer arrives, a soft, blurred warm glow rises behind it
+  // (afterglow at night, sunset by day). The dots stay as they are.
+  const fr = foot.getBoundingClientRect();
+  const hz = smooth(clamp((vh - fr.top) / (vh * .95)));
+  if (hz > .005) {
+    // A wide, low ellipse that hugs the bottom edge, so the top of the screen keeps its sky.
+    const rx = Math.max(vw * .75, 520), ry = Math.min(vh * .62, rx * .62), hx = vw * .5, hy = vh + ry * .18;
+    cx.save(); cx.translate(hx * s, hy * s); cx.scale(1, ry / rx);
+    const hg = cx.createRadialGradient(0, 0, 0, 0, 0, rx * s);
+    for (const [k, c, m] of [[0, t.accent, 1], [.3, t.accent, .62], [.55, t.glow, .3], [.8, t.glow, .08], [1, t.glow, 0]]) hg.addColorStop(k, rgba(c, t.horizon * m * hz));
+    cx.fillStyle = hg; cx.fillRect(-rx * s, -rx * s, rx * 2 * s, rx * 2 * s); cx.restore();
+  }
+  const pools = [];
+  if (t.pools > .005) {
+    const T = RM ? 0 : time, R = Math.max(vw, vh);
+    const defs = [[.24, .3, .2, .14, 0, .3], [.74, .66, .17, .16, 2.1, .26], [.52, .02, .22, .1, 4.2, .22]];
+    for (const [cxp, cyp, ax, ay, ph, rr] of defs) {
+      const sy = scrollY * .0007;
+      const px = vw * (cxp + ax * Math.sin(T * .09 + ph + sy * .6)), py = vh * (cyp + ay * Math.cos(T * .075 + ph * 1.3 + sy));
+      pools.push([px, py, R * rr]);
+      const wg = cx.createRadialGradient(px * s, py * s, 0, px * s, py * s, R * rr * s);
+      wg.addColorStop(0, rgba(t.glow, .085 * t.pools)); wg.addColorStop(.5, rgba(t.glow, .035 * t.pools)); wg.addColorStop(1, rgba(t.glow, 0));
+      cx.fillStyle = wg; cx.fillRect(0, 0, W, H);
+    }
+  }
+  for (const st of stars) {
+    // Night: uneven stars. Daylight: an even grid at one depth, where half the bright points stay as
+    // ember sparks and the rest join the grid. Every property blends, so a theme switch has no pops.
+    const sw = st.tw ? (st.ph < 3.1 ? 1 : 1 - t.even) : 0;
+    const z = lerp(lerp(st.z, .25, t.even), st.z, sw);
+    const bx = st.gx + st.jx * t.jitter, by = st.gy + st.jy * t.jitter;
+    let x = (bx - ox * 14 * z), y = ((by - scrollY * .04 * z) % vh + vh) % vh - oy * 10 * z;
+    const base = lerp(lerp(st.a, .34, t.even), st.a * (1 - .3 * t.even), sw);
+    let a = base * t.starA * (RM ? 1 : 1 - sw * .4 * (1 - Math.sin(time * st.sp + st.ph)));
+    // Dots brighten around the pointer, as on the Welcome screen.
+    const pd = Math.hypot(x - pointer.x, y - pointer.y);
+    let boost = pd < 150 ? (1 - pd / 150) * .45 : 0;
+    for (const r of ripples) {
+      const age = (now - r.t) / 1000, rad = age * 520, d = Math.hypot(x - r.x, y - r.y), band = 46;
+      if (Math.abs(d - rad) < band) boost += (1 - Math.abs(d - rad) / band) * (1 - age / 1.9);
+    }
+    let lit = 0;
+    for (const [px, py, pr] of pools) { const dd = ((x - px) ** 2 + (y - py) ** 2) / (pr * pr * .36); if (dd < 4) lit += Math.exp(-dd); }
+    lit = clamp(lit) * clamp(t.pools) * (1 - sw);
+    a = clamp(a + boost * .9 + lit * .26);
+    if (a < .01) continue;
+    const col = mix(mix(t.star, t.accent, lit * .75), t.spark, sw);
+    cx.fillStyle = boost > .2 ? rgba(mix(col, t.accent, clamp(boost)), a) : rgba(col, a);
+    const rr = lerp(lerp(st.r, .72, t.even), st.r, sw) * (1 + lit * 1.15) * s * (1 + boost * .7);
+    if (sw > .5 || rr > 1.3 * s) { cx.beginPath(); cx.arc(x * s, y * s, rr, 0, 6.283); cx.fill(); } else cx.fillRect(x * s - rr, y * s - rr, rr * 2, rr * 2);
+  }
+  ripples = ripples.filter(r => now - r.t < 1900);
+  // The evening star (night) or a lowering sun (daylight).
+  if (!(t.starOn > .01)) {
+    /* Daylight: no celestial body. */
+  } else if (t.celestial === 'sun') {
+    const set = smooth(clamp(p / .6)), fade = 1 - set;
+    if (fade > .01) {
+      const sx = vw * .84, sy = vh * (.17 + set * .95), sr = Math.min(vw, vh) * .055;
+      const sg = cx.createRadialGradient(sx * s, sy * s, 0, sx * s, sy * s, sr * 3.4 * s);
+      sg.addColorStop(0, rgba(t.glow, .1 * fade)); sg.addColorStop(.35, rgba(t.glow, .045 * fade)); sg.addColorStop(1, rgba(t.glow, 0));
+      cx.fillStyle = sg; cx.fillRect(0, 0, W, H);
+      cx.fillStyle = rgba(mix([255, 226, 204], [255, 196, 168], set), .5 * fade);
+      cx.beginPath(); cx.arc(sx * s, sy * s, sr * s, 0, 6.283); cx.fill();
+    }
+  } else {
+    const ex = vw * .83 - ox * 10, ey = vh * .19 - oy * 8;
+    const k = t.starOn * (1 - smooth(clamp((scrollY - vh * .35) / (vh * .4)))) * smooth(clamp((Math.hypot(ex - birdAt.x, ey - birdAt.y) - 50) / 110));
+    if (k < .01) return drawParticles();
+    const tw = RM ? 1 : .9 + .1 * Math.sin(time * 1.3);
+    const eg = cx.createRadialGradient(ex * s, ey * s, 0, ex * s, ey * s, 40 * s);
+    eg.addColorStop(0, rgba([255, 236, 220], .55 * k * tw)); eg.addColorStop(.25, rgba(t.accent, .16 * k)); eg.addColorStop(1, rgba(t.accent, 0));
+    cx.fillStyle = eg; cx.fillRect((ex - 40) * s, (ey - 40) * s, 80 * s, 80 * s);
+    cx.strokeStyle = rgba([255, 240, 228], .5 * k * tw); cx.lineWidth = 1 * s;
+    const L = (14 + 6 * k) * s;
+    cx.beginPath(); cx.moveTo(ex * s - L, ey * s); cx.lineTo(ex * s + L, ey * s); cx.moveTo(ex * s, ey * s - L); cx.lineTo(ex * s, ey * s + L); cx.stroke();
+    cx.fillStyle = rgba([255, 248, 240], .95 * k);
+    cx.beginPath(); cx.arc(ex * s, ey * s, 2.2 * s, 0, 6.283); cx.fill();
+  }
+  drawParticles();
+}
+
+/* ================= Layout cache ================= */
+const perches = $$('.perch').filter(p => !p.closest('.capture'));
+let stops = [];
+function measure() {
+  vw = innerWidth; vh = innerHeight;
+  const maxA = document.documentElement.scrollHeight - vh * .5 - 24;
+  stops = perches.map(el => {
+    const sec = el.closest('section, footer');
+    const r = sec.getBoundingClientRect();
+    const top = r.top + scrollY, h = r.height, m = Math.min(vh * .42, h * .36);
+    return { el, top, bottom: top + h, m, start: Math.min(top + m, maxA), home: el.hasAttribute('data-home') };
+  });
+  sizeSky();
+  fitHeadline();
+  layoutForms();
+  drawWire(0);
+}
+
+/* Keep "Speak." and "It's written." on one line each in every browser. */
+function fitHeadline() {
+  const h = $('.hero h1'); h.style.fontSize = '';
+  const need = Math.max(...$$('span', h).map(s => s.scrollWidth)), room = h.clientWidth;
+  if (need > room) h.style.fontSize = (parseFloat(getComputedStyle(h).fontSize) * room / need * .98).toFixed(1) + 'px';
+}
+
+/* ================= The traveling bird ================= */
+const inner = traveler.querySelector('.bird-inner');
+let birdState = { flying: false, landedAt: -1, intro: RM ? 1 : 0, home: false };
+const birdAt = { x: -1e4, y: -1e4 };
+const foot = $('#foot');
+const introStart = performance.now() + 250;
+function perchBox(el) { const r = el.getBoundingClientRect(); return { x: r.left, y: r.top, w: r.width, face: el.dataset.face === 'left' ? -1 : 1 }; }
+function bez(a, b, c, d, t) { const u = 1 - t; return u * u * u * a + 3 * u * u * t * b + 3 * u * t * t * c + t * t * t * d; }
+function bezD(a, b, c, d, t) { const u = 1 - t; return 3 * u * u * (b - a) + 6 * u * t * (c - b) + 3 * t * t * (d - c); }
+function flight(P0, P1, t) {
+  const dx = P1.x - P0.x, lift = Math.min(240, vh * .3) + Math.abs(dx) * .08;
+  const xs = [P0.x, P0.x + dx * .3, P1.x - dx * .3, P1.x], ys = [P0.y, Math.min(P0.y, P1.y) - lift, Math.min(P0.y, P1.y) - lift * .6, P1.y];
+  return { x: bez(...xs, t), y: bez(...ys, t), vx: bezD(...xs, t), vy: bezD(...ys, t), w: lerp(P0.w, P1.w, t) };
+}
+// The bird glides: it eases toward the scroll position instead of jumping with each wheel step,
+// and its turn and tilt ease too. No bobbing or wing wobble.
+// Scroll sets where the bird should be; the bird follows that target on a spring in page
+// coordinates, so it can never jump, and a perched bird stays fixed to its line while you scroll.
+let bp = null, faceS = 1, angS = 0, hoverK = 0;
+function updateBird(dt = 1 / 60) {
+  if (RM || !stops.length) return;
+  const a = scrollY + vh * .5;
+  let pos, flying = false, face = 1, vx = 0, vy = 0, k = 0;
+  for (let i = 0; i < stops.length; i++) {
+    const s = stops[i], start = i === 0 ? -Infinity : s.start, end = i === stops.length - 1 ? Infinity : Math.min(i === 0 ? Math.max(s.bottom - s.m, vh * .5 + 160) : s.bottom - s.m, stops[i + 1].start - 1);
+    if (a <= end && a >= start) { const b = perchBox(s.el); pos = b; face = b.face; k = i; break; }
+    const n = stops[i + 1];
+    if (n && a > end && a < n.start) {
+      const t = (a - end) / (n.start - end), e = easeIO(clamp(t));
+      const P0 = perchBox(s.el), P1 = perchBox(n.el), f = flight(P0, P1, e);
+      pos = f; vx = f.vx; vy = f.vy; flying = t > 0.001 && t < .999; face = flying ? (P1.x >= P0.x ? 1 : -1) : P1.face; k = i;
+      break;
+    }
+  }
+  if (!pos) return;
+  // Intro: fly in from the dusk at the left edge and land on the wire.
+  const it = clamp((now - introStart) / 1500);
+  if (it < 1) {
+    const e = easeOut(it), P1 = pos, P0 = { x: -vw * .25, y: vh * .05, w: pos.w };
+    const f = flight(P0, P1, e); pos = f; vx = f.vx; vy = f.vy; flying = true; face = 1;
+  }
+  // Follow the target on a spring.
+  const ty = pos.y + scrollY;
+  if (!bp || Math.hypot(pos.x - bp.x, ty - bp.y) > vh * 3) bp = { x: pos.x, y: ty, w: pos.w, vx: 0, vy: 0 };
+  // Critically damped spring: eases in and out; speed capped so long hops stay a glide.
+  const K = 9, h = Math.min(dt, 1 / 30);
+  bp.vx += (K * K * (pos.x - bp.x) - 2 * K * bp.vx) * h;
+  bp.vy += (K * K * (ty - bp.y) - 2 * K * bp.vy) * h;
+  const sp = Math.hypot(bp.vx, bp.vy), cap = Math.max(1600, vh * 2.4);
+  if (sp > cap) { bp.vx *= cap / sp; bp.vy *= cap / sp; }
+  bp.x += bp.vx * h; bp.y += bp.vy * h;
+  bp.w += (pos.w - bp.w) * (1 - Math.exp(-dt * 8));
+  const rvx = bp.vx, rvy = bp.vy;
+  const lag = Math.hypot(pos.x - bp.x, ty - bp.y);
+  if (lag > 8) { flying = true; if (Math.abs(rvx) > 40) face = rvx > 0 ? 1 : -1; vx = rvx; vy = rvy; }
+  pos = { x: bp.x, y: bp.y - scrollY, w: bp.w };
+  const ang = flying ? clamp(Math.atan2(vy, Math.abs(vx) + 1e-3) * 57.3 * .4, -18, 18) : 0;
+  angS += (ang - angS) * (1 - Math.exp(-dt * 7));
+  faceS += (face - faceS) * (1 - Math.exp(-dt * 9));
+  const fx = Math.abs(faceS) < .08 ? Math.sign(faceS || 1) * .08 : faceS;
+  const sway = Math.sin(now / 1000 * 1.9 + .8) * 2.2 * hoverK;
+  inner.style.transform = `scale(${fx.toFixed(3)}, 1) rotate(${(angS + sway).toFixed(2)}deg)`;
+  const s = pos.w / 150;
+  hoverK += ((flying || (stops[k] && stops[k].home)) ? -hoverK : 1 - hoverK) * (1 - Math.exp(-dt * 3));
+  const wy = Math.sin(now / 1000 * 1.9) * 5 * hoverK;
+  const home = !flying && stops[k] && stops[k].home && clamp((now - introStart) / 1500) >= 1;
+  if (home !== birdState.home) { birdState.home = home; traveler.classList.toggle('home', home); foot.classList.toggle('home', home); }
+  birdAt.x = pos.x + pos.w * .45; birdAt.y = pos.y + pos.w * .32;
+  traveler.style.transform = `translate3d(${pos.x.toFixed(1)}px, ${(pos.y + wy).toFixed(1)}px, 0) scale(${s.toFixed(4)})`;
+  if (flying !== birdState.flying) {
+    traveler.classList.toggle('flying', flying);
+    traveler.classList.toggle('calling', !flying);
+    if (!flying) onLand(pos, face, s);
+    birdState.flying = flying;
+  }
+}
+function onLand(pos, face, s) {
+  // Restart the call so it begins as the bird lands, and ripple the sky from the beak.
+  traveler.classList.remove('calling'); void traveler.offsetWidth; traveler.classList.add('calling');
+  const bx = face > 0 ? pos.x + 64 * 1.875 * s : pos.x + (80 - 64) * 1.875 * s;
+  ripples.push({ x: bx, y: pos.y + 20 * 1.875 * s, t: now + 120 });
+  if (!heroDone && !heroStarted) startHero();
+  if (!heroStarted) return;
+  if (pos.y < vh && scrollY < vh * .5) wireKick = now;
+}
+
+/* ================= Hero wire ================= */
+const wire = $('#hero-wire'), wirePath = wire.querySelector('path');
+let wireKick = -1e9;
+function wireAmp() { const t = (now - wireKick) / 1000; return t < 0 || t > 3 ? 0 : 9 * Math.exp(-t * 2.6) * Math.cos(t * 13); }
+function wireDy() { return wireAmp() * .55; }
+function drawWire() {
+  const W = vw, heroPerch = $('.perch[data-hero]').getBoundingClientRect();
+  const bx = clamp(heroPerch.left + heroPerch.width * .45, 10, W - 10);
+  const amp = wireAmp();
+  wire.setAttribute('viewBox', `0 0 ${W} 40`);
+  wirePath.setAttribute('d', `M0 20 Q ${bx} ${20 + amp} ${W} ${20 + Math.sin(now / 900) * 0}`);
+}
+
+/* ================= Reed ================= */
+function makeReed(el, n) { el.replaceChildren(...Array.from({ length: n }, () => document.createElement('i'))); return { el, bars: [...el.children], level: 0, target: 0, grow: 1 }; }
+function driveReed(r, dt) {
+  r.level += (r.target - r.level) * Math.min(1, dt * 6);
+  const n = r.bars.length, c = (n - 1) / 2, h = r.el.clientHeight || 56, w = parseFloat(getComputedStyle(r.bars[0]).width) || 3;
+  const min = w / h, t = now / 1000;
+  for (let i = 0; i < n; i++) {
+    const env = Math.exp(-Math.pow((i - c) / (n * .3), 2));
+    const v = .35 + .65 * Math.abs(Math.sin(t * 7.1 + i * .55) * Math.sin(t * 2.9 + i * 1.31) + .3 * Math.sin(t * 13 + i * 2.1));
+    const g = clamp((r.grow * n - i) / 3);
+    const s = Math.max(min, env * clamp(v) * r.level) * g;
+    r.bars[i].style.setProperty('--s', Math.max(min * g, s).toFixed(3));
+  }
+}
+const heroReed = makeReed($('#hero-reed'), vw < 600 ? 28 : 40);
+const capReed = makeReed($('#cap-reed'), 18);
+const draftReed = makeReed($('#draft-reed'), 22);
+heroReed.grow = RM ? 1 : 0;
+
+/* ================= Hero moment ================= */
+const heroText = $('#hero-text');
+const hero = $('.hero');
+const HERO_FRAMES = [
+  ['', 'Can you'], ['Can', 'you send'], ['Can you', 'send the arc'], ['Can you send the', 'Arclight notes'],
+  ['Can you send the Arclight', 'notes to Priya'], ['Can you send the Arclight notes to', 'Priya by'],
+  ['Can you send the Arclight notes to Priya', 'by Friday'], ['Can you send the Arclight notes to Priya by Friday?', '']
+];
+let heroStarted = false, heroDone = RM;
+function renderWords(el, confirmed, prov, caret = true) {
+  const words = [...(confirmed ? confirmed.split(' ').map(w => [w, false]) : []), ...(prov ? prov.split(' ').map(w => [w, true]) : [])];
+  const old = $$('.w', el);
+  const frag = [];
+  words.forEach(([w, p], i) => {
+    let s = old[i];
+    if (!s) { s = document.createElement('span'); s.className = 'w'; }
+    if (s.textContent !== w) { s.textContent = w; s.classList.remove('in'); void s.offsetWidth; s.classList.add('in'); }
+    s.classList.toggle('p', p);
+    frag.push(s, document.createTextNode(' '));
+  });
+  frag.pop();
+  let c = el.querySelector('.caret') || Object.assign(document.createElement('span'), { className: 'caret' });
+  c.classList.toggle('off', !caret);
+  el.replaceChildren(...frag, c);
+}
+function wait(ms) { return new Promise(r => setTimeout(r, ms)); }
+/* Live stream, as in the app: one word at a time at a speaking pace. New words arrive grey and settle
+   into full colour two words behind; a misheard word is corrected in place when it settles.
+   Words already on screen are never rebuilt, so nothing re-animates or jumps. */
+async function streamWords(el, words, { heard = {}, lag = 2, step = 165, alive = () => true } = {}) {
+  const caret = el.querySelector('.caret') || Object.assign(document.createElement('span'), { className: 'caret' });
+  caret.classList.remove('off');
+  el.replaceChildren(caret);
+  el.getAnimations({ subtree: false }).forEach(a => a.cancel());
+  const spans = [];
+  const settle = i => {
+    const sp = spans[i]; if (!sp || !sp.classList.contains('p')) return;
+    if (heard[i] !== undefined && sp.textContent !== words[i]) {
+      sp.textContent = words[i];
+      sp.animate([{ opacity: .3 }, { opacity: 1 }], { duration: 280, easing: 'ease-out' });
+    }
+    sp.classList.remove('p');
+  };
+  for (let i = 0; i < words.length; i++) {
+    if (!alive()) return false;
+    const sp = document.createElement('span');
+    sp.className = 'w p in'; sp.textContent = heard[i] ?? words[i];
+    if (i) el.insertBefore(document.createTextNode(' '), caret);
+    el.insertBefore(sp, caret); spans.push(sp);
+    settle(i - lag);
+    await wait(step * (.75 + Math.random() * .55) + (/[,.?]$/.test(words[i]) ? 120 : 0));
+  }
+  for (let i = Math.max(0, words.length - lag); i < words.length; i++) { await wait(150); if (!alive()) return false; settle(i); }
+  caret.classList.add('off');
+  return true;
+}
+const HERO_WORDS = 'Can you send the Arclight notes to Priya by Friday?'.split(' ');
+async function startHero() {
+  heroStarted = true;
+  wireKick = now;
+  await wait(380);
+  hero.classList.add('speaking');
+  heroReed.growStart = performance.now();
+  heroReed.target = .18;
+  await wait(650);
+  heroReed.target = 1;
+  await streamWords(heroText, HERO_WORDS, { heard: { 4: 'arc', 9: 'Friday' }, step: 175 });
+  heroReed.target = 0;
+  hero.classList.remove('pending');
+  await wait(500);
+  hero.classList.add('done');
+  heroDone = true;
+}
+if (!RM) { renderWords(heroText, '', '', true); }
+else { hero.classList.remove('pending'); }
+
+/* ================= How it works (pinned scrub) ================= */
+const how = $('#how'), steps = $$('#steps li'), keys = ['#k1', '#k2', '#k3'].map(s => $(s)), capture = $('#capture'), typed = $('#typed');
+const TYPED = typed.textContent.trim().split(' ');
+function updateHow() {
+  const r = how.getBoundingClientRect();
+  if (r.bottom < 0 || r.top > vh) return false;
+  const p = RM ? 1 : clamp(-r.top / (r.height - vh));
+  const step = p < .3 ? 0 : p < .55 ? 1 : 2;
+  steps.forEach((li, i) => { li.classList.toggle('on', RM || i === step); li.classList.toggle('done', !RM && i < step); });
+  const held = p > .08 && p < .86;
+  keys.forEach((k, i) => k.classList.toggle('down', p > .06 + i * .03 && p < .86));
+  capture.classList.toggle('on', held && p > .22);
+  capReed.target = held && p > .26 ? 1 : 0;
+  const tp = clamp((p - .3) / .52), n = Math.round(tp * TYPED.length);
+  const done = p >= .86;
+  const settled = done ? n : Math.max(0, n - 2);
+  // Built from text nodes, never parsed as HTML: settled words, then the still-heard tail.
+  const key = settled + '/' + n;
+  if (typed._h !== key) {
+    typed._h = key;
+    typed.replaceChildren(TYPED.slice(0, settled).join(' '));
+    if (n > settled) { const tail = document.createElement('span'); tail.className = 'p'; tail.textContent = TYPED.slice(settled, n).join(' '); typed.append(settled ? ' ' : '', tail); }
+    if (!n) typed.textContent = ' ';
+  }
+  return capture.classList.contains('on') || capReed.level > .01;
+}
+
+/* ================= Live drafts loop ================= */
+const draftLine = $('#draft-line');
+const DRAFT = [
+  ['', 'The quarterly'], ['The', 'quarterly review'], ['The quarterly review', 'moves to thirsty'],
+  ['The quarterly review moves to', 'Thursday after'], ['The quarterly review moves to Thursday', 'afternoon'],
+  ['The quarterly review moves to Thursday afternoon.', '']
+];
+const DRAFT_WORDS = 'The quarterly review moves to Thursday afternoon.'.split(' ');
+let draftRunning = false;
+async function runDrafts() {
+  if (draftRunning) return; draftRunning = true;
+  const alive = () => visible.has('drafts');
+  while (alive()) {
+    draftReed.target = 1;
+    const ok = await streamWords(draftLine, DRAFT_WORDS, { heard: { 5: 'thirsty' }, step: 230, alive });
+    draftReed.target = 0;
+    if (!ok) break;
+    await wait(2600);
+    if (!alive()) break;
+    await draftLine.animate([{ opacity: 1 }, { opacity: 0 }], { duration: 380, easing: 'ease-in', fill: 'forwards' }).finished;
+    await wait(250);
+  }
+  draftLine.getAnimations().forEach(a => a.cancel());
+  draftRunning = false;
+}
+function updateDrafts(isVisible) {
+  if (!isVisible) { draftReed.target = 0; return; }
+  if (!draftRunning) runDrafts();
+}
+
+/* ================= Cleanup ================= */
+const CLEAN = [
+  ['um', 'Um,', null], ['so', 'so', null], ['i', 'I', 'I'], ['think', 'think', 'think'], ['we', 'we', 'we'], ['should', 'should,', 'should'],
+  ['uh', 'uh,', null], ['move', 'move', 'move'], ['the', 'the', 'the'], ['launch', 'launch', 'launch'], ['to', 'to', null], ['to', 'to', 'to'],
+  ['next', 'next', 'next'], ['weak', 'weak.', 'week.']
+];
+const MODE_IX = { o: 0, s: 1, p: 2 };
+const cleanEl = $('#clean-text');
+const toks = CLEAN.map(() => { const s = document.createElement('span'); s.className = 'tok'; return s; });
+cleanEl.replaceChildren(...toks.flatMap((t, i) => i ? [document.createTextNode(' '), t] : [t]));
+let cleanMode = null, cleanBusy = false, cleanAuto = true, cleanTimer = 0;
+function applyClean(m) {
+  const ix = MODE_IX[m];
+  toks.forEach((t, i) => { const v = CLEAN[i][ix]; t.hidden = v === null; if (v !== null) t.textContent = v; t.classList.toggle('fix', m === 'p' && i === 13); });
+  cleanMode = m;
+  $$('.modes button').forEach(b => b.setAttribute('aria-pressed', String(b.dataset.mode === m)));
+}
+async function setClean(m) {
+  if (m === cleanMode || cleanBusy) return;
+  if (RM) { applyClean(m); return; }
+  cleanBusy = true;
+  const ix = MODE_IX[m];
+  const leaving = toks.filter((t, i) => !t.hidden && CLEAN[i][ix] === null);
+  const changing = toks.filter((t, i) => !t.hidden && CLEAN[i][ix] !== null && CLEAN[i][ix] !== t.textContent);
+  await Promise.all([...leaving, ...changing].map(el => el.animate([{ opacity: 1, filter: 'blur(0px)' }, { opacity: 0, filter: 'blur(10px)' }], { duration: 300, easing: 'ease-in', fill: 'forwards' }).finished));
+  const first = new Map(toks.filter(t => !t.hidden).map(t => [t, t.getBoundingClientRect()]));
+  const prevHidden = new Set(toks.filter(t => t.hidden));
+  applyClean(m);
+  [...leaving, ...changing].forEach(el => el.getAnimations().forEach(a => a.cancel()));
+  toks.forEach(t => {
+    if (t.hidden) return;
+    const f = first.get(t);
+    if (f && !changing.includes(t)) {
+      const l = t.getBoundingClientRect();
+      const dx = f.left - l.left, dy = f.top - l.top;
+      if (dx || dy) t.animate([{ transform: `translate(${dx}px, ${dy}px)` }, { transform: 'none' }], { duration: 620, easing: 'cubic-bezier(.16,1,.3,1)' });
+    } else {
+      t.animate([{ opacity: 0, filter: 'blur(10px)', transform: 'translateY(.15em)' }, { opacity: 1, filter: 'blur(0px)', transform: 'none' }], { duration: 520, delay: 180, easing: 'cubic-bezier(.16,1,.3,1)', fill: 'backwards' });
+    }
+  });
+  await wait(700);
+  cleanBusy = false;
+}
+applyClean('o');
+if (RM) applyClean('p');
+$$('.modes button').forEach(b => b.addEventListener('click', () => { cleanAuto = false; setClean(b.dataset.mode); }));
+function updateClean(visible) {
+  if (RM || !cleanAuto || !visible) return;
+  if (!cleanTimer) cleanTimer = now + 900;
+  if (now > cleanTimer) { const order = ['o', 's', 'p']; setClean(order[(order.indexOf(cleanMode) + 1) % 3]); cleanTimer = now + (cleanMode === 'o' ? 2400 : 2600); }
+}
+
+/* ================= Vocabulary: words fly into place ================= */
+const vocabDemo = $('#vocab-demo');
+const flyers = [{ chip: $('#chip-a'), slot: $('#slot-a'), a: .18, b: .5 }, { chip: $('#chip-p'), slot: $('#slot-p'), a: .4, b: .72 }];
+flyers.forEach(f => { const c = f.chip.cloneNode(true); c.removeAttribute('id'); c.classList.add('flyer'); c.setAttribute('aria-hidden', 'true'); document.body.appendChild(c); f.fly = c; });
+const heardEl = $('.heard');
+function updateVocab() {
+  const r = vocabDemo.getBoundingClientRect();
+  if (r.bottom < -100 || r.top > vh + 100) { flyers.forEach(f => { f.fly.style.opacity = 0; }); return; }
+  const p = RM ? 1 : clamp((vh * .92 - r.top) / (vh * .72));
+  const big = parseFloat(getComputedStyle(heardEl).fontSize) / 18 * .82;
+  for (const f of flyers) {
+    const t = clamp((p - f.a) / (f.b - f.a)), e = easeIO(t);
+    const c = f.chip.getBoundingClientRect(), s = f.slot.querySelector('.right').getBoundingClientRect();
+    const dx = (s.left + s.width / 2) - (c.left + c.width / 2), dy = (s.top + s.height / 2) - (c.top + c.height / 2);
+    const arc = -Math.sin(Math.PI * e) * 80;
+    const sc = lerp(1, big, e);
+    const on = !RM && t > 0 && t < 1;
+    f.fly.style.opacity = on ? String(t > .9 ? 1 - (t - .9) / .1 : 1) : '0';
+    if (on) { f.fly.style.backgroundColor = `color-mix(in srgb, var(--tint) ${((1 - e) * 100).toFixed(0)}%, transparent)`; f.fly.style.borderColor = `color-mix(in srgb, var(--accent) ${((1 - e) * 100).toFixed(0)}%, transparent)`; }
+    if (on) f.fly.style.transform = `translate(${(c.left + dx * e).toFixed(1)}px, ${(c.top + dy * e + arc).toFixed(1)}px) scale(${sc.toFixed(3)})`;
+    f.chip.style.opacity = on ? '.45' : '1';
+    f.slot.classList.toggle('fixed', t > .86);
+  }
+}
+
+/* ================= Particle forms: the sky's dust gathers into a globe, a chip and a Mac ================= */
+const PN = innerWidth < 700 ? 900 : 1700, SP = PN < 1700 ? 1.6 : 1;
+let pseed = 3; const prnd = () => (pseed = (pseed * 16807) % 2147483647) / 2147483647;
+const P = Array.from({ length: PN }, () => ({ dx: prnd(), dy: prnd(), ph: prnd() * 6.283, d: prnd() }));
+const forms = [
+  { id: 'globe', el: $('#globe-stage'), pts: [], v: 0, skipRM: true },
+  { id: 'chip', el: $('#chip-stage'), pts: [], v: 0 },
+  { id: 'mac', el: $('#ledger'), pts: [], v: 0 }
+];
+// Point kinds: 0 fixed, 1 orbiting ring, 2 pulsing GPU core, 3 reed dot, 4 inbound flow, 5 sphere point.
+const pt = (o, x, y, c, a, k = 0, p1 = 0, p2 = 0, p3 = 0) => o.push({ x, y, c, a, k, p1, p2, p3 });
+function rrAt(x, y, w, h, r, s) {
+  const A = w - 2 * r, B = h - 2 * r, q = Math.PI * r / 2, seg = [A, q, B, q, A, q, B, q];
+  let i = 0; while (i < 7 && s > seg[i]) { s -= seg[i]; i++; }
+  const arc = (cx0, cy0, a0) => [cx0 + Math.cos(a0 + s / r) * r, cy0 + Math.sin(a0 + s / r) * r];
+  switch (i) {
+    case 0: return [x + r + s, y];
+    case 1: return arc(x + w - r, y + r, -Math.PI / 2);
+    case 2: return [x + w, y + r + s];
+    case 3: return arc(x + w - r, y + h - r, 0);
+    case 4: return [x + w - r - s, y + h];
+    case 5: return arc(x + r, y + h - r, Math.PI / 2);
+    case 6: return [x, y + h - r - s];
+    default: return arc(x + r, y + r, Math.PI);
+  }
+}
+const rrLen = (w, h, r) => 2 * (w + h) - 8 * r + 2 * Math.PI * r;
+function rrDots(o, x, y, w, h, r, step, c, a, keep) {
+  const L = rrLen(w, h, r);
+  for (let s = 0; s < L; s += step) { const [px, py] = rrAt(x, y, w, h, r, s); if (!keep || keep(s, px, py)) pt(o, px, py, c, a); }
+}
+function fib(n) {
+  const out = [], g = Math.PI * (3 - Math.sqrt(5));
+  for (let i = 0; i < n; i++) { const y = 1 - (i + .5) / n * 2, r = Math.sqrt(1 - y * y), t = g * i; out.push([Math.cos(t) * r, y, Math.sin(t) * r]); }
+  return out;
+}
+const INK = 0, ACC = 1, MUT = 2;
+function buildGlobe() {
+  const o = [];
+  fib(SP > 1 ? 560 : 1000).forEach((v, i) => pt(o, 0, 0, i % 9 === 4 ? ACC : INK, i % 9 === 4 ? .9 : .7, 5, v[0], v[1], v[2]));
+  return o;
+}
+// Chip, in the 560 x 380 units of the SVG on top.
+function buildChip() {
+  const o = [];
+  rrDots(o, 160, 30, 370, 320, 14, 3 * SP, INK, .8);
+  const pin = (x0, y0, x1, y1) => { for (let t = 0; t <= 1.001; t += .25) pt(o, x0 + (x1 - x0) * t, y0 + (y1 - y0) * t, MUT, .85); };
+  for (let x = 190; x <= 460; x += 30) { pin(x, 25, x, 13); pin(x, 355, x, 367); }
+  for (const y of [70, 100, 130, 160, 190, 220, 250, 280, 310]) pin(535, y, 547, y);
+  for (const y of [70, 100, 130, 250, 280, 310]) pin(155, y, 143, y);
+  rrDots(o, 186, 56, 140, 120, 6, 4 * SP, MUT, .8);
+  rrDots(o, 350, 56, 154, 268, 6, 3.4 * SP, ACC, .75);
+  for (let cy = 0; cy < 4; cy++) for (let cxi = 0; cxi < 3; cxi++) {
+    const x0 = 364 + cxi * 46, y0 = 132 + cy * 46, ci = cy * 3 + cxi, n = SP > 1 ? 3 : 4, st = 34 / n;
+    for (let i = 0; i < n; i++) for (let j = 0; j < n; j++) pt(o, x0 + st / 2 + i * st, y0 + st / 2 + j * st, ACC, 1, 2, ci);
+  }
+  rrDots(o, 186, 200, 140, 124, 6, 3.2 * SP, ACC, .7, s => s % 14 < 8);
+  [9, 18, 27].forEach((r, ri) => { const n = Math.round(2 * Math.PI * r / (4 * SP)); for (let j = 0; j < n; j++) pt(o, 290, 292, ACC, .9 - ri * .15, 1, r, j / n * 6.283, ri % 2 ? -1 : 1); });
+  return o;
+}
+// The Mac: a boundary of dashes around the ledger, a laptop with a live reed, and models arriving from outside.
+let macGeo = null;
+function buildMac() {
+  const o = [], L = $('#ledger').getBoundingClientRect(), B = $('#ledger-in').getBoundingClientRect(), A = $('#mac-art').getBoundingClientRect();
+  const lab = $('.b-label').getBoundingClientRect(), arrow = $('#ledger-out .arrow').getBoundingClientRect();
+  const bx = B.left - L.left, by = B.top - L.top, lx0 = lab.left - L.left - 6, lx1 = lab.right - L.left + 6;
+  rrDots(o, bx, by, B.width, B.height, 28, 3.2 * SP, ACC, .9, (s, x, y) => s % 18 < 11 && !(Math.abs(y - by) < 2 && x > lx0 && x < lx1));
+  const ax = A.left - L.left, ay = A.top - L.top, W = A.width;
+  const sw = W * .82, sh = sw * .62, sx = ax + (W - sw) / 2, sy = ay + W * .02;
+  rrDots(o, sx, sy, sw, sh, 10, 3 * SP, INK, .85);
+  const baseY = sy + sh + 7, bw = W * .98, bx0 = ax + (W - bw) / 2;
+  for (let row = 0; row < 2; row++) for (let x = bx0 + row * 3; x <= bx0 + bw - row * 3; x += 3 * SP) {
+    const notch = row === 0 && Math.abs(x - (ax + W / 2)) < W * .07;
+    if (!notch) pt(o, x, baseY + row * 3.2, INK, .6);
+  }
+  const bars = 15, gap = sw * .62 / (bars - 1), x0 = sx + sw * .19, cyR = sy + sh / 2, dotGap = 4.5, K = Math.floor(sh * .34 / dotGap);
+  for (let b = 0; b < bars; b++) for (let k = -K; k <= K; k++) pt(o, x0 + b * gap, cyR + k * dotGap, ACC, 1, 3, b, k * dotGap, sh * .68);
+  if (arrow.width && getComputedStyle($('#ledger-out .arrow')).display !== 'none') {
+    const yA = arrow.top - L.top + arrow.height / 2, xs = arrow.right - L.left, xe = bx + B.width - 2;
+    for (let i = 0; i < 14; i++) pt(o, xs, yA, ACC, .9, 4, i / 14, xe);
+  }
+  macGeo = true;
+  return o;
+}
+const builders = { globe: buildGlobe, chip: buildChip, mac: buildMac };
+function layoutForms() {
+  forms.forEach(f => { const pts = builders[f.id](); f.pts = pts.length > PN ? pts.filter((_, i) => i % Math.ceil(pts.length / PN) === 0) : pts; });
+  layoutGlobeLabels();
+}
+function formV(f) {
+  const r = f.el.getBoundingClientRect(); f.rect = r;
+  if (r.bottom < -vh * .3 || r.top > vh * 1.3) return 0;
+  if (RM) return r.bottom > 0 && r.top < vh ? 1 : 0;
+  // Built by the time the stage is a third of the way up the screen; it dissolves only as it leaves at the top.
+  const enter = clamp((vh * .98 - r.top) / (vh * .4)), leave = clamp((r.bottom - vh * .04) / (vh * .22));
+  return smooth(Math.min(enter, leave));
+}
+// Globe state: it turns slowly and steers toward the pointer.
+let globeAng = .6, globeT = 0;
+const GT = -.36, cT = Math.cos(GT), sT = Math.sin(GT);
+function globeProj(v, r) {
+  const cr = Math.cos(globeAng), sr = Math.sin(globeAng);
+  const x1 = v[0] * cr + v[2] * sr, z1 = -v[0] * sr + v[2] * cr;
+  const y2 = v[1] * cT - z1 * sT, z2 = v[1] * sT + z1 * cT;
+  const R = Math.min(r.width * .44, r.height * .42);
+  return [r.width * (vw < 960 ? .5 : .56) + x1 * R, r.height * .52 + y2 * R, z2, R];
+}
+const langLis = $$('#globe-stage li'), langVec = fib(langLis.length).map(([x, y, z]) => [x, y * .92, z]);
+let langW = [];
+function layoutGlobeLabels() { if (!RM) langW = langLis.map(li => [li.offsetWidth, li.offsetHeight]); }
+function updateGlobe(dt) {
+  const f = forms[0];
+  if (RM || !f.v) { if (!RM && f.wasOn) { langLis.forEach(li => li.style.opacity = 0); f.wasOn = false; } return; }
+  f.wasOn = true;
+  const r = f.rect, inside = pointer.x > r.left && pointer.x < r.right && pointer.y > r.top && pointer.y < r.bottom;
+  globeAng += dt * (.16 + (inside ? (pointer.x - (r.left + r.width / 2)) / r.width * 1.1 : 0));
+  const order = langVec.map((v, i) => [i, globeProj(v, r)]).sort((a, b) => b[1][2] - a[1][2]);
+  const placed = [];
+  for (const [i, [x, y, z]] of order) {
+    const li = langLis[i], [w, h] = langW[i] || [80, 16];
+    // Keep every label inside the stage on narrow screens: names near the right edge sit left of their star.
+    const lx = x + w > r.width - 2 ? Math.max(0, x - w + 6) : x;
+    const box = { x: lx - 4, y: y - h / 2 - 3, w: w + 8, h: h + 6 };
+    const free = z > -.15 && !placed.some(b => box.x < b.x + b.w && box.x + box.w > b.x && box.y < b.y + b.h && box.y + box.h > b.y);
+    if (free) placed.push(box);
+    const o = free ? clamp((z + .15) / .45) * clamp((f.v - .35) / .45) : 0;
+    li.style.transform = `translate(${lx.toFixed(1)}px, ${(y - h / 2).toFixed(1)}px)`;
+    li.style.opacity = o.toFixed(3);
+    li.classList.toggle('back', z < .45);
+    li.classList.toggle('near', Math.hypot(pointer.x - r.left - x - w / 2, pointer.y - r.top - y) < 70);
+  }
+}
+const chipOver = $('#chip-over');
+function updateChipRoute() {
+  const v = forms[1].v;
+  chipOver.style.setProperty('--lab', clamp((v - .55) / .3).toFixed(3));
+  chipOver.style.setProperty('--r1', (1 - clamp((v - .4) / .35)).toFixed(3));
+  chipOver.style.setProperty('--r2', (1 - clamp((v - .62) / .25)).toFixed(3));
+  chipOver.style.setProperty('--r3', clamp((v - .72) / .15).toFixed(3));
+}
+const bins = [[], [], []];
+function drawParticles() {
+  const t = now / 1000, s = dpr, light = isLight();
+  forms.forEach(f => { f.v = (RM && f.skipRM) ? 0 : formV(f); });
+  if (!forms.some(f => f.v > 0)) return;
+  const cols = [rgba(tokens.formDot), rgba(tokens.accent), rgba(tokens.muted)];
+  bins.forEach(b => b.length = 0);
+  const geo = forms.map(f => {
+    if (!f.v) return null;
+    const r = f.rect;
+    if (f.id === 'chip') return { ox: r.left, oy: r.top, k: r.width / 560 };
+    return { ox: r.left, oy: r.top, k: 1 };
+  });
+  const gpuLit = clamp((forms[1].v - .75) / .2), RT = RM ? 0 : t;
+  for (let i = 0; i < PN; i++) {
+    const p = P[i];
+    const dx = p.dx * vw + Math.sin(t * .3 + p.ph) * 8, dy = p.dy * vh + Math.cos(t * .25 + p.ph) * 8;
+    let X = dx, Y = dy, al = 0, best = -1, bestA = 0, size = 1;
+    let sumA = 0;
+    const tg = [];
+    for (let fi = 0; fi < 3; fi++) {
+      const f = forms[fi]; if (!f.v || i >= f.pts.length) continue;
+      const a = RM ? 1 : smooth(clamp(f.v * 1.6 - p.d * .6));
+      if (a <= 0) continue;
+      const q = f.pts[i], g = geo[fi];
+      let x = q.x, y = q.y, qa = q.a, sz = g.k;
+      if (q.k === 1) { const an = q.p2 + RT * .5 * q.p3; x += Math.cos(an) * q.p1; y += Math.sin(an) * q.p1; }
+      else if (q.k === 2) { const pu = Math.pow(.5 + .5 * Math.sin(RT * 2.2 + q.p1 * 2.39), 2); qa *= .35 + .65 * (gpuLit * pu + (1 - gpuLit) * .5); }
+      else if (q.k === 3) {
+        const env = Math.exp(-Math.pow((q.p1 - 7) / 4.6, 2)), lv = RM ? .55 : Math.abs(Math.sin(RT * 6.3 + q.p1 * .7) * Math.sin(RT * 2.7 + q.p1 * 1.9)) * .8 + .2;
+        if (Math.abs(q.p2) > q.p3 * .5 * env * lv + .5) qa = 0;
       }
-      body {
-        margin: 0;
-        min-height: 100vh;
-        display: grid;
-        place-items: center;
-        background: var(--bg);
-        color: var(--text);
-        font-family: ui-sans-serif, system-ui, -apple-system, 'Segoe UI', sans-serif;
+      else if (q.k === 4) { const u = (RT * .32 + q.p1) % 1; x = q.x + (q.p2 - q.x) * u; qa *= Math.sin(u * Math.PI); }
+      else if (q.k === 5) { const [gx, gy, gz] = globeProj([q.p1, q.p2, q.p3], f.rect); x = gx; y = gy; qa *= .14 + .86 * Math.pow((gz + 1) / 2, 1.6); sz = .65 + .55 * (gz + 1) / 2; }
+      x = g.ox + x * g.k; y = g.oy + y * g.k;
+      // Condense in place: a dot starts a short, random way from its place and settles as the stage arrives.
+      const e = 1 - a, spread = 90 + p.d * 160;
+      x += Math.cos(p.ph) * spread * e * e; y += Math.sin(p.ph) * spread * e * e;
+      qa *= a;
+      tg.push([a, x, y, qa, sz]); sumA += a;
+      if (a > bestA) { bestA = a; best = q.c; }
+    }
+    if (!tg.length) continue;
+    const norm = sumA > 1 ? 1 / sumA : 1;
+    size = 0;
+    X = 0; Y = 0;
+    for (const [a, x, y, qa, sz] of tg) { const w = a / sumA; X += x * w; Y += y * w; al += qa * w; size += sz * w; }
+    al *= Math.min(1, sumA);
+    if (al < .02) continue;
+    bins[best].push(X * s, Y * s, al, (1.15 + .5 * size) * s * (light ? 1 : .95));
+  }
+  for (let c = 0; c < 3; c++) {
+    const b = bins[c]; if (!b.length) continue;
+    cx.fillStyle = cols[c];
+    for (let j = 0; j < b.length; j += 4) { cx.globalAlpha = Math.min(1, b[j + 2]); cx.beginPath(); cx.arc(b[j], b[j + 1], b[j + 3] * .5 + .35 * s, 0, 6.283); cx.fill(); }
+  }
+  cx.globalAlpha = 1;
+}
+
+/* ================= Footer: the wordmark writes itself ================= */
+const letters = $$('#giant .giant-word > span'), footMark = $('#foot-mark');
+// When the bird reaches home it sings: the dots ripple from its beak and the letters hop in turn.
+const homePerch = $('#foot-mark .perch'), singBtn = $('#sing');
+let songT = -1e9, wasHome = false;
+function sing() {
+  if (RM) return;
+  const r = homePerch.getBoundingClientRect();
+  ripples.push({ x: r.left + r.width * .88, y: r.top + r.height * .4, t: now });
+  homePerch.classList.remove('calling'); void homePerch.offsetWidth; homePerch.classList.add('calling');
+  songT = now;
+}
+singBtn.addEventListener('click', sing);
+singBtn.addEventListener('pointerenter', () => { if (now - songT > 1400) sing(); });
+function updateFooter() {
+  const r = footMark.getBoundingClientRect();
+  if (r.top > vh * 1.2) return;
+  const p = RM ? 1 : clamp((vh - r.top) / (r.height + vh * .25));
+  const home = foot.classList.contains('home');
+  if (home && !wasHome) setTimeout(sing, 350);
+  wasHome = home;
+  letters.forEach((l, j) => {
+    l.style.setProperty('--rise', (1 - easeOut(clamp((p - j * .06) / .5))).toFixed(3));
+    const u = (now - songT) / 1000 - .18 - j * .075;
+    l.style.setProperty('--hop', u > 0 && u < .55 ? Math.sin(u / .55 * Math.PI).toFixed(3) : 0);
+  });
+}
+
+/* ================= Release: the version comes from the stable update feed ================= */
+// Pages serves latest.json beside this page (pages.yml); the absolute address covers local previews.
+// Without a feed the page keeps its version-free wording.
+const FEEDS = [...(location.protocol.startsWith('http') ? ['latest.json'] : []), 'https://rahulsharmavishwakarma.github.io/vesper/latest.json'];
+(async () => {
+  let rel = null;
+  for (const url of FEEDS) {
+    try {
+      const r = await fetch(url, { cache: 'no-cache' });
+      if (!r.ok) continue;
+      const j = await r.json();
+      if (/^\d+\.\d+\.\d+$/.test(j.version || '')) { rel = j; break; }
+    } catch (e) { /* try the next feed */ }
+  }
+  if (!rel) return;
+  const v = rel.version;
+  $('#hero-ver').textContent = `Version ${v} for`;
+  $('#dl-title').textContent = `Vesper ${v}`;
+  const meta = $('#rel-meta'), when = new Date(rel.pub_date);
+  const date = isNaN(when) ? '' : `Released ${when.toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' })}. `;
+  meta.textContent = date;
+  const a = document.createElement('a');
+  a.href = `https://github.com/rahulsharmavishwakarma/vesper/releases/tag/v${v}`;
+  a.textContent = `What’s new in ${v}`;
+  meta.append(a); meta.hidden = false;
+  requestAnimationFrame(() => typeof measure === 'function' && measure());
+})();
+
+/* ================= History search ================= */
+const hq = $('#hq'), hrows = $$('#history-demo .hrow');
+let histT0 = 0;
+function updateHistory(visible) {
+  if (RM) { hq.textContent = 'Arclight'; hrows.forEach(r => r.classList.toggle('out', !r.dataset.k)); return; }
+  if (!visible) return;
+  if (!histT0) histT0 = now + 500;
+  const t = (now - histT0) % 9000, word = 'Arclight';
+  const n = clamp(Math.floor(t / 120), 0, word.length);
+  const q = t > 6800 ? '' : word.slice(0, n);
+  if (hq.textContent !== q) { hq.textContent = q; hrows.forEach(r => r.classList.toggle('out', q.length > 2 && !r.dataset.k)); }
+}
+
+/* ================= First launch: the bird hops along the route ================= */
+const route = $('#route'), routeLis = $$('#route li'), hop = $('#route .perch');
+function updateRoute() {
+  const r = route.getBoundingClientRect();
+  if (r.bottom < -200 || r.top > vh + 200) return;
+  const p = RM ? 1 : clamp((vh * .82 - r.top) / (vh * .55));
+  const i = Math.min(6, Math.floor(p * 6.999));
+  routeLis.forEach((li, k) => li.classList.toggle('reached', k <= i));
+  const li = routeLis[i], lr = li.getBoundingClientRect();
+  if (vw <= 960) hop.style.transform = `translateY(${lr.top - r.top - 30}px)`;
+  else hop.style.transform = `translateX(${lr.left - r.left - 6}px)`;
+}
+
+/* ================= Benchmarks ================= */
+const LANG_SHORT = { en: 'English', de: 'German', es: 'Spanish', fr: 'French', hi: 'Hindi' };
+const SHORT = {
+  'NVIDIA Parakeet TDT 0.6B v3': 'Parakeet TDT 0.6B v3', 'IBM Granite Speech 5.0 TurboCTC': 'Granite Speech 5.0', 'Moondream Parakeet Redux': 'Parakeet Redux',
+  'NVIDIA Nemotron 3.5 ASR Streaming 0.6B': 'Nemotron 3.5 Streaming', 'Qwen3-ASR 0.6B': 'Qwen3-ASR 0.6B', 'Cohere Transcribe': 'Cohere Transcribe',
+  'Fermion Phonon-2 (English)': 'Phonon-2', 'Liquid LFM2.5 Audio 1.5B': 'LFM2.5 Audio 1.5B', 'Moonshine Base (English)': 'Moonshine Base',
+  'OpenAI Whisper Turbo INT8': 'Whisper Turbo INT8', 'OpenAI Whisper Small INT8': 'Whisper Small INT8'
+};
+const MAKER = {
+  'NVIDIA Parakeet TDT 0.6B v3': 'NVIDIA', 'IBM Granite Speech 5.0 TurboCTC': 'IBM', 'Moondream Parakeet Redux': 'Moondream',
+  'NVIDIA Nemotron 3.5 ASR Streaming 0.6B': 'NVIDIA', 'Qwen3-ASR 0.6B': 'Qwen', 'Cohere Transcribe': 'Cohere',
+  'Fermion Phonon-2 (English)': 'Fermion', 'Liquid LFM2.5 Audio 1.5B': 'Liquid AI', 'Moonshine Base (English)': 'Moonshine',
+  'OpenAI Whisper Turbo INT8': 'OpenAI', 'OpenAI Whisper Small INT8': 'OpenAI'
+};
+const tbody = $('#lineup tbody'), lineup = $('#lineup');
+let lang = 'en', sortKey = 'wer', benchSeen = RM;
+const svgNS = 'http://www.w3.org/2000/svg', chart = $('#chart'), ptMap = new Map();
+const langBox = $('#langs');
+function buildLangs() { Object.keys(BENCH.languages).forEach(code => {
+  const b = document.createElement('button'); b.type = 'button'; b.textContent = LANG_SHORT[code] || BENCH.languages[code]; b.dataset.lang = code;
+  b.setAttribute('aria-pressed', String(code === lang)); b.addEventListener('click', () => setLang(code)); langBox.appendChild(b);
+}); }
+const val = (r, k) => k === 'wer' ? r.wer : k === 'ms' ? r.ms : r.peakMemoryGb;
+const rows = () => BENCH.results.filter(r => r.language === lang).sort((a, b) => val(a, sortKey) - val(b, sortKey) || a.wer - b.wer);
+// Bar lengths: error rate on 0 to 20%, time on a log scale from 15 ms to 2.2 s, memory on 0 to 4 GB.
+const fill = {
+  wer: r => clamp(r.wer / 20),
+  ms: r => clamp((Math.log10(r.ms) - Math.log10(15)) / (Math.log10(2200) - Math.log10(15)), .03),
+  mem: r => clamp(r.peakMemoryGb / 4, .03)
+};
+const fmt = { wer: r => `${r.wer}%`, ms: r => r.ms >= 1000 ? `${(r.ms / 1000).toFixed(2)} s` : `${r.ms} ms`, mem: r => `${r.peakMemoryGb} GB` };
+const TAG = { wer: 'Most accurate', ms: 'Fastest', mem: 'Lightest' };
+function setLang(code) {
+  lang = code;
+  $$('button', langBox).forEach(b => b.setAttribute('aria-pressed', String(b.dataset.lang === code)));
+  renderChart(); renderLineup(false); renderTakeaway();
+}
+function renderTakeaway() {
+  // One sentence that names both winners, so nobody has to click to find them.
+  const all = rows(), name = BENCH.languages[lang], n = r => SHORT[r.model] || r.model;
+  const acc = all[0], fast = [...all].sort((a, b) => a.ms - b.ms)[0];
+  $('#takeaway').textContent = all.length === 1
+    ? `In ${name} on this Mac, ${n(acc)} met the bar: ${acc.wer}% of words wrong, at ${fmt.ms(acc)} per recording.`
+    : acc === fast
+      ? `In ${name} on this Mac, ${n(acc)} was both the most accurate (${acc.wer}% of words wrong) and the quickest (${fmt.ms(acc)} per recording).`
+      : `In ${name} on this Mac, ${n(acc)} made the fewest mistakes (${acc.wer}% of words wrong), and ${n(fast)} was quickest at ${fmt.ms(fast)} per recording.`;
+}
+function hl(model, on) {
+  const o = ptMap.get(model);
+  if (o) { o.g.classList.toggle('hl', on); if (o.lbl) o.lbl.classList.toggle('hl', on); o.g.querySelector('.core').setAttribute('r', on ? o.rad + 2 : o.rad); }
+  $$('tr', tbody).forEach(tr => tr.classList.toggle('hl', on && tr.dataset.model === model));
+}
+const measureCtx = document.createElement('canvas').getContext('2d');
+function renderChart() {
+  if (!rows().length) return;
+  const W = chart.parentElement.clientWidth, small = W < 600;
+  const H = small ? 340 : Math.round(clamp(W * .34, 340, 440));
+  const M = { l: small ? 40 : 52, r: small ? 10 : 20, t: 34, b: 52 };
+  chart.setAttribute('viewBox', `0 0 ${W} ${H}`); chart.setAttribute('width', W); chart.setAttribute('height', H);
+  const rs = rows();
+  // Zoom to the models' range: error rate in whole percent around the data, time on a log scale.
+  const wMin = Math.min(...rs.map(r => r.wer)), wMax = Math.max(...rs.map(r => r.wer));
+  const step = wMax - wMin > 8 ? 4 : 2;
+  const y0 = Math.max(0, Math.floor((wMin - 1) / step) * step), y1 = Math.max(y0 + step * 2, Math.ceil((wMax + 1) / step) * step);
+  const tMin = Math.min(...rs.map(r => r.ms)), tMax = Math.max(...rs.map(r => r.ms));
+  const x0 = Math.log10(tMin / 1.7), x1 = Math.log10(Math.max(tMax * 1.7, tMin * 12));
+  const X = ms => M.l + (Math.log10(ms) - x0) / (x1 - x0) * (W - M.l - M.r);
+  const Y = w => M.t + (w - y0) / (y1 - y0) * (H - M.t - M.b);
+  chart.setAttribute('aria-label', `${BENCH.languages[lang]} results: time per recording on a log scale against word error rate. ${rs.map(r => `${r.model}: ${r.wer}% at ${r.ms} ms`).join('; ')}.`);
+  if (!chart.querySelector('.grid')) {
+    chart.innerHTML = `<defs><radialGradient id="sweet" cx="0" cy="0" r=".62"><stop offset="0" stop-color="var(--accent)" stop-opacity=".2"/><stop offset=".45" stop-color="var(--accent)" stop-opacity=".07"/><stop offset="1" stop-color="var(--accent)" stop-opacity="0"/></radialGradient></defs><rect class="sweet"/><g class="grid"></g><g class="pts"></g><g class="lbls"></g>`;
+  }
+  const pw = W - M.l - M.r, ph = H - M.t - M.b;
+  const sw = chart.querySelector('.sweet');
+  sw.setAttribute('x', M.l); sw.setAttribute('y', M.t); sw.setAttribute('width', pw); sw.setAttribute('height', ph); sw.setAttribute('fill', 'url(#sweet)');
+  let gs = '';
+  for (let w = y0; w <= y1 + 1e-6; w += step) gs += `<line x1="${M.l}" x2="${W - M.r}" y1="${Y(w)}" y2="${Y(w)}"/><text class="tick" x="${M.l - 10}" y="${Y(w) + 4}" text-anchor="end">${w}%</text>`;
+  let xt = [10, 20, 50, 100, 200, 500, 1000, 2000].filter(ms => { const x = X(ms); return x >= M.l - 1 && x <= W - M.r + 1; });
+  if (small && xt.length > 4) xt = xt.filter((ms, i) => i % 2 === 0);
+  for (const ms of xt) gs += `<text class="tick" x="${X(ms)}" y="${H - M.b + 22}" text-anchor="middle">${ms >= 1000 ? ms / 1000 + ' s' : ms + ' ms'}</text>`;
+  gs += `<text class="axis-title" x="${M.l}" y="${M.t - 14}">Word error rate</text>`;
+  gs += `<text class="axis-title" x="${W - M.r}" y="${H - 8}" text-anchor="end">Time per recording (log scale)</text>`;
+  gs += `<text class="sweet-label" x="${M.l + 12}" y="${M.t + 22}">Faster and more accurate</text>`;
+  chart.querySelector('.grid').innerHTML = gs;
+  const pl = chart.querySelector('.pts'), ll = chart.querySelector('.lbls');
+  const present = new Set(rs.map(r => r.model));
+  for (const [m, o] of ptMap) if (!present.has(m)) { o.g.style.opacity = 0; const g = o.g; setTimeout(() => g.remove(), 500); ptMap.delete(m); }
+  rs.forEach((r, i) => {
+    let o = ptMap.get(r.model);
+    if (!o) {
+      const g = document.createElementNS(svgNS, 'g'); g.setAttribute('class', 'pt');
+      g.style.transform = `translate(${X(r.ms)}px, ${H}px)`; g.style.opacity = 0;
+      g.addEventListener('mouseenter', () => hl(r.model, true)); g.addEventListener('mouseleave', () => hl(r.model, false));
+      pl.appendChild(g); o = { g }; ptMap.set(r.model, o);
+    }
+    // Small screens have no room for every name: each dot carries its rank from the list below.
+    o.rad = small ? 8 : 6;
+    o.g.innerHTML = `<circle class="ring" r="${o.rad + 9}"/><circle class="core" r="${o.rad}"/>${small ? `<text class="num">${i + 1}</text>` : ''}`;
+    o.x = X(r.ms); o.y = Y(r.wer);
+    o.g.style.transitionDelay = (i * .06).toFixed(2) + 's';
+    if (benchSeen) { o.g.style.transform = `translate(${o.x}px, ${o.y}px)`; o.g.style.opacity = 1; }
+  });
+  // Labels sit right beside their dot when there is room, else on the nearest free side.
+  const fs = small ? 12.5 : 13.5;
+  measureCtx.font = `600 ${fs}px Bricolage, sans-serif`; chart.style.setProperty('--lbl', fs + 'px');
+  const boxes = rs.map(r => { const o = ptMap.get(r.model); return { x: o.x - 9, y: o.y - 9, w: 18, h: 18 }; });
+  boxes.push({ x: M.l + 4, y: M.t + 6, w: measureCtx.measureText('Faster and more accurate').width + 16, h: 22 });
+  const hit = b => b.x < M.l - 4 || b.x + b.w > W - 2 || b.y < M.t - 4 || b.y + b.h > H - M.b + 2 || boxes.some(o => b.x < o.x + o.w && b.x + b.w > o.x && b.y < o.y + o.h && b.y + b.h > o.y);
+  let out = '';
+  if (!small) rs.map((r, i) => i).sort((a, b) => rs[a].wer - rs[b].wer).forEach(i => {
+    const r = rs[i], o = ptMap.get(r.model), name = SHORT[r.model] || r.model, tw = measureCtx.measureText(name).width + 4, th = fs + 3;
+    let placed = null;
+    for (const dist of [11, 26, 44]) {
+      for (const ang of [0, 180, -90, 90, -30, 30, -150, 150]) {
+        const a = ang * Math.PI / 180, ax = o.x + Math.cos(a) * dist, ay = o.y + Math.sin(a) * dist;
+        const bx = Math.cos(a) > .3 ? ax : Math.cos(a) < -.3 ? ax - tw : ax - tw / 2;
+        const by = Math.sin(a) > .3 ? ay : Math.sin(a) < -.3 ? ay - th : ay - th / 2;
+        const b = { x: bx, y: by, w: tw, h: th };
+        if (!hit(b)) { placed = { b, far: dist > 11 }; break; }
       }
-      main {
-        box-sizing: border-box;
-        max-width: 32rem;
-        padding: 2rem 1rem;
-      }
-      h1 {
-        margin: 0 0 0.5rem;
-        font-size: 2.5rem;
-      }
-      p {
-        margin: 0 0 1rem;
-        color: var(--muted);
-        line-height: 1.5;
-      }
-      a {
-        color: var(--ember);
-      }
-    </style>
-  </head>
-  <body>
-    <main>
-      <h1>Vesper</h1>
-      <p>Voice to text, on your device.</p>
-      <p>
-        The project site is on its way. Until then, get the app and release notes from the
-        <a href="https://github.com/rahulsharmavishwakarma/vesper/releases">Releases page</a>
-        or read the
-        <a href="https://github.com/rahulsharmavishwakarma/vesper#readme">README</a>.
-      </p>
-    </main>
-  </body>
+      if (placed) break;
+    }
+    if (!placed) { o.lbl = null; return; }
+    const b = placed.b; boxes.push(b);
+    if (placed.far) {
+      const ex = clamp(o.x, b.x, b.x + b.w), ey = clamp(o.y, b.y, b.y + b.h), dd = Math.hypot(ex - o.x, ey - o.y) || 1;
+      out += `<line class="leader" x1="${(o.x + (ex - o.x) / dd * 8).toFixed(1)}" y1="${(o.y + (ey - o.y) / dd * 8).toFixed(1)}" x2="${ex.toFixed(1)}" y2="${ey.toFixed(1)}" style="opacity:${benchSeen ? .5 : 0}"/>`;
+    }
+    out += `<text class="lbl" data-model="${esc(r.model)}" x="${(b.x + 2).toFixed(1)}" y="${(b.y + fs).toFixed(1)}" style="opacity:${benchSeen ? 1 : 0}">${esc(name)}</text>`;
+  });
+  ll.innerHTML = out;
+  ptMap.forEach(o => { o.lbl = null; });
+  $$('.lbl', ll).forEach(t => { const o = ptMap.get(t.dataset.model); if (o) o.lbl = t; });
+}
+function renderLineup(reorder) {
+  const rs = rows(), all = BENCH.results.filter(r => r.language === lang);
+  const best = { wer: Math.min(...all.map(r => r.wer)), ms: Math.min(...all.map(r => r.ms)), mem: Math.min(...all.map(r => r.peakMemoryGb)) };
+  const sortName = { wer: 'word error rate (lower is better)', ms: 'time per recording (faster first)', mem: 'peak memory (lightest first)' }[sortKey];
+  $('#bench-table-caption').textContent = `Results in ${BENCH.languages[lang]}, ${rs.length} models, sorted by ${sortName}. ${benchEnvelope()}`;
+  // FLIP: remember where rows were, rebuild, then glide them from old to new places.
+  const before = new Map($$('tr', tbody).map(tr => [tr.dataset.model, tr.getBoundingClientRect().top]));
+  const old = new Map($$('tr', tbody).map(tr => [tr.dataset.model, tr]));
+  const next = rs.map((r, i) => {
+    let tr = reorder && old.get(r.model);
+    if (!tr) {
+      tr = document.createElement('tr'); tr.dataset.model = r.model;
+      tr.addEventListener('mouseenter', () => hl(r.model, true)); tr.addEventListener('mouseleave', () => hl(r.model, false));
+      const cell = k => `<td class="m-${k}" data-label="${{ wer: 'Word error rate', ms: 'Time per recording', mem: 'Peak memory' }[k]}"><span class="metric"><span class="track" aria-hidden="true"><i></i></span><b>${esc(fmt[k](r))}</b></span></td>`;
+      tr.innerHTML = `<td class="who-cell"><span class="who"><span class="rank"></span><span class="name">${esc(SHORT[r.model] || r.model)}<span class="maker">${esc(MAKER[r.model] || '')}</span><span class="tags"></span></span></span></td>${cell('wer')}${cell('ms')}${cell('mem')}`;
+    }
+    tr.querySelector('.rank').textContent = i + 1;
+    // Best in each measure wears a tag under the model's name, so the measure cells stay aligned.
+    const tags = tr.querySelector('.tags');
+    tags.replaceChildren(...['wer', 'ms', 'mem'].filter(k => val(r, k) === best[k]).map(k => { const t = document.createElement('span'); t.className = 'tag'; t.textContent = TAG[k]; return t; }));
+    for (const k of ['wer', 'ms', 'mem']) {
+      const m = tr.querySelector(`.m-${k} .metric`);
+      const bar = m.querySelector('.track i');
+      bar.style.setProperty('--delay', reorder ? '0s' : (i * .06).toFixed(2) + 's');
+      if (!reorder) bar.style.setProperty('--v', 0);
+    }
+    return tr;
+  });
+  tbody.replaceChildren(...next);
+  if (reorder && !RM) {
+    next.forEach(tr => {
+      const was = before.get(tr.dataset.model); if (was === undefined) return;
+      const dy = was - tr.getBoundingClientRect().top; if (!dy) return;
+      tr.animate([{ transform: `translateY(${dy}px)` }, { transform: 'none' }], { duration: 650, easing: 'cubic-bezier(.16, 1, .3, 1)' });
+    });
+  }
+  const grow = () => next.forEach(tr => { const r = rs.find(x => x.model === tr.dataset.model); for (const k of ['wer', 'ms', 'mem']) tr.querySelector(`.m-${k} .track i`).style.setProperty('--v', benchSeen ? fill[k](r).toFixed(3) : 0); });
+  if (reorder) grow(); else requestAnimationFrame(() => requestAnimationFrame(grow));
+}
+function revealBench() {
+  if (benchSeen) return; benchSeen = true;
+  renderChart(); renderLineup(false);
+}
+function benchEnvelope() {
+  const d = BENCH, when = d.date ? new Date(d.date + 'T00:00:00Z').toLocaleDateString('en-US', { month: 'long', year: 'numeric', timeZone: 'UTC' }) : '';
+  return ['Measured by Vesper through the app', d.hardware && `on ${d.hardware}`, d.recordings && `with ${d.recordings} FLEURS recordings per language`, when && `in ${when}`].filter(Boolean).join(', ') + '.';
+}
+// Published figures stay separate from Vesper's measurements.
+function renderPublished() {
+  const p = BENCH.published, box = $('.published');
+  if (!p) { box.hidden = true; return; }
+  $('#pub-note').textContent = `${p.note}. These come from the leaderboard, not from Vesper, and use different recordings and hardware.`;
+  $('#pub-list').replaceChildren(...p.english.map(({ model, wer }) => { const li = document.createElement('li'); const a = document.createElement('span'), b = document.createElement('span'); a.textContent = model; b.textContent = `${wer}%`; li.append(a, b); return li; }));
+}
+fetch('benchmarks.json', { cache: 'no-cache' }).then(r => { if (!r.ok) throw new Error(r.status); return r.json(); }).then(d => {
+  if (!d || !Array.isArray(d.results) || !d.results.length) throw new Error('empty');
+  BENCH = d;
+  if (!BENCH.languages[lang]) lang = Object.keys(BENCH.languages)[0];
+  $('#bench-source').textContent = benchEnvelope();
+  buildLangs(); renderChart(); renderLineup(false); renderTakeaway(); renderPublished();
+  requestAnimationFrame(() => measure());
+}).catch(() => {
+  // Without data, say so plainly instead of drawing an empty chart.
+  for (const sel of ['.langs', '.lineup-bar', '#chart-box', '#lineup-wrap', '.published', '.source-note']) { const el = $(sel); if (el) el.hidden = true; }
+  $('#bench-missing').hidden = false;
+});
+
+/* ================= Visibility tracking ================= */
+const visible = new Set();
+const io = new IntersectionObserver(es => es.forEach(e => {
+  e.isIntersecting ? visible.add(e.target.id) : visible.delete(e.target.id);
+  if ((e.target.id === 'chart-box' || e.target.id === 'lineup-wrap') && e.isIntersecting && e.intersectionRatio > .25) revealBench();
+}), { threshold: [0, .25, .5] });
+['drafts', 'cleanup', 'history-demo', 'chart-box', 'lineup-wrap', 'top'].forEach(id => io.observe(document.getElementById(id)));
+
+/* ================= Nav ================= */
+const nav = $('#nav');
+function updateNav() { nav.classList.toggle('solid', scrollY > 40); }
+
+/* ================= Main loop ================= */
+let last = performance.now(), running = false;
+function frame(t) {
+  if (document.hidden) { running = false; return; }
+  const dt = Math.min(.05, (t - last) / 1000); last = t; now = t;
+  scrollP = docProgress();
+  stepTheme();
+  updateNav();
+  updateBird(dt);
+  drawSky();
+  if (visible.has('top')) {
+    if (heroReed.growStart) heroReed.grow = clamp((now - heroReed.growStart) / 700);
+    driveReed(heroReed, dt); drawWire();
+  }
+  const howActive = updateHow(); if (howActive) driveReed(capReed, dt);
+  updateDrafts(visible.has('drafts')); if (visible.has('drafts')) driveReed(draftReed, dt);
+  updateClean(visible.has('cleanup'));
+  updateVocab(); updateRoute(); updateGlobe(dt); updateChipRoute(); updateFooter();
+  updateHistory(visible.has('history-demo'));
+  requestAnimationFrame(frame);
+}
+function start() { if (!running && !RM) { running = true; last = performance.now(); requestAnimationFrame(frame); } }
+document.addEventListener('visibilitychange', () => { if (!document.hidden) start(); });
+addEventListener('pointermove', e => { pointer.x = e.clientX; pointer.y = e.clientY; pointer.px = e.clientX / vw; pointer.py = e.clientY / vh; }, { passive: true });
+
+/* Reduced motion: final states, redraw the static sky on scroll only. */
+function staticPass() {
+  now = performance.now(); scrollP = docProgress(); updateNav(); drawSky(); updateHow(); updateVocab(); updateChipRoute(); updateRoute(); updateFooter(); updateHistory(true);
+  heroReed.target = 0; heroReed.level = 0; driveReed(heroReed, 1); drawWire();
+  driveReed(capReed, 1); driveReed(draftReed, 1);
+}
+let rsT = 0;
+addEventListener('resize', () => { clearTimeout(rsT); rsT = setTimeout(() => { measure(); renderChart(); if (RM) staticPass(); }, 120); });
+function boot() {
+  measure();
+  if (RM) {
+    renderWords(heroText, HERO_FRAMES[HERO_FRAMES.length - 1][0], '', false);
+    renderWords(draftLine, DRAFT[DRAFT.length - 1][0], '', false);
+    staticPass();
+    addEventListener('scroll', () => requestAnimationFrame(staticPass), { passive: true });
+  } else start();
+}
+(document.fonts && document.fonts.ready ? document.fonts.ready : Promise.resolve()).then(boot);
+new ResizeObserver(() => { clearTimeout(rsT); rsT = setTimeout(() => { measure(); if (RM) staticPass(); }, 150); }).observe(document.body);
+})();
+</script>
+</body>
 </html>

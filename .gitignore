@@ -7,6 +7,8 @@
 node_modules/
 build/
 dist/
+# Local preview of the Pages site (node scripts/build-site.mjs --out=_site)
+/_site/
 .vite/
 *.tsbuildinfo
 /apps/desktop/src-tauri/gen/

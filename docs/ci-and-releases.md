@@ -934,14 +934,30 @@ expiring artifact only" policy (2026-10-20) and chose download-only first.
   Rotate by replacing `NIGHTLY_PUBKEY` and both environment secrets together; the
   private key and password are backed up offline in `~/.tauri` (not in the
   repository, and never in production).
-- **GitHub Pages** (`pages.yml`): `site/` holds a bare placeholder root page; the
-  landing, download and versions pages are deferred
-  ([issue #67](https://github.com/rahulsharmavishwakarma/vesper/issues/67)). The
-  workflow assembles `site/` plus the newest nightly feed, validates every JSON
-  feed, and deploys with GitHub's `upload-pages-artifact` and `deploy-pages`
-  actions (no branch push, no ruleset bypass). It also publishes the newest
-  pre-release's `beta.json` and the newest stable release's `latest.json`
-  (see the updater contract below).
+- **GitHub Pages** (`pages.yml`): `site/index.html` is the landing page
+  ([issue #329](https://github.com/rahulsharmavishwakarma/vesper/issues/329)), a
+  single self-contained HTML file with no framework or third-party requests.
+  Pages sends no security headers, so a Content-Security-Policy `<meta>` tag
+  limits the page to its own origin plus the project's Pages feed, with no
+  framing targets, forms or `<base>` changes.
+  `scripts/build-site.mjs` assembles it into `_site/` with the app's Bricolage
+  Grotesque font and licence from `apps/desktop/src/assets/`, and writes
+  `benchmarks.json` from `models/recommendations.json`: only Vesper's own
+  explicit-language results that met the quality bar, plus Open ASR Leaderboard
+  English averages labelled as published figures, never as Vesper's. The page
+  reads its version and release date from the stable `latest.json` feed, so a
+  release needs no page edit; without the feed it shows version-free wording,
+  and without `benchmarks.json` it says the results did not load. The workflow
+  then adds the newest nightly feed, the newest pre-release's `beta.json` and the
+  newest stable release's `latest.json` (see the updater contract below),
+  validates every JSON file, and deploys with GitHub's `upload-pages-artifact`
+  and `deploy-pages` actions (no branch push, no ruleset bypass). It runs when
+  `site/`, the build script, the benchmark evidence, the catalog or the font
+  changes, and after each release. Preview locally with
+  `node scripts/build-site.mjs --out=_site` and any static server in `_site/`
+  (the page fetches its data, so `file://` shows the no-data fallback). A
+  separate versions page stays deferred
+  ([issue #67](https://github.com/rahulsharmavishwakarma/vesper/issues/67)).
 - Limitations: nightly is unsigned, so macOS asks you to allow it under System Settings → Privacy & Security → Open Anyway;
   only the latest nightly release is kept (its tag stays reserved); a nightly can lag main by a day, and a
   failed or running `Check` on the newest commit skips that night.

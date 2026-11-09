@@ -1,16 +1,21 @@
 name: Pages
 
-# Publishes the project site and the machine-readable release feeds on GitHub
-# Pages (issue #262). Release workflows attach their feed to the release; this
-# workflow only republishes the newest one, so a later landing page can be
-# deployed without losing the feeds. Deployment uses the official Pages actions:
-# no branch push and no ruleset bypass.
+# Publishes the landing page (issue #329) and the machine-readable release
+# feeds on GitHub Pages (issue #262). scripts/build-site.mjs assembles the page,
+# its font and benchmarks.json from models/recommendations.json; release
+# workflows attach their feed to the release and this workflow republishes the
+# newest one beside the page. Deployment uses the official Pages actions: no
+# branch push and no ruleset bypass.
 
 on:
   push:
     branches: [main]
     paths:
       - 'site/**'
+      - 'scripts/build-site.mjs'
+      - 'models/recommendations.json'
+      - 'models/catalog.json'
+      - 'apps/desktop/src/assets/bricolage-*'
       - '.github/workflows/pages.yml'
   workflow_dispatch:
 
@@ -39,11 +44,15 @@ jobs:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           persist-credentials: false
+      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
+        with:
+          node-version-file: .nvmrc
       - name: Assemble the site and its release feeds
         run: |
           set -eu
-          mkdir _site
-          cp -R site/. _site/
+          # The page, its font and benchmarks.json (Vesper's own passing
+          # results); the feeds are added next and are never part of site/.
+          node scripts/build-site.mjs --out=_site
           # The newest nightly release carries the signed nightly feed; an
           # unsigned build has none, and then no feed is published.
           tag="$(gh api "repos/$GITHUB_REPOSITORY/releases?per_page=100" --jq '[.[]|select(.tag_name|startswith("nightly-"))][0].tag_name // ""')"
