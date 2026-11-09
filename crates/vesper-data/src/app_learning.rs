@@ -12,6 +12,9 @@ pub(crate) const SCHEMA: &str = "
         unaligned INTEGER NOT NULL DEFAULT 0,
         unreadable INTEGER NOT NULL DEFAULT 0,
         cleared INTEGER NOT NULL DEFAULT 0,
+        sent_edited INTEGER NOT NULL DEFAULT 0,
+        watch_notified INTEGER NOT NULL DEFAULT 0,
+        watch_polled INTEGER NOT NULL DEFAULT 0,
         field_reads INTEGER NOT NULL DEFAULT 0,
         field_unreadable INTEGER NOT NULL DEFAULT 0,
         field_terms INTEGER NOT NULL DEFAULT 0
@@ -68,14 +71,55 @@ pub enum Readback {
     Edited,
     /// The text no longer lines up with what was pasted (rewritten, moved, deleted).
     Unaligned,
-    /// The span is now empty: the text was sent or cleared (a chat box after Return).
+    /// The span is now empty: the text was sent or cleared (a chat box after
+    /// Return) with no fix the watch could keep.
     Cleared,
+    /// The text was sent or cleared, but the watch kept a fix made before
+    /// that; it was offered to learning as a draft edit (issue #410).
+    EditedBeforeSend,
     /// The field could not be read (closed, secure, or no text access).
     Unreadable,
 }
 
+/// How the field was watched before its read-back, for the per-app counts.
+#[derive(Debug, Clone, Copy, Default, PartialEq, Eq)]
+pub enum ReadbackWatch {
+    /// No change was seen.
+    #[default]
+    Quiet,
+    /// The app sent value-change notifications.
+    Notified,
+    /// Only polling saw changes.
+    Polled,
+}
+
+/// Decide what one read-back found. `text` is what was read from where the
+/// paste began; `before_send` says it is the last text seen before the field
+/// emptied. Returns the outcome and, for a fix, the corrected pasted text.
+pub fn classify_readback(
+    pasted: &str,
+    text: Option<&str>,
+    before_send: bool,
+) -> (Readback, Option<String>) {
+    let Some(text) = text else {
+        return (Readback::Unreadable, None);
+    };
+    if text.trim().is_empty() {
+        return (Readback::Cleared, None);
+    }
+    let aligned = vesper_core::aligned_edit(pasted, text);
+    match (aligned, before_send) {
+        (Some(fixed), true) if fixed != pasted => (Readback::EditedBeforeSend, Some(fixed)),
+        // Sent as pasted, or the kept text no longer lines up: nothing to learn.
+        (_, true) => (Readback::Cleared, None),
+        (None, false) => (Readback::Unaligned, None),
+        (Some(same), false) if same == pasted => (Readback::Unchanged, None),
+        (Some(fixed), false) => (Readback::Edited, Some(fixed)),
+    }
+}
+
 #[derive(Debug, Clone, Default, PartialEq, Eq, Serialize, Deserialize)]
-#[serde(rename_all = "camelCase")]
+#[serde(default, rename_all = "camelCase")]
 pub struct AppLearningCoverage {
     pub application: String,
     pub readbacks: u32,
@@ -84,6 +128,12 @@ pub struct AppLearningCoverage {
     pub unaligned: u32,
     pub unreadable: u32,
     pub cleared: u32,
+    /// Fixes kept by the watch from a field that was then sent or cleared.
+    pub sent_edited: u32,
+    /// Read-backs whose field sent value-change notifications.
+    pub watch_notified: u32,
+    /// Read-backs where only polling saw the field change.
+    pub watch_polled: u32,
     pub field_reads: u32,
     pub field_unreadable: u32,
     /// Total spellings taken from fields in this app.
@@ -92,13 +142,15 @@ pub struct AppLearningCoverage {
 
 /// Columns added after the table first shipped locally; added in place when missing.
 pub(crate) fn migrate(connection: &Connection) -> Result<()> {
-    let present: bool = connection
-        .prepare("SELECT 1 FROM pragma_table_info('app_learning_coverage') WHERE name = 'cleared'")?
-        .exists([])?;
-    if !present {
-        connection.execute_batch(
-            "ALTER TABLE app_learning_coverage ADD COLUMN cleared INTEGER NOT NULL DEFAULT 0;",
-        )?;
+    for column in ["cleared", "sent_edited", "watch_notified", "watch_polled"] {
+        let present: bool = connection
+            .prepare("SELECT 1 FROM pragma_table_info('app_learning_coverage') WHERE name = ?1")?
+            .exists([column])?;
+        if !present {
+            connection.execute_batch(&format!(
+                "ALTER TABLE app_learning_coverage ADD COLUMN {column} INTEGER NOT NULL DEFAULT 0;"
+            ))?;
+        }
     }
     Ok(())
 }
@@ -137,15 +189,27 @@ impl DatasetStore {
         Ok(())
     }
 
-    pub fn record_app_readback(&self, application: &str, outcome: Readback) -> Result<()> {
+    pub fn record_app_readback(
+        &self,
+        application: &str,
+        outcome: Readback,
+        watch: ReadbackWatch,
+    ) -> Result<()> {
         let column = match outcome {
             Readback::Unchanged => "unchanged",
             Readback::Edited => "edited",
             Readback::Unaligned => "unaligned",
             Readback::Unreadable => "unreadable",
             Readback::Cleared => "cleared",
+            Readback::EditedBeforeSend => "sent_edited",
         };
-        self.bump_app_learning(application, &[("readbacks", 1), (column, 1)])
+        let mut columns = vec![("readbacks", 1), (column, 1)];
+        match watch {
+            ReadbackWatch::Quiet => {}
+            ReadbackWatch::Notified => columns.push(("watch_notified", 1)),
+            ReadbackWatch::Polled => columns.push(("watch_polled", 1)),
+        }
+        self.bump_app_learning(application, &columns)
     }
 
     /// `terms` is `None` when the field could not be read.
@@ -167,7 +231,8 @@ impl DatasetStore {
     pub fn app_learning_coverage(&self) -> Result<Vec<AppLearningCoverage>> {
         let mut statement = self.connection.prepare(
             "SELECT application, readbacks, unchanged, edited, unaligned, unreadable, field_reads, \
-             field_unreadable, field_terms, cleared FROM app_learning_coverage \
+             field_unreadable, field_terms, cleared, sent_edited, watch_notified, watch_polled \
+             FROM app_learning_coverage \
              ORDER BY readbacks + field_reads DESC, application",
         )?;
         let rows = statement.query_map([], |row| {
@@ -182,6 +247,9 @@ impl DatasetStore {
                 field_unreadable: row.get(7)?,
                 field_terms: row.get(8)?,
                 cleared: row.get(9)?,
+                sent_edited: row.get(10)?,
+                watch_notified: row.get(11)?,
+                watch_polled: row.get(12)?,
             })
         })?;
         Ok(rows.collect::<std::result::Result<_, _>>()?)
@@ -276,10 +344,17 @@ mod tests {
         profile.app_field_words = true;
         let profile = store.save_personalization(profile).unwrap();
         store
-            .record_app_readback("com.apple.Notes", Readback::Edited)
+            .record_app_readback("com.apple.Notes", Readback::Edited, ReadbackWatch::Notified)
             .unwrap();
         store
-            .record_app_readback("com.apple.Notes", Readback::Unchanged)
+            .record_app_readback("com.apple.Notes", Readback::Unchanged, ReadbackWatch::Quiet)
+            .unwrap();
+        store
+            .record_app_readback(
+                "com.apple.Notes",
+                Readback::EditedBeforeSend,
+                ReadbackWatch::Polled,
+            )
             .unwrap();
         store.record_field_read("com.apple.Notes", Some(3)).unwrap();
         store.record_field_read("com.apple.Notes", None).unwrap();
@@ -287,9 +362,12 @@ mod tests {
             store.app_learning_coverage().unwrap(),
             vec![AppLearningCoverage {
                 application: "com.apple.Notes".into(),
-                readbacks: 2,
+                readbacks: 3,
                 unchanged: 1,
                 edited: 1,
+                sent_edited: 1,
+                watch_notified: 1,
+                watch_polled: 1,
                 field_reads: 2,
                 field_unreadable: 1,
                 field_terms: 3,
@@ -308,6 +386,91 @@ mod tests {
         off.learn_from_app_edits = false;
         store.save_personalization(off).unwrap();
         assert!(store.app_learning_coverage().unwrap().is_empty());
+    }
+
+    #[test]
+    fn a_fix_kept_before_send_teaches_and_a_plain_send_does_not() {
+        let pasted = "restart the cubernetes cluster today";
+        let fixed = "restart the Kubernetes cluster today";
+        // Read in place, as before the watch.
+        assert_eq!(
+            classify_readback(pasted, None, false),
+            (Readback::Unreadable, None)
+        );
+        assert_eq!(
+            classify_readback(pasted, Some("  "), false),
+            (Readback::Cleared, None)
+        );
+        assert_eq!(
+            classify_readback(pasted, Some(pasted), false),
+            (Readback::Unchanged, None)
+        );
+        assert_eq!(
+            classify_readback(
+                pasted,
+                Some("restart the Kubernetes cluster today and then more"),
+                false
+            )
+            .0,
+            Readback::Edited
+        );
+        assert_eq!(
+            classify_readback(pasted, Some("something else entirely now written"), false),
+            (Readback::Unaligned, None)
+        );
+        // The field was sent: the watch's last text decides.
+        assert_eq!(
+            classify_readback(pasted, Some(fixed), true),
+            (Readback::EditedBeforeSend, Some(fixed.into()))
+        );
+        assert_eq!(
+            classify_readback(pasted, Some(pasted), true),
+            (Readback::Cleared, None)
+        );
+        // Backspaced away word by word before sending: nothing lines up.
+        assert_eq!(
+            classify_readback(pasted, Some("d"), true),
+            (Readback::Cleared, None)
+        );
+    }
+
+    #[test]
+    fn older_tables_gain_the_watch_counts_in_place() {
+        let dir = tempfile::tempdir().unwrap();
+        {
+            let connection = Connection::open(dir.path().join("sessions.sqlite3")).unwrap();
+            connection
+                .execute_batch(
+                    "CREATE TABLE app_learning_coverage (
+                        application TEXT PRIMARY KEY NOT NULL,
+                        readbacks INTEGER NOT NULL DEFAULT 0,
+                        unchanged INTEGER NOT NULL DEFAULT 0,
+                        edited INTEGER NOT NULL DEFAULT 0,
+                        unaligned INTEGER NOT NULL DEFAULT 0,
+                        unreadable INTEGER NOT NULL DEFAULT 0,
+                        field_reads INTEGER NOT NULL DEFAULT 0,
+                        field_unreadable INTEGER NOT NULL DEFAULT 0,
+                        field_terms INTEGER NOT NULL DEFAULT 0
+                    );
+                    INSERT INTO app_learning_coverage (application, readbacks, unreadable)
+                    VALUES ('com.microsoft.VSCode', 4, 4);",
+                )
+                .unwrap();
+        }
+        let store = DatasetStore::open(dir.path().into()).unwrap();
+        store
+            .record_app_readback(
+                "com.microsoft.VSCode",
+                Readback::EditedBeforeSend,
+                ReadbackWatch::Notified,
+            )
+            .unwrap();
+        let row = &store.app_learning_coverage().unwrap()[0];
+        assert_eq!((row.readbacks, row.unreadable), (5, 4));
+        assert_eq!(
+            (row.sent_edited, row.watch_notified, row.watch_polled),
+            (1, 1, 0)
+        );
     }
 
     #[test]
