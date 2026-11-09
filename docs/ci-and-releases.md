@@ -937,6 +937,9 @@ expiring artifact only" policy (2026-10-20) and chose download-only first.
 - **GitHub Pages** (`pages.yml`): `site/index.html` is the landing page
   ([issue #329](https://github.com/rahulsharmavishwakarma/vesper/issues/329)), a
   single self-contained HTML file with no framework or third-party requests.
+  Pages sends no security headers, so a Content-Security-Policy `<meta>` tag
+  limits the page to its own origin plus the project's Pages feed, with no
+  framing targets, forms or `<base>` changes.
   `scripts/build-site.mjs` assembles it into `_site/` with the app's Bricolage
   Grotesque font and licence from `apps/desktop/src/assets/`, and writes
   `benchmarks.json` from `models/recommendations.json`: only Vesper's own

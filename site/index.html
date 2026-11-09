@@ -3,6 +3,10 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
+<!-- GitHub Pages sends no security headers, so the policy lives here: everything comes from this
+     site, the one outside request is the project's own update feed, and nothing can be framed or posted. -->
+<meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'unsafe-inline'; style-src 'unsafe-inline'; font-src 'self'; img-src 'self' data:; connect-src 'self' https://rahulsharmavishwakarma.github.io; base-uri 'none'; form-action 'none'">
+<meta name="referrer" content="strict-origin-when-cross-origin">
 <title>Vesper: voice to text on your Mac</title>
 <meta name="description" content="Vesper turns your voice into text on your Mac. Local speech models, live drafts, optional cleanup and personal vocabulary. Open source, for Apple silicon.">
 <script>
@@ -663,7 +667,7 @@ html:not(.js) .b-label { background: var(--bg); }
       <div class="stage">
         <div class="stage-row">
           <span class="perch" data-face="right" data-hero>
-            <svg class="bird" viewBox="0 0 80 60" aria-hidden="true"><use href="#none"/></svg>
+            <svg class="bird" viewBox="0 0 80 60" aria-hidden="true"></svg>
           </span>
           <div class="call" aria-hidden="true">
             <div class="reed" id="hero-reed"></div>
@@ -719,7 +723,7 @@ html:not(.js) .b-label { background: var(--bg); }
                 <p class="typed" id="typed">Hi Priya, the Arclight notes are ready. Can we go through them on Friday?</p>
               </div>
               <div class="capture" id="capture">
-                <svg viewBox="0 0 80 60"><use href="#none"/></svg>
+                <svg viewBox="0 0 80 60" aria-hidden="true"></svg>
                 <div class="reed" id="cap-reed"></div>
               </div>
             </div>
@@ -2052,7 +2056,7 @@ function renderLineup(reorder) {
     if (!tr) {
       tr = document.createElement('tr'); tr.dataset.model = r.model;
       tr.addEventListener('mouseenter', () => hl(r.model, true)); tr.addEventListener('mouseleave', () => hl(r.model, false));
-      const cell = k => `<td class="m-${k}" data-label="${{ wer: 'Word error rate', ms: 'Time per recording', mem: 'Peak memory' }[k]}"><span class="metric"><span class="track" aria-hidden="true"><i></i></span><b>${fmt[k](r)}</b></span></td>`;
+      const cell = k => `<td class="m-${k}" data-label="${{ wer: 'Word error rate', ms: 'Time per recording', mem: 'Peak memory' }[k]}"><span class="metric"><span class="track" aria-hidden="true"><i></i></span><b>${esc(fmt[k](r))}</b></span></td>`;
       tr.innerHTML = `<td class="who-cell"><span class="who"><span class="rank"></span><span class="name">${esc(SHORT[r.model] || r.model)}<span class="maker">${esc(MAKER[r.model] || '')}</span><span class="tags"></span></span></span></td>${cell('wer')}${cell('ms')}${cell('mem')}`;
     }
     tr.querySelector('.rank').textContent = i + 1;
