@@ -29,7 +29,8 @@ impl CpuBaseline {
 }
 
 pub struct ResourceSampler {
-    system: System,
+    /// `None` when the OS refuses to initialize sysinfo; samples then report "unavailable".
+    system: Option<System>,
     pid: Pid,
     baseline: CpuBaseline,
     last: Option<(Instant, ResourceSample)>,
@@ -37,7 +38,7 @@ pub struct ResourceSampler {
 impl Default for ResourceSampler {
     fn default() -> Self {
         Self {
-            system: System::new(),
+            system: System::new().ok(),
             pid: Pid::from_u32(std::process::id()),
             baseline: CpuBaseline::default(),
             last: None,
@@ -52,17 +53,23 @@ impl ResourceSampler {
                 return sample.clone();
             }
         }
-        if self.system.cpus().is_empty() {
-            self.system.refresh_cpu_list(CpuRefreshKind::nothing());
-        }
-        self.system.refresh_processes_specifics(
-            ProcessesToUpdate::Some(&[self.pid]),
-            true,
-            ProcessRefreshKind::nothing()
-                .with_cpu()
-                .with_memory()
-                .without_tasks(),
-        );
+        let logical_cpus = match self.system.as_mut() {
+            Some(system) => {
+                if system.cpus().is_empty() {
+                    system.refresh_cpu_list(CpuRefreshKind::nothing());
+                }
+                system.refresh_processes_specifics(
+                    ProcessesToUpdate::Some(&[self.pid]),
+                    true,
+                    ProcessRefreshKind::nothing()
+                        .with_cpu()
+                        .with_memory()
+                        .without_tasks(),
+                );
+                system.cpus().len()
+            }
+            None => 0,
+        };
         let sampled = Instant::now();
         let mut result = ResourceSample {
             sampled_at_ms: SystemTime::now()
@@ -71,10 +78,14 @@ impl ResourceSampler {
                 .as_millis() as u64,
             cpu_percent: None,
             memory_bytes: None,
-            logical_cpus: self.system.cpus().len(),
+            logical_cpus,
             status: "unavailable",
         };
-        if let Some(process) = self.system.process(self.pid) {
+        if let Some(process) = self
+            .system
+            .as_ref()
+            .and_then(|system| system.process(self.pid))
+        {
             // RSS=0 also occurs when the OS refuses the memory read. Do not present it as measured zero.
             result.memory_bytes = (process.memory() > 0).then(|| process.memory());
             result.cpu_percent =
