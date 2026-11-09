@@ -1506,8 +1506,14 @@ function updateHow() {
   const tp = clamp((p - .3) / .52), n = Math.round(tp * TYPED.length);
   const done = p >= .86;
   const settled = done ? n : Math.max(0, n - 2);
-  const html = TYPED.slice(0, settled).join(' ') + (n > settled ? ' <span class="p">' + TYPED.slice(settled, n).join(' ') + '</span>' : '');
-  if (typed._h !== html) { typed.innerHTML = html || '&nbsp;'; typed._h = html; }
+  // Built from text nodes, never parsed as HTML: settled words, then the still-heard tail.
+  const key = settled + '/' + n;
+  if (typed._h !== key) {
+    typed._h = key;
+    typed.replaceChildren(TYPED.slice(0, settled).join(' '));
+    if (n > settled) { const tail = document.createElement('span'); tail.className = 'p'; tail.textContent = TYPED.slice(settled, n).join(' '); typed.append(settled ? ' ' : '', tail); }
+    if (!n) typed.textContent = ' ';
+  }
   return capture.classList.contains('on') || capReed.level > .01;
 }
 
