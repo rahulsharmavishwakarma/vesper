@@ -13,7 +13,10 @@ pub(crate) struct Memory {
 
 impl Memory {
     pub fn read() -> Self {
-        let mut system = sysinfo::System::new();
+        // Initialization can fail since sysinfo 0.40; report unknown rather than zero.
+        let Ok(mut system) = sysinfo::System::new() else {
+            return Self::default();
+        };
         system.refresh_memory();
         let physical = system.total_memory();
         let rss = sysinfo::get_current_pid().ok().and_then(|pid| {
