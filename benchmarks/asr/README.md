@@ -325,7 +325,7 @@ A separate 48-recording Svarah `en-IN` CPU screen measured raw WER of 18.50% for
 
 ### Setup's per-language matrix
 
-First-run setup and the Models page rank speech models from `models/recommendations.json` ([#296](https://github.com/rahulsharmavishwakarma/vesper/issues/296), [22 October 2026 results](../../docs/validation/recommendation-matrix-2026-10-22.md)). To reproduce or refresh it:
+First-run setup and the Models page rank speech models from `models/recommendations.json` ([#296](https://github.com/rahulsharmavishwakarma/vesper/issues/296), [22 October 2026 results](../../docs/validation/recommendation-matrix-2026-10-22.md)). The project website's benchmark section is generated from the same file on each deploy (its passing explicit-language results only; see [GitHub Pages](../../docs/ci-and-releases.md)), so a refresh updates the site too. To reproduce or refresh it:
 
 1. Download each FLEURS test locale at the pinned revision as above (`en_us`, `fr_fr`, `de_de`, `es_419`, `hi_in`). FLEURS has no `es_es`.
 2. Extract each archive into `.cache/benchmarks/corpora/fleurs-<locale>/`.
