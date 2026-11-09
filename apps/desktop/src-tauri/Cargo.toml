@@ -33,7 +33,7 @@ serde.workspace = true
 serde_json.workspace = true
 tempfile.workspace = true
 uuid.workspace = true
-sysinfo = { version = "=0.39.6", default-features = false, features = ["system"] }
+sysinfo = { version = "=0.40.1", default-features = false, features = ["system"] }
 vesper-core.workspace = true
 vesper-data.workspace = true
 vesper-audio.workspace = true
