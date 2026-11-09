@@ -30,8 +30,8 @@ numpy==2.5.4 ; platform_machine == 'arm64' and sys_platform == 'darwin' \
     #   onnxruntime
     #   soundfile
     #   vesper-audio-frontend-probe
-onnxruntime==1.31.0 ; platform_machine == 'arm64' and sys_platform == 'darwin' \
-    --hash=sha256:aaab9b3af536b06ca27ab5e35e3d429c97457ce76cf298af103f687e8b9975c0
+onnxruntime==1.31.1 ; platform_machine == 'arm64' and sys_platform == 'darwin' \
+    --hash=sha256:96dd2564b10ea7153ad9c207e7cd8e5917cb3ba521e0e0a62ac03486fdc8d56c
     # via vesper-audio-frontend-probe
 packaging==26.3 ; platform_machine == 'arm64' and sys_platform == 'darwin' \
     --hash=sha256:94edc256424af38762eb31306eed28beb9f0efc50a8837492c9d6fd6004aed79 \
