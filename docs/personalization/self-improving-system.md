@@ -38,7 +38,7 @@ flowchart TB
     G --> FMT["Formatting (English)<br/>numbers · dates · links · hesitations"]
     FMT --> OUT["Displayed text<br/>stage authorship recorded"]
   end
-  OUT -.->|"fix in the destination app<br/>(opt-in read-back)"| EV
+  OUT -.->|"fix in the destination app<br/>(opt-in, watched until sent)"| EV
   OUT -->|"user edit / Undo"| EV["Evidence rules<br/>asymmetric promotion · one-strike suspend"]
   EV --> BRK{"Policy breaker<br/>2 distinct rejections in 7 days"}
   BRK -->|tripped| PAUSE["Unconfirmed learned spellings paused<br/>until Resume or new policy"]
