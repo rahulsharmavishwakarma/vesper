@@ -48,9 +48,11 @@ mod ffi {
         pub fn td_receipt_read(
             token: u64,
             pasted: *mut u64,
+            flags: *mut u32,
             output: *mut c_char,
             size: usize,
         ) -> i32;
+        pub fn td_receipt_set_finished(handler: extern "C" fn(u64));
     }
 }
 
@@ -310,22 +312,87 @@ pub fn set_paste_receipts_enabled(enabled: bool) {
     let _ = enabled;
 }
 
-/// Read back the last paste once: (paste token, text from where it began).
-/// `token` 0 takes any pending receipt. The receipt is consumed either way.
-pub fn take_paste_receipt(token: u64) -> Option<(u64, String)> {
+/// How the pasted field was watched until it was read back (issue #410).
+#[derive(Clone, Copy, Debug, Default, PartialEq, Eq)]
+pub enum PasteWatch {
+    /// No change was seen: nothing edited, or the app gave no signal.
+    #[default]
+    Quiet,
+    /// The app sent value-change notifications for the field.
+    Notified,
+    /// Only polling the frontmost field saw changes.
+    Polled,
+}
+
+/// One read-back of the last paste.
+#[derive(Clone, Debug, PartialEq, Eq)]
+pub struct PasteReadback {
+    pub token: u64,
+    /// Text from where the paste began, at most twice its length plus a margin.
+    pub text: String,
+    /// The field was empty or gone (a chat box after Return): `text` is the
+    /// last text the watch saw there before that.
+    pub before_send: bool,
+    pub watch: PasteWatch,
+}
+
+/// Read back the last paste once. `token` 0 takes any pending receipt. The
+/// receipt and its watch end either way. `None` when nothing could be read.
+pub fn take_paste_receipt(token: u64) -> Option<PasteReadback> {
     #[cfg(target_os = "macos")]
     {
         let mut pasted = 0;
-        // SAFETY: `pasted` and the buffer outlive the synchronous call.
-        let text =
-            read_native(|out, size| unsafe { ffi::td_receipt_read(token, &mut pasted, out, size) });
-        text.map(|text| (pasted, text))
+        let mut flags = 0u32;
+        // SAFETY: `pasted`, `flags` and the buffer outlive the synchronous call.
+        let text = read_native(|out, size| unsafe {
+            ffi::td_receipt_read(token, &mut pasted, &mut flags, out, size)
+        });
+        text.map(|text| PasteReadback {
+            token: pasted,
+            text,
+            before_send: flags & 1 != 0,
+            watch: if flags & 2 != 0 {
+                PasteWatch::Notified
+            } else if flags & 4 != 0 {
+                PasteWatch::Polled
+            } else {
+                PasteWatch::Quiet
+            },
+        })
     }
     #[cfg(not(target_os = "macos"))]
     {
         let _ = token;
         None
     }
+}
+
+#[cfg(target_os = "macos")]
+static PASTE_WATCH_FINISHED: std::sync::OnceLock<Box<dyn Fn(u64) + Send + Sync>> =
+    std::sync::OnceLock::new();
+
+#[cfg(target_os = "macos")]
+extern "C" fn paste_watch_finished(token: u64) {
+    // Never unwind into Objective-C.
+    let _ = std::panic::catch_unwind(std::panic::AssertUnwindSafe(|| {
+        if let Some(handler) = PASTE_WATCH_FINISHED.get() {
+            handler(token);
+        }
+    }));
+}
+
+/// Run `handler` with the paste token when a watched field empties (the text
+/// was sent) or goes away, so its read-back happens at once. It runs on the
+/// main thread and must only schedule work. Set once, on the main thread.
+pub fn on_paste_watch_finished(handler: impl Fn(u64) + Send + Sync + 'static) {
+    #[cfg(target_os = "macos")]
+    if PASTE_WATCH_FINISHED.set(Box::new(handler)).is_ok() {
+        // SAFETY: A plain function pointer with a 'static handler behind it;
+        // native code checks thread affinity and calls it on the main thread.
+        unsafe { ffi::td_receipt_set_finished(paste_watch_finished) }
+    }
+    #[cfg(not(target_os = "macos"))]
+    let _ = handler;
 }
 
 pub fn capture_target(token: u64) -> Result<(), String> {
