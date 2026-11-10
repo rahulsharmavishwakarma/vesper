@@ -130,6 +130,10 @@ no underline. The native application sidebar keeps its existing treatment.
 Sections use extra-bold Bricolage headings with natural tracking, a 1.4 line height
 and shared description spacing; the main page title stays visually distinct.
 At narrow widths the interior navigation becomes a wrapping row of 44 px targets.
+In the desktop row the tabs are 44 px targets as well; hover shows a neutral
+wash, a press a deeper one, and the selected section keeps its tint while
+hovered (issue #377, asserted at 360, 414, 700 and 1280 px in both themes in
+`settings-layout.spec.mjs`).
 
 Keep the real settings controls and their data ownership. Section changes hide
 panels without recreating the application draft or dirty personal preferences.
