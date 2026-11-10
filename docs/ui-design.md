@@ -177,7 +177,17 @@ labels, 3.32:1 dark and 3.58:1 light control outlines, and 7.00:1 dark and
 3.57:1 light focus. Only light primary-button labels sit under the 4.5:1
 bar; that matches the owner-finalized mock, so that pair is a known,
 accepted limitation. Accent text stays on large, bold or non-text roles,
-and focus/outline indicators clear 3:1.
+and focus/outline indicators clear 3:1. Small ember text (status such as
+**Ready to listen**, counts, the selected range and filter chips, **Reviewed**,
+model creator labels and inline links) uses `--color-accent-text` instead of
+`--color-accent`: the accent itself in Dark (6.13:1 or better on every dark
+surface) and the darker ember `#bc3e13` in Light (5.47:1 on white, 4.81:1 on
+the ember tint), where the accent measures 3.81:1 (issue #376). Fills,
+selection washes, icons and the chart keep `--color-accent`. History filter
+counts render at full strength rather than at 80% opacity, which diluted them
+below 4.5:1. `contrast.spec.mjs` sweeps Dictate, History, Models and every
+Settings section in Light and fails on any small ember text under 4.5:1,
+opacity included.
 Selection applies immediately, defaults to the existing Dark appearance and is
 stored under `vesper-appearance-v1` in the browser/webview's local storage,
 separately from native inference settings. Other windows on the same origin sync

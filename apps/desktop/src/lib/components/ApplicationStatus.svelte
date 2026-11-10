@@ -321,7 +321,7 @@
     display: flex;
     gap: var(--space-2);
     align-items: center;
-    color: var(--color-accent);
+    color: var(--color-accent-text);
     font-size: 11px;
     margin-left: auto;
   }

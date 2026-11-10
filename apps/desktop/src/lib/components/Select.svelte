@@ -544,7 +544,7 @@
     gap: var(--space-2);
   }
   .creator-name {
-    color: var(--color-accent);
+    color: var(--color-accent-text);
     font-size: 11px;
     font-weight: 400;
     line-height: 1.4;
