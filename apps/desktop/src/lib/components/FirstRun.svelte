@@ -1175,22 +1175,33 @@
   }
 
   @container first-run (max-width: 760px) {
+    /* The single column and the one-row rail must shrink to the 360 px minimum
+       window: the brand gives up a little width, the dots sit closer, and as a
+       last resort the dots wrap rather than run past the edge (#375). */
     .fr-grid {
-      grid-template-columns: 1fr;
+      grid-template-columns: minmax(0, 1fr);
       grid-template-rows: auto 1fr;
     }
     .fr-rail {
       flex-direction: row;
       align-items: center;
+      gap: var(--space-3);
       padding: 12px 16px;
       border-right: 0;
       border-bottom: 1px solid var(--color-line);
+      min-width: 0;
     }
     .fr-brand {
+      flex: 0 1 120px;
       width: 120px;
+      min-width: 96px;
     }
     .fr-steps {
       flex-direction: row;
+      flex-wrap: wrap;
+      justify-content: flex-end;
+      gap: 4px;
+      min-width: 0;
       margin-left: auto;
     }
     .fr-step {

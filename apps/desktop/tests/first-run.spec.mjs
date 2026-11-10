@@ -292,3 +292,36 @@ test('reduced motion shows Welcome at once and changes step without the flight',
   await expect(page.locator('.fr-flyer')).toHaveCount(0);
   await context.close();
 });
+
+// #375: at the native minimum width (360 px) and just above it, every setup
+// step fits the window. Nothing is clipped past the right edge, including
+// the narrow rail of step dots.
+test('every setup step fits the narrowest windows without clipping', async ({ page }) => {
+  await page.emulateMedia({ reducedMotion: 'reduce' });
+  for (const [width, height] of [
+    [360, 480],
+    [375, 640],
+    [414, 700],
+  ]) {
+    await page.setViewportSize({ width, height });
+    for (let step = 1; step <= 7; step += 1) {
+      await page.goto(
+        `/tests/interaction-preview.html?first-run&first-run-step=${step}&first-run-mic=allowed`,
+      );
+      await expect(page.locator('.fr-main')).toBeVisible();
+      const overflow = await page.evaluate(() => {
+        const limit = window.innerWidth + 1;
+        const rail = document.querySelector('.fr-rail');
+        const past = [...document.querySelectorAll('.first-run *')]
+          .filter((el) => {
+            const box = el.getBoundingClientRect();
+            const style = getComputedStyle(el);
+            return box.width > 0 && style.visibility !== 'hidden' && box.right > limit;
+          })
+          .map((el) => `${el.tagName.toLowerCase()}.${[...el.classList].join('.')}`);
+        return { rail: rail.scrollWidth - rail.clientWidth, past: past.slice(0, 5) };
+      });
+      expect(overflow, `step ${step} at ${width}x${height}`).toEqual({ rail: 0, past: [] });
+    }
+  }
+});
