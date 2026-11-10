@@ -1349,7 +1349,7 @@ details {
   padding-inline: var(--space-3);
 }
 .stats-range button[aria-pressed='true'] {
-  color: var(--color-accent);
+  color: var(--color-accent-text);
   background: var(--color-tint);
 }
 .history-metrics {
@@ -1657,13 +1657,12 @@ details {
   font-size: 12px;
 }
 .history-filters button[aria-pressed='true'] {
-  color: var(--color-accent);
+  color: var(--color-accent-text);
   background: var(--color-tint);
 }
 .history-filters button span {
   font-variant-numeric: tabular-nums;
   font-size: 10px;
-  opacity: 0.8;
 }
 .history-results {
   min-width: 0;
@@ -1958,7 +1957,7 @@ button.inline-link {
   min-height: 32px;
   padding: 0 var(--space-1);
   border: 0;
-  color: var(--color-accent);
+  color: var(--color-accent-text);
   background: var(--color-transparent);
   font-size: inherit;
   white-space: normal;
@@ -2166,7 +2165,7 @@ textarea:focus:enabled {
   background: var(--color-tint);
 }
 .sliding-selection button[aria-pressed='true'] {
-  color: var(--color-accent);
+  color: var(--color-accent-text);
 }
 .session-editor.history-reveal {
   animation: none;
@@ -2450,7 +2449,7 @@ textarea:focus:enabled {
   background: var(--color-accent);
 }
 .dataset-panel[data-view='full'] .review-ok {
-  color: var(--color-accent);
+  color: var(--color-accent-text);
   display: inline-flex;
   align-items: center;
   gap: 5px;

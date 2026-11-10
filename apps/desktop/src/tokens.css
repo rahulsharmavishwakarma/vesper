@@ -23,6 +23,8 @@
   --color-control-edge: #6b6259;
   --color-control-hover: #7d7468;
   --color-accent-light: #ff8a5c;
+  /* Ember for small text (status, counts, links): the accent itself clears 4.5:1 on night. */
+  --color-accent-text: #ff6b3d;
   --color-error-light: oklch(84% 0.1 30);
   --color-surface-light: #1c1a18;
   --color-overlay: rgb(0 0 0 / 72%);
@@ -91,6 +93,8 @@
   --color-control-edge: #8a8781;
   --color-control-hover: #74716b;
   --color-accent-light: #f29d7f;
+  /* The light accent is 3.81:1 on white, so small text uses the darker ember (#376). */
+  --color-accent-text: #bc3e13;
   --color-error-light: oklch(50% 0.14 30);
   --color-surface-light: #f6f5f2;
   --color-overlay: rgb(18 17 15 / 40%);
