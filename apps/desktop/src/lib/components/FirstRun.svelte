@@ -347,8 +347,10 @@
     timers.push(setTimeout(() => (chirping = false), 1200));
   }
 
-  // Welcome: a thin voice line speaks, gathers into the centre and becomes the
-  // bird; then the words come into focus and the bird chirps once.
+  // Welcome: a thin voice line speaks while the words come into focus beneath it,
+  // then it gathers into the centre, becomes the bird and chirps once. The words
+  // do not wait for the bird: the heading is readable within about half a second
+  // and Get started within about one, so the window is never blank (#378).
   function playWelcome() {
     if (reducedMotion()) {
       birdIn = true;
@@ -384,7 +386,7 @@
       if (g < 1) frame = requestAnimationFrame(draw);
     };
     frame = requestAnimationFrame(draw);
-    timers.push(setTimeout(() => (textIn = true), SPEAK + GATHER + 60));
+    timers.push(setTimeout(() => (textIn = true), 180));
   }
 
   function save(next: number) {
@@ -742,14 +744,14 @@
         </button>
       </div>
       <h1 id="hello-title" class="fx" class:in={textIn} style="--d:0ms">Welcome to Vesper</h1>
-      <p class="fx sub" class:in={textIn} style="--d:110ms">
+      <p class="fx sub" class:in={textIn} style="--d:90ms">
         Speak, and your words appear wherever you type. Everything stays on this Mac.
       </p>
       <button
         type="button"
         class="primary get-started fx"
         class:in={textIn}
-        style="--d:240ms"
+        style="--d:180ms"
         onclick={leaveWelcome}>Get started</button
       >
     </section>
@@ -924,11 +926,11 @@
   }
   .fx {
     opacity: 0;
-    filter: blur(10px);
-    transform: translateY(12px);
+    filter: blur(6px);
+    transform: translateY(8px);
   }
   .fx.in {
-    animation: blur-in 0.95s cubic-bezier(0.2, 0.8, 0.2, 1) var(--d) forwards;
+    animation: blur-in 0.6s cubic-bezier(0.2, 0.8, 0.2, 1) var(--d) forwards;
   }
   .fr-flyer {
     position: absolute;
@@ -1175,22 +1177,33 @@
   }
 
   @container first-run (max-width: 760px) {
+    /* The single column and the one-row rail must shrink to the 360 px minimum
+       window: the brand gives up a little width, the dots sit closer, and as a
+       last resort the dots wrap rather than run past the edge (#375). */
     .fr-grid {
-      grid-template-columns: 1fr;
+      grid-template-columns: minmax(0, 1fr);
       grid-template-rows: auto 1fr;
     }
     .fr-rail {
       flex-direction: row;
       align-items: center;
+      gap: var(--space-3);
       padding: 12px 16px;
       border-right: 0;
       border-bottom: 1px solid var(--color-line);
+      min-width: 0;
     }
     .fr-brand {
+      flex: 0 1 120px;
       width: 120px;
+      min-width: 96px;
     }
     .fr-steps {
       flex-direction: row;
+      flex-wrap: wrap;
+      justify-content: flex-end;
+      gap: 4px;
+      min-width: 0;
       margin-left: auto;
     }
     .fr-step {

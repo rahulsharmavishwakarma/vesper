@@ -75,6 +75,29 @@
               : 'Check model setup',
   );
   const currentReading = $derived(enabled && !readError ? reading : null);
+  // The charts appear once there is something to plot (#379): CPU needs a second
+  // sample, so until a CPU reading (or, where CPU is unavailable, two memory
+  // readings) exists, one compact row says what is happening instead of an
+  // empty chart, a lone memory bar and a table of dashes.
+  const charted = $derived(
+    history.some((point) => point.cpuPercent !== null) ||
+      history.filter((point) => point.memoryBytes !== null).length >= 2,
+  );
+  // Memory is known from the first sample; it shows at once in the compact row.
+  const memoryNow = $derived(
+    currentReading?.memoryBytes != null ? (currentReading.memoryBytes / 2 ** 30).toFixed(2) : null,
+  );
+  const pendingText = $derived(
+    !desktop
+      ? 'Usage readings are available in the desktop app.'
+      : currentReading?.status === 'unavailable'
+        ? 'Usage readings are unavailable on this system.'
+        : readError
+          ? 'Waiting for a fresh reading…'
+          : memoryNow
+            ? 'Measuring CPU activity…'
+            : 'Measuring engine usage…',
+  );
   const ramScale = $derived(memoryScale(history));
   const timings = $derived(diagnostics?.timings);
   const hardware = $derived(executedHardware(diagnostics?.execution, timings?.operationId));
@@ -170,45 +193,51 @@
     >
   </header>
   <div class="engine-body">
-    <div class="engine-resources">
-      {#each [{ key: 'cpuPercent' as const, name: 'CPU activity', value: currentReading?.cpuPercent?.toFixed(1) ?? '—', unit: '% capacity', scale: 100, scaleLabel: '100%' }, { key: 'memoryBytes' as const, name: 'Memory in use', value: currentReading?.memoryBytes != null ? (currentReading.memoryBytes / 2 ** 30).toFixed(2) : '—', unit: 'GiB', scale: ramScale, scaleLabel: `${(ramScale / 2 ** 30).toFixed(1)} GiB` }] as metric (metric.key)}
-        <section class="engine-resource" aria-label={metric.name}>
-          <div class="resource-heading">
-            <h3>{metric.name}</h3>
-            <span class="resource-value">{metric.value}<small>{metric.unit}</small></span>
-          </div>
-          <div class="resource-graph" class:stale={Boolean(readError)}>
-            <svg viewBox="0 0 400 84" preserveAspectRatio="none" aria-hidden="true">
-              <path class="resource-grid" d="M0 8H400M0 42H400M0 76H400" />
-              {#key refreshRevision}<g class="resource-bars" class:reveal={animateResources}>
-                  {#each resourceBars(history, metric.key, metric.scale) as bar, index (bar.time)}<rect
-                      x={bar.x}
-                      y={bar.y}
-                      width="4"
-                      height={bar.height}
-                      rx="1.5"
-                      style:--bar-delay={`${Math.min(index * 8, 120)}ms`}
-                    />{/each}
-                </g>{/key}
-            </svg>
-            {#if !history.some((point) => point[metric.key] !== null)}<p>
-                {!desktop
-                  ? 'Available in the desktop app'
-                  : currentReading?.status === 'unavailable'
-                    ? 'Unavailable on this system'
-                    : readError
-                      ? 'Waiting for a fresh reading'
-                      : 'Measuring…'}
-              </p>{/if}
-            <span class="resource-scale">{metric.scaleLabel}</span>
-          </div>
-          <div class="resource-axis"><span>60s ago</span><span>Now</span></div>
-        </section>
-      {/each}
-    </div>
-    <p class="resource-scope">
-      Main speech engine usage, including loaded models. App window and helper processes excluded.
-    </p>
+    {#if charted}
+      <div class="engine-resources">
+        {#each [{ key: 'cpuPercent' as const, name: 'CPU activity', value: currentReading?.cpuPercent?.toFixed(1) ?? '—', unit: '% capacity', scale: 100, scaleLabel: '100%' }, { key: 'memoryBytes' as const, name: 'Memory in use', value: currentReading?.memoryBytes != null ? (currentReading.memoryBytes / 2 ** 30).toFixed(2) : '—', unit: 'GiB', scale: ramScale, scaleLabel: `${(ramScale / 2 ** 30).toFixed(1)} GiB` }] as metric (metric.key)}
+          <section class="engine-resource" aria-label={metric.name}>
+            <div class="resource-heading">
+              <h3>{metric.name}</h3>
+              <span class="resource-value">{metric.value}<small>{metric.unit}</small></span>
+            </div>
+            <div class="resource-graph" class:stale={Boolean(readError)}>
+              <svg viewBox="0 0 400 84" preserveAspectRatio="none" aria-hidden="true">
+                <path class="resource-grid" d="M0 8H400M0 42H400M0 76H400" />
+                {#key refreshRevision}<g class="resource-bars" class:reveal={animateResources}>
+                    {#each resourceBars(history, metric.key, metric.scale) as bar, index (bar.time)}<rect
+                        x={bar.x}
+                        y={bar.y}
+                        width="4"
+                        height={bar.height}
+                        rx="1.5"
+                        style:--bar-delay={`${Math.min(index * 8, 120)}ms`}
+                      />{/each}
+                  </g>{/key}
+              </svg>
+              {#if !history.some((point) => point[metric.key] !== null)}<p>
+                  {!desktop
+                    ? 'Available in the desktop app'
+                    : currentReading?.status === 'unavailable'
+                      ? 'Unavailable on this system'
+                      : readError
+                        ? 'Waiting for a fresh reading'
+                        : 'Measuring…'}
+                </p>{/if}
+              <span class="resource-scale">{metric.scaleLabel}</span>
+            </div>
+            <div class="resource-axis"><span>60s ago</span><span>Now</span></div>
+          </section>
+        {/each}
+      </div>
+      <p class="resource-scope">
+        Main speech engine usage, including loaded models. App window and helper processes excluded.
+      </p>
+    {:else}<p class="engine-measuring" role="status">
+        <span class="measure-dot" aria-hidden="true"></span>{pendingText}{#if memoryNow}<span
+            class="measure-memory">Memory in use <b>{memoryNow}</b> GiB</span
+          >{/if}
+      </p>{/if}
     <div class="engine-operation">
       <div class="operation-heading">
         <h3>
@@ -238,15 +267,15 @@
             : ''}
         </p>{/if}
       {#if hardware}<p class="operation-model">{hardware}</p>{/if}
-      <div class="engine-steps">
-        {#each rows as row (row.key)}<div class="engine-step" class:current={active === row.key}>
-            <span>{row.label}</span><span class="step-duration"
-              >{row.key === 'cleanup' && timings && timings.cleanupModel === null
-                ? 'Off'
-                : durationLabel(row.value)}</span
-            >
-          </div>{/each}
-      </div>
+      {#if timings}<div class="engine-steps">
+          {#each rows as row (row.key)}<div class="engine-step" class:current={active === row.key}>
+              <span>{row.label}</span><span class="step-duration"
+                >{row.key === 'cleanup' && timings && timings.cleanupModel === null
+                  ? 'Off'
+                  : durationLabel(row.value)}</span
+              >
+            </div>{/each}
+        </div>{/if}
     </div>
     {#if readError || statusError}<p class="engine-error" role="status">
         {readError ?? statusError} Use Refresh to retry.
@@ -299,7 +328,7 @@
     display: flex;
     gap: var(--space-2);
     align-items: center;
-    color: var(--color-accent);
+    color: var(--color-accent-text);
     font-size: 11px;
     margin-left: auto;
   }
@@ -412,6 +441,35 @@
     color: var(--color-muted);
     font: 10px var(--font-mono);
   }
+  .engine-resources {
+    animation: engine-grow 0.35s var(--ease-out) both;
+  }
+  .engine-measuring {
+    display: flex;
+    align-items: center;
+    gap: var(--space-2);
+    margin: 0;
+    padding: var(--space-4) 0;
+    border-top: 1px solid var(--color-line);
+    color: var(--color-muted);
+    font-size: 12px;
+  }
+  .measure-memory {
+    margin-left: auto;
+  }
+  .measure-memory b {
+    color: var(--color-ink);
+    font-weight: 500;
+    font-variant-numeric: tabular-nums;
+  }
+  .measure-dot {
+    width: 6px;
+    height: 6px;
+    flex-shrink: 0;
+    border-radius: var(--radius-pill);
+    background: currentColor;
+    animation: engine-pulse 1.4s ease-in-out infinite;
+  }
   .resource-scope {
     margin: var(--space-5) 0 var(--space-6);
     color: var(--color-muted);
@@ -500,6 +558,12 @@
       transform: rotate(360deg);
     }
   }
+  @keyframes engine-grow {
+    from {
+      opacity: 0;
+      transform: translateY(4px);
+    }
+  }
   @keyframes resource-rise {
     from {
       transform: scaleY(0.05);
@@ -550,7 +614,9 @@
   @media (prefers-reduced-motion: reduce) {
     .working .engine-dot,
     .spinning,
-    .resource-bars.reveal rect {
+    .resource-bars.reveal rect,
+    .engine-resources,
+    .measure-dot {
       animation: none;
     }
   }

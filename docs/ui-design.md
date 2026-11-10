@@ -130,6 +130,10 @@ no underline. The native application sidebar keeps its existing treatment.
 Sections use extra-bold Bricolage headings with natural tracking, a 1.4 line height
 and shared description spacing; the main page title stays visually distinct.
 At narrow widths the interior navigation becomes a wrapping row of 44 px targets.
+In the desktop row the tabs are 44 px targets as well; hover shows a neutral
+wash, a press a deeper one, and the selected section keeps its tint while
+hovered (issue #377, asserted at 360, 414, 700 and 1280 px in both themes in
+`settings-layout.spec.mjs`).
 
 Keep the real settings controls and their data ownership. Section changes hide
 panels without recreating the application draft or dirty personal preferences.
@@ -177,7 +181,17 @@ labels, 3.32:1 dark and 3.58:1 light control outlines, and 7.00:1 dark and
 3.57:1 light focus. Only light primary-button labels sit under the 4.5:1
 bar; that matches the owner-finalized mock, so that pair is a known,
 accepted limitation. Accent text stays on large, bold or non-text roles,
-and focus/outline indicators clear 3:1.
+and focus/outline indicators clear 3:1. Small ember text (status such as
+**Ready to listen**, counts, the selected range and filter chips, **Reviewed**,
+model creator labels and inline links) uses `--color-accent-text` instead of
+`--color-accent`: the accent itself in Dark (6.13:1 or better on every dark
+surface) and the darker ember `#bc3e13` in Light (5.47:1 on white, 4.81:1 on
+the ember tint), where the accent measures 3.81:1 (issue #376). Fills,
+selection washes, icons and the chart keep `--color-accent`. History filter
+counts render at full strength rather than at 80% opacity, which diluted them
+below 4.5:1. `contrast.spec.mjs` sweeps Dictate, History, Models and every
+Settings section in Light and fails on any small ember text under 4.5:1,
+opacity included.
 Selection applies immediately, defaults to the existing Dark appearance and is
 stored under `vesper-appearance-v1` in the browser/webview's local storage,
 separately from native inference settings. Other windows on the same origin sync
@@ -372,9 +386,13 @@ and tests open it with `?first-run`.
 
 - **Welcome** uses the whole window with one focal point: the bird, "Welcome
   to Vesper", one line and one Get started button. Its single signature motion
-  is a thin voice line that gathers into the centre and becomes the bird; the
-  words then come into focus in sequence and the bird chirps once. Afterwards
-  only the blink remains.
+  is a thin voice line that speaks while the words come into focus beneath it,
+  then gathers into the centre and becomes the bird, which chirps once.
+  Afterwards only the blink remains. The words do not wait for the bird: the
+  heading is readable by about 0.5 s and Get started by about 1 s (measured
+  467 ms and 633 ms in Chromium), so the first window is never blank (issue
+  #378, timed per frame in `first-run.spec.mjs`). Each word group comes in
+  over 0.6 s from a 6 px blur, staggered 90 ms.
 - **Leaving Welcome** places step 2 underneath at once and crossfades Welcome
   away above it, so there is no blank frame. The bird is the one shared
   element: it flies a sampled arc with one ease-in-out into the sidebar logo,
@@ -386,6 +404,11 @@ and tests open it with `?first-run`.
   composed Welcome screen again (a short fade, no replayed intro); there is no
   empty step 1. There is no Skip. Progress is saved after every step so a quit
   resumes where it stopped.
+  In windows up to 760 px wide the rail becomes one row above the content (the
+  logo, then the seven step dots); it and the content shrink to the 360 px
+  minimum window, and the dots wrap rather than run past the edge, so no step
+  is clipped (issue #375, asserted at 360, 375 and 414 px for every step in
+  `first-run.spec.mjs`).
 - **Voice** uses the app's shared controls: the language and microphone
   fields are the same `Select` as Dictate, and the meter is the recording
   waveform (`AudioIndicator`, full reed shape and pitch spacing). The language

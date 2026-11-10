@@ -327,7 +327,12 @@ if (states) {
             resultId: 'preview-try',
             rawTranscript: 'can you send the arc light notes to priya by friday',
             cleanedTranscript: 'Can you send the Arclight notes to Priya by Friday?',
+            // The full stop_recording contract, as runtime.rs sends it, so the
+            // result panel renders here exactly as in the app (#393).
+            learningOutcome: null,
             session: null,
+            warnings: [],
+            durationSeconds: 3.4,
           };
         case 'get_onboarding':
           return { ...onboarding };
@@ -399,7 +404,9 @@ if (states) {
               cpuPercent: 3,
               memoryBytes: 268435456,
               logicalCpus: 8,
-              status: 'available',
+              // The native sampler's ready state (resources.rs); 'available' is
+              // not a status, so the preview never showed a CPU reading (#379).
+              status: 'ready',
             },
             activity: runtime,
             timings: null,

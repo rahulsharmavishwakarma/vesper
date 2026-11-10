@@ -1349,7 +1349,7 @@ details {
   padding-inline: var(--space-3);
 }
 .stats-range button[aria-pressed='true'] {
-  color: var(--color-accent);
+  color: var(--color-accent-text);
   background: var(--color-tint);
 }
 .history-metrics {
@@ -1657,13 +1657,12 @@ details {
   font-size: 12px;
 }
 .history-filters button[aria-pressed='true'] {
-  color: var(--color-accent);
+  color: var(--color-accent-text);
   background: var(--color-tint);
 }
 .history-filters button span {
   font-variant-numeric: tabular-nums;
   font-size: 10px;
-  opacity: 0.8;
 }
 .history-results {
   min-width: 0;
@@ -1958,7 +1957,7 @@ button.inline-link {
   min-height: 32px;
   padding: 0 var(--space-1);
   border: 0;
-  color: var(--color-accent);
+  color: var(--color-accent-text);
   background: var(--color-transparent);
   font-size: inherit;
   white-space: normal;
@@ -2166,7 +2165,7 @@ textarea:focus:enabled {
   background: var(--color-tint);
 }
 .sliding-selection button[aria-pressed='true'] {
-  color: var(--color-accent);
+  color: var(--color-accent-text);
 }
 .session-editor.history-reveal {
   animation: none;
@@ -2450,7 +2449,7 @@ textarea:focus:enabled {
   background: var(--color-accent);
 }
 .dataset-panel[data-view='full'] .review-ok {
-  color: var(--color-accent);
+  color: var(--color-accent-text);
   display: inline-flex;
   align-items: center;
   gap: 5px;
@@ -3104,9 +3103,12 @@ button:is(
   margin-top: var(--space-6);
 }
 
-/* Sage Settings refresh (Refs #85): underline section tabs, divider-separated
+/* Sage Settings refresh (Refs #85): a row of section tabs, divider-separated
    setting rows with switches on the right, two-column preference fields, and a
-   centered sticky save bar. Visual only; ids, labels, and behavior unchanged. */
+   centered sticky save bar. Visual only; ids, labels, and behavior unchanged.
+   The tabs follow docs/ui-design.md (#377): the selected section sits on the
+   tonal tint with no underline, hover is a neutral wash, a press a deeper one,
+   and every tab is a 44 px target in the row and the narrow wrapping rows. */
 .settings-layout {
   grid-template-columns: minmax(0, 1fr);
 }
@@ -3114,27 +3116,31 @@ button:is(
   flex-direction: row;
   position: static;
   gap: var(--space-1);
+  padding-bottom: var(--space-2);
   border-bottom: 1px solid var(--color-line);
   overflow-x: auto;
 }
 .settings-nav button {
   width: auto;
-  min-height: 0;
+  min-height: 44px;
   padding: 10px 14px;
-  border-bottom: 2px solid transparent;
-  border-radius: 0;
-  margin-bottom: -1px;
+  border: 0;
+  border-radius: var(--radius-sm);
   white-space: nowrap;
   color: var(--color-muted);
 }
 .settings-nav button:hover:enabled {
-  background: var(--color-transparent);
+  background: var(--color-surface-light);
   color: var(--color-ink);
 }
-.settings-nav button[aria-current='page'] {
-  background: var(--color-transparent);
+.settings-nav button:active:enabled {
+  background: var(--color-line);
+}
+/* The selected section keeps its tint under the pointer too. */
+.settings-nav button[aria-current='page'],
+.settings-nav button[aria-current='page']:hover:enabled {
+  background: var(--color-tint);
   color: var(--color-ink);
-  border-bottom-color: var(--color-accent);
 }
 .studio-main[data-view='settings'] .settings-content .settings-section > h2 {
   font-size: 16px;
@@ -3364,6 +3370,7 @@ button:is(
   }
   .settings-nav button {
     width: auto;
+    min-height: 44px;
     padding: 8px 12px;
   }
 }
@@ -3390,8 +3397,9 @@ button:is(
     gap: 2px;
   }
   .settings-nav button {
-    padding: 8px;
-    font-size: 11px;
+    min-height: 44px;
+    padding: 8px 10px;
+    font-size: 12px;
   }
   .appearance-options {
     gap: var(--space-2);

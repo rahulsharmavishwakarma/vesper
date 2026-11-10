@@ -535,3 +535,50 @@ test('Settings row actions and the writing link keep 44 px pointer targets', asy
     }
   }
 });
+
+// #377: Settings section tabs follow docs/ui-design.md: the selected section
+// sits on a tonal fill with no underline, hover shows a wash, and every tab
+// is at least 44 px tall in the desktop row and the narrow wrapping rows.
+test('Settings tabs use a tonal selection and 44 px targets at every width', async ({ page }) => {
+  await openSettings(page);
+  await page.emulateMedia({ reducedMotion: 'reduce' });
+  for (const theme of ['Light', 'Dark']) {
+    await section(page, 'Appearance').click();
+    await page.getByRole('button', { name: theme, exact: true }).click();
+    for (const width of [360, 414, 700, 1280]) {
+      await page.setViewportSize({ width, height: width === 360 ? 480 : 900 });
+      await section(page, 'Privacy').click();
+      const tabs = await page.evaluate(() => {
+        const tint = (() => {
+          const el = document.createElement('span');
+          el.style.backgroundColor = 'var(--color-tint)';
+          document.body.append(el);
+          const value = getComputedStyle(el).backgroundColor;
+          el.remove();
+          return value;
+        })();
+        const buttons = [...document.querySelectorAll('.settings-nav button')];
+        const current = document.querySelector('.settings-nav [aria-current="page"]');
+        const style = getComputedStyle(current);
+        return {
+          shortest:
+            Math.min(...buttons.map((b) => Math.round(b.getBoundingClientRect().height))) >= 44,
+          tonal: style.backgroundColor === tint,
+          underline: style.borderBottomStyle !== 'none' && parseFloat(style.borderBottomWidth) > 0,
+        };
+      });
+      expect(tabs, `${theme} at ${width}`).toEqual({
+        shortest: true,
+        tonal: true,
+        underline: false,
+      });
+    }
+    const other = section(page, 'About');
+    const before = await other.evaluate((el) => getComputedStyle(el).backgroundColor);
+    await other.hover();
+    await expect
+      .poll(() => other.evaluate((el) => getComputedStyle(el).backgroundColor))
+      .not.toBe(before);
+    await page.mouse.move(0, 0);
+  }
+});

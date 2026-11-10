@@ -133,9 +133,15 @@
     if (!open || !popup) return;
     const option = document.getElementById(optionId(active));
     if (!option || !popup.contains(option)) return;
+    // The sticky language filter covers the top of the list, so an option is in
+    // view only below it, for arrow keys here and for native scroll-into-view
+    // (scroll-padding), which assistive tools and the window use.
+    const covered = popup.querySelector<HTMLElement>('.lang-filter')?.offsetHeight ?? 0;
+    popup.style.scrollPaddingTop = `${covered}px`;
     const popupRect = popup.getBoundingClientRect();
     const optionRect = option.getBoundingClientRect();
-    if (optionRect.top < popupRect.top) popup.scrollTop -= popupRect.top - optionRect.top;
+    const top = popupRect.top + covered;
+    if (optionRect.top < top) popup.scrollTop -= top - optionRect.top;
     else if (optionRect.bottom > popupRect.bottom)
       popup.scrollTop += optionRect.bottom - popupRect.bottom;
   }
@@ -538,7 +544,7 @@
     gap: var(--space-2);
   }
   .creator-name {
-    color: var(--color-accent);
+    color: var(--color-accent-text);
     font-size: 11px;
     font-weight: 400;
     line-height: 1.4;

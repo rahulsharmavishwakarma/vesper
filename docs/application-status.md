@@ -19,6 +19,11 @@ otherwise the raw transcript.
   capacity: `100 × Δprocess CPU milliseconds / Δmonotonic wall milliseconds /
 logical CPU count`. One fully busy core on an 18-core logical machine is about
   5.6%. The initial reading is unavailable until an interval has been measured.
+  Until that first CPU reading exists the panel shows one compact row instead of
+  the charts: **Measuring CPU activity…** with the real **Memory in use** value
+  beside it (or **Measuring engine usage…** before the first sample, or why
+  readings are unavailable). The CPU and memory charts then appear in place,
+  so the panel never opens on an empty plot or a lone memory bar (issue #379).
 - **Memory in use** is current resident RAM (RSS), displayed in GiB. It includes
   shared models, runtime, and allocator overhead. These are process readings, not
   individual model allocations. WebView, native helper processes, GPU
@@ -43,7 +48,9 @@ logical CPU count`. One fully busy core on an 18-core logical machine is about
 
 An operation can finish while retaining raw text and a cleanup warning. Its existing
 Dictate warnings remain the source of that detail. Cancelled and failed operations
-show partial durations; unstarted stages show a dash. Timings retain only the current
+show partial durations; unstarted stages show a dash. Before any operation has
+run, the stage table is not drawn; **No recent activity** says so instead of a
+row of dashes. Timings retain only the current
 or last operation in memory and reset on the next operation or app exit.
 
 ## Sampling and implementation

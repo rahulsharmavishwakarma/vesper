@@ -76,3 +76,31 @@ test('the sidebar shows a running download with its progress on every page', asy
   await page.evaluate(() => window.previewFinishDownload());
   await expect(activity).toHaveCount(0);
 });
+
+// #379: before the first reading the Local engine card is one compact
+// "Measuring" row, not an empty chart, a lone memory bar and a table of
+// dashes. The charts appear in place once a CPU reading exists.
+test('the engine card measures compactly, then shows its charts', async ({ page }) => {
+  const errors = [];
+  page.on('pageerror', (error) => errors.push(error.message));
+  await page.goto('/tests/interaction-preview.html');
+  await page
+    .getByRole('navigation', { name: 'Application', exact: true })
+    .getByRole('button', { name: 'Models', exact: true })
+    .click();
+  const card = page.locator('.engine-status');
+  // Memory is real from the first sample, so it shows at once; CPU waits for a second.
+  const measuring = card.getByRole('status').filter({ hasText: /Measuring/ });
+  await expect(measuring).toBeVisible();
+  await expect(measuring).toContainText('Memory in use 0.25 GiB');
+  await expect(card.locator('.engine-resource')).toHaveCount(0);
+  await expect(card.locator('.engine-steps')).toHaveCount(0);
+  await expect(card.getByText('No recent activity')).toBeVisible();
+
+  await expect(card.getByRole('region', { name: 'CPU activity' })).toBeVisible({ timeout: 4000 });
+  await expect(card.getByRole('region', { name: 'CPU activity' })).toContainText('3.0');
+  await expect(card.getByRole('region', { name: 'Memory in use' })).toContainText('0.25');
+  await expect(card.getByText(/Measuring/)).toHaveCount(0);
+  await expect(card.locator('.engine-steps')).toHaveCount(0);
+  expect(errors).toEqual([]);
+});
