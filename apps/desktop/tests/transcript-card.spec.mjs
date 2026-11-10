@@ -63,3 +63,31 @@ test('transcript card votes, correction learning, undo and details', async ({ pa
 
   expect(errors, 'Uncaught browser errors').toEqual([]);
 });
+
+// #394: tapping a heard word stays a pointer shortcut for seeking, while the
+// labelled slider is the keyboard and screen-reader seek control. Words are
+// plain text in the accessibility tree, not a Tab stop each.
+test('heard words seek by pointer and the slider seeks by keyboard', async ({ page }) => {
+  const errors = [];
+  page.on('pageerror', (error) => errors.push(error.message));
+  const card = await openPendingCard(page);
+  const slider = card.getByRole('slider', { name: 'Seek recording' });
+  await expect(slider).toHaveAttribute('aria-valuenow', '0');
+
+  const words = card.locator('.raw .w');
+  const count = await words.count();
+  expect(count).toBeGreaterThan(4);
+  await expect(words.first()).toHaveAttribute('role', 'presentation');
+  await expect(words.first()).not.toHaveAttribute('tabindex', /.*/);
+  await words.nth(Math.floor(count * 0.75)).click();
+  await expect
+    .poll(async () => Number(await slider.getAttribute('aria-valuenow')))
+    .toBeGreaterThan(0);
+
+  // The slider takes focus and keys move it: Home returns from mid-track to the start.
+  await slider.focus();
+  await expect(slider).toBeFocused();
+  await page.keyboard.press('Home');
+  await expect(slider).toHaveAttribute('aria-valuenow', '0');
+  expect(errors).toEqual([]);
+});

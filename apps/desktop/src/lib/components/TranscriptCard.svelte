@@ -432,20 +432,24 @@
     </div>
     <div class="cols">
       <div class="col">
-        <label>Heard</label>
-        <!-- Word tap seeks like the mock; the slider stays the keyboard path. -->
+        <span class="col-label">Heard</span>
+        <!-- Tapping a word is a pointer shortcut for seeking. The labelled "Seek recording"
+             slider is the keyboard and screen-reader seek control, so the words stay plain text
+             (role="presentation") instead of becoming one Tab stop each (#394). -->
         <p class="raw">
           {#each heardParts() as part, index (index)}{#if part.changed}<span
                 class="w"
                 data-i={part.index}
                 class:said={part.index < saidThrough}
                 class:now={playing && part.index === saidThrough}
+                role="presentation"
                 onclick={() => seekWord(part.index)}><mark>{part.text}</mark></span
               >{:else if part.index >= 0}<span
                 class="w"
                 data-i={part.index}
                 class:said={part.index < saidThrough}
                 class:now={playing && part.index === saidThrough}
+                role="presentation"
                 onclick={() => seekWord(part.index)}>{part.text}</span
               >{:else}{part.text}{/if}{/each}
         </p>
@@ -551,7 +555,10 @@
               Speaker numbers apply to this recording only. Overlapping ranges mean simultaneous
               speech.
             </p>
-            <div class="spk" tabindex="0" aria-label="Estimated speaker activity">
+            <!-- A scrolling region must take focus so keyboard users can scroll it: WebKit, which
+                 the app runs in, does not make scroll containers focusable on its own (#394). -->
+            <!-- svelte-ignore a11y_no_noninteractive_tabindex -->
+            <div class="spk" role="region" tabindex="0" aria-label="Estimated speaker activity">
               <table>
                 <thead
                   ><tr
@@ -719,7 +726,8 @@
       grid-template-columns: 1fr;
     }
   }
-  .col > label {
+  .col > label,
+  .col > .col-label {
     display: block;
     font-size: 12.5px;
     color: var(--color-muted);
