@@ -9,8 +9,23 @@ Nightly builds are not listed.
 
 ## [Unreleased]
 
+### Added
+
+- Models › **Local engine** shows the hardware each model actually ran on in the
+  last operation, for example "Speech on Neural Engine · writing on CPU
+  (fallback)".
+
 ### Changed
 
+- **Learn from fixes in other apps** now works in chat and prompt boxes. Vesper
+  watches the pasted field until it is sent, so a word you fix before pressing
+  Return is learned instead of lost.
+- Rewrites stay fast after dictations that use a learned word: the writer keeps
+  its prompt cache when your profile is saved.
+- Welcome's text appears while the voice line plays, instead of after the
+  animation.
+- Settings section tabs and row actions have larger 44 px targets, and removing a
+  workspace asks for confirmation.
 - About shows **What's new** in a panel of fixed height that scrolls, instead of
   expanding the page.
 - Speech recognition runs on sherpa-onnx 2.0.1. Cohere Transcribe (the default)
@@ -23,6 +38,17 @@ Nightly builds are not listed.
 - Updates keep macOS permissions such as Accessibility and Microphone. Release
   builds now keep one signing identity; the first update to such a build asks
   once more.
+- First-run setup fits windows as narrow as 360 px instead of being cut off, and
+  lists keep their first options visible below the language filter.
+- Small accent-coloured text in the Light theme now meets 4.5:1 contrast.
+- **Local engine** shows a short status until there is a reading to chart,
+  instead of an empty chart and a table of dashes.
+- History shows one empty state when nothing matches.
+- A shortcut error replaces the help line and has an icon, so a duplicate
+  binding is easy to spot.
+- The Settings save indicator keeps its "Saving" and "Saved" text.
+- Words in a transcript are no longer one keyboard stop each; the **Seek
+  recording** slider is the keyboard path.
 
 ### Security
 
