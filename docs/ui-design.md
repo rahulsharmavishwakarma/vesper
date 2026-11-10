@@ -372,9 +372,13 @@ and tests open it with `?first-run`.
 
 - **Welcome** uses the whole window with one focal point: the bird, "Welcome
   to Vesper", one line and one Get started button. Its single signature motion
-  is a thin voice line that gathers into the centre and becomes the bird; the
-  words then come into focus in sequence and the bird chirps once. Afterwards
-  only the blink remains.
+  is a thin voice line that speaks while the words come into focus beneath it,
+  then gathers into the centre and becomes the bird, which chirps once.
+  Afterwards only the blink remains. The words do not wait for the bird: the
+  heading is readable by about 0.5 s and Get started by about 1 s (measured
+  467 ms and 633 ms in Chromium), so the first window is never blank (issue
+  #378, timed per frame in `first-run.spec.mjs`). Each word group comes in
+  over 0.6 s from a 6 px blur, staggered 90 ms.
 - **Leaving Welcome** places step 2 underneath at once and crossfades Welcome
   away above it, so there is no blank frame. The bird is the one shared
   element: it flies a sampled arc with one ease-in-out into the sidebar logo,
