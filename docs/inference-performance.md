@@ -48,7 +48,7 @@ for current measurements and their scope.
 
 ## What this application does today
 
-The user-selected default is Cohere Transcribe INT8 through sherpa-onnx 2.0.1, with completed-recording CPU inference and Qwen writing cleanup. This preference is not a fastest-model claim. Selectable Nemotron 3.5 Q8 uses the official NeMo-Speech.cpp 0.1.0 C ABI and supports live partials. Parakeet v3 INT8 through `sherpa-onnx = 1.13.8` remains an offline CPU fallback. Cleanup uses Qwen3.5-0.8B Q4_0/Q8_0 through `llama-cpp-2 = 0.1.159`. Hugging Face profile selection changes compatible artifacts; it does not make an arbitrary architecture compatible with these runtimes.
+The user-selected default is Cohere Transcribe INT8 through sherpa-onnx 2.0.1, with completed-recording CPU inference and Qwen writing cleanup. This preference is not a fastest-model claim. Selectable Nemotron 3.5 Q8 uses the official NeMo-Speech.cpp 0.1.0 C ABI and supports live partials. Parakeet v3 INT8 through `sherpa-onnx = 1.13.8` remains an offline CPU fallback. Cleanup uses Qwen3.5-0.8B Q4_0/Q8_0 through `llama-cpp-2 = 0.1.160`. Hugging Face profile selection changes compatible artifacts; it does not make an arbitrary architecture compatible with these runtimes.
 
 | Component       | Current behavior                                                                                                                                                                                                                                               | Consequence                                                                                                                                                                                                                                            |
 | --------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
@@ -144,7 +144,7 @@ baseline overrides. Where a runner sanitizes inherited settings it removes
 both namespaces; recorded prior runtime environments remain historical input.
 Automatic-level qualification writes the same Vesper baseline switch.
 
-One build detail matters: `default-features = false` does **not** mean Metal is absent. The `llama-cpp-2` manifest had an Apple ARM target dependency enabling `metal` as reviewed for 0.1.156; not re-checked for the pinned 0.1.159. Application features forward `cuda`, `rocm`, and `vulkan`; there is no direct `sycl` feature in this release. Explicitly selecting an unavailable backend fails with a device-selection error. Automatic selection uses a detected native GPU or CPU; failed GPU initialization retries CPU and records its reason. [Pinned Rust binding manifest](https://docs.rs/crate/llama-cpp-2/0.1.156/source/Cargo.toml).
+One build detail matters: `default-features = false` does **not** mean Metal is absent. The `llama-cpp-2` manifest had an Apple ARM target dependency enabling `metal` as reviewed for 0.1.156; not re-checked for the pinned 0.1.160. Application features forward `cuda`, `rocm`, and `vulkan`; there is no direct `sycl` feature in this release. Explicitly selecting an unavailable backend fails with a device-selection error. Automatic selection uses a detected native GPU or CPU; failed GPU initialization retries CPU and records its reason. [Pinned Rust binding manifest](https://docs.rs/crate/llama-cpp-2/0.1.156/source/Cargo.toml).
 
 NeMo-Speech.cpp 0.1.0 publishes CPU, CUDA, Vulkan, and Metal release packages. Vesper pins their bytes and hashes rather than treating a requested device string as evidence of availability. NVIDIA does not publish an MLX or ROCm Nemotron package: Apple uses Metal; the AMD profile uses Vulkan for speech and can use ROCm/HIP for Qwen cleanup.
 
@@ -554,7 +554,7 @@ failed its quality gate on both providers.
 #### Exact native boundaries
 
 The current pins are Sherpa 2.0.1/source
-`af2d8d81dbfa61c4cea4c568da78f3982edca005`, llama-cpp-2 0.1.159 / llama-cpp-sys-2 0.1.160 (llama.cpp
+`af2d8d81dbfa61c4cea4c568da78f3982edca005`, llama-cpp-2 0.1.160 / llama-cpp-sys-2 0.1.160 (llama.cpp
 `d8123504`), and NeMo-Speech.cpp 0.1.0/source
 `4f9676226f667d14608487df744f375db87127f8` (ggml
 `c03b4e2bcece5134827881af90242086daf75be5`). Model revisions and complete hashes
@@ -795,7 +795,7 @@ For cleanup, upstream SYCL targets Intel GPUs and requires matching toolchain/ru
 5. **Qualify CUDA, Vulkan, and ROCm packages.** Test named GPU/driver/OS combinations and package loading, cancellation, output equivalence, sustained thermals, and memory pressure.
 6. **Split device controls and add probing.** The first implementation uses one pipeline backend. A later control should report actual devices independently per stage and let `Auto` choose only measured profiles, with a visible fallback.
 
-Caching preserves integrity by performing full role-specific verification when a resident handle is created and unloading handles before settings/model replacement. Session inference metadata describes the selected provider; because `Auto` can fall back during native initialization, it is not yet an attestation of the device that executed every operator. Runtime-observed provider provenance and visible fallback reporting remain measurement work. Training or candidate evaluation should use a separate idle-work budget and must not compete with interactive recording.
+Caching preserves integrity by performing full role-specific verification when a resident handle is created and unloading handles before settings/model replacement. Session `inference` metadata describes the selected provider. The session's `execution` evidence records the provider each loaded model actually initialized on and any automatic fallback reason, and Local engine shows it ([what a recording records](accelerators.md#scope-and-implementation)). Neither attests the device of every operator. Training or candidate evaluation should use a separate idle-work budget and must not compete with interactive recording.
 
 ONNX Runtime distinguishes intra-op parallelism from inter-op graph parallelism. Its default graph execution is sequential; an inter-op count alone does not enable parallel graph execution. Spinning may reduce wakeup latency while increasing power use, and multiple session pools can contend. Compare spinning disabled against enabled for desktop latency and battery modes. [ONNX threading guidance](https://onnxruntime.ai/docs/performance/tune-performance/threading.html).
 

@@ -34,7 +34,7 @@ while the fallback choices remain usable.
 
 ## Scope and implementation
 
-The existing `llama-cpp-2 = 0.1.159` dependency exposes
+The existing `llama-cpp-2 = 0.1.160` dependency exposes
 `list_llama_ggml_backend_devices()`. The app calls it once on a background worker
 and caches the result for the process lifetime. It maps MTL/CUDA/Vulkan/ROCm registry
 names to the existing preferences, retaining GPU/integrated-GPU records with a
@@ -65,6 +65,18 @@ initialization fails, preserving the fallback reason. Explicit GPU requests and
 cancellation never silently retry on CPU. Nemotron retains its separate native
 runtime/package selection. A selected GPU or successful context probe is not
 proof that every operator executes there; reports retain unknown placement.
+
+**What a recording records.** Each saved recording keeps two views of hardware.
+`inference` holds what the settings selected (`requestedBackend`,
+`selectedProvider`) and is marked `executionEvidence: "not-observed"`. `execution`
+holds what each loaded model actually initialized on (`initializedProvider`) and,
+after an automatic retry, why (`fallbackReason`). The writer, Nemotron and the
+Parakeet GGUF engine record the CPU after a failed GPU load. The Neural Engine
+engine records `neural_engine+metal`, or `metal` or `cpu+metal` when Core ML loaded
+its encoder for the GPU or the CPU instead, with the encoder's compute units. Models
+→ **Local engine** shows the last operation's line, for example "Speech on Neural
+Engine · writing on CPU (fallback)". Operator placement inside a runtime is still
+not attested.
 The [measured Metal screen](inference-performance.md#native-gpu-implementation-and-screening--23-september-2026)
 records exact models, runtime pins, accuracy, cold/resident timings and limits.
 

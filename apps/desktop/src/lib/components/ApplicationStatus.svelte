@@ -10,6 +10,7 @@
     appendSample,
     createResourcePoller,
     durationLabel,
+    executedHardware,
     memoryScale,
     resourceBars,
     validSample,
@@ -76,6 +77,7 @@
   const currentReading = $derived(enabled && !readError ? reading : null);
   const ramScale = $derived(memoryScale(history));
   const timings = $derived(diagnostics?.timings);
+  const hardware = $derived(executedHardware(diagnostics?.execution, timings?.operationId));
   const active = $derived(
     timings?.outcome === 'running' && engineActivity?.busy ? timings.activeStage : null,
   );
@@ -235,6 +237,7 @@
             ? ' · completed-recording fallback'
             : ''}
         </p>{/if}
+      {#if hardware}<p class="operation-model">{hardware}</p>{/if}
       <div class="engine-steps">
         {#each rows as row (row.key)}<div class="engine-step" class:current={active === row.key}>
             <span>{row.label}</span><span class="step-duration"
@@ -264,6 +267,10 @@
         Times cover transcription, writing and saving, including model loading. Recording time is
         excluded. For live speech, Finalize speech measures the wait after Stop. A fallback includes
         the retry.
+      </p>
+      <p>
+        The hardware line shows where each model actually started. Fallback means the faster
+        hardware could not start it, so it ran on slower hardware.
       </p>
     </details>
   </div>
@@ -423,6 +430,9 @@
     color: var(--color-muted);
     overflow-wrap: anywhere;
     margin: var(--space-2) 0 0;
+  }
+  .operation-model + .operation-model {
+    margin-top: var(--space-1);
   }
   .engine-steps {
     display: grid;

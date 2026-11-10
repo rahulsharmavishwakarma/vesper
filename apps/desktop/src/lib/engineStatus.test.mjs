@@ -7,6 +7,7 @@ import {
   resourceBars,
   durationLabel,
   createResourcePoller,
+  executedHardware,
 } from './engineStatus.ts';
 const sample = (time, cpu = 25) => ({
   sampledAtMs: time,
@@ -91,4 +92,34 @@ test('polling suspends immediately, ignores old results and never overlaps reque
   poller.dispose();
   t.mock.timers.tick(10_000);
   assert.equal(calls, 2);
+});
+
+test('executed hardware names observed providers and marks fallbacks', () => {
+  const execution = {
+    operationId: 'op-1',
+    asr: { initializedProvider: 'neural_engine+metal', fallbackReason: null },
+    rewriter: { initializedProvider: 'cpu', fallbackReason: 'Metal context creation failed' },
+  };
+  assert.equal(
+    executedHardware(execution, 'op-1'),
+    'Speech on Neural Engine · writing on CPU (fallback)',
+  );
+  // Writing off: speech alone.
+  assert.equal(
+    executedHardware({ operationId: 'op-1', asr: { initializedProvider: 'metal' } }, 'op-1'),
+    'Speech on GPU',
+  );
+  // Only the writer observed: still capitalised.
+  assert.equal(
+    executedHardware({ operationId: 'op-1', rewriter: { initializedProvider: 'metal' } }, 'op-1'),
+    'Writing on GPU',
+  );
+  // Another operation's evidence, none yet, or nothing observed: no claim.
+  assert.equal(executedHardware(execution, 'op-2'), null);
+  assert.equal(executedHardware({}, 'op-1'), null);
+  assert.equal(executedHardware(undefined, 'op-1'), null);
+  assert.equal(
+    executedHardware({ operationId: 'op-1', asr: { initializedProvider: null } }, 'op-1'),
+    null,
+  );
 });

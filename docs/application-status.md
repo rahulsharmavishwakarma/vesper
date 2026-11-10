@@ -25,7 +25,13 @@ logical CPU count`. One fully busy core on an 18-core logical machine is about
   memory, and other applications are excluded.
 - **Installed** means the configured model files/runtime passed the existing
   installation check. It does not mean the model is resident. Backend preferences
-  are labelled as preferences; the panel does not claim an observed accelerator.
+  are labelled as preferences.
+- **Hardware line.** Below the model names, the last operation shows where its
+  speech and writing models actually started, for example "Speech on Neural
+  Engine · writing on CPU (fallback)". It comes from the native load, not the
+  settings. **Fallback** means the faster hardware could not start the model, so
+  Automatic used slower hardware. A stage nobody observed is left out. It does not
+  show where every individual operation inside a model ran.
 - **Transcribe** wraps the existing ASR call, including its model verification and
   load work. A live recording instead shows **Finalize speech**, measuring the
   remaining wait after stop. If live recognition fails and the completed recording

@@ -16,10 +16,54 @@ export interface JobTimings {
   cleanupMs: number | null;
   saveMs: number | null;
 }
+/** What one stage's loaded model actually initialized on, from native evidence. */
+export interface StageExecution {
+  initializedProvider?: string | null;
+  fallbackReason?: string | null;
+}
+/** The latest operation's content-free execution evidence (`{}` before the first). */
+export interface ExecutionEvidence {
+  operationId?: string;
+  asr?: StageExecution;
+  rewriter?: StageExecution;
+}
 export interface EngineDiagnostics {
   resources: ResourceSample;
   activity: { busy: boolean; stage: string };
   timings: JobTimings | null;
+  execution?: ExecutionEvidence;
+}
+const HARDWARE: Record<string, string> = {
+  'neural_engine+metal': 'Neural Engine',
+  metal: 'GPU',
+  cuda: 'GPU',
+  vulkan: 'GPU',
+  rocm: 'GPU',
+  'cpu+metal': 'CPU and GPU',
+  cpu: 'CPU',
+};
+/**
+ * Where the operation's speech and writing models actually ran, for example
+ * "Speech on Neural Engine · writing on CPU (fallback)". Evidence from another
+ * operation, or a provider nobody observed, is left out rather than guessed.
+ */
+export function executedHardware(
+  execution: ExecutionEvidence | undefined,
+  operationId: string | undefined,
+): string | null {
+  if (!execution || !operationId || execution.operationId !== operationId) return null;
+  const parts = (
+    [
+      ['Speech', execution.asr],
+      ['writing', execution.rewriter],
+    ] as const
+  ).flatMap(([stage, run]) => {
+    const hardware = run?.initializedProvider ? HARDWARE[run.initializedProvider] : undefined;
+    return hardware ? [`${stage} on ${hardware}${run?.fallbackReason ? ' (fallback)' : ''}`] : [];
+  });
+  if (!parts.length) return null;
+  const text = parts.join(' · ');
+  return text[0].toUpperCase() + text.slice(1);
 }
 export function validSample(sample: ResourceSample, now = Date.now()): ResourceSample {
   if (
