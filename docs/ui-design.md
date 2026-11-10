@@ -386,6 +386,11 @@ and tests open it with `?first-run`.
   composed Welcome screen again (a short fade, no replayed intro); there is no
   empty step 1. There is no Skip. Progress is saved after every step so a quit
   resumes where it stopped.
+  In windows up to 760 px wide the rail becomes one row above the content (the
+  logo, then the seven step dots); it and the content shrink to the 360 px
+  minimum window, and the dots wrap rather than run past the edge, so no step
+  is clipped (issue #375, asserted at 360, 375 and 414 px for every step in
+  `first-run.spec.mjs`).
 - **Voice** uses the app's shared controls: the language and microphone
   fields are the same `Select` as Dictate, and the meter is the recording
   waveform (`AudioIndicator`, full reed shape and pitch spacing). The language
