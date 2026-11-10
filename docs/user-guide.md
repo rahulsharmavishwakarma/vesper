@@ -501,7 +501,9 @@ adds nothing.
 Expanding a recording shows its transcript card, also used for the latest
 result in Dictate. The card plays the saved audio (play/pause, seek bar,
 1×–2× speed) and shows **Heard** beside **Polished · edit to teach**;
-highlighted Heard words were changed or dropped by cleanup. Both panes grow
+highlighted Heard words were changed or dropped by cleanup. Click a Heard
+word to play from that point; with the keyboard or a screen reader, use the
+seek bar (Tab to it, then the arrow keys, Home or End). Both panes grow
 to fit long transcripts, so neither side clips mid-line. Answer **Is the
 polished text right?** with a vote: a like approves the polished text (a
 verified speech label only when it matches what was heard, otherwise a
