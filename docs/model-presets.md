@@ -189,7 +189,7 @@ maps the four-language checkpoint to the selected transducer files. The
 provides the selected non-streaming export. These presets run through the app's
 existing CPU adapter and finalize completed recordings.
 
-Cleanup uses llama-cpp-2 0.1.159 / llama-cpp-sys-2 0.1.160, bundling llama.cpp revision
+Cleanup uses llama-cpp-2 0.1.160 / llama-cpp-sys-2 0.1.160, bundling llama.cpp revision
 `d81235049384534c167caea52b85a694f6103d14`. The
 [architecture table](https://github.com/ggml-org/llama.cpp/blob/d81235049384534c167caea52b85a694f6103d14/src/llama-arch.cpp)
 and [template formatter](https://github.com/ggml-org/llama.cpp/blob/d81235049384534c167caea52b85a694f6103d14/src/llama-chat.cpp)
