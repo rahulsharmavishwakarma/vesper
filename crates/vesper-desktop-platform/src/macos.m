@@ -34,14 +34,26 @@ static uint64_t targetToken;
 static bool targetIsCell;
 static id pasteAccessibilityObserver;
 // Opt-in read-back of one paste (docs/personalization/app-learning.md): the
-// field and where the pasted text began. Only that span is ever read, once.
+// field and where the pasted text began. Only that span is ever read.
 static AXUIElementRef receipt;
 static pid_t receiptPID;
 static CFIndex receiptLocation;
 static CFIndex receiptLength;
 static uint64_t receiptToken;
 static bool receiptsEnabled;
+// While a receipt is pending the field is watched (issue #410) so a fix made
+// in a chat box is kept after Return empties it. Only the latest non-empty
+// span is held, in memory, until the receipt is read or cleared.
+static AXObserverRef receiptObserver;
+static NSTimer *receiptPoll;
+static NSString *receiptSnapshot;
+static CFAbsoluteTime receiptWatchStarted;
+static bool receiptNotified;
+static bool receiptPolled;
+static bool receiptFinished;
+static void (*receiptFinishedHandler)(uint64_t);
 void td_receipt_clear(void);
+static void receiptStartWatching(void);
 static NSMutableArray<NSRunningApplication *> *preparedPasteApplications;
 
 // Electron exposes its editable tree asynchronously after this documented
@@ -508,6 +520,7 @@ int td_paste(uint64_t token, const char *text) {
         receipt = (AXUIElementRef)CFRetain(target); receiptPID = targetPID;
         receiptLocation = targetSelection.location; receiptLength = (CFIndex)value.length;
         receiptToken = token;
+        receiptStartWatching();
     }
     // Consume before posting: another call can never duplicate this dispatch.
     td_target_clear(token);
@@ -551,6 +564,108 @@ static bool secureElement(AXUIElementRef element) {
     NSString *subrole = attribute(element, kAXSubroleAttribute);
     return [subrole isEqualToString:(__bridge NSString *)kAXSecureTextFieldSubrole] || IsSecureEventInputEnabled();
 }
+// The watch ends on its own after this long; Rust's read-back normally ends it first.
+static const CFAbsoluteTime receiptWatchSeconds = 120;
+static const NSTimeInterval receiptPollSeconds = 0.3;
+enum { receiptFromSnapshot = 1, receiptNotifiedFlag = 2, receiptPolledFlag = 4 };
+
+static NSString *receiptSpan(void) {
+    if (!receipt) return nil;
+    AXUIElementSetMessagingTimeout(receipt, 0.15f);
+    NSString *text = rangeText(receipt, receiptLocation, MIN(receiptLength * 2 + 80, (CFIndex)32768));
+    if (text) return text;
+    // A field now shorter than where the paste began has lost the pasted text:
+    // that is an empty span (sent), not an unreadable field.
+    NSNumber *count = attribute(receipt, kAXNumberOfCharactersAttribute);
+    return [count isKindOfClass:NSNumber.class] && count.longValue <= receiptLocation ? @"" : nil;
+}
+static bool blankText(NSString *text) {
+    return [text stringByTrimmingCharactersInSet:NSCharacterSet.whitespaceAndNewlineCharacterSet].length == 0;
+}
+static void receiptStopWatching(void) {
+    if (receiptObserver) {
+        if (receipt) {
+            AXObserverRemoveNotification(receiptObserver, receipt, kAXValueChangedNotification);
+            AXObserverRemoveNotification(receiptObserver, receipt, kAXUIElementDestroyedNotification);
+        }
+        CFRunLoopRemoveSource(CFRunLoopGetMain(), AXObserverGetRunLoopSource(receiptObserver),
+                              kCFRunLoopCommonModes);
+        CFRelease(receiptObserver);
+        receiptObserver = NULL;
+    }
+    [receiptPoll invalidate];
+    receiptPoll = nil;
+}
+// The field was emptied (sent) or went away: stop watching and ask Rust to
+// read the receipt now. The snapshot stays until that read or a clear.
+static void receiptFinish(void) {
+    if (!receipt || receiptFinished) return;
+    receiptFinished = true;
+    receiptStopWatching();
+    if (receiptFinishedHandler) receiptFinishedHandler(receiptToken);
+}
+// Read the span once and keep it while it still holds text.
+static void receiptObserve(bool polled) {
+    if (!receipt || receiptFinished) return;
+    if (secureElement(receipt) ||
+        CFAbsoluteTimeGetCurrent() - receiptWatchStarted > receiptWatchSeconds) {
+        receiptStopWatching();
+        return;
+    }
+    CFAbsoluteTime began = CFAbsoluteTimeGetCurrent();
+    NSString *text = receiptSpan();
+    // A slow or hung app must not stall the main thread every tick.
+    if (polled && CFAbsoluteTimeGetCurrent() - began > 0.1) {
+        [receiptPoll invalidate];
+        receiptPoll = nil;
+    }
+    if (!text) return;
+    if (blankText(text)) {
+        receiptFinish();
+        return;
+    }
+    if (polled && receiptSnapshot && ![receiptSnapshot isEqualToString:text]) receiptPolled = true;
+    receiptSnapshot = text;
+}
+static void receiptChanged(AXObserverRef observer, AXUIElementRef element, CFStringRef notification,
+                           void *context) {
+    (void)observer; (void)element; (void)context;
+    if (!receipt || receiptFinished) return;
+    if (CFEqual(notification, kAXUIElementDestroyedNotification)) {
+        receiptFinish();
+        return;
+    }
+    receiptNotified = true;
+    receiptObserve(false);
+}
+// Notifications first; polling covers apps that never send them, only while
+// that app is frontmost and until the first notification arrives.
+static void receiptStartWatching(void) {
+    receiptStopWatching();
+    receiptSnapshot = nil;
+    receiptNotified = false;
+    receiptPolled = false;
+    receiptFinished = false;
+    receiptWatchStarted = CFAbsoluteTimeGetCurrent();
+    AXObserverRef observer = NULL;
+    if (AXObserverCreate(receiptPID, receiptChanged, &observer) == kAXErrorSuccess && observer) {
+        AXObserverAddNotification(observer, receipt, kAXValueChangedNotification, NULL);
+        AXObserverAddNotification(observer, receipt, kAXUIElementDestroyedNotification, NULL);
+        CFRunLoopAddSource(CFRunLoopGetMain(), AXObserverGetRunLoopSource(observer), kCFRunLoopCommonModes);
+        receiptObserver = observer;
+    }
+    receiptPoll = [NSTimer timerWithTimeInterval:receiptPollSeconds repeats:YES block:^(NSTimer *timer) {
+        (void)timer;
+        if (receiptNotified) {
+            [receiptPoll invalidate];
+            receiptPoll = nil;
+            return;
+        }
+        if (NSWorkspace.sharedWorkspace.frontmostApplication.processIdentifier != receiptPID) return;
+        receiptObserve(true);
+    }];
+    [NSRunLoop.mainRunLoop addTimer:receiptPoll forMode:NSRunLoopCommonModes];
+}
 static int copyOut(NSString *text, char *output, size_t size) {
     NSData *data = [text dataUsingEncoding:NSUTF8StringEncoding];
     if (!data || data.length >= size) return -1;
@@ -574,22 +689,37 @@ void td_paste_receipts_enabled(bool enabled) {
 }
 void td_receipt_clear(void) {
     if (![NSThread isMainThread]) return;
+    receiptStopWatching();
+    receiptSnapshot = nil;
+    receiptNotified = false; receiptPolled = false; receiptFinished = false;
     if (receipt) CFRelease(receipt);
     receipt = NULL; receiptPID = 0; receiptLocation = 0; receiptLength = 0; receiptToken = 0;
 }
-// One-shot read-back of the last paste: the text from where it began, up to
-// twice its length plus a margin. `token` names the paste (0 takes any).
-// Returns bytes written; -1 when there is no receipt or it cannot be read.
-int td_receipt_read(uint64_t token, uint64_t *pasted, char *output, size_t size) {
+// Called on the main thread with the paste token when a watched field empties.
+void td_receipt_set_finished(void (*handler)(uint64_t)) {
+    if (![NSThread isMainThread]) return;
+    receiptFinishedHandler = handler;
+}
+// Read-back of the last paste: the text from where it began, up to twice its
+// length plus a margin. When the field is now empty or gone, the last text the
+// watch saw there instead (`receiptFromSnapshot` in `flags`). `token` names the
+// paste (0 takes any). Returns bytes written; -1 when nothing could be read.
+int td_receipt_read(uint64_t token, uint64_t *pasted, uint32_t *flags, char *output, size_t size) {
     if (![NSThread isMainThread] || !receipt || !output || !size || (token && token != receiptToken)) return -1;
     NSRunningApplication *app = [NSRunningApplication runningApplicationWithProcessIdentifier:receiptPID];
-    int written = -1;
-    if (app && !app.terminated && !secureElement(receipt)) {
-        AXUIElementSetMessagingTimeout(receipt, 0.15f);
-        NSString *text = rangeText(receipt, receiptLocation, MIN(receiptLength * 2 + 80, (CFIndex)32768));
-        if (text) written = copyOut(text, output, size);
+    NSString *text = nil;
+    if (app && !app.terminated && !secureElement(receipt)) text = receiptSpan();
+    uint32_t found = (receiptNotified ? receiptNotifiedFlag : 0) | (receiptPolled ? receiptPolledFlag : 0);
+    // Use the watch's last text only when the pasted text is gone: the span is
+    // empty now, or the watch already saw it empty or the field go away. A field
+    // that is merely unreadable now stays unreadable.
+    if (((text && blankText(text)) || (!text && receiptFinished)) && receiptSnapshot) {
+        text = receiptSnapshot;
+        found |= receiptFromSnapshot;
     }
+    int written = text ? copyOut(text, output, size) : -1;
     if (pasted) *pasted = receiptToken;
+    if (flags) *flags = found;
     td_receipt_clear();
     return written;
 }

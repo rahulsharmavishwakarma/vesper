@@ -103,7 +103,7 @@ flowchart TD
     WS --> CG
     CG --> F["Rule-based formatting (English)"]
     F --> O["Output with recording scope and stage authorship"]
-    O --> E["Edits in Your text, Undo, opt-in fixes read back from the app"]
+    O --> E["Edits in Your text, Undo, opt-in fixes watched in the app until sent"]
     E --> G["Independent support, language, context gates and policy breaker"]
     G -->|"Eligible spelling"| P
     E --> Q["Semantic and policy shadow evaluation only"]

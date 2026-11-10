@@ -892,12 +892,25 @@ pub async fn completed(
 }
 
 /// The fallback read-back happens this long after a paste when no new dictation
-/// reads it first.
+/// or sent message reads it first.
 const READ_BACK_AFTER: Duration = Duration::from_secs(120);
+
+/// Read the paste back as soon as its watched field empties (a chat box after
+/// Return), so the fix kept before sending teaches (issue #410). Call once at
+/// startup on the main thread; the handler only schedules the read-back.
+pub fn watch_sent_pastes(app: &tauri::AppHandle) {
+    let app = app.clone();
+    vesper_desktop_platform::on_paste_watch_finished(move |token| {
+        let app = app.clone();
+        tauri::async_runtime::spawn(async move { read_back_paste(&app, token).await });
+    });
+}
 
 /// Opt-in: read the last paste's span back once and, when the user changed
 /// words there, offer the corrected text to learning as an edit of that draft.
-/// `token` 0 reads whichever paste is pending. Only per-app counts are stored.
+/// While the paste is pending the native layer watches the field, so a fix
+/// made before the text was sent is read from its last snapshot. `token` 0
+/// reads whichever paste is pending. Only per-app counts are stored.
 async fn read_back_paste(app: &tauri::AppHandle, token: u64) {
     let storage = app.state::<AppStorage>();
     let record = storage.dictation.state.lock().ok().and_then(|mut state| {
@@ -920,24 +933,24 @@ async fn read_back_paste(app: &tauri::AppHandle, token: u64) {
     })
     .await
     .ok()
-    .flatten();
-    let corrected = match receipt {
-        Some((pasted, region)) if pasted == record.token => Some((
-            region.trim().is_empty(),
-            vesper_core::aligned_edit(&record.pasted, &region),
-        )),
-        _ => None,
+    .flatten()
+    .filter(|receipt| receipt.token == record.token);
+    let watch = match receipt.as_ref().map(|receipt| receipt.watch) {
+        Some(vesper_desktop_platform::PasteWatch::Notified) => vesper_data::ReadbackWatch::Notified,
+        Some(vesper_desktop_platform::PasteWatch::Polled) => vesper_data::ReadbackWatch::Polled,
+        _ => vesper_data::ReadbackWatch::Quiet,
     };
+    let (outcome, fixed) = vesper_data::classify_readback(
+        &record.pasted,
+        receipt.as_ref().map(|receipt| receipt.text.as_str()),
+        receipt.as_ref().is_some_and(|receipt| receipt.before_send),
+    );
     let root = storage.dataset_dir.clone();
     let runtime = std::sync::Arc::clone(&storage.runtime);
     let _ = tauri::async_runtime::spawn_blocking(move || {
         use vesper_data::Readback;
-        let outcome = match corrected {
-            None => Readback::Unreadable,
-            Some((true, _)) => Readback::Cleared,
-            Some((false, None)) => Readback::Unaligned,
-            Some((false, Some(text))) if text == record.pasted => Readback::Unchanged,
-            Some((false, Some(text))) => {
+        let outcome = match fixed {
+            Some(text) => {
                 let draft = record.draft.replacen(&record.pasted, &text, 1);
                 match runtime.edit_latest_draft(
                     root.clone(),
@@ -945,14 +958,15 @@ async fn read_back_paste(app: &tauri::AppHandle, token: u64) {
                     record.revision,
                     draft,
                 ) {
-                    Ok(_) => Readback::Edited,
+                    Ok(_) => outcome,
                     // The draft moved on (edited in Vesper or replaced): nothing learned.
                     Err(_) => Readback::Unaligned,
                 }
             }
+            None => outcome,
         };
         if let Ok(store) = vesper_data::DatasetStore::open(root) {
-            let _ = store.record_app_readback(&record.application, outcome);
+            let _ = store.record_app_readback(&record.application, outcome, watch);
         }
     })
     .await;

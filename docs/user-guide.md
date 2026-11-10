@@ -659,7 +659,7 @@ controls.
 | In-app spelling learning    | Eligible saved corrections contribute automatically to scoped vocabulary under the support and context rules above. No per-word approval is needed.                                                                                      |
 | Background edit analysis    | After a saved in-app correction, an already-loaded supported writer can analyze intent and context while idle. Its findings are evaluation evidence; they do not change your preferences or approve labels. Recording cancels this work. |
 | Learning-rule comparisons   | Explicit in-app edits trigger background comparisons of fixed learning rules. Results do not select a new active rule.                                                                                                                   |
-| External-editor corrections | Off by default. With **Learn from fixes in other apps** on, Vesper reads the pasted text back once and teaches from words you changed.                                                                                                   |
+| External-editor corrections | Off by default. With **Learn from fixes in other apps** on, Vesper watches the pasted text until it is sent or two minutes pass, and teaches from words you changed.                                                                     |
 | History and model training  | History training labels require explicit review. Automatic label approval, candidate training and model promotion are not active.                                                                                                        |
 
 Automatic checks therefore do not mark each recording as reviewed. Semantic
@@ -727,7 +727,7 @@ The app may retain bounded before/after text and one recent attempt locally for 
 Two optional settings in Settings → Vocabulary → Learning let Vesper learn from the app you dictate into. Both are off until you turn them on.
 
 - **Use words already in the field:** when you dictate into a text field, Vesper reads the text before the cursor and uses names and terms written there to fix misheard words in that dictation. Nothing it reads is saved.
-- **Learn from fixes in other apps:** after pasting, Vesper reads back only the text it pasted, at your next dictation or two minutes later. Words you changed there teach spellings the same way an edit in Vesper does, and the corrected text becomes that dictation's draft in History.
+- **Learn from fixes in other apps:** after pasting, Vesper keeps an eye on only the text it pasted, for up to two minutes or until your next dictation. If you fix a word and then press Return in a chat box, Vesper keeps the fixed version from just before it was sent. Words you changed teach spellings the same way an edit in Vesper does (the same fix three times), and the corrected text becomes that dictation's draft in History.
 
 Neither reads password fields. Apps that do not expose their text show as unreadable in the per-app counts. See [learning from the app you dictate into](personalization/app-learning.md). Correcting the draft inside Vesper still teaches as before. The former TextEdit-only observer is described in the [removal note](personalization/external-observer.md).
 

@@ -678,3 +678,52 @@ fn a_fix_made_in_another_app_teaches_through_the_draft_edit_path() {
         Some("Deploy it with kubectl tonight")
     );
 }
+
+/// Issue #410: in a chat box the field is empty by the time it is read back.
+/// The watch's last text before sending carries the fix, and it teaches through
+/// the same draft-edit path; sending without a fix teaches nothing.
+#[test]
+fn a_fix_kept_before_a_chat_box_was_sent_teaches_through_the_draft_edit_path() {
+    use vesper_data::{classify_readback, Readback};
+    let dir = tempfile::tempdir().unwrap();
+    let root = dir.path().join("dataset");
+    let runtime = Arc::new(Runtime::default());
+    let heard = "Deploy it with kube ctl tonight";
+    let complete_one = |source: u16| {
+        complete(
+            &root,
+            &runtime,
+            source,
+            AsrModel::CohereTranscribe,
+            Language::English,
+            heard,
+        )
+    };
+    let pasted_text = |result: &PipelineResult| {
+        result
+            .personalized_transcript
+            .clone()
+            .unwrap_or_else(|| result.raw_transcript.clone())
+    };
+    // Sent as dictated: the snapshot equals the paste, so nothing is offered.
+    let result = complete_one(1);
+    let pasted = pasted_text(&result);
+    assert_eq!(
+        classify_readback(&pasted, Some(&pasted), true),
+        (Readback::Cleared, None)
+    );
+    for source in [2, 3] {
+        let result = complete_one(source);
+        let pasted = pasted_text(&result);
+        let (outcome, fixed) =
+            classify_readback(&pasted, Some("Deploy it with kubectl tonight"), true);
+        assert_eq!(outcome, Readback::EditedBeforeSend);
+        runtime
+            .edit_latest_draft(root.clone(), &result.result_id, 0, fixed.unwrap())
+            .unwrap();
+    }
+    assert_eq!(
+        complete_one(4).personalized_transcript.as_deref(),
+        Some("Deploy it with kubectl tonight")
+    );
+}

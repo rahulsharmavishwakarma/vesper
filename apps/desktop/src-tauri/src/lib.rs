@@ -162,6 +162,7 @@ pub fn run() {
                 .capture_design;
             dictation::apply_capture_design(app.handle(), capture_design);
             dictation::apply_output(app.handle());
+            dictation::watch_sent_pastes(app.handle());
             menu_bar::setup(app.handle())?;
             let _ = replace_global_shortcut(app.handle(), None, &shortcut);
             Ok(())
