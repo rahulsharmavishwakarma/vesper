@@ -325,3 +325,43 @@ test('every setup step fits the narrowest windows without clipping', async ({ pa
     }
   }
 });
+
+// #378: Welcome is never a blank window. The heading is readable within about
+// half a second and Get started is legible and clickable within about one;
+// the voice line and bird keep playing around them. Timed per frame from the
+// moment Welcome appears; the limits leave headroom for slow CI machines.
+test('Welcome shows its heading and Get started quickly', async ({ page }) => {
+  await page.addInitScript(() => {
+    const marks = {};
+    window.__welcome = marks;
+    const readable = (el) => {
+      if (!el) return false;
+      const style = getComputedStyle(el);
+      const blur = Number(/blur\(([\d.]+)px\)/.exec(style.filter)?.[1] ?? 0);
+      return Number(style.opacity) >= 0.9 && blur <= 1;
+    };
+    const watch = (now) => {
+      const hello = document.querySelector('.hello');
+      if (hello && marks.start == null) marks.start = now;
+      if (marks.start != null) {
+        if (marks.heading == null && readable(hello.querySelector('h1')))
+          marks.heading = now - marks.start;
+        if (marks.button == null && readable(hello.querySelector('.get-started')))
+          marks.button = now - marks.start;
+      }
+      if (marks.heading == null || marks.button == null) requestAnimationFrame(watch);
+    };
+    requestAnimationFrame(watch);
+  });
+  await page.goto('/tests/interaction-preview.html?first-run');
+  await expect(page.getByRole('button', { name: 'Get started' })).toBeVisible();
+  await expect
+    .poll(() => page.evaluate(() => window.__welcome.button), { timeout: 5000 })
+    .toBeDefined();
+  const marks = await page.evaluate(() => window.__welcome);
+  console.log(
+    `Welcome readable: heading ${Math.round(marks.heading)} ms, Get started ${Math.round(marks.button)} ms`,
+  );
+  expect(marks.heading).toBeLessThan(900);
+  expect(marks.button).toBeLessThan(1500);
+});
