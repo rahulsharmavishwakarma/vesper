@@ -66,16 +66,31 @@ would change (`git diff HEAD^1 HEAD` on the merge commit) and
 [`scripts/ci-scope.mjs`](../scripts/ci-scope.mjs) decides which heavy jobs they
 need:
 
-| Job                                  | Skipped when every changed file is…                                                                                                                                                                   |
-| ------------------------------------ | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `Rust (macOS)`                       | documentation, Markdown, notebooks, the Pages `site/`, Python benchmark projects, or the browser-only frontend (`apps/desktop/src/`, `apps/desktop/tests/`, Playwright/ESLint config)                 |
-| `Browser regressions`                | documentation, Markdown, notebooks, `site/`, Python benchmark projects, or Rust/native-only paths (`crates/`, `native/`, `patches/`, `vendor/`, `apps/desktop/src-tauri/`, Cargo and toolchain files) |
-| `Python benchmarks (…)`              | anything other than a benchmark project, its exported requirements, the root `pyproject.toml`/`uv.lock` or the `Makefile`                                                                             |
-| GLib backport step in `Dependencies` | anything other than `vendor/glib/`, `tests/glib-backport/`, Cargo manifests and lockfile, the toolchain file, `scripts/audit-rust.py`/`test_rust_audit.py` or the `Makefile`                          |
+| Job                                  | Skipped when every changed file is…                                                                                                                                                                                                                                                                                       |
+| ------------------------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `Rust (macOS)`                       | documentation, Markdown, notebooks, the Pages `site/`, Python benchmark projects, files only other workflows or GitHub read (below), an npm manifest or lockfile change that touches no `@tauri-apps/*` package, or the browser-only frontend (`apps/desktop/src/`, `apps/desktop/tests/`, Playwright/ESLint config)      |
+| `Browser regressions`                | documentation, Markdown, notebooks, `site/`, Python benchmark projects, the root `pyproject.toml`/`uv.lock` and exported benchmark requirements, files only other workflows or GitHub read, or Rust/native-only paths (`crates/`, `native/`, `patches/`, `vendor/`, `apps/desktop/src-tauri/`, Cargo and toolchain files) |
+| `Python benchmarks (…)`              | anything other than a benchmark project, its exported requirements, the root `pyproject.toml`/`uv.lock` or the `Makefile`                                                                                                                                                                                                 |
+| GLib backport step in `Dependencies` | anything other than `vendor/glib/`, `tests/glib-backport/`, Cargo manifests and lockfile, the toolchain file, `scripts/audit-rust.py`/`test_rust_audit.py` or the `Makefile`                                                                                                                                              |
 
 The rules list what each job can ignore, so a path nobody anticipated still runs
 the job. Rust embeds files from `models/` and `benchmarks/`, so those always run
-it. Changing a workflow or the scope script runs everything, and so do pushes to
+it. Files only other workflows or GitHub read are the container `Dockerfile`,
+`.dockerignore` and `.github/container/`, workflows other than `check.yml` and
+`security.yml`, `.github/CODEOWNERS`, `dependabot.yml` and `release.yml`, and
+the Pages builder `scripts/build-site*.mjs`; the always-on hygiene job still
+lints workflows and runs the builder's Node tests.
+
+The root Python environment still runs Rust, because the bundle step packages
+the speaker runtime with `uv run --locked`. For `package.json`,
+`apps/desktop/package.json` and `package-lock.json`, the scope script compares
+both revisions with every non-Tauri dependency removed. Rust runs only if
+something remains different: a `@tauri-apps/*` package (the bundle step's Tauri
+CLI rejects an npm plugin whose version does not match its crate), npm scripts,
+the version or workspace settings. A file it cannot read or parse runs Rust.
+Other dependency updates are covered by the frontend and browser jobs.
+
+Changing `check.yml`, `security.yml` or the scope script runs everything, and so do pushes to
 `main`, release tags, merge-queue entries, manual runs, the weekly security
 schedule and any pull request whose file list comes back empty. `Frontend and
 repository hygiene`, `Dependencies` and `Secrets` always run; inside
