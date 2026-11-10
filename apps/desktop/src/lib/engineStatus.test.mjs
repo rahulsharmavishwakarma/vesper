@@ -7,7 +7,7 @@ import {
   resourceBars,
   durationLabel,
   createResourcePoller,
-  executedHardware,
+  stageHardware,
 } from './engineStatus.ts';
 const sample = (time, cpu = 25) => ({
   sampledAtMs: time,
@@ -94,32 +94,37 @@ test('polling suspends immediately, ignores old results and never overlaps reque
   assert.equal(calls, 2);
 });
 
-test('executed hardware names observed providers and marks fallbacks', () => {
+test('stage hardware names observed providers per step and marks fallbacks', () => {
   const execution = {
     operationId: 'op-1',
     asr: { initializedProvider: 'neural_engine+metal', fallbackReason: null },
     rewriter: { initializedProvider: 'cpu', fallbackReason: 'Metal context creation failed' },
   };
-  assert.equal(
-    executedHardware(execution, 'op-1'),
-    'Speech on Neural Engine · writing on CPU (fallback)',
+  const { transcribe, cleanup } = stageHardware(execution, 'op-1');
+  assert.deepEqual(
+    [transcribe.kind, transcribe.label, transcribe.fallback],
+    ['neural', 'Neural Engine', false],
   );
-  // Writing off: speech alone.
+  assert.equal(transcribe.description, 'Ran on Neural Engine');
+  assert.deepEqual([cleanup.kind, cleanup.label, cleanup.fallback], ['cpu', 'CPU', true]);
+  assert.match(cleanup.description, /faster hardware could not start/);
   assert.equal(
-    executedHardware({ operationId: 'op-1', asr: { initializedProvider: 'metal' } }, 'op-1'),
-    'Speech on GPU',
+    stageHardware({ operationId: 'op-1', asr: { initializedProvider: 'metal' } }, 'op-1').transcribe
+      .kind,
+    'gpu',
   );
-  // Only the writer observed: still capitalised.
+  // Writing off or unobserved: no chip for that step.
   assert.equal(
-    executedHardware({ operationId: 'op-1', rewriter: { initializedProvider: 'metal' } }, 'op-1'),
-    'Writing on GPU',
-  );
-  // Another operation's evidence, none yet, or nothing observed: no claim.
-  assert.equal(executedHardware(execution, 'op-2'), null);
-  assert.equal(executedHardware({}, 'op-1'), null);
-  assert.equal(executedHardware(undefined, 'op-1'), null);
-  assert.equal(
-    executedHardware({ operationId: 'op-1', asr: { initializedProvider: null } }, 'op-1'),
+    stageHardware({ operationId: 'op-1', asr: { initializedProvider: 'metal' } }, 'op-1').cleanup,
     null,
+  );
+  // Another operation's evidence, none yet, or an unknown provider: no claim.
+  const none = { transcribe: null, cleanup: null };
+  assert.deepEqual(stageHardware(execution, 'op-2'), none);
+  assert.deepEqual(stageHardware({}, 'op-1'), none);
+  assert.deepEqual(stageHardware(undefined, 'op-1'), none);
+  assert.deepEqual(
+    stageHardware({ operationId: 'op-1', asr: { initializedProvider: 'tpu' } }, 'op-1'),
+    none,
   );
 });

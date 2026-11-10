@@ -33,37 +33,48 @@ export interface EngineDiagnostics {
   timings: JobTimings | null;
   execution?: ExecutionEvidence;
 }
-const HARDWARE: Record<string, string> = {
-  'neural_engine+metal': 'Neural Engine',
-  metal: 'GPU',
-  cuda: 'GPU',
-  vulkan: 'GPU',
-  rocm: 'GPU',
-  'cpu+metal': 'CPU and GPU',
-  cpu: 'CPU',
+export type HardwareKind = 'cpu' | 'gpu' | 'neural';
+/** One stage's observed hardware, shown as a chip beside its duration. */
+export interface StageHardware {
+  kind: HardwareKind;
+  label: string;
+  fallback: boolean;
+  /** Accessible and hover description, for example "Ran on CPU after a fallback". */
+  description: string;
+}
+const HARDWARE: Record<string, { kind: HardwareKind; label: string }> = {
+  'neural_engine+metal': { kind: 'neural', label: 'Neural Engine' },
+  metal: { kind: 'gpu', label: 'GPU' },
+  cuda: { kind: 'gpu', label: 'GPU' },
+  vulkan: { kind: 'gpu', label: 'GPU' },
+  rocm: { kind: 'gpu', label: 'GPU' },
+  'cpu+metal': { kind: 'cpu', label: 'CPU + GPU' },
+  cpu: { kind: 'cpu', label: 'CPU' },
 };
+function observed(run: StageExecution | undefined): StageHardware | null {
+  const hardware = run?.initializedProvider ? HARDWARE[run.initializedProvider] : undefined;
+  if (!hardware) return null;
+  const fallback = Boolean(run?.fallbackReason);
+  return {
+    ...hardware,
+    fallback,
+    description: fallback
+      ? `Ran on ${hardware.label}: the faster hardware could not start this model`
+      : `Ran on ${hardware.label}`,
+  };
+}
 /**
- * Where the operation's speech and writing models actually ran, for example
- * "Speech on Neural Engine · writing on CPU (fallback)". Evidence from another
- * operation, or a provider nobody observed, is left out rather than guessed.
+ * Where the operation's speech and writing models actually ran, keyed by the
+ * step they belong to. Evidence from another operation, or a provider nobody
+ * observed, is left out rather than guessed.
  */
-export function executedHardware(
+export function stageHardware(
   execution: ExecutionEvidence | undefined,
   operationId: string | undefined,
-): string | null {
-  if (!execution || !operationId || execution.operationId !== operationId) return null;
-  const parts = (
-    [
-      ['Speech', execution.asr],
-      ['writing', execution.rewriter],
-    ] as const
-  ).flatMap(([stage, run]) => {
-    const hardware = run?.initializedProvider ? HARDWARE[run.initializedProvider] : undefined;
-    return hardware ? [`${stage} on ${hardware}${run?.fallbackReason ? ' (fallback)' : ''}`] : [];
-  });
-  if (!parts.length) return null;
-  const text = parts.join(' · ');
-  return text[0].toUpperCase() + text.slice(1);
+): { transcribe: StageHardware | null; cleanup: StageHardware | null } {
+  if (!execution || !operationId || execution.operationId !== operationId)
+    return { transcribe: null, cleanup: null };
+  return { transcribe: observed(execution.asr), cleanup: observed(execution.rewriter) };
 }
 export function validSample(sample: ResourceSample, now = Date.now()): ResourceSample {
   if (

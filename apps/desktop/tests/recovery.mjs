@@ -2070,6 +2070,7 @@ await test('Local engine reports measured values and pauses on navigation, visib
   saved.cleanupEnabled = false;
   let fail = false;
   let timings = null;
+  let execution = {};
   const state = await setup({
     main: true,
     intercept: (command, state) => {
@@ -2086,6 +2087,7 @@ await test('Local engine reports measured values and pauses on navigation, visib
           },
           activity: { ...state.runtime },
           timings,
+          execution,
         };
       }
     },
@@ -2137,6 +2139,45 @@ await test('Local engine reports measured values and pauses on navigation, visib
     panel().textContent.includes('1.2 s') && panel().textContent.includes('12 ms'),
     'Stage durations missing',
   );
+  const chips = () => [...panel().querySelectorAll('.engine-step .hardware')];
+  assert(!chips().length, 'Hardware chip shown without execution evidence');
+  // Evidence from another operation is never attached to this one's steps.
+  execution = { operationId: 'older', asr: { initializedProvider: 'metal' } };
+  refresh();
+  await pause();
+  assert(!chips().length, "Another operation's hardware was shown");
+  // Writing is off, so only the speech step carries a chip, even if evidence exists.
+  execution = {
+    operationId: 'synthetic',
+    asr: { initializedProvider: 'neural_engine+metal' },
+    rewriter: { initializedProvider: 'metal' },
+  };
+  refresh();
+  await until(() => chips().length === 1, 'Speech hardware chip missing');
+  assert(
+    chips()[0].getAttribute('aria-label') === 'Ran on Neural Engine' &&
+      chips()[0].textContent.trim() === 'Neural Engine' &&
+      chips()[0].querySelector('[data-icon="neural"]'),
+    'Speech chip has the wrong label or icon',
+  );
+  timings = { ...timings, cleanupModel: 'Synthetic writer', cleanupMs: 950 };
+  execution = {
+    operationId: 'synthetic',
+    asr: { initializedProvider: 'metal' },
+    rewriter: { initializedProvider: 'cpu', fallbackReason: 'Synthetic GPU failure' },
+  };
+  refresh();
+  await until(() => chips().length === 2, 'Writing hardware chip missing');
+  const [speech, writing] = chips();
+  assert(speech.querySelector('[data-icon="gpu"]') && !speech.matches('.fallback'), 'GPU chip');
+  assert(
+    writing.matches('.fallback') &&
+      writing.querySelector('[data-icon="warning"]') &&
+      writing.textContent.trim() === 'CPU' &&
+      writing.getAttribute('aria-label').includes('could not start'),
+    'Fallback chip is not marked',
+  );
+  assert(!panel().textContent.includes('Speech on'), 'The old hardware sentence is still shown');
   timings = { ...timings, outcome: 'error' };
   state.runtime = { ...idle, stage: 'error' };
   refresh();

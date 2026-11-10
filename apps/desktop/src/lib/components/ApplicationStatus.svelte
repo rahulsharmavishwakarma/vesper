@@ -10,7 +10,7 @@
     appendSample,
     createResourcePoller,
     durationLabel,
-    executedHardware,
+    stageHardware,
     memoryScale,
     resourceBars,
     validSample,
@@ -100,7 +100,7 @@
   );
   const ramScale = $derived(memoryScale(history));
   const timings = $derived(diagnostics?.timings);
-  const hardware = $derived(executedHardware(diagnostics?.execution, timings?.operationId));
+  const hardware = $derived(stageHardware(diagnostics?.execution, timings?.operationId));
   const active = $derived(
     timings?.outcome === 'running' && engineActivity?.busy ? timings.activeStage : null,
   );
@@ -109,9 +109,15 @@
       key: 'transcribe',
       label: timings?.speechMode === 'finalization' ? 'Finalize speech' : 'Transcribe',
       value: timings?.transcribeMs,
+      chip: hardware.transcribe,
     },
-    { key: 'cleanup', label: 'Polish text', value: timings?.cleanupMs },
-    { key: 'save', label: 'Save', value: timings?.saveMs },
+    {
+      key: 'cleanup',
+      label: 'Polish text',
+      value: timings?.cleanupMs,
+      chip: timings?.cleanupModel === null ? null : hardware.cleanup,
+    },
+    { key: 'save', label: 'Save', value: timings?.saveMs, chip: null },
   ]);
   async function refresh() {
     if (refreshBusy) return;
@@ -266,14 +272,22 @@
             ? ' · completed-recording fallback'
             : ''}
         </p>{/if}
-      {#if hardware}<p class="operation-model">{hardware}</p>{/if}
       {#if timings}<div class="engine-steps">
           {#each rows as row (row.key)}<div class="engine-step" class:current={active === row.key}>
               <span>{row.label}</span><span class="step-duration"
                 >{row.key === 'cleanup' && timings && timings.cleanupModel === null
                   ? 'Off'
                   : durationLabel(row.value)}</span
-              >
+              >{#if row.chip}<span
+                  class="hardware"
+                  class:fallback={row.chip.fallback}
+                  title={row.chip.description}
+                  role="img"
+                  aria-label={row.chip.description}
+                  ><Icon name={row.chip.fallback ? 'warning' : row.chip.kind} /><span
+                    aria-hidden="true">{row.chip.label}</span
+                  ></span
+                >{/if}
             </div>{/each}
         </div>{/if}
     </div>
@@ -298,8 +312,8 @@
         the retry.
       </p>
       <p>
-        The hardware line shows where each model actually started. Fallback means the faster
-        hardware could not start it, so it ran on slower hardware.
+        The chip beside Transcribe and Polish text shows the hardware that model actually ran on. A
+        warning chip means the faster hardware could not start it, so it ran on slower hardware.
       </p>
     </details>
   </div>
@@ -489,9 +503,6 @@
     overflow-wrap: anywhere;
     margin: var(--space-2) 0 0;
   }
-  .operation-model + .operation-model {
-    margin-top: var(--space-1);
-  }
   .engine-steps {
     display: grid;
     grid-template-columns: repeat(3, minmax(0, 1fr));
@@ -499,8 +510,10 @@
     margin-top: var(--space-5);
   }
   .engine-step {
-    display: flex;
-    justify-content: space-between;
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto;
+    align-items: baseline;
+    align-content: start;
     gap: var(--space-2);
     border-top: 2px solid var(--color-line);
     padding-top: var(--space-3);
@@ -510,6 +523,30 @@
   .engine-step.current {
     border-color: var(--color-accent);
     color: var(--color-accent);
+  }
+  /* Its own row under the step's name and time, so every step's text lines up. */
+  .hardware {
+    grid-column: 1 / -1;
+    justify-self: start;
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    padding: 1px 7px 1px 5px;
+    border: 1px solid var(--color-line);
+    border-radius: 999px;
+    color: var(--color-muted);
+    font-size: 10.5px;
+    line-height: 16px;
+    white-space: nowrap;
+  }
+  .hardware :global(.icon) {
+    width: 12px;
+    height: 12px;
+    flex: none;
+  }
+  .hardware.fallback {
+    border-color: var(--color-warning);
+    color: var(--color-warning);
   }
   .step-duration {
     font-family: var(--font-mono);
@@ -608,7 +645,7 @@
       gap: var(--space-3);
     }
     .engine-step {
-      flex-direction: column;
+      grid-template-columns: minmax(0, 1fr);
     }
   }
   @media (prefers-reduced-motion: reduce) {
