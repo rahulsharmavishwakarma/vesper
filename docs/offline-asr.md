@@ -279,7 +279,9 @@ How it runs:
 - **Output.** Output is read through the Neural Engine's padded strides and decoded with fresh state for each part.
 - **Compute units.** The encoder loads with CPU and Neural Engine first, then CPU and GPU, then CPU only. A load that
   fails, or whose short probe window errors or is not finite, falls through to the next. Every option uses the same
-  installed files, and the choice is recorded as `encoderComputeUnits` in each segment's evidence.
+  installed files, and the choice is recorded as `encoderComputeUnits` in each segment's evidence. The recording's
+  `initializedProvider` follows it (`neural_engine+metal`, `metal` or `cpu+metal`), with a `fallbackReason` when the
+  Neural Engine was not used.
 - **Live dictation.** Live dictation shows buffered drafts. The completed-audio pass stays authoritative.
 - **Directory check.** The model directory must hold only the pinned files at every depth.
 

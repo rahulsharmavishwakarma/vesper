@@ -22,7 +22,6 @@ const OUTPUT: usize = 1024;
 const BATCH: u32 = 512;
 const THREADS: i32 = 8;
 const DEADLINE_SECONDS: u64 = 120;
-const RUNTIME: &str = "llama-cpp-2 0.1.159; llama.cpp d81235049384534c167caea52b85a694f6103d14";
 
 #[derive(Clone, Copy, Debug, Serialize)]
 #[serde(rename_all = "snake_case")]
@@ -391,7 +390,7 @@ fn main() -> Result<()> {
     let load_ms = ms(started);
     let mut report = json!({
         "schemaVersion": 1, "generatedAt": chrono::Utc::now().to_rfc3339(),
-        "architecture": architecture, "profile": args[0], "revision": revision, "runtime": RUNTIME,
+        "architecture": architecture, "profile": args[0], "revision": revision, "runtime": format!("llama-cpp-2 {}; llama.cpp {}", vesper_core::LLAMA_CPP_2_VERSION, vesper_core::LLAMA_CPP_REVISION),
         "artifacts": artifacts, "environment": environment,
         "manifest": manifest, "manifestSha256": hash(Path::new(&args[2]))?,
         "harnessSha256": format!("{:x}", Sha256::digest(include_bytes!("multimodal.rs"))),

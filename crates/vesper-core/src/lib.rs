@@ -28,7 +28,7 @@ mod workspace;
 pub use adapters::{
     adapter, mlx_speech_only, mlx_speech_supported, nemo_gguf_supported, neural_engine_supported,
     resolve_adapter, AdapterCapabilities, AdapterKind, AdapterRegistration, CacheState, LiveMode,
-    ADAPTERS, MLX_REVISION, MLX_RUNTIME,
+    ADAPTERS, LLAMA_CPP_2_VERSION, LLAMA_CPP_REVISION, MLX_REVISION, MLX_RUNTIME,
 };
 pub use app_text::{aligned_edit, field_terms, MAX_ALIGNED_WORDS, MAX_FIELD_TERMS};
 pub use config::{

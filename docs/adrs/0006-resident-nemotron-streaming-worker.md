@@ -25,6 +25,6 @@ Retain Qwen weights but create a fresh llama.cpp context per final transcript. D
 - Microphone transcription can display native partials and finalization includes every captured tail frame.
 - The audio callback remains lock-free. If a fixed live queue saturates, capture stays responsive, the partial stream is discarded, and final ASR falls back to the complete archived capture instead of silently dropping audio.
 - Resident weights increase idle memory until a selection change or application exit; an idle eviction policy is deferred until memory pressure is measured.
-- Selected-provider metadata is not yet proof of the device that executed every operator when `Auto` falls back. Runtime-observed provider provenance and visible fallback reporting remain follow-up work.
+- Selected-provider metadata is not proof of the device that executed every operator when `Auto` falls back. Update (10 November 2026, #30): the session's `execution` evidence now records the provider each model initialized on and the fallback reason, and Local engine shows it; operator placement is still not attested.
 - Automatic endpointing, right-context tuning, prompt/KV caching, lower-bit Nemotron artifacts, custom CUDA kernels, Kyutai streaming, and new model adapters require separate evidence, approval, and validation.
 - Acceptance still requires live-device latency/quality measurements and the documented 100-cycle finish/cancel/reset gate; the initial public-fixture smoke proves only basic lifecycle correctness.

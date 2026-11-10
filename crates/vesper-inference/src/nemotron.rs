@@ -49,6 +49,8 @@ pub(crate) fn key(config: &AppConfig, model_root: &Path) -> Result<RecognizerKey
 pub(crate) struct Recognizer {
     inner: vesper_nemo::Recognizer,
     pub(crate) initialized_provider: &'static str,
+    /// Why an automatic GPU load fell back to the CPU; never set for an explicit backend.
+    pub(crate) fallback_reason: Option<String>,
 }
 
 impl Recognizer {
@@ -63,6 +65,7 @@ impl Recognizer {
         require_file(&key.model)?;
         let mut initialized_provider = vesper_models::resolved_nemo_backend(config)
             .map_err(|e| native("backend selection", e))?;
+        let mut fallback_reason = None;
         let streaming = streaming_model(config);
         let open = |gpu: Option<u32>| {
             if streaming {
@@ -78,6 +81,7 @@ impl Recognizer {
             {
                 eprintln!("automatic NeMo GPU initialization failed; retrying on CPU: {gpu_error}");
                 initialized_provider = "cpu";
+                fallback_reason = Some(gpu_error.to_string());
                 open(None).map_err(
                     |cpu_error| {
                         native(
@@ -95,6 +99,7 @@ impl Recognizer {
         Ok(Self {
             inner,
             initialized_provider,
+            fallback_reason,
         })
     }
 

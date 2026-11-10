@@ -183,7 +183,12 @@ use crate::generated::{
     PARAKEET_LANGUAGES, PHONON2_LANGUAGES, QWEN_ASR_LANGUAGES, REDUX_LANGUAGES, WHISPER_LANGUAGES,
 };
 const SHERPA: &str = "af2d8d81dbfa61c4cea4c568da78f3982edca005";
-const LLAMA: &str = "d81235049384534c167caea52b85a694f6103d14";
+const LLAMA: &str = LLAMA_CPP_REVISION;
+/// The locked `llama-cpp-2` release and the llama.cpp commit its
+/// `llama-cpp-sys-2` bundles, recorded in provenance. A test in
+/// vesper-inference fails when `Cargo.lock` moves without them.
+pub const LLAMA_CPP_2_VERSION: &str = "0.1.160";
+pub const LLAMA_CPP_REVISION: &str = "d81235049384534c167caea52b85a694f6103d14";
 const SPEECH: ModelRole = ModelRole::SpeechRecognition;
 const TEXT: ModelRole = ModelRole::TextReconstruction;
 pub const MLX_RUNTIME: &str = "MLX-Audio-Swift";
