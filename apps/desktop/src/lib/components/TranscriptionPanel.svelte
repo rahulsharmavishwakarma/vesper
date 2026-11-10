@@ -1083,7 +1083,9 @@
       <div class="section-heading">
         <div>
           <h2>Your latest transcription</h2>
-          <span class="note">{result.durationSeconds.toFixed(1)} seconds</span>
+          {#if Number.isFinite(result.durationSeconds)}<span class="note"
+              >{result.durationSeconds.toFixed(1)} seconds</span
+            >{/if}
         </div>
         <button
           class="quiet"
@@ -1174,7 +1176,8 @@
             onclick={undoRemembered}>Undo remembered edits</button
           >
         </div>{/if}
-      {#if result.warnings.length}<ul class="pipeline-warnings">
+      <!-- A result without warnings (an older backend or a fixture) shows none rather than failing (#393). -->
+      {#if result.warnings?.length}<ul class="pipeline-warnings">
           {#each result.warnings as warning, index (index)}<li>{warning}</li>{/each}
         </ul>{/if}
       <div aria-live="polite">
