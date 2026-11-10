@@ -227,7 +227,7 @@ pub fn model_versions(config: &AppConfig) -> Value {
                 json!({"modelId":config.models.asr.id(), "revision":offline_asr::MOONSHINE_REVISION, "architecture":"moonshine_v2", "runtime":"sherpa-onnx", "runtimeVersion":"2.0.1", "runtimeRevision":"af2d8d81dbfa61c4cea4c568da78f3982edca005", "runtimeBuildId":env!("VESPER_SHERPA_BUILD_ID"), "runtimePatchSha256":env!("VESPER_SHERPA_PATCH_SHA256"), "completionReportVersion":1, "provider":"cpu", "modelLifetime":"resident-in-manager-fresh-stream-per-segment", "maxRecordingSeconds":0, "languageMode":"english-only", "segmentation":{"policy":"balanced-low-energy-v1", "maxSegmentSeconds":offline_asr::MOONSHINE_MAX_SEGMENT_SECONDS, "boundaryLookbackMs":1000, "energyWindowMs":100, "boundaryStepMs":10, "overlapSamples":0, "streamLifetime":"per-segment"}, "language":config.language, "artifacts":vesper_models::selected(config).unwrap_or_default().into_iter().filter(|file| file.role == "asr").collect::<Vec<_>>()})
             }
             AdapterKind::LfmAudio => {
-                json!({"modelId":config.models.asr.id(), "revision":lfm::REVISION, "runtime":"llama-cpp-2/mtmd", "runtimeVersion":"0.1.159", "provider":qwen::provider(config), "modelLifetime":"resident-weights-fresh-context-per-segment", "contextTokens":lfm::CONTEXT_TOKENS, "maxOutputTokens":lfm::MAX_OUTPUT_TOKENS, "sampling":{"strategy":"greedy"}, "languageMode":"explicit-english", "streamingMode":"completed-recordings", "segmentation":{"policy":"balanced-low-energy-v1", "maxSegmentSeconds":lfm::MAX_SEGMENT_SECONDS, "boundaryLookbackMs":1000, "energyWindowMs":100, "boundaryStepMs":10, "overlapSamples":0}, "cancellation":"before-and-after-audio-evaluation-and-between-text-tokens", "artifacts":vesper_models::selected(config).unwrap_or_default().into_iter().filter(|f| f.role == "asr").collect::<Vec<_>>()})
+                json!({"modelId":config.models.asr.id(), "revision":lfm::REVISION, "runtime":"llama-cpp-2/mtmd", "runtimeVersion":vesper_core::LLAMA_CPP_2_VERSION, "provider":qwen::provider(config), "modelLifetime":"resident-weights-fresh-context-per-segment", "contextTokens":lfm::CONTEXT_TOKENS, "maxOutputTokens":lfm::MAX_OUTPUT_TOKENS, "sampling":{"strategy":"greedy"}, "languageMode":"explicit-english", "streamingMode":"completed-recordings", "segmentation":{"policy":"balanced-low-energy-v1", "maxSegmentSeconds":lfm::MAX_SEGMENT_SECONDS, "boundaryLookbackMs":1000, "energyWindowMs":100, "boundaryStepMs":10, "overlapSamples":0}, "cancellation":"before-and-after-audio-evaluation-and-between-text-tokens", "artifacts":vesper_models::selected(config).unwrap_or_default().into_iter().filter(|f| f.role == "asr").collect::<Vec<_>>()})
             }
             AdapterKind::NemoRnnt => {
                 let provider =
@@ -259,7 +259,7 @@ pub fn model_versions(config: &AppConfig) -> Value {
             "vadPolicy":audio_frontend::vad_policy(&config.audio_frontend), "denoiserApi":"online-in-both-modes",
             "artifacts":vesper_models::selected(config).unwrap_or_default().into_iter().filter(|a| a.role == "audio_frontend").collect::<Vec<_>>()},
         "asr": asr,
-        "rewriter": {"modelId":config.models.rewriter.id(), "runtime":"llama-cpp-2", "runtimeVersion":"0.1.159", "artifactFile":rewrite_filename(config.rewrite_quantization), "provider":qwen::provider(config), "modelLifetime":"resident-weights-fresh-context-per-request", "thinkingEnabled":false, "contextTokens":qwen::CONTEXT_TOKENS, "maxOutputTokens":qwen::MAX_OUTPUT_TOKENS, "sampling":{"strategy":"greedy"}, "fidelityGuard":"lexical-v1"}
+        "rewriter": {"modelId":config.models.rewriter.id(), "runtime":"llama-cpp-2", "runtimeVersion":vesper_core::LLAMA_CPP_2_VERSION, "artifactFile":rewrite_filename(config.rewrite_quantization), "provider":qwen::provider(config), "modelLifetime":"resident-weights-fresh-context-per-request", "thinkingEnabled":false, "contextTokens":qwen::CONTEXT_TOKENS, "maxOutputTokens":qwen::MAX_OUTPUT_TOKENS, "sampling":{"strategy":"greedy"}, "fidelityGuard":"lexical-v1"}
     });
     if let Some(profile) = &config.models.custom_asr {
         versions["asr"]["modelId"] = json!(profile.repository);
@@ -348,6 +348,35 @@ fn worker_threads() -> i32 {
 mod profile_tests {
     use super::*;
     use vesper_core::{HuggingFaceFile, HuggingFaceProfile, ModelFileRole, ModelRuntime};
+
+    /// Provenance names the locked writer runtime and the llama.cpp source it
+    /// bundles. A dependency bump fails here until both labels are updated.
+    #[test]
+    fn recorded_llama_runtime_matches_the_lockfile() {
+        let lock =
+            std::fs::read_to_string(Path::new(env!("CARGO_MANIFEST_DIR")).join("../../Cargo.lock"))
+                .unwrap();
+        let locked = |name: &str| {
+            let entry = format!("name = \"{name}\"\nversion = \"");
+            let start = lock.find(&entry).expect("locked package") + entry.len();
+            lock[start..].split('"').next().unwrap().to_owned()
+        };
+        assert_eq!(locked("llama-cpp-2"), vesper_core::LLAMA_CPP_2_VERSION);
+        // llama-cpp-sys-2 0.1.160 bundles this llama.cpp submodule commit.
+        assert_eq!(locked("llama-cpp-sys-2"), "0.1.160");
+        assert_eq!(
+            vesper_core::LLAMA_CPP_REVISION,
+            "d81235049384534c167caea52b85a694f6103d14"
+        );
+        assert_eq!(
+            AppConfig::default().text_adapter().runtime_revision,
+            vesper_core::LLAMA_CPP_REVISION
+        );
+        assert_eq!(
+            model_versions(&AppConfig::default())["rewriter"]["runtimeVersion"],
+            vesper_core::LLAMA_CPP_2_VERSION
+        );
+    }
 
     #[test]
     fn runtime_paths_and_versions_follow_selected_profiles() {
