@@ -68,6 +68,29 @@ pub(crate) struct Recognizer {
     requests: Cell<u64>,
     pub healthy: Cell<bool>,
     metrics: RefCell<Metrics>,
+    /// Core ML compute units the Neural Engine encoder actually loaded with,
+    /// learned from the first report; fixed for the life of the handle.
+    encoder_compute_units: RefCell<Option<String>>,
+}
+
+/// What the Neural Engine engine actually runs on. Its decoder is MLX on the GPU;
+/// Core ML loads the encoder for the Neural Engine, else the GPU, else the CPU.
+/// `None` until the first segment reports the units the encoder loaded with.
+pub(crate) fn neural_engine_provider(
+    encoder_units: Option<&str>,
+) -> (Option<&'static str>, Option<&'static str>) {
+    match encoder_units {
+        Some("cpu_and_neural_engine") => (Some("neural_engine+metal"), None),
+        Some("cpu_and_gpu") => (
+            Some("metal"),
+            Some("Core ML could not load the encoder for the Neural Engine; it runs on the GPU"),
+        ),
+        Some("cpu_only") => (
+            Some("cpu+metal"),
+            Some("Core ML could not load the encoder for the Neural Engine or the GPU; it runs on the CPU"),
+        ),
+        _ => (None, None),
+    }
 }
 
 pub(crate) fn maximum_samples(config: &AppConfig) -> usize {
@@ -164,6 +187,7 @@ impl Recognizer {
             requests: Cell::new(0),
             healthy: Cell::new(true),
             metrics: RefCell::default(),
+            encoder_compute_units: RefCell::default(),
         })
     }
 
@@ -207,6 +231,9 @@ impl Recognizer {
                         cancelled,
                     )
                     .map_err(map_error)?;
+                if let Some(units) = &report.encoder_compute_units {
+                    self.encoder_compute_units.replace(Some(units.clone()));
+                }
                 self.metrics.borrow_mut().segments.push(serde_json::json!({"inputSamples":samples.len(), "stopReason":report.stop_reason, "generationTokens":report.generation_tokens, "promptTokens":report.prompt_tokens, "nativeSeconds":report.native_seconds, "processAllocatorPeakGB":report.peak_memory_gb, "whisperScores":report.whisper_scores,"resources":report.resources,"encoderComputeUnits":report.encoder_compute_units}));
                 Ok(report.text)
             },
@@ -231,7 +258,12 @@ impl Recognizer {
     }
 
     pub(crate) fn evidence(&self, config: &AppConfig) -> serde_json::Value {
-        serde_json::json!({"requestedBackend":config.compute_backend,"initializedProvider":"metal", "runtime":vesper_core::MLX_RUNTIME, "runtimeRevision":vesper_mlx::RUNTIME_REVISION, "runtimeArtifacts":vesper_models::mlx::runtime_artifacts(), "operatorPlacement":"MLX default GPU; individual kernels not attested", "residentWeights":true,"residentLoadOrdinal":self.load_ordinal,"verificationUs":self.verification_us,"modelLoadUs":self.load_us,"metrics":*self.metrics.borrow(),"contextualPhrasesSupported":false,"contextualPhraseCount":0,"evidence":"verified-application-MLX-fresh-segment-decoder-state"})
+        let (provider, fallback_reason) = if config.uses_neural_engine() {
+            neural_engine_provider(self.encoder_compute_units.borrow().as_deref())
+        } else {
+            (Some("metal"), None)
+        };
+        serde_json::json!({"requestedBackend":config.compute_backend,"initializedProvider":provider, "fallbackReason":fallback_reason, "encoderComputeUnits":*self.encoder_compute_units.borrow(), "runtime":vesper_core::MLX_RUNTIME, "runtimeRevision":vesper_mlx::RUNTIME_REVISION, "runtimeArtifacts":vesper_models::mlx::runtime_artifacts(), "operatorPlacement":"MLX default GPU; individual kernels not attested", "residentWeights":true,"residentLoadOrdinal":self.load_ordinal,"verificationUs":self.verification_us,"modelLoadUs":self.load_us,"metrics":*self.metrics.borrow(),"contextualPhrasesSupported":false,"contextualPhraseCount":0,"evidence":"verified-application-MLX-fresh-segment-decoder-state"})
     }
 }
 
@@ -316,6 +348,22 @@ mod tests {
     use super::*;
     use crate::{InferenceError, InferenceManager};
     use std::sync::{atomic::Ordering, Arc, Mutex};
+
+    #[test]
+    fn neural_engine_evidence_reports_the_units_the_encoder_loaded_with() {
+        assert_eq!(
+            neural_engine_provider(Some("cpu_and_neural_engine")),
+            (Some("neural_engine+metal"), None)
+        );
+        let (provider, reason) = neural_engine_provider(Some("cpu_and_gpu"));
+        assert_eq!(provider, Some("metal"));
+        assert!(reason.unwrap().contains("GPU"));
+        let (provider, reason) = neural_engine_provider(Some("cpu_only"));
+        assert_eq!(provider, Some("cpu+metal"));
+        assert!(reason.unwrap().contains("CPU"));
+        // Before the first segment nothing is claimed, not even the request.
+        assert_eq!(neural_engine_provider(None), (None, None));
+    }
 
     #[test]
     #[ignore = "requires pinned CPU/MLX Qwen models, a Metal device and public audio"]
