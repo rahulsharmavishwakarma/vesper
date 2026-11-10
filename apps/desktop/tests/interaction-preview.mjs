@@ -399,7 +399,9 @@ if (states) {
               cpuPercent: 3,
               memoryBytes: 268435456,
               logicalCpus: 8,
-              status: 'available',
+              // The native sampler's ready state (resources.rs); 'available' is
+              // not a status, so the preview never showed a CPU reading (#379).
+              status: 'ready',
             },
             activity: runtime,
             timings: null,
