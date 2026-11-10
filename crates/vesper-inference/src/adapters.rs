@@ -310,7 +310,11 @@ impl SpeechModel {
             ) => Some("cpu"),
             Self::Lfm(_) | Self::Sherpa(_) | Self::PerJob(_) => None,
         };
-        serde_json::json!({"requestedBackend":config.compute_backend, "initializedProvider":initialized, "nativeGraphThreads":if matches!(self, Self::Nemo(_)) { Some(4) } else { None }, "streamingPolicy":if matches!(self, Self::Nemo(_)) && config.speech_adapter().capabilities.native_streaming { serde_json::json!({"rightContextPolicy":"artifact-default", "artifactRightContextFrames":3, "artifactLeftContextFrames":56, "nominalEncoderAdvanceMs":320, "evidence":"pinned-model-and-runtime-source"}) } else { serde_json::Value::Null }, "operatorPlacement":"unknown", "profileRevision":profile.revision, "contextualPhrasesSupported":config.speech_adapter().capabilities.contextual_phrases(), "contextualPhraseCount":decode_hints(config, profile).phrases.len(), "phraseBoost":phrase_boost(&decode_hints(config, profile)), "evidence":"adapter-initialization-or-explicit-cpu-contract"})
+        let fallback_reason = match self {
+            Self::Nemo(m) => m.fallback_reason.as_deref(),
+            _ => None,
+        };
+        serde_json::json!({"requestedBackend":config.compute_backend, "initializedProvider":initialized, "fallbackReason":fallback_reason, "nativeGraphThreads":if matches!(self, Self::Nemo(_)) { Some(4) } else { None }, "streamingPolicy":if matches!(self, Self::Nemo(_)) && config.speech_adapter().capabilities.native_streaming { serde_json::json!({"rightContextPolicy":"artifact-default", "artifactRightContextFrames":3, "artifactLeftContextFrames":56, "nominalEncoderAdvanceMs":320, "evidence":"pinned-model-and-runtime-source"}) } else { serde_json::Value::Null }, "operatorPlacement":"unknown", "profileRevision":profile.revision, "contextualPhrasesSupported":config.speech_adapter().capabilities.contextual_phrases(), "contextualPhraseCount":decode_hints(config, profile).phrases.len(), "phraseBoost":phrase_boost(&decode_hints(config, profile)), "evidence":"adapter-initialization-or-explicit-cpu-contract"})
     }
 }
 
