@@ -24,6 +24,12 @@
     disk: 'M3 7.5A2.5 2.5 0 0 1 5.5 5h13A2.5 2.5 0 0 1 21 7.5v9a2.5 2.5 0 0 1-2.5 2.5h-13A2.5 2.5 0 0 1 3 16.5zM3 13h18M17 16h.01M14 16h.01',
     target: 'M12 21a9 9 0 1 0 0-18 9 9 0 0 0 0 18Zm0-5a4 4 0 1 0 0-8 4 4 0 0 0 0 8Zm0-4h.01',
     shield: 'M12 3 5 6v5c0 4.5 3 8 7 10 4-2 7-5.5 7-10V6zm-3 9 2 2 4-4',
+    // Hardware a model ran on: a processor, a graphics card, and the Neural
+    // Engine as a processor with a spark (the Models icon is a chip with a core).
+    cpu: 'M7 7h10v10H7zM10 3v4M14 3v4M10 17v4M14 17v4M3 10h4M3 14h4M17 10h4M17 14h4',
+    gpu: 'M3 6h18v11H3zM3 6V4M7 17v3M11 17v3M14 11.5a3 3 0 1 1-6 0 3 3 0 0 1 6 0ZM17.5 9v5',
+    neural:
+      'M7 7h10v10H7zM10 3v4M14 3v4M10 17v4M14 17v4M3 10h4M3 14h4M17 10h4M17 14h4M12 9.5l.8 1.7 1.7.8-1.7.8-.8 1.7-.8-1.7-1.7-.8 1.7-.8z',
   };
   type IconName =
     | keyof typeof simplePaths

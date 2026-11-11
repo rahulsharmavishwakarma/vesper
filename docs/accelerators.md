@@ -74,9 +74,9 @@ after an automatic retry, why (`fallbackReason`). The writer, Nemotron and the
 Parakeet GGUF engine record the CPU after a failed GPU load. The Neural Engine
 engine records `neural_engine+metal`, or `metal` or `cpu+metal` when Core ML loaded
 its encoder for the GPU or the CPU instead, with the encoder's compute units. Models
-→ **Local engine** shows the last operation's line, for example "Speech on Neural
-Engine · writing on CPU (fallback)". Operator placement inside a runtime is still
-not attested.
+→ **Local engine** shows it as a chip under the last operation's Transcribe and
+Polish text steps, with a warning chip for a fallback. Operator placement inside a
+runtime is still not attested.
 The [measured Metal screen](inference-performance.md#native-gpu-implementation-and-screening--23-september-2026)
 records exact models, runtime pins, accuracy, cold/resident timings and limits.
 
