@@ -53,6 +53,9 @@ pub struct Dictation {
 struct State {
     status: Status,
     key_down: [bool; 2],
+    /// Last press (or key repeat) of each shortcut, to tell a held key from a
+    /// release the operating system never reported.
+    last_press: [Option<Instant>; 2],
     held_session: bool,
     stop_requested: bool,
     cancelled: bool,
@@ -78,6 +81,9 @@ struct PasteRecord {
     draft: String,
     pasted: String,
 }
+/// A shortcut held down repeats well within this interval; a press after a
+/// longer silence follows a release that was never reported.
+const MISSED_RELEASE: Duration = Duration::from_secs(2);
 #[derive(Debug, PartialEq, Eq)]
 enum Action {
     None,
@@ -134,10 +140,30 @@ impl State {
         }
     }
     fn key(&mut self, pressed: bool, mode: RecordingMode, output: DictationOutput) -> Action {
+        self.key_at(pressed, mode, output, Instant::now())
+    }
+    fn key_at(
+        &mut self,
+        pressed: bool,
+        mode: RecordingMode,
+        output: DictationOutput,
+        now: Instant,
+    ) -> Action {
         let index = if mode == RecordingMode::Hold { 0 } else { 1 };
         if pressed {
+            let previous = self.last_press[index].replace(now);
             if self.key_down[index] {
-                return Action::None;
+                // A held key repeats far more often than this. A press after a
+                // longer silence means the release was never delivered, so it
+                // is a new press rather than a repeat; without this the next
+                // press after a lost release did nothing.
+                let repeat = previous.is_some_and(|at| now.duration_since(at) < MISSED_RELEASE);
+                if repeat {
+                    return Action::None;
+                }
+                eprintln!(
+                    "shortcut: {mode:?} release was not reported; treating this as a new press"
+                );
             }
             self.key_down[index] = true;
             if self.status.phase.active() && mode == RecordingMode::Hold {
@@ -166,6 +192,9 @@ impl State {
             return Action::Cancel;
         }
         self.status.capture_ready_ms = self.began.map(|t| t.elapsed().as_millis() as u64);
+        if let Some(ms) = self.status.capture_ready_ms {
+            eprintln!("dictation: microphone ready {ms} ms after start was requested");
+        }
         self.status.started_at_unix_ms = Some(
             std::time::SystemTime::now()
                 .duration_since(std::time::UNIX_EPOCH)
@@ -450,6 +479,16 @@ async fn start(app: tauri::AppHandle, id: u64) {
             fail(&app, id, "Another operation is running.");
         }
         return;
+    }
+    // Show "Preparing microphone…" now: the work below can take a moment, and
+    // with no feedback a second press stopped the recording as it started.
+    // The panel never activates, so the target field stays frontmost.
+    if storage
+        .settings
+        .load()
+        .is_ok_and(|s| s.floating_bar_enabled)
+    {
+        show(&app);
     }
     // A fix made in the app since the last paste teaches before this snapshot.
     read_back_paste(&app, 0).await;
@@ -998,6 +1037,58 @@ pub async fn copy_dictation(id: u64, app: tauri::AppHandle) -> Result<(), String
 #[cfg(test)]
 mod tests {
     use super::*;
+    #[test]
+    fn a_press_after_a_lost_release_starts_and_stops_instead_of_being_ignored() {
+        let t0 = Instant::now();
+        let at = |ms: u64| t0 + Duration::from_millis(ms);
+        let mut state = State::default();
+        // Toggle starts; the operating system never reports the release.
+        let Action::Start(id) =
+            state.key_at(true, RecordingMode::Toggle, DictationOutput::Paste, at(0))
+        else {
+            panic!("start");
+        };
+        assert_eq!(state.ready(id), Action::None);
+        // Key repeats while the key is still held are ignored.
+        for ms in [500, 530, 560] {
+            assert_eq!(
+                state.key_at(true, RecordingMode::Toggle, DictationOutput::Paste, at(ms)),
+                Action::None
+            );
+        }
+        // The next deliberate press stops the recording on the first try.
+        assert_eq!(
+            state.key_at(
+                true,
+                RecordingMode::Toggle,
+                DictationOutput::Paste,
+                at(6_000)
+            ),
+            Action::Stop(id)
+        );
+        // Hold, with its release lost while idle, still starts on the next press.
+        state.status.phase = Phase::Ready;
+        state.key_down[0] = true;
+        state.last_press[0] = Some(at(7_000));
+        let Action::Start(next) = state.key_at(
+            true,
+            RecordingMode::Hold,
+            DictationOutput::Paste,
+            at(12_000),
+        ) else {
+            panic!("hold after a lost release");
+        };
+        state.ready(next);
+        assert_eq!(
+            state.key_at(
+                false,
+                RecordingMode::Hold,
+                DictationOutput::Paste,
+                at(14_000)
+            ),
+            Action::Stop(next)
+        );
+    }
     #[test]
     fn hold_repeats_and_release_during_startup_finish_only_that_request() {
         let mut state = State::default();
