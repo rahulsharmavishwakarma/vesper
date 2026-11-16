@@ -187,7 +187,7 @@ const LLAMA: &str = LLAMA_CPP_REVISION;
 /// The locked `llama-cpp-2` release and the llama.cpp commit its
 /// `llama-cpp-sys-2` bundles, recorded in provenance. A test in
 /// vesper-inference fails when `Cargo.lock` moves without them.
-pub const LLAMA_CPP_2_VERSION: &str = "0.1.160";
+pub const LLAMA_CPP_2_VERSION: &str = "0.1.161";
 pub const LLAMA_CPP_REVISION: &str = "d81235049384534c167caea52b85a694f6103d14";
 const SPEECH: ModelRole = ModelRole::SpeechRecognition;
 const TEXT: ModelRole = ModelRole::TextReconstruction;

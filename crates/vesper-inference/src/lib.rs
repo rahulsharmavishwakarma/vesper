@@ -362,8 +362,8 @@ mod profile_tests {
             lock[start..].split('"').next().unwrap().to_owned()
         };
         assert_eq!(locked("llama-cpp-2"), vesper_core::LLAMA_CPP_2_VERSION);
-        // llama-cpp-sys-2 0.1.160 bundles this llama.cpp submodule commit.
-        assert_eq!(locked("llama-cpp-sys-2"), "0.1.160");
+        // llama-cpp-sys-2 0.1.161 bundles this llama.cpp submodule commit (as did 0.1.160).
+        assert_eq!(locked("llama-cpp-sys-2"), "0.1.161");
         assert_eq!(
             vesper_core::LLAMA_CPP_REVISION,
             "d81235049384534c167caea52b85a694f6103d14"
