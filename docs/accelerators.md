@@ -34,7 +34,7 @@ while the fallback choices remain usable.
 
 ## Scope and implementation
 
-The existing `llama-cpp-2 = 0.1.160` dependency exposes
+The existing `llama-cpp-2 = 0.1.161` dependency exposes
 `list_llama_ggml_backend_devices()`. The app calls it once on a background worker
 and caches the result for the process lifetime. It maps MTL/CUDA/Vulkan/ROCm registry
 names to the existing preferences, retaining GPU/integrated-GPU records with a
