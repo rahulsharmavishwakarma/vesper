@@ -20,18 +20,18 @@ ml-dtypes==0.6.0 ; platform_machine == 'arm64' and sys_platform == 'darwin' \
     --hash=sha256:5359c588cc62de6f78d7430f06b65853d884955494d86d6ad90b6dd64a3f3a08 \
     --hash=sha256:5e60251d32ced5598972e4d5e06a2f044341f9291402551a3f6f0ec44f9299b0
     # via ai-edge-litert
-numpy==2.5.4 ; platform_machine == 'arm64' and sys_platform == 'darwin' \
-    --hash=sha256:9a94cf751c9ad8ebaa835bcd3d40dacf8534ad086b88c38029b65123c7999d2a \
-    --hash=sha256:9cb18a327b49c5c337f972b03682f6a49855525faaf3c0d3e9c96cd0fd8880a8 \
-    --hash=sha256:b11e8fda06a7d69f15ebf542660b74466c2e51094800c1fb794f47ad4faeef17
+numpy==2.5.5 ; platform_machine == 'arm64' and sys_platform == 'darwin' \
+    --hash=sha256:5cddc243c75114ba845f01b1f87aca1572dbf7b6c2d88636ed3e1d2bccd7f1bf \
+    --hash=sha256:a3856a97e48ed8371c680fb04120b99fbcc29f2076ebe6dc3deb34f77947c5ca \
+    --hash=sha256:b96e9ee49ccbdb5676359f852a4497f7a9c5df6c377d8877f5330d6fd3ff42e4
     # via
     #   ai-edge-litert
     #   ml-dtypes
     #   onnxruntime
     #   soundfile
     #   vesper-audio-frontend-probe
-onnxruntime==1.31.1 ; platform_machine == 'arm64' and sys_platform == 'darwin' \
-    --hash=sha256:96dd2564b10ea7153ad9c207e7cd8e5917cb3ba521e0e0a62ac03486fdc8d56c
+onnxruntime==1.32.0 ; platform_machine == 'arm64' and sys_platform == 'darwin' \
+    --hash=sha256:d52510bbbcc880c13b826f7d75cdf33ac5cf0bb864d960000fc29ce73f0cb83e
     # via vesper-audio-frontend-probe
 packaging==26.3 ; platform_machine == 'arm64' and sys_platform == 'darwin' \
     --hash=sha256:94edc256424af38762eb31306eed28beb9f0efc50a8837492c9d6fd6004aed79 \
