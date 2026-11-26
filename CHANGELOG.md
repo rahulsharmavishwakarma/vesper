@@ -55,6 +55,9 @@ Nightly builds are not listed.
 - Removed the last copies of `zip` older than 9 from the build
   (RUSTSEC-2026-0429): the updater plugin moved to 2.14.1 and the speech runtime
   to 2.0.1.
+- Updated `url` to 2.5.9 (RUSTSEC-2026-0592, stack overflow on nested `blob:`
+  URLs) and `cookie` to 0.18.3 (RUSTSEC-2026-0594, repeated private-cookie
+  nonces after fork).
 
 ## [0.1.2] - 2026-10-29
 
